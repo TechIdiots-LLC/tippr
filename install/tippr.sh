@@ -1353,15 +1353,11 @@ SyslogIdentifier=tippr-consumer-%i
 WantedBy=tippr-consumers.target
 UNIT
 
-# Create job services
-function create_job_service {
-    local name=\$1
-    local description=\$2
-    local command=\$3
+# Create job services - write each one directly to avoid escaping issues
 
-    cat > /etc/systemd/system/tippr-job-\${name}.service <<JOBUNIT
+cat > /etc/systemd/system/tippr-job-broken_things.service <<JOBUNIT
 [Unit]
-Description=Tippr job: \${description}
+Description=Tippr job: find and delete broken things
 
 [Service]
 Type=oneshot
@@ -1371,43 +1367,183 @@ Group=$TIPPR_GROUP
 WorkingDirectory=$TIPPR_SRC/tippr/r2
 Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
 Environment=VIRTUAL_ENV=$TIPPR_VENV
-ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "\${command}"
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib.utils import utils; utils.find_recent_broken_things(delete=True)"
 Nice=10
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=tippr-job-\${name}
+SyslogIdentifier=tippr-job-broken_things
 JOBUNIT
-}
 
-create_job_service "broken_things" "find and delete broken things" \
-    "from r2.lib.utils import utils; utils.find_recent_broken_things(delete=True)"
+cat > /etc/systemd/system/tippr-job-rising.service <<JOBUNIT
+[Unit]
+Description=Tippr job: update rising pages
 
-create_job_service "rising" "update rising pages" \
-    "from r2.lib import rising; rising.set_rising()"
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib import rising; rising.set_rising()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-rising
+JOBUNIT
 
-create_job_service "trylater" "run events scheduled for later" \
-    "from r2.models.trylater import TryLater; TryLater.run()"
+cat > /etc/systemd/system/tippr-job-trylater.service <<JOBUNIT
+[Unit]
+Description=Tippr job: run events scheduled for later
 
-create_job_service "update_sr_names" "update subreddit name search cache" \
-    "from r2.lib import subreddit_search; subreddit_search.load_all_reddits()"
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.models.trylater import TryLater; TryLater.run()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-trylater
+JOBUNIT
 
-create_job_service "update_tipprs" "update tipprs" \
-    "from r2.lib.db.queries import changed; changed()"
+cat > /etc/systemd/system/tippr-job-update_sr_names.service <<JOBUNIT
+[Unit]
+Description=Tippr job: update subreddit name search cache
 
-create_job_service "update_promos" "update promos" \
-    "from r2.lib import promote; promote.Run()"
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib import subreddit_search; subreddit_search.load_all_reddits()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-update_sr_names
+JOBUNIT
 
-create_job_service "clean_up_hardcache" "clean up hardcache" \
-    "from r2.models import hardcachebackend; hardcachebackend.delete_expired()"
+cat > /etc/systemd/system/tippr-job-update_tipprs.service <<JOBUNIT
+[Unit]
+Description=Tippr job: update tipprs
 
-create_job_service "liveupdate_activity" "liveupdate activity" \
-    "from r2.lib.liveupdate import activity; activity.update_activity()"
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib.db.queries import changed; changed()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-update_tipprs
+JOBUNIT
 
-create_job_service "email" "send emails" \
-    "from r2.lib import emailer; emailer.send_queued_mail()"
+cat > /etc/systemd/system/tippr-job-update_promos.service <<JOBUNIT
+[Unit]
+Description=Tippr job: update promos
 
-create_job_service "update_gold_users" "update gold users" \
-    "from r2.models import gold; gold.update_gold_users()"
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib import promote; promote.Run()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-update_promos
+JOBUNIT
+
+cat > /etc/systemd/system/tippr-job-clean_up_hardcache.service <<JOBUNIT
+[Unit]
+Description=Tippr job: clean up hardcache
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.models import hardcachebackend; hardcachebackend.delete_expired()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-clean_up_hardcache
+JOBUNIT
+
+cat > /etc/systemd/system/tippr-job-liveupdate_activity.service <<JOBUNIT
+[Unit]
+Description=Tippr job: liveupdate activity
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib.liveupdate import activity; activity.update_activity()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-liveupdate_activity
+JOBUNIT
+
+cat > /etc/systemd/system/tippr-job-email.service <<JOBUNIT
+[Unit]
+Description=Tippr job: send emails
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.lib import emailer; emailer.send_queued_mail()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-email
+JOBUNIT
+
+cat > /etc/systemd/system/tippr-job-update_gold_users.service <<JOBUNIT
+[Unit]
+Description=Tippr job: update gold users
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/tippr
+User=$TIPPR_USER
+Group=$TIPPR_GROUP
+WorkingDirectory=$TIPPR_SRC/tippr/r2
+Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+Environment=VIRTUAL_ENV=$TIPPR_VENV
+ExecStart=$TIPPR_VENV/bin/paster run \${TIPPR_INI} -c "from r2.models import gold; gold.update_gold_users()"
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tippr-job-update_gold_users
+JOBUNIT
 
 # Reload systemd to pick up new units
 systemctl daemon-reload
