@@ -35,12 +35,28 @@ class RateLimitStandaloneFunctionsTest(unittest.TestCase):
         self.patch('r2.lib.ratelimit.time.time', lambda: self.now)
 
         self.cache = LocalCache()
-        self.patch('r2.lib.ratelimit.g.ratelimitcache', self.cache)
+        self._patch_g_attr('ratelimitcache', self.cache)
 
     def patch(self, *a, **kw):
         p = patch(*a,  **kw)
         p.start()
         self.addCleanup(p.stop)
+
+    def _patch_g_attr(self, attr, value):
+        """Patch an attribute on g, handling LocalStack properly."""
+        had_attr = hasattr(g, attr)
+        if had_attr:
+            orig = getattr(g, attr)
+        setattr(g, attr, value)
+        def cleanup():
+            if had_attr:
+                setattr(g, attr, orig)
+            else:
+                try:
+                    delattr(g, attr)
+                except AttributeError:
+                    pass
+        self.addCleanup(cleanup)
 
     def test_get_timeslice(self):
         self.now = 125
@@ -131,12 +147,28 @@ class RateLimitTest(unittest.TestCase):
         self.patch('r2.lib.ratelimit.time.time', lambda: self.now)
 
         self.cache = LocalCache()
-        self.patch('r2.lib.ratelimit.g.ratelimitcache', self.cache)
+        self._patch_g_attr('ratelimitcache', self.cache)
 
     def patch(self, *a, **kw):
         p = patch(*a,  **kw)
         p.start()
         self.addCleanup(p.stop)
+
+    def _patch_g_attr(self, attr, value):
+        """Patch an attribute on g, handling LocalStack properly."""
+        had_attr = hasattr(g, attr)
+        if had_attr:
+            orig = getattr(g, attr)
+        setattr(g, attr, value)
+        def cleanup():
+            if had_attr:
+                setattr(g, attr, orig)
+            else:
+                try:
+                    delattr(g, attr)
+                except AttributeError:
+                    pass
+        self.addCleanup(cleanup)
 
     def test_record_usage(self):
         rl = self.TestRateLimit()

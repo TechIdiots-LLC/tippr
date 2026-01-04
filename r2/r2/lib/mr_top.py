@@ -21,7 +21,7 @@
 ###############################################################################
 
 # Known bug: if a given listing hasn't had a submission in the
-# allotted time (e.g. the year listing in a subreddit that hasn't had
+# allotted time (e.g. the year listing in a vault that hasn't had
 # a submission in the last year), we won't write out an empty
 # list. I'll call it a feature.
 

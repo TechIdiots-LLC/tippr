@@ -34,16 +34,16 @@
 
 %if thing.allminus_url:
   <div class="giftgold allminus-link">
-    <a href="${thing.allminus_url}">${_("Exclude your subscribed subreddits")}</a>
+    <a href="${thing.allminus_url}">${_("Exclude your subscribed vaults")}</a>
   </div>
 %endif
 
 <div class="giftgold allminus-link">
-    <a href="/me/f/all">${_("Exclude custom subreddits")}</a>
+    <a href="/me/f/all">${_("Exclude custom vaults")}</a>
 </div>
 
 %if not thing.gilding_listing:
 <div class="gilded-link">
-  <a href="/r/all/gilded">${_("See gilded comments and submissions")}</a>
+  <a href="/v/all/gilded">${_("See gilded comments and submissions")}</a>
 </div>
 %endif

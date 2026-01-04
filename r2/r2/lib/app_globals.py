@@ -273,7 +273,7 @@ class Globals:
             'lockcaches',
             'permacache_memcaches',
             'cassandra_seeds',
-            'automatic_reddits',
+            'automatic_vaults',
             'hardcache_categories',
             'case_sensitive_domains',
             'known_image_domains',
@@ -684,7 +684,7 @@ class Globals:
         # make python warnings go through the logging system
         logging.captureWarnings(capture=True)
 
-        log = logging.getLogger('reddit')
+        log = logging.getLogger('tippr')
 
         # when we're a script (paster run) just set up super simple logging
         if self.running_as_script:
@@ -703,7 +703,7 @@ class Globals:
             # clean up the pool name since we're putting stuff after "-"
             pool = pool.partition("-")[0]
         except OSError:
-            pool = "reddit-app"
+            pool = "tippr-app"
         self.log = logging.LoggerAdapter(log, {"pool": pool})
 
         # set locations
@@ -726,8 +726,8 @@ class Globals:
                 self.log.debug("Overriding g.{} to {}".format(k, v))
                 setattr(self, k, v)
 
-        self.reddit_host = socket.gethostname()
-        self.reddit_pid  = os.getpid()
+        self.tippr_host = socket.gethostname()
+        self.tippr_pid  = os.getpid()
 
         if hasattr(signal, 'SIGUSR1'):
             # not all platforms have user signals
@@ -858,7 +858,7 @@ class Globals:
         self.startup_timer.intermediate("thrift")
 
         ################# CASSANDRA
-        keyspace = "reddit"
+        keyspace = "tippr"
         self.cassandra_pools = {
             "main":
                 StatsCollectingConnectionPool(
@@ -1040,8 +1040,8 @@ class Globals:
         if self.log_start:
             self.log.error(
                 "%s:%s started %s at %s (took %.02fs)",
-                self.reddit_host,
-                self.reddit_pid,
+                self.tippr_host,
+                self.tippr_pid,
                 self.short_version,
                 datetime.now().strftime("%H:%M:%S"),
                 self.startup_timer.elapsed_seconds()

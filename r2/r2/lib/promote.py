@@ -67,7 +67,7 @@ from r2.models import (
     PromoCampaign,
     PromotionLog,
     PromotionWeights,
-    Subreddit,
+    Vault,
     traffic,
 )
 from r2.models.keyvalue import NamedGlobals
@@ -129,7 +129,7 @@ def view_live_url(link, campaign, srname):
     is_mobile_web = campaign.platform == "mobile_web"
     host = _base_host(is_mobile_web=is_mobile_web)
     if srname:
-        host += '/r/%s' % srname
+        host += '/v/%s' % srname
     return '{}/?ad={}'.format(host, link._fullname)
 
 def payment_url(action, link_id36, campaign_id36):
@@ -293,7 +293,7 @@ def new_promotion(is_self, title, content, author, ip):
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    sr = Subreddit._byID(Subreddit.get_promote_srid())
+    sr = Vault._byID(Vault.get_promote_srid())
     l = Link._submit(
         is_self=is_self,
         title=title,
@@ -898,7 +898,7 @@ def make_daily_promotions():
         update_promote_status(link, PROMOTE_STATUS.finished)
         emailer.finished_promo(link)
 
-    # update subreddits with promos
+    # update vaults with promos
     all_live_promo_srnames(_update=True)
 
     _mark_promos_updated()
@@ -1043,13 +1043,13 @@ def srnames_from_site(user, site, include_subscriptions=True):
         srnames.add(Frontpage.name)
 
         if is_logged_in and include_subscriptions:
-            subscriptions = Subreddit.user_subreddits(
+            subscriptions = Vault.user_subreddits(
                 user,
                 ids=False,
             )
 
-            # only use subreddits that aren't quarantined and have the same
-            # age gate as the subreddit being viewed.
+            # only use vaults that aren't quarantined and have the same
+            # age gate as the vault being viewed.
             subscriptions = list(filter(
                 lambda sr: not sr.quarantine and sr.over_18 == over_18,
                 subscriptions,
@@ -1106,7 +1106,7 @@ def keywords_from_context(
 
 
 # special handling for memcache ascii protocol
-SPECIAL_NAMES = {" reddit.com": "_reddit.com"}
+SPECIAL_NAMES = {" tippr.net": "_reddit.com"}
 REVERSED_NAMES = {v: k for k, v in SPECIAL_NAMES.items()}
 
 

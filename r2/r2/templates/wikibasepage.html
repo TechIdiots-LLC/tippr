@@ -24,7 +24,7 @@
 %>
 
 <%namespace file="less.html" import="less_stylesheet"/>
-<%inherit file="reddit.html"/>
+<%inherit file="tippr.html"/>
 
 <%def name="global_stylesheets()">
     ${parent.global_stylesheets()}
@@ -43,7 +43,7 @@
         %else:
             href="${thing.base_url}/${action[0]}"
         %endif
-        data-type="subreddit"
+        data-type="vault"
         %if action[3]:
             data-event-action="pageview"
             data-event-detail="${action[3]}"
@@ -84,5 +84,5 @@
         ${thing.content()}
     </div>
 
-    <!--reddit wikis are powered by Cray-1™ supercomputers-->
+    <!--tippr wikis are powered by Cray-1™ supercomputers-->
 </%def>

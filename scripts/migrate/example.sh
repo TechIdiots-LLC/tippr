@@ -24,4 +24,4 @@ for $cf in $(ls output/); do
 done
 
 # bulk-load the sstables into cassandra
-sstableloader reddit/
+sstableloader tippr/

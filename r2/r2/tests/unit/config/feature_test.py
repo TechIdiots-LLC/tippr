@@ -284,26 +284,26 @@ class TestFeature(TestFeatureBase):
         self.assertFalse(featurestate.is_enabled(user=gary))
 
     def test_subreddit_in(self):
-        cfg = {'subreddits': ['WTF']}
+        cfg = {'vaults': ['WTF']}
         feature_state = self.world._make_state(cfg)
-        self.assertTrue(feature_state.is_enabled(subreddit='wtf'))
+        self.assertTrue(feature_state.is_enabled(vault='wtf'))
 
-        cfg = {'subreddits': ['wtf']}
+        cfg = {'vaults': ['wtf']}
         feature_state = self.world._make_state(cfg)
-        self.assertTrue(feature_state.is_enabled(subreddit='WTF'))
+        self.assertTrue(feature_state.is_enabled(vault='WTF'))
 
-        cfg = {'subreddits': ['aww', 'wtf']}
+        cfg = {'vaults': ['aww', 'wtf']}
         feature_state = self.world._make_state(cfg)
-        self.assertTrue(feature_state.is_enabled(subreddit='wtf'))
+        self.assertTrue(feature_state.is_enabled(vault='wtf'))
 
     def test_subreddit_not_in(self):
-        cfg = {'subreddits': []}
+        cfg = {'vaults': []}
         feature_state = self.world._make_state(cfg)
-        self.assertFalse(feature_state.is_enabled(subreddit='wtf'))
+        self.assertFalse(feature_state.is_enabled(vault='wtf'))
 
-        cfg = {'subreddits': ['aww', 'wtfoobar']}
+        cfg = {'vaults': ['aww', 'wtfoobar']}
         feature_state = self.world._make_state(cfg)
-        self.assertFalse(feature_state.is_enabled(subreddit='wtf'))
+        self.assertFalse(feature_state.is_enabled(vault='wtf'))
 
     def test_subdomain_in(self):
         cfg = {'subdomains': ['BETA']}

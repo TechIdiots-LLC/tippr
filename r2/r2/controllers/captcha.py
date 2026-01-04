@@ -28,10 +28,10 @@ import r2.lib.captcha as captcha
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import allow_oauth2_access
 
-from .reddit_base import RedditController
+from .reddit_base import TipprController
 
 
-class CaptchaController(RedditController):
+class CaptchaController(TipprController):
     @allow_oauth2_access
     @api_doc(api_section.captcha, uri='/captcha/{iden}')
     def GET_captchaimg(self, iden):

@@ -30,7 +30,7 @@ from r2.lib.menus import (
     OffsiteButton,
     menu,
 )
-from r2.lib.pages.pages import LinkInfoBar, Reddit
+from r2.lib.pages.pages import LinkInfoBar, Tippr
 from r2.lib.utils import timesince
 from r2.lib.wrapped import Templated
 
@@ -64,14 +64,14 @@ class Details(Templated):
         self.link = link
 
 
-class AdminPage(Reddit):
+class AdminPage(Tippr):
     create_reddit_box  = False
     submit_box         = False
     extension_handling = False
     show_sidebar = False
 
     def __init__(self, nav_menus = None, *a, **kw):
-        Reddit.__init__(self, nav_menus = nav_menus, *a, **kw)
+        Tippr.__init__(self, nav_menus = nav_menus, *a, **kw)
 
 class AdminProfileMenu(NavMenu):
     def __init__(self, path):
@@ -88,14 +88,14 @@ class AdminNotesSidebar(Templated):
     EMPTY_MESSAGE = {
         "domain": N_("No notes for this domain"),
         "ip": N_("No notes for this IP address"),
-        "subreddit": N_("No notes for this subreddit"),
+        "vault": N_("No notes for this vault"),
         "user": N_("No notes for this user"),
     }
 
     SYSTEMS = {
         "domain": N_("domain"),
         "ip": N_("IP address"),
-        "subreddit": N_("subreddit"),
+        "vault": N_("vault"),
         "user": N_("user"),
     }
 

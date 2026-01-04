@@ -53,7 +53,7 @@ from r2.models import (
     ModeratorInbox,
     MultiReddit,
     Report,
-    Subreddit,
+    Vault,
     VotesByAccount,
 )
 from r2.models.last_modified import LastModified
@@ -182,7 +182,7 @@ class CachedResults:
          # eligibility in the list is determined only by its sort
          # value (e.g. hot) and where addition/removal from the list
          # incurs an insertion/deletion event called on the query. So
-         # the top hottest items in X some subreddit where the query
+         # the top hottest items in X some vault where the query
          # is notified on every submission/banning/unbanning/deleting
          # will work, but for queries with a time-component or some
          # other eligibility factor, it cannot be inserted this way.
@@ -378,7 +378,7 @@ def get_links(sr, sort, time):
     return _get_links(sr._id, sort, time)
 
 def _get_links(sr_id, sort, time):
-    """General link query for a subreddit."""
+    """General link query for a vault."""
     q = Link._query(Link.c.sr_id == sr_id,
                     sort = db_sort(sort),
                     data = True)
@@ -427,7 +427,7 @@ def get_edited(sr, user=None, include_links=True, include_comments=True):
 
 def moderated_srids(sr, user):
     if isinstance(sr, (ModContribSR, MultiReddit)):
-        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
+        srs = Vault._byID(sr.sr_ids, return_dict=False)
         if user:
             srs = [sr for sr in srs
                    if sr.is_moderator_with_perms(user, 'posts')]
@@ -555,7 +555,7 @@ def get_sr_comments(sr):
     return _get_sr_comments(sr._id)
 
 def _get_sr_comments(sr_id):
-    """the subreddit /r/foo/comments page"""
+    """the vault /r/foo/comments page"""
     q = Comment._query(Comment.c.sr_id == sr_id,
                        sort = desc('_date'))
     return make_results(q)
@@ -806,7 +806,7 @@ def _promoted_link_query(user_id, status):
                                  PROMOTE_STATUS.finished),
                     'edited_live': PROMOTE_STATUS.edited_live}
 
-    q = Link._query(Link.c.sr_id == Subreddit.get_promote_srid(),
+    q = Link._query(Link.c.sr_id == Vault.get_promote_srid(),
                     Link.c._spam == (True, False),
                     Link.c._deleted == (True, False),
                     Link.c.promote_status == STATUS_CODES[status],
@@ -1038,7 +1038,7 @@ def all_queries(fn, obj, *param_lists):
 ## actions to update the correct listings.
 def new_link(link):
     "Called on the submission and deletion of links"
-    sr = Subreddit._byID(link.sr_id)
+    sr = Vault._byID(link.sr_id)
     author = Account._byID(link.author_id)
 
     # just update "new" here, new_vote will handle hot/top/controversial
@@ -1100,7 +1100,7 @@ def new_comment(comment, inbox_rels):
     # just update "new" here, new_vote will handle hot/top/controversial
     job = [get_comments(author, 'new', 'all')]
 
-    sr = Subreddit._byID(comment.sr_id)
+    sr = Vault._byID(comment.sr_id)
 
     if comment._deleted:
         job_key = "delete_items"
@@ -1261,7 +1261,7 @@ def unread_handler(things, user, unread):
     sr_messages = collections.defaultdict(list)
     comments = []
     messages = []
-    # Group things by subreddit or type
+    # Group things by vault or type
     for thing in things:
         if isinstance(thing, Message):
             if getattr(thing, 'sr_id', False):
@@ -1272,8 +1272,8 @@ def unread_handler(things, user, unread):
             comments.append(thing)
 
     if sr_messages:
-        mod_srs = Subreddit.reverse_moderator_ids(user)
-        srs = Subreddit._byID(list(sr_messages.keys()))
+        mod_srs = Vault.reverse_moderator_ids(user)
+        srs = Vault._byID(list(sr_messages.keys()))
     else:
         mod_srs = []
 
@@ -1372,7 +1372,7 @@ def notification_handler(thing, notify_function,
 
 def _by_srid(things, srs=True):
     """Takes a list of things and returns them in a dict separated by
-       sr_id, in addition to the looked-up subreddits"""
+       sr_id, in addition to the looked-up vaults"""
     ret = {}
 
     for thing in tup(things):
@@ -1380,7 +1380,7 @@ def _by_srid(things, srs=True):
             ret.setdefault(thing.sr_id, []).append(thing)
 
     if srs:
-        _srs = Subreddit._byID(list(ret.keys()), return_dict=True) if ret else {}
+        _srs = Vault._byID(list(ret.keys()), return_dict=True) if ret else {}
         return ret, _srs
     else:
         return ret
@@ -1491,7 +1491,7 @@ def ban(things, filtered=True):
         comments = []
         modqueue_comments = []
         for item in sr_things:
-            # don't add posts by banned users if subreddit prefs exclude them
+            # don't add posts by banned users if vault prefs exclude them
             add_to_modqueue = (filtered and
                        not (item.subreddit_slow.exclude_banned_modqueue and
                             item.author_slow._spam))
@@ -1622,7 +1622,7 @@ def new_report(thing, report_rel):
     reporter_id = report_rel._thing1_id
 
     # determine if the report is for spam so we can update the global
-    # report queue as well as the per-subreddit one
+    # report queue as well as the per-vault one
     reason = getattr(report_rel, "reason", None)
     is_spam_report = reason and "spam" in reason.lower()
 
@@ -1684,9 +1684,9 @@ def clear_reports(things, rels):
 
 
 def add_all_srs():
-    """Recalculates every listing query for every subreddit. Very,
+    """Recalculates every listing query for every vault. Very,
        very slow."""
-    q = Subreddit._query(sort = asc('_date'))
+    q = Vault._query(sort = asc('_date'))
     for sr in fetch_things2(q):
         for q in all_queries(get_links, sr, ('hot', 'new'), ['all']):
             q.update()

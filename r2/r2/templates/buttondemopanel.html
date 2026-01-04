@@ -26,16 +26,16 @@
    from r2.lib.template_helpers import get_domain
  %>
 
-<% domain = get_domain(subreddit=False) %>
+<% domain = get_domain(vault=False) %>
 
 <div class="instructions">
   <h1>${_("put %(site)s buttons on your site") % dict(site=c.site.name)}</h1>
-    <p>${_('the reddit button is the smart way to get your content submitted to\
-      and discussed on reddit.  pick the button you like from below, and then\
+    <p>${_('the tippr button is the smart way to get your content submitted to\
+      and discussed on tippr.  pick the button you like from below, and then\
       copy/paste the code into your HTML editor.')}</p>
 
     <h2>${_("commonly used buttons")}</h2>
-    <p>${_('use one of these buttons to quickly add reddit links to your site, or \
+    <p>${_('use one of these buttons to quickly add tippr links to your site, or \
       see below for more options.')}</p>
     <ul class="buttons">
       ${demo(capture(drawbadge, 1))}
@@ -152,7 +152,7 @@ $(function() {
   <a href="//${domain}/submit"
     onclick="window.location = '//${domain}/submit?url=' + encodeURIComponent(window.location); return false">
    <img src="//${g.static_domain}/spreddit${image}.gif"
-        alt="submit to reddit" border="0" />
+        alt="submit to tippr" border="0" />
    </a>
 </%def>
 

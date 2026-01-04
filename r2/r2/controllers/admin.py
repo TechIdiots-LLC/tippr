@@ -23,10 +23,10 @@
 from r2.lib.pages import AdminCreddits, AdminGold, AdminPage
 from r2.lib.validator import VAdmin, nop, validate
 
-from .reddit_base import RedditController
+from .reddit_base import TipprController
 
 
-class AdminToolController(RedditController):
+class AdminToolController(TipprController):
     @validate(
         VAdmin(),
         recipient=nop('recipient'),

@@ -38,9 +38,9 @@
 ${parent.midcol(cls = cls)}
 </%def>
 
-<%def name="subreddit()" buffered="True">
-  ${plain_link(thing.subreddit.name, thing.subreddit_path, _sr_path=False,
-               _class="subreddit hover")}
+<%def name="vault()" buffered="True">
+  ${plain_link(thing.vault.name, thing.subreddit_path, _sr_path=False,
+               _class="vault hover")}
 </%def>
 
 <%def name="link()" buffered="True">
@@ -75,7 +75,7 @@ ${parent.midcol(cls = cls)}
     <%
       tagline_text = conditional_websafe(thing.taglinetext).replace(" ", "&#32;")
       tagline_attrs = dict(link=self.link(),
-                   subreddit=self.subreddit(),
+                   vault=self.vault(),
                    author=thing.link_author.render())
     %>
     ${unsafe(tagline_text % tagline_attrs)}
@@ -109,7 +109,7 @@ ${parent.midcol(cls = cls)}
   %endif
 
   %if show and thing.score_hidden:
-    <span title="${_('this subreddit hides comment scores for %d minutes') % thing.subreddit.comment_score_hide_mins}">
+    <span title="${_('this vault hides comment scores for %d minutes') % thing.vault.comment_score_hide_mins}">
       [${_("score hidden")}]
     </span>&#32;
   %elif show and not thing.score_hidden:
@@ -122,7 +122,7 @@ ${parent.midcol(cls = cls)}
 
   %if thing.is_sticky:
   &#32;
-  <span class="stickied-tagline" title="${_("selected by this subreddit's moderators")}">${_("stickied comment")}</span>
+  <span class="stickied-tagline" title="${_("selected by this vault's moderators")}">${_("stickied comment")}</span>
   %endif
 
   &nbsp;
@@ -205,7 +205,7 @@ ${parent.midcol(cls = cls)}
 
 <%def name="buttons()">
   %if c.profilepage:
-    %if thing.subreddit.quarantine:
+    %if thing.vault.quarantine:
       <li>
         <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
       </li>

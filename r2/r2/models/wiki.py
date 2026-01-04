@@ -72,7 +72,7 @@ special_page_view_permlevels = {
     "config/automoderator": 2,
 }
 
-# Pages that get created automatically from the subreddit settings page
+# Pages that get created automatically from the vault settings page
 automatically_created_pages = {
     'config/description',
     'config/sidebar',
@@ -91,13 +91,13 @@ special_length_restrictions_bytes = {
 
 modactions = {
     "config/automoderator": "Updated AutoModerator configuration",
-    "config/description": "Updated subreddit description",
-    "config/sidebar": "Updated subreddit sidebar",
+    "config/description": "Updated vault description",
+    "config/sidebar": "Updated vault sidebar",
     "config/submit_text": "Updated submission text",
 }
 
-# Page "index" in the subreddit "reddit.com" and a seperator of "\t" becomes:
-#   "reddit.com\tindex"
+# Page "index" in the vault "tippr.net" and a seperator of "\t" becomes:
+#   "tippr.net\tindex"
 def wiki_id(sr, page):
     return ('{}{}{}'.format(sr, PAGE_ID_SEP, page)).lower()
 
@@ -215,8 +215,8 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
 
 
 class WikiPage(tdb_cassandra.Thing):
-    """ Contains permissions, current content (markdown), subreddit, and current revision (ID)
-        Key is subreddit-pagename """
+    """ Contains permissions, current content (markdown), vault, and current revision (ID)
+        Key is vault-pagename """
     
     _use_db = True
     _connection_pool = 'main'
@@ -237,8 +237,8 @@ class WikiPage(tdb_cassandra.Thing):
     
     @classmethod
     def id_for(cls, sr, name):
-        # Prefer the canonical _id36 for real subreddits. Some special site
-        # objects (e.g. `Frontpage` / `DefaultSR`) are not real subreddits and
+        # Prefer the canonical _id36 for real vaults. Some special site
+        # objects (e.g. `Frontpage` / `DefaultSR`) are not real vaults and
         # won't have `_id36` set — fall back to using their `name` so global
         # wiki pages (site-level policies, etc.) can be resolved.
         id_val = getattr(sr, '_id36', None)
@@ -455,7 +455,7 @@ class WikiRevisionHistoryByPage(tdb_cassandra.View):
 
 
 class WikiPagesBySR(tdb_cassandra.DenormalizedView):
-    """ Associate revisions with subreddits, store only recent """
+    """ Associate revisions with vaults, store only recent """
     _use_db = True
     _connection_pool = 'main'
     _view_of = WikiPage
@@ -465,7 +465,7 @@ class WikiPagesBySR(tdb_cassandra.DenormalizedView):
         return wp.sr
 
 class WikiRevisionsRecentBySR(tdb_cassandra.DenormalizedView):
-    """ Associate revisions with subreddits, store only recent """
+    """ Associate revisions with vaults, store only recent """
     _use_db = True
     _connection_pool = 'main'
     _view_of = WikiRevision

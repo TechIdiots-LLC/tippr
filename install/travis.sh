@@ -22,14 +22,15 @@
 ###############################################################################
 
 ###############################################################################
-# reddit travis environment installer (LEGACY - Ubuntu 14.04 only)
+# tippr travis environment installer (LEGACY - Ubuntu 14.04 only)
 # -----------------------------------------------------------------
 # NOTE: This script is for legacy Ubuntu 14.04 environments only.
-# For Ubuntu 24.04, use install-reddit.sh which creates a Python venv.
+# For Ubuntu 24.04, use install-tippr.sh which creates a Python venv.
 #
-# This script installs a reddit stack suitable for running on travis-ci.
+# This script installs a tippr stack suitable for running on travis-ci.
 # As such, this is a minimal build to allow for running "nosetests"
 # and not much more.
+#
 ###############################################################################
 
 # load configuration
@@ -40,10 +41,10 @@ source $RUNDIR/install.cfg
 ENVIRONMENT=${1:-travis}
 
 # the root directory to base the install in. must exist already
-REDDIT_CODE=${2:-$REDDIT_SRC/reddit}
+TIPPR_CODE=${2:-$TIPPR_SRC/tippr}
 
-if [ ! -e $REDDIT_CODE ]; then
-    echo "Couldn't find source $REDDIT_CODE. Aborting"
+if [ ! -e $TIPPR_CODE ]; then
+    echo "Couldn't find source $TIPPR_CODE. Aborting"
     exit 1
 fi
 
@@ -60,14 +61,14 @@ if [[ "amd64" != $(dpkg --print-architecture) ]]; then
 ERROR: This host is running the $(dpkg --print-architecture) architecture!
 
 Because of the pre-built dependencies in our PPA, and some extra picky things
-like ID generation in liveupdate, installing reddit is only supported on amd64
+like ID generation in liveupdate, installing tippr is only supported on amd64
 architectures.
 END
     exit 1
 fi
 
 # seriously! these checks are here for a reason. the packages from the
-# reddit ppa aren't built for anything but trusty (14.04) right now, so
+# tippr ppa aren't built for anything but trusty (14.04) right now, so
 # if you try and use this install script on another release you're gonna
 # have a bad time.
 source /etc/lsb-release
@@ -85,12 +86,12 @@ $RUNDIR/install_cassandra.sh
 $RUNDIR/install_zookeeper.sh
 
 ###############################################################################
-# Install and configure the reddit code
+# Install and configure the tippr code
 ###############################################################################
 
 [ -x "$(which pip)" ] || easy_install pip
 pip install -U pip wheel setuptools coverage
-pushd $REDDIT_CODE/r2
+pushd $TIPPR_CODE/r2
 sudo python setup.py build
 python setup.py develop
 make
@@ -120,10 +121,10 @@ fi
 ###############################################################################
 cat <<CONCLUSION
 
-Congratulations! A base version of reddit is now installed.  To run the
+Congratulations! A base version of tippr is now installed.  To run the
 unit tests:
 
-    cd src/reddit/r2
+    cd src/tippr/r2
     nosetests
 
 CONCLUSION

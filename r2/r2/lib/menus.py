@@ -75,22 +75,22 @@ menu =   MenuHandler(hot          = _('hot'),
                      spam         = _("spam"),
                      autobanned   = _("autobanned"),
 
-                     # reddit header strings
+                     # tippr header strings
                      prefs        = _("preferences"),
                      submit       = _("submit"),
                      wiki         = _("wiki"),
                      blog         = _("blog"),
                      logout       = _("logout"),
 
-                     #reddit footer strings
+                     #tippr footer strings
                      reddiquette  = _("reddiquette"),
                      contact      = _("contact us"),
                      buttons      = _("buttons"),
                      widget       = _("widget"),
                      mobile       = _("mobile"),
                      advertising  = _("advertise"),
-                     gold         = _('reddit gold'),
-                     reddits      = _('subreddits'),
+                     gold         = _('tippr gold'),
+                     reddits      = _('vaults'),
                      rules        = _('site rules'),
                      jobs         = _('jobs'),
                      transparency = _("transparency"),
@@ -123,7 +123,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      home         = _("home"),
                      about        = _("about"),
                      edit_subscriptions = _("edit subscriptions"),
-                     community_settings = _("subreddit settings"),
+                     community_settings = _("vault settings"),
                      edit_stylesheet    = _("edit stylesheet"),
                      community_rules    = _("rules"),
                      moderators   = _("moderators"),
@@ -149,7 +149,7 @@ menu =   MenuHandler(hot          = _('hot'),
 
                      popular      = _("popular"),
                      create       = _("create"),
-                     mine         = _("my subreddits"),
+                     mine         = _("my vaults"),
                      quarantine   = _("quarantine"),
                      featured     = _("featured"),
 
@@ -420,14 +420,14 @@ class OffsiteButton(NavButton):
 
 
 class SubredditButton(NavButton):
-    from r2.models.subreddit import All, Frontpage, Mod, Random, RandomSubscription
+    from r2.models.vault import All, Frontpage, Mod, Random, RandomSubscription
     # TRANSLATORS: This refers to /r/mod
     name_overrides = {Mod: N_("mod"),
     # TRANSLATORS: This refers to the user's front page
                       Frontpage: N_("front"),
                       All: N_("all"),
                       Random: N_("random"),
-    # TRANSLATORS: Gold feature, "myrandom", a random subreddit from your subscriptions
+    # TRANSLATORS: Gold feature, "myrandom", a random vault from your subscriptions
                       RandomSubscription: N_("myrandom")}
 
     def __init__(self, sr, css_class='', data=None):
@@ -511,7 +511,7 @@ class JsButton(NavButton):
 class PageNameNav(Styled):
     """generates the links and/or labels which live in the header
     between the header image and the first nav menu (e.g., the
-    subreddit name, the page name, etc.)"""
+    vault name, the page name, etc.)"""
     pass
 
 
@@ -582,7 +582,7 @@ class CommentSortMenu(SortMenu):
     hidden_options = ['random']
 
     # Links may have a suggested sort of 'blank', which is an explicit None -
-    # that is, do not check the subreddit for a suggested sort, either.
+    # that is, do not check the vault for a suggested sort, either.
     suggested_sort_options = _options + ('blank',)
 
     def __init__(self, *args, **kwargs):
@@ -619,7 +619,7 @@ class SearchSortMenu(SortMenu):
 
 
 class SubredditSearchSortMenu(SortMenu):
-    """Sort menu for subreddit search pages."""
+    """Sort menu for vault search pages."""
     _default = 'relevance'
     _options = ('relevance', 'activity')
 

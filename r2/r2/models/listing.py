@@ -34,7 +34,7 @@ from r2.models import rules
 from .account import *
 from .link import *
 from .report import *
-from .subreddit import AllSR, DefaultSR, Frontpage
+from .vault import AllSR, DefaultSR, Frontpage
 from .vote import *
 
 
@@ -197,7 +197,7 @@ class BannedListing(UserListing):
     @property
     def title(self):
         return _("users banned from"
-                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+                 " /r/%(vault)s") % dict(vault=c.site.name)
 
     def get_items(self, *a, **kw):
         items = UserListing.get_items(self, *a, **kw)
@@ -228,7 +228,7 @@ class MutedListing(UserListing):
     @property
     def title(self):
         return _("users muted from"
-                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+                 " /r/%(vault)s") % dict(vault=c.site.name)
 
     def get_items(self, *a, **kw):
         items = UserListing.get_items(self, *a, **kw)
@@ -250,7 +250,7 @@ class WikiBannedListing(BannedListing):
     @property
     def title(self):
         return _("wiki contibutors banned from"
-                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+                 " /r/%(vault)s") % dict(vault=c.site.name)
 
 class ContributorListing(UserListing):
     type = 'contributor'
@@ -258,7 +258,7 @@ class ContributorListing(UserListing):
     @property
     def title(self):
         return _("approved submitters for"
-                 " /r/%(subreddit)s") % dict(subreddit=c.site.name)
+                 " /r/%(vault)s") % dict(vault=c.site.name)
 
     @property
     def form_title(self):
@@ -270,7 +270,7 @@ class WikiMayContributeListing(ContributorListing):
     @property
     def title(self):
         return _("approved wiki contributors"
-                 " for /r/%(subreddit)s") % dict(subreddit=c.site.name)
+                 " for /r/%(vault)s") % dict(vault=c.site.name)
 
     @property
     def form_title(self):
@@ -279,7 +279,7 @@ class WikiMayContributeListing(ContributorListing):
 class InvitedModListing(UserListing):
     type = 'moderator_invite'
     form_title = _('invite moderator')
-    remove_self_title = _('you are a moderator of this subreddit. %(action)s')
+    remove_self_title = _('you are a moderator of this vault. %(action)s')
 
     @property
     def permissions_form(self):
@@ -296,7 +296,7 @@ class InvitedModListing(UserListing):
     @property
     def title(self):
         return _("invited moderators for"
-                 " %(subreddit)s") % dict(subreddit=c.site.name)
+                 " %(vault)s") % dict(vault=c.site.name)
 
 class ModListing(InvitedModListing):
     type = 'moderator'
@@ -316,7 +316,7 @@ class ModListing(InvitedModListing):
 
     @property
     def title(self):
-        return _("moderators of /r/%(subreddit)s") % dict(subreddit=c.site.name)
+        return _("moderators of /r/%(vault)s") % dict(vault=c.site.name)
 
 class LinkListing(Listing):
     def __init__(self, *a, **kw):

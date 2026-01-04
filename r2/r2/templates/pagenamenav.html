@@ -22,7 +22,7 @@
 
 <%namespace file="utils.html" import="plain_link, _md"/>
 
-<%def name="subreddit()">
+<%def name="vault()">
   <span class="hover pagename redditname">
     ${plain_link(c.site.name, c.site.user_path, _sr_path=False)}
     % if hasattr(thing, "title"):
@@ -54,9 +54,9 @@
   </div>
 </%def>
 
-<%def name="subreddits()">
+<%def name="vaults()">
   <span class="hover pagename redditname">
-    ${plain_link(_("subreddits"), "/subreddits/", _sr_path=False)}
+    ${plain_link(_("vaults"), "/vaults/", _sr_path=False)}
   </span>
 </%def>
 
@@ -71,5 +71,5 @@
 </%def>
 
 <%def name="newpagelink()">
-<span class="newpagelink">reddit all?&#32;${plain_link("click here to find new links.", "/new/", _sr_path=False)}</span>
+<span class="newpagelink">tippr all?&#32;${plain_link("click here to find new links.", "/new/", _sr_path=False)}</span>
 </%def>

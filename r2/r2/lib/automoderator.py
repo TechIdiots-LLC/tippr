@@ -20,15 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-"""Implements the AutoModerator functionality, a rules system for subreddits.
+"""Implements the AutoModerator functionality, a rules system for vaults.
 
-AutoModerator allows subreddits to define "rules", which are conditions
-checked against submissions and comments in that subreddit. If a rule's
+AutoModerator allows vaults to define "rules", which are conditions
+checked against submissions and comments in that vault. If a rule's
 conditions are satisfied by a post, actions can be automatically taken on it,
 such as removing the post, setting flair on it, posting a comment, etc.
 
-A subreddit's rules are defined through YAML on a mod-only page on the
-subreddit's wiki. This collection of multiple rules is implemented with the
+A vault's rules are defined through YAML on a mod-only page on the
+vault's wiki. This collection of multiple rules is implemented with the
 Ruleset class. Each individual rule is a Rule object, which is made up of at
 least one RuleTarget object, which defines the conditions and/or actions to
 apply to an item. Rules may have additional RuleTargets which represent
@@ -48,7 +48,7 @@ from pylons import app_globals as g
 
 from r2.lib import amqp
 from r2.lib.db import queries
-from r2.lib.errors import RedditError
+from r2.lib.errors import TipprError
 from r2.lib.filters import _force_unicode
 from r2.lib.menus import CommentSortMenu
 from r2.lib.utils import (
@@ -72,7 +72,7 @@ from r2.models import (
     Message,
     ModAction,
     Report,
-    Subreddit,
+    Vault,
     Thing,
     WikiPage,
 )
@@ -85,7 +85,7 @@ if g.automoderator_account:
 else:
     ACCOUNT = None
 
-DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this subreddit](/message/compose/?to=/r/{{subreddit}}) if you have any questions or concerns.*"
+DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this vault](/message/compose/?to=/r/{{vault}}) if you have any questions or concerns.*"
 
 rules_by_subreddit = {}
 
@@ -97,11 +97,11 @@ def replace_placeholders(string, data, matches):
     replacements = {
         "{{author}}": data["author"].name,
         "{{body}}": getattr(item, "body", ""),
-        "{{subreddit}}": data["subreddit"].name,
+        "{{vault}}": data["vault"].name,
         "{{author_flair_text}}": data["author"].flair_text(
-            data["subreddit"]._id, obey_disabled=True),
+            data["vault"]._id, obey_disabled=True),
         "{{author_flair_css_class}}": data["author"].flair_css_class(
-            data["subreddit"]._id, obey_disabled=True),
+            data["vault"]._id, obey_disabled=True),
     }
 
     if isinstance(item, Comment):
@@ -190,7 +190,7 @@ RuleDefinition = namedtuple("RuleDefinition", ["yaml", "values"])
 
 
 class Ruleset(object):
-    """A subreddit's collection of Rules."""
+    """A vault's collection of Rules."""
     def __init__(self, yaml_text="", timer=None):
         """Create a collection of Rules from YAML documents."""
         if timer is None:
@@ -316,7 +316,7 @@ class Ruleset(object):
         # fetch supplemental data to use throughout
         data = {}
         data["item"] = item
-        data["subreddit"] = item.subreddit_slow
+        data["vault"] = item.subreddit_slow
 
         author = item.author_slow
         if not author._deleted:
@@ -515,7 +515,7 @@ class RuleTarget(object):
         "set_sticky": RuleComponent(
             valid_types=(bool, int),
             valid_values=set(
-                [True, False] + list(range(1, Subreddit.MAX_STICKIES+1))),
+                [True, False] + list(range(1, Vault.MAX_STICKIES+1))),
             valid_targets=Link,
             component_type="action",
         ),
@@ -850,12 +850,12 @@ class RuleTarget(object):
                 return False
 
         if self.is_moderator is not None:
-            is_mod = bool(data["subreddit"].is_moderator(item))
+            is_mod = bool(data["vault"].is_moderator(item))
             if is_mod != self.is_moderator:
                 return False
 
         if self.is_contributor is not None:
-            is_contrib = bool(data["subreddit"].is_contributor(item))
+            is_contrib = bool(data["vault"].is_contributor(item))
             if is_contrib != self.is_contributor:
                 return False
 
@@ -992,7 +992,7 @@ class RuleTarget(object):
                             self.action_reason, data, self.parent.matches)
                     else:
                         reason = "unspam" if was_removed else "approved"
-                    ModAction.create(data["subreddit"], ACCOUNT, log_action,
+                    ModAction.create(data["vault"], ACCOUNT, log_action,
                         target=item, details=reason)
 
                 g.stats.simple_event("automoderator.approve")
@@ -1022,7 +1022,7 @@ class RuleTarget(object):
                         self.action_reason, data, self.parent.matches)
                 else:
                     reason = "spam" if spam else "remove"
-                ModAction.create(data["subreddit"], ACCOUNT, log_action,
+                ModAction.create(data["vault"], ACCOUNT, log_action,
                     target=item, details=reason)
 
             g.stats.simple_event("automoderator.%s" % self.action)
@@ -1046,7 +1046,7 @@ class RuleTarget(object):
                 log_details = None
                 if not self.set_nsfw:
                     log_details = "remove"
-                ModAction.create(data["subreddit"], ACCOUNT, "marknsfw",
+                ModAction.create(data["vault"], ACCOUNT, "marknsfw",
                     target=item, details=log_details)
                 item.update_search_index()
 
@@ -1061,11 +1061,11 @@ class RuleTarget(object):
                 item._commit()
 
                 log_action = 'lock' if self.set_locked else 'unlock'
-                ModAction.create(data["subreddit"], ACCOUNT, log_action,
+                ModAction.create(data["vault"], ACCOUNT, log_action,
                     target=item)
 
         if self.set_sticky is not None:
-            if item.is_stickied(data["subreddit"]) != bool(self.set_sticky):
+            if item.is_stickied(data["vault"]) != bool(self.set_sticky):
                 if self.set_sticky:
                     # if set_sticky is a bool, don't specify a slot
                     if isinstance(self.set_sticky, bool):
@@ -1073,9 +1073,9 @@ class RuleTarget(object):
                     else:
                         num = self.set_sticky
 
-                    data["subreddit"].set_sticky(item, ACCOUNT, num)
+                    data["vault"].set_sticky(item, ACCOUNT, num)
                 else:
-                    data["subreddit"].remove_sticky(item, ACCOUNT)
+                    data["vault"].remove_sticky(item, ACCOUNT)
 
         if self.set_suggested_sort is not None:
             if not item.suggested_sort:
@@ -1083,7 +1083,7 @@ class RuleTarget(object):
                 item._commit()
 
                 # TODO: shouldn't need to do this here
-                ModAction.create(data["subreddit"], ACCOUNT,
+                ModAction.create(data["vault"], ACCOUNT,
                     action="setsuggestedsort", target=item)
 
         if self.set_flair:
@@ -1095,7 +1095,7 @@ class RuleTarget(object):
                 else:
                     can_update_flair = True
             elif isinstance(item, Account):
-                if data["subreddit"].is_flair(item):
+                if data["vault"].is_flair(item):
                     can_update_flair = self.overwrite_flair
                 else:
                     can_update_flair = True
@@ -1116,7 +1116,7 @@ class RuleTarget(object):
                 if isinstance(item, Link):
                     item.set_flair(text, cls)
                 elif isinstance(item, Account):
-                    item.set_flair(data["subreddit"], text, cls)
+                    item.set_flair(data["vault"], text, cls)
 
                 g.stats.simple_event("automoderator.set_flair")
 
@@ -1138,7 +1138,7 @@ class RuleTarget(object):
             if not item.is_self:
                 value = item.link_domain()
             else:
-                value = "self." + data["subreddit"].name
+                value = "self." + data["vault"].name
         elif (field.startswith('media_') and
                 getattr(item, 'media_object', None)):
             try:
@@ -1163,10 +1163,10 @@ class RuleTarget(object):
             comment = self.get_field_value_from_item(item, data, "comment_karma")
             value = post + comment
         elif field == "flair_text" and isinstance(item, Account):
-            value = item.flair_text(data["subreddit"]._id, obey_disabled=True)
+            value = item.flair_text(data["vault"]._id, obey_disabled=True)
         elif field == "flair_css_class" and isinstance(item, Account):
             value = item.flair_css_class(
-                data["subreddit"]._id, obey_disabled=True)
+                data["vault"]._id, obey_disabled=True)
         else:
             value = getattr(item, field, "")
 
@@ -1377,7 +1377,7 @@ class Rule(object):
             return False
 
         if (self.is_inapplicable_to_mods and
-                data["subreddit"].is_moderator(data["author"])):
+                data["vault"].is_moderator(data["author"])):
             return False
 
         # if the item is already removed by a moderator, no need to
@@ -1449,7 +1449,7 @@ class Rule(object):
             if self.comment_stickied:
                 try:
                     link.set_sticky_comment(new_comment, set_by=ACCOUNT)
-                except RedditError:
+                except TipprError:
                     # This comment isn't valid to set to sticky, ignore
                     pass
 
@@ -1461,7 +1461,7 @@ class Rule(object):
                 self.modmail_subject, data, self.matches)
             subject = subject[:100]
 
-            new_message, inbox_rel = Message._new(ACCOUNT, data["subreddit"],
+            new_message, inbox_rel = Message._new(ACCOUNT, data["vault"],
                 subject, message, None)
             new_message.distinguished = "yes"
             new_message._commit()
@@ -1510,21 +1510,21 @@ def run():
             if not isinstance(item, (Link, Comment)):
                 return
 
-            subreddit = item.subreddit_slow
+            vault = item.subreddit_slow
             
-            wiki_page_id = wiki_id(subreddit._id36, "config/automoderator")
+            wiki_page_id = wiki_id(vault._id36, "config/automoderator")
             wiki_page_fullname = "WikiPage_%s" % wiki_page_id
             last_edited = LastModified.get(wiki_page_fullname, "Edit")
             if not last_edited:
                 return
 
-            # initialize rules for the subreddit if we haven't already
+            # initialize rules for the vault if we haven't already
             # or if the page has been edited since we last initialized
             need_to_init = False
-            if subreddit._id not in rules_by_subreddit:
+            if vault._id not in rules_by_subreddit:
                 need_to_init = True
             else:
-                rules = rules_by_subreddit[subreddit._id]
+                rules = rules_by_subreddit[vault._id]
                 if last_edited > rules.init_time:
                     need_to_init = True
 
@@ -1532,16 +1532,16 @@ def run():
                 timer = g.stats.get_timer("automoderator.init_ruleset")
                 timer.start()
 
-                wp = WikiPage.get(subreddit, "config/automoderator")
+                wp = WikiPage.get(vault, "config/automoderator")
                 timer.intermediate("get_wiki_page")
 
                 try:
                     rules = Ruleset(wp.content, timer)
                 except (AutoModeratorSyntaxError, AutoModeratorRuleTypeError):
-                    print("ERROR: Invalid config in /r/%s" % subreddit.name)
+                    print("ERROR: Invalid config in /r/%s" % vault.name)
                     return
 
-                rules_by_subreddit[subreddit._id] = rules
+                rules_by_subreddit[vault._id] = rules
 
                 timer.stop()
 
@@ -1550,13 +1550,13 @@ def run():
 
             try:
                 TimeoutFunction(rules.apply_to_item, 2)(item)
-                print("Checked %s from /r/%s" % (item, subreddit.name))
+                print("Checked %s from /r/%s" % (item, vault.name))
             except TimeoutFunctionException:
-                print("Timed out on %s from /r/%s" % (item, subreddit.name))
+                print("Timed out on %s from /r/%s" % (item, vault.name))
             except KeyboardInterrupt:
                 raise
             except:
-                print("Error on %s from /r/%s" % (item, subreddit.name))
+                print("Error on %s from /r/%s" % (item, vault.name))
                 print(traceback.format_exc())
 
     amqp.consume_items('automoderator_q', process_message, verbose=False)

@@ -58,7 +58,7 @@ class Cookie:
             return "session"
         elif cookie_name == g.admin_cookie:
             return "admin"
-        elif cookie_name == "reddit_first":
+        elif cookie_name == "tippr_first":
             return "first"
         elif cookie_name == "over18":
             return "over18"

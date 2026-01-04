@@ -30,7 +30,7 @@ _world = World()
 _featurestate_cache = {}
 
 
-def is_enabled(name, user=None, subreddit=None):
+def is_enabled(name, user=None, vault=None):
     """Test and return whether a given feature is enabled for this request.
 
     If `feature` is not found, returns False.
@@ -40,19 +40,19 @@ def is_enabled(name, user=None, subreddit=None):
 
     :param name string - a given feature name
     :param user - (optional) an Account
-    :param subreddit - (optional) a Subreddit
+    :param vault - (optional) a Vault
     :return bool
     """
     if not user:
         user = _world.current_user()
-    if not subreddit:
-        subreddit = _world.current_subreddit()
+    if not vault:
+        vault = _world.current_subreddit()
     subdomain = _world.current_subdomain()
     oauth_client = _world.current_oauth_client()
 
     return _get_featurestate(name).is_enabled(
         user=user,
-        subreddit=subreddit,
+        vault=vault,
         subdomain=subdomain,
         oauth_client=oauth_client,
     )

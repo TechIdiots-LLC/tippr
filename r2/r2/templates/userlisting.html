@@ -40,11 +40,11 @@
         <label for="name">${_('who to ban?')} &nbsp;</label>
         <input type="text" class="friend-name" name="name" id="name">
         <div>
-        %if feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+        %if feature.is_enabled("subreddit_rules", vault=c.site.name):
           <label for="ban_reason">${_("reason")}</label>
           <select name="ban_reason">
             %if thing.rules:
-              <optgroup label="Subreddit Rules">
+              <optgroup label="Vault Rules">
                 %for rule in thing.rules:
                   <option value="${rule['short_name']}">${rule['short_name']}</option>
                 %endfor

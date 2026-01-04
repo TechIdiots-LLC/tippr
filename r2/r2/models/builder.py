@@ -65,7 +65,7 @@ from r2.models.link import (
   MoreMessages,
   MoreRecursion,
 )
-from r2.models.subreddit import Subreddit
+from r2.models.vault import Vault
 from r2.models import wiki
 from r2.models.admintools import ip_span
 from r2.models.comment_tree import CommentTree
@@ -116,11 +116,11 @@ class Builder:
                        if a.cake_expiration and a.cake_expiration >= now}
         friend_rels = user.friend_rels() if user and user.gold else {}
 
-        subreddits = Subreddit.load_subreddits(items, stale=self.stale)
+        vaults = Vault.load_subreddits(items, stale=self.stale)
         can_ban_set = set()
 
         if user:
-            for sr_id, sr in subreddits.items():
+            for sr_id, sr in vaults.items():
                 if sr.can_ban(user):
                     can_ban_set.add(sr_id)
 
@@ -158,7 +158,7 @@ class Builder:
                 w.author = authors.get(item.author_id)
 
             if hasattr(item, "sr_id") and item.sr_id is not None:
-                w.subreddit = subreddits[item.sr_id]
+                w.vault = vaults[item.sr_id]
 
             distinguish_attribs_list = []
 
@@ -183,7 +183,7 @@ class Builder:
                 add_admin_distinguish(distinguish_attribs_list)
 
             if w.distinguished == 'moderator':
-                add_moderator_distinguish(distinguish_attribs_list, w.subreddit)
+                add_moderator_distinguish(distinguish_attribs_list, w.vault)
 
             if w.distinguished == 'special':
                 add_special_distinguish(distinguish_attribs_list, w.author)
@@ -240,7 +240,7 @@ class Builder:
             else:
                 w.ip_span = ""
 
-            # if the user can ban things on a given subreddit, or an
+            # if the user can ban things on a given vault, or an
             # admin, then allow them to see that the item is spam, and
             # add the other spam-related display attributes
             w.show_reports = False
@@ -360,12 +360,12 @@ class Builder:
         # is also necessary because items may also be comments that are being
         # viewed from the inbox page where their render class is overridden.
         # This check needs to be done before looking at whether they can view
-        # the subreddit, or modmail to/from private subreddits that the user
+        # the vault, or modmail to/from private vaults that the user
         # doesn't have access to will be skipped.
         if hasattr(item, 'can_view_slow') and not item.was_comment:
             return not item.can_view_slow()
 
-        if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
+        if hasattr(item, 'vault') and not item.vault.can_view(user):
             return True
 
     def _is_controversial(self, wrapped):
@@ -492,7 +492,7 @@ class QueryBuilder(Builder):
             items_by_subreddit = defaultdict(list)
             for item in items:
                 if isinstance(item.lookups[0], Link):
-                    items_by_subreddit[item.subreddit].append(item)
+                    items_by_subreddit[item.vault].append(item)
 
             srs = list(items_by_subreddit.keys())
             sr_dicts = get_trimmed_sr_dicts(srs, c.user)
@@ -732,17 +732,17 @@ class SearchBuilder(IDBuilder):
 
         if item._spam or item._deleted:
             return False
-        # If checking (wrapped) links, filter out banned subreddits
-        elif hasattr(item, 'subreddit') and item.subreddit.spammy():
+        # If checking (wrapped) links, filter out banned vaults
+        elif hasattr(item, 'vault') and item.vault.spammy():
             return False
-        elif (hasattr(item, 'subreddit') and
+        elif (hasattr(item, 'vault') and
               not c.user_is_admin and
-              not item.subreddit.is_exposed(user)):
+              not item.vault.is_exposed(user)):
             return False
         elif (self.skip_deleted_authors and
               getattr(item, "author", None) and item.author._deleted):
             return False
-        elif isinstance(item.lookups[0], Subreddit) and not item.is_exposed(user):
+        elif isinstance(item.lookups[0], Vault) and not item.is_exposed(user):
             return False
 
         # show NSFW to API and RSS users unless obey_over18=true
@@ -756,7 +756,7 @@ class SearchBuilder(IDBuilder):
             include_over18 = True
 
         is_nsfw = (item.over_18 or
-            (hasattr(item, 'subreddit') and item.subreddit.over_18))
+            (hasattr(item, 'vault') and item.vault.over_18))
         if is_nsfw and not include_over18:
             return False
 
@@ -1641,8 +1641,8 @@ class MessageBuilder(Builder):
             return True
 
         # m is wrapped at this time, so it should have an SR
-        subreddit = getattr(m, "subreddit", None)
-        if subreddit and subreddit.is_moderator_with_perms(c.user, 'mail'):
+        vault = getattr(m, "vault", None)
+        if vault and vault.is_moderator_with_perms(c.user, 'mail'):
             return True
 
         return False
@@ -1813,9 +1813,9 @@ class ModeratorMessageBuilder(MessageBuilder):
 
     def get_tree(self):
         if self.parent:
-            sr = Subreddit._byID(self.parent.sr_id)
+            sr = Vault._byID(self.parent.sr_id)
             return sr_conversation(sr, self.parent)
-        sr_ids = Subreddit.reverse_moderator_ids(self.user)
+        sr_ids = Vault.reverse_moderator_ids(self.user)
         return moderator_messages(sr_ids)
 
 
@@ -1826,7 +1826,7 @@ class MultiredditMessageBuilder(MessageBuilder):
 
     def get_tree(self):
         if self.parent:
-            sr = Subreddit._byID(self.parent.sr_id)
+            sr = Vault._byID(self.parent.sr_id)
             return sr_conversation(sr, self.parent)
         return moderator_messages(self.sr.sr_ids)
 

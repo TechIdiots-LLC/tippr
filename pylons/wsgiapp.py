@@ -147,7 +147,7 @@ class PylonsApp:
 
         # Try to resolve the controller class and call it as a WSGI app.
         controller_cls = None
-        # Prefer a find_controller hook if the app implements it (RedditApp)
+        # Prefer a find_controller hook if the app implements it (TipprApp)
         find_fn = getattr(self, 'find_controller', None)
         if callable(find_fn):
             try:

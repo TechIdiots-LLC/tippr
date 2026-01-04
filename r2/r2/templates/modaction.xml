@@ -28,9 +28,9 @@
 %>
 <%namespace name="utils" file="utils.xml"/>
 <%
-    title = '%(subreddit)s: %(mod)s %(action)s'
+    title = '%(vault)s: %(mod)s %(action)s'
     title %= {
-        'subreddit': thing.subreddit.name,
+        'vault': thing.vault.name,
         'mod': thing.moderator.name,
         'action': thing.text,
     }
@@ -46,16 +46,16 @@
         title += ' (%s)' % thing.details_text
 
     if isinstance(thing, Comment):
-        permalink = thing.target.make_permalink(thing.parent_link, thing.subreddit)
+        permalink = thing.target.make_permalink(thing.parent_link, thing.vault)
     elif isinstance(thing, Link):
-        permalink = thing.target.make_permalink(thing.subreddit)
+        permalink = thing.target.make_permalink(thing.vault)
     else:
         permalink = None
 %>
 
 <entry>
     <%utils:atom_author author="${thing.moderator}" />
-    <category term="${thing.subreddit.name}" label="/r/${thing.subreddit.name}" />
+    <category term="${thing.vault.name}" label="/v/${thing.vault.name}" />
     <id>${thing._fullname}</id>
     %if permalink:
         <link href="${add_sr(permalink)}"/>

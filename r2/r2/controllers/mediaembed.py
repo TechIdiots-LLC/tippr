@@ -33,7 +33,7 @@ from r2.lib.media import get_media_embed
 from r2.lib.pages import MediaEmbedBody
 from r2.lib.utils import constant_time_compare
 from r2.lib.validator import VLink, nop, validate
-from r2.models import Subreddit
+from r2.models import Vault
 
 
 class MediaembedController(MinimalController):
@@ -47,7 +47,7 @@ class MediaembedController(MinimalController):
             # specifically untrusted domain
             abort(404)
 
-        if link.subreddit_slow.type in Subreddit.private_types:
+        if link.subreddit_slow.type in Vault.private_types:
             expected_mac = hmac.new(g.secrets["media_embed"], link._id36,
                                     hashlib.sha1).hexdigest()
             if not constant_time_compare(credentials or "", expected_mac):

@@ -28,7 +28,7 @@ from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.ipn import send_gift
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.controllers.reddit_base import OAuth2OnlyController
-from r2.lib.errors import RedditError
+from r2.lib.errors import TipprError
 from r2.lib.validator import (
     VAccountByName,
     VByName,
@@ -46,7 +46,7 @@ class APIv1GoldController(OAuth2OnlyController):
             proxying_for=None):
         with creddits_lock(c.user):
             if not c.user.employee and c.user.gold_creddits < months:
-                err = RedditError("INSUFFICIENT_CREDDITS")
+                err = TipprError("INSUFFICIENT_CREDDITS")
                 self.on_validation_error(err)
 
             note = None
@@ -85,13 +85,13 @@ class APIv1GoldController(OAuth2OnlyController):
     )
     def POST_gild(self, target):
         if not isinstance(target, (Comment, Link)):
-            err = RedditError("NO_THING_ID")
+            err = TipprError("NO_THING_ID")
             self.on_validation_error(err)
 
         if target.subreddit_slow.quarantine:
-            err = RedditError("GILDING_NOT_ALLOWED")
+            err = TipprError("GILDING_NOT_ALLOWED")
             self.on_validation_error(err)
-        VNotInTimeout().run(target=target, subreddit=target.subreddit_slow)
+        VNotInTimeout().run(target=target, vault=target.subreddit_slow)
 
         self._gift_using_creddits(
             recipient=target.author_slow,

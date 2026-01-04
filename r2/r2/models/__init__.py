@@ -39,6 +39,6 @@ from .modaction import *
 from .promo import *
 from .report import *
 from .rules import *
-from .subreddit import *
+from .vault import *
 from .token import *
 from .vote import *

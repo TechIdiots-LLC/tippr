@@ -312,7 +312,7 @@ def get_maximized_pageviews(priority_sr_names, booked_by_target,
 
 
 def run_tests():
-    # example 1: maximize impressions in a subreddit that is also targeted
+    # example 1: maximize impressions in a vault that is also targeted
     # by a collection
     pageviews_by_sr_name = {
         'leagueoflegends': 50000,

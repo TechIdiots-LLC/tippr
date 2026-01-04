@@ -23,7 +23,7 @@
 <!doctype html>
 <%!
    from r2.lib.template_helpers import static
-   from r2.models import Link, Comment, Subreddit
+   from r2.models import Link, Comment, Vault
    from r2.lib import tracking
 %>
 <%namespace file="utils.html" import="js_setup, googleanalytics, googletagmanager, classes"/>
@@ -70,7 +70,7 @@ ${c.site.title}
 </%def>
 
 <%def name="keywords()">
-reddit, reddit.com, vote, comment, submit
+tippr, tippr.net, vote, comment, submit
 </%def>
 
 <%def name="viewport()">

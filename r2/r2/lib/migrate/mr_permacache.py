@@ -175,7 +175,7 @@ def insert_to_query(q, items):
 def store_keys(key, maxes):
     # we're building queries from queries.py, but we could avoid this
     # by making the queries ourselves if we wanted to avoid the
-    # individual lookups for accounts and subreddits
+    # individual lookups for accounts and vaults
     userrel_fns = dict(liked = queries.get_liked,
                        disliked = queries.get_disliked,
                        saved = queries.get_saved,
@@ -197,7 +197,7 @@ def store_keys(key, maxes):
             # it
             sort = 'controversial'
 
-        q = queries.get_links(Subreddit._byID(sr_id), sort, time)
+        q = queries.get_links(Vault._byID(sr_id), sort, time)
         insert_to_query(q, [tuple([item[-1]] + list(map(float, item[:-1])))
                             for item in maxes])
 

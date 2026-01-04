@@ -29,20 +29,20 @@
   </h1>
 
   <div class="usertext">
-    ${md(_("Displaying content from %s, except the following subreddits: ") % c.site.unfiltered_path, wrap=True)}
+    ${md(_("Displaying content from %s, except the following vaults: ") % c.site.unfiltered_path, wrap=True)}
   </div>
 
-  <ul class="subreddits">
+  <ul class="vaults">
   %for sr in c.site.exclude_srs:
     <li data-name="${sr.name}">
-      <a href="/r/${sr.name}" data-name="${sr.name}">/r/${sr.name}</a>
+      <a href="/v/${sr.name}" data-name="${sr.name}">/r/${sr.name}</a>
       <button class="remove-sr">${_('remove')}</button>
     </li>
   %endfor
   </ul>
 
   <form class="add-sr">
-    <input type="text" class="sr-name" placeholder="${_('filter subreddit')}"><button class="add">${_('add')}</button>
+    <input type="text" class="sr-name" placeholder="${_('filter vault')}"><button class="add">${_('add')}</button>
     <div class="error add-error"></div>
   </form>
 

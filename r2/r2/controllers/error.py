@@ -35,7 +35,7 @@ try:
     # get caught and the stack trace won't be presented to the user in
     # production
     from r2.config import extensions
-    from r2.controllers.reddit_base import RedditController, UnloggedUser
+    from r2.controllers.reddit_base import TipprController, UnloggedUser
     from r2.lib import log, pages
     from r2.lib.base import abort
     from r2.lib.cookies import Cookies
@@ -49,7 +49,7 @@ try:
     from r2.lib.strings import get_funny_translated_string
     from r2.lib.template_helpers import static
     from r2.models.link import Link
-    from r2.models.subreddit import DefaultSR, Subreddit
+    from r2.models.vault import DefaultSR, Vault
 except Exception as e:
     if g.debug:
         # if debug mode, let the error filter up to pylons to be handled
@@ -64,13 +64,13 @@ except Exception as e:
 redditbroke =  \
 '''<html>
   <head>
-    <title>reddit broke!</title>
+    <title>tippr broke!</title>
   </head>
   <body>
     <div style="margin: auto; text-align: center">
       <p>
         <a href="/">
-          <img border="0" src="%s" alt="you broke reddit" />
+          <img border="0" src="%s" alt="you broke tippr" />
         </a>
       </p>
       <p>
@@ -88,7 +88,7 @@ def make_failien_url():
     return static(failien_name)
 
 
-class ErrorController(RedditController):
+class ErrorController(TipprController):
     """Generates error documents as and when they are required.
 
     The ErrorDocuments middleware forwards to ErrorController when error
@@ -104,13 +104,13 @@ class ErrorController(RedditController):
         pass
 
     allowed_render_styles = ('html', 'xml', 'js', 'embed', '', "compact", 'api')
-    # List of admins to blame (skip the first admin, "reddit")
+    # List of admins to blame (skip the first admin, "tippr")
     # If list is empty, just blame "an admin"
     admins = g.admins[1:] or ["an admin"]
     def __before__(self):
         try:
             c.error_page = True
-            RedditController.__before__(self)
+            TipprController.__before__(self)
         except (HTTPMovedPermanently, HTTPFound):
             # ignore an attempt to redirect from an error page
             pass
@@ -125,13 +125,13 @@ class ErrorController(RedditController):
 
     def __after__(self): 
         try:
-            RedditController.__after__(self)
+            TipprController.__after__(self)
         except Exception as e:
             handle_awful_failure("ErrorController.__after__: %r" % e)
 
     def __call__(self, environ, start_response):
         try:
-            return RedditController.__call__(self, environ, start_response)
+            return TipprController.__call__(self, environ, start_response)
         except Exception as e:
             return handle_awful_failure("ErrorController.__call__: %r" % e)
 
@@ -140,7 +140,7 @@ class ErrorController(RedditController):
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         else:
-            res = pages.RedditError(
+            res = pages.TipprError(
                 title=_("bad request (%(domain)s)") % dict(domain=g.domain),
                 message=_("you sent an invalid request"),
                 explanation=request.GET.get('explanation'))
@@ -151,7 +151,7 @@ class ErrorController(RedditController):
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         else:
-            res = pages.RedditError(
+            res = pages.TipprError(
                 title=_("forbidden (%(domain)s)") % dict(domain=g.domain),
                 message=_("you are not allowed to do that"),
                 explanation=request.GET.get('explanation'))
@@ -160,7 +160,7 @@ class ErrorController(RedditController):
     def send404(self):
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
-        return pages.RedditError(_("page not found"),
+        return pages.TipprError(_("page not found"),
                                  _("the page you requested does not exist")).render()
 
     def send429(self):
@@ -204,7 +204,7 @@ class ErrorController(RedditController):
                 c.user = UnloggedUser(browser_langs=None)
 
             if srname:
-                c.site = Subreddit._by_name(srname)
+                c.site = Vault._by_name(srname)
 
             if 'allow_framing' in request.GET:
                 c.allow_framing = bool(request.GET['allow_framing'] == '1')

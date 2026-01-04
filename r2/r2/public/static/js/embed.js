@@ -28,10 +28,10 @@
           '</a>' +
           '<div id="live-help" class="c-help-block c-toggle-content">' +
             '<p>' +
-              _.escape(r._('When checked, if an embedded comment is later edited, the embedded comment text will be replaced by a link back to the current version of the comment on reddit.')) +
+              _.escape(r._('When checked, if an embedded comment is later edited, the embedded comment text will be replaced by a link back to the current version of the comment on tippr.')) +
             '</p>' +
             '<p>' +
-              '<a href="https://www.reddit.com/r/reddit.com/wiki/embeds">' +
+              '<a href="https://www.tippr.net/r/tippr.net/wiki/embeds">' +
                 _.escape(r._('This parameter can be changed after embedding.')) +
               '</a>' +
             '</p>' +
@@ -51,7 +51,7 @@
     );
 
     var embedCodeTemplate = _.template(
-      '<div class="reddit-embed" ' +
+      '<div class="tippr-embed" ' +
          ' data-embed-media="<%- media %>" ' +
          '<% if (parent) { %> data-embed-parent="true" <% } %>' +
          '<% if (live) { %> data-embed-live="true" <% } %>' +
@@ -209,7 +209,7 @@
       });
 
       popup.on('show.r.popup', function() {
-        $preview.find('.reddit-embed').hide();
+        $preview.find('.tippr-embed').hide();
       });
 
       popup.on('opened.r.popup', function() {

@@ -33,7 +33,7 @@ from r2.lib.validator import *
 from r2.models import *
 from r2.models.admintools import is_shamed_domain
 
-from .reddit_base import RedditController
+from .reddit_base import TipprController
 
 # strips /r/foo/, /s/, or both
 strip_sr          = re.compile(r'\A/r/[a-zA-Z0-9_-]+')
@@ -78,7 +78,7 @@ def force_html():
     c.content_type = 'text/html; charset=UTF-8'
 
 
-class ToolbarController(RedditController):
+class ToolbarController(TipprController):
 
     allow_stylesheets = True
 

@@ -102,11 +102,11 @@
       subreddit_link_fmt = format_html('<span>%s</span>', _('to %s')).replace(' ', '&#32;')
     %>
     ${plain_link(
-        '/r/%s' % thing.subreddit.name,
-        '/r/%s' % thing.subreddit.name,
+        '/v/%s' % thing.vault.name,
+        '/v/%s' % thing.vault.name,
         _sr_path=False,
         fmt=subreddit_link_fmt,
-        _class='search-subreddit-link may-blank',
+        _class='search-vault-link may-blank',
       )}
   </%parent:search_result_meta>
 </%def>

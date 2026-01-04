@@ -27,7 +27,7 @@
    from r2.lib.strings import Score
  %>
 
-<%def name="submiturl(url, title='')">${("%s://%s/submit" % (g.default_scheme, get_domain(subreddit=True))) + query_string(dict(url=url, title=title))}</%def>
+<%def name="submiturl(url, title='')">${("%s://%s/submit" % (g.default_scheme, get_domain(vault=True))) + query_string(dict(url=url, title=title))}</%def>
 
 <% 
     if thing._fullname:
@@ -50,9 +50,9 @@
 %if thing._fullname:
     write_string += '${jssafe(websafe(Score.safepoints(thing.score)))}';
     %if thing.styled:  
-        write_string += ' on ' + styled_submit + 'reddit</a>';
+        write_string += ' on ' + styled_submit + 'tippr</a>';
     %else:
-        write_string += ' on ' + unstyled_submit + 'reddit</a>';
+        write_string += ' on ' + unstyled_submit + 'tippr</a>';
     %endif
 %else:
     %if thing.styled:
@@ -63,7 +63,7 @@
     %if thing.image > 0:
     write_string += '</a>';
     %else:
-    write_string += ' to reddit</a>';
+    write_string += ' to tippr</a>';
     %endif
 %endif
     write_string += '</span>';

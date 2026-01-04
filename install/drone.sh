@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 ###############################################################################
-# reddit Drone environment installer
+# tippr Drone environment installer
 # ----------------------------------
 # This script re-purposes some of our existing vagrant/Travis install and
 # setup scripts for our Drone CI builds.
 #
 # NOTE: You don't want to run this script directly in your development
 # environment, since we assume that it's running within this Docker image
-# that Drone runs our builds within: https://github.com/reddit/docker-reddit-py
+# that Drone runs our builds within: https://github.com/tippr/docker-tippr-py
 #
-# docker-reddit-py has most of the apt dependencies pre-installed in order to
+# docker-tippr-py has most of the apt dependencies pre-installed in order to
 # significantly reduce our build times.
 #
 # Refer to .drone.yml in the repo root to see where this script gets called
@@ -30,18 +30,18 @@ source $RUNDIR/install.cfg
 install/install_services.sh
 
 ###############################################################################
-# Install and configure the reddit code
+# Install and configure the tippr code
 ###############################################################################
 
 # Create venv if it doesn't exist
-if [ ! -d "$REDDIT_VENV" ]; then
-    python3 -m venv $REDDIT_VENV
-    $REDDIT_VENV/bin/pip install --upgrade pip setuptools wheel
+if [ ! -d "$TIPPR_VENV" ]; then
+    python3 -m venv $TIPPR_VENV
+    $TIPPR_VENV/bin/pip install --upgrade pip setuptools wheel
 fi
 
 pushd r2
-$REDDIT_VENV/bin/pip install -e .
-$REDDIT_VENV/bin/python setup.py build
+$TIPPR_VENV/bin/pip install -e .
+$TIPPR_VENV/bin/python setup.py build
 make pyx
 ln -sf example.ini test.ini
 popd

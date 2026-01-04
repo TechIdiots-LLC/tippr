@@ -74,7 +74,7 @@ def monitor_mentions(comment):
     if sender.in_timeout:
         return
 
-    subreddit = comment.subreddit_slow
+    vault = comment.subreddit_slow
     usernames = extract_user_mentions(comment.body)
     inbox_class = Inbox.rel(Account, Comment)
 
@@ -83,7 +83,7 @@ def monitor_mentions(comment):
     if len(usernames) > g.butler_max_mentions:
         return
 
-    # Subreddit.can_view stupidly requires this.
+    # Vault.can_view stupidly requires this.
     c.user_is_loggedin = True
 
     for username in usernames:
@@ -101,7 +101,7 @@ def monitor_mentions(comment):
             continue
 
         # don't notify users of things they can't see
-        if not subreddit.can_view(account):
+        if not vault.can_view(account):
             continue
 
         # don't notify users when a person they've blocked mentions them

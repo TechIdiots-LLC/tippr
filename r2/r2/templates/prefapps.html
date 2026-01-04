@@ -218,7 +218,7 @@ ${utils.radio_type('app_type', "script", _("script"),
     %if i:
       ,&#32;
     %endif
-    <a href="/r/${name}">/r/${name}</a>
+    <a href="/v/${name}">/r/${name}</a>
   %endfor
 </%def>
 
@@ -228,12 +228,12 @@ ${utils.radio_type('app_type', "script", _("script"),
       %if scope.subreddit_only:
         %if compact:
 	  ${_("Only in:")}&#32;
-	  ${sr_list(scope.subreddits)}
+	  ${sr_list(scope.vaults)}
 	  <br>
 	%else:
           <li>
-            ${_("Only in the subreddits:")}&#32;
-            ${sr_list(scope.subreddits)}.
+            ${_("Only in the vaults:")}&#32;
+            ${sr_list(scope.vaults)}.
           </li>
 	%endif
       %endif

@@ -61,12 +61,12 @@ from r2.models import (
     Link,
     MultiReddit,
     NotFound,
-    Subreddit,
+    Vault,
     Thing,
 )
 
 _CHUNK_SIZE = 4000000 # Approx. 4 MB, to stay under the 5MB limit
-DEFAULT_FACETS = {"reddit": {"count":20}}
+DEFAULT_FACETS = {"tippr": {"count":20}}
 
 WARNING_XPATH = ".//lst[@name='error']/str[@name='warning']"
 STATUS_XPATH = ".//lst/int[@name='status']"
@@ -117,7 +117,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
 
 basic_link = functools.partial(basic_query, size=10, start=0,
                                rank="",
-                               return_fields=['title', 'reddit',
+                               return_fields=['title', 'tippr',
                                               'author_fullname'],
                                record_stats=False,
                                search_api=g.solr_search_host)
@@ -127,7 +127,7 @@ basic_subreddit = functools.partial(basic_query,
                                     faceting=None,
                                     size=10, start=0,
                                     rank="activity",
-                                    return_fields=['title', 'reddit',
+                                    return_fields=['title', 'tippr',
                                                    'author_fullname'],
                                     record_stats=False,
                                     search_api=g.solr_subreddit_search_host)
@@ -240,21 +240,21 @@ class SolrSearchQuery:
                     {
                         u'_version_':1496564637825499136,
                         u'type_id':5,
-                        u'reddit':u'coffee',
+                        u'tippr':u'coffee',
                         u'fullname':u't5_3',
                         u'author':u'grandpa',
                         u'url':u'http://hamsandwich.com/sideoffries/?attachment_id=44',
                         u'num_comments':0,
                         u'downs':1,
                         u'title':u'013',
-                        u'site':u"[u'reddit.com',u'hamsandwich.reddit.com']", 
+                        u'site':u"[u'tippr.net',u'hamsandwich.tippr.net']", 
                         u'author_s': u'grandpa', 
                         u'over18': False, 
                         u'timestamp': 1427180669, 
                         u'sr_id': 2, 
                         u'author_fullname': u't2_1', 
                         u'is_self': False, 
-                        u'subreddit': u'coffee', 
+                        u'vault': u'coffee', 
                         u'ups': 0, u'id': u't5_3'}, 
                     {
                 ]
@@ -675,10 +675,10 @@ class SolrLinkUploader(SolrSearchUploader):
         sr_ids = [thing.sr_id for thing in self.things
                   if hasattr(thing, 'sr_id')]
         try:
-            self.srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
+            self.srs = Vault._byID(sr_ids, data=True, return_dict=True)
         except NotFound:
             if self.use_safe_get:
-                self.srs = safe_get(Subreddit._byID, sr_ids, data=True,
+                self.srs = safe_get(Vault._byID, sr_ids, data=True,
                                     return_dict=True)
             else:
                 raise
@@ -688,13 +688,13 @@ class SolrLinkUploader(SolrSearchUploader):
     
 
 class SolrSubredditUploader(SolrSearchUploader):
-    types = (Subreddit,)
+    types = (Vault,)
 
     def fields(self, thing):
         return SubredditFields(thing).fields()
 
     def should_index(self, thing):
-        return thing._id != Subreddit.get_promote_srid()
+        return thing._id != Vault.get_promote_srid()
 
  
 def _progress_key(item):
@@ -736,7 +736,7 @@ def _rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
 
 
 rebuild_subreddit_index = functools.partial(_rebuild_link_index,
-                                            cls=Subreddit,
+                                            cls=Vault,
                                             uploader=SolrSubredditUploader,
                                             estimate=200000,
                                             chunk_size=1000)
@@ -753,8 +753,8 @@ def test_run_link(start_link, count=1000):
 
 
 def test_run_srs(*sr_names):
-    '''Inject Subreddits by name into the index'''
-    srs = list(Subreddit._by_name(sr_names).values())
+    '''Inject Vaults by name into the index'''
+    srs = list(Vault._by_name(sr_names).values())
     uploader = SolrSubredditUploader(things=srs)
     return uploader.inject()
 
@@ -779,9 +779,9 @@ class SolrSearchProvider(SearchProvider):
     solr_search_host = 127.0.0.1
     # hostname or IP for link upload
     solr_doc_host = 127.0.0.1
-    # hostname or IP for subreddit search
+    # hostname or IP for vault search
     solr_subreddit_search_host = 127.0.0.1
-    # hostname or IP subreddit upload
+    # hostname or IP vault upload
     solr_subreddit_doc_host = 127.0.0.1
     # solr port (assumed same on all hosts)
     solr_port = 8080

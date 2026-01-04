@@ -46,7 +46,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from r2.lib.db.thing import NotFound, Thing
 from r2.lib.utils import Enum, to_date
-from r2.models.subreddit import Frontpage
+from r2.models.vault import Frontpage
 from r2.models.account import Account
 
 engine = g.dbm.get_engine('authorize')

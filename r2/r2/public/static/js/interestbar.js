@@ -55,8 +55,8 @@ r.ui.InterestBar.prototype = {
             last = this.$el.find('.results li:last')
 
         var item = _.template(
-            '<li><a href="/r/<%= name %>" target="_blank">'
-                +'/r/<%= name %>'
+            '<li><a href="/v/<%= name %>" target="_blank">'
+                +'/v/<%= name %>'
             +'</a></li>'
         )
 

@@ -76,7 +76,7 @@ traffic_categories = (SitewidePageviews, PageviewsBySubreddit,
 
 traffic_subdirectories = {
     SitewidePageviews: 'sitewide',
-    PageviewsBySubreddit: 'subreddit',
+    PageviewsBySubreddit: 'vault',
     PageviewsBySubredditAndPath: 'srpath',
     PageviewsByLanguage: 'lang',
     ClickthroughsByCodename: 'clicks',
@@ -147,8 +147,8 @@ def _name_to_kw(category_cls, name):
     def target_split(name):
         """Split a name that contains multiple words.
 
-        Name is (link,campaign-subreddit) where link and campaign are
-        thing fullnames. campaign and subreddit are each optional, so
+        Name is (link,campaign-vault) where link and campaign are
+        thing fullnames. campaign and vault are each optional, so
         the string could look like any of these:
         (t3_bh,t8_ab-pics), (t3_bh,t8_ab), (t3_bh,-pics), (t3_bh,)
         Also check for the old format (t3_by, pics)
@@ -158,19 +158,19 @@ def _name_to_kw(category_cls, name):
         link_codename, target_info = name
         campaign_codename = None
         if not target_info:
-            subreddit = ''
+            vault = ''
         elif target_info.find('-') != -1:
-            campaign_codename, subreddit = target_info.split('-', 1)
+            campaign_codename, vault = target_info.split('-', 1)
         elif target_info.find('_') != -1:
             campaign_codename = target_info
-            subreddit = ''
+            vault = ''
         else:
-            subreddit = target_info
+            vault = target_info
         return {'codename': campaign_codename or link_codename,
-                'subreddit': subreddit}
+                'vault': vault}
 
     d = {SitewidePageviews: lambda n: {},
-         PageviewsBySubreddit: lambda n: {'subreddit': n},
+         PageviewsBySubreddit: lambda n: {'vault': n},
          PageviewsBySubredditAndPath: lambda n: {'srpath': n},
          PageviewsByLanguage: lambda n: {'lang': n},
          ClickthroughsByCodename: lambda n: {'codename': name},

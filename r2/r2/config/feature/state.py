@@ -219,7 +219,7 @@ class FeatureState:
             variant not in cls.DEFAULT_CONTROL_GROUPS
         )
 
-    def is_enabled(self, user=None, subreddit=None, subdomain=None,
+    def is_enabled(self, user=None, vault=None, subdomain=None,
                    oauth_client=None):
         """Determine if a feature is enabled.
 
@@ -229,7 +229,7 @@ class FeatureState:
         cfg = self.config
         kw = dict(
             user=user,
-            subreddit=subreddit,
+            vault=vault,
             subdomain=subdomain,
             oauth_client=oauth_client
         )
@@ -250,7 +250,7 @@ class FeatureState:
         return False
 
     def _is_config_enabled(
-        self, cfg, user=None, subreddit=None, subdomain=None,
+        self, cfg, user=None, vault=None, subdomain=None,
         oauth_client=None
     ):
         world = self.world
@@ -296,8 +296,8 @@ class FeatureState:
         if users and user and user.name.lower() in users:
             return True
 
-        subreddits = [s.lower() for s in cfg.get('subreddits', [])]
-        if subreddits and subreddit and subreddit.lower() in subreddits:
+        vaults = [s.lower() for s in cfg.get('vaults', [])]
+        if vaults and vault and vault.lower() in vaults:
             return True
 
         subdomains = [s.lower() for s in cfg.get('subdomains', [])]
@@ -451,7 +451,7 @@ class FeatureState:
             content_id = link._fullname
         elif type_name == 'link':
             content_id = thing._fullname
-        elif type_name == 'subreddit':
+        elif type_name == 'vault':
             content_id = thing._fullname
         return content_id, type_name
 
@@ -464,7 +464,7 @@ class FeatureState:
         # If we've restricted the experiment to certain page types, make sure
         # the request is for one of those
         if (experiment.get('subreddit_only', False) and
-                type_name != 'subreddit'):
+                type_name != 'vault'):
             return None
 
         if (experiment.get('link_only', False) and

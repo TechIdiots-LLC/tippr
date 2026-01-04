@@ -38,7 +38,7 @@ from r2.lib.utils import fetch_things2, tup
 from r2.models.account import Account
 from r2.models.link import Comment, Link, Message
 from r2.models.report import Report
-from r2.models.subreddit import Subreddit
+from r2.models.vault import Vault
 from r2.models.award import Award
 from r2.models.gold import append_random_bottlecap_phrase, creddits_lock
 from r2.models.token import AwardClaimToken
@@ -182,7 +182,7 @@ class AdminTools:
                 by_srid.setdefault(thing.sr_id, []).append(thing)
 
         if by_srid:
-            srs = Subreddit._byID(list(by_srid.keys()), data=True, return_dict=True)
+            srs = Vault._byID(list(by_srid.keys()), data=True, return_dict=True)
             for sr_id, sr_things in by_srid.items():
                 sr = srs[sr_id]
 
@@ -287,7 +287,7 @@ def update_gold_users():
     renew_msg = _("[Click here for details on how to set up an "
                   "automatically-renewing subscription or to renew.]"
                   "(/gold) If you have any thoughts, complaints, "
-                  "rants, suggestions about reddit gold, please write "
+                  "rants, suggestions about tippr gold, please write "
                   "to us at %(gold_email)s. Your feedback would be "
                   "much appreciated.\n\nThank you for your past "
                   "patronage.") % {'gold_email': g.goldsupport_email}
@@ -305,8 +305,8 @@ def update_gold_users():
 
             admintools.degolden(account)
 
-            subject = _("Your reddit gold subscription has expired.")
-            message = _("Your subscription to reddit gold has expired.")
+            subject = _("Your tippr gold subscription has expired.")
+            message = _("Your subscription to tippr gold has expired.")
             message += "\n\n" + renew_msg
             message = append_random_bottlecap_phrase(message)
 
@@ -318,9 +318,9 @@ def update_gold_users():
             if not already_warned:
                 g.hardcache.set(hc_key, True, 86400 * (warning_days + 1))
                 
-                subject = _("Your reddit gold subscription is about to "
+                subject = _("Your tippr gold subscription is about to "
                             "expire!")
-                message = _("Your subscription to reddit gold will be "
+                message = _("Your subscription to tippr gold will be "
                             "expiring soon.")
                 message += "\n\n" + renew_msg
                 message = append_random_bottlecap_phrase(message)
@@ -349,10 +349,10 @@ def ip_span(ip):
 
 
 def wiki_template(template_slug, sr=None):
-    """Pull content from a subreddit's wiki page for internal use."""
+    """Pull content from a vault's wiki page for internal use."""
     if not sr:
         try:
-            sr = Subreddit._by_name(g.default_sr)
+            sr = Vault._by_name(g.default_sr)
         except NotFound:
             return None
 

@@ -29,10 +29,10 @@ from r2.lib.pages.things import wrap_links
 from r2.lib.validator import *
 from r2.models import *
 
-from .reddit_base import RedditController, UnloggedUser
+from .reddit_base import TipprController, UnloggedUser
 
 
-class ButtonsController(RedditController):
+class ButtonsController(TipprController):
     def get_wrapped_link(self, url, link = None, wrapper = None):
         try:
             links = []
@@ -58,7 +58,7 @@ class ButtonsController(RedditController):
             return links
             # note: even if _by_url successed or a link was passed in,
             # it is possible link_listing.things is empty if the
-            # link(s) is/are members of a private reddit
+            # link(s) is/are members of a private tippr
             # return the link with the highest score (if more than 1)
         except:
             #we don't want to return 500s in other people's pages.
@@ -107,11 +107,11 @@ class ButtonsController(RedditController):
         # no buttons for domain listings -> redirect to top level
         if isinstance(c.site, DomainSR):
             return self.redirect('/buttons')
-        return BoringPage(_("reddit buttons"),
+        return BoringPage(_("tippr buttons"),
                           show_sidebar = False, 
                           content=ButtonDemoPanel()).render()
 
     def GET_widget_demo_page(self):
-        return BoringPage(_("reddit widget"),
+        return BoringPage(_("tippr widget"),
                           show_sidebar = False, 
                           content=WidgetDemoPanel()).render()

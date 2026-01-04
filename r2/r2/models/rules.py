@@ -35,7 +35,7 @@ OLD_SITEWIDE_RULES = [
     _("vote manipulation"),
     _("personal information"),
     _("sexualizing minors"),
-    _("breaking reddit"),
+    _("breaking tippr"),
 ]
 
 SITEWIDE_RULES = [
@@ -77,11 +77,11 @@ class SubredditRules(tdb_cassandra.View):
         return blob
 
     @classmethod
-    def create(self, subreddit, short_name, description, kind=None,
+    def create(self, vault, short_name, description, kind=None,
             created_utc=None):
         """Create a rule and append to the end of the priority list."""
         try:
-            priority = len(list(self._cf.get(subreddit._id36)))
+            priority = len(list(self._cf.get(vault._id36)))
         except tdb_cassandra.NotFoundException:
             priority = 0
 
@@ -90,14 +90,14 @@ class SubredditRules(tdb_cassandra.View):
 
         blob = self.get_rule_blob(short_name, description, priority,
             kind, created_utc)
-        self._set_values(subreddit._id36, blob)
+        self._set_values(vault._id36, blob)
 
     @classmethod
-    def remove_rule(self, subreddit, short_name):
+    def remove_rule(self, vault, short_name):
         """Remove a rule and update priorities of remaining rules."""
-        self._remove(subreddit._id36, [short_name])
+        self._remove(vault._id36, [short_name])
 
-        rules = self.get_rules(subreddit)
+        rules = self.get_rules(vault)
         blobs = {}
         for index, rule in enumerate(rules):
             if rule["priority"] != index:
@@ -108,16 +108,16 @@ class SubredditRules(tdb_cassandra.View):
                     kind=rule.get("kind"),
                     created_utc=rule["created_utc"],
                 ))
-        self._set_values(subreddit._id36, blobs)
+        self._set_values(vault._id36, blobs)
 
     @classmethod
-    def update(self, subreddit, old_short_name, short_name, description,
+    def update(self, vault, old_short_name, short_name, description,
             kind=None):
         """Update the short_name or description of a rule."""
-        rules = self._cf.get(subreddit._id36)
+        rules = self._cf.get(vault._id36)
         if old_short_name != short_name:
             old_rule = rules.get(old_short_name, None)
-            self._remove(subreddit._id36, [old_short_name])
+            self._remove(vault._id36, [old_short_name])
         else:
             old_rule = rules.get(short_name, None)
         if not old_rule:
@@ -137,21 +137,21 @@ class SubredditRules(tdb_cassandra.View):
             kind=kind,
             created_utc=old_rule["created_utc"],
         )
-        self._set_values(subreddit._id36, blob)
+        self._set_values(vault._id36, blob)
 
     @classmethod
-    def reorder(self, subreddit, short_name, priority):
+    def reorder(self, vault, short_name, priority):
         """Update the priority spot of a rule
 
         Move an existing rule to the desired spot in the rules
         list and then update the priority of the rules.
         """
-        rule_to_reorder = self.get_rule(subreddit, short_name)
+        rule_to_reorder = self.get_rule(vault, short_name)
         if not rule_to_reorder:
             return False
 
-        self._remove(subreddit._id36, [short_name])
-        rules = self.get_rules(subreddit)
+        self._remove(vault._id36, [short_name])
+        rules = self.get_rules(vault)
 
         priority = min(priority, len(rules))
         current_priority_index = 0
@@ -178,13 +178,13 @@ class SubredditRules(tdb_cassandra.View):
                     created_utc=rule["created_utc"],
                 ))
             current_priority_index += 1
-        self._set_values(subreddit._id36, blobs)
+        self._set_values(vault._id36, blobs)
 
     @classmethod
-    def get_rule(self, subreddit, short_name):
+    def get_rule(self, vault, short_name):
         """Return rule associated with short_name or None."""
         try:
-            rules = self._cf.get(subreddit._id36)
+            rules = self._cf.get(vault._id36)
         except tdb_cassandra.NotFoundException:
             return None
         rule = rules.get(short_name, None)
@@ -195,13 +195,13 @@ class SubredditRules(tdb_cassandra.View):
         return rule
 
     @classmethod
-    def get_rules(self, subreddit, kind=None):
+    def get_rules(self, vault, kind=None):
         """Return list of rules sorted by priority.
 
         If kind is empty, then all the rules apply.
         """
         try:
-            query = self._cf.get(subreddit._id36)
+            query = self._cf.get(vault._id36)
         except tdb_cassandra.NotFoundException:
             return []
 

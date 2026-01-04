@@ -33,11 +33,11 @@ then
     sudo rabbitmqctl add_vhost /
 fi
 
-if ! sudo rabbitmqctl list_users | egrep "^reddit"
+if ! sudo rabbitmqctl list_users | egrep "^tippr"
 then
-    sudo rabbitmqctl add_user reddit reddit
+    sudo rabbitmqctl add_user tippr tippr
 fi
 
-sudo rabbitmqctl set_permissions -p / reddit ".*" ".*" ".*"
+sudo rabbitmqctl set_permissions -p / tippr ".*" ".*" ".*"
 sudo rabbitmq-plugins enable rabbitmq_management
 sudo service rabbitmq-server restart

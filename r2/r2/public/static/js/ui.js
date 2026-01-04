@@ -1,8 +1,8 @@
 r.ui.init = function() {
     // welcome bar
-    if ($.cookie('reddit_first')) {
+    if ($.cookie('tippr_first')) {
         // save welcome seen state and delete obsolete cookie
-        $.cookie('reddit_first', null, {domain: r.config.cur_domain})
+        $.cookie('tippr_first', null, {domain: r.config.cur_domain})
         store.safeSet('ui.shown.welcome', true)
     } else if (store.safeGet('ui.shown.welcome') != true) {
         $('.infobar.welcome').show()
@@ -1009,7 +1009,7 @@ r.ui.SubredditSubmitText = Backbone.View.extend({
             this.req.abort()
         }
         this.req = this.cache.ajax(sr, {
-            url: '/r/' + sr + '/api/submit_text/.json',
+            url: '/v/' + sr + '/api/submit_text/.json',
             dataType: 'json'
         }).done(_.bind(this.settext, this, sr))
           .fail(_.bind(this.error, this))

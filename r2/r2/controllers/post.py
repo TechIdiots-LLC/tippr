@@ -58,7 +58,7 @@ class PostController(ApiController):
               **PREFS_VALIDATORS)
     def POST_options(self, all_langs, **prefs):
         if feature.is_enabled("autoexpand_media_previews"):
-            validator = VOneOf('media_preview', ('on', 'off', 'subreddit'))
+            validator = VOneOf('media_preview', ('on', 'off', 'vault'))
             value = request.params.get('media_preview')
             prefs["pref_media_preview"] = validator.run(value)
 
@@ -90,7 +90,7 @@ class PostController(ApiController):
     def GET_quarantine(self, dest):
         sr = UrlParser(dest).get_subreddit()
 
-        # if dest doesn't include a quarantined subreddit,
+        # if dest doesn't include a quarantined vault,
         # redirect to the homepage or the original destination
         if not sr:
             return self.redirect('/')

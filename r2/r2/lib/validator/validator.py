@@ -43,7 +43,7 @@ from r2.lib import captcha, ratelimit, signing, totp, utils
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.db import tdb_cassandra
 from r2.lib.errors import (
-    RedditError,
+    TipprError,
     UserRequiredException,
     VerifiedUserRequiredException,
     errors,
@@ -299,7 +299,7 @@ def validate(*simple_vals, **param_vals):
                 pass
             try:
                 kw = _make_validated_kw(fn, simple_vals, param_vals, env)
-            except RedditError as err:
+            except TipprError as err:
                 self.on_validation_error(err)
 
             for err in c.errors:
@@ -307,7 +307,7 @@ def validate(*simple_vals, **param_vals):
 
             try:
                 return fn(self, *a, **kw)
-            except RedditError as err:
+            except TipprError as err:
                 self.on_validation_error(err)
 
         set_api_docs(newfn, simple_vals, param_vals)
@@ -713,7 +713,7 @@ class VTitle(VLength):
         }
 
 class VMarkdown(Validator):
-    def __init__(self, param, renderer='reddit'):
+    def __init__(self, param, renderer='tippr'):
         Validator.__init__(self, param)
         self.renderer = renderer
 
@@ -755,7 +755,7 @@ class VMarkdown(Validator):
 
 
 class VMarkdownLength(VMarkdown):
-    def __init__(self, param, renderer='reddit', max_length=10000,
+    def __init__(self, param, renderer='tippr', max_length=10000,
                  empty_error=errors.NO_TEXT, length_error=errors.TOO_LONG):
         VMarkdown.__init__(self, param, renderer)
         self.max_length = max_length
@@ -801,7 +801,7 @@ class VSubredditName(VRequired):
         if name:
             name = sr_path_rx.sub(r'\g<name>', name.strip())
 
-        valid_name = Subreddit.is_valid_name(
+        valid_name = Vault.is_valid_name(
             name, allow_language_srs=self.allow_language_srs)
 
         if not valid_name:
@@ -812,7 +812,7 @@ class VSubredditName(VRequired):
 
     def param_docs(self):
         return {
-            self.param: "subreddit name",
+            self.param: "vault name",
         }
 
 
@@ -821,7 +821,7 @@ class VAvailableSubredditName(VSubredditName):
         name = VSubredditName.run(self, name)
         if name:
             try:
-                a = Subreddit._by_name(name)
+                a = Vault._by_name(name)
                 return self.error(errors.SUBREDDIT_EXISTS)
             except NotFound:
                 return name
@@ -840,7 +840,7 @@ class VSRByName(Validator):
         else:
             sr_name = sr_path_rx.sub(r'\g<name>', sr_name.strip())
             try:
-                sr = Subreddit._by_name(sr_name)
+                sr = Vault._by_name(sr_name)
                 if self.return_srname:
                     return sr.name
                 else:
@@ -850,15 +850,15 @@ class VSRByName(Validator):
 
     def param_docs(self):
         return {
-            self.param: "subreddit name",
+            self.param: "vault name",
         }
 
 
 class VSRByNames(Validator):
-    """Returns a dict mapping subreddit names to subreddit objects.
+    """Returns a dict mapping vault names to vault objects.
 
-    sr_names_csv - a comma delimited string of subreddit names
-    required - if true (default) an empty subreddit name list is an error
+    sr_names_csv - a comma delimited string of vault names
+    required - if true (default) an empty vault name list is an error
 
     """
     def __init__(self, sr_names_csv, required=True):
@@ -869,14 +869,14 @@ class VSRByNames(Validator):
         if sr_names_csv:
             sr_names = [sr_path_rx.sub(r'\g<name>', s.strip())
                         for s in sr_names_csv.split(',')]
-            return Subreddit._by_name(sr_names)
+            return Vault._by_name(sr_names)
         elif self.required:
             self.set_error(errors.BAD_SR_NAME, code=400)
         return {}
 
     def param_docs(self):
         return {
-            self.param: "comma-delimited list of subreddit names",
+            self.param: "comma-delimited list of vault names",
         }
 
 
@@ -950,7 +950,7 @@ class VAccountByName(VRequired):
         return self.error()
 
     def param_docs(self):
-        return {self.param: "A valid, existing reddit username"}
+        return {self.param: "A valid, existing tippr username"}
 
 
 class VFriendOfMine(VAccountByName):
@@ -1082,19 +1082,19 @@ class VUser(Validator):
 
 class VNotInTimeout(Validator):
     def run(self, target_fullname=None, fatal=True, action_name=None,
-            details_text="", target=None, subreddit=None):
+            details_text="", target=None, vault=None):
         if c.user_is_loggedin and c.user.in_timeout:
             g.events.timeout_forbidden_event(
                 action_name,
                 details_text=details_text,
                 target=target,
                 target_fullname=target_fullname,
-                subreddit=subreddit,
+                vault=vault,
                 request=request,
                 context=c,
             )
             if fatal:
-                request.environ['REDDIT_ERROR_NAME'] = 'IN_TIMEOUT'
+                request.environ['TIPPR_ERROR_NAME'] = 'IN_TIMEOUT'
                 abort(403, errors.IN_TIMEOUT)
             return False
 
@@ -1207,7 +1207,7 @@ class VVerifiedUser(VUser):
             raise VerifiedUserRequiredException
 
 class VGold(VUser):
-    notes = "*Requires a subscription to [reddit gold](/gold/about)*"
+    notes = "*Requires a subscription to [tippr gold](/gold/about)*"
     def run(self):
         VUser.run(self)
         if not c.user.gold:
@@ -1312,10 +1312,10 @@ class VCanDistinguish(VByName):
             if item.author_id == c.user._id:
                 if isinstance(item, Message) and c.user.employee:
                     return True
-                subreddit = item.subreddit_slow
+                vault = item.subreddit_slow
 
                 if (how in ("yes", "no") and
-                        subreddit.can_distinguish(c.user)):
+                        vault.can_distinguish(c.user)):
                     can_distinguish = True
                 elif (how in ("special", "no") and
                         c.user_special_distinguish):
@@ -1326,7 +1326,7 @@ class VCanDistinguish(VByName):
 
                 if can_distinguish:
                     # Don't allow distinguishing for users in timeout
-                    VNotInTimeout().run(target=item, subreddit=subreddit)
+                    VNotInTimeout().run(target=item, vault=vault)
                     return can_distinguish
 
         abort(403,'forbidden')
@@ -1340,7 +1340,7 @@ class VSrCanAlter(VByName):
             return True
         elif c.user_is_loggedin:
             can_alter = False
-            subreddit = None
+            vault = None
             item = VByName.run(self, thing_name)
 
             if item.author_id == c.user._id:
@@ -1351,13 +1351,13 @@ class VSrCanAlter(VByName):
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and
                 # comments
-                subreddit = item.subreddit_slow
-                if subreddit.can_distinguish(c.user):
+                vault = item.subreddit_slow
+                if vault.can_distinguish(c.user):
                     can_alter = True
 
             if can_alter:
                 # Don't allow mod actions for users who are in timeout
-                VNotInTimeout().run(target=item, subreddit=subreddit)
+                VNotInTimeout().run(target=item, vault=vault)
                 return can_alter
 
         abort(403,'forbidden')
@@ -1388,8 +1388,8 @@ class VSrSpecial(VByName):
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
-            subreddit = item.subreddit_slow
-            if subreddit.is_special(c.user):
+            vault = item.subreddit_slow
+            if vault.is_special(c.user):
                 return True
         abort(403,'forbidden')
 
@@ -1479,7 +1479,7 @@ class VSubmitSR(Validator):
 
         try:
             sr_name = sr_path_rx.sub(r'\g<name>', str(sr_name).strip())
-            sr = Subreddit._by_name(sr_name)
+            sr = Vault._by_name(sr_name)
         except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.SUBREDDIT_NOEXIST)
             return
@@ -1507,7 +1507,7 @@ class VSubmitSR(Validator):
 
     def param_docs(self):
         return {
-            self.param[0]: "name of a subreddit",
+            self.param[0]: "name of a vault",
         }
 
 class VSubscribeSR(VByName):
@@ -1521,7 +1521,7 @@ class VSubscribeSR(VByName):
             return
 
         try:
-            sr = Subreddit._by_name(str(sr_name).strip())
+            sr = Vault._by_name(str(sr_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.SUBREDDIT_NOEXIST)
             return
@@ -1530,7 +1530,7 @@ class VSubscribeSR(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: "the name of a subreddit",
+            self.param[0]: "the name of a vault",
         }
 
 
@@ -1962,7 +1962,7 @@ class VMessageRecipient(VExistingUname):
         if not name:
             return self.error()
         is_subreddit = False
-        if name.startswith('/r/'):
+        if name.startswith('/v/'):
             name = name[3:]
             is_subreddit = True
         elif name.startswith('#'):
@@ -1972,16 +1972,16 @@ class VMessageRecipient(VExistingUname):
         # A user in timeout should only be able to message us, the admins.
         if (c.user.in_timeout and
                 not (is_subreddit and
-                     '/r/%s' % name == g.admin_message_acct)):
+                     '/v/%s' % name == g.admin_message_acct)):
             abort(403, 'forbidden')
 
         if is_subreddit:
             try:
-                s = Subreddit._by_name(name)
+                s = Vault._by_name(name)
                 if isinstance(s, FakeSubreddit):
-                    raise NotFound("fake subreddit")
+                    raise NotFound("fake vault")
                 if s._spam:
-                    raise NotFound("banned subreddit")
+                    raise NotFound("banned vault")
                 if s.is_muted(c.user) and not c.user_is_admin:
                     self.set_error(errors.USER_MUTED)
                 return s
@@ -2109,7 +2109,7 @@ class VCssName(Validator):
 
     def param_docs(self):
         return {
-            self.param: "a valid subreddit image name",
+            self.param: "a valid vault image name",
         }
 
 class VColor(Validator):
@@ -3075,7 +3075,7 @@ class VValidatedJSON(VJSON):
 
         def run(self, data):
             if not isinstance(data, list):
-                raise RedditError('JSON_INVALID', code=400)
+                raise TipprError('JSON_INVALID', code=400)
 
             validated_data = []
             for item in data:
@@ -3104,7 +3104,7 @@ class VValidatedJSON(VJSON):
 
         def run(self, data, ignore_missing=False):
             if not isinstance(data, dict):
-                raise RedditError('JSON_INVALID', code=400)
+                raise TipprError('JSON_INVALID', code=400)
 
             validated_data = {}
             for key, validator in self.spec.items():
@@ -3113,7 +3113,7 @@ class VValidatedJSON(VJSON):
                 except KeyError:
                     if ignore_missing:
                         continue
-                    raise RedditError('JSON_MISSING_KEY', code=400,
+                    raise TipprError('JSON_MISSING_KEY', code=400,
                                       msg_params={'key': key})
             return validated_data
 
@@ -3175,7 +3175,7 @@ multi_name_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{1,20}\Z")
 multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
 
 class VMultiPath(Validator):
-    """Validates a multireddit path. Returns a path info dictionary.
+    """Validates a multivault path. Returns a path info dictionary.
     """
     def __init__(self, param, kinds=None, required=True, **kw):
         Validator.__init__(self, param, **kw)
@@ -3230,12 +3230,12 @@ class VMultiPath(Validator):
 
     def param_docs(self):
         return {
-            self.param: "multireddit url path",
+            self.param: "multivault url path",
         }
 
 
 class VMultiByPath(Validator):
-    """Validates a multireddit path.  Returns a LabeledMulti.
+    """Validates a multivault path.  Returns a LabeledMulti.
     """
     def __init__(self, param, require_view=True, require_edit=False, kinds=None):
         Validator.__init__(self, param)
@@ -3268,11 +3268,11 @@ class VMultiByPath(Validator):
 
     def param_docs(self):
         return {
-            self.param: "multireddit url path",
+            self.param: "multivault url path",
         }
 
 
-sr_path_rx = re.compile(r"\A(/?r/)?(?P<name>.*?)/?\Z")
+sr_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
 class VSubredditList(Validator):
 
     def __init__(self, param, limit=20, allow_language_srs=True):
@@ -3280,24 +3280,24 @@ class VSubredditList(Validator):
         self.limit = limit
         self.allow_language_srs = allow_language_srs
 
-    def run(self, subreddits):
-        if not subreddits:
+    def run(self, vaults):
+        if not vaults:
             return []
 
-        # extract subreddit name if path provided
-        subreddits = [sr_path_rx.sub(r'\g<name>', sr.strip())
-                      for sr in subreddits.lower().strip().splitlines() if sr]
+        # extract vault name if path provided
+        vaults = [sr_path_rx.sub(r'\g<name>', sr.strip())
+                      for sr in vaults.lower().strip().splitlines() if sr]
 
-        for name in subreddits:
-            valid_name = Subreddit.is_valid_name(
+        for name in vaults:
+            valid_name = Vault.is_valid_name(
                 name, allow_language_srs=self.allow_language_srs)
             if not valid_name:
                 return self.set_error(errors.BAD_SR_NAME, code=400)
 
-        unique_srs = set(subreddits)
+        unique_srs = set(vaults)
 
-        if subreddits:
-            valid_srs = set(Subreddit._by_name(subreddits).keys())
+        if vaults:
+            valid_srs = set(Vault._by_name(vaults).keys())
             if unique_srs - valid_srs:
                 return self.set_error(errors.SUBREDDIT_NOEXIST, code=400)
 
@@ -3305,12 +3305,12 @@ class VSubredditList(Validator):
             return self.set_error(
                 errors.TOO_MANY_SUBREDDITS, {'max': self.limit}, code=400)
 
-        # return list of subreddit names as entered
-        return subreddits
+        # return list of vault names as entered
+        return vaults
 
     def param_docs(self):
         return {
-            self.param: 'a list of subreddit names, line break delimited',
+            self.param: 'a list of vault names, line break delimited',
         }
 
 

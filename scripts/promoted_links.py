@@ -86,7 +86,7 @@ def get_campaign_pageviews(date, sr_name=''):
     codename_string = PC_PREFIX + '_%'
     q = (Session.query(traffic_cls.codename,
                        sa_sum(traffic_cls.pageview_count).label('daily'))
-            .filter(traffic_cls.subreddit == sr_name)
+            .filter(traffic_cls.vault == sr_name)
             .filter(traffic_cls.codename.like(codename_string))
             .filter(traffic_cls.interval == 'hour')
             .filter(traffic_cls.date.in_(hours))

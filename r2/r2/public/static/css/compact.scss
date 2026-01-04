@@ -999,26 +999,26 @@ body.post-under-6h-old .gilded-icon {
     margin-left: 0;
 }
 
-/* subreddit */
+/* vault */
 
-.link .subreddit { 
+.link .vault { 
     background-color: transparent;
     margin: 0px; 
 }
 
-.subreddit { 
+.vault { 
     background-color: white;
     @include border-radius(5px);
     margin: 5px; 
 }
 
-.subreddit p.title { 
+.vault p.title { 
     display: block;
     margin-left: 35px;
     margin-right: 30px; 
 }
 
-.subreddit  a.title {
+.vault  a.title {
     display: block;
     margin: 0; padding: 0;
     text-overflow: ellipsis; 
@@ -1029,61 +1029,61 @@ body.post-under-6h-old .gilded-icon {
     color: #25A; 
     text-decoration: none;
 }
-.subreddit .title a.domain { 
+.vault .title a.domain { 
     font-size: x-small;
     color: #AAA; 
     font-style: italic; 
     display: block; 
 }
 
-.subreddit .tagline { 
+.vault .tagline { 
     font-size: x-small;
     color: #666;
 }
 
-.subreddit .button.active { 
+.vault .button.active { 
     @include vertical_gradient(#BFD0E0, #80A2C4);
 }
 
-.subreddit > .entry .score,
-.subreddit > .entry.likes  .score.unvoted,
-.subreddit > .entry.dislikes  .score.unvoted  {
+.vault > .entry .score,
+.vault > .entry.likes  .score.unvoted,
+.vault > .entry.dislikes  .score.unvoted  {
     display:none;
 }
 
-.subreddit > .entry  .score.unvoted,
-.subreddit > .entry.likes  .score.likes,
-.subreddit > .entry.dislikes  .score.dislikes
+.vault > .entry  .score.unvoted,
+.vault > .entry.likes  .score.likes,
+.vault > .entry.dislikes  .score.dislikes
 {
     display:inline;
 }
 
-.subreddit .midcol .button.add,
-.subreddit .midcol .button.remove { 
+.vault .midcol .button.add,
+.vault .midcol .button.remove { 
     font-family: courier;
     font-size: small; 
 }
 
-.subreddit .midcol { 
+.vault .midcol { 
     float: left; 
 }
 
-.subreddit .midcol .button { 
+.vault .midcol .button { 
     display: none;
     margin: 4px; 
 }
-.subreddit .midcol .button.active { 
+.vault .midcol .button.active { 
     display: block;
     width: auto; 
     height: auto;
     padding: 0px 9px; 
 }
-.subreddit .expando-button { 
+.vault .expando-button { 
     float: right; 
     height: 100%; 
 }
 
-.subreddit .description { 
+.vault .description { 
     border-top: 1px solid #AAA;
     margin-top: 2px;
     padding-top: 2px; 

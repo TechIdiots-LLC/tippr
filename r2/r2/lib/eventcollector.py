@@ -298,16 +298,16 @@ class EventQueue:
         self.save_event(event)
 
     @squelch_exceptions
-    def muted_forbidden_event(self, details_text, subreddit=None,
+    def muted_forbidden_event(self, details_text, vault=None,
             parent_message=None, target=None, request=None, context=None):
         """Create a mute-related 'forbidden_event' for event-collector.
 
         details_text: "muted" if a muted user is trying to message the
-            subreddit or "muted mod" if the subreddit mod is attempting
+            vault or "muted mod" if the vault mod is attempting
             to message the muted user
-        subreddit: The Subreddit of the mod messaging the muted user
+        vault: The Vault of the mod messaging the muted user
         parent_message: Message that is being responded to
-        target: The intended recipient (Subreddit or Account)
+        target: The intended recipient (Vault or Account)
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
@@ -323,14 +323,14 @@ class EventQueue:
             event.add("parent_message_id", parent_message._id)
             event.add("parent_message_fullname", parent_message._fullname)
 
-        event.add_subreddit_fields(subreddit)
+        event.add_subreddit_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
 
     @squelch_exceptions
     def timeout_forbidden_event(self, action_name, details_text,
-            target=None, target_fullname=None, subreddit=None,
+            target=None, target_fullname=None, vault=None,
             request=None, context=None):
         """Create a timeout-related 'forbidden_actions' for event-collector.
 
@@ -338,8 +338,8 @@ class EventQueue:
         details_text: this provides more details about the action
         target: The intended item the action was to be taken on
         target_fullname: The fullname used to convert to a target
-        subreddit: The Subreddit the action was taken in. If target is of the
-            type Subreddit, then this won't be passed in
+        vault: The Vault the action was taken in. If target is of the
+            type Vault, then this won't be passed in
         request, context: Should be pylons.request & pylons.c respectively;
 
         """
@@ -356,7 +356,7 @@ class EventQueue:
                     action_name = "downvote"
                 else:
                     action_name = "clearvote"
-            # set or unset for contest mode and subreddit sticky
+            # set or unset for contest mode and vault sticky
             elif action_name in ("set_contest_mode", "set_subreddit_sticky"):
                 action_name = action_name.replace("_", "")
                 if request.POST.get('state') == "False":
@@ -409,28 +409,28 @@ class EventQueue:
         event.add("details_text", details_text)
         event.add("process_notes", "IN_TIMEOUT")
 
-        from r2.models import Comment, Link, Subreddit
-        if not subreddit:
-            if isinstance(context.site, Subreddit):
-                subreddit = context.site
+        from r2.models import Comment, Link, Vault
+        if not vault:
+            if isinstance(context.site, Vault):
+                vault = context.site
             elif isinstance(target, (Comment, Link)):
-                subreddit = target.subreddit_slow
-            elif isinstance(target, Subreddit):
-                subreddit = target
+                vault = target.subreddit_slow
+            elif isinstance(target, Vault):
+                vault = target
 
-        event.add_subreddit_fields(subreddit)
+        event.add_subreddit_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
 
     @squelch_exceptions
     @sampled("events_collector_mod_sample_rate")
-    def mod_event(self, modaction, subreddit, mod, target=None,
+    def mod_event(self, modaction, vault, mod, target=None,
             request=None, context=None):
         """Create a 'mod' event for event-collector.
 
         modaction: An r2.models.ModAction object
-        subreddit: The Subreddit the mod action is being performed in
+        vault: The Vault the mod action is being performed in
         mod: The Account that is performing the mod action
         target: The Thing the mod action was applied to
         request, context: Should be pylons.request & pylons.c respectively
@@ -455,7 +455,7 @@ class EventQueue:
             event["user_id"] = mod._id
             event["user_name"] = mod.name
 
-        event.add_subreddit_fields(subreddit)
+        event.add_subreddit_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -463,13 +463,13 @@ class EventQueue:
     @squelch_exceptions
     @sampled("events_collector_report_sample_rate")
     def report_event(self, reason=None, details_text=None,
-            subreddit=None, target=None, request=None, context=None,
+            vault=None, target=None, request=None, context=None,
                      event_type="ss.report"):
         """Create a 'report' event for event-collector.
 
         process_notes: Type of rule (pre-defined report reasons or custom)
         details_text: The report reason
-        subreddit: The Subreddit the action is being performed in
+        vault: The Vault the action is being performed in
         target: The Thing the action was applied to
         request, context: Should be pylons.request & pylons.c respectively
 
@@ -485,7 +485,7 @@ class EventQueue:
         if reason in OLD_SITEWIDE_RULES or reason in SITEWIDE_RULES:
             process_notes = "SITE_RULES"
         else:
-            if subreddit and SubredditRules.get_rule(subreddit, reason):
+            if vault and SubredditRules.get_rule(vault, reason):
                 process_notes = "SUBREDDIT_RULES"
             else:
                 process_notes = "CUSTOM"
@@ -493,20 +493,20 @@ class EventQueue:
         event.add("process_notes", process_notes)
         event.add("details_text", details_text)
 
-        event.add_subreddit_fields(subreddit)
+        event.add_subreddit_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
 
     @squelch_exceptions
     @sampled("events_collector_quarantine_sample_rate")
-    def quarantine_event(self, event_type, subreddit,
+    def quarantine_event(self, event_type, vault,
             request=None, context=None):
         """Create a 'quarantine' event for event-collector.
 
         event_type: quarantine_interstitial_view, quarantine_opt_in,
             quarantine_opt_out, quarantine_interstitial_dismiss
-        subreddit: The quarantined subreddit
+        vault: The quarantined vault
         request, context: Should be pylons.request & pylons.c respectively
 
         """
@@ -540,7 +540,7 @@ class EventQueue:
             if thing_id36:
                 event.add("thing_id", int(thing_id36, 36))
 
-        event.add_subreddit_fields(subreddit)
+        event.add_subreddit_fields(vault)
 
         self.save_event(event)
 
@@ -887,7 +887,7 @@ class Event:
             target_type = "self"
         self.add("target_type", target_type)
 
-        # If the target is an Account or Subreddit (or has a "name" attr),
+        # If the target is an Account or Vault (or has a "name" attr),
         # add the target_name
         if hasattr(target, "name"):
             self.add("target_name", target.name)
@@ -924,12 +924,12 @@ class Event:
             target=target,
         )
 
-    def add_subreddit_fields(self, subreddit):
-        if not subreddit:
+    def add_subreddit_fields(self, vault):
+        if not vault:
             return
 
-        self.add("sr_id", subreddit._id)
-        self.add("sr_name", subreddit.name)
+        self.add("sr_id", vault._id)
+        self.add("sr_name", vault.name)
 
     def get(self, field, obfuscated=False):
         if obfuscated:

@@ -41,7 +41,7 @@ class TestGetScrapeUrl(unittest.TestCase):
         post = Link(is_self=True, selftext='''
 Some text here.
 https://example.com
-https://reddit.com''')
+https://www.tippr.net''')
         url = _get_scrape_url(post)
         self.assertEqual(url, 'https://example.com')
 
@@ -57,20 +57,20 @@ https://imgur.com''')
         post = Link(is_self=True, selftext='''
 Some text here.
 https://example.com
-https://reddit.com/a.jpg''')
+https://www.tippr.net/a.jpg''')
         url = _get_scrape_url(post)
-        self.assertEqual(url, 'https://reddit.com/a.jpg')
+        self.assertEqual(url, 'https://www.tippr.net/a.jpg')
 
         post = Link(is_self=True, selftext='''
 Some text here.
 https://example.com
-https://reddit.com/a.PNG''')
+https://www.tippr.net/a.PNG''')
         url = _get_scrape_url(post)
-        self.assertEqual(url, 'https://reddit.com/a.PNG')
+        self.assertEqual(url, 'https://www.tippr.net/a.PNG')
 
         post = Link(is_self=True, selftext='''
 Some text here.
 https://example.com
-https://reddit.com/a.jpg/b''')
+https://www.tippr.net/a.jpg/b''')
         url = _get_scrape_url(post)
         self.assertEqual(url, 'https://example.com')

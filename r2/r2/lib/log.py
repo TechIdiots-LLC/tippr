@@ -146,7 +146,7 @@ class RavenErrorReporter(Reporter):
         }
 
         if c.site:
-            reddit_context["subreddit"] = c.site.name
+            reddit_context["vault"] = c.site.name
 
         client.extra_context(reddit_context)
 

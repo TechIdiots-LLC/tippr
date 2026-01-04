@@ -36,7 +36,7 @@ class RunCommand(command.Command):
 
     usage = "CONFIGFILE CMDFILE.py"
     summary = "Executed CMDFILE with pylons support"
-    group_name = "Reddit"
+    group_name = "Tippr"
 
 
     parser = command.Command.standard_parser(verbose=True)

@@ -392,7 +392,7 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 def _get_scrape_url(link):
     if not link.is_self:
         sr_name = link.subreddit_slow.name
-        if not feature.is_enabled("imgur_gif_conversion", subreddit=sr_name):
+        if not feature.is_enabled("imgur_gif_conversion", vault=sr_name):
             return link.url
         p = UrlParser(link.url)
         # If it's a gif link on imgur, replacing it with gifv should
@@ -422,7 +422,7 @@ def _get_scrape_url(link):
 def _set_media(link, force=False, **kwargs):
     sr = link.subreddit_slow
     
-    # Do not process thumbnails for quarantined subreddits
+    # Do not process thumbnails for quarantined vaults
     if sr.quarantine:
         return
 
@@ -443,7 +443,7 @@ def _set_media(link, force=False, **kwargs):
             link._commit()
         return
 
-    youtube_scraper = feature.is_enabled("youtube_scraper", subreddit=sr.name)
+    youtube_scraper = feature.is_enabled("youtube_scraper", vault=sr.name)
     media = _scrape_media(scrape_url, force=force,
                           use_youtube_scraper=youtube_scraper, **kwargs)
 

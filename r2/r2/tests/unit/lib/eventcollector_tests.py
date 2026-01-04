@@ -202,12 +202,12 @@ class TestEventCollector(RedditTestCase):
         self.patch_liveconfig("events_collector_mod_sample_rate", 1.0)
         mod = MagicMock(name="mod")
         modaction = MagicMock(name="modaction")
-        subreddit = MagicMock(name="subreddit")
+        vault = MagicMock(name="vault")
         context = MagicMock(name="context")
         request = MagicMock(name="request")
         request.ip = "1.2.3.4"
         g.events.mod_event(
-            modaction, subreddit, mod, context=context, request=request
+            modaction, vault, mod, context=context, request=request
         )
 
         self.amqp.assert_event_item(
@@ -215,8 +215,8 @@ class TestEventCollector(RedditTestCase):
                 'event_type': modaction.action,
                 'event_topic': 'mod_events',
                 'payload': {
-                    'sr_id': subreddit._id,
-                    'sr_name': subreddit.name,
+                    'sr_id': vault._id,
+                    'sr_name': vault.name,
                     'domain': request.host,
                     'user_agent': request.user_agent,
                     'user_agent_parsed': request.parsed_agent.to_dict(),
@@ -241,12 +241,12 @@ class TestEventCollector(RedditTestCase):
     def test_quarantine_event(self):
         self.patch_liveconfig("events_collector_quarantine_sample_rate", 1.0)
         event_type = MagicMock(name="event_type")
-        subreddit = MagicMock(name="subreddit")
+        vault = MagicMock(name="vault")
         context = MagicMock(name="context")
         request = MagicMock(name="request")
         request.ip = "1.2.3.4"
         g.events.quarantine_event(
-            event_type, subreddit, context=context, request=request
+            event_type, vault, context=context, request=request
         )
 
         self.amqp.assert_event_item(
@@ -258,11 +258,11 @@ class TestEventCollector(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'verified_email': context.user.email_verified,
                     'user_id': context.user._id,
-                    'sr_name': subreddit.name,
+                    'sr_name': vault.name,
                     'referrer_url': request.headers.get(),
                     'user_agent': request.user_agent,
                     'user_agent_parsed': request.parsed_agent.to_dict(),
-                    'sr_id': subreddit._id,
+                    'sr_id': vault._id,
                     'user_name': context.user.name,
                     'oauth2_client_id': context.oauth2_client._id,
                     'oauth2_client_app_type': context.oauth2_client.app_type,

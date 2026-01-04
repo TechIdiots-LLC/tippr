@@ -96,7 +96,7 @@ class LinkButtons(PrintableButtons):
         show_report = not is_author and not thing._deleted and report
 
         show_share = ((c.user_is_loggedin or not g.read_only_mode) and
-                      not thing.subreddit.quarantine and
+                      not thing.vault.quarantine and
                       not thing.disable_comments and
                       not thing._deleted)
 
@@ -212,7 +212,7 @@ class CommentButtons(PrintableButtons):
         show_delete = is_author and delete and not thing._deleted
         suppress_reply_buttons = getattr(thing, 'suppress_reply_buttons', False)
 
-        if thing.link.is_archived(thing.subreddit):
+        if thing.link.is_archived(thing.vault):
             suppress_reply_buttons = True
 
         show_distinguish = (is_author and
@@ -237,7 +237,7 @@ class CommentButtons(PrintableButtons):
                 data={
                     "media": g.media_domain or g.domain,
                     "comment": thing.permalink,
-                    "link": thing.link.make_permalink(thing.subreddit),
+                    "link": thing.link.make_permalink(thing.vault),
                     "title": thing.link.title,
                     "root": ("true" if thing.parent_id is None else "false"),
                 })
@@ -295,7 +295,7 @@ class MessageButtons(PrintableButtons):
 
             if thing.sr_id:
                 sr = thing.subreddit_slow
-                is_admin_message = '/r/%s' % sr.name == g.admin_message_acct
+                is_admin_message = '/v/%s' % sr.name == g.admin_message_acct
 
                 if (sr.is_muted(first_message.author_slow) or
                         (first_message.to_id and
@@ -309,7 +309,7 @@ class MessageButtons(PrintableButtons):
 
         if was_comment:
             link = thing.link_slow
-            if link.is_archived(thing.subreddit) or link.locked:
+            if link.is_archived(thing.vault) or link.locked:
                 can_reply = False
 
         # Allow comment-reply messages to have links to the full thread.

@@ -77,7 +77,7 @@ class SigningTests(RedditTestCase):
     def test_signing(self):
         epoch_time = 1234567890
         header = self.make_sig_header(
-            '{"user": "reddit", "password": "hunter2"}',
+            '{"user": "tippr", "password": "hunter2"}',
             epoch=epoch_time,
         )
         self.assertEqual(
@@ -87,7 +87,7 @@ class SigningTests(RedditTestCase):
         )
 
     def test_valid_header(self):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         platform = "something"
         version = 2
         header = self.make_sig_header(
@@ -104,11 +104,11 @@ class SigningTests(RedditTestCase):
         )
 
     def test_no_header(self):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         self.assert_invalid(body, "", signing.ERRORS.INVALID_FORMAT)
 
     def test_garbage_header(self):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         self.assert_invalid(
             body,
             header="idontneednosignature",
@@ -116,7 +116,7 @@ class SigningTests(RedditTestCase):
         )
 
     def test_future_header(self):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         self.assert_invalid(
             body,
             header="2:awesomefuturespec",
@@ -126,7 +126,7 @@ class SigningTests(RedditTestCase):
 
     @patch.object(signing, "is_invalid_token", return_value=True)
     def test_invalid(self, _):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         platform = "something"
         version = 2
         # this is a perfectly valid signature (from `test_valid_header`)
@@ -144,7 +144,7 @@ class SigningTests(RedditTestCase):
         )
 
     def test_invalid_header(self):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         platform = "test"
         version = 1
         header = "1:{}:{}:deadbeef".format(platform, version)
@@ -156,7 +156,7 @@ class SigningTests(RedditTestCase):
         )
 
     def test_expired_header(self):
-        body = '{"user": "reddit", "password": "hunter2"}'
+        body = '{"user": "tippr", "password": "hunter2"}'
         platform = "test"
         version = 1
         header = "1:{}:{}:0:deadbeef".format(platform, version)

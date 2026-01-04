@@ -28,7 +28,7 @@ error_encountered=$?
 
 if [[ ${error_encountered} = 1 ]]; then
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    echo "pep8 issues found. reddit follows pep8: https://github.com/reddit/styleguide"
+    echo "pep8 issues found. tippr follows pep8: https://github.com/tippr/styleguide"
     echo "              Please commit a fix or ignore inline with: noqa"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     exit 1

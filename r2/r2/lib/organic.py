@@ -55,13 +55,13 @@ def cached_organic_links(*sr_ids):
     return link_names
 
 def organic_links(user):
-    sr_ids = Subreddit.user_subreddits(user)
+    sr_ids = Vault.user_subreddits(user)
     # make sure that these are sorted so the cache keys are constant
     sr_ids.sort()
 
-    # get the default subreddits if the user is not logged in
+    # get the default vaults if the user is not logged in
     user_id = None if isinstance(user, FakeAccount) else user
-    sr_ids = Subreddit.user_subreddits(user, True)
+    sr_ids = Vault.user_subreddits(user, True)
 
     # pass the cached function a sorted list so that we can guarantee
     # cachability

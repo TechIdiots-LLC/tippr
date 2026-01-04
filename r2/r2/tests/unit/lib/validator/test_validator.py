@@ -35,7 +35,7 @@ from r2.lib.validator import (
     VSubmitParent,
     VSubredditName,
 )
-from r2.models import Account, Comment, Link, Message, Subreddit
+from r2.models import Account, Comment, Link, Message, Vault
 from r2.tests import RedditTestCase
 
 
@@ -68,7 +68,7 @@ class TestVSubmitParent(ValidatorTests):
         c.user = Account(id=100)
 
         self.autopatch(Account, "enemy_ids", return_value=[])
-        self.autopatch(Subreddit, "_byID", return_value=None)
+        self.autopatch(Vault, "_byID", return_value=None)
 
     def _mock_message(self, id=1, author_id=1, **kwargs):
         kwargs['id'] = id
@@ -88,9 +88,9 @@ class TestVSubmitParent(ValidatorTests):
         link = Link(**kwargs)
         self.autopatch(VByName, "run", return_value=link)
 
-        sr = Subreddit(id=sr_id)
-        self.autopatch(Subreddit, "_byID", return_value=sr)
-        self.autopatch(Subreddit, "can_comment", return_value=can_comment)
+        sr = Vault(id=sr_id)
+        self.autopatch(Vault, "_byID", return_value=sr)
+        self.autopatch(Vault, "can_comment", return_value=can_comment)
         self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
 
         return link
@@ -109,11 +109,11 @@ class TestVSubmitParent(ValidatorTests):
         link = Link(id=link_id, sr_id=sr_id)
         self.autopatch(Link, "_byID", return_value=link)
 
-        sr = Subreddit(id=sr_id)
-        self.autopatch(Subreddit, "_byID", return_value=sr)
-        self.autopatch(Subreddit, "can_comment", return_value=can_comment)
+        sr = Vault(id=sr_id)
+        self.autopatch(Vault, "_byID", return_value=sr)
+        self.autopatch(Vault, "can_comment", return_value=can_comment)
         self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
-        self.autopatch(Subreddit, "is_moderator", return_value=is_moderator)
+        self.autopatch(Vault, "is_moderator", return_value=is_moderator)
 
         return comment
 
@@ -132,7 +132,7 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_invalid_thing(self):
         with self.assertRaises(HTTPForbidden):
-            sr = Subreddit(id=1)
+            sr = Vault(id=1)
             with patch.object(VByName, "run", return_value=sr):
                 self.validator.run('fullname', None)
 
@@ -189,7 +189,7 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_locked_link(self):
         link = self._mock_link(locked=True)
-        with patch.object(Subreddit, "can_distinguish", return_value=False):
+        with patch.object(Vault, "can_distinguish", return_value=False):
             result = self.validator.run('fullname', None)
 
             self.assertEqual(result, link)
@@ -198,7 +198,7 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_locked_link_mod_reply(self):
         link = self._mock_link(locked=True)
-        with patch.object(Subreddit, "can_distinguish", return_value=True):
+        with patch.object(Vault, "can_distinguish", return_value=True):
             result = self.validator.run('fullname', None)
 
             self.assertEqual(result, link)
@@ -275,15 +275,15 @@ class TestVSubredditName(ValidatorTests):
     # Most of this validator's logic is already covered in `IsValidNameTest`.
 
     def test_slash_r_slash(self):
-        result = self._test_success('/r/foo', assertEqual=False)
+        result = self._test_success('/v/foo', assertEqual=False)
         self.assertEqual(result, 'foo')
 
     def test_r_slash(self):
-        result = self._test_success('r/foo', assertEqual=False)
+        result = self._test_success('v/foo', assertEqual=False)
         self.assertEqual(result, 'foo')
 
     def test_two_prefixes(self):
-        self._test_failure('/r/r/foo')
+        self._test_failure('/v/r/foo')
 
     def test_slash_not_prefix(self):
         self._test_failure('foo/r/')

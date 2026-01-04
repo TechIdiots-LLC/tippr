@@ -555,7 +555,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "uuid.js",
     "hooks.js",
     "setup.js",
-    "migrate-global-reddit.js",
+    "migrate-global-tippr.js",
     "ajax.js",
     "safe-store.js",
     "preload.js",
@@ -569,12 +569,12 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "events.js",
     "access.js",
     "reddit-init-hook.js",
-    "jquery.reddit.js",
+    "jquery.tippr.js",
     "stateify.js",
     "validator.js",
     "strength-meter.js",
     "toggles.js",
-    "reddit.js",
+    "tippr.js",
     "sr-autocomplete.js",
     "spotlight.js",
     localized_appendices=[
@@ -605,7 +605,7 @@ module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
     "expando/nsfwflow.js",
 )
 
-module["reddit"] = LocalizedModule("reddit.js",
+module["tippr"] = LocalizedModule("tippr.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
     "custom-event.js",
@@ -658,8 +658,8 @@ module["reddit"] = LocalizedModule("reddit.js",
 module["modtools"] = Module("modtools.js",
     "errors.js",
     "models/validators.js",
-    "models/subreddit-rule.js",
-    "edit-subreddit-rules.js",
+    "models/vault-rule.js",
+    "edit-vault-rules.js",
     wrap=catch_errors,
 )
 
@@ -671,7 +671,7 @@ module["admin"] = Module("admin.js",
 )
 
 module["mobile"] = LocalizedModule("mobile.js",
-    module["reddit"],
+    module["tippr"],
     "lib/jquery.lazyload.js",
     "compact.js",
     filter_module=module["reddit-init-base"],
@@ -731,7 +731,7 @@ module["less"] = Module('less.js',
 )
 
 # This needs to be separate module because we need it to load on old / bad
-# browsers that choke on reddit.js
+# browsers that choke on tippr.js
 module["https-tester"] = Module("https-tester.js",
     "base.js",
     "uuid.js",

@@ -31,7 +31,7 @@ import sqlalchemy
 
 logger = logging.getLogger('dm_manager')
 logger.addHandler(logging.StreamHandler())
-APPLICATION_NAME = "reddit@%s:%d" % (socket.gethostname(), os.getpid())
+APPLICATION_NAME = "tippr@%s:%d" % (socket.gethostname(), os.getpid())
 
 
 def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',

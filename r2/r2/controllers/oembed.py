@@ -35,11 +35,11 @@ from r2.lib.filters import _force_unicode, scriptsafe_dumps, websafe
 from r2.lib.template_helpers import format_html, make_url_https
 from r2.lib.utils import UrlParser, url_to_thing
 from r2.lib.validator import VBoolean, VUrl, can_view_link_comments, validate
-from r2.models import Comment, Link, Subreddit
+from r2.models import Comment, Link, Vault
 
 _OEMBED_BASE = {
     "version": "1.0",
-    "provider_name": "reddit",
+    "provider_name": "tippr",
     "provider_url": make_url_https('/'),
 }
 
@@ -68,9 +68,9 @@ def _oembed_for(thing, **embed_options):
 
 
 def _oembed_post(thing, **embed_options):
-    subreddit = thing.subreddit_slow
+    vault = thing.subreddit_slow
     if (not can_view_link_comments(thing) or
-            subreddit.type in Subreddit.private_types):
+            vault.type in Vault.private_types):
         raise ForbiddenError(errors.POST_NOT_ACCESSIBLE)
 
     live = ''
@@ -99,8 +99,8 @@ def _oembed_post(thing, **embed_options):
                        live_data_attr=live,
                        link_url=link_url.unparse(),
                        title=websafe(thing.title),
-                       subreddit_url=make_url_https(subreddit.path),
-                       subreddit_name=subreddit.name,
+                       subreddit_url=make_url_https(vault.path),
+                       subreddit_name=vault.name,
                        script=script,
                        )
 
@@ -116,9 +116,9 @@ def _oembed_post(thing, **embed_options):
 
 def _oembed_comment(thing, **embed_options):
     link = thing.link_slow
-    subreddit = link.subreddit_slow
+    vault = link.subreddit_slow
     if (not can_view_link_comments(link) or
-            subreddit.type in Subreddit.private_types):
+            vault.type in Vault.private_types):
         raise ForbiddenError(errors.COMMENT_NOT_ACCESSIBLE)
 
     if not thing._deleted:

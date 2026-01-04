@@ -12,7 +12,7 @@ def health_view(request):
     simplified form: it returns the `versions` mapping from the app
     settings as JSON, and returns 503 if the quiesce lock file exists.
     """
-    if os.path.exists("/var/opt/reddit/quiesce"):
+    if os.path.exists("/var/opt/tippr/quiesce"):
         return Response("No thanks, I'm full.", status=503, content_type="text/plain")
 
     versions = request.registry.settings.get("versions", {})

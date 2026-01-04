@@ -26,7 +26,7 @@ from pylons import app_globals as g
 from pylons import request, response
 from pylons import tmpl_context as c
 
-from r2.controllers.reddit_base import RedditController, abort_with_error
+from r2.controllers.reddit_base import TipprController, abort_with_error
 from r2.lib.base import abort
 from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.csrf import csrf_exempt
@@ -42,7 +42,7 @@ from r2.lib.validator import (
 )
 
 
-class WebLogController(RedditController):
+class WebLogController(TipprController):
     on_validation_error = staticmethod(abort_with_error)
 
     @csrf_exempt

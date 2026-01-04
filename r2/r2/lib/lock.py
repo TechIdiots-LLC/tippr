@@ -35,8 +35,8 @@ from r2.lib.utils import simple_traceback
 # thread-local storage for detection of recursive locks
 locks = local()
 
-reddit_host = socket.gethostname()
-reddit_pid  = os.getpid()
+tippr_host = socket.gethostname()
+tippr_pid  = os.getpid()
 
 class TimeoutExpired(Exception): pass
 
@@ -70,7 +70,7 @@ class MemcacheLock:
     def acquire(self):
         start = datetime.now()
 
-        self.nonce = (reddit_host, reddit_pid, simple_traceback(limit=7))
+        self.nonce = (tippr_host, tippr_pid, simple_traceback(limit=7))
 
         # if this thread already has this lock, move on
         if self.key in self.locks:

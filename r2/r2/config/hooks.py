@@ -32,5 +32,5 @@ def register_hooks():
     from r2.models.account import trylater_hooks
     trylater_hooks.register_all()
 
-    from r2.models import subreddit
-    subreddit.trylater_hooks.register_all()
+    from r2.models import vault
+    vault.trylater_hooks.register_all()

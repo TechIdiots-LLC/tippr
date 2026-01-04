@@ -27,7 +27,7 @@ from routes import Mapper
 
 
 def not_in_sr(environ, results):
-    return ('subreddit' not in environ and
+    return ('vault' not in environ and
             'sub_domain' not in environ and
             'domain' not in environ)
 
@@ -70,7 +70,7 @@ def make_map(config):
     mc('/submit', controller='front', action='submit')
 
     # redirect old urls to the new
-    ABOUT_BASE = "https://about.reddit.com/"
+    ABOUT_BASE = "https://about.tippr.net/"
     mc('/about', controller='redirect', action='redirect', dest=ABOUT_BASE, 
        conditions={'function':not_in_sr})
     mc('/about/values', controller='redirect', action='redirect', dest=ABOUT_BASE)
@@ -90,26 +90,26 @@ def make_map(config):
        action='lang_traffic', langcode='')
     mc('/traffic/adverts/:code', controller='front',
        action='advert_traffic', code='')
-    mc('/traffic/subreddits/report', controller='front',
+    mc('/traffic/vaults/report', controller='front',
        action='subreddit_traffic_report')
     mc('/account-activity', controller='front', action='account_activity')
 
-    mc('/subreddits/create', controller='front', action='newreddit')
-    mc('/subreddits/search', controller='front', action='search_reddits')
-    mc('/subreddits/login', controller='forms', action='login')
-    mc('/subreddits/:where', controller='reddits', action='listing',
+    mc('/vaults/create', controller='front', action='newreddit')
+    mc('/vaults/search', controller='front', action='search_reddits')
+    mc('/vaults/login', controller='forms', action='login')
+    mc('/vaults/:where', controller='reddits', action='listing',
        where='popular', conditions={'function':not_in_sr},
        requirements=dict(where="popular|new|banned|employee|gold|default|"
                                "quarantine|featured"))
-    # If no subreddit is specified, might as well show a list of 'em.
-    mc('/r', controller='redirect', action='redirect', dest='/subreddits')
+    # If no vault is specified, might as well show a list of 'em.
+    mc('/r', controller='redirect', action='redirect', dest='/vaults')
 
-    mc('/subreddits/mine/:where', controller='myreddits', action='listing',
+    mc('/vaults/mine/:where', controller='myreddits', action='listing',
        where='subscriber', conditions={'function':not_in_sr},
        requirements=dict(where='subscriber|contributor|moderator'))
 
     # These routes are kept for backwards-compatibility reasons
-    # Using the above /subreddits/ ones instead is preferable
+    # Using the above /vaults/ ones instead is preferable
     mc('/reddits/create', controller='front', action='newreddit')
     mc('/reddits/search', controller='front', action='search_reddits')
     mc('/reddits/login', controller='forms', action='login')
@@ -136,7 +136,7 @@ def make_map(config):
     mc('/awards/received', controller='front', action='received_award')
 
     mc('/i18n', controller='redirect', action='redirect',
-       dest='https://www.reddit.com/r/i18n')
+       dest='https://www.tippr.net/r/i18n')
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
     mc('/contact', controller='frontunstyled', action='contact_us')
@@ -488,7 +488,7 @@ def make_map(config):
 
     # these should be near the buttom, because they should only kick
     # in if everything else fails. It's the attempted catch-all
-    # reddit.com/http://... and reddit.com/34fr
+    # tippr.net/http://... and tippr.net/34fr
     mc('/:link_id', controller='front', action='link_id_redirect',
        requirements=dict(link_id='[0-9a-z]{1,6}'))
     mc('/:urloid', controller='toolbar', action='s',

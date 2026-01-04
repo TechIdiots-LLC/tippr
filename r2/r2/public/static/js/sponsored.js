@@ -665,9 +665,9 @@ var exports = r.sponsored = {
         var $collections = $collectionList.find('.form-group .label-group');
         var collectionCount = $collections.length;
         var collectionHeight = $collections.eq(0).outerHeight();
-        var $subredditList = $('.collection-subreddit-list ul');
-        var $collectionLabel = $('.collection-subreddit-list .collection-label');
-        var $frontpageLabel = $('.collection-subreddit-list .frontpage-label');
+        var $subredditList = $('.collection-vault-list ul');
+        var $collectionLabel = $('.collection-vault-list .collection-label');
+        var $frontpageLabel = $('.collection-vault-list .frontpage-label');
 
         var subredditNameTemplate = _.template('<% _.each(sr_names, function(name) { %>'
             + ' <li><%= name %></li> <% }); %>');
@@ -785,7 +785,7 @@ var exports = r.sponsored = {
         this.collections = [{
             name: 'none',
             sr_names: null,
-            description: 'influencers on reddit’s highest trafficking page',
+            description: 'influencers on tippr’s highest trafficking page',
         }].concat(collections || []);
 
         this.collectionsByName = _.reduce(collections, function(obj, item) {
@@ -800,7 +800,7 @@ var exports = r.sponsored = {
           + '<input type="radio" name="collection" value="<%= name %>"'
           + '    <% print(name === \'' + defaultValue + '\' ? "checked=\'checked\'" : "") %>/>'
           + '  <div class="label-group">'
-          + '    <span class="label"><% print(name === \'none\' ? \'Reddit front page\' : name) %></span>'           + '    <small class="description"><%= description %></small>'
+          + '    <span class="label"><% print(name === \'none\' ? \'Tippr front page\' : name) %></span>'           + '    <small class="description"><%= description %></small>'
           + '  </div>'
           + '</label>');
 
@@ -1102,7 +1102,7 @@ var exports = r.sponsored = {
         } else if (isCollection) {
             prices.push(this.priceDict.COLLECTION[collectionVal] || this.priceDict.COLLECTION_DEFAULT);
         } else {
-            prices.push(this.priceDict.SUBREDDIT[sr] || this.priceDict.SUBREDDIT_DEFAULT);
+            prices.push(this.priceDict.VAULT[sr] || this.priceDict.SUBREDDIT_DEFAULT);
         }
 
         return _.max(prices);
@@ -1165,7 +1165,7 @@ var exports = r.sponsored = {
             collectionVal = $form.find('input[name="collection"]:checked').val(),
             isFrontpage = !isSubreddit && collectionVal === 'none',
             isCollection = !isSubreddit && !isFrontpage,
-            type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'subreddit',
+            type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'vault',
             sr = isSubreddit ? $form.find('*[name="sr"]').val() : '',
             collection = isCollection ? collectionVal : null,
             canGeotarget = isFrontpage || this.userIsSponsor || this.isAuction,
@@ -1181,8 +1181,8 @@ var exports = r.sponsored = {
             case 'frontpage':
                 displayName = 'the frontpage'
                 break;
-            case 'subreddit':
-                displayName = '/r/' + sr
+            case 'vault':
+                displayName = '/v/' + sr
                 break;
             default:
                 displayName = collection
@@ -1309,19 +1309,19 @@ var exports = r.sponsored = {
         var totalAuctionBudgetDollars = 0;
         var totalImpressions = 0;
 
-        function mapSubreddit(name, subreddits) {
-            subreddits[name] = 1;
+        function mapSubreddit(name, vaults) {
+            vaults[name] = 1;
         }
 
         function getSubredditsByCollection(name) {
             return collections[name] && collections[name].sr_names || null;
         }
 
-        function mapCollection(name, subreddits) {
+        function mapCollection(name, vaults) {
             var subredditNames = getSubredditsByCollection(name);
             if (subredditNames) {
                 _.each(subredditNames, function(subredditName) {
-                    mapSubreddit(subredditName, subreddits);
+                    mapSubreddit(subredditName, vaults);
                 });
             }
         }
@@ -1364,7 +1364,7 @@ var exports = r.sponsored = {
         + '<%= auctionCampaigns %> auction campaign'
         + '<% auctionCampaigns > 1 && print("s") %> with a total budget of '
         + '<%= prettyTotalAuctionBudgetDollars %> in '
-        + '<%= auctionSubreddits.length %> subreddit'
+        + '<%= auctionSubreddits.length %> vault'
         + '<% auctionSubreddits.length > 1 && print("s") %></p>'),
 
     fixed_cpm_dashboard_help_template: _.template('<p>there '
@@ -1372,7 +1372,7 @@ var exports = r.sponsored = {
         + '<%= fixedCPMCampaigns %> fixed CPM campaign'
         + '<% fixedCPMCampaigns > 1 && print("s") %> with a total budget of '
         + '<%= prettyTotalFixedCPMBudgetDollars %> in '
-        + '<%= fixedCPMSubreddits.length %> subreddit'
+        + '<%= fixedCPMSubreddits.length %> vault'
         + '<% fixedCPMSubreddits.length > 1 && print("s") %>, amounting to a '
         + 'total of <%= totalImpressions %> impressions</p>'),
 
@@ -1675,13 +1675,13 @@ var exports = r.sponsored = {
     },
 
     subreddit_targeting: function() {
-        $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
+        $('.vault-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
         this.render()
     },
 
     collection_targeting: function() {
-        $('.subreddit-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
+        $('.vault-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
         this.render()
     },
@@ -1862,7 +1862,7 @@ var exports = r.sponsored = {
         if (targeting.type === 'collection') {
             data.collection_name = targeting.collection;
         }
-        else if (targeting.type === 'subreddit') {
+        else if (targeting.type === 'vault') {
             data.sr_name = targeting.sr;
         }
 
@@ -2200,7 +2200,7 @@ function edit_campaign($campaign_row) {
                 radios.filter('*[value="one"]')
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
-                    .find(".subreddit-targeting").show();
+                    .find(".vault-targeting").show();
                 $(".collection-targeting").hide();
             } else {
                 radios.filter('*[value="collection"]')
@@ -2208,7 +2208,7 @@ function edit_campaign($campaign_row) {
                 $('.collection-targeting input[value="' + collectionTargeting + '"]')
                     .prop("checked", "checked");
                 campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
-                    .find(".subreddit-targeting").hide();
+                    .find(".vault-targeting").hide();
                 $('.collection-targeting').show();
             }
 
@@ -2292,7 +2292,7 @@ function create_campaign() {
                 .find('input[name="targeting"][value="collection"]').prop("checked", "checked").end()
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="total_budget_dollars"]').val(defaultBudgetDollars).end()
-                .find(".subreddit-targeting").hide().end()
+                .find(".vault-targeting").hide().end()
                 .find('select[name="country"]').val('').end()
                 .find('select[name="region"]').hide().end()
                 .find('select[name="metro"]').hide().end()

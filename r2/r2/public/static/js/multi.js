@@ -73,14 +73,14 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     initialize: function(attributes, options) {
         this.uncreated = options && !!options.isNew
-        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {
-            url: this.url() + '/r/',
+        this.vaults = new r.multi.MultiRedditList(this.get('vaults'), {
+            url: this.url() + '/v/',
             parse: true
         })
-        this.on('change:subreddits', function(model, value) {
-            this.subreddits.set(value, {parse: true})
+        this.on('change:vaults', function(model, value) {
+            this.vaults.set(value, {parse: true})
         }, this)
-        this.subreddits.on('request', function(model, xhr, options) {
+        this.vaults.on('request', function(model, xhr, options) {
             this.trigger('request', model, xhr, options)
         }, this)
     },
@@ -91,7 +91,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     toJSON: function() {
         data = Backbone.Model.prototype.toJSON.apply(this)
-        data.subreddits = this.subreddits.toJSON()
+        data.vaults = this.vaults.toJSON()
         return data
     },
 
@@ -117,27 +117,27 @@ r.multi.MultiReddit = Backbone.Model.extend({
     addSubreddit: function(names, options) {
         names = r.utils.tup(names)
         if (names.length == 1) {
-            this.subreddits.create({name: names[0]}, options)
+            this.vaults.create({name: names[0]}, options)
         } else {
             // batch add by syncing the entire multi
-            var subreddits = this.subreddits,
-                tmp = subreddits.clone()
+            var vaults = this.vaults,
+                tmp = vaults.clone()
             tmp.add(_.map(names, function(srName) {
                 return {name: srName}
             }))
 
-            // temporarily swap out the subreddits collection so we can
+            // temporarily swap out the vaults collection so we can
             // serialize and send the new data without updating the UI
             // this is similar to how the "wait" option is handled in
             // Backbone.Model.set
-            this.subreddits = tmp
+            this.vaults = tmp
             this.save(null, options)
-            this.subreddits = subreddits
+            this.vaults = vaults
         }
     },
 
     removeSubreddit: function(name, options) {
-        this.subreddits.getByName(name).destroy(options)
+        this.vaults.getByName(name).destroy(options)
     },
 
     _copyOp: function(op, newCollection, newName) {
@@ -171,7 +171,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
     },
 
     getSubredditNames: function() {
-        return this.subreddits.pluck('name')
+        return this.vaults.pluck('name')
     }
 })
 
@@ -219,7 +219,7 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
 r.multi.MultiSubredditItem = Backbone.View.extend({
     tagName: 'li',
 
-    template: _.template('<a href="/r/<%- sr_name %>">/r/<%- sr_name %></a><button class="remove-sr">x</button>'),
+    template: _.template('<a href="/v/<%- sr_name %>">/r/<%- sr_name %></a><button class="remove-sr">x</button>'),
 
     events: {
         'click .remove-sr': 'removeSubreddit'
@@ -259,12 +259,12 @@ r.multi.SubredditList = Backbone.View.extend({
     },
 
     initialize: function() {
-        this.listenTo(this.model.subreddits, 'add', this.addOne)
-        this.listenTo(this.model.subreddits, 'remove', this.removeOne)
-        this.listenTo(this.model.subreddits, 'sort', this.resort)
+        this.listenTo(this.model.vaults, 'add', this.addOne)
+        this.listenTo(this.model.vaults, 'remove', this.removeOne)
+        this.listenTo(this.model.vaults, 'sort', this.resort)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
 
-        this.listenTo(this.model.subreddits, 'add remove', function() {
+        this.listenTo(this.model.vaults, 'add remove', function() {
             r.ui.showWorkingDeferred(this.$el, r.ui.refreshListing())
         })
 
@@ -275,8 +275,8 @@ r.multi.SubredditList = Backbone.View.extend({
         this.itemView = this.options.itemView || r.multi.MultiSubredditItem
         this.itemViews = {}
         this.bubbleGroup = {}
-        this.$('.subreddits').empty()
-        this.model.subreddits.each(this.addOne, this)
+        this.$('.vaults').empty()
+        this.model.vaults.each(this.addOne, this)
     },
     
     addOne: function(sr) {
@@ -286,12 +286,12 @@ r.multi.SubredditList = Backbone.View.extend({
             bubbleGroup: this.bubbleGroup
         })
         this.itemViews[sr.id] = view
-        this.$('.subreddits').append(view.render().$el)
+        this.$('.vaults').append(view.render().$el)
     },
 
     resort: function() {
-        this.model.subreddits.each(function(sr) {
-            this.itemViews[sr.id].$el.appendTo(this.$('.subreddits'))
+        this.model.vaults.each(function(sr) {
+            this.itemViews[sr.id].$el.appendTo(this.$('.vaults'))
         }, this)
     },
 
@@ -345,7 +345,7 @@ r.multi.MultiDetails = Backbone.View.extend({
 
     initialize: function() {
         this.listenTo(this.model, 'change', this.render)
-        this.listenTo(this.model.subreddits, 'add remove reset', this.render)
+        this.listenTo(this.model.vaults, 'add remove reset', this.render)
 
         this.addBubble = new r.multi.MultiAddNoticeBubble({
             parent: this.$('.add-sr .sr-name'),
@@ -362,12 +362,12 @@ r.multi.MultiDetails = Backbone.View.extend({
         })
  
         // fetch initial data
-        if (!this.model.subreddits.isEmpty()) {
+        if (!this.model.vaults.isEmpty()) {
             recs.fetchForSrs(this.model.getSubredditNames())
         }
  
         // update recs when multi changes
-        this.listenTo(this.model.subreddits, 'add remove reset',
+        this.listenTo(this.model.vaults, 'add remove reset',
             function() {
                 var srNames = this.model.getSubredditNames()
                 recs.fetchForSrs(srNames)
@@ -382,7 +382,7 @@ r.multi.MultiDetails = Backbone.View.extend({
     render: function() {
         var canEdit = this.model.get('can_edit')
         if (canEdit) {
-            if (this.model.subreddits.isEmpty()) {
+            if (this.model.vaults.isEmpty()) {
                 this.addBubble.show()
             } else {
                 this.addBubble.hide()
@@ -398,7 +398,7 @@ r.multi.MultiDetails = Backbone.View.extend({
             )
         }
 
-        this.$('.count').text(this.model.subreddits.length)
+        this.$('.count').text(this.model.vaults.length)
 
         return this
     },
@@ -498,7 +498,7 @@ r.multi.MultiAddNoticeBubble = r.ui.Bubble.extend({
     render: function() {
         this.$el.html(this.template({
             awesomeness_goes_here: r._('awesomeness goes here'),
-            add_multi_sr: r._('add a subreddit to your multi.')
+            add_multi_sr: r._('add a vault to your multi.')
         }))
     }
 })
@@ -531,7 +531,7 @@ r.multi.SubscribeButton = Backbone.View.extend({
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
-    template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/r/<%- sr_name %>">/r/<%- sr_name %></a></div><div class="throbber"></div>'),
+    template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/v/<%- sr_name %>">/r/<%- sr_name %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank" title="<%- open_multi %>">&rsaquo;</a></label>'),
     itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- create_msg %>"><div class="error create-multi-error"></div></form></label>'),
 
@@ -558,14 +558,14 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
         var content = $('<div class="multi-list">')
         r.multi.mine.chain()
             .sortBy(function(multi) {
-                // sort multireddits containing this subreddit to the top.
-                return multi.subreddits.getByName(this.options.srName)
+                // sort multireddits containing this vault to the top.
+                return multi.vaults.getByName(this.options.srName)
             }, this)
             .each(function(multi) {
                 content.append(this.itemTemplate({
                     name: multi.get('name'),
                     path: multi.get('path'),
-                    checked: multi.subreddits.getByName(this.options.srName)
+                    checked: multi.vaults.getByName(this.options.srName)
                              ? 'checked' : '',
                     open_multi: r._('open this multi')
                 }))

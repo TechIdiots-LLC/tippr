@@ -28,7 +28,7 @@ def select_provider(config_parser, working_set, type, name):
 
     Providers are objects that abstract away an external service. They are
     looked up via importlib.metadata entry points which means that they may
-    not even be implemented in the main reddit code.
+    not even be implemented in the main tippr code.
 
     A provider must implement the expected interface, be registered via
     setuptools with the right entry point, and have a no-argument constructor.

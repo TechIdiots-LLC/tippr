@@ -33,7 +33,7 @@ from r2.lib.validator.validator import (
     VOneOf,
     VSRByName,
 )
-from r2.models import NotFound, Subreddit
+from r2.models import NotFound, Vault
 
 # Validators that map directly to Account._preference_attrs
 # The key MUST be the same string as the value in _preference_attrs
@@ -51,8 +51,8 @@ PREFS_VALIDATORS = dict(
     pref_research=VBoolean('research'),
     pref_numsites=VInt('numsites', 1, 100),
     pref_lang=VLang('lang'),
-    pref_media=VOneOf('media', ('on', 'off', 'subreddit')),
-    # pref_media_preview=VOneOf('media_preview', ('on', 'off', 'subreddit')),
+    pref_media=VOneOf('media', ('on', 'off', 'vault')),
+    # pref_media_preview=VOneOf('media_preview', ('on', 'off', 'vault')),
     pref_compress=VBoolean('compress'),
     pref_domain_details=VBoolean('domain_details'),
     pref_min_link_score=VInt('min_link_score', -100, 100),
@@ -98,13 +98,13 @@ def set_prefs(user, prefs):
     for k, v in prefs.items():
         if k == 'pref_beta' and v and not getattr(user, 'pref_beta', False):
             # If a user newly opted into beta, we want to subscribe them
-            # to the beta subreddit.
+            # to the beta vault.
             try:
-                sr = Subreddit._by_name(g.beta_sr)
+                sr = Vault._by_name(g.beta_sr)
                 if not sr.is_subscriber(user):
                     sr.add_subscriber(user)
             except NotFound:
-                g.log.warning("Could not find beta subreddit '%s'. It may "
+                g.log.warning("Could not find beta vault '%s'. It may "
                               "need to be created." % g.beta_sr)
 
         setattr(user, k, v)
@@ -145,7 +145,7 @@ def filter_prefs(prefs, user):
     # check stylesheet override
     if (feature.is_enabled('stylesheets_everywhere', user=user) and
             prefs['pref_default_theme_sr']):
-        override_sr = Subreddit._by_name(prefs['pref_default_theme_sr'])
+        override_sr = Vault._by_name(prefs['pref_default_theme_sr'])
         if not override_sr:
             del prefs['pref_default_theme_sr']
             if prefs['pref_enable_default_themes']:
@@ -154,6 +154,6 @@ def filter_prefs(prefs, user):
             if override_sr.can_view(user):
                 prefs['pref_default_theme_sr'] = override_sr.name
             else:
-                # don't update if they can't view the chosen subreddit
+                # don't update if they can't view the chosen vault
                 c.errors.add(errors.SUBREDDIT_NO_ACCESS, field='stylesheet_override')
                 del prefs['pref_default_theme_sr']

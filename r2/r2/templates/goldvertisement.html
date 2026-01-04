@@ -30,7 +30,7 @@
     % if hasattr(thing, "goal_today"):
       title="Goal = $${'%0.2f' % thing.goal_today}"
     % endif
-    >${_("daily reddit gold goal")}</h2>
+    >${_("daily tippr gold goal")}</h2>
 
     <div class="progress">
       <p>${format_percent(thing.percent_filled / 100.0, locale=c.locale)}</p>
@@ -39,18 +39,18 @@
       </div>
     </div>
 
-    <a href="/gold?goldtype=${thing.default_type}&amp;source=progressbar" target="_blank">${_("help support reddit")}</a>
+    <a href="/gold?goldtype=${thing.default_type}&amp;source=progressbar" target="_blank">${_("help support tippr")}</a>
 
     <div class="gold-bubble hover-bubble help-bubble anchor-top-centered">
-      <p><span class="gold-branding">reddit gold</span>&#32;gives you extra features
-      and helps keep our servers running. We believe the more reddit can be
-      user-supported, the freer we will be to make reddit the best it can
+      <p><span class="gold-branding">tippr gold</span>&#32;gives you extra features
+      and helps keep our servers running. We believe the more tippr can be
+      user-supported, the freer we will be to make tippr the best it can
       be.</p>
 
       <p class="buy-gold">Buy gold for yourself to gain access to&#32;<a
         href="/gold/about" target="_blank">extra features</a>&#32;and&#32;<a
-        href="/r/goldbenefits" target="_blank">special benefits</a>. A month of gold pays for
-      &#32;<b>${thing.hours_paid}</b>&#32;of reddit server time!</p>
+        href="/v/goldbenefits" target="_blank">special benefits</a>. A month of gold pays for
+      &#32;<b>${thing.hours_paid}</b>&#32;of tippr server time!</p>
 
       <p class="give-gold">Give gold to thank exemplary people and encourage them to post
       more.</p>
@@ -65,7 +65,7 @@
         % if hasattr(thing, "goal_yesterday"):
           title="Goal = $${'%0.2f' % thing.goal_yesterday}"
         % endif
-        >${_("Yesterday's reddit gold goal")}</p>
+        >${_("Yesterday's tippr gold goal")}</p>
 
         <div class="progress">
           <p>${format_percent(thing.percent_filled_yesterday / 100.0, locale=c.locale)}</p>

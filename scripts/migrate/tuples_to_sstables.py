@@ -123,7 +123,7 @@ def main():
                       nargs=1, dest="data_type", default="utf8",
                       help="type to coerce data into for column values")
     parser.add_option("-k", "--keyspace",
-                      nargs=1, dest="keyspace", default="reddit",
+                      nargs=1, dest="keyspace", default="tippr",
                       help="the name of the keyspace the data is for")
     parser.add_option("-o", "--output-root",
                       nargs=1, dest="output_root", default=".",

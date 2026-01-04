@@ -20,13 +20,13 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-_reddit_controllers = {}
+_tippr_controllers = {}
 _plugin_controllers = {}
 
 def get_controller(name):
     name = name.lower() + 'controller'
-    if name in _reddit_controllers:
-        return _reddit_controllers[name]
+    if name in _tippr_controllers:
+        return _tippr_controllers[name]
     elif name in _plugin_controllers:
         return _plugin_controllers[name]
     else:
@@ -57,7 +57,7 @@ def load_controllers():
     from .ipn import (
         CoinbaseController,
         IpnController,
-        RedditGiftsController,
+        TipprGiftsController,
         StripeController,
     )
     from .listingcontroller import (
@@ -72,7 +72,7 @@ def load_controllers():
         MyredditsController,
         NewController,
         RandomrisingController,
-        RedditsController,
+        VaultsController,
         RisingController,
         UserController,
         UserListListingController,
@@ -98,4 +98,4 @@ def load_controllers():
     from .web import WebLogController
     from .wiki import WikiApiController, WikiController
 
-    _reddit_controllers.update((name.lower(), obj) for name, obj in locals().items())
+    _tippr_controllers.update((name.lower(), obj) for name, obj in locals().items())

@@ -30,7 +30,7 @@ from r2.lib.utils import constant_time_compare
 
 
 class FastlyCdnProvider(CdnProvider):
-    """A provider for reddit's configuration of Fastly."""
+    """A provider for tippr's configuration of Fastly."""
 
     def get_client_ip(self, environ):
         try:

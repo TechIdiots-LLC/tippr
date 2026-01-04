@@ -66,7 +66,7 @@ except ImportError:
 
 from pylons import app_globals as g
 
-from r2.config.middleware import RedditApp
+from r2.config.middleware import TipprApp
 
 # unfortunately, because of the deep intertwinded dependency we have in the
 # orm with app_globals, we unfortunately have to do some pylons-setup
@@ -221,10 +221,10 @@ class RedditTestCase(TestCase):
 
         # disable controllers for this type of test, and make sure to set
         # things back to where they started.
-        def reset_test_mode(orig_value=RedditApp.test_mode):
-            RedditApp.test_mode = orig_value
+        def reset_test_mode(orig_value=TipprApp.test_mode):
+            TipprApp.test_mode = orig_value
         self.addCleanup(reset_test_mode)
-        RedditApp.test_mode = True
+        TipprApp.test_mode = True
 
         self.app = paste.fixture.TestApp(wsgiapp)
         test_response = self.app.get("/_test_vars")
@@ -281,10 +281,23 @@ class RedditTestCase(TestCase):
     def patch_g(self, **kw):
         """Helper method to patch attrs on pylons.g.
 
-        Since we do this all the time.  autpatch g with the provided kw.
+        Since we do this all the time. Handles LocalStack properly by using
+        setattr/getattr instead of patch.object which fails on cleanup.
         """
         for k, v in kw.items():
-            self.autopatch(g, k, v, create=not hasattr(g, k))
+            had_attr = hasattr(g, k)
+            if had_attr:
+                orig = getattr(g, k)
+            setattr(g, k, v)
+            def cleanup(attr=k, had=had_attr, original=orig if had_attr else None):
+                if had:
+                    setattr(g, attr, original)
+                else:
+                    try:
+                        delattr(g, attr)
+                    except AttributeError:
+                        pass
+            self.addCleanup(cleanup)
 
     def patch_liveconfig(self, k, v):
         """Helper method to patch g.live_config (with cleanup)."""
@@ -320,19 +333,19 @@ class RedditControllerTestCase(RedditTestCase):
 
     def setUp(self):
         super().setUp()
-        from r2.models import Account, Link, Subreddit
+        from r2.models import Account, Link, Vault
         # unfortunately, these classes' _type attrs are used as import
         # side effects for some controllers, and need to be set for things
         # to work properly
-        for i, _cls in enumerate((Link, Subreddit, Account)):
+        for i, _cls in enumerate((Link, Vault, Account)):
             if not hasattr(_cls, "_type_id"):
                 self.autopatch(_cls, "_type_id", i + 1000, create=True)
             if not hasattr(_cls, "_type_name"):
                 self.autopatch(
                     _cls, "_type_name", _cls.__name__.lower(),
                     create=True)
-        # The same is true for _by_name on Subreddit and Account
-        self.subreddit_by_name = self.autopatch(Subreddit, "_by_name")
+        # The same is true for _by_name on Vault and Account
+        self.subreddit_by_name = self.autopatch(Vault, "_by_name")
         self.account_by_name = self.autopatch(Account, "_by_name")
 
         # mock out any Memcached side effects
@@ -353,7 +366,7 @@ class RedditControllerTestCase(RedditTestCase):
 
         # Lastly, pull the app out of test mode so it'll load controllers on
         # first use
-        RedditApp.test_mode = False
+        TipprApp.test_mode = False
 
     def do_post(self, action, params, headers=None, expect_errors=False):
 

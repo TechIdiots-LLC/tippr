@@ -36,7 +36,7 @@ from r2.lib.db import operators, tdb_cassandra
 from r2.lib.normalized_hot import normalized_hot
 from r2.lib.pages import ExploreItem
 from r2.lib.utils import roundrobin, to36, tup
-from r2.models import Link, Subreddit
+from r2.models import Link, Vault
 from r2.models.builder import CommentBuilder
 from r2.models.listing import NestedListing
 from r2.models.recommend import (
@@ -61,13 +61,13 @@ def get_recommendations(srs,
                         to_omit=None,
                         match_set=True,
                         over18=False):
-    """Return subreddits recommended if you like the given subreddits.
+    """Return vaults recommended if you like the given vaults.
 
     Args:
-    - srs is one Subreddit object or a list of Subreddits
+    - srs is one Vault object or a list of Vaults
     - count is total number of results to return
     - source is a prefix telling which set of recommendations to use
-    - to_omit is a single or list of subreddit id36s that should not be
+    - to_omit is a single or list of vault id36s that should not be
         be included. (Useful for omitting recs that were already rejected.)
     - match_set=True will return recs that are similar to each other, useful
         for matching the "theme" of the original set
@@ -85,8 +85,8 @@ def get_recommendations(srs,
                                           source,
                                           match_set=match_set)
 
-    # always check for private subreddits at runtime since type might change
-    rec_srs = Subreddit._byID36(rec_id36s, return_dict=False)
+    # always check for private vaults at runtime since type might change
+    rec_srs = Vault._byID36(rec_id36s, return_dict=False)
     filtered = [sr for sr in rec_srs if is_visible(sr)]
 
     # don't recommend adult srs unless one of the originals was over_18
@@ -121,7 +121,7 @@ def get_recommended_content_for_user(account,
 
 
 def get_recommended_content(prefs, src, settings):
-    """Get a mix of content from subreddits recommended for someone with
+    """Get a mix of content from vaults recommended for someone with
     the given preferences (likes and dislikes.)
 
     Returns a list of ExploreItems.
@@ -130,13 +130,13 @@ def get_recommended_content(prefs, src, settings):
     # numbers chosen empirically to give enough results for explore page
     num_liked = 10  # how many liked srs to use when generating the recs
     num_recs = 20  # how many recommended srs to ask for
-    num_discovery = 2  # how many discovery-related subreddits to mix in
+    num_discovery = 2  # how many discovery-related vaults to mix in
     num_rising = 4  # how many rising links to mix in
     num_items = 20  # total items to return
     rising_items = discovery_items = comment_items = hot_items = []
 
     # make a list of srs that shouldn't be recommended
-    default_srid36s = [to36(srid) for srid in Subreddit.default_subreddits()]
+    default_srid36s = [to36(srid) for srid in Vault.default_subreddits()]
     omit_srid36s = list(prefs.likes.union(prefs.dislikes,
                                           prefs.recent_views,
                                           default_srid36s))
@@ -145,9 +145,9 @@ def get_recommended_content(prefs, src, settings):
     # pick random subset of discovery srs
     candidates = set(get_discovery_srid36s()).difference(prefs.dislikes)
     discovery_srid36s = random_sample(candidates, num_discovery)
-    # multiget subreddits
+    # multiget vaults
     to_fetch = liked_srid36s + discovery_srid36s
-    srs = Subreddit._byID36(to_fetch)
+    srs = Vault._byID36(to_fetch)
     liked_srs = [srs[sr_id36] for sr_id36 in liked_srid36s]
     discovery_srs = [srs[sr_id36] for sr_id36 in discovery_srid36s]
     if settings.personalized:
@@ -168,7 +168,7 @@ def get_recommended_content(prefs, src, settings):
         # just get hot links from the other half
         hot_items = get_hot_items(srs_slice2, TYPE_HOT, src)
     if settings.discovery:
-        # get links from subreddits dedicated to discovery
+        # get links from vaults dedicated to discovery
         discovery_items = get_hot_items(discovery_srs, TYPE_DISCOVERY, 'disc')
     if settings.rising:
         # grab some (non-personalized) rising items
@@ -180,7 +180,7 @@ def get_recommended_content(prefs, src, settings):
                           discovery_items,
                           hot_items))
     random.shuffle(all_recs)
-    # make sure subreddits aren't repeated
+    # make sure vaults aren't repeated
     seen_srs = set()
     recs = []
     for r in all_recs:
@@ -216,7 +216,7 @@ def get_rising_items(omit_sr_ids, count=4):
     rising_links = Link._by_fullname(link_fullnames_to_show,
                                      return_dict=False,
                                      data=True)
-    rising_items = [ExploreItem(TYPE_RISING, 'ris', Subreddit._byID(l.sr_id), l)
+    rising_items = [ExploreItem(TYPE_RISING, 'ris', Vault._byID(l.sr_id), l)
                    for l in rising_links]
     return rising_items
 
@@ -235,7 +235,7 @@ def get_comment_items(srs, src, count=4):
                                  load_more=False)
         listing = NestedListing(builder, parent_name=link._fullname).listing()
         top_comments.extend(listing.things)
-    srs = Subreddit._byID([com.sr_id for com in top_comments])
+    srs = Vault._byID([com.sr_id for com in top_comments])
     links = Link._byID([com.link_id for com in top_comments])
     comment_items = [ExploreItem(TYPE_COMMENT,
                                  src,
@@ -247,7 +247,7 @@ def get_comment_items(srs, src, count=4):
 
 def get_discovery_srid36s():
     """Get list of srs that help people discover other srs."""
-    srs = Subreddit._by_name(g.live_config['discovery_srs'])
+    srs = Vault._by_name(g.live_config['discovery_srs'])
     return [sr._id36 for sr in srs.values()]
 
 
@@ -260,7 +260,7 @@ def random_sample(items, count):
 def is_visible(sr):
     """True if sr is visible to regular users, false if private or banned."""
     return (
-        sr.type not in Subreddit.private_types and
+        sr.type not in Vault.private_types and
         not sr._spam and
         sr.discoverable
     )
@@ -272,7 +272,7 @@ class SRRecommendation(tdb_cassandra.View):
     _compare_with = LongType()
 
     # don't keep these around if a run hasn't happened lately, or if the last
-    # N runs didn't generate recommendations for a given subreddit
+    # N runs didn't generate recommendations for a given vault
     _ttl = timedelta(days=7, hours=12)
 
     # we know that we mess with these but it's okay

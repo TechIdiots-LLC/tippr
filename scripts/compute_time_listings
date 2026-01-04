@@ -24,13 +24,13 @@
 set -e
 
 # expects two environment variables
-#   REDDIT_ROOT = path to the root of the reddit public code; the directory with the Makefile
-#   REDDIT_INI = path to the ini file to use
+#   TIPPR_ROOT = path to the root of the tippr public code; the directory with the Makefile
+#   TIPPR_INI = path to the ini file to use
 # which should be supplied via:
-source /etc/default/reddit
+source /etc/default/tippr
 # additionally, some configuration can be overridden in the environment
 export TMPDIR=${TMPDIR:-/tmp}
-export PGUSER=${PGUSER:-reddit}
+export PGUSER=${PGUSER:-tippr}
 export PGHOST=${PGHOST:-localhost}
 
 ## command line args
@@ -45,7 +45,7 @@ export TIMES="$3"
 echo "Starting $THING_CLS processing"
 
 # enable reporting to sentry
-export REDDIT_ERRORS_TO_SENTRY=1
+export TIPPR_ERRORS_TO_SENTRY=1
 
 THING_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-thing.dump
 DATA_DUMP=$TMPDIR/$THING_CLS-$INTERVAL-data.dump
@@ -71,9 +71,9 @@ function mrsort {
     LC_ALL=C sort -S200m
 }
 
-function reddit {
-    reddit_usage() {
-        echo "reddit: [-jN] cmd..." 2>&1
+function tippr {
+    tippr_usage() {
+        echo "tippr: [-jN] cmd..." 2>&1
         exit
     }
 
@@ -87,18 +87,18 @@ function reddit {
                 njobs="${OPTARG}"
                 ;;
             *)
-                reddit_usage
+                tippr_usage
                 ;;
         esac
     done
     shift $((OPTIND-1))
 
-    cmd="paster --plugin=r2 run $REDDIT_INI $REDDIT_ROOT/r2/lib/mr_top.py -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
+    cmd="paster --plugin=r2 run $TIPPR_INI $TIPPR_ROOT/r2/lib/mr_top.py -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
 
     if [ "$njobs" = "1" ]; then
         sh -c "$cmd" # just execute it directly
     else
-        $REDDIT_ROOT/../scripts/hashdist.py -n"$njobs" -- sh -c "$cmd"
+        $TIPPR_ROOT/../scripts/hashdist.py -n"$njobs" -- sh -c "$cmd"
     fi
 }
 
@@ -135,9 +135,9 @@ run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
 
 cat $THING_DUMP $DATA_DUMP |
     mrsort |
-    reddit "join_things('$THING_CLS')" |
-    reddit "time_listings($TIMES, '$THING_CLS')" |
+    tippr "join_things('$THING_CLS')" |
+    tippr "time_listings($TIMES, '$THING_CLS')" |
     mrsort |
-    reddit -j4 "write_permacache()"
+    tippr -j4 "write_permacache()"
 
 echo 'Done.'

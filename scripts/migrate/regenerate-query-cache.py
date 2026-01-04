@@ -57,7 +57,7 @@ COGROUP items BY id, data BY id;
 items_with_data =
 FOREACH grouped_with_data
     GENERATE FLATTEN(items),
-             com.reddit.pig.MAKE_MAP(data.(key, value)) AS data;
+             com.tippr.pig.MAKE_MAP(data.(key, value)) AS data;
 """
 
 add_unread = """
@@ -95,8 +95,8 @@ FILTER joined BY minimal_things::id IS NOT NULL AND
 
 potential_columns =
 FOREACH only_valid
-    GENERATE com.reddit.pig.MAKE_ROWKEY(relation, name, thing1_id) AS rowkey,
-             com.reddit.pig.MAKE_THING2_FULLNAME(relation, thing2_id) AS colkey,
+    GENERATE com.tippr.pig.MAKE_ROWKEY(relation, name, thing1_id) AS rowkey,
+             com.tippr.pig.MAKE_THING2_FULLNAME(relation, thing2_id) AS colkey,
              timestamp AS value;
 """
 
@@ -117,14 +117,14 @@ FOREACH grouped {
 jsonified =
 FOREACH limited GENERATE rowkey,
                          colkey,
-                         com.reddit.pig.TO_JSON(value);
+                         com.tippr.pig.TO_JSON(value);
 
 STORE jsonified INTO '$OUTPUT' USING PigStorage();
 """
 
 ###### run the jobs
-# register the reddit udfs
-Pig.registerJar(SCRIPT_ROOT + "reddit-pig-udfs.jar")
+# register the tippr udfs
+Pig.registerJar(SCRIPT_ROOT + "tippr-pig-udfs.jar")
 
 # process rels
 for rel, (cf, thing2_type) in relations.items():
@@ -164,8 +164,8 @@ if False:
     potential_columns =
     FOREACH non_null
     GENERATE
-        CONCAT('sent.', com.reddit.pig.TO_36(data#'author_id')) AS rowkey,
-        com.reddit.pig.MAKE_FULLNAME('message', id) AS colkey,
+        CONCAT('sent.', com.tippr.pig.TO_36(data#'author_id')) AS rowkey,
+        com.tippr.pig.MAKE_FULLNAME('message', id) AS colkey,
         timestamp AS value;
     """
     script += store_top_1000_per_rowkey
@@ -207,8 +207,8 @@ if True:
 
     potential_columns =
     FOREACH comments_with_name GENERATE
-        CONCAT(name, CONCAT('.', com.reddit.pig.TO_36(data#'sr_id'))) AS rowkey,
-        com.reddit.pig.MAKE_FULLNAME('comment', id) AS colkey,
+        CONCAT(name, CONCAT('.', com.tippr.pig.TO_36(data#'sr_id'))) AS rowkey,
+        com.tippr.pig.MAKE_FULLNAME('comment', id) AS colkey,
         timestamp AS value;
     """
     script += store_top_1000_per_rowkey

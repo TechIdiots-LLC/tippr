@@ -120,7 +120,7 @@ class _LazyGlobals:
 
 _lazy = _LazyGlobals()
 
-keyspace = 'reddit'
+keyspace = "tippr"
 
 # These will be accessed via _lazy or directly from g at runtime
 # Keep module-level references for code that expects them
@@ -1131,7 +1131,7 @@ class ColumnQuery:
         self.column_start = column_name
 
     def _reverse(self):
-        # Logic of standard reddit query is opposite of cassandra
+        # Logic of standard tippr query is opposite of cassandra
         self.column_reversed = False
 
     def __iter__(self, yield_column_names=False):

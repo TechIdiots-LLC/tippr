@@ -49,7 +49,7 @@ class GzipMiddleware:
         - it does not "yield at least one value each time its underlying
           application yields a value".
 
-    None of these are an issue for the reddit application, but use at your
+    None of these are an issue for the tippr application, but use at your
     own risk.
 
     """

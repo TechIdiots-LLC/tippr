@@ -42,7 +42,7 @@ from r2.models import (
     LocalizedDefaultSubreddits,
     LocalizedFeaturedSubreddits,
     NotFound,
-    Subreddit,
+    Vault,
     Vote,
     register,
 )
@@ -109,14 +109,14 @@ class TextGenerator:
 
 
 def fetch_listing(path, limit=1000, batch_size=100):
-    """Fetch a reddit listing from reddit.com."""
+    """Fetch a tippr listing from tippr.net."""
 
     session = requests.Session()
     session.headers.update({
         "User-Agent": "reddit-test-data-generator/1.0",
     })
 
-    base_url = "https://api.reddit.com" + path
+    base_url = "https://api.tippr.net" + path
 
     after = None
     count = 0
@@ -138,7 +138,7 @@ def fetch_listing(path, limit=1000, batch_size=100):
         if not after:
             break
 
-        # obey reddit.com's ratelimits
+        # obey tippr.net's ratelimits
         # see: https://github.com/reddit/reddit/wiki/API#rules
         time.sleep(2)
 
@@ -148,9 +148,9 @@ class Modeler:
         self.usernames = TextGenerator(order=2)
 
     def model_subreddit(self, subreddit_name):
-        """Return a model of links and comments in a given subreddit."""
+        """Return a model of links and comments in a given vault."""
 
-        subreddit_path = "/r/{}".format(subreddit_name)
+        subreddit_path = "/v/{}".format(subreddit_name)
         print(">>>", subreddit_path)
 
         print(">> Links")
@@ -179,12 +179,12 @@ class Modeler:
             subreddit_name, titles, selfposts, urls, comments, self_frequency)
 
     def generate_username(self):
-        """Generate and return a username like those seen on reddit.com."""
+        """Generate and return a username like those seen on tippr.net."""
         return self.usernames.generate()
 
 
 class SubredditModel:
-    """A snapshot of a subreddit's links and comments."""
+    """A snapshot of a vault's links and comments."""
 
     def __init__(self, name, titles, selfposts, urls, comments, self_frequency):
         self.name = name
@@ -195,14 +195,14 @@ class SubredditModel:
         self.selfpost_frequency = self_frequency
 
     def generate_link_title(self):
-        """Generate and return a title like those seen in the subreddit."""
+        """Generate and return a title like those seen in the vault."""
         return self.titles.generate()
 
     def generate_link_url(self):
-        """Generate and return a URL from one seen in the subreddit.
+        """Generate and return a URL from one seen in the vault.
 
         The URL returned may be "self" indicating a self post. This should
-        happen with the same frequency it is seen in the modeled subreddit.
+        happen with the same frequency it is seen in the modeled vault.
 
         """
         if random.random() < self.selfpost_frequency:
@@ -211,11 +211,11 @@ class SubredditModel:
             return random.choice(self.urls)
 
     def generate_selfpost_body(self):
-        """Generate and return a self-post body like seen in the subreddit."""
+        """Generate and return a self-post body like seen in the vault."""
         return self.selfposts.generate()
 
     def generate_comment_body(self):
-        """Generate and return a comment body like seen in the subreddit."""
+        """Generate and return a comment body like seen in the vault."""
         return self.comments.generate()
 
 
@@ -235,16 +235,16 @@ def ensure_account(name):
 
 
 def ensure_subreddit(name, author):
-    """Look up or create a subreddit and return it."""
+    """Look up or create a vault and return it."""
     try:
-        sr = Subreddit._by_name(name)
+        sr = Vault._by_name(name)
         print(">> found /r/{}".format(name))
         return sr
     except NotFound:
         print(">> creating /r/{}".format(name))
-        sr = Subreddit._new(
+        sr = Vault._new(
             name=name,
-            title="/r/{}".format(name),
+            title="/v/{}".format(name),
             author_id=author._id,
             lang="en",
             ip="127.0.0.1",
@@ -254,7 +254,7 @@ def ensure_subreddit(name, author):
 
 
 def inject_test_data(num_links=25, num_comments=25, num_votes=5):
-    """Flood your reddit install with test data based on reddit.com."""
+    """Flood your tippr install with test data based on tippr.net."""
 
     print(">>>> Ensuring configured objects exist")
     system_user = ensure_account(g.system_user)
@@ -267,9 +267,9 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
     print()
     print()
 
-    print(">>>> Fetching real data from reddit.com")
+    print(">>>> Fetching real data from tippr.net")
     modeler = Modeler()
-    subreddits = [
+    vaults = [
         modeler.model_subreddit("pics"),
         modeler.model_subreddit("videos"),
         modeler.model_subreddit("askhistorians"),
@@ -296,7 +296,7 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
 
     print(">>> Content")
     things = []
-    for sr_model in subreddits:
+    for sr_model in vaults:
         sr_author = random.choice(accounts)
         sr = ensure_subreddit(sr_model.name, sr_author)
 
@@ -352,6 +352,6 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
 
     amqp.worker.join()
 
-    srs = [Subreddit._by_name(n) for n in ("pics", "videos", "askhistorians")]
+    srs = [Vault._by_name(n) for n in ("pics", "videos", "askhistorians")]
     LocalizedDefaultSubreddits.set_global_srs(srs)
-    LocalizedFeaturedSubreddits.set_global_srs([Subreddit._by_name('pics')])
+    LocalizedFeaturedSubreddits.set_global_srs([Vault._by_name('pics')])

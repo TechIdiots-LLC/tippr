@@ -121,8 +121,8 @@
         eventData.authorFullname = thingData.authorFullname;
       }
 
-      if ('subreddit' in thingData) {
-        eventData.subredditName = thingData.subreddit;
+      if ('vault' in thingData) {
+        eventData.subredditName = thingData.vault;
       }
 
       if ('subredditFullname' in thingData) {
@@ -163,7 +163,7 @@
         if ($media.is('iframe')) {
           this._expandoEventData.provider = 'embedly';
         } else {
-          this._expandoEventData.provider = 'reddit';
+          this._expandoEventData.provider = 'tippr';
         }
       }
 
@@ -240,7 +240,7 @@
     var listingSelectors = [
       '.linklisting',
       '.organic-listing',
-      '.selfserve-subreddit-links',
+      '.selfserve-vault-links',
     ];
 
     function initExpando($thing, autoexpanded) {

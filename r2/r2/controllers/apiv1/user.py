@@ -111,7 +111,7 @@ class APIv1UserController(OAuth2OnlyController):
         uri='/api/v1/me/karma',
     )
     def GET_karma(self):
-        """Return a breakdown of subreddit karma."""
+        """Return a breakdown of vault karma."""
         karmas = c.oauth_user.all_karmas(include_old=False)
         resp = KarmaListJsonTemplate().render(karmas)
         return self.api_wrapper(resp.finalize())
@@ -162,9 +162,9 @@ class APIv1UserController(OAuth2OnlyController):
         if 'name' in notes_json and notes_json['name'] != friend:
             # The 'name' in the JSON is optional, but if present, must
             # match the username from the URL
-            err = errors.RedditError('BAD_USERNAME', fields='name')
+            err = errors.TipprError('BAD_USERNAME', fields='name')
         if 'note' in notes_json and not c.user.gold:
-            err = errors.RedditError('GOLD_REQUIRED', fields='note')
+            err = errors.TipprError('GOLD_REQUIRED', fields='note')
         if err:
             self.on_validation_error(err)
 

@@ -200,11 +200,11 @@ def scriptsafe_dumps(obj, **kwargs):
     return _Unsafe(text.translate(_json_escapes))
 
 
-def markdown_souptest(text, nofollow=False, target=None, renderer='reddit'):
+def markdown_souptest(text, nofollow=False, target=None, renderer='tippr'):
     if not text:
         return text
     
-    if renderer == 'reddit':
+    if renderer == 'tippr':
         smd = safemarkdown(text, nofollow=nofollow, target=target)
     elif renderer == 'wiki':
         smd = wikimarkdown(text)

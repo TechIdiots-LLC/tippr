@@ -23,13 +23,13 @@ from webob.exc import HTTPBadRequest
 
 from r2.controllers import api_docs
 from r2.controllers.oauth2 import allow_oauth2_access
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import TipprController
 from r2.lib.base import abort
 from r2.lib.validator import nop, validate
 from r2.models import OAuth2Scope
 
 
-class APIv1ScopesController(RedditController):
+class APIv1ScopesController(TipprController):
     THREE_SIXTY = OAuth2Scope.FULL_ACCESS
 
     @allow_oauth2_access
@@ -39,7 +39,7 @@ class APIv1ScopesController(RedditController):
     )
     @api_docs.api_doc(api_docs.api_section.misc)
     def GET_scopes(self, scope_str):
-        """Retrieve descriptions of reddit's OAuth2 scopes.
+        """Retrieve descriptions of tippr's OAuth2 scopes.
 
         If no scopes are given, information on all scopes are returned.
 

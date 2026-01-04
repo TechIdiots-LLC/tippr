@@ -38,7 +38,7 @@ from r2.lib.filters import _force_unicode, safemarkdown, spaceCompress
 from r2.models.account import Account
 from r2.models.link import Comment, Link
 from r2.models.report import Report
-from r2.models.subreddit import Subreddit, SubredditUserRelations
+from r2.models.vault import Vault, SubredditUserRelations
 from r2.models.award import Trophy
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 from r2.models.wiki import ImagesByWikiPage
@@ -285,25 +285,25 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         wiki_enabled="wiki_enabled",
     )
 
-    # subreddit *attributes* (right side of the equals)
-    # that are accessible even if the user can't view the subreddit
+    # vault *attributes* (right side of the equals)
+    # that are accessible even if the user can't view the vault
     _public_attrs = {
         "_id36",
-        # subreddit ID with prefix
+        # vault ID with prefix
         "_fullname",
         # Creation date
         "created",
         "created_utc",
-        # Canonically-cased subreddit name
+        # Canonically-cased vault name
         "name",
-        # Canonical subreddit URL, relative to reddit.com
+        # Canonical vault URL, relative to tippr.net
         "path",
         # Text shown on the access denied page
         "public_description",
         "public_description_html",
         # Title shown in search
         "title",
-        # Type of subreddit, so people know that it's private
+        # Type of vault, so people know that it's private
         "type",
     }
 
@@ -401,7 +401,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         icon_url="icon_url",
         name="name",
         path="path",
-        subreddits="srs",
+        vaults="srs",
         visibility="visibility",
         weighting_scheme="weighting_scheme",
     )
@@ -442,7 +442,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
 
 def get_trimmed_sr_dicts(srs, user):
     if c.user_is_loggedin:
-        sr_user_relations = Subreddit.get_sr_user_relations(user, srs)
+        sr_user_relations = Vault.get_sr_user_relations(user, srs)
     else:
         # backwards compatibility: for loggedout users don't return boolean,
         # instead return None for all relations.
@@ -639,7 +639,7 @@ def get_author_attributes(item):
     data = {}
     if not item.author._deleted:
         author = item.author
-        sr_id = item.subreddit._id
+        sr_id = item.vault._id
 
         data["author"] = author.name
 
@@ -828,9 +828,9 @@ class LinkJsonTemplate(ThingTemplate):
             "saved": item.saved,
             "score": item.score,
             "stickied": item.stickied,
-            "subreddit": item.subreddit.name,
-            "subreddit_id": item.subreddit._fullname,
-            "suggested_sort": item.sort_if_suggested(sr=item.subreddit),
+            "vault": item.vault.name,
+            "subreddit_id": item.vault._fullname,
+            "suggested_sort": item.sort_if_suggested(sr=item.vault),
             "thumbnail": item.thumbnail,
             "title": item.title,
             "ups": item.score,
@@ -878,7 +878,7 @@ class LinkJsonTemplate(ThingTemplate):
     def get_rendered(cls, item, render_style):
         data = ThingTemplate.get_rendered(item, render_style)
         data.update({
-            "sr": item.subreddit._fullname,
+            "sr": item.vault._fullname,
         })
         return data
 
@@ -899,7 +899,7 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
             "third_party_tracking_2": item.third_party_tracking_2,
         })
 
-        del data["subreddit"]
+        del data["vault"]
         del data["subreddit_id"]
         return data
 
@@ -951,8 +951,8 @@ class CommentJsonTemplate(ThingTemplate):
             "saved": item.saved,
             "score": item.score,
             "score_hidden": item.score_hidden,
-            "subreddit": item.subreddit.name,
-            "subreddit_id": item.subreddit._fullname,
+            "vault": item.vault.name,
+            "subreddit_id": item.vault._fullname,
             "ups": item.score,
             "replies": cls.render_child(item),
             "parent_id": cls.get_parent_id(item),
@@ -965,7 +965,7 @@ class CommentJsonTemplate(ThingTemplate):
             data["action_type"] = item.action_type
 
         if c.profilepage:
-            data["quarantine"] = item.subreddit.quarantine
+            data["quarantine"] = item.vault.quarantine
             data["over_18"] = item.link.is_nsfw
 
             data["link_title"] = item.link.title
@@ -973,7 +973,7 @@ class CommentJsonTemplate(ThingTemplate):
 
             if item.link.is_self:
                 link_url = item.link.make_permalink(
-                    item.subreddit, force_domain=True)
+                    item.vault, force_domain=True)
             else:
                 link_url = item.link.url
             data["link_url"] = link_url
@@ -1037,7 +1037,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
         parent_id="parent_id",
         replies="child",
         subject="subject",
-        subreddit="subreddit",
+        vault="vault",
         was_comment="was_comment",
     )
 
@@ -1052,10 +1052,10 @@ class MessageJsonTemplate(ThingJsonTemplate):
             if thing.to_id:
                 return thing.to.name
             else:
-                return "#" + thing.subreddit.name
-        elif attr == "subreddit":
+                return "#" + thing.vault.name
+        elif attr == "vault":
             if thing.sr_id:
-                return thing.subreddit.name
+                return thing.vault.name
             return None
         elif attr == "body_html":
             return safemarkdown(thing.body)
@@ -1093,7 +1093,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
         return d
 
 
-class RedditJsonTemplate(JsonTemplate):
+class TipprJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
         return ObjectTemplate(thing.content().render() if thing else {})
 
@@ -1149,7 +1149,7 @@ class SearchListingJsonTemplate(ListingJsonTemplate):
 
         facets = {}
         if thing.subreddit_facets:
-            facets['subreddits'] = [format_sr(sr, count)
+            facets['vaults'] = [format_sr(sr, count)
                                     for sr, count in thing.subreddit_facets]
         data['facets'] = facets
 
@@ -1515,7 +1515,7 @@ class ModActionTemplate(ThingJsonTemplate):
         mod='moderator',
         mod_id36='mod_id36',
         sr_id36='sr_id36',
-        subreddit='subreddit',
+        vault='vault',
         target_author='target_author',
         target_fullname='target_fullname',
         target_permalink='target_permalink',
@@ -1540,8 +1540,8 @@ class ModActionTemplate(ThingJsonTemplate):
                 return None
         elif attr == "moderator":
             return thing.moderator.name
-        elif attr == "subreddit":
-            return thing.subreddit.name
+        elif attr == "vault":
+            return thing.vault.name
         elif attr == 'target_title' and isinstance(thing.target, Link):
             return thing.target.title
         elif attr == 'target_body' and isinstance(thing.target, Comment):

@@ -37,7 +37,7 @@ from r2.lib.utils import tup
 class ModAction(tdb_cassandra.UuidThing):
     """
     Columns:
-    sr_id - Subreddit id36
+    sr_id - Vault id36
     mod_id - Account id36 of moderator
     action - specific name of action, must be in ModAction.actions
     target_fullname - optional fullname of the target of the action
@@ -231,7 +231,7 @@ class ModAction(tdb_cassandra.UuidThing):
 
         g.events.mod_event(
             modaction=ma,
-            subreddit=sr,
+            vault=sr,
             mod=mod,
             target=target,
             request=request if c.user_is_loggedin else None,
@@ -305,7 +305,7 @@ class ModAction(tdb_cassandra.UuidThing):
             Link,
             ModSR,
             MultiReddit,
-            Subreddit,
+            Vault,
         )
 
         target_names = {item.target_fullname for item in wrapped
@@ -326,12 +326,12 @@ class ModAction(tdb_cassandra.UuidThing):
                                     if hasattr(target, "link_id")}
         parent_links = Link._byID(parent_link_names, data=True)
 
-        # get subreddits
-        srs = Subreddit._byID36({item.sr_id36 for item in wrapped}, data=True)
+        # get vaults
+        srs = Vault._byID36({item.sr_id36 for item in wrapped}, data=True)
 
         for item in wrapped:
             item.moderator = moderators[item.mod_id36]
-            item.subreddit = srs[item.sr_id36]
+            item.vault = srs[item.sr_id36]
             item.text = cls._text.get(item.action, '')
             item.target = None
             item.target_author = None
@@ -375,7 +375,7 @@ class ModAction(tdb_cassandra.UuidThing):
                 item.mod_button = mod_button
 
                 if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
-                    rgb = item.subreddit.get_rgb()
+                    rgb = item.vault.get_rgb()
                     item.bgcolor = 'rgb(%s,%s,%s)' % rgb
                     item.is_multi = True
                 else:

@@ -92,7 +92,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
 
     # when mako loads a previously compiled template file from its cache, it
     # doesn't check that the original template path matches the current path.
-    # in the event that a new plugin defines a template overriding a reddit
+    # in the event that a new plugin defines a template overriding a tippr
     # template, unless the mtime newer, mako doesn't update the compiled
     # template. as a workaround, this makes mako store compiled templates with
     # the original path in the filename, forcing it to update with the path.

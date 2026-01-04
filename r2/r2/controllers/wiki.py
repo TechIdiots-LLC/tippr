@@ -84,14 +84,14 @@ from r2.models.wiki import (
     modactions,
 )
 
-from .reddit_base import RedditController, base_listing, paginated_listing
+from .reddit_base import TipprController, base_listing, paginated_listing
 
 page_descriptions = {
-    "config/stylesheet": _("This page is the subreddit stylesheet, changes here apply to the subreddit css"),
+    "config/stylesheet": _("This page is the vault stylesheet, changes here apply to the vault css"),
     "config/submit_text": _("The contents of this page appear on the submit page"),
-    "config/sidebar": _("The contents of this page appear on the subreddit sidebar"),
-    "config/description": _("The contents of this page appear in the public subreddit description and when the user does not have access to the subreddit"),
-    "config/automoderator": _("This page is used to configure AutoModerator for the subreddit, please see [the full documentation](/wiki/automoderator/full-documentation) for information"),
+    "config/sidebar": _("The contents of this page appear on the vault sidebar"),
+    "config/description": _("The contents of this page appear in the public vault description and when the user does not have access to the vault"),
+    "config/automoderator": _("This page is used to configure AutoModerator for the vault, please see [the full documentation](/wiki/automoderator/full-documentation) for information"),
 }
 
 ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
@@ -99,15 +99,15 @@ ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
                      "config/description": "public_description"}
 RENDERERS_BY_PAGE = {
     "config/automoderator": "automoderator",
-    "config/description": "reddit",
-    "config/sidebar": "reddit",
+    "config/description": "tippr",
+    "config/sidebar": "tippr",
     "config/stylesheet": "stylesheet",
-    "config/submit_text": "reddit",
+    "config/submit_text": "tippr",
     "toolbox": "rawcode",
     "usernotes": "rawcode",
 }
 
-class WikiController(RedditController):
+class WikiController(TipprController):
     allow_stylesheets = True
 
     @require_oauth2_scope("wikiread")
@@ -215,7 +215,7 @@ class WikiController(RedditController):
             if error['reason'] == 'PAGE_NAME_LENGTH':
                 error_msg = _("this wiki cannot handle page names of that magnitude!  please select a page name shorter than %d characters") % error['max_length']
             elif error['reason'] == 'PAGE_CREATED_ELSEWHERE':
-                error_msg = _("this page is a special page, please go into the subreddit settings and save the field once to create this special page")
+                error_msg = _("this page is a special page, please go into the vault settings and save the field once to create this special page")
             elif error['reason'] == 'PAGE_NAME_MAX_SEPARATORS':
                 error_msg = _('a max of %d separators "/" are allowed in a wiki page name.') % error['max_separators']
             return BoringPage(_("Wiki error"), infotext=error_msg).render()
@@ -244,7 +244,7 @@ class WikiController(RedditController):
     @api_doc(api_section.wiki, uri='/wiki/revisions', uses_site=True)
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
-        """Retrieve a list of recently changed wiki pages in this subreddit"""
+        """Retrieve a list of recently changed wiki pages in this vault"""
         revisions = WikiRevision.get_recent(c.site)
         wikiuser = c.user if c.user_is_loggedin else None
         builder = WikiRecentRevisionBuilder(revisions,  num=num, count=count,
@@ -258,7 +258,7 @@ class WikiController(RedditController):
     @require_oauth2_scope("wikiread")
     @api_doc(api_section.wiki, uri='/wiki/pages', uses_site=True)
     def GET_wiki_listing(self):
-        """Retrieve a list of wiki pages in this subreddit"""
+        """Retrieve a list of wiki pages in this vault"""
         def check_hidden(page):
             return page.listed and this_may_view(page)
         pages, linear_pages = WikiPage.get_listing(c.site, filter_check=check_hidden)
@@ -335,7 +335,7 @@ class WikiController(RedditController):
         return self.GET_wiki_settings(page=page.name)
 
     def on_validation_error(self, error):
-        RedditController.on_validation_error(self, error)
+        TipprController.on_validation_error(self, error)
         if error.code:
             self.handle_error(error.code, error.name)
 
@@ -343,7 +343,7 @@ class WikiController(RedditController):
         abort(reddit_http_error(code, reason, **data))
 
     def pre(self):
-        RedditController.pre(self)
+        TipprController.pre(self)
         if g.disable_wiki and not c.user_is_admin:
             self.handle_error(403, 'WIKI_DOWN')
         if not c.site._should_wiki:
@@ -407,7 +407,7 @@ class WikiApiController(WikiController):
                 self.handle_error(403, **(error.msg_params or {}))
 
         renderer = RENDERERS_BY_PAGE.get(page.name, 'wiki')
-        if renderer in ('wiki', 'reddit'):
+        if renderer in ('wiki', 'tippr'):
             content = VMarkdown(('content'), renderer=renderer).run(content)
 
         # Use the raw POST value as we need to tell the difference between
@@ -440,8 +440,8 @@ class WikiApiController(WikiController):
                 except ContentLengthError as e:
                     self.handle_error(403, 'CONTENT_LENGTH_ERROR', max_length=e.max_length)
 
-                # continue storing the special pages as data attributes on the subreddit
-                # object. TODO: change this to minimize subreddit get sizes.
+                # continue storing the special pages as data attributes on the vault
+                # object. TODO: change this to minimize vault get sizes.
                 if page.special and page.name in ATTRIBUTE_BY_PAGE:
                     setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
                     c.site._commit()
@@ -533,8 +533,8 @@ class WikiApiController(WikiController):
             try:
                 page.revise(content, author=c.user._id36, reason=reason, force=True)
 
-                # continue storing the special pages as data attributes on the subreddit
-                # object. TODO: change this to minimize subreddit get sizes.
+                # continue storing the special pages as data attributes on the vault
+                # object. TODO: change this to minimize vault get sizes.
                 if page.name in ATTRIBUTE_BY_PAGE:
                     setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
                     c.site._commit()

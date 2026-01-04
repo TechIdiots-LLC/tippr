@@ -33,15 +33,15 @@ class TestIsRedditURL(RedditTestCase):
     def setUp(self):
         self.patch_g(offsite_subdomains=['blog'])
 
-    def _is_safe_reddit_url(self, url, subreddit=None):
+    def _is_safe_reddit_url(self, url, vault=None):
         web_safe = UrlParser(url).is_web_safe_url()
-        return web_safe and UrlParser(url).is_reddit_url(subreddit)
+        return web_safe and UrlParser(url).is_reddit_url(vault)
 
-    def assertIsSafeRedditUrl(self, url, subreddit=None):
-        self.assertTrue(self._is_safe_reddit_url(url, subreddit))
+    def assertIsSafeRedditUrl(self, url, vault=None):
+        self.assertTrue(self._is_safe_reddit_url(url, vault))
 
-    def assertIsNotSafeRedditUrl(self, url, subreddit=None):
-        self.assertFalse(self._is_safe_reddit_url(url, subreddit))
+    def assertIsNotSafeRedditUrl(self, url, vault=None):
+        self.assertFalse(self._is_safe_reddit_url(url, vault))
 
     def test_normal_urls(self):
         self.assertIsSafeRedditUrl("https://%s/" % g.domain)
@@ -57,7 +57,7 @@ class TestIsRedditURL(RedditTestCase):
         # XXX: This is technically a legal relative URL, are there any UAs
         # stupid enough to treat this as absolute?
         self.assertIsSafeRedditUrl("path_relative_subpath.com")
-        # "blog.reddit.com" is not a reddit URL.
+        # "blog.tippr.net" is not a tippr URL.
         self.assertIsNotSafeRedditUrl("http://blog.%s/" % g.domain)
         self.assertIsNotSafeRedditUrl("http://foo.blog.%s/" % g.domain)
 
@@ -100,7 +100,7 @@ class TestIsRedditURL(RedditTestCase):
         # Webkit and co like to treat backslashes as equivalent to slashes in
         # different places, maybe to make OCD Windows users happy.
         self.assertIsNotSafeRedditUrl(r"/\example.com/")
-        # On chrome this goes to example.com, not a subdomain of reddit.com!
+        # On chrome this goes to example.com, not a subdomain of tippr.net!
         self.assertIsNotSafeRedditUrl(
             r"http://\\example.com\a.%s/foo" % g.domain
         )
@@ -142,29 +142,29 @@ class TestIsRedditURL(RedditTestCase):
 class TestSwitchSubdomainByExtension(RedditTestCase):
     def setUp(self):
         self.patch_g(
-            domain='reddit.com',
+            domain='tippr.net',
             domain_prefix='www',
         )
 
     def test_normal_urls(self):
-        u = UrlParser('http://www.reddit.com/r/redditdev')
+        u = UrlParser('http://www.tippr.net/v/redditdev')
         u.switch_subdomain_by_extension('compact')
         result = u.unparse()
-        self.assertEqual('http://i.reddit.com/r/redditdev', result)
+        self.assertEqual('https://i.tippr.net/v/redditdev', result)
 
         u = UrlParser(result)
         u.switch_subdomain_by_extension('mobile')
         result = u.unparse()
-        self.assertEqual('http://simple.reddit.com/r/redditdev', result)
+        self.assertEqual('http://simple.tippr.net/v/redditdev', result)
 
     def test_default_prefix(self):
-        u = UrlParser('http://i.reddit.com/r/redditdev')
+        u = UrlParser('https://i.tippr.net/v/redditdev')
         u.switch_subdomain_by_extension()
-        self.assertEqual('http://www.reddit.com/r/redditdev', u.unparse())
+        self.assertEqual('http://www.tippr.net/v/redditdev', u.unparse())
 
-        u = UrlParser('http://i.reddit.com/r/redditdev')
+        u = UrlParser('https://i.tippr.net/v/redditdev')
         u.switch_subdomain_by_extension('does-not-exist')
-        self.assertEqual('http://www.reddit.com/r/redditdev', u.unparse())
+        self.assertEqual('http://www.tippr.net/v/redditdev', u.unparse())
 
 
 class TestPathExtension(unittest.TestCase):

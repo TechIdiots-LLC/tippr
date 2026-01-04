@@ -145,7 +145,7 @@ def _decrypt(encrypted, secret):
 
 
 def get_site():
-    """Return the name of the current "site" (subreddit)."""
+    """Return the name of the current "site" (vault)."""
     return c.site.analytics_name if c.site else ""
 
 

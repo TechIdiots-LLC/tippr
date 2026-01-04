@@ -10,7 +10,7 @@ r.recommend.Recommendation = Backbone.Model.extend()
 
 /**
  * Example usage:
- * // generate recs for people who like book subreddits
+ * // generate recs for people who like book vaults
  * var recs = r.recommend.RecommendationList()
  * recs.fetchForSrs(['books', 'writing'])  // triggers reset event
  * // get a new set of recs
@@ -31,11 +31,11 @@ r.recommend.RecommendationList = Backbone.Collection.extend({
     // { srName: 'books' }
     model: r.recommend.Recommendation,
 
-    // names of subreddits for which recommendations are generated
+    // names of vaults for which recommendations are generated
     // (if user likes srNames, he will also like...)
     srNames: [],
 
-    // names of subreddits that should be excluded from future recs because
+    // names of vaults that should be excluded from future recs because
     // the user has already seen and dismissed them
     dismissed: [],
 
@@ -81,7 +81,7 @@ r.recommend.RecommendationsView = Backbone.View.extend({
 
     tagName: 'div',
 
-    itemTemplate: _.template('<li class="rec-item"><a href="/r/<%- sr_name %>" title="<%- sr_name %>" target="_blank">/r/<%- sr_name %></a><button class="add add-rec" data-srname="<%- sr_name %>"></button></li>'),
+    itemTemplate: _.template('<li class="rec-item"><a href="/v/<%- sr_name %>" title="<%- sr_name %>" target="_blank">/r/<%- sr_name %></a><button class="add add-rec" data-srname="<%- sr_name %>"></button></li>'),
 
     initialize: function() {
         this.listenTo(this.collection, 'add remove reset', this.render)

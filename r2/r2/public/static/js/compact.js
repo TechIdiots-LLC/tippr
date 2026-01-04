@@ -6,7 +6,7 @@
     };
     $.unsafe_orig = $.unsafe;
     $.unsafe = function(text) {
-        /* inverts websafe filtering of reddit app. */
+        /* inverts websafe filtering of tippr app. */
         text = $.unsafe_orig(text);
         if (typeof(text) == "string") {
             /* space compress the result */

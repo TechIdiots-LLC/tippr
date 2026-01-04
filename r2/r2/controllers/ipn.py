@@ -30,7 +30,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _
 from sqlalchemy.exc import IntegrityError
 
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import TipprController
 from r2.lib.base import abort
 from r2.lib.csrf import csrf_exempt
 from r2.lib.emailer import _system_email
@@ -278,7 +278,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
         amount = "%d months" % months
 
     if not thing:
-        subject = 'Let there be gold! %s just sent you reddit gold!' % sender
+        subject = 'Let there be gold! %s just sent you tippr gold!' % sender
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
     else:
         url = thing.make_permalink_slow()
@@ -296,7 +296,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
                     _force_unicode(giftmessage) + '\n\n----')
 
     message += '\n\n' + strings.gold_benefits_msg
-    if g.lounge_reddit:
+    if g.lounge_vault:
         message += '\n\n' + strings.lounge_msg
     message = append_random_bottlecap_phrase(message)
 
@@ -337,14 +337,14 @@ def send_gold_code(buyer, months, days,
         amount = "%d months" % months
 
     subject = _('Your gold gift code has been generated!')
-    message = _('Here is your gift code for %(amount)s of reddit gold:\n\n'
+    message = _('Here is your gift code for %(amount)s of tippr gold:\n\n'
                 '%(code)s\n\nThe recipient (or you!) can enter it at '
-                'https://www.reddit.com/gold or go directly to '
-                'https://www.reddit.com/thanks/%(code)s to claim it.'
+                'https://www.tippr.net/gold or go directly to '
+                'https://www.tippr.net/thanks/%(code)s to claim it.'
               ) % {'amount': amount, 'code': code}
 
     if buyer:
-        # bought by a logged-in user, send a reddit PM
+        # bought by a logged-in user, send a tippr PM
         message = append_random_bottlecap_phrase(message)
         send_system_message(buyer, subject, message, distinguished='gold-auto')
     else:
@@ -356,7 +356,7 @@ def send_gold_code(buyer, months, days,
     return code
 
 
-class IpnController(RedditController):
+class IpnController(TipprController):
     # Used when buying gold with creddits
     @validatedForm(VUser(),
                    VModhash(),
@@ -559,13 +559,13 @@ class IpnController(RedditController):
         if payment_blob['goldtype'] == 'onetime':
             admintools.adjust_gold_expiration(buyer, days=days)
 
-            subject = _("Eureka! Thank you for investing in reddit gold!")
-            message = _("Thank you for buying reddit gold. Your patronage "
+            subject = _("Eureka! Thank you for investing in tippr gold!")
+            message = _("Thank you for buying tippr gold. Your patronage "
                         "supports the site and makes future development "
-                        "possible. For example, one month of reddit gold "
-                        "pays for 5 instance hours of reddit's servers.")
+                        "possible. For example, one month of tippr gold "
+                        "pays for 5 instance hours of tippr's servers.")
             message += "\n\n" + strings.gold_benefits_msg
-            if g.lounge_reddit:
+            if g.lounge_vault:
                 message += "\n\n" + strings.lounge_msg
         elif payment_blob['goldtype'] == 'autorenew':
             admintools.adjust_gold_expiration(buyer, days=days)
@@ -573,12 +573,12 @@ class IpnController(RedditController):
         elif payment_blob['goldtype'] == 'creddits':
             buyer._incr("gold_creddits", months)
             buyer._commit()
-            subject = _("Eureka! Thank you for investing in reddit gold "
+            subject = _("Eureka! Thank you for investing in tippr gold "
                         "creddits!")
 
             message = _("Thank you for buying creddits. Your patronage "
                         "supports the site and makes future development "
-                        "possible. To spend your creddits and spread reddit "
+                        "possible. To spend your creddits and spread tippr "
                         "gold, visit [/gold](/gold) or your favorite "
                         "person's user page.")
             message += "\n\n" + strings.gold_benefits_msg + "\n\n"
@@ -598,9 +598,9 @@ class IpnController(RedditController):
             send_gift(buyer, recipient, months, days, signed, giftmessage,
                       thing_fullname)
             instagift = True
-            subject = _("Thanks for giving the gift of reddit gold!")
+            subject = _("Thanks for giving the gift of tippr gold!")
             message = _("Your classy gift to %s has been delivered.\n\n"
-                        "Thank you for gifting reddit gold. Your patronage "
+                        "Thank you for gifting tippr gold. Your patronage "
                         "supports the site and makes future development "
                         "possible.") % recipient.name
             message += "\n\n" + strings.gold_benefits_msg + "\n\n"
@@ -676,7 +676,7 @@ class Webhook:
         return '<{}: transaction {}>'.format(self.__class__.__name__, self.transaction_id)
 
 
-class GoldPaymentController(RedditController):
+class GoldPaymentController(TipprController):
     name = ''
     webhook_secret = ''
     event_type_mappings = {}
@@ -728,8 +728,8 @@ class GoldPaymentController(RedditController):
         msg = None
 
         if event_type == 'cancelled':
-            subject = _('reddit gold payment cancelled')
-            msg = _('Your reddit gold payment has been cancelled, contact '
+            subject = _('tippr gold payment cancelled')
+            msg = _('Your tippr gold payment has been cancelled, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldsupport_email}
             if existing:
@@ -744,8 +744,8 @@ class GoldPaymentController(RedditController):
 
             self.complete_gold_purchase(webhook)
         elif event_type == 'failed':
-            subject = _('reddit gold payment failed')
-            msg = _('Your reddit gold payment has failed, contact '
+            subject = _('tippr gold payment failed')
+            msg = _('Your tippr gold payment has failed, contact '
                     '%(gold_email)s for details') % {'gold_email':
                                                      g.goldsupport_email}
         elif event_type == 'deleted_subscription':
@@ -753,8 +753,8 @@ class GoldPaymentController(RedditController):
             # POST_delete_subscription, in which case gold_subscr_id is already
             # unset and we don't need to message them
             if webhook.buyer and webhook.buyer.gold_subscr_id:
-                subject = _('reddit gold subscription cancelled')
-                msg = _('Your reddit gold subscription has been cancelled '
+                subject = _('tippr gold subscription cancelled')
+                msg = _('Your tippr gold subscription has been cancelled '
                         'because your credit card could not be charged. '
                         'Contact %(gold_email)s for details')
                 msg %= {'gold_email': g.goldsupport_email}
@@ -764,8 +764,8 @@ class GoldPaymentController(RedditController):
             if not (existing and existing.status == 'processed'):
                 return
 
-            subject = _('reddit gold refund')
-            msg = _('Your reddit gold payment has been refunded, contact '
+            subject = _('tippr gold refund')
+            msg = _('Your tippr gold payment has been refunded, contact '
                    '%(gold_email)s for details') % {'gold_email':
                                                     g.goldsupport_email}
             reverse_gold_purchase(webhook.transaction_id)
@@ -829,8 +829,8 @@ class GoldPaymentController(RedditController):
             if goldtype in ('onetime', 'autorenew'):
                 admintools.adjust_gold_expiration(buyer, days=days)
                 if goldtype == 'onetime':
-                    subject = "thanks for buying reddit gold!"
-                    if g.lounge_reddit:
+                    subject = "thanks for buying tippr gold!"
+                    if g.lounge_vault:
                         message = strings.lounge_msg
                     else:
                         message = ":)"
@@ -851,7 +851,7 @@ class GoldPaymentController(RedditController):
             elif goldtype == 'gift':
                 send_gift(buyer, recipient, months, days, signed, giftmessage,
                           thing)
-                subject = "thanks for giving reddit gold!"
+                subject = "thanks for giving tippr gold!"
                 message = "Your gift to %s has been delivered." % recipient.name
 
             try:
@@ -1136,8 +1136,8 @@ class StripeController(GoldPaymentController):
             c.user._commit()
 
             status = _('subscription created')
-            subject = _('reddit gold subscription')
-            body = _('Your subscription is being processed and reddit gold '
+            subject = _('tippr gold subscription')
+            body = _('Your subscription is being processed and tippr gold '
                      'will be delivered shortly.')
         else:
             charge = self.charge_customer(form, customer, pennies,
@@ -1146,8 +1146,8 @@ class StripeController(GoldPaymentController):
                 return
 
             status = _('payment submitted')
-            subject = _('reddit gold payment')
-            body = _('Your payment is being processed and reddit gold '
+            subject = _('tippr gold payment')
+            body = _('Your payment is being processed and tippr gold '
                      'will be delivered shortly.')
 
         form.set_text('.status', status)
@@ -1209,10 +1209,10 @@ class CoinbaseController(GoldPaymentController):
         return status, webhook
 
 
-class RedditGiftsController(GoldPaymentController):
-    """Handle notifications of gold purchases from reddit gifts.
+class TipprGiftsController(GoldPaymentController):
+    """Handle notifications of gold purchases from tippr gifts.
 
-    Payment is handled by reddit gifts. Once an order is complete they can hit
+    Payment is handled by tippr gifts. Once an order is complete they can hit
     this route to apply gold to a user's account.
 
     The post should include data in the form:
@@ -1230,7 +1230,7 @@ class RedditGiftsController(GoldPaymentController):
     """
 
     name = 'redditgifts'
-    webhook_secret = g.secrets['redditgifts_webhook']
+    webhook_secret = g.secrets['tipprgifts_webhook']
     event_type_mappings = {'succeeded': 'succeeded'}
 
     def process_response(self):
@@ -1388,28 +1388,28 @@ def subscr_pm(pennies, months, new_subscr=True):
     price = "$%0.2f" % (pennies/100.0)
     if new_subscr:
         if months % 12 == 0:
-            message = _("You have created a yearly Reddit Gold subscription "
+            message = _("You have created a yearly Tippr Gold subscription "
                 "for %(price)s per year.\n\nThis subscription will renew "
                 "automatically yearly until you cancel. You may cancel your "
                 "subscription at any time by visiting %(subscr_url)s.\n\n")
         else:
-            message = _("You have created a monthly Reddit Gold subscription "
+            message = _("You have created a monthly Tippr Gold subscription "
                 "for %(price)s per month.\n\nThis subscription will renew "
                 "automatically monthly until you cancel. You may cancel your "
                 "subscription at any time by visiting %(subscr_url)s.\n\n")
     else:
         if months == 1:
-            message = _("Your Reddit Gold subscription has been renewed "
+            message = _("Your Tippr Gold subscription has been renewed "
                 "for 1 month for %(price)s.\n\nThis subscription will renew "
                 "automatically monthly until you cancel. You may cancel your "
                 "subscription at any time by visiting %(subscr_url)s.\n\n")
         else:
-            message = _("Your Reddit Gold subscription has been renewed "
+            message = _("Your Tippr Gold subscription has been renewed "
                 "for 1 year for %(price)s.\n\nThis subscription will renew "
                 "automatically yearly until you cancel. You may cancel your "
                 "subscription at any time by visiting %(subscr_url)s.\n\n")
 
-    subject = _("Reddit Gold Subscription")
+    subject = _("Tippr Gold Subscription")
     message += _("If you cancel, you will not be billed for any additional "
         "months of service, and service will continue until the end of the "
         "billing period. If you cancel, you will not receive a refund for any "
@@ -1418,7 +1418,7 @@ def subscr_pm(pennies, months, new_subscr=True):
 
     message %= {
         "price": price,
-        "subscr_url": "https://www.reddit.com/gold/subscription",
+        "subscr_url": "https://www.tippr.net/gold/subscription",
         "gold_email": g.goldsupport_email,
     }
     return subject, message

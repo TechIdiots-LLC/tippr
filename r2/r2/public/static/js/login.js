@@ -136,7 +136,7 @@ r.login.ui = {
       } else if ($el.parents('.subscribe-button').length) {
         return {
             eventName: 'subscribe-button',
-            description: r._('You need to be logged in to subscribe to subreddits.')
+            description: r._('You need to be logged in to subscribe to vaults.')
         };
       } else if ($el.parents('.submit-link').length) {
         return {
@@ -172,7 +172,7 @@ r.login.ui = {
       }
 
       // set target using page context
-      if (!targetFullname && targetType == 'subreddit') {
+      if (!targetFullname && targetType == 'vault') {
         targetFullname = r.config.cur_site;
       } else if (!targetFullname && targetType == 'link') {
         targetFullname = r.config.cur_link;

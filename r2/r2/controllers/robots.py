@@ -39,7 +39,7 @@ class RobotsController(MinimalController):
         # This ensures we don't have the port included.
         requested_domain = utils.domain(request.host)
 
-        # If someone CNAMEs myspammysite.com to reddit.com or something, we
+        # If someone CNAMEs myspammysite.com to tippr.net or something, we
         # don't want search engines to index that.
         if not utils.is_subdomain(requested_domain, g.domain):
             return False
@@ -47,10 +47,10 @@ class RobotsController(MinimalController):
         # Only allow the canonical desktop site and mobile subdomains, since
         # we have canonicalization set up appropriately for them.
         # Note: in development, DomainMiddleware needs to be temporarily
-        # modified to not skip assignment of reddit-domain-extension on
+        # modified to not skip assignment of tippr-domain-extension on
         # localhost for this to work properly.
         return (requested_domain == g.domain or
-                request.environ.get('reddit-domain-extension') in
+                request.environ.get('tippr-domain-extension') in
                     ('mobile', 'compact'))
 
     def GET_robots(self):

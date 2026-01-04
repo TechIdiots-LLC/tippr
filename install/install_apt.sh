@@ -78,6 +78,8 @@ make
 optipng
 jpegoptim
 
+ccache
+
 libpcre3-dev
 libpq-dev
 build-essential
@@ -91,7 +93,7 @@ thrift-compiler
 memcached
 PACKAGES
 
-    # Note: Python packages are installed via pip in the venv created by reddit.sh
+    # Note: Python packages are installed via pip in the venv created by tippr.sh
     # The following packages are installed there: pyramid-mako, Paste, PasteDeploy,
     # pylibmc, simplejson, pytest, baseplate, gunicorn, PasteScript
 
@@ -107,14 +109,14 @@ else
     wget -qO- -L https://debian.datastax.com/debian/repo_key | \
         sudo apt-key add -
 
-    # add the reddit ppa for some custom packages
+    # add the tippr ppa for some custom packages
     apt-get install $APTITUDE_OPTIONS python-software-properties
     apt-add-repository -y ppa:reddit/ppa
 
     # pin the ppa
     cat <<HERE > /etc/apt/preferences.d/reddit
 Package: *
-Pin: release o=LP-PPA-reddit
+Pin: release o=LP-PPA-tippr
 Pin-Priority: 600
 HERE
 

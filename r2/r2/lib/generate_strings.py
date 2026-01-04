@@ -24,13 +24,13 @@
 funny_translatable_strings = {
     "500_page": ["Funny 500 page message %d" % i for i in range(1, 11)],
     "create_subreddit": [
-        "Reason to create a reddit %d" % i for i in range(1, 21)],
+        "Reason to create a tippr %d" % i for i in range(1, 21)],
 }
 
 def generate_strings():
     """Print out automatically generated strings for translation."""
 
-    # used by error pages and in the sidebar for why to create a subreddit
+    # used by error pages and in the sidebar for why to create a vault
     for category, strings in funny_translatable_strings.items():
         for string in strings:
             print("# TRANSLATORS: Do not translate literally. Come up with a funny/relevant phrase (see the English version for ideas.) Accepts markdown formatting.")

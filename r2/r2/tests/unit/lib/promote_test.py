@@ -15,22 +15,22 @@ from r2.models import (
     Frontpage,
     MultiReddit,
     PromoCampaign,
-    Subreddit,
+    Vault,
 )
 from r2.tests import NonCache, RedditTestCase
 
 subscriptions_srnames = ["foo", "bar"]
-subscriptions = [Subreddit(name=srname) for srname in subscriptions_srnames]
+subscriptions = [Vault(name=srname) for srname in subscriptions_srnames]
 multi_srnames = ["bing", "bat"]
-multi_subreddits = [Subreddit(name=srname) for srname in multi_srnames]
+multi_subreddits = [Vault(name=srname) for srname in multi_srnames]
 nice_srname = "mylittlepony"
 nsfw_srname = "pr0n"
 questionably_nsfw = "sexstories"
 quarantined_srname = "croontown"
 naughty_subscriptions = [
-    Subreddit(name=nice_srname),
-    Subreddit(name=nsfw_srname, over_18=True),
-    Subreddit(name=quarantined_srname, quarantine=True),
+    Vault(name=nice_srname),
+    Vault(name=nsfw_srname, over_18=True),
+    Vault(name=quarantined_srname, quarantine=True),
 ]
 nsfw_collection_srnames = [questionably_nsfw, nsfw_srname]
 nsfw_collection = Collection(
@@ -51,7 +51,7 @@ class TestSRNamesFromSite(RedditTestCase):
 
         self.assertEqual(srnames, {Frontpage.name})
 
-    @patch("r2.models.Subreddit.user_subreddits")
+    @patch("r2.models.Vault.user_subreddits")
     def test_frontpage_logged_in(self, user_subreddits):
         user_subreddits.return_value = subscriptions
         srnames = srnames_from_site(self.logged_in, Frontpage)
@@ -64,7 +64,7 @@ class TestSRNamesFromSite(RedditTestCase):
 
         self.assertEqual(srnames, set(multi_srnames))
 
-    @patch("r2.models.Subreddit.user_subreddits")
+    @patch("r2.models.Vault.user_subreddits")
     def test_multi_logged_in(self, user_subreddits):
         user_subreddits.return_value = subscriptions
         multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_subreddits)
@@ -74,30 +74,30 @@ class TestSRNamesFromSite(RedditTestCase):
 
     def test_subreddit_logged_out(self):
         srname = "test1"
-        subreddit = Subreddit(name=srname)
-        srnames = srnames_from_site(self.logged_out, subreddit)
+        vault = Vault(name=srname)
+        srnames = srnames_from_site(self.logged_out, vault)
 
         self.assertEqual(srnames, {srname})
 
-    @patch("r2.models.Subreddit.user_subreddits")
+    @patch("r2.models.Vault.user_subreddits")
     def test_subreddit_logged_in(self, user_subreddits):
         user_subreddits.return_value = subscriptions
         srname = "test1"
-        subreddit = Subreddit(name=srname)
-        srnames = srnames_from_site(self.logged_in, subreddit)
+        vault = Vault(name=srname)
+        srnames = srnames_from_site(self.logged_in, vault)
 
         self.assertEqual(srnames, {srname})
 
-    @patch("r2.models.Subreddit.user_subreddits")
+    @patch("r2.models.Vault.user_subreddits")
     def test_quarantined_subscriptions_are_never_included(self, user_subreddits):
         user_subreddits.return_value = naughty_subscriptions
-        subreddit = Frontpage
-        srnames = srnames_from_site(self.logged_in, subreddit)
+        vault = Frontpage
+        srnames = srnames_from_site(self.logged_in, vault)
 
-        self.assertEqual(srnames, {subreddit.name} | {nice_srname})
+        self.assertEqual(srnames, {vault.name} | {nice_srname})
         self.assertTrue(len(srnames & {quarantined_srname}) == 0)
 
-    @patch("r2.models.Subreddit.user_subreddits")
+    @patch("r2.models.Vault.user_subreddits")
     def test_nsfw_subscriptions_arent_included_when_viewing_frontpage(self, user_subreddits):
         user_subreddits.return_value = naughty_subscriptions
         srnames = srnames_from_site(self.logged_in, Frontpage)
@@ -116,14 +116,14 @@ class TestSRNamesFromSite(RedditTestCase):
     def test_remove_nsfw_collection_srnames_on_frontpage(self, get_nsfw_collections_srnames):
         get_nsfw_collections_srnames.return_value = set(nsfw_collection.sr_names)
         srname = "test1"
-        subreddit = Subreddit(name=srname)
-        Subreddit.user_subreddits = MagicMock(return_value=[
-            Subreddit(name=nice_srname),
-            Subreddit(name=questionably_nsfw),
+        vault = Vault(name=srname)
+        Vault.user_subreddits = MagicMock(return_value=[
+            Vault(name=nice_srname),
+            Vault(name=questionably_nsfw),
         ])
 
         frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
-        swf_srnames = srnames_from_site(self.logged_in, subreddit)
+        swf_srnames = srnames_from_site(self.logged_in, vault)
 
         self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
         self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)

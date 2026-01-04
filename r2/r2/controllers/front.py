@@ -34,7 +34,7 @@ from r2.config import feature
 from r2.config.extensions import API_TYPES, RSS_TYPES, is_api
 from r2.controllers.ipn import GoldException, generate_blob, validate_blob
 from r2.controllers.reddit_base import (
-    RedditController,
+    TipprController,
     base_listing,
     disable_subreddit_css,
     paginated_listing,
@@ -68,7 +68,7 @@ from .listingcontroller import ListingController
 from .oauth2 import require_oauth2_scope
 
 
-class FrontController(RedditController):
+class FrontController(TipprController):
 
     allow_stylesheets = True
 
@@ -77,7 +77,7 @@ class FrontController(RedditController):
         if not link:
             abort(404)
         elif not link.subreddit_slow.can_view(c.user):
-            # don't disclose the subreddit/title of a post via the redirect url
+            # don't disclose the vault/title of a post via the redirect url
             abort(403)
         else:
             redirect_url = link.make_permalink_slow(force_domain=True)
@@ -110,7 +110,7 @@ class FrontController(RedditController):
                       (dest, article._id36,
                        quote_plus(title_to_url(article.title).encode('utf-8')))
             if not c.default_sr:
-                new_url = "/r/{}{}".format(c.site.name, new_url)
+                new_url = "/v/{}{}".format(c.site.name, new_url)
             if comment:
                 new_url = new_url + "/%s" % comment._id36
             if c.extension:
@@ -139,7 +139,7 @@ class FrontController(RedditController):
             return (
                 item.fresh and
                 item.keep_item(item) and
-                item.subreddit.discoverable
+                item.vault.discoverable
             )
 
         builder = IDBuilder(names, skip=True, keep_fn=keep_fn, num=1)
@@ -221,7 +221,7 @@ class FrontController(RedditController):
               showedits=VBoolean("showedits", default=True),
               showmore=VBoolean("showmore", default=True),
               sr_detail=VBoolean(
-                  "sr_detail", docs={"sr_detail": "(optional) expand subreddits"}),
+                  "sr_detail", docs={"sr_detail": "(optional) expand vaults"}),
               )
     @api_doc(api_section.listings,
              uri='/comments/{article}',
@@ -254,10 +254,10 @@ class FrontController(RedditController):
         if comment and comment.link_id != article._id:
             return self.abort404()
 
-        sr = Subreddit._byID(article.sr_id, True)
+        sr = Vault._byID(article.sr_id, True)
 
         if sr.name == g.takedown_sr:
-            request.environ['REDDIT_TAKEDOWN'] = article._fullname
+            request.environ['TIPPR_TAKEDOWN'] = article._fullname
             return self.abort404()
 
         if not c.default_sr and c.site._id != sr._id:
@@ -555,12 +555,12 @@ class FrontController(RedditController):
     @validate(VUser(),
               name=nop('name'))
     def GET_newreddit(self, name):
-        """Create a subreddit form"""
+        """Create a vault form"""
         VNotInTimeout().run(action_name="pageview", details_text="newreddit")
-        title = _('create a subreddit')
+        title = _('create a vault')
         captcha = Captcha() if c.user.needs_captcha() else None
         content = CreateSubreddit(name=name or '', captcha=captcha)
-        res = FormPage(_("create a subreddit"),
+        res = FormPage(_("create a vault"),
                        content=content,
                        captcha=captcha,
                        ).render()
@@ -569,16 +569,16 @@ class FrontController(RedditController):
     @require_oauth2_scope("modconfig")
     @api_doc(api_section.moderation, uses_site=True)
     def GET_stylesheet(self):
-        """Redirect to the subreddit's stylesheet if one exists.
+        """Redirect to the vault's stylesheet if one exists.
 
         See also: [/api/subreddit_stylesheet](#POST_api_subreddit_stylesheet).
 
         """
-        # de-stale the subreddit object so we don't poison downstream caches
+        # de-stale the vault object so we don't poison downstream caches
         if not isinstance(c.site, FakeSubreddit):
-            c.site = Subreddit._byID(c.site._id, data=True, stale=False)
+            c.site = Vault._byID(c.site._id, data=True, stale=False)
 
-        url = Reddit.get_subreddit_stylesheet_url(c.site)
+        url = Tippr.get_subreddit_stylesheet_url(c.site)
         if url:
             return self.redirect(url)
         else:
@@ -592,7 +592,7 @@ class FrontController(RedditController):
         return ShareClose().render()
 
     def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
-        query = Subreddit.get_modactions(srs, mod=mod, action=action)
+        query = Vault.get_modactions(srs, mod=mod, action=action)
         builder = ModActionBuilder(
             query, num=num, after=after, count=count, reverse=reverse,
             wrap=default_thing_wrapper())
@@ -614,13 +614,13 @@ class FrontController(RedditController):
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
         """Get a list of recent moderation actions.
 
-        Moderator actions taken within a subreddit are logged. This listing is
+        Moderator actions taken within a vault are logged. This listing is
         a view of that log with various filters to aid in analyzing the
         information.
 
         The optional `mod` parameter can be a comma-delimited list of moderator
         names to restrict the results to, or the string `a` to restrict the
-        results to admin actions taken within the subreddit.
+        results to admin actions taken within the vault.
 
         The `type` parameter is optional and if sent limits the log entries
         returned to only those of the type specified.
@@ -645,10 +645,10 @@ class FrontController(RedditController):
             mod = mod or None
 
         if isinstance(c.site, (MultiReddit, ModSR)):
-            srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
+            srs = Vault._byID(c.site.sr_ids, return_dict=False)
 
             # grab all moderators
-            mod_ids = set(Subreddit.get_all_mod_ids(srs))
+            mod_ids = set(Vault.get_all_mod_ids(srs))
             mods = Account._byID(mod_ids, data=True)
 
             pane = self._make_moderationlog(srs, num, after, reverse, count,
@@ -744,8 +744,8 @@ class FrontController(RedditController):
             elif location == "modqueue":
                 if x.reported > 0 and not x._spam:
                     return True # reported but not banned
-                if x.author._spam and x.subreddit.exclude_banned_modqueue:
-                    # banned user, don't show if subreddit pref excludes
+                if x.author._spam and x.vault.exclude_banned_modqueue:
+                    # banned user, don't show if vault pref excludes
                     return False
 
                 verdict = getattr(x, "verdict", None)
@@ -757,8 +757,8 @@ class FrontController(RedditController):
                         return True # spam, unless banned by a moderator
                 return False
             elif location == "unmoderated":
-                # banned user, don't show if subreddit pref excludes
-                if x.author._spam and x.subreddit.exclude_banned_modqueue:
+                # banned user, don't show if vault pref excludes
+                if x.author._spam and x.vault.exclude_banned_modqueue:
                     return False
                 if x._spam:
                     ban_info = getattr(x, "ban_info", {})
@@ -799,7 +799,7 @@ class FrontController(RedditController):
                 pane.append(InfoBar(message=infobar_message))
 
             c.allow_styles = True
-            c.site = Subreddit._byID(c.site._id, data=True, stale=False)
+            c.site = Vault._byID(c.site._id, data=True, stale=False)
             pane.append(CreateSubreddit(site=c.site))
         elif (location == 'stylesheet'
               and c.site.can_change_stylesheet(c.user)
@@ -854,7 +854,7 @@ class FrontController(RedditController):
         * unmoderated: Things that have yet to be approved/removed by a mod.
         * edited: Things that have been edited recently.
 
-        Requires the "posts" moderator permission for the subreddit.
+        Requires the "posts" moderator permission for the vault.
 
         """
         c.allow_styles = True
@@ -911,13 +911,13 @@ class FrontController(RedditController):
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),
                              default='false'))
-    @api_doc(api_section.subreddits, uri="/r/{subreddit}/about/edit")
+    @api_doc(api_section.vaults, uri="/v/{vault}/about/edit")
     def GET_editreddit(self, location, created):
-        """Get the current settings of a subreddit.
+        """Get the current settings of a vault.
 
-        In the API, this returns the current settings of the subreddit as used
+        In the API, this returns the current settings of the vault as used
         by [/api/site_admin](#POST_api_site_admin).  On the HTML site, it will
-        display a form for editing the subreddit.
+        display a form for editing the vault.
 
         """
         c.profilepage = True
@@ -929,38 +929,38 @@ class FrontController(RedditController):
             return self._edit_normal_reddit(location, created)
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.subreddits, uri='/r/{subreddit}/about')
+    @api_doc(api_section.vaults, uri='/v/{vault}/about')
     def GET_about(self):
-        """Return information about the subreddit.
+        """Return information about the vault.
 
         Data includes the subscriber count, description, and header image."""
         if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
 
         # we do this here so that item.accounts_active_count is only present on
-        # this one endpoint, and not all the /subreddit listings etc. since
-        # looking up activity across multiple subreddits is more work.
+        # this one endpoint, and not all the /vault listings etc. since
+        # looking up activity across multiple vaults is more work.
         accounts_active_count = None
         activity = c.site.count_activity()
         if activity:
             accounts_active_count = activity.logged_in.count
 
         item = Wrapped(c.site, accounts_active_count=accounts_active_count)
-        Subreddit.add_props(c.user, [item])
-        return Reddit(content=item).render()
+        Vault.add_props(c.user, [item])
+        return Tippr(content=item).render()
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def GET_sidebar(self):
-        """Get the sidebar for the current subreddit"""
+        """Get the sidebar for the current vault"""
         usertext = UserText(c.site, c.site.description)
-        return Reddit(content=usertext).render()
+        return Tippr(content=usertext).render()
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.subreddits, uri='/r/{subreddit}/about/rules')
+    @api_doc(api_section.vaults, uri='/v/{vault}/about/rules')
     def GET_rules(self):
-        """Get the rules for the current subreddit"""
-        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+        """Get the rules for the current vault"""
+        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
             abort(404)
         if isinstance(c.site, FakeSubreddit):
             abort(404)
@@ -970,7 +970,7 @@ class FrontController(RedditController):
             "link": _("Posts only"),
             "comment": _("Comments only"),
         }
-        title_string = _("Rules for r/%(subreddit)s") % { "subreddit" : c.site.name }
+        title_string = _("Rules for r/%(vault)s") % { "vault" : c.site.name }
         content = Rules(
             title=title_string,
             kind_labels=kind_labels,
@@ -983,17 +983,17 @@ class FrontController(RedditController):
         ).render()
 
     @require_oauth2_scope("read")
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     @validate(
         num=VInt("num",
-            min=1, max=Subreddit.MAX_STICKIES, num_default=1, coerce=True),
+            min=1, max=Vault.MAX_STICKIES, num_default=1, coerce=True),
     )
     def GET_sticky(self, num):
-        """Redirect to one of the posts stickied in the current subreddit
+        """Redirect to one of the posts stickied in the current vault
 
         The "num" argument can be used to select a specific sticky, and will
         default to 1 (the top sticky) if not specified.
-        Will 404 if there is not currently a sticky post in this subreddit.
+        Will 404 if there is not currently a sticky post in this vault.
 
         """
         if not num or not c.site.sticky_fullnames:
@@ -1054,9 +1054,9 @@ class FrontController(RedditController):
     @require_oauth2_scope("read")
     @validate(query=nop('q', docs={"q": "a search query"}),
               sort=VMenu('sort', SubredditSearchSortMenu, remember=False))
-    @api_doc(api_section.subreddits, uri='/subreddits/search', supports_rss=True)
+    @api_doc(api_section.vaults, uri='/vaults/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num, sort):
-        """Search subreddits by title and description."""
+        """Search vaults by title and description."""
 
         # trigger redirect to /over18
         if request.GET.get('over18') == 'yes':
@@ -1085,7 +1085,7 @@ class FrontController(RedditController):
         else:
             content = None
 
-        # event target for screenviews (/subreddits/search)
+        # event target for screenviews (/vaults/search)
         event_target = {}
         if after:
             event_target['target_count'] = count
@@ -1097,7 +1097,7 @@ class FrontController(RedditController):
 
         res = SubredditsPage(content=content,
                              prev_search=query,
-                             page_classes=['subreddits-page'],
+                             page_classes=['vaults-page'],
                              extra_js_config=extra_js_config,
                              # update if we ever add sorts
                              search_params={},
@@ -1158,16 +1158,16 @@ class FrontController(RedditController):
             include_over18 = True
 
         # do not request facets--they are not popular with users and result in
-        # looking up unpopular subreddits (which is bad for site performance)
+        # looking up unpopular vaults (which is bad for site performance)
         faceting = {}
 
-        # no subreddit results if fielded search or structured syntax
+        # no vault results if fielded search or structured syntax
         if syntax == 'cloudsearch' or (query and ':' in query):
             result_types = result_types - {'sr'}
 
         # combined results on first page only
         if not after and not restrict_sr and result_types == {'link', 'sr'}:
-            # hardcoded to 3 subreddits (or fewer)
+            # hardcoded to 3 vaults (or fewer)
             sr_num = min(3, int(num / 3))
             num = num - sr_num
         elif result_types == {'sr'}:
@@ -1177,7 +1177,7 @@ class FrontController(RedditController):
             sr_num = 0
 
         content = None
-        subreddits = None
+        vaults = None
         nav_menus = None
         cleanup_message = None
         converted_data = None
@@ -1229,28 +1229,28 @@ class FrontController(RedditController):
                 else:
                     cleanup_message = strings.completely_invalid_search_query
 
-        # extra search request for subreddit results
+        # extra search request for vault results
         if sr_num > 0 and has_query:
             sr_q = g.search.SubredditSearchQuery(query, sort='relevance',
                                                  faceting={},
                                                  include_over18=include_over18)
-            subreddits = self._search(sr_q, num=sr_num, reverse=reverse,
+            vaults = self._search(sr_q, num=sr_num, reverse=reverse,
                                       after=after, count=count, type='sr',
-                                      skip_deleted_authors=False, heading=_('subreddits'),
+                                      skip_deleted_authors=False, heading=_('vaults'),
                                       legacy_render_class=legacy_render_class)
 
-            # backfill with facets if no subreddit search results
-            if subreddit_facets and not subreddits.things:
+            # backfill with facets if no vault search results
+            if subreddit_facets and not vaults.things:
                 names = [sr._fullname for sr, count in subreddit_facets]
                 builder = IDBuilder(names, num=sr_num)
                 listing = SearchListing(builder, nextprev=False)
-                subreddits = listing.listing(
+                vaults = listing.listing(
                     legacy_render_class=legacy_render_class)
 
-            # ensure response is not list for subreddit only result type
+            # ensure response is not list for vault only result type
             if is_api() and not content:
-                content = subreddits
-                subreddits = None
+                content = vaults
+                vaults = None
 
         # event target for screenviews (/search)
         event_target = {
@@ -1267,7 +1267,7 @@ class FrontController(RedditController):
 
         res = SearchPage(_('search results'), query,
                          content=content,
-                         subreddits=subreddits,
+                         vaults=vaults,
                          nav_menus=nav_menus,
                          search_params=dict(sort=sort, t=recent),
                          infotext=cleanup_message,
@@ -1295,7 +1295,7 @@ class FrontController(RedditController):
 
             if isinstance(thing, Link):
                 w.render_class = SearchResultLink
-            elif isinstance(thing, Subreddit):
+            elif isinstance(thing, Vault):
                 w.render_class = SearchResultSubreddit
             return w
         return wrapper_fn
@@ -1401,7 +1401,7 @@ class FrontController(RedditController):
         extra_subreddits = []
         if isinstance(c.site, MultiReddit):
             extra_subreddits.append((
-                _('%s subreddits') % c.site.name,
+                _('%s vaults') % c.site.name,
                 c.site.srs
             ))
 
@@ -1485,23 +1485,23 @@ class FrontController(RedditController):
         lounge_md = None
 
         if vendor == "claimed-gold":
-            claim_msg = _("Claimed! Enjoy your reddit gold membership.")
-            if g.lounge_reddit:
+            claim_msg = _("Claimed! Enjoy your tippr gold membership.")
+            if g.lounge_vault:
                 lounge_md = strings.lounge_msg
         elif vendor == "claimed-creddits":
             claim_msg = _("Your gold creddits have been claimed! Now go to "
                           "someone's userpage and give them a present!")
         elif vendor == "spent-creddits":
-            claim_msg = _("Thanks for buying reddit gold! Your transaction "
+            claim_msg = _("Thanks for buying tippr gold! Your transaction "
                           "has been completed.")
         elif vendor == "paypal":
-            claim_msg = _("Thanks for buying reddit gold! Your transaction "
+            claim_msg = _("Thanks for buying tippr gold! Your transaction "
                           "has been completed and emailed to you. You can "
                           "check the details by signing into your account "
                           "at:")
             vendor_url = "https://www.paypal.com/us"
         elif vendor in {"coinbase", "stripe"}:  # Pending vendors
-            claim_msg = _("Thanks for buying reddit gold! Your transaction is "
+            claim_msg = _("Thanks for buying tippr gold! Your transaction is "
                           "being processed. If you have any questions please "
                           "email us at %(gold_email)s")
             claim_msg = claim_msg % {'gold_email': g.goldsupport_email}
@@ -1581,7 +1581,7 @@ class FrontController(RedditController):
     PUT_modify_hsts_grant = _modify_hsts_grant
 
 
-class FormsController(RedditController):
+class FormsController(TipprController):
 
     def GET_password(self):
         """The 'what is my password' page"""
@@ -1670,7 +1670,7 @@ class FormsController(RedditController):
 
         expected_mac = generate_notification_email_unsubscribe_token(user_id36)
         if not constant_time_compare(provided_mac or '', expected_mac):
-            error_page = pages.RedditError(
+            error_page = pages.TipprError(
                 title=_('incorrect message token'),
                 message='',
             )
@@ -1809,7 +1809,7 @@ class FormsController(RedditController):
     @validate(VUser(),
               secret=VPrintable("secret", 50))
     def GET_claim(self, secret):
-        """The page to claim reddit gold trophies"""
+        """The page to claim tippr gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
 
     @validate(VUser(),
@@ -1859,7 +1859,7 @@ class FormsController(RedditController):
             period=None,
         )
 
-        return BoringPage(_("reddit gold"),
+        return BoringPage(_("tippr gold"),
                           show_sidebar=False,
                           content=content,
                           page_classes=["gold-page-ga-tracking"]
@@ -1885,7 +1885,7 @@ class FormsController(RedditController):
         VNotInTimeout().run(action_name="pageview", details_text="gold",
             target=thing)
         if thing:
-            thing_sr = Subreddit._byID(thing.sr_id, data=True)
+            thing_sr = Vault._byID(thing.sr_id, data=True)
             if (thing._deleted or
                     thing._spam or
                     not thing_sr.can_view(c.user) or
@@ -1947,7 +1947,7 @@ class FormsController(RedditController):
             if not can_subscribe and goldtype == "autorenew":
                 self.redirect("/creddits", code=302)
 
-            return BoringPage(_("reddit gold"),
+            return BoringPage(_("tippr gold"),
                               show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,
                                            email, recipient,
@@ -1986,7 +1986,7 @@ class FormsController(RedditController):
             if goldtype == "creddits":
                 page_classes.append("creddits-payment")
 
-            return BoringPage(_("reddit gold"),
+            return BoringPage(_("tippr gold"),
                               show_sidebar=False,
                               content=GoldPayment(goldtype, period, months,
                                                   signed, recipient,
@@ -2006,7 +2006,7 @@ class FormsController(RedditController):
     def GET_subscription(self):
         user = c.user
         content = GoldSubscription(user)
-        return BoringPage(_("reddit gold subscription"),
+        return BoringPage(_("tippr gold subscription"),
                           show_sidebar=False,
                           content=content,
                           page_classes=["gold-page-ga-tracking"]

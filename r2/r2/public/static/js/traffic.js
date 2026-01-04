@@ -1,6 +1,6 @@
 r.traffic = {
     init: function () {
-        // add a simple method of jumping to any subreddit's traffic page
+        // add a simple method of jumping to any vault's traffic page
         if ($('body').hasClass('traffic-sitewide'))
             this.addSubredditSelector()
     },
@@ -8,7 +8,7 @@ r.traffic = {
     addSubredditSelector: function () {
         $('<form>').append(
             $('<fieldset>').append(
-                $('<legend>').text(r._('view subreddit traffic')),
+                $('<legend>').text(r._('view vault traffic')),
                 $('<input type="text" id="srname">'),
                 $('<input type="submit">').attr('value', r._('go'))
             )
@@ -21,7 +21,7 @@ r.traffic = {
 
         window.location = window.location.protocol + '//' +
                           r.config.cur_domain +
-                          '/r/' + srname +
+                          '/v/' + srname +
                           '/about/traffic'
 
         return false

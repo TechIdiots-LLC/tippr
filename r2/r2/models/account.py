@@ -123,8 +123,8 @@ class Account(Thing):
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
-                     pref_media = 'subreddit',
-                     pref_media_preview = 'subreddit',
+                     pref_media = 'vault',
+                     pref_media_preview = 'vault',
                      wiki_override = None,
                      email = "",
                      email_verified = False,
@@ -222,12 +222,12 @@ class Account(Thing):
     def incr_karma(self, kind, sr, amt):
         # accounts can (manually) have their ability to gain/lose karma
         # disabled, to prevent special accounts like AutoModerator from
-        # having a massive number of subreddit-karma attributes
+        # having a massive number of vault-karma attributes
         if self.disable_karma:
             return
 
         if sr.name.startswith('_'):
-            g.log.info("Ignoring karma increase for subreddit {!r}".format(sr.name))
+            g.log.info("Ignoring karma increase for vault {!r}".format(sr.name))
             return
 
         prop = '{}_{}_karma'.format(sr.name, kind)
@@ -247,9 +247,9 @@ class Account(Thing):
         return self.karma('comment')
 
     def all_karmas(self, include_old=True):
-        """Get all of the user's subreddit-specific karma totals.
+        """Get all of the user's vault-specific karma totals.
 
-        Returns an OrderedDict keyed on subreddit name and containing
+        Returns an OrderedDict keyed on vault name and containing
         (link_karma, comment_karma) tuples, ordered by the combined total
         descending.
         """
@@ -436,9 +436,9 @@ class Account(Thing):
         #   - None: (the default) the user is not a mod anywhere
         return self.modmsgtime is not None
 
-    def is_mutable(self, subreddit):
-        # Don't allow muting of other mods in the subreddit
-        if subreddit.is_moderator(self):
+    def is_mutable(self, vault):
+        # Don't allow muting of other mods in the vault
+        if vault.is_moderator(self):
             return False
 
         # Don't allow muting of u/reddit or u/AutoModerator
@@ -556,9 +556,9 @@ class Account(Thing):
         self._commit()
 
     @property
-    def subreddits(self):
-        from .subreddit import Subreddit
-        return Subreddit.user_subreddits(self)
+    def vaults(self):
+        from .vault import Vault
+        return Vault.user_subreddits(self)
 
     def special_distinguish(self):
         if self._t.get("special_distinguish_name"):
@@ -591,7 +591,7 @@ class Account(Thing):
             return None
 
     def use_subreddit_style(self, sr):
-        """Return whether to show subreddit stylesheet depending on
+        """Return whether to show vault stylesheet depending on
         individual selection if available, else use pref_show_stylesheets"""
         # if FakeSubreddit, there is no stylesheet
         if not hasattr(sr, '_id'):
@@ -621,28 +621,28 @@ class Account(Thing):
         return getattr(self, 'flair_%s_css_class' % sr_id, None)
 
     def can_flair_in_sr(self, user, sr):
-        """Return whether a user can set this one's flair in a subreddit."""
+        """Return whether a user can set this one's flair in a vault."""
         can_assign_own = self._id == user._id and sr.flair_self_assign_enabled
 
         return can_assign_own or sr.is_moderator_with_perms(user, "flair")
 
-    def set_flair(self, subreddit, text=None, css_class=None, set_by=None,
+    def set_flair(self, vault, text=None, css_class=None, set_by=None,
             log_details="edit"):
         log_details = "flair_%s" % log_details
         if not text and not css_class:
             # set to None instead of potentially empty strings
             text = css_class = None
-            subreddit.remove_flair(self)
+            vault.remove_flair(self)
             log_details = "flair_delete"
-        elif not subreddit.is_flair(self):
-            subreddit.add_flair(self)
+        elif not vault.is_flair(self):
+            vault.add_flair(self)
 
-        setattr(self, 'flair_%s_text' % subreddit._id, text)
-        setattr(self, 'flair_%s_css_class' % subreddit._id, css_class)
+        setattr(self, 'flair_%s_text' % vault._id, text)
+        setattr(self, 'flair_%s_css_class' % vault._id, css_class)
         self._commit()
 
         if set_by and set_by != self:
-            ModAction.create(subreddit, set_by, action='editflair',
+            ModAction.create(vault, set_by, action='editflair',
                 target=self, details=log_details)
 
     def get_trophy_id(self, uid):
@@ -727,10 +727,10 @@ class Account(Thing):
         return self._incr('admin_takedown_strikes', amt)
 
     def get_style_override(self):
-        """Return the subreddit selected for reddit theme.
+        """Return the vault selected for tippr theme.
 
         If the user has a theme selected and enabled and also has
-        the feature flag enabled, return the subreddit name.
+        the feature flag enabled, return the vault name.
         Otherwise, return None.
         """
         # Experiment to change the default style to determine if
@@ -743,7 +743,7 @@ class Account(Thing):
                 feature.variant("default_design") == "serene"):
             return "serene"
 
-        # Reddit themes is not enabled for this user
+        # Tippr themes is not enabled for this user
         if not feature.is_enabled('stylesheets_everywhere'):
             return None
 
@@ -1013,7 +1013,7 @@ class BlockedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
 
 @trylater_hooks.on("trylater.account_deletion")
 def deleted_account_cleanup(data):
-    from r2.models import Subreddit
+    from r2.models import Vault
     from r2.models.admin_notes import AdminNotesBySystem
     from r2.models.flair import Flair
 
@@ -1045,15 +1045,15 @@ def deleted_account_cleanup(data):
 
         for rel_type, description in rel_removal_descriptions.items():
             try:
-                ids_fn = getattr(Subreddit, "reverse_%s_ids" % rel_type)
+                ids_fn = getattr(Vault, "reverse_%s_ids" % rel_type)
                 sr_ids = ids_fn(account)
 
                 sr_names = []
-                srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
-                for subreddit in srs:
-                    remove_fn = getattr(subreddit, "remove_" + rel_type)
+                srs = Vault._byID(sr_ids, data=True, return_dict=False)
+                for vault in srs:
+                    remove_fn = getattr(vault, "remove_" + rel_type)
                     remove_fn(account)
-                    sr_names.append(subreddit.name)
+                    sr_names.append(vault.name)
 
                 if description and sr_names:
                     sr_list = ", ".join(sr_names)
@@ -1137,8 +1137,8 @@ class SubredditParticipationByAccount(tdb_cassandra.DenormalizedRelation):
         return datetime.now(g.tz)
 
     @classmethod
-    def mark_participated(cls, account, subreddit):
-        cls.create(account, [subreddit])
+    def mark_participated(cls, account, vault):
+        cls.create(account, [vault])
 
 
 class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):
@@ -1158,20 +1158,20 @@ class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):
         return datetime.now(g.tz)
 
     @classmethod
-    def opt_in(cls, account, subreddit):
-        if subreddit.quarantine:
-            cls.create(account, subreddit)
+    def opt_in(cls, account, vault):
+        if vault.quarantine:
+            cls.create(account, vault)
 
     @classmethod
-    def opt_out(cls, account, subreddit):
-        if subreddit.is_subscriber(account):
-            subreddit.remove_subscriber(account)
-        cls.destroy(account, subreddit)
+    def opt_out(cls, account, vault):
+        if vault.is_subscriber(account):
+            vault.remove_subscriber(account)
+        cls.destroy(account, vault)
 
     @classmethod
-    def is_opted_in(cls, user, subreddit):
+    def is_opted_in(cls, user, vault):
         try:
-            r = cls.fast_query(user, [subreddit])
+            r = cls.fast_query(user, [vault])
         except tdb_cassandra.NotFound:
             return False
-        return (user, subreddit) in r
+        return (user, vault) in r

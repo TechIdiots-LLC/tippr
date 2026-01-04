@@ -18,7 +18,7 @@
     },
   };
 
-  r.hooks.get('reddit').register(function() {
+  r.hooks.get('tippr').register(function() {
     r.archived.init();
   });
 }(r);

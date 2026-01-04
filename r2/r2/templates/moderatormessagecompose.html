@@ -48,21 +48,21 @@ ${captcha_field()}
 </%utils:submit_form>
 
 <%def name="from_field()">
-  ## If the user is in timeout, they can only message /r/reddit.com - so it
+  ## If the user is in timeout, they can only message /r/tippr.net - so it
   ## only makes sense to let them do that from their user account (the
-  ## default), not as a subreddit moderator.
+  ## default), not as a vault moderator.
   %if not thing.restrict_recipient:
     <div class="spacer">
       <%utils:round_field title="${_('from')}">
         ## On certain pages, it really only makes sense to send as a specific
-        ## subreddit.
+        ## vault.
         %if thing.only_as_subreddit:
           <input type="text" name="from_sr" value="${thing.mod_srs[0].name}" readonly>
         %else:
           <select name="from_sr">
             <option value="">${"/u/%s" % c.user.name}</option>
             %for sr in thing.mod_srs:
-              <option value="${sr.name}">${"/r/%s" % sr.name}</option>
+              <option value="${sr.name}">${"/v/%s" % sr.name}</option>
             %endfor
           </select>
         %endif

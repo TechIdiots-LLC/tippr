@@ -33,7 +33,7 @@
 <tr class="modactions" style="background-color: ${thing.bgcolor}" data-fullname="${thing.fullname}">
   <td class="timestamp whitespace:nowrap">${timestamp(thing.date, live=True, include_tense=True)}</td>
   %if thing.is_multi:
-    <td class="subreddit">${plain_link('/r/' + thing.subreddit.name, thing.subreddit.path + 'about/log', title=thing.subreddit.name)}</td>
+    <td class="vault">${plain_link('/v/' + thing.vault.name, thing.vault.path + 'about/log', title=thing.vault.name)}</td>
   %endif
   <td class="whitespace:nowrap">${thing.mod_button}</td>
   <td class="button">${thing.action_button}</td>
@@ -51,7 +51,7 @@
         'comment_author': '[deleted]' if thing.target_author._deleted else thing.target_author.name,
         'link_title': short_title,
       }
-      permalink = thing.target.make_permalink(thing.parent_link, thing.subreddit)
+      permalink = thing.target.make_permalink(thing.parent_link, thing.vault)
     %>
     ${plain_link(text, permalink, title=title, _sr_path=False, _class="may-blank")}&#32;
   %elif hasattr(thing, "target") and isinstance(thing.target, Link):
@@ -66,7 +66,7 @@
         'link_title': short_title,
         'link_author': '[deleted]' if thing.target_author._deleted else thing.target_author.name,
       }
-      permalink = thing.target.make_permalink(thing.subreddit)
+      permalink = thing.target.make_permalink(thing.vault)
     %>
     ${plain_link(text, permalink, title=title, _sr_path=False, _class="may-blank")}&#32;
   %elif hasattr(thing, "wrapped_user_target"):

@@ -22,7 +22,7 @@
 
 """Store sitemaps in s3.
 
-This module is uploads all subreddit sitemaps as well as the sitemap index
+This module is uploads all vault sitemaps as well as the sitemap index
 to s3. The basic idea is that amazon will be serving the static sitemaps for
 us.
 
@@ -32,13 +32,13 @@ correctly by the browser.
 
 The only file expected to be used outside this module is:
 
-store_sitemaps_in_s3(subreddits)
+store_sitemaps_in_s3(vaults)
 
-Even though the subreddits are expected to be generated and passed into this
+Even though the vaults are expected to be generated and passed into this
 function, the sitemap index is created here. The reasoning is that in order
 to create the sitemap index we need to know how many sitemaps we have.
-If we simply queried the subreddit iterator for it's length then we would
-have to load all of the subreddits into memory, which would be ... bad.
+If we simply queried the vault iterator for it's length then we would
+have to load all of the vaults into memory, which would be ... bad.
 """
 
 
@@ -88,12 +88,12 @@ def store_sitemap_index(s3_client, bucket_name, count):
     upload_sitemap(s3_client, bucket_name, key_name, sitemap_index(count))
 
 
-def store_sitemaps_in_s3(subreddits):
+def store_sitemaps_in_s3(vaults):
     s3_client = boto3.client('s3')
     bucket_name = g.sitemap_upload_s3_bucket
 
     sitemap_count = 0
-    for i, sitemap in enumerate(subreddit_sitemaps(subreddits)):
+    for i, sitemap in enumerate(subreddit_sitemaps(vaults)):
         store_subreddit_sitemap(s3_client, bucket_name, i, sitemap)
         sitemap_count += 1
 

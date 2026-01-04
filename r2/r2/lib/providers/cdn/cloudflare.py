@@ -31,7 +31,7 @@ from r2.lib.utils import constant_time_compare
 
 
 class CloudFlareCdnProvider(CdnProvider):
-    """A provider for reddit's configuration of CloudFlare.
+    """A provider for tippr's configuration of CloudFlare.
 
     """
  

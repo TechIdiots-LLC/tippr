@@ -247,7 +247,7 @@ class TestSubmit(unittest.TestCase):
             author=AccountMock()
         )
 
-        self.assertEqual(l.url, "/r/linktests/comments/%s/test_post/" % l._id36)
+        self.assertEqual(l.url, "/v/linktests/comments/%s/test_post/" % l._id36)
 
     def test_new_self_post_doesnt_modify_links_by_url(self):
         l = LinkMock._submit(

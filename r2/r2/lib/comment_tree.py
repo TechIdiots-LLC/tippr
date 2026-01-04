@@ -332,9 +332,9 @@ def subreddit_messages(sr, update = False):
     return trees
 
 def moderator_messages(sr_ids):
-    from r2.models import Subreddit
+    from r2.models import Vault
 
-    srs = Subreddit._byID(sr_ids)
+    srs = Vault._byID(sr_ids)
     sr_ids = [sr_id for sr_id, sr in srs.items()
               if sr.is_moderator_with_perms(c.user, 'mail')]
 

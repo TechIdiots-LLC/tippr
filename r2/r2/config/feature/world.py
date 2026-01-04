@@ -60,7 +60,7 @@ class World:
         if not site:
             # In non-request code (eg queued jobs), there isn't necessarily a
             # site name (or other request-type data).  In those cases, we don't
-            # want to trigger any subreddit-specific code.
+            # want to trigger any vault-specific code.
             return ''
         return site.name
 

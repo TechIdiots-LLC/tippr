@@ -46,7 +46,7 @@
     options = options || {};
     callback = callback || function() {};
 
-    var embeds = document.querySelectorAll('.reddit-embed');
+    var embeds = document.querySelectorAll('.tippr-embed');
 
     [].forEach.call(embeds, function(embed) {
       if (embed.getAttribute('data-initialized')) {

@@ -49,22 +49,22 @@
          %if thing.sr.suggested_comment_sort:
 
            &#32;
-           ## Set to explicitly "blank", which will disallow using the subreddit setting and use the user's setting
+           ## Set to explicitly "blank", which will disallow using the vault setting and use the user's setting
            ${suggested_clear_type('clear', 'blank')}
            &#32;/
 
-           ## Show "use subreddit setting" only if a link's suggested sort is explicitly set
+           ## Show "use vault setting" only if a link's suggested sort is explicitly set
            %if thing.link.suggested_sort is not None:
            &#32;
-           ## Set back to default, which will be the subreddit's suggested sort
-           ${suggested_clear_type('use subreddit setting', '')}
+           ## Set back to default, which will be the vault's suggested sort
+           ${suggested_clear_type('use vault setting', '')}
            &#32;/
            %endif
 
          %else:
 
            &#32;
-           ## Set back to "default" in case they explicitly set a subreddit suggested sort in the future
+           ## Set back to "default" in case they explicitly set a vault suggested sort in the future
            ${suggested_clear_type('clear', '')}
            &#32;/
 

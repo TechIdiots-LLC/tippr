@@ -21,13 +21,13 @@
 ###############################################################################
 
 from r2.lib import count
-from r2.models import Subreddit
+from r2.models import Vault
 
 
 def set_downs():
     sr_counts = count.get_sr_counts()
     names = [k for k, v in sr_counts.items() if v != 0]
-    srs = Subreddit._by_fullname(names)
+    srs = Vault._by_fullname(names)
     for name in names:
         sr,c = srs[name], sr_counts[name]
         if c != sr._downs and c > 0:

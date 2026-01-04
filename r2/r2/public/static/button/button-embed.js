@@ -1,6 +1,6 @@
 var buttonEmbed = (function() {
-  var baseUrl = "//www.reddit.com"
-  var apiUrl = "//buttons.reddit.com"
+  var baseUrl = "//www.tippr.net"
+  var apiUrl = "//buttons.tippr.net"
   var logo = $q('a.logo')
   var up = $q('a.up')
   var down = $q('a.down')
@@ -32,7 +32,7 @@ var buttonEmbed = (function() {
     var url = baseUrl
 
     if (query.sr) {
-      url += '/r/' + encodeURIComponent(query.sr)
+      url += '/v/' + encodeURIComponent(query.sr)
     }
 
     url += '/submit?url=' + encodeURIComponent(query.url)

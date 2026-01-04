@@ -30,7 +30,7 @@ from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 import r2.lib.utils as r2utils
-from r2.models import NotFound, Subreddit
+from r2.models import NotFound, Vault
 
 
 class InvalidQuery(Exception):
@@ -180,11 +180,11 @@ class LinkFields(FieldsBase):
         return self.link._fullname
 
     @field
-    def subreddit(self):
+    def vault(self):
         return self.sr.name
 
     @field
-    def reddit(self):
+    def tippr(self):
         return self.sr.name
 
     @field
@@ -334,13 +334,13 @@ class Results:
 
     @property
     def subreddit_facets(self):
-        '''Filter out subreddits that the user isn't allowed to see'''
-        if not self._subreddits and 'reddit' in self._facets:
+        '''Filter out vaults that the user isn't allowed to see'''
+        if not self._subreddits and 'tippr' in self._facets:
             sr_facets = [(sr['value'], sr['count']) for sr in
-                         self._facets['reddit']]
+                         self._facets['tippr']]
 
-            # look up subreddits
-            srs_by_name = Subreddit._by_name([name for name, count
+            # look up vaults
+            srs_by_name = Vault._by_name([name for name, count
                                               in sr_facets])
 
             sr_facets = [(srs_by_name[name], count) for name, count

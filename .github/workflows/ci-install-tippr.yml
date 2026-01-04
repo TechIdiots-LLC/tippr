@@ -1,0 +1,122 @@
+name: CI — Install Tippr (installer smoke)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  install-tippr:
+    name: Run install/tippr.sh (smoke)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache APT archives
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('install/install_apt.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Cache pip and pip wheels
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pip/wheels
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/setup.py', '**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache source checkouts
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/src
+          key: ${{ runner.os }}-src-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-src-
+
+      - name: Cache mcrouter build (/opt/mcrouter)
+        uses: actions/cache@v4
+        with:
+          path: /opt/mcrouter
+          key: ${{ runner.os }}-mcrouter-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-mcrouter-
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Ensure install scripts are executable
+        run: |
+          chmod +x install/*.sh
+
+      - name: Prepare venv and install baseplate (runner venv)
+        run: |
+          # Create a venv at the default location the installer will use
+          # Use actions/setup-python's Python which has working stdlib modules
+          python -m venv /home/runner/venv
+          # Ensure python3 symlink exists for compatibility with installer checks
+          ln -sf python /home/runner/venv/bin/python3 || true
+          # Verify the venv works (can import stdlib modules including math)
+          /home/runner/venv/bin/python -c "import sys, os, math; print('venv created successfully with Python', sys.version)"
+          /home/runner/venv/bin/pip install --upgrade pip setuptools wheel 'packaging>=23.1'
+          # Install the local baseplate checkout editable so builds find it
+          if [ -d ./tippr-baseplate.py ]; then
+            /home/runner/venv/bin/pip install -e ./tippr-baseplate.py
+          fi
+          # Install a packaging-compatible formenergy-observability fork early
+          /home/runner/venv/bin/pip install 'git+https://github.com/TechIdiots-LLC/tippr-formenergy-observability.git@main#egg=formenergy-observability' || true
+
+      - name: Install tippr via installer (non-interactive)
+        env:
+          # Prefer develop branch of baseplate for these smoke runs
+          TIPPR_BASEPLATE_PIP_URL: "git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@develop#egg=baseplate"
+          # Ensure a non-root runtime user exists in the installer
+          TIPPR_USER: "runner"
+        run: |
+          # The installer expects to run as root; run it under sudo and
+          # pipe a single 'Y' to answer the final confirmation prompt.
+          sudo -E bash -c "printf 'Y\n' | ./install/tippr.sh"
+
+      - name: Archive installer logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-logs
+          path: |
+            /var/log/*.log
+            /var/log/apt/* || true
+
+      - name: Show services status (always)
+        run: |
+          echo "=== Checking systemd units and service processes ==="
+          services=(postgresql rabbitmq-server memcached cassandra zookeeper nginx redis-server)
+          for s in "${services[@]}"; do
+            if sudo systemctl list-units --full -all --no-legend | grep -Fq "${s}.service"; then
+              echo "\n--- systemctl status ${s} ---"
+              sudo systemctl --no-pager status ${s} || true
+            else
+              echo "\n--- ${s}.service not present under systemd; checking process list ---"
+              sudo ps auxww | grep -i ${s} | grep -v grep || true
+            fi
+          done
+
+          echo "\n=== Listening TCP ports ==="
+          sudo ss -ltnp || true
+
+          echo "\n=== Matching processes (ps/grep) ==="
+          ps auxww | egrep 'postgres|rabbit|memcache|cassandra|zookeeper|nginx|redis|java' || true

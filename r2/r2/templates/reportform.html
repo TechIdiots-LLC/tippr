@@ -26,7 +26,7 @@
 <%namespace file="utils.html" import="error_field" />
   <%
     additional_cls = ""
-    if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+    if not feature.is_enabled("subreddit_rules", vault=c.site.name):
         additional_cls = "report-action-form"
   %>
   <form id="report-action-form" class="action-form ${additional_cls} rounded" data-form-action="report">
@@ -48,7 +48,7 @@
             <input type="radio" name="reason" value="site_reason_selected">
             <select name="site_reason">
               %for rule in thing.system_rules:
-                <option value="${rule}">${_("reddit rule: %(rule_name)s" % dict(rule_name=rule))}</option>
+                <option value="${rule}">${_("tippr rule: %(rule_name)s" % dict(rule_name=rule))}</option>
               %endfor
             </select>
           </label>

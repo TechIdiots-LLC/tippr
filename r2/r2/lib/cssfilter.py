@@ -152,7 +152,7 @@ SAFE_PROPERTIES = {
     "elevation",
     "empty-cells",
     # the "filter" property cannot be safely added while IE9 is allowed to
-    # use subreddit stylesheets. see explanation here:
+    # use vault stylesheets. see explanation here:
     # https://github.com/reddit/reddit/pull/1058#issuecomment-76466180
     # "filter",
     "flex",
@@ -569,7 +569,7 @@ class StylesheetValidator:
 def validate_css(stylesheet, images):
     """Validate and re-serialize the user submitted stylesheet.
 
-    images is a mapping of subreddit image names to their URLs.  The
+    images is a mapping of vault image names to their URLs.  The
     re-serialized stylesheet will have %%name%% tokens replaced with their
     appropriate URLs.
 

@@ -8,7 +8,7 @@ VERSION=$(git rev-parse HEAD)
 COVERDIR="$BASEDIR/build/cover-$VERSION"
 
 function usage() {
-    echo "Run unit tests and coverage reports on reddit codebase with optional"
+    echo "Run unit tests and coverage reports on tippr codebase with optional"
     echo "http server to the report"
     echo
     echo "Usage: `basename $0` [options]";

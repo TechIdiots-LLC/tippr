@@ -68,7 +68,7 @@ jobs:
 
       - name: Run unit tests (r2)
         env:
-          DATABASE_URL: "postgresql://reddit:password@127.0.0.1/reddit"
+          DATABASE_URL: "postgresql://tippr:password@127.0.0.1/tippr"
         run: |
           # Run only unit tests for now - functional tests require full WSGI app setup
           python -m pytest r2/r2/tests/unit -v --tb=short

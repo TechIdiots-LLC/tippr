@@ -93,22 +93,22 @@
     substitutions = {}
 
     if thing.sr_id:
-        path = thing.subreddit.path.rstrip('/')
+        path = thing.vault.path.rstrip('/')
 
         if getattr(thing, "subreddit_distinguish", None) == "admin":
             distinguish_attribs_list = []
             add_admin_distinguish(distinguish_attribs_list)
             distinguish = format_html(capture(make_distinguish, distinguish_attribs_list))
             type = "admin-distinguish"
-            substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s" class="%(type)s">%(path)s</a>%(distinguish)s</span>', path=path, distinguish=distinguish, type=type)
+            substitutions['vault'] = format_html(u'<span class="vault"><a href="%(path)s" class="%(type)s">%(path)s</a>%(distinguish)s</span>', path=path, distinguish=distinguish, type=type)
         elif getattr(thing, "subreddit_distinguish", None) == "moderator":
             distinguish_attribs_list = []
-            add_moderator_distinguish(distinguish_attribs_list, thing.subreddit)
+            add_moderator_distinguish(distinguish_attribs_list, thing.vault)
             distinguish = format_html(capture(make_distinguish, distinguish_attribs_list))
             type = "moderator-distinguish"
-            substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s" class="%(type)s">%(path)s</a>%(distinguish)s</span>', path=path, distinguish=distinguish, type=type)
+            substitutions['vault'] = format_html(u'<span class="vault"><a href="%(path)s" class="%(type)s">%(path)s</a>%(distinguish)s</span>', path=path, distinguish=distinguish, type=type)
         else:
-            substitutions['subreddit'] = format_html(u'<span class="subreddit"><a href="%(path)s">%(path)s</a></span>', path=path)
+            substitutions['vault'] = format_html(u'<span class="vault"><a href="%(path)s">%(path)s</a></span>', path=path)
 
     substitutions['author'] = format_html(u'<span class="sender">%s</span>', WrappedUser(thing.author, thing.attribs, thing))
 
@@ -118,10 +118,10 @@
             if thing.to.name in g.admins:
                 add_admin_distinguish(to_attribs)
             elif thing.to_is_moderator:
-                add_moderator_distinguish(to_attribs, thing.subreddit)
+                add_moderator_distinguish(to_attribs, thing.vault)
         substitutions['dest'] = format_html(u'<span class="recipient">%s</span>', WrappedUser(thing.to, to_attribs, thing))
     elif thing.sr_id:
-        substitutions['dest'] = format_html(u'<span class="recipient subreddit"><a href="%(path)s">%(path)s</a></span>', path=thing.subreddit.path)
+        substitutions['dest'] = format_html(u'<span class="recipient vault"><a href="%(path)s">%(path)s</a></span>', path=thing.vault.path)
 
     substitutions['when'] = unsafe(capture(thing_timestamp, thing, thing.timesince, live=True, include_tense=True))
 
@@ -142,19 +142,19 @@
   <p class="subject">
     %if getattr(thing, "is_parent", False):
        %if thing.sr_id:
-         <span class="correspondent reddit rounded">
+         <span class="correspondent tippr rounded">
            <%
              if getattr(thing, "user_is_moderator", False):
-               sr_path = "%smessage/moderator/inbox" % thing.subreddit.path
+               sr_path = "%smessage/moderator/inbox" % thing.vault.path
              else:
-               sr_path = thing.subreddit.path
+               sr_path = thing.vault.path
              accent_color = getattr(thing, "accent_color", "")
            %>
            <a href="${sr_path}">
              %if accent_color:
                <span class="marker-dot" style="background-color:${accent_color};"></span>
              %endif
-             /r/${thing.subreddit.name}
+             /r/${thing.vault.name}
            </a>
          </span>
        %else:

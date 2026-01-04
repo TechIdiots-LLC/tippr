@@ -22,7 +22,7 @@ def test_health_endpoint_quiesce_returns_503(tmp_path, monkeypatch):
     orig_exists = os.path.exists
 
     def fake_exists(path):
-        if path == "/var/opt/reddit/quiesce":
+        if path == "/var/opt/tippr/quiesce":
             return True
         return orig_exists(path)
 

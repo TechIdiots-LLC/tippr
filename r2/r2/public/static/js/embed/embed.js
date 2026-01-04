@@ -34,7 +34,7 @@
 
       el.previousSibling.style.maxHeight = '';
       el.parentNode.className =
-        el.parentNode.className.replace(' reddit-embed-comment-fade', '');
+        el.parentNode.className.replace(' tippr-embed-comment-fade', '');
     }
 
     var blockquotes = document.getElementsByTagName('blockquote');
@@ -42,7 +42,7 @@
     for (var i = 0, l = blockquotes.length; i < l; i++) {
       if (blockquotes[i].clientHeight > height + flex) {
         blockquotes[i].style.maxHeight = height + 'px';
-        blockquotes[i].parentNode.className += ' reddit-embed-comment-fade';
+        blockquotes[i].parentNode.className += ' tippr-embed-comment-fade';
         blockquotes[i].nextSibling.addEventListener('click', expandComment, false);
       }
     }

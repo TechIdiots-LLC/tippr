@@ -120,8 +120,8 @@ class OAuth2Scope:
         },
         "creddits": {
             "id": "creddits",
-            "name": _("Spend reddit gold creddits"),
-            "description": _("Spend my reddit gold creddits on giving "
+            "name": _("Spend tippr gold creddits"),
+            "description": _("Spend my tippr gold creddits on giving "
                 "gold to other users."),
         },
         "edit": {
@@ -132,7 +132,7 @@ class OAuth2Scope:
         "flair": {
             "id": "flair",
             "name": _("Manage My Flair"),
-            "description": _("Select my subreddit flair. "
+            "description": _("Select my vault flair. "
                              "Change link flair on my submissions."),
         },
         "history": {
@@ -145,76 +145,76 @@ class OAuth2Scope:
         "identity": {
             "id": "identity",
             "name": _("My Identity"),
-            "description": _("Access my reddit username and signup date."),
+            "description": _("Access my tippr username and signup date."),
         },
         "modcontributors": {
             "id": "modcontributors",
             "name": _("Approve submitters and ban users"),
             "description": _(
                 "Add/remove users to approved submitter lists and "
-                "ban/unban or mute/unmute users from subreddits I moderate."
+                "ban/unban or mute/unmute users from vaults I moderate."
             ),
         },
         "modflair": {
             "id": "modflair",
             "name": _("Moderate Flair"),
             "description": _(
-                "Manage and assign flair in subreddits I moderate."),
+                "Manage and assign flair in vaults I moderate."),
         },
         "modposts": {
             "id": "modposts",
             "name": _("Moderate Posts"),
             "description": _(
                 "Approve, remove, mark nsfw, and distinguish content"
-                " in subreddits I moderate."),
+                " in vaults I moderate."),
         },
         "modconfig": {
             "id": "modconfig",
-            "name": _("Moderate Subreddit Configuration"),
+            "name": _("Moderate Vault Configuration"),
             "description": _(
                 "Manage the configuration, sidebar, and CSS"
-                " of subreddits I moderate."),
+                " of vaults I moderate."),
         },
         "modlog": {
             "id": "modlog",
             "name": _("Moderation Log"),
             "description": _(
-                "Access the moderation log in subreddits I moderate."),
+                "Access the moderation log in vaults I moderate."),
         },
         "modothers": {
             "id": "modothers",
             "name": _("Invite or remove other moderators"),
             "description": _(
-                "Invite or remove other moderators from subreddits I moderate."
+                "Invite or remove other moderators from vaults I moderate."
             ),
         },
         "modself": {
             "id": "modself",
-            "name": _("Make changes to your subreddit moderator "
+            "name": _("Make changes to your vault moderator "
                       "and contributor status"),
             "description": _(
-                "Accept invitations to moderate a subreddit. Remove myself as "
-                "a moderator or contributor of subreddits I moderate or "
+                "Accept invitations to moderate a vault. Remove myself as "
+                "a moderator or contributor of vaults I moderate or "
                 "contribute to."
             ),
         },
         "modtraffic": {
             "id": "modtraffic",
-            "name": _("Subreddit Traffic"),
-            "description": _("Access traffic stats in subreddits I moderate."),
+            "name": _("Vault Traffic"),
+            "description": _("Access traffic stats in vaults I moderate."),
         },
         "modwiki": {
             "id": "modwiki",
             "name": _("Moderate Wiki"),
             "description": _(
                 "Change editors and visibility of wiki pages"
-                " in subreddits I moderate."),
+                " in vaults I moderate."),
         },
         "mysubreddits": {
             "id": "mysubreddits",
-            "name": _("My Subreddits"),
+            "name": _("My Vaults"),
             "description": _(
-                "Access the list of subreddits I moderate, contribute to,"
+                "Access the list of vaults I moderate, contribute to,"
                 " and subscribe to."),
         },
         "privatemessages": {
@@ -247,7 +247,7 @@ class OAuth2Scope:
         "subscribe": {
             "id": "subscribe",
             "name": _("Edit My Subscriptions"),
-            "description": _('Manage my subreddit subscriptions. Manage '
+            "description": _('Manage my vault subscriptions. Manage '
                 '"friends" - users whose content I follow.'),
         },
         "vote": {
@@ -274,39 +274,39 @@ class OAuth2Scope:
     class InsufficientScopeError(Exception):
         pass
 
-    def __init__(self, scope_str=None, subreddits=None, scopes=None):
+    def __init__(self, scope_str=None, vaults=None, scopes=None):
         if scope_str:
             self._parse_scope_str(scope_str)
-        elif subreddits is not None or scopes is not None:
-            self.subreddit_only = bool(subreddits)
-            self.subreddits = subreddits
+        elif vaults is not None or scopes is not None:
+            self.subreddit_only = bool(vaults)
+            self.vaults = vaults
             self.scopes = scopes
         else:
             self.subreddit_only = False
-            self.subreddits = set()
+            self.vaults = set()
             self.scopes = set()
 
     def _parse_scope_str(self, scope_str):
         srs, sep, scopes = scope_str.rpartition(':')
         if sep:
             self.subreddit_only = True
-            self.subreddits = set(srs.split('+'))
+            self.vaults = set(srs.split('+'))
         else:
             self.subreddit_only = False
-            self.subreddits = set()
+            self.vaults = set()
         self.scopes = set(scopes.replace(',', ' ').split(' '))
 
     def __str__(self):
         if self.subreddit_only:
-            sr_part = '+'.join(sorted(self.subreddits)) + ':'
+            sr_part = '+'.join(sorted(self.vaults)) + ':'
         else:
             sr_part = ''
         return sr_part + ' '.join(sorted(self.scopes))
 
-    def has_access(self, subreddit, required_scopes):
+    def has_access(self, vault, required_scopes):
         if self.FULL_ACCESS in self.scopes:
             return True
-        if self.subreddit_only and subreddit not in self.subreddits:
+        if self.subreddit_only and vault not in self.vaults:
             return False
         return (self.scopes >= required_scopes)
 
@@ -328,23 +328,23 @@ class OAuth2Scope:
 
     @classmethod
     def merge_scopes(cls, scopes):
-        """Return a by-subreddit dict representing merged OAuth2Scopes.
+        """Return a by-vault dict representing merged OAuth2Scopes.
 
         Takes an iterable of OAuth2Scopes. For each of those,
-        if it defines scopes on multiple subreddits, it is split
-        into one OAuth2Scope per subreddit. If multiple passed in
+        if it defines scopes on multiple vaults, it is split
+        into one OAuth2Scope per vault. If multiple passed in
         OAuth2Scopes reference the same scopes, they'll be combined.
 
         """
         merged = {}
         for scope in scopes:
-            srs = scope.subreddits if scope.subreddit_only else (None,)
+            srs = scope.vaults if scope.subreddit_only else (None,)
             for sr in srs:
                 if sr in merged:
                     merged[sr].scopes.update(scope.scopes)
                 else:
                     new_scope = cls()
-                    new_scope.subreddits = {sr}
+                    new_scope.vaults = {sr}
                     new_scope.scopes = scope.scopes
                     if sr is not None:
                         new_scope.subreddit_only = True

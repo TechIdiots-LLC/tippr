@@ -107,8 +107,28 @@ class UserMessageBuilderTest(RedditTestCase):
     def mock_preparation(self, is_admin=False):
         """ Context manager for mocking function calls. """
         stack = contextlib.ExitStack()
-        stack.enter_context(patch.object(c, "user", self.user, create=True))
-        stack.enter_context(patch.object(c, "user_is_admin", is_admin, create=True))
+        # Use direct setattr for LocalStack objects (c) instead of patch.object
+        # which fails on cleanup when create=True
+        stack.enter_context(self._patch_localstack_attr(c, "user", self.user))
+        stack.enter_context(self._patch_localstack_attr(c, "user_is_admin", is_admin))
         stack.enter_context(patch.object(MessageBuilder, "_viewable_message", return_value=True))
         return stack
+
+    @contextlib.contextmanager
+    def _patch_localstack_attr(self, obj, attr, value):
+        """Patch an attribute on a LocalStack object, handling cleanup properly."""
+        had_attr = hasattr(obj, attr)
+        if had_attr:
+            orig = getattr(obj, attr)
+        setattr(obj, attr, value)
+        try:
+            yield
+        finally:
+            if had_attr:
+                setattr(obj, attr, orig)
+            else:
+                try:
+                    delattr(obj, attr)
+                except AttributeError:
+                    pass
 

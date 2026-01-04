@@ -69,36 +69,36 @@ string_dict = dict(
 
     already_submitted = _("that link has already been submitted, but you can try to [submit it again](%s)."),
 
-    multiple_submitted = _("that link has been submitted to multiple subreddits. you can try to [submit it again](%s)."),
+    multiple_submitted = _("that link has been submitted to multiple vaults. you can try to [submit it again](%s)."),
 
     user_deactivated = _("your account has been deactivated, but we won't judge you for it."),
 
     oauth_login_msg = _(
-        "Log in or sign up to connect your reddit account with %(app)s."),
+        "Log in or sign up to connect your tippr account with %(app)s."),
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
-    friends = _('to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)'),
+    friends = _('to view tippr with only submissions from your friends, use [tippr.net/r/friends](%s)'),
 
-    sr_created = _('your subreddit has been created'),
+    sr_created = _('your vault has been created'),
 
     more_info_link = _("visit [%(link)s](%(link)s) for more information"),
 
     sr_messages = dict(
-        empty =  _('you have not subscribed to any subreddits.'),
-        subscriber =  _('below are the subreddits you have subscribed to.'),
-        contributor =  _('below are the subreddits that you are an approved submitter on.'),
-        moderator = _('below are the subreddits that you have moderator access to.')
+        empty =  _('you have not subscribed to any vaults.'),
+        subscriber =  _('below are the vaults you have subscribed to.'),
+        contributor =  _('below are the vaults that you are an approved submitter on.'),
+        moderator = _('below are the vaults that you have moderator access to.')
         ),
 
-    sr_subscribe =  _('click the `subscribe` or `unsubscribe` buttons to choose which subreddits appear on your front page.'),
+    sr_subscribe =  _('click the `subscribe` or `unsubscribe` buttons to choose which vaults appear on your front page.'),
 
-    searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) subreddit. '+
-                           'you can also search within [all subreddits](%(all_reddits_link)s)'),
+    searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) vault. '+
+                           'you can also search within [all vaults](%(all_reddits_link)s)'),
 
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
-    link_info_og_description = _("%(score)s points and %(num_comments)s comments so far on reddit"),
+    link_info_og_description = _("%(score)s points and %(num_comments)s comments so far on tippr"),
 
     submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),
     submit_text = _("""You are submitting a text-based post. Speak your mind. A title is required, but expanding further in the text field is not. Beginning your title with "vote up if" is violation of intergalactic law."""),
@@ -113,40 +113,40 @@ string_dict = dict(
     invalid_search_query = _("I couldn't understand your query, so I simplified it and searched for \"%(clean_query)s\" instead."),
     completely_invalid_search_query = _("I couldn't understand your search query. Please try again."),
     search_help = _("You may also want to check the [search help page](%(search_help)s) for more information."),
-    formatting_help_info = _('reddit uses a slightly-customized version of [Markdown](http://daringfireball.net/projects/markdown/syntax) for formatting. See below for some basics, or check [the commenting wiki page](/wiki/commenting) for more detailed help and solutions to common issues.'),
-    read_only_msg = _("Reddit is in \"emergency read-only mode\" right now. :( You won't be able to log in. We're sorry and are working frantically to fix the problem."),
+    formatting_help_info = _('tippr uses a slightly-customized version of [Markdown](http://daringfireball.net/projects/markdown/syntax) for formatting. See below for some basics, or check [the commenting wiki page](/wiki/commenting) for more detailed help and solutions to common issues.'),
+    read_only_msg = _("Tippr is in \"emergency read-only mode\" right now. :( You won't be able to log in. We're sorry and are working frantically to fix the problem."),
     heavy_load_msg = _("this page is temporarily in read-only mode due to heavy traffic."),
-    in_perma_timeout_msg = _("Your account has been permanently [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) from Reddit."),
-    in_temp_timeout_msg = _("Your account has been [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) from Reddit for %(days)s."),
-    gold_benefits_msg = "reddit gold is our premium membership program. It grants you access to [extra features](https://www.reddit.com/gold/about) to improve your reddit experience. It also makes you really quite dapper. If you have questions about your gold, please visit /r/goldbenefits.",
+    in_perma_timeout_msg = _("Your account has been permanently [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) from Tippr."),
+    in_temp_timeout_msg = _("Your account has been [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) from Tippr for %(days)s."),
+    gold_benefits_msg = "tippr gold is our premium membership program. It grants you access to [extra features](https://www.tippr.net/gold/about) to improve your tippr experience. It also makes you really quite dapper. If you have questions about your gold, please visit /r/goldbenefits.",
     lounge_msg = "Grab a drink and join us in /r/lounge, the super-secret members-only community that may or may not exist.",
     postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
-    over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to reddit gold, it goes up to %(goldmax)d.)"),
+    over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to tippr gold, it goes up to %(goldmax)d.)"),
     over_comment_limit_gold = _("Sorry, the maximum number of comments is %d."),
-    youve_got_gold = "%(sender)s just gifted you %(amount)s of reddit gold!",
+    youve_got_gold = "%(sender)s just gifted you %(amount)s of tippr gold!",
     giftgold_note = "Here's a note that was included:\n\n----\n\n",
-    youve_been_gilded_comment = "%(sender)s liked [your comment](%(url)s) so much that they gilded it, giving you reddit gold.\n\n",
-    youve_been_gilded_link = "%(sender)s liked [your submission](%(url)s) so much that they gilded it, giving you reddit gold.\n\n",
+    youve_been_gilded_comment = "%(sender)s liked [your comment](%(url)s) so much that they gilded it, giving you tippr gold.\n\n",
+    youve_been_gilded_link = "%(sender)s liked [your submission](%(url)s) so much that they gilded it, giving you tippr gold.\n\n",
     respond_to_anonymous_gilder = "Want to say thanks to your mysterious benefactor? Reply to this message. You will find out their username if they choose to reply back.",
     unsupported_respond_to_gilder = "Sorry, replying directly to your mysterious benefactor is not yet supported for this gilding.",
     anonymous_gilder_warning = _("***WARNING: Responding to this message will reveal your username to the gildee.***\n\n"),
-    gold_claimed_code = _("Thanks for claiming a reddit gold code.\n\n"),
-    gold_summary_autorenew_monthly = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **monthly**. \n\n>This subscription will renew automatically each month until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional months of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
-    gold_summary_autorenew_yearly = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **yearly**. \n\n>This subscription will renew automatically each year until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional years of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
-    gold_summary_onetime = _("You're about to make a one-time purchase of %(amount)s of reddit gold for yourself (%(user)s). You'll pay a total of %(price)s for this."),
-    gold_summary_creddits = _("You're about to purchase %(amount)s. They work like gift certificates: each creddit you have will allow you to give one month of reddit gold to someone else. You'll pay a total of %(price)s for this."),
-    gold_summary_gift_code = _("You're about to purchase %(amount)s of reddit gold in the form of a gift code. The recipient (or you) will be able to claim the code to redeem that gold to their account. You'll pay a total of %(price)s for this."),
-    gold_summary_signed_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s, who will be told that it came from you. You'll pay a total of %(price)s for this."),
-    gold_summary_anonymous_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s. It will be an anonymous gift. You'll pay a total of %(price)s for this."),
-    gold_summary_gilding_comment = _("Want to say thanks to *%(recipient)s* for this comment? Give them a month of [reddit gold](/gold/about)."),
-    gold_summary_gilding_link = _("Want to say thanks to *%(recipient)s* for this submission? Give them a month of [reddit gold](/gold/about)."),
-    gold_summary_gilding_page_comment = _("You're about to give *%(recipient)s* a month of [reddit gold](/gold/about) for this comment:"),
-    gold_summary_gilding_page_link = _("You're about to give *%(recipient)s* a month of [reddit gold](/gold/about) for this submission:"),
+    gold_claimed_code = _("Thanks for claiming a tippr gold code.\n\n"),
+    gold_summary_autorenew_monthly = _("You're about to set up an ongoing, autorenewing subscription to tippr gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **monthly**. \n\n>This subscription will renew automatically each month until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional months of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
+    gold_summary_autorenew_yearly = _("You're about to set up an ongoing, autorenewing subscription to tippr gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **yearly**. \n\n>This subscription will renew automatically each year until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional years of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
+    gold_summary_onetime = _("You're about to make a one-time purchase of %(amount)s of tippr gold for yourself (%(user)s). You'll pay a total of %(price)s for this."),
+    gold_summary_creddits = _("You're about to purchase %(amount)s. They work like gift certificates: each creddit you have will allow you to give one month of tippr gold to someone else. You'll pay a total of %(price)s for this."),
+    gold_summary_gift_code = _("You're about to purchase %(amount)s of tippr gold in the form of a gift code. The recipient (or you) will be able to claim the code to redeem that gold to their account. You'll pay a total of %(price)s for this."),
+    gold_summary_signed_gift = _("You're about to give %(amount)s of tippr gold to %(recipient)s, who will be told that it came from you. You'll pay a total of %(price)s for this."),
+    gold_summary_anonymous_gift = _("You're about to give %(amount)s of tippr gold to %(recipient)s. It will be an anonymous gift. You'll pay a total of %(price)s for this."),
+    gold_summary_gilding_comment = _("Want to say thanks to *%(recipient)s* for this comment? Give them a month of [tippr gold](/gold/about)."),
+    gold_summary_gilding_link = _("Want to say thanks to *%(recipient)s* for this submission? Give them a month of [tippr gold](/gold/about)."),
+    gold_summary_gilding_page_comment = _("You're about to give *%(recipient)s* a month of [tippr gold](/gold/about) for this comment:"),
+    gold_summary_gilding_page_link = _("You're about to give *%(recipient)s* a month of [tippr gold](/gold/about) for this submission:"),
     gold_summary_gilding_page_footer = _("You'll pay a total of %(price)s for this."),
     archived_post_message = _("This is an archived post. You won't be able to vote or comment."),
     locked_post_message = _("This post is locked. You won't be able to comment."),
     account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices."),
-    your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
+    your_current_ip_is = _("You are currently accessing tippr from this IP address: %(address)s."),
     account_activity_apps_blurb = _("""
 These apps are authorized to access your account. Signing out of all sessions
 will revoke access from all apps. You may also revoke access from individual
@@ -159,21 +159,21 @@ apps below.
     traffic_help_email = _("Questions? Email self serve support: %(email)s"),
 
     traffic_subreddit_explanation = _("""
-Below are the traffic statistics for your subreddit. Each graph represents one of the following over the interval specified.
+Below are the traffic statistics for your vault. Each graph represents one of the following over the interval specified.
 
-* **pageviews** are all hits to %(subreddit)s, including both listing pages and comment pages.
+* **pageviews** are all hits to %(vault)s, including both listing pages and comment pages.
 * **uniques** are the total number of unique visitors (determined by a combination of their IP address and User Agent string) that generate the above pageviews. This is independent of whether or not they are signed in.
 * **subscriptions** is the number of new subscriptions that have been generated in a given day. This number is less accurate than the first two metrics, as, though we can track new subscriptions, we have no way to track unsubscriptions.
 
-Note: there are a couple of places outside of your subreddit where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.
+Note: there are a couple of places outside of your vault where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.
 """),
 
-    subscribed_multi = _("multireddit of your subscriptions"),
-    mod_multi = _("multireddit of subreddits you moderate"),
+    subscribed_multi = _("multivault of your subscriptions"),
+    mod_multi = _("multivault of vaults you moderate"),
 
-    r_all_description = _("/r/all displays content from all of reddit, including subreddits you aren't subscribed to. Some subreddits have chosen to exclude themselves from /r/all."),
-    r_all_minus_description = _("Displaying content from /r/all of reddit, except the following subreddits:"),
-    all_minus_gold_only = _('Filtering /r/all is a feature only available to [reddit gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
+    r_all_description = _("/v/all displays content from all of tippr, including vaults you aren't subscribed to. Some vaults have chosen to exclude themselves from /r/all."),
+    r_all_minus_description = _("Displaying content from /r/all of tippr, except the following vaults:"),
+    all_minus_gold_only = _('Filtering /r/all is a feature only available to [tippr gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
 )
 
 class StringHandler:
@@ -257,7 +257,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("link",        "links"),
                          P_("comment",     "comments"),
                          P_("message",     "messages"),
-                         P_("subreddit",   "subreddits"),
+                         P_("vault",   "vaults"),
                          P_("creddit",     "creddits"),
 
                          # people

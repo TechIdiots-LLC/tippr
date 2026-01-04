@@ -32,7 +32,7 @@ from r2.lib.inventory_optimization import get_maximized_pageviews
 from r2.lib.utils import to_date, tup
 from r2.models.bidding import Bid, PromotionWeights
 from r2.models.promo import NO_TRANSACTION, Location, PromoCampaign
-from r2.models.subreddit import DefaultSR, FakeSubreddit, LocalizedDefaultSubreddits, Subreddit
+from r2.models.vault import DefaultSR, FakeSubreddit, LocalizedDefaultSubreddits, Vault
 from r2.models import traffic
 from r2.models.promo_metrics import LocationPromoMetrics, PromoMetrics
 
@@ -154,7 +154,7 @@ def get_predicted_pageviews(srs, location=None):
     srs, is_single = tup(srs, ret_is_single=True)
     sr_names = [sr.name for sr in srs]
 
-    # default subreddits require a different inventory factor
+    # default vaults require a different inventory factor
     default_srids = LocalizedDefaultSubreddits.get_global_defaults()
 
     if location:
@@ -208,7 +208,7 @@ def find_campaigns(srs, start, end, ignore):
             campaign.target.subreddit_names for campaign in new_campaigns
         ))
         new_sr_names -= all_sr_names
-        srs = set(Subreddit._by_name(new_sr_names).values())
+        srs = set(Vault._by_name(new_sr_names).values())
     return all_campaigns
 
 
@@ -218,7 +218,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
     Return the available pageviews by date for the targets and location.
 
     Available pageviews depends on all equal and higher level locations:
-    A location is: subreddit > country > metro
+    A location is: vault > country > metro
 
     e.g. if a campaign is targeting /r/funny in USA/Boston we need to check that
     there's enough inventory in:
@@ -245,12 +245,12 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
         target.subreddits_slow for target in targets))
     all_campaigns = find_campaigns(target_srs, start, end, ignore)
 
-    # get predicted pageviews for each subreddit and location
+    # get predicted pageviews for each vault and location
     all_sr_names = {sr.name for sr in target_srs}
     all_sr_names |= set(chain.from_iterable(
         campaign.target.subreddit_names for campaign in all_campaigns
     ))
-    all_srs = list(Subreddit._by_name(all_sr_names).values())
+    all_srs = list(Vault._by_name(all_sr_names).values())
     pageviews_dict = {location: get_predicted_pageviews(all_srs, location)
                           for location in locations}
 

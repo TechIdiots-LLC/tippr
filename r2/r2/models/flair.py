@@ -28,13 +28,13 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Relation
 from r2.lib.db.userrel import UserRel
 from r2.lib.utils import to36
-from r2.models import Account, Subreddit
+from r2.models import Account, Vault
 
 USER_FLAIR = 'USER_FLAIR'
 LINK_FLAIR = 'LINK_FLAIR'
 
 
-class Flair(Relation(Subreddit, Account)):
+class Flair(Relation(Vault, Account)):
     _cache = g.thingcache
 
     @classmethod
@@ -42,7 +42,7 @@ class Flair(Relation(Subreddit, Account)):
         return "flair:"
 
 
-Subreddit.__bases__ += (
+Vault.__bases__ += (
     UserRel(
         name='flair',
         relation=Flair,
@@ -105,11 +105,11 @@ class FlairTemplate(tdb_cassandra.Thing):
 
 
 class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
-    """Lists of FlairTemplate IDs for a subreddit.
+    """Lists of FlairTemplate IDs for a vault.
 
     The FlairTemplate references are stored as an arbitrary number of attrs.
     The lexicographical ordering of these attr names gives the ordering for
-    flair templates within the subreddit.
+    flair templates within the vault.
     """
 
     MAX_FLAIR_TEMPLATES = 350

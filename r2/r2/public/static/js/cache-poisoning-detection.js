@@ -13,7 +13,7 @@
    * the canary.
    *
    * There are 36**2 (1296) possible canaries, large enough to make
-   * false-negatives unlikely, but small enough at reddit's scale
+   * false-negatives unlikely, but small enough at tippr's scale
    * to make them not uniquely identifying. Essentially, we eat the
    * possibility of missing 1 in every 1296 instances of poisoned caches to
    * protect privacy.

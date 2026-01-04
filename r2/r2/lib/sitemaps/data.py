@@ -22,7 +22,7 @@
 
 """Generates all the data used in making sitemaps and sitemap links.
 
-Currently only supports subreddit links but will soon support comment links.
+Currently only supports vault links but will soon support comment links.
 """
 
 import tempfile
@@ -68,5 +68,5 @@ def _read_subreddit_etl_from_s3(s3path):
 
 def find_all_subreddits(s3path):
     for line in _read_subreddit_etl_from_s3(s3path):
-        _, subreddit, __ = line.split('\x01')
-        yield subreddit
+        _, vault, __ = line.split('\x01')
+        yield vault

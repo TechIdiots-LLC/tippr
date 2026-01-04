@@ -121,12 +121,12 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             if error_data:
                 environ['extra_error_data'] = error_data
 
-        if environ.get('REDDIT_NAME'):
-            d['srname'] = environ.get('REDDIT_NAME')
-        if environ.get('REDDIT_TAKEDOWN'):
-            d['takedown'] = environ.get('REDDIT_TAKEDOWN')
-        if environ.get('REDDIT_ERROR_NAME'):
-            d['error_name'] = environ.get('REDDIT_ERROR_NAME')
+        if environ.get('TIPPR_NAME'):
+            d['srname'] = environ.get('TIPPR_NAME')
+        if environ.get('TIPPR_TAKEDOWN'):
+            d['takedown'] = environ.get('TIPPR_TAKEDOWN')
+        if environ.get('TIPPR_ERROR_NAME'):
+            d['error_name'] = environ.get('TIPPR_ERROR_NAME')
 
         # preserve x-frame-options when 304ing
         if code == 304:
@@ -198,7 +198,7 @@ class DomainMiddleware:
         if domain == "localhost" or is_media_only_domain:
             return self.app(environ, start_response)
 
-        # tell reddit_base to redirect to the appropriate subreddit for
+        # tell reddit_base to redirect to the appropriate vault for
         # a legacy CNAME
         if not is_subdomain(domain, g.domain):
             environ['legacy-cname'] = domain
@@ -225,19 +225,19 @@ class DomainMiddleware:
                     continue
                 prefix_parts.append(subdomain)
             elif extension:
-                environ['reddit-domain-extension'] = extension
+                environ['tippr-domain-extension'] = extension
             elif is_language_subdomain(subdomain):
-                environ['reddit-prefer-lang'] = subdomain
+                environ['tippr-prefer-lang'] = subdomain
             else:
                 sr_redirect = subdomain
                 subdomains.remove(subdomain)
 
-        if 'reddit-prefer-lang' in environ:
-            prefix_parts.insert(0, environ['reddit-prefer-lang'])
+        if 'tippr-prefer-lang' in environ:
+            prefix_parts.insert(0, environ['tippr-prefer-lang'])
         if prefix_parts:
-            environ['reddit-domain-prefix'] = '.'.join(prefix_parts)
+            environ['tippr-domain-prefix'] = '.'.join(prefix_parts)
 
-        # if there was a subreddit subdomain, redirect
+        # if there was a vault subdomain, redirect
         if sr_redirect and environ.get("FULLPATH"):
             if not subdomains and g.domain_prefix:
                 subdomains.append(g.domain_prefix)
@@ -253,7 +253,7 @@ class DomainMiddleware:
 
 
 class SubredditMiddleware:
-    sr_pattern = re.compile(r'^/r/([^/]{2,})')
+    sr_pattern = re.compile(r'^/v/([^/]{2,})')
 
     def __init__(self, app):
         self.app = app
@@ -262,7 +262,7 @@ class SubredditMiddleware:
         path = environ['PATH_INFO']
         sr = self.sr_pattern.match(path)
         if sr:
-            environ['subreddit'] = sr.groups()[0]
+            environ['vault'] = sr.groups()[0]
             environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
         return self.app(environ, start_response)
 
@@ -272,7 +272,7 @@ class DomainListingMiddleware:
         self.app = app
 
     def __call__(self, environ, start_response):
-        if 'subreddit' not in environ:
+        if 'vault' not in environ:
             path = environ['PATH_INFO']
             domain, rest = path_info_split(path)
             if domain == "domain" and rest:
@@ -291,7 +291,7 @@ class ExtensionMiddleware:
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
         fname, sep, path_ext = path.rpartition('.')
-        domain_ext = environ.get('reddit-domain-extension')
+        domain_ext = environ.get('tippr-domain-extension')
 
         ext = None
         if path_ext in extension_mapping:
@@ -478,7 +478,7 @@ class TestVariablesMiddleware:
         return self.app(environ, start_response)
 
 
-class RedditApp(PylonsApp):
+class TipprApp(PylonsApp):
 
     test_mode = False
 
@@ -506,7 +506,7 @@ class RedditApp(PylonsApp):
 
         if not g.running_as_script:
             controllers_iter = itertools.chain(
-                iter(controllers._reddit_controllers.values()),
+                iter(controllers._tippr_controllers.values()),
                 iter(controllers._plugin_controllers.values()),
             )
             for controller in controllers_iter:
@@ -561,7 +561,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     g = config['pylons.app_globals']
 
     # The Pylons WSGI app
-    app = RedditApp(config=config)
+    app = TipprApp(config=config)
     app = RoutesMiddleware(app, config["routes.map"])
 
     # CUSTOM MIDDLEWARE HERE (filtered by the error handling middlewares)

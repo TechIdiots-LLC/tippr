@@ -24,10 +24,10 @@ import re
 
 from pylons import app_globals as g
 
-from r2.models import NotFound, Subreddit, Thing
+from r2.models import NotFound, Vault, Thing
 from r2.models.keyvalue import NamedGlobals
 
-_SUBREDDIT_RE = re.compile(r'/r/(\w+)')
+_SUBREDDIT_RE = re.compile(r'/v/(\w+)')
 TRENDING_SUBREDDITS_KEY = 'trending_subreddits'
 
 
@@ -37,15 +37,15 @@ def get_trending_subreddits():
 
 def update_trending_subreddits():
     try:
-        trending_sr = Subreddit._by_name(g.config['trending_sr'])
+        trending_sr = Vault._by_name(g.config['trending_sr'])
     except NotFound:
-        g.log.info("Unknown trending subreddit %r or trending_sr config "
+        g.log.info("Unknown trending vault %r or trending_sr config "
                    "not set. Not updating.", g.config['trending_sr'])
         return
 
     link = _get_newest_link(trending_sr)
     if not link:
-        g.log.info("Unable to find active link in subreddit %r. Not updating.",
+        g.log.info("Unable to find active link in vault %r. Not updating.",
                    g.config['trending_sr'])
         return
 
@@ -56,7 +56,7 @@ def update_trending_subreddits():
         'link_id': link._id,
     }
     NamedGlobals.set(TRENDING_SUBREDDITS_KEY, trending_data)
-    g.log.debug("Trending subreddit data set to %r", trending_data)
+    g.log.debug("Trending vault data set to %r", trending_data)
 
 
 def _get_newest_link(sr):

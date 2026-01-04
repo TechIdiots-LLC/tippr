@@ -28,7 +28,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import TipprController
 from r2.lib.base import proxyurl
 from r2.lib.csrf import csrf_exempt
 from r2.lib.filters import SC_OFF, SC_ON
@@ -39,9 +39,9 @@ from r2.lib.template_helpers import get_domain
 
 @memoize("renderurl_cached", time=60)
 def renderurl_cached(path):
-    # Needed so http://reddit.com/help/ works
+    # Needed so https://www.tippr.net/help/ works
     fp = path.rstrip("/")
-    u = "https://code.reddit.com/wiki" + fp + '?stripped=1'
+    u = "https://code.tippr.net/wiki" + fp + '?stripped=1'
 
     g.log.debug("Pulling %s for help" % u)
 
@@ -53,7 +53,7 @@ def renderurl_cached(path):
             print(e.fp.read())
         return (None, None)
 
-class EmbedController(RedditController):
+class EmbedController(TipprController):
     allow_stylesheets = True
 
     def rendercontent(self, input, fp):
@@ -88,7 +88,7 @@ class EmbedController(RedditController):
 
     def GET_blog(self):
         return self.redirect("https://blog.%s/" %
-                             get_domain(subreddit=False, no_www=True))
+                             get_domain(vault=False, no_www=True))
 
     def GET_faq(self):
         if c.default_sr:

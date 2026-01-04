@@ -21,11 +21,11 @@ against his. I also made sure Jed passed against his tests
 in order to offer easy upgrades -- jsgettext.berlios.de
 */
 
-// some modifications have been made to work with reddit; they are commented
-// below with a "reddit" prefix.
+// some modifications have been made to work with tippr; they are commented
+// below with a "tippr" prefix.
 (function (root, undef) {
 
-  // reddit: *snip* - Jed's miniature underscore.js implementation was removed
+  // tippr: *snip* - Jed's miniature underscore.js implementation was removed
   // from here since we already have full underscore.
 
   // Jed is a constructor function
@@ -37,7 +37,7 @@ in order to offer easy upgrades -- jsgettext.berlios.de
           "" : {
             "domain"       : "messages",
             "lang"         : "en",
-            "plural_forms" : "(n != 1);" // reddit: simplified
+            "plural_forms" : "(n != 1);" // tippr: simplified
           }
           // There are no default keys, though
         }
@@ -62,7 +62,7 @@ in order to offer easy upgrades -- jsgettext.berlios.de
   // just change this at any time and it will use that instead.
   Jed.context_delimiter = String.fromCharCode( 4 );
 
-  // reddit: this function was modified to bypass the (removed) parser
+  // tippr: this function was modified to bypass the (removed) parser
   var getPluralFormFunc = _.memoize(function( pluralFormString ) {
     // turns true/false into 1 and 0 for plural indexing
     function pluralFormsCoerced( pluralFormFunc, n ) {
@@ -74,7 +74,7 @@ in order to offer easy upgrades -- jsgettext.berlios.de
     return _.partial(pluralFormsCoerced, new Function('n', 'return ' + pluralFormString));
   })
 
-  // reddit: *snip* - Jed's fluent API was removed since we won't be using it.
+  // tippr: *snip* - Jed's fluent API was removed since we won't be using it.
 
   // Add functions to the Jed prototype.
   // These will be the functions on the object that's returned
@@ -228,11 +228,11 @@ in order to offer easy upgrades -- jsgettext.berlios.de
     }
   });
 
-  // reddit: *snip* - the Jed-supplied sprintf implementation was removed from here
+  // tippr: *snip* - the Jed-supplied sprintf implementation was removed from here
 
-  // reddit: *snip* - Jed's plural forms expression parser was replaced with an
+  // tippr: *snip* - Jed's plural forms expression parser was replaced with an
   // eval-based system relying on build-time validity checking
 
-  // reddit: *snip* the npm stuff was removed
+  // tippr: *snip* the npm stuff was removed
   root["Jed"] = Jed;
 })(this);

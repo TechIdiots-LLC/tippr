@@ -24,7 +24,7 @@ from pylons import tmpl_context as c
 
 from r2.config.extensions import set_extension
 from r2.controllers.login import handle_login, handle_register
-from r2.controllers.reddit_base import RedditController, generate_modhash
+from r2.controllers.reddit_base import TipprController, generate_modhash
 from r2.lib.csrf import csrf_exempt
 from r2.lib.validator import (
     ValidEmail,
@@ -37,7 +37,7 @@ from r2.lib.validator import (
 )
 
 
-class APIv1LoginController(RedditController):
+class APIv1LoginController(TipprController):
 
     def pre(self):
         super().pre()

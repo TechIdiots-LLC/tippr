@@ -39,7 +39,7 @@ from pylons.i18n import N_, _
 from r2.config import feature
 from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import TipprController
 from r2.lib import (
     hooks,
     inventory,
@@ -70,7 +70,7 @@ from r2.lib.pages import (
     PromoteLinkNew,
     PromotePage,
     PromoteReport,
-    Reddit,
+    Tippr,
     RefundPage,
     RenderableCampaign,
     SponsorLookupUser,
@@ -137,7 +137,7 @@ from r2.models import (
     PromotionLog,
     PromotionPrices,
     PromotionWeights,
-    Subreddit,
+    Vault,
     Target,
     calc_impressions,
 )
@@ -273,7 +273,7 @@ def _clear_ads_images(thing):
     timer.stop()
 
 
-class PromoteController(RedditController):
+class PromoteController(TipprController):
     @validate(VSponsor())
     def GET_new_promo(self):
         ads_images = _get_ads_images(c.user)
@@ -304,7 +304,7 @@ class PromoteController(RedditController):
             return self.abort404()
 
         content = RefundPage(link, campaign)
-        return Reddit("refund", content=content, show_sidebar=False).render()
+        return Tippr("refund", content=content, show_sidebar=False).render()
 
     @validate(VVerifiedSponsor("link"),
               link=VLink("link"),
@@ -398,7 +398,7 @@ class SponsorController(PromoteController):
         target = Target(Frontpage.name)
         if sr_name:
             try:
-                sr = Subreddit._by_name(sr_name)
+                sr = Vault._by_name(sr_name)
                 target = Target(sr.name)
             except NotFound:
                 c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_name')
@@ -545,7 +545,7 @@ class SponsorListingController(PromoteListingController):
 
     @property
     def title_text(self):
-        return _('promos on reddit')
+        return _('promos on tippr')
 
     @property
     def menus(self):
@@ -591,7 +591,7 @@ class SponsorListingController(PromoteListingController):
                 NavButton(name, name, use_params=True) for name in srnames)
             base_path = self.base_path + '/live_promos'
             menus.append(NavMenu(buttons, base_path=base_path,
-                                 title='subreddit', type='lightdrop'))
+                                 title='vault', type='lightdrop'))
         return menus
 
     @classmethod
@@ -655,7 +655,7 @@ class SponsorListingController(PromoteListingController):
             link_ids = [camp.link_id for camp in campaigns]
             return [Link._fullname_from_id36(to36(id)) for id in link_ids]
         elif self.sort == 'reported':
-            return queries.get_reported_links(Subreddit.get_promote_srid())
+            return queries.get_reported_links(Vault.get_promote_srid())
         elif self.sort == 'fraud':
             return queries.get_payment_flagged_links()
         elif self.sort == 'house':
@@ -701,7 +701,7 @@ class SponsorListingController(PromoteListingController):
 
         if srname:
             try:
-                self.sr = Subreddit._by_name(srname)
+                self.sr = Vault._by_name(srname)
             except NotFound:
                 pass
         return ListingController.GET_listing(self, **kw)

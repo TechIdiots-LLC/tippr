@@ -50,7 +50,7 @@
       }
 
       // set target using page context
-      if (!targetFullname && targetType == 'subreddit') {
+      if (!targetFullname && targetType == 'vault') {
         targetFullname = r.config.cur_site;
       } else if (!targetFullname && targetType == 'link') {
         targetFullname = r.config.cur_link;

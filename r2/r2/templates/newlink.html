@@ -34,7 +34,7 @@
   if thing.default_sr:
     sr = format_html("&#32;%s", unsafe(_a_buffered(thing.default_sr.name, href=thing.default_sr.path)))
   else:
-    sr = _("reddit")
+    sr = _("tippr")
 %>
 
 <h1>${_wsf("submit to %(sr)s", sr=sr)}</h1>
@@ -100,14 +100,14 @@ ${thing.formtabs_menu}
 %endif
 
 <div class="spacer">
-  <%utils:round_field title="${_('choose a subreddit')}" id="reddit-field">
+  <%utils:round_field title="${_('choose a vault')}" id="reddit-field">
     ${SubredditSelector(thing.default_sr, extra_subreddits=thing.extra_subreddits, required=True)}
   </%utils:round_field>
 </div>
 
 <div class="spacer">
     <div class="submit_text roundfield">
-        <h1>${_wsf('submitting to %(sr)s', sr=unsafe('/r/<span class="sr"></span>'))}</h1>
+        <h1>${_wsf('submitting to %(sr)s', sr=unsafe('/v/<span class="sr"></span>'))}</h1>
         <span class="content md-container">
             %if thing.default_sr and thing.default_sr.submit_text:
                 ${unsafe(safemarkdown(thing.default_sr.submit_text))}
@@ -130,7 +130,7 @@ ${thing.captcha}
 </div>
 
 <div class="roundfield info-notice">
-  ${text_with_links(_("please be mindful of reddit's %(content_policy)s and practice %(good_reddiquette)s."),
+  ${text_with_links(_("please be mindful of tippr's %(content_policy)s and practice %(good_reddiquette)s."),
       content_policy=dict(
         link_text=_("content policy"),
         path="/help/contentpolicy",

@@ -101,7 +101,7 @@ class SimpleXMLObjectTest(RedditTestCase):
         from r2.lib.authorize import Address
         address = Address(firstName="Bob",
                           lastName="Smith",
-                          company="Reddit Inc.",
+                          company="Tippr Inc.",
                           address="123 Main St.",
                           city="San Francisco",
                           state="California",
@@ -114,7 +114,7 @@ class SimpleXMLObjectTest(RedditTestCase):
                           )
         expected = ("<firstName>Bob</firstName>" +
                    "<lastName>Smith</lastName>" +
-                   "<company>Reddit Inc.</company>" +
+                   "<company>Tippr Inc.</company>" +
                    "<address>123 Main St.</address>" +
                    "<city>San Francisco</city>" +
                    "<state>California</state>" +

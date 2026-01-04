@@ -23,7 +23,7 @@
 class MediaProvider:
     """Provider for storing media objects.
 
-    Media objects are thumbnails, subreddit images/stylesheets, and app icons.
+    Media objects are thumbnails, vault images/stylesheets, and app icons.
     A media provider must allow new objects to be added to the system and for
     users to be able to view those objects over HTTP.
 

@@ -26,7 +26,7 @@ from pylons.controllers.util import abort
 
 from r2.lib.base import BaseController
 from r2.lib.validator import chkuser
-from r2.models import Subreddit
+from r2.models import Vault
 
 
 class RedirectController(BaseController):
@@ -50,10 +50,10 @@ class RedirectController(BaseController):
 
     def GET_timereddit_redirect(self, timereddit, rest=None):
         sr_name = "t:" + timereddit
-        if not Subreddit.is_valid_name(sr_name, allow_time_srs=True):
+        if not Vault.is_valid_name(sr_name, allow_time_srs=True):
             abort(400)
         if rest:
             rest = str(rest)
         else:
             rest = ''
-        return self.redirect("/r/{}/{}".format(sr_name, rest), code=301)
+        return self.redirect("/v/{}/{}".format(sr_name, rest), code=301)

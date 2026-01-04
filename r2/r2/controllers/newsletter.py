@@ -20,10 +20,10 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import TipprController
 from r2.lib.pages import Newsletter
 
 
-class NewsletterController(RedditController):
+class NewsletterController(TipprController):
     def GET_newsletter(self):
         return Newsletter().render()

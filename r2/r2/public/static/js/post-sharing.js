@@ -60,7 +60,7 @@
     '<div class="post-sharing-email-form post-sharing-form" ref="$emailForm">' +
       '<p class="post-sharing-label">' +
         '<span ref="$emailFormEmailLabel">' + _.escape(r._('Share via email as %(username)s').format({ username: r.config.logged })) + '</span>' +
-        '<span ref="$emailFormPMLabel">' + _.escape(r._('Share via private message on reddit as %(username)s').format({ username: r.config.logged })) + '</span>' +
+        '<span ref="$emailFormPMLabel">' + _.escape(r._('Share via private message on tippr as %(username)s').format({ username: r.config.logged })) + '</span>' +
       '</p>' +
       '<div class="c-form-group">' +
         '<input class="post-sharing-recipient-input c-form-control" ' +
@@ -68,7 +68,7 @@
                'name="recipient" type="text" ' +
                'placeholder="name@example.com, name@example.com" ' +
                'data-placeholder-email="name@example.com, name@example.com" ' +
-               'data-placeholder-reddit-pm="username">' +
+               'data-placeholder-tippr-pm="username">' +
         feedbackTemplate({ ref: '$shareToFeedback' }) +
       '</div>' +
       '<div class="c-form-group">' +
@@ -198,7 +198,7 @@
       switch (option) {
         case 'email':
           // fall through
-        case 'reddit-pm':
+        case 'tippr-pm':
           return this.state.set({
             selectedOption: option,
           });
@@ -243,7 +243,7 @@
 
     shareToTwitter: function() {
       var redditUrl = this.getShareLink('twitter');
-      var twitterHandle = 'reddit'
+      var twitterHandle = 'tippr'
       var title = this.thingData.title;
 
       // current twitter short url length is 23, +1 for space after, and +1 for
@@ -390,11 +390,11 @@
 
       if ('selectedOption' in changed) {
           this.refs.$emailFormEmailLabel.toggle(selectedOption === 'email');
-          this.refs.$emailFormPMLabel.toggle(selectedOption === 'reddit-pm');
+          this.refs.$emailFormPMLabel.toggle(selectedOption === 'tippr-pm');
 
           this.refs.$shareTo.attr('placeholder', this.refs.$shareTo.data('placeholder-' + selectedOption));
 
-        if (selectedOption === 'email' || selectedOption === 'reddit-pm') {
+        if (selectedOption === 'email' || selectedOption === 'tippr-pm') {
           this.refs.$mainForm.slideUp('fast');
           this.refs.$emailForm.slideDown('fast', this.onOpenEmailForm.bind(this));
         } else {
@@ -404,7 +404,7 @@
       }
 
 
-      if (selectedOption === 'email' || selectedOption === 'reddit-pm') {
+      if (selectedOption === 'email' || selectedOption === 'tippr-pm') {
         this.refs.$shareToFeedback.stateify('clear');
         this.refs.$messageFeedback.stateify('clear');
         this.refs.$requestStateFeedback.stateify('clear');
@@ -472,8 +472,8 @@
 
       if (r.config.logged && !r.config.user_in_timeout) {
         shareOptions.push({
-          name: 'reddit-pm',
-          tooltip: r._('Private Message a Friend on Reddit'),
+          name: 'tippr-pm',
+          tooltip: r._('Private Message a Friend on Tippr'),
         });
       }
 

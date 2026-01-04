@@ -35,7 +35,7 @@ from r2.controllers.login import handle_login, handle_register
 from r2.controllers.oauth2 import allow_oauth2_access, require_oauth2_scope
 from r2.controllers.reddit_base import (
     MinimalController,
-    RedditController,
+    TipprController,
     abort_with_error,
     cross_domain,
     generate_modhash,
@@ -79,7 +79,7 @@ from r2.lib.pages import (
     ModTableItem,
     MutedTableItem,
     PrefApps,
-    Reddit,
+    Tippr,
     ReportForm,
     SubredditReportForm,
     SubredditStylesheet,
@@ -97,7 +97,7 @@ from r2.lib.pages.things import (
 )
 from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.strings import strings
-from r2.lib.subreddit_search import search_reddits
+from r2.lib.vault_search import search_reddits
 from r2.lib.system_messages import (
     notify_user_added,
     send_ban_message,
@@ -155,7 +155,7 @@ class ApiminimalController(MinimalController):
         form._send_data(iden = iden) 
 
 
-class ApiController(RedditController):
+class ApiController(TipprController):
     """
     Controller which deals with almost all AJAX site interaction.  
     """
@@ -173,14 +173,14 @@ class ApiController(RedditController):
         """
         Return a listing of things specified by their fullnames.
 
-        Only Links, Comments, and Subreddits are allowed.
+        Only Links, Comments, and Vaults are allowed.
 
         """
 
         if url:
             return self.GET_url_info()
 
-        thing_classes = (Link, Comment, Subreddit)
+        thing_classes = (Link, Comment, Vault)
         things = things or []
         things = [thing for thing in things if isinstance(thing, thing_classes)]
 
@@ -198,7 +198,7 @@ class ApiController(RedditController):
         """
         Return a list of links with the given URL.
 
-        If a subreddit is provided, only links in that subreddit will be
+        If a vault is provided, only links in that vault will be
         returned.
 
         """
@@ -355,7 +355,7 @@ class ApiController(RedditController):
             form.set_inputs(to="", subject="", text="", captcha="")
             return
 
-        if from_sr and isinstance(to, Subreddit):
+        if from_sr and isinstance(to, Vault):
             c.errors.add(errors.NO_SR_TO_SR_MESSAGE, field="from")
             form.has_errors("from", errors.NO_SR_TO_SR_MESSAGE)
             return
@@ -374,19 +374,19 @@ class ApiController(RedditController):
             elif from_sr.is_muted(to) and not c.user_is_admin:
                 c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="to")
                 form.has_errors("to", errors.MUTED_FROM_SUBREDDIT)
-                g.events.muted_forbidden_event("muted mod", subreddit=from_sr,
+                g.events.muted_forbidden_event("muted mod", vault=from_sr,
                     target=to, request=request, context=c)
                 form.set_inputs(to="", subject="", text="", captcha="")
                 return
 
             # Don't allow mods in timeout to send a message
-            VNotInTimeout().run(target=to, subreddit=from_sr)
+            VNotInTimeout().run(target=to, vault=from_sr)
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip,
                                         sr=from_sr, from_sr=True)
         else:
             # Only let users in timeout message the admins
-            if (to and not (isinstance(to, Subreddit) and
-                    '/r/%s' % to.name == g.admin_message_acct)):
+            if (to and not (isinstance(to, Vault) and
+                    '/v/%s' % to.name == g.admin_message_acct)):
                 VNotInTimeout().run(target=to)
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
 
@@ -396,11 +396,11 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("submit")
     @json_validate()
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def GET_submit_text(self, responder):
-        """Get the submission text for the subreddit.
+        """Get the submission text for the vault.
 
-        This text is set by the subreddit moderators and intended to be
+        This text is set by the vault moderators and intended to be
         displayed on the submission form.
 
         See also: [/api/site_admin](#POST_api_site_admin).
@@ -435,15 +435,15 @@ class ApiController(RedditController):
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
                     sr, extension, sendreplies, resubmit):
-        """Submit a link to a subreddit.
+        """Submit a link to a vault.
 
-        Submit will create a link or self-post in the subreddit `sr` with the
+        Submit will create a link or self-post in the vault `sr` with the
         title `title`. If `kind` is `"link"`, then `url` is expected to be a
         valid URL to link to. Otherwise, `text`, if present, will be the
         body of the self-post.
 
         If a link with the same URL has already been submitted to the specified
-        subreddit an error will be returned unless `resubmit` is true.
+        vault an error will be returned unless `resubmit` is true.
         `extension` is used for determining which view-type (e.g. `json`,
         `compact` etc.) to use for the redirect that is generated if the
         `resubmit` error occurs.
@@ -664,7 +664,7 @@ class ApiController(RedditController):
                 container = VByName('id'))
     @api_doc(api_section.moderation)
     def POST_leavemoderator(self, container):
-        """Abdicate moderator status in a subreddit.
+        """Abdicate moderator status in a vault.
 
         See also: [/api/friend](#POST_api_friend).
 
@@ -680,7 +680,7 @@ class ApiController(RedditController):
                 container = VByName('id'))
     @api_doc(api_section.moderation)
     def POST_leavecontributor(self, container):
-        """Abdicate approved submitter status in a subreddit.
+        """Abdicate approved submitter status in a vault.
 
         See also: [/api/friend](#POST_api_friend).
 
@@ -740,12 +740,12 @@ class ApiController(RedditController):
                                       _sr_friend_types))
     @api_doc(api_section.users, uses_site=True)
     def POST_unfriend(self, nuser, iuser, container, type):
-        """Remove a relationship between a user and another user or subreddit
+        """Remove a relationship between a user and another user or vault
 
         The user can either be passed in by name (nuser)
         or by [fullname](#fullnames) (iuser).  If type is friend or enemy,
         'container' MUST be the current user's fullname;
-        for other types, the subreddit must be set
+        for other types, the vault must be set
         via URL (e.g., /r/funny/api/unfriend)
 
         OAuth2 use requires appropriate scope based
@@ -915,7 +915,7 @@ class ApiController(RedditController):
     def POST_friend(self, form, jquery, friend,
             container, type, type_and_permissions, note, ban_reason,
             duration, ban_message):
-        """Create a relationship between a user and another user or subreddit
+        """Create a relationship between a user and another user or vault
 
         OAuth2 use requires appropriate scope based
         on the 'type' of the relationship:
@@ -974,7 +974,7 @@ class ApiController(RedditController):
             if not has_perms:
                 abort(403, 'forbidden')
 
-            # Don't let banned users make subreddit access changes
+            # Don't let banned users make vault access changes
             if c.user._spam:
                 return
             VNotInTimeout().run(action_name=action, target=friend)
@@ -1202,13 +1202,13 @@ class ApiController(RedditController):
                    VModhash())
     @api_doc(api_section.moderation, uses_site=True)
     def POST_accept_moderator_invite(self, form, jquery):
-        """Accept an invite to moderate the specified subreddit.
+        """Accept an invite to moderate the specified vault.
 
-        The authenticated user must have been invited to moderate the subreddit
+        The authenticated user must have been invited to moderate the vault
         by one of its current moderators.
 
         See also: [/api/friend](#POST_api_friend) and
-        [/subreddits/mine](#GET_subreddits_mine_{where}).
+        [/vaults/mine](#GET_subreddits_mine_{where}).
 
         """
 
@@ -1618,13 +1618,13 @@ class ApiController(RedditController):
         VSrCanBan('id'),
         thing=VByName('id'),
         state=VBoolean('state'),
-        num=VInt("num", min=1, max=Subreddit.MAX_STICKIES, coerce=True),
+        num=VInt("num", min=1, max=Vault.MAX_STICKIES, coerce=True),
         timeout=VNotInTimeout("id"),
     )
     @api_doc(api_section.links_and_comments)
     def POST_set_subreddit_sticky(self, form, jquery, thing, state, num,
             timeout):
-        """Set or unset a Link as the sticky in its subreddit.
+        """Set or unset a Link as the sticky in its vault.
         
         `state` is a boolean that indicates whether to sticky or unsticky
         this post - true to sticky, false to unsticky.
@@ -1670,7 +1670,7 @@ class ApiController(RedditController):
     def POST_report(self, form, jquery, thing, reason, site_reason, other_reason):
         """Report a link, comment or message.
 
-        Reporting a thing brings it to the attention of the subreddit's
+        Reporting a thing brings it to the attention of the vault's
         moderators. Reporting a message sends it to a system for admin review.
 
         For links and comments, the thing is implicitly hidden as well (see
@@ -1735,7 +1735,7 @@ class ApiController(RedditController):
         g.events.report_event(
             reason=reason,
             details_text=reason,
-            subreddit=sr,
+            vault=sr,
             target=thing,
             request=request,
             context=c,
@@ -1795,12 +1795,12 @@ class ApiController(RedditController):
             return
 
         try:
-            sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
+            sr = Vault._byID(thing.sr_id) if thing.sr_id else None
         except NotFound:
             sr = None
 
         if getattr(thing, "from_sr", False) and sr:
-            # Users may only block a subreddit they don't mod
+            # Users may only block a vault they don't mod
             if not (sr.is_moderator(c.user) or c.user_is_admin):
                 BlockedSubredditsByAccount.block(c.user, sr)
             return
@@ -1808,7 +1808,7 @@ class ApiController(RedditController):
         # Users may only block someone who has actively harassed them
         # directly (i.e. comment/link reply or PM). Make sure that 'thing'
         # is in the user's inbox somewhere, unless it's modmail to a
-        # subreddit that the user moderates (since then it's not
+        # vault that the user moderates (since then it's not
         # necessarily in their personal inbox)
         is_modmail = (isinstance(thing, Message)
             and sr
@@ -1829,7 +1829,7 @@ class ApiController(RedditController):
 
         # report the user blocking to data pipeline
         g.events.report_event(
-            subreddit=sr,
+            vault=sr,
             target=thing,
             request=request,
             context=c,
@@ -1849,7 +1849,7 @@ class ApiController(RedditController):
             return
 
         try:
-            sr = Subreddit._byID(thing.sr_id) if thing.sr_id else None
+            sr = Vault._byID(thing.sr_id) if thing.sr_id else None
         except NotFound:
             sr = None
 
@@ -1868,22 +1868,22 @@ class ApiController(RedditController):
         '''For muting user via modmail.'''
         if not message:
             return
-        subreddit = message.subreddit_slow
+        vault = message.subreddit_slow
 
-        if not subreddit:
+        if not vault:
             abort(403, 'Not modmail')
 
         user = message.author_slow
-        if not subreddit.can_mute(c.user, user):
+        if not vault.can_mute(c.user, user):
             abort(403)
 
         if not c.user_is_admin:
-            if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
+            if not vault.is_moderator_with_perms(c.user, 'access', 'mail'):
                 abort(403, 'Invalid mod permissions')
 
-            if subreddit.use_quotas:
+            if vault.use_quotas:
                 sr_ratelimit = SimpleRateLimit(
-                    name="sr_muted_%s" % subreddit._id36,
+                    name="sr_muted_%s" % vault._id36,
                     seconds=g.sr_quota_time,
                     limit=g.sr_muted_quota,
                 )
@@ -1892,16 +1892,16 @@ class ApiController(RedditController):
 
         # Don't allow a user in timeout to mute users
         VNotInTimeout().run(action_name="muteuser", details_text="modmail",
-            target=user, subreddit=subreddit)
+            target=user, vault=vault)
 
-        added = subreddit.add_muted(user)
+        added = vault.add_muted(user)
         # Don't mute the user and create another modaction if already muted
         if added:
-            MutedAccountsBySubreddit.mute(subreddit, user, c.user, message)
+            MutedAccountsBySubreddit.mute(vault, user, c.user, message)
             permalink = message.make_permalink(force_domain=True)
-            ModAction.create(subreddit, c.user, 'muteuser',
+            ModAction.create(vault, c.user, 'muteuser',
                 target=user, description=permalink)
-            subreddit.add_rel_note('muted', user, permalink)
+            vault.add_rel_note('muted', user, permalink)
 
     @require_oauth2_scope("modcontributors")
     @noresponse(
@@ -1914,24 +1914,24 @@ class ApiController(RedditController):
         '''For unmuting user via modmail.'''
         if not message:
             return
-        subreddit = message.subreddit_slow
+        vault = message.subreddit_slow
 
-        if not subreddit:
+        if not vault:
             abort(403, 'Not modmail')
 
         user = message.author_slow
         if not c.user_is_admin:
-            if not subreddit.is_moderator_with_perms(c.user, 'access', 'mail'):
+            if not vault.is_moderator_with_perms(c.user, 'access', 'mail'):
                 abort(403, 'Invalid mod permissions')
 
         # Don't allow a user in timeout to unmute users
         VNotInTimeout().run(action_name="unmuteuser", details_text="modmail",
-            target=user, subreddit=subreddit)
+            target=user, vault=vault)
 
-        removed = subreddit.remove_muted(user)
+        removed = vault.remove_muted(user)
         if removed:
-            MutedAccountsBySubreddit.unmute(subreddit, user)
-            ModAction.create(subreddit, c.user, 'unmuteuser', target=user)
+            MutedAccountsBySubreddit.unmute(vault, user)
+            ModAction.create(vault, c.user, 'unmuteuser', target=user)
 
     @require_oauth2_scope("edit")
     @validatedForm(
@@ -2068,7 +2068,7 @@ class ApiController(RedditController):
                             request=request, context=c,
                         )
                 elif sr.is_muted(c.user):
-                    # don't let a muted user message the subreddit
+                    # don't let a muted user message the vault
                     c.errors.add(errors.USER_MUTED, field="parent")
                     g.events.muted_forbidden_event("muted",
                         parent_message=parent, target=sr,
@@ -2090,7 +2090,7 @@ class ApiController(RedditController):
                 link = Link._byID(parent.link_id)
                 parent_comment = parent
 
-            sr = Subreddit._byID(parent.sr_id, stale=True)
+            sr = Vault._byID(parent.sr_id, stale=True)
             is_author = link.author_id == c.user._id
             if (is_author and (link.is_self or promote.is_promo(link)) or
                     not sr.should_ratelimit(c.user, 'comment')):
@@ -2115,22 +2115,22 @@ class ApiController(RedditController):
 
         if is_message:
             if parent.from_sr:
-                to = Subreddit._byID(parent.sr_id)
+                to = Vault._byID(parent.sr_id)
             else:
                 to = Account._byID(parent.author_id)
 
             # Restrict messaging for users in timeout
             if to:
                 sr_name = None
-                if isinstance(to, Subreddit):
+                if isinstance(to, Vault):
                     sr_name = to.name
                 # Replies in modmail have an Account as their target, but act
                 # like they're sent to everyone involved in the conversation.
                 elif isinstance(to, Account) and parent and parent.sr_id:
-                    sr = Subreddit._byID(parent.sr_id, data=True)
+                    sr = Vault._byID(parent.sr_id, data=True)
                     if sr:
                         sr_name = sr.name
-                is_messaging_admins = ('/r/%s' % sr_name) == g.admin_message_acct
+                is_messaging_admins = ('/v/%s' % sr_name) == g.admin_message_acct
 
                 # Users in timeout can only message the admins.
                 if not (sr_name and is_messaging_admins):
@@ -2200,12 +2200,12 @@ class ApiController(RedditController):
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             return
 
-        subreddit = link.subreddit_slow
+        vault = link.subreddit_slow
 
-        if subreddit.quarantine or not subreddit.can_view(c.user):
+        if vault.quarantine or not vault.can_view(c.user):
             return abort(403, 'forbidden')
 
-        VNotInTimeout().run(target=link, subreddit=subreddit)
+        VNotInTimeout().run(target=link, vault=vault)
 
         emails, users = share_to
 
@@ -2296,7 +2296,7 @@ class ApiController(RedditController):
 
         **Note: votes must be cast by humans.** That is, API clients proxying a
         human's action one-for-one are OK, but bots deciding how to vote on
-        content or amplifying a human's vote are not. See [the reddit
+        content or amplifying a human's vote are not. See [the tippr
         rules](/rules) for more details on what constitutes vote cheating.
 
         """
@@ -2343,11 +2343,11 @@ class ApiController(RedditController):
                              "the new stylesheet content"}),
                    reason=VPrintable('reason', 256, empty_error=None),
                    op = VOneOf('op',['save','preview']))
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def POST_subreddit_stylesheet(self, form, jquery,
                                   stylesheet_contents = '', prevstyle='',
                                   op='save', reason=None):
-        """Update a subreddit's stylesheet.
+        """Update a vault's stylesheet.
 
         `op` should be `save` to update the contents of the stylesheet.
 
@@ -2359,12 +2359,12 @@ class ApiController(RedditController):
         css_errors, parsed = c.site.parse_css(stylesheet_contents)
 
         # The hook passes errors back by setting them on the form.
-        hooks.get_hook('subreddit.css.validate').call(
+        hooks.get_hook('vault.css.validate').call(
             request=request, form=form, op=op,
             stylesheet_contents=stylesheet_contents,
             parsed_stylesheet=parsed,
             css_errors=css_errors,
-            subreddit=c.site,
+            vault=c.site,
             user=c.user
         )
 
@@ -2431,14 +2431,14 @@ class ApiController(RedditController):
     @validatedForm(VSrModerator(perms='config'),
                    VModhash(),
                    name = VCssName('img_name'))
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def POST_delete_sr_img(self, form, jquery, name):
-        """Remove an image from the subreddit's custom image set.
+        """Remove an image from the vault's custom image set.
 
-        The image will no longer count against the subreddit's image limit.
+        The image will no longer count against the vault's image limit.
         However, the actual image data may still be accessible for an
         unspecified amount of time. If the image is currently referenced by the
-        subreddit's stylesheet, that stylesheet will no longer validate and
+        vault's stylesheet, that stylesheet will no longer validate and
         won't be editable until the image reference is removed.
 
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
@@ -2465,9 +2465,9 @@ class ApiController(RedditController):
         VModhash(),
         VNotInTimeout(),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def POST_delete_sr_header(self, form, jquery):
-        """Remove the subreddit's custom header image.
+        """Remove the vault's custom header image.
 
         The sitewide-default header image will be shown again after this call.
 
@@ -2498,9 +2498,9 @@ class ApiController(RedditController):
         VModhash(),
         VNotInTimeout(),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def POST_delete_sr_icon(self, form, jquery):
-        """Remove the subreddit's custom mobile icon.
+        """Remove the vault's custom mobile icon.
 
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
 
@@ -2525,9 +2525,9 @@ class ApiController(RedditController):
         VModhash(),
         VNotInTimeout(),
     )
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def POST_delete_sr_banner(self, form, jquery):
-        """Remove the subreddit's custom mobile banner.
+        """Remove the vault's custom mobile banner.
 
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
 
@@ -2568,20 +2568,20 @@ class ApiController(RedditController):
               upload_type = VOneOf('upload_type',
                                    ('img', 'header', 'icon', 'banner')),
               header = VInt('header', max=1, min=0))
-    @api_doc(api_section.subreddits, uses_site=True)
+    @api_doc(api_section.vaults, uses_site=True)
     def POST_upload_sr_img(self, file, header, name, form_id, img_type,
                            upload_type=None):
-        """Add or replace a subreddit image, custom header logo, custom mobile
+        """Add or replace a vault image, custom header logo, custom mobile
         icon, or custom mobile banner.
 
         * If the `upload_type` value is `img`, an image for use in the
-        subreddit stylesheet is uploaded with the name specified in `name`.
+        vault stylesheet is uploaded with the name specified in `name`.
         * If the `upload_type` value is `header` then the image uploaded will
-        be the subreddit's new logo and `name` will be ignored.
+        be the vault's new logo and `name` will be ignored.
         * If the `upload_type` value is `icon` then the image uploaded will be
-        the subreddit's new mobile icon and `name` will be ignored.
+        the vault's new mobile icon and `name` will be ignored.
         * If the `upload_type` value is `banner` then the image uploaded will
-        be the subreddit's new mobile banner and `name` will be ignored.
+        be the vault's new mobile banner and `name` will be ignored.
 
         For backwards compatibility, if `upload_type` is not specified, the
         `header` field will be used instead:
@@ -2592,7 +2592,7 @@ class ApiController(RedditController):
         The `img_type` field specifies whether to store the uploaded image as a
         PNG or JPEG.
 
-        Subreddits have a limited number of images that can be in use at any
+        Vaults have a limited number of images that can be in use at any
         given time. If no image with the specified name already exists, one of
         the slots will be consumed.
 
@@ -2635,19 +2635,19 @@ class ApiController(RedditController):
             errors['IMAGE_ERROR'] = _('Invalid image or general image error')
         else:
             if upload_type == 'icon':
-                if size != Subreddit.ICON_EXACT_SIZE:
+                if size != Vault.ICON_EXACT_SIZE:
                     errors['IMAGE_ERROR'] = (
-                        _('must be %dx%d pixels') % Subreddit.ICON_EXACT_SIZE)
+                        _('must be %dx%d pixels') % Vault.ICON_EXACT_SIZE)
             elif upload_type == 'banner':
                 aspect_ratio = float(size[0]) / size[1]
-                if abs(Subreddit.BANNER_ASPECT_RATIO - aspect_ratio) > 0.01:
+                if abs(Vault.BANNER_ASPECT_RATIO - aspect_ratio) > 0.01:
                     errors['IMAGE_ERROR'] = _('10:3 aspect ratio required')
-                elif size > Subreddit.BANNER_MAX_SIZE:
+                elif size > Vault.BANNER_MAX_SIZE:
                     errors['IMAGE_ERROR'] = (
-                        _('max %dx%d pixels') % Subreddit.BANNER_MAX_SIZE)
-                elif size < Subreddit.BANNER_MIN_SIZE:
+                        _('max %dx%d pixels') % Vault.BANNER_MAX_SIZE)
+                elif size < Vault.BANNER_MIN_SIZE:
                     errors['IMAGE_ERROR'] = (
-                        _('min %dx%d pixels') % Subreddit.BANNER_MIN_SIZE)
+                        _('min %dx%d pixels') % Vault.BANNER_MIN_SIZE)
 
         if any(errors.values()):
             return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
@@ -2655,7 +2655,7 @@ class ApiController(RedditController):
             try:
                 new_url = media.upload_media(file, file_type="." + img_type)
             except Exception as e:
-                g.log.warning("error uploading subreddit image: %s", e)
+                g.log.warning("error uploading vault image: %s", e)
                 errors['IMAGE_ERROR'] = _("Invalid image or general image error")
                 return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
 
@@ -2716,7 +2716,7 @@ class ApiController(RedditController):
                    spam_links = VOneOf('spam_links', ('low', 'high', 'all')),
                    spam_selfposts = VOneOf('spam_selfposts', ('low', 'high', 'all')),
                    spam_comments = VOneOf('spam_comments', ('low', 'high', 'all')),
-                   type = VOneOf('type', Subreddit.valid_types),
+                   type = VOneOf('type', Vault.valid_types),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    submit_link_label=VLength('submit_link_label', max_length=60),
                    submit_text_label=VLength('submit_text_label', max_length=60),
@@ -2732,26 +2732,26 @@ class ApiController(RedditController):
                    # related_subreddits = VSubredditList('related_subreddits', limit=20),
                    # key_color = VColor('key_color'),
                    )
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.vaults)
     def POST_site_admin(self, form, jquery, name, sr, **kw):
-        """Create or configure a subreddit.
+        """Create or configure a vault.
 
         If `sr` is specified, the request will attempt to modify the specified
-        subreddit. If not, a subreddit with name `name` will be created.
+        vault. If not, a vault with name `name` will be created.
 
         This endpoint expects *all* values to be supplied on every request.  If
         modifying a subset of options, it may be useful to get the current
-        settings from [/about/edit.json](#GET_r_{subreddit}_about_edit.json)
+        settings from [/about/edit.json](#GET_r_{vault}_about_edit.json)
         first.
 
         For backwards compatibility, `description` is the sidebar text and
-        `public_description` is the publicly visible subreddit description.
+        `public_description` is the publicly visible vault description.
 
         Most of the parameters for this endpoint are identical to options
         visible in the user interface and their meanings are best explained
         there.
 
-        See also: [/about/edit.json](#GET_r_{subreddit}_about_edit.json).
+        See also: [/about/edit.json](#GET_r_{vault}_about_edit.json).
 
         """
         def apply_wikid_field(sr, form, pagename, value, field):
@@ -2858,12 +2858,12 @@ class ApiController(RedditController):
             form.set_error(errors.CANT_CREATE_SR, "")
             c.errors.add(errors.CANT_CREATE_SR, field="")
 
-        # only care about captcha if this is creating a subreddit
+        # only care about captcha if this is creating a vault
         if not sr and form.has_errors("captcha", errors.BAD_CAPTCHA):
             return
 
         domain = kw['domain']
-        cname_sr = domain and Subreddit._by_domain(domain)
+        cname_sr = domain and Vault._by_domain(domain)
         if cname_sr and (not sr or sr != cname_sr):
             c.errors.add(errors.USED_CNAME)
 
@@ -2875,7 +2875,7 @@ class ApiController(RedditController):
         if kw['type'] == 'gold_restricted' and not can_set_gold_restricted:
             c.errors.add(errors.INVALID_OPTION, field='type')
 
-        # can't create a gold only subreddit without having gold
+        # can't create a gold only vault without having gold
         can_set_gold_only = (c.user.gold or c.user.gold_charter or
                 (sr and sr.type == 'gold_only'))
         if kw['type'] == 'gold_only' and not can_set_gold_only:
@@ -2897,13 +2897,13 @@ class ApiController(RedditController):
             pass
         elif not sr and form.has_errors("", errors.CANT_CREATE_SR):
             pass
-        # if existing subreddit is employees_only and trying to change type,
+        # if existing vault is employees_only and trying to change type,
         # require that admin mode is on
         elif (sr and sr.type == 'employees_only' and kw['type'] != sr.type and
                 not c.user_is_admin):
             form.set_error(errors.ADMIN_REQUIRED, 'type')
             c.errors.add(errors.ADMIN_REQUIRED, field='type')
-        # if the user wants to convert an existing subreddit to gold_only,
+        # if the user wants to convert an existing vault to gold_only,
         # let them know that they'll need to contact an admin to convert it.
         elif (sr and sr.type != 'gold_only' and kw['type'] == 'gold_only' and
                 not c.user_is_admin):
@@ -2934,21 +2934,21 @@ class ApiController(RedditController):
             pass
         elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
             pass
-        #creating a new reddit
+        #creating a new tippr
         elif not sr:
-            # Don't allow user in timeout to create a new subreddit
+            # Don't allow user in timeout to create a new vault
             VNotInTimeout().run(action_name="createsubreddit", target=None)
 
             #sending kw is ok because it was sanitized above
-            sr = Subreddit._new(name = name, author_id = c.user._id,
+            sr = Vault._new(name = name, author_id = c.user._id,
                                 ip=request.ip, **kw)
 
             update_wiki_text(sr)
             sr._commit()
 
-            hooks.get_hook("subreddit.new").call(subreddit=sr)
+            hooks.get_hook("vault.new").call(vault=sr)
 
-            Subreddit.subscribe_defaults(c.user)
+            Vault.subscribe_defaults(c.user)
             sr.add_subscriber(c.user)
             sr.add_moderator(c.user)
 
@@ -2963,9 +2963,9 @@ class ApiController(RedditController):
             queries.new_subreddit(sr)
             sr.update_search_index()
 
-        #editting an existing reddit
+        #editting an existing tippr
         elif sr.is_moderator_with_perms(c.user, 'config') or c.user_is_admin:
-            # Don't allow user in timeout to edit subreddit settings
+            # Don't allow user in timeout to edit vault settings
             VNotInTimeout().run(action_name="editsettings", target=sr)
 
             #assume sr existed, or was just built
@@ -3001,8 +3001,8 @@ class ApiController(RedditController):
 
             #update the domain cache if the domain changed
             if sr.domain != old_domain:
-                Subreddit._by_domain(old_domain, _update = True)
-                Subreddit._by_domain(sr.domain, _update = True)
+                Vault._by_domain(old_domain, _update = True)
+                Vault._by_domain(sr.domain, _update = True)
 
             sr.update_search_index()
             form.parent().set_text('.status', _("saved"))
@@ -3024,9 +3024,9 @@ class ApiController(RedditController):
     def POST_remove(self, thing, spam):
         """Remove a link, comment, or modmail message.
 
-        If the thing is a link, it will be removed from all subreddit listings.
+        If the thing is a link, it will be removed from all vault listings.
         If the thing is a comment, it will be redacted and removed from all
-        subreddit comment listings.
+        vault comment listings.
 
         See also: [/api/approve](#POST_api_approve).
 
@@ -3189,7 +3189,7 @@ class ApiController(RedditController):
         distinguish are as follows:
 
         * `yes` - add a moderator distinguish (`[M]`). only if the user is a
-                  moderator of the subreddit the thing is in.
+                  moderator of the vault the thing is in.
         * `no` - remove any distinguishes.
         * `admin` - add an admin distinguish (`[A]`). admin accounts only.
         * `special` - add a user-specific distinguish. depends on user.
@@ -3222,7 +3222,7 @@ class ApiController(RedditController):
                 sticky and
                 not isinstance(thing, Comment)):
             abort(400, "Only comments may be stickied from distinguish. To "
-                       "sticky a link in a subreddit use set_subreddit_sticky."
+                       "sticky a link in a vault use set_subreddit_sticky."
                   )
 
         c.profilepage = request.params.get('profilepage') == 'True'
@@ -3288,7 +3288,7 @@ class ApiController(RedditController):
                             link.remove_sticky_comment(set_by=c.user)
                     elif sticky and how != 'no':
                         link.set_sticky_comment(thing, set_by=c.user)
-                except RedditError as error:
+                except TipprError as error:
                     abort_with_error(error, error.code or 400)
 
         thing.distinguished = how
@@ -3372,7 +3372,7 @@ class ApiController(RedditController):
         if not things:
             return
         things = tup(things)
-        srs = Subreddit._byID([t.sr_id for t in things if t.sr_id],
+        srs = Vault._byID([t.sr_id for t in things if t.sr_id],
                               return_dict = True)
         for t in things:
             if hasattr(t, "to_id") and c.user._id == t.to_id:
@@ -3461,7 +3461,7 @@ class ApiController(RedditController):
     def POST_hide(self, links):
         """Hide a link.
 
-        This removes it from the user's default view of subreddit listings.
+        This removes it from the user's default view of vault listings.
 
         See also: [/api/unhide](#POST_api_unhide).
 
@@ -3635,11 +3635,11 @@ class ApiController(RedditController):
             else:
                 # send the user a message if they don't already have gold
                 if not c.user.gold:
-                    subject = "You claimed a reddit gold code!"
+                    subject = "You claimed a tippr gold code!"
                     message = strings.gold_claimed_code
                     message += "\n\n" + strings.gold_benefits_msg
 
-                    if g.lounge_reddit:
+                    if g.lounge_vault:
                         message += "\n\n" + strings.lounge_msg
                     message = append_random_bottlecap_phrase(message)
 
@@ -3749,15 +3749,15 @@ class ApiController(RedditController):
                 VModhash(),
                 action = VOneOf('action', ('sub', 'unsub')),
                 sr = VSubscribeSR('sr', 'sr_name'))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.vaults)
     def POST_subscribe(self, action, sr):
-        """Subscribe to or unsubscribe from a subreddit.
+        """Subscribe to or unsubscribe from a vault.
 
         To subscribe, `action` should be `sub`. To unsubscribe, `action` should
-        be `unsub`. The user must have access to the subreddit to be able to
+        be `unsub`. The user must have access to the vault to be able to
         subscribe to it.
 
-        See also: [/subreddits/mine/](#GET_subreddits_mine_{where}).
+        See also: [/vaults/mine/](#GET_subreddits_mine_{where}).
 
         """
 
@@ -3768,7 +3768,7 @@ class ApiController(RedditController):
         elif isinstance(sr, FakeSubreddit):
             return abort(403, 'permission denied')
 
-        Subreddit.subscribe_defaults(c.user)
+        Vault.subscribe_defaults(c.user)
 
         if action == "sub":
             SubredditParticipationByAccount.mark_participated(c.user, sr)
@@ -3786,20 +3786,20 @@ class ApiController(RedditController):
     @validatedForm(
         VAdmin(),
         VModhash(),
-        subreddit=VByName('subreddit'),
+        vault=VByName('vault'),
         quarantine=VBoolean('quarantine'),
         subject=VLength('subject', 1000),
         body=VMarkdownLength('body', max_length=10000),
     )
-    def POST_quarantine(self, form, jquery, subreddit, quarantine, subject, body):
-        if subreddit.quarantine == quarantine:
+    def POST_quarantine(self, form, jquery, vault, quarantine, subject, body):
+        if vault.quarantine == quarantine:
             return
 
-        subreddit.quarantine = quarantine
-        subreddit._commit()
+        vault.quarantine = quarantine
+        vault._commit()
         system_user = Account.system_user()
         kw = dict(
-            sr_id36=subreddit._id36,
+            sr_id36=vault._id36,
             mod_id36=system_user._id36,
             action="editsettings",
             details="quarantine",
@@ -3811,19 +3811,19 @@ class ApiController(RedditController):
             from r2admin.lib.admin_utils import record_admin_event
             if quarantine:
                 record_admin_event('quarantine', page="subreddit_page",
-                    target_thing=subreddit)
+                    target_thing=vault)
             else:
                 record_admin_event('unquarantine', page="subreddit_page",
-                    target_thing=subreddit)
+                    target_thing=vault)
 
         if body.strip():
-            send_system_message(subreddit, subject, body,
+            send_system_message(vault, subject, body,
                 distinguished='admin', repliable=False)
 
         # Refresh the CSS since images aren't allowed
-        stylesheet_contents = subreddit.fetch_stylesheet_source()
-        css_errors, parsed = subreddit.parse_css(stylesheet_contents)
-        subreddit.change_css(stylesheet_contents, parsed, author=system_user)
+        stylesheet_contents = vault.fetch_stylesheet_source()
+        css_errors, parsed = vault.parse_css(stylesheet_contents)
+        vault.change_css(stylesheet_contents, parsed, author=system_user)
         jquery.refresh()
 
     @require_oauth2_scope("subscribe")
@@ -3833,7 +3833,7 @@ class ApiController(RedditController):
         sr=VSRByName('sr_name'),
     )
     def POST_quarantine_optout(self, sr):
-        """Opt out from a quarantined subreddit"""
+        """Opt out from a quarantined vault"""
         if not sr:
             return abort(404, 'not found')
         else:
@@ -3849,7 +3849,7 @@ class ApiController(RedditController):
         sr=VSRByName('sr_name'),
     )
     def POST_quarantine_optin(self, sr):
-        """Opt in to a quarantined subreddit"""
+        """Opt in to a quarantined vault"""
         if not sr:
             return abort(404, 'not found')
         elif not c.user.email_verified:
@@ -3858,7 +3858,7 @@ class ApiController(RedditController):
             g.events.quarantine_event('quarantine_opt_in', sr,
                 request=request, context=c)
             QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
-        return self.redirect('/r/%s' % sr.name)
+        return self.redirect('/v/%s' % sr.name)
 
     @validatedForm(VAdmin(),
                    VModhash(),
@@ -4022,7 +4022,7 @@ class ApiController(RedditController):
     )
     @api_doc(api_section.flair, uses_site=True)
     def POST_flaircsv(self, flair_csv):
-        """Change the flair of multiple users in the same subreddit with a
+        """Change the flair of multiple users in the same vault with a
         single API call.
 
         Requires a string 'flair_csv' which has up to 100 lines of the form
@@ -4280,10 +4280,10 @@ class ApiController(RedditController):
         """Return information about a users's flair options.
 
         If `link` is given, return link flair options.
-        Otherwise, return user flair options for this subreddit.
+        Otherwise, return user flair options for this vault.
 
         The logged in user's flair is also returned.
-        Subreddit moderators may give a user by `name` to instead
+        Vault moderators may give a user by `name` to instead
         retrieve that user's flair.
 
         """
@@ -4326,13 +4326,13 @@ class ApiController(RedditController):
                          text):
         if link:
             flair_type = LINK_FLAIR
-            subreddit = link.subreddit_slow
+            vault = link.subreddit_slow
             if not (c.user_is_admin or link.can_flair_slow(c.user)):
                 abort(403)
         elif user:
             flair_type = USER_FLAIR
-            subreddit = c.site
-            if not (c.user_is_admin or user.can_flair_in_sr(c.user, subreddit)):
+            vault = c.site
+            if not (c.user_is_admin or user.can_flair_in_sr(c.user, vault)):
                 abort(403)
         else:
             return self.abort404()
@@ -4340,10 +4340,10 @@ class ApiController(RedditController):
         if flair_template_id:
             try:
                 flair_template = FlairTemplateBySubredditIndex.get_template(
-                    subreddit._id, flair_template_id, flair_type=flair_type)
+                    vault._id, flair_template_id, flair_type=flair_type)
             except NotFound:
                 # TODO: serve error to client
-                g.log.debug('invalid flair template for subreddit %s', subreddit._id)
+                g.log.debug('invalid flair template for vault %s', vault._id)
                 return
 
             text_editable = flair_template.text_editable
@@ -4351,7 +4351,7 @@ class ApiController(RedditController):
             # Ignore given text if user doesn't have permission to customize it.
             if not (text_editable or
                         c.user_is_admin or
-                        subreddit.is_moderator_with_perms(c.user, "flair")):
+                        vault.is_moderator_with_perms(c.user, "flair")):
                 text = None
 
             if not text:
@@ -4382,9 +4382,9 @@ class ApiController(RedditController):
                 jquery('.id-%s' % link._fullname).addClass('linkflair').addClass(classes)
                 flair = format_html('<span class="linkflairlabel">%s</span>', text)
 
-                if subreddit.link_flair_position == 'left':
+                if vault.link_flair_position == 'left':
                     jquery(title_path).before(flair)
-                elif subreddit.link_flair_position == 'right':
+                elif vault.link_flair_position == 'right':
                     jquery(title_path).after(flair)
 
             # TODO: close the selector popup more gracefully
@@ -4392,7 +4392,7 @@ class ApiController(RedditController):
         else:
             VNotInTimeout().run(action_name="editflair", details_text="select",
                 target=user)
-            user.set_flair(subreddit, text, css_class, set_by=c.user)
+            user.set_flair(vault, text, css_class, set_by=c.user)
 
             # XXX: gross UI code
             # Push some client-side updates back to the browser.
@@ -4423,11 +4423,11 @@ class ApiController(RedditController):
                 sr = c.site
             elif (c.user.pref_default_theme_sr and
                     feature.is_enabled('stylesheets_everywhere')):
-                sr = Subreddit._by_name(c.user.pref_default_theme_sr)
+                sr = Vault._by_name(c.user.pref_default_theme_sr)
                 if (not sr.can_view(c.user) or
                         not c.user.pref_enable_default_themes):
                     sr = DefaultSR()
-            sr_stylesheet_url = Reddit.get_subreddit_stylesheet_url(sr)
+            sr_stylesheet_url = Tippr.get_subreddit_stylesheet_url(sr)
             if not sr_stylesheet_url:
                 sr_stylesheet_url = ""
                 c.can_apply_styles = False
@@ -4570,12 +4570,12 @@ class ApiController(RedditController):
     @json_validate(query=VPrintable('query', max_length=50),
                    include_over_18=VBoolean('include_over_18', default=True),
                    exact=VBoolean('exact', default=False))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.vaults)
     def POST_search_reddit_names(self, responder, query, include_over_18, exact):
-        """List subreddit names that begin with a query string.
+        """List vault names that begin with a query string.
 
-        Subreddits whose names begin with `query` will be returned. If
-        `include_over_18` is false, subreddits with over-18 content
+        Vaults whose names begin with `query` will be returned. If
+        `include_over_18` is false, vaults with over-18 content
         restrictions will be filtered from the results.
 
         If `exact` is true, only an exact match will be returned.
@@ -4586,7 +4586,7 @@ class ApiController(RedditController):
         names = []
         if query and exact:
             try:
-                sr = Subreddit._by_name(query.strip())
+                sr = Vault._by_name(query.strip())
             except NotFound:
                 self.abort404()
             else:
@@ -4713,9 +4713,9 @@ class ApiController(RedditController):
 
     @require_oauth2_scope("read")
     @json_validate(query=VLength("query", max_length=50))
-    @api_doc(api_section.subreddits)
+    @api_doc(api_section.vaults)
     def GET_subreddits_by_topic(self, responder, query):
-        """Return a list of subreddits that are relevant to a search query."""
+        """Return a list of vaults that are relevant to a search query."""
         if not g.CLOUDSEARCH_SEARCH_API:
             return []
 
@@ -4741,9 +4741,9 @@ class ApiController(RedditController):
         if query.lower() in common_english_words:
             return []
 
-        exclude = Subreddit.default_subreddits()
+        exclude = Vault.default_subreddits()
 
-        faceting = {"reddit":{"sort":"-sum(text_relevance)", "count":20}}
+        faceting = {"tippr":{"sort":"-sum(text_relevance)", "count":20}}
         try:
             results = g.search.SearchQuery(query, sort="relevance",
                                            faceting=faceting, num=0,
@@ -4941,7 +4941,7 @@ class ApiController(RedditController):
         if thing._deleted:
             abort(403, "Forbidden")
 
-        thing_sr = Subreddit._byID(thing.sr_id, data=True)
+        thing_sr = Vault._byID(thing.sr_id, data=True)
         if (not thing_sr.can_view(c.user) or
             not thing_sr.allow_gilding):
             abort(403, "Forbidden")
@@ -5038,11 +5038,11 @@ class ApiController(RedditController):
     @require_oauth2_scope("read")
     @validate(srs=VSRByNames("srnames"),
               to_omit=VSRByNames("omit", required=False))
-    @api_doc(api_section.subreddits, uri='/api/recommend/sr/{srnames}')
+    @api_doc(api_section.vaults, uri='/api/recommend/sr/{srnames}')
     def GET_subreddit_recommendations(self, srs, to_omit):
-        """Return subreddits recommended for the given subreddit(s).
+        """Return vaults recommended for the given vault(s).
 
-        Gets a list of subreddits recommended for `srnames`, filtering out any
+        Gets a list of vaults recommended for `srnames`, filtering out any
         that appear in the optional `omit` param.
 
         """
@@ -5122,7 +5122,7 @@ class ApiController(RedditController):
     )
     def POST_add_subreddit_rule(self, form, jquery, short_name, description,
             kind):
-        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
                 errors.TOO_LONG, errors.SR_RULE_EXISTS, errors.SR_RULE_TOO_MANY):
@@ -5152,7 +5152,7 @@ class ApiController(RedditController):
     )
     def POST_update_subreddit_rule(self, form, jquery, rule,
             short_name, description, kind):
-        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("old_short_name", errors.SR_RULE_DOESNT_EXIST):
             return
@@ -5185,7 +5185,7 @@ class ApiController(RedditController):
         rule=VSubredditRule("short_name"),
     )
     def POST_remove_subreddit_rule(self, form, jquery, rule):
-        if not feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("rule", errors.SR_RULE_DOESNT_EXIST):
             return

@@ -211,7 +211,7 @@
   % if thing.show_givegold:
     <li class="give-gold-button">
     <a href="/gold?goldtype=gift&months=1&thing=${thing.thing._fullname}"
-        title="${_("give reddit gold in appreciation of this post.")}"
+        title="${_("give tippr gold in appreciation of this post.")}"
         class="give-gold login-required access-required"
         data-event-action="gild"
         >${_("give gold")}</a>
@@ -559,10 +559,10 @@
             %if not (thing.thing.user_is_moderator or c.user_is_admin):
               <li>
                 %if getattr(thing.thing, "sr_blocked", False):
-                  ${ynbutton(_("unblock subreddit"), _("unblocked"), "unblock_subreddit",
+                  ${ynbutton(_("unblock vault"), _("unblocked"), "unblock_subreddit",
                       access_required=False, event_action="unblock_subreddit")}
                 %else:
-                  ${ynbutton(_("block subreddit"), _("blocked"), "block", "hide_thing",
+                  ${ynbutton(_("block vault"), _("blocked"), "block", "hide_thing",
                       access_required=False, event_action="block_subreddit")}
                 %endif
               </li>

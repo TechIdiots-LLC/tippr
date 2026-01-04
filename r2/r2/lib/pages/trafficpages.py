@@ -39,26 +39,26 @@ from pylons.i18n import _
 from r2.lib import promote
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.menus import NamedButton, NavButton, NavMenu, PageNameNav, menu
-from r2.lib.pages.pages import Reddit, TimeSeriesChart
+from r2.lib.pages.pages import Tippr, TimeSeriesChart
 from r2.lib.template_helpers import format_number
 from r2.lib.utils import Storage, timedelta_by_name, to_date
 from r2.lib.wrapped import Templated
 from r2.models import Link, PromoCampaign, Thing, traffic
-from r2.models.subreddit import Subreddit, _DefaultSR
+from r2.models.vault import Vault, _DefaultSR
 
 COLORS = Storage(UPVOTE_ORANGE="#ff5700",
                  DOWNVOTE_BLUE="#9494ff",
                  MISCELLANEOUS="#006600")
 
 
-class TrafficPage(Reddit):
+class TrafficPage(Tippr):
     """Base page template for pages rendering traffic graphs."""
 
     extension_handling = False
     extra_page_classes = ["traffic"]
 
     def __init__(self, content):
-        Reddit.__init__(self, title=_("traffic stats"), content=content)
+        Tippr.__init__(self, title=_("traffic stats"), content=content)
 
     def build_toolbars(self):
         main_buttons = [NavButton(menu.sitewide, "/"),
@@ -103,7 +103,7 @@ class AdvertTrafficPage(TrafficPage):
         TrafficPage.__init__(self, content)
 
 
-class RedditTraffic(Templated):
+class TipprTraffic(Templated):
     """A generalized content pane for traffic reporting."""
 
     make_period_link = None
@@ -206,16 +206,16 @@ class RedditTraffic(Templated):
         raise NotImplementedError()
 
 
-def make_subreddit_traffic_report(subreddits=None, num=None):
-    """Return a report of subreddit traffic in the last full month.
+def make_subreddit_traffic_report(vaults=None, num=None):
+    """Return a report of vault traffic in the last full month.
 
-    If given a list of subreddits, those subreddits will be put in the report
-    otherwise the top subreddits by pageviews will be automatically chosen.
+    If given a list of vaults, those vaults will be put in the report
+    otherwise the top vaults by pageviews will be automatically chosen.
 
     """
 
-    if subreddits:
-        subreddit_summary = traffic.PageviewsBySubreddit.last_month(subreddits)
+    if vaults:
+        subreddit_summary = traffic.PageviewsBySubreddit.last_month(vaults)
     else:
         subreddit_summary = traffic.PageviewsBySubreddit.top_last_month(num)
 
@@ -224,22 +224,22 @@ def make_subreddit_traffic_report(subreddits=None, num=None):
         if srname == _DefaultSR.name:
             name = _("[frontpage]")
             url = None
-        elif srname in Subreddit._specials:
+        elif srname in Vault._specials:
             name = "[%s]" % srname
             url = None
         else:
-            name = "/r/%s" % srname
+            name = "/v/%s" % srname
             url = name + "/about/traffic"
 
         report.append(((name, url), data))
     return report
 
 
-class SitewideTraffic(RedditTraffic):
+class SitewideTraffic(TipprTraffic):
     """An overview of all traffic to the site."""
     def __init__(self):
         self.subreddit_summary = make_subreddit_traffic_report(num=250)
-        RedditTraffic.__init__(self, g.domain)
+        TipprTraffic.__init__(self, g.domain)
 
     def get_dow_summary(self):
         return traffic.SitewidePageviews.history("day")
@@ -262,11 +262,11 @@ class LanguageTrafficSummary(Templated):
         Templated.__init__(self)
 
 
-class AdvertTrafficSummary(RedditTraffic):
+class AdvertTrafficSummary(TipprTraffic):
     """An overview of traffic for all adverts on the site."""
 
     def __init__(self):
-        RedditTraffic.__init__(self, _("adverts"))
+        TipprTraffic.__init__(self, _("adverts"))
 
     def make_tables(self):
         # overall promoted link traffic
@@ -319,11 +319,11 @@ class AdvertTrafficSummary(RedditTraffic):
 
     @staticmethod
     def get_sr_name(name):
-        """Return the display name for a subreddit."""
+        """Return the display name for a vault."""
         if name == g.default_sr:
             return _("frontpage")
         else:
-            return "/r/" + name
+            return "/v/" + name
 
     @staticmethod
     def get_ad_name(code, things=None):
@@ -355,7 +355,7 @@ class AdvertTrafficSummary(RedditTraffic):
                 return code
         elif isinstance(thing, Link):
             return "Link: " + thing.title
-        elif isinstance(thing, Subreddit):
+        elif isinstance(thing, Vault):
             srname = AdvertTrafficSummary.get_sr_name(thing.name)
             name = "300x100: " + srname
             if campaign:
@@ -371,11 +371,11 @@ class AdvertTrafficSummary(RedditTraffic):
         return "/traffic/adverts/%s" % code
 
 
-class LanguageTraffic(RedditTraffic):
+class LanguageTraffic(TipprTraffic):
     def __init__(self, langcode):
         self.langcode = langcode
         name = LanguageTraffic.get_language_name(langcode)
-        RedditTraffic.__init__(self, name)
+        TipprTraffic.__init__(self, name)
 
     def get_data_for_interval(self, interval, columns):
         return traffic.PageviewsByLanguage.history(interval, self.langcode)
@@ -393,11 +393,11 @@ class LanguageTraffic(RedditTraffic):
             return lang_locale.get_display_name(locale)
 
 
-class AdvertTraffic(RedditTraffic):
+class AdvertTraffic(TipprTraffic):
     def __init__(self, code):
         self.code = code
         name = AdvertTrafficSummary.get_ad_name(code)
-        RedditTraffic.__init__(self, name)
+        TipprTraffic.__init__(self, name)
 
     def get_data_for_interval(self, interval, columns):
         columns[1]["title"] = _("impressions by %s" % interval)
@@ -415,9 +415,9 @@ class AdvertTraffic(RedditTraffic):
         return traffic.zip_timeseries(imps, clicks)
 
 
-class SubredditTraffic(RedditTraffic):
+class SubredditTraffic(TipprTraffic):
     def __init__(self):
-        RedditTraffic.__init__(self, "/r/" + c.site.name)
+        TipprTraffic.__init__(self, "/v/" + c.site.name)
 
         if c.user_is_sponsor:
             fullname = c.site._fullname
@@ -444,7 +444,7 @@ class SubredditTraffic(RedditTraffic):
             "q": "timestamp:{:d}..{:d}".format(int(epoch_seconds(date)),
                                                int(epoch_seconds(end))),
         })
-        return "/r/{}/search?{}".format(c.site.name, query)
+        return "/v/{}/search?{}".format(c.site.name, query)
 
     def get_dow_summary(self):
         return traffic.PageviewsBySubreddit.history("day", c.site.name)
@@ -780,23 +780,23 @@ class SubredditTrafficReport(Templated):
     def __init__(self):
         self.srs, self.invalid_srs, self.report = [], [], []
 
-        self.textarea = request.params.get("subreddits")
+        self.textarea = request.params.get("vaults")
         if self.textarea:
             requested_srs = [srname.strip()
                              for srname in self.textarea.splitlines()]
-            subreddits = Subreddit._by_name(requested_srs)
+            vaults = Vault._by_name(requested_srs)
 
             for srname in requested_srs:
-                if srname in subreddits:
+                if srname in vaults:
                     self.srs.append(srname)
                 else:
                     self.invalid_srs.append(srname)
 
-            if subreddits:
-                self.report = make_subreddit_traffic_report(list(subreddits.values()))
+            if vaults:
+                self.report = make_subreddit_traffic_report(list(vaults.values()))
 
             param = urllib.parse.quote(self.textarea)
-            self.csv_url = "/traffic/subreddits/report.csv?subreddits=" + param
+            self.csv_url = "/traffic/vaults/report.csv?vaults=" + param
 
         Templated.__init__(self)
 
@@ -809,7 +809,7 @@ class SubredditTrafficReport(Templated):
         out = io.StringIO()
         writer = csv.writer(out)
 
-        writer.writerow((_("subreddit"),
+        writer.writerow((_("vault"),
                          _("uniques"),
                          _("pageviews")))
         for (name, url), (uniques, pageviews) in self.report:

@@ -30,47 +30,47 @@ source $RUNDIR/install.cfg
 ###############################################################################
 cat <<CONCLUSION
 
-Congratulations! reddit is now installed.
+Congratulations! tippr is now installed.
 
-The reddit application code is managed with upstart, to see what's currently
+The tippr application code is managed with upstart, to see what's currently
 running, run
 
-    sudo initctl list | grep reddit
+    sudo initctl list | grep tippr
 
-Cron jobs start with "reddit-job-" and queue processors start with
-"reddit-consumer-". The crons are managed by /etc/cron.d/reddit. You can
+Cron jobs start with "tippr-job-" and queue processors start with
+"tippr-consumer-". The crons are managed by /etc/cron.d/tippr. You can
 initiate a restart of all the consumers by running:
 
-    sudo reddit-restart
+    sudo tippr-restart
 
 or target specific ones:
 
-    sudo reddit-restart scraper_q
+    sudo tippr-restart scraper_q
 
 See the GitHub wiki for more information on these jobs:
 
 * https://github.com/reddit/reddit/wiki/Cron-jobs
 * https://github.com/reddit/reddit/wiki/Services
 
-The reddit code can be shut down or started up with
+The tippr code can be shut down or started up with
 
-    sudo reddit-stop
-    sudo reddit-start
+    sudo tippr-stop
+    sudo tippr-start
 
 And if you think caching might be hurting you, you can flush memcache with
 
-    reddit-flush
+    tippr-flush
 
-Now that the core of reddit is installed, you may want to do some additional
+Now that the core of tippr is installed, you may want to do some additional
 steps:
 
-* Ensure that $REDDIT_DOMAIN resolves to this machine.
+* Ensure that $TIPPR_DOMAIN resolves to this machine.
 
 * To populate the database with test data, run:
 
-    cd $REDDIT_SRC/reddit
-    reddit-run scripts/inject_test_data.py -c 'inject_test_data()'
+    cd $TIPPR_SRC/tippr
+    tippr-run scripts/inject_test_data.py -c 'inject_test_data()'
 
-* Manually run reddit-job-update_reddits immediately after populating the db
-  or adding your own subreddits.
+* Manually run tippr-job-update_reddits immediately after populating the db
+  or adding your own vaults.
 CONCLUSION

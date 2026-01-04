@@ -18,7 +18,7 @@ r.wiki = {
         }
         base_url += '/wiki'
         if (!r.config.is_fake) {
-            base_url = '/r/' + r.config.post_site + base_url
+            base_url = '/v/' + r.config.post_site + base_url
         }
         return base_url
     },

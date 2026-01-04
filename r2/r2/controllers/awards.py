@@ -23,10 +23,10 @@
 from r2.lib.pages import AdminAwardGive, AdminAwards, AdminAwardWinners, AdminPage
 from r2.lib.validator import *
 
-from .reddit_base import RedditController
+from .reddit_base import TipprController
 
 
-class AwardsController(RedditController):
+class AwardsController(TipprController):
 
     @validate(VAdmin())
     def GET_index(self):

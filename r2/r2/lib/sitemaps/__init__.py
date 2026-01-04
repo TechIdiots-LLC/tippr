@@ -24,15 +24,15 @@
 
 Sitemaps (http://www.sitemaps.org/protocol.html) are an xml
 protocol designed to exhaustively describe websites. In lieu of
-an external link or a link from a reddit, in general most reddit
+an external link or a link from a tippr, in general most tippr
 links do not get indexed by search engines. This means that the vast
-majority of Reddit content does not get indexed by Google, Bing, or Yahoo.
+majority of Tippr content does not get indexed by Google, Bing, or Yahoo.
 Sitemaps solve the problem by showing search engines links that they
 likely don't have access to any other way.
 
-Reddit contains tons and tons of links. Generating them on the fly is simply
+Tippr contains tons and tons of links. Generating them on the fly is simply
 impractical. The solution this module implements is a very slow batch that
-goes through every subreddit and every link and creates crawlable permalinks
+goes through every vault and every link and creates crawlable permalinks
 from them. These links are then put into sitemaps and stored in
 s3. We then upload those sitemaps as static files to s3 where we host them.
 
@@ -42,19 +42,19 @@ significantly more links than that, we have to define a Sitemap Index
 up to 50000 links to other sitemaps. For now it suits our purposes to have
 exactly one sitemap, but it may change in the future.
 
-There are only two types of links we currently support. Subreddit links
+There are only two types of links we currently support. Vault links
 in the form of
 
-https://www.reddit.com/r/hiphopheads
+https://www.tippr.net/r/hiphopheads
 
 and comment links in the form of
 
-https://www.reddit.com/r/hiphopheads/comments/4gxk5i/fresh_album_drake_views/.
+https://www.tippr.net/r/hiphopheads/comments/4gxk5i/fresh_album_drake_views/.
 
 
 This module is split into 3 parts.
 
-  r2.lib.sitemaps.data - Loads up the raw Subreddit and Link Things.
+  r2.lib.sitemaps.data - Loads up the raw Vault and Link Things.
   r2.lib.sitemaps.generate - Transforms the Things into sitemap xml strings.
   r2.lib.sitemaps.store - Stores the sitemaps on s3.
   r2.lib.sitemaps.watcher - Reads from the SQS queue and starts a new upload

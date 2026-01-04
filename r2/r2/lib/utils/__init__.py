@@ -21,5 +21,5 @@
 ###############################################################################
 
 from .http_utils import *
-from .reddit_agent_parser import Agent
+from .tippr_agent_parser import Agent
 from .utils import *

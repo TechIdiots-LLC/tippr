@@ -361,19 +361,19 @@ class UtilsTest(unittest.TestCase):
 
     def test_extract_subdomain(self):
         self.assertEqual(
-            utils.extract_subdomain('beta.reddit.com', 'reddit.com'),
+            utils.extract_subdomain('beta.tippr.net', 'tippr.net'),
             'beta')
 
         self.assertEqual(
-            utils.extract_subdomain('beta.reddit.local:8000', 'reddit.local'),
+            utils.extract_subdomain('beta.tippr.local:8000', 'tippr.local'),
             'beta')
 
         self.assertEqual(
-            utils.extract_subdomain('reddit.com', 'reddit.com'),
+            utils.extract_subdomain('tippr.net', 'tippr.net'),
             '')
 
         self.assertEqual(
-            utils.extract_subdomain('internet-frontpage.com', 'reddit.com'),
+            utils.extract_subdomain('internet-frontpage.com', 'tippr.net'),
             '')
 
     def test_coerce_url_to_protocol(self):
@@ -492,20 +492,20 @@ class TestTruncString(unittest.TestCase):
 class TestUrlToThing(unittest.TestCase):
 
     def test_subreddit_noslash(self):
-        with patch('r2.models.Subreddit') as MockSubreddit:
+        with patch('r2.models.Vault') as MockSubreddit:
             mock_sr = MagicMock()
             MockSubreddit._by_name.return_value = mock_sr
             self.assertEqual(
-                utils.url_to_thing('http://reddit.local/r/pics'),
+                utils.url_to_thing('http://reddit.local/v/pics'),
                 mock_sr,
             )
 
     def test_subreddit(self):
-        with patch('r2.models.Subreddit') as MockSubreddit:
+        with patch('r2.models.Vault') as MockSubreddit:
             mock_sr = MagicMock()
             MockSubreddit._by_name.return_value = mock_sr
             self.assertEqual(
-                utils.url_to_thing('http://reddit.local/r/pics/'),
+                utils.url_to_thing('http://reddit.local/v/pics/'),
                 mock_sr,
             )
 

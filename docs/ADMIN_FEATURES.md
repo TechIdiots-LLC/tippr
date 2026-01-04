@@ -24,7 +24,7 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - UI: admin notes sidebar rendered via `AdminNotesSidebar` (used on profile and admin pages).
 - Model: `AdminNotesBySystem` ([r2/r2/models/admin_notes.py]) provides:
   - `add(system_name, subject, note, author)` — add a note.
-  - `in_display_order(system_name, subject)` — list notes for `user`, `subreddit`, `domain`, or `ip`.
+  - `in_display_order(system_name, subject)` — list notes for `user`, `vault`, `domain`, or `ip`.
 
 ## Admin templates (common)
 Files under `r2/r2/templates/` used by admin pages include:

@@ -30,7 +30,7 @@ from pylons import app_globals as g
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import max_column_count
 from r2.lib.utils import tup, utils
-from r2.models import LabeledMulti, Subreddit
+from r2.models import LabeledMulti, Vault
 
 VIEW = 'imp'
 CLICK = 'clk'
@@ -50,7 +50,7 @@ class AccountSRPrefs:
     multireddits, and recent interactions with the recommender UI.
 
     Likes are used to generate recommendations, dislikes to filter out
-    unwanted results, and recent views to make sure the same subreddits aren't
+    unwanted results, and recent views to make sure the same vaults aren't
     recommended too often.
 
     """
@@ -68,7 +68,7 @@ class AccountSRPrefs:
         multi_srs = set(chain.from_iterable(multi.srs for multi in multis))
         feedback = AccountSRFeedback.for_user(account)
         # subscriptions and srs in the user's multis become likes
-        subscriptions = Subreddit.user_subreddits(account, limit=None)
+        subscriptions = Vault.user_subreddits(account, limit=None)
         prefs.likes.update(utils.to36(sr_id) for sr_id in subscriptions)
         prefs.likes.update(sr._id36 for sr in multi_srs)
         # recent clicks on explore tab items are also treated as likes

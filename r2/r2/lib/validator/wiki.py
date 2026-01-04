@@ -66,11 +66,11 @@ def may_revise(sr, user, page=None):
         return False
 
     if sr.is_wikibanned(user):
-        # Users who are wiki banned in the subreddit may not contribute
+        # Users who are wiki banned in the vault may not contribute
         return False
     
     if sr.is_banned(user):
-        # If the user is banned from the subreddit, do not allow them to contribute
+        # If the user is banned from the vault, do not allow them to contribute
         return False
     
     if page and not may_view(sr, user, page):
@@ -111,7 +111,7 @@ def may_revise(sr, user, page=None):
         return False
     
     if not sr.wiki_can_submit(user):
-        # If the user can not submit to the subreddit
+        # If the user can not submit to the vault
         # They should not be able to contribute
         return False
 

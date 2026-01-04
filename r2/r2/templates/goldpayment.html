@@ -34,7 +34,7 @@
 %>
 
 <div class="gold-wrap ${clone_class}">
-  <h1 class="gold-banner"><a href="${'/gold' if thing.goldtype != 'creddits' else '/creddits'}">${_('reddit gold')}</a></h1>
+  <h1 class="gold-banner"><a href="${'/gold' if thing.goldtype != 'creddits' else '/creddits'}">${_('tippr gold')}</a></h1>
 
   <div class="fancy">
     <div class="fancy-inner">
@@ -50,7 +50,7 @@
               ${md(thing.summary)}
 
               <div>
-                ${_md('> By purchasing Reddit Gold, you agree to the [Reddit User Agreement.](/help/useragreement)')}
+                ${_md('> By purchasing Tippr Gold, you agree to the [Tippr User Agreement.](/help/useragreement)')}
               </div>
 
               %if thing.thing and not thing.clone_template:

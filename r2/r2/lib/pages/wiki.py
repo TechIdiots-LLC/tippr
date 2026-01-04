@@ -27,7 +27,7 @@ from r2.lib.filters import safemarkdown, wikimarkdown
 from r2.lib.pages.pages import (
     AutoModeratorConfig,
     RawCode,
-    Reddit,
+    Tippr,
     SubredditStylesheetSource,
 )
 from r2.lib.wrapped import Templated
@@ -39,7 +39,7 @@ class WikiView(Templated):
         self.page_content_md = content
         if renderer == 'wiki':
             self.page_content = wikimarkdown(content)
-        elif renderer == 'reddit':
+        elif renderer == 'tippr':
             self.page_content = safemarkdown(content)
         elif renderer == 'stylesheet':
             self.page_content = SubredditStylesheetSource(content).render()
@@ -103,7 +103,7 @@ class WikiPageDiscussions(Templated):
         self.page = page
         Templated.__init__(self)
 
-class WikiBasePage(Reddit):
+class WikiBasePage(Tippr):
     extra_page_classes = ['wiki-page']
     
     def __init__(self, content, page=None, may_revise=False,
@@ -145,7 +145,7 @@ class WikiBasePage(Reddit):
                 "page": page}
             page_classes = ['wiki-page-%s' % page.replace('/', '-')]
 
-        Reddit.__init__(self, extra_js_config={'wiki_page': page}, 
+        Tippr.__init__(self, extra_js_config={'wiki_page': page}, 
                         show_wiki_actions=True, page_classes=page_classes,
                         content=content, short_title=page, **context)
 
@@ -165,13 +165,13 @@ class WikiPageView(WikiBasePage):
 class WikiNotFound(WikiBasePage):
     def __init__(self, page, **context):
         content = WikiPageNotFound(page)
-        context['alert'] = _("page %s does not exist in this subreddit") % page
+        context['alert'] = _("page %s does not exist in this vault") % page
         context['actionless'] = True
         WikiBasePage.__init__(self, content, page=page, **context)
 
 class WikiCreate(WikiBasePage):
     def __init__(self, page, **context):
-        context['alert'] = _("page %s does not exist in this subreddit") % page
+        context['alert'] = _("page %s does not exist in this vault") % page
         context['actionless'] = True
         content = WikiEditPage(page=page)
         WikiBasePage.__init__(self, content, page, **context)
@@ -206,7 +206,7 @@ class WikiListing(WikiBasePage):
     def __init__(self, pages, linear_pages, **context):
         content = WikiPageListing(pages, linear_pages)
         context['wikiaction'] = ('pages', _("Viewing pages for /r/%s") % c.wiki_id)
-        description = [_("Below is a list of pages in this wiki visible to you in this subreddit.")]
+        description = [_("Below is a list of pages in this wiki visible to you in this vault.")]
         WikiBasePage.__init__(self, content, description=description, showtitle=True, **context)
 
 class WikiDiscussions(WikiBasePage):

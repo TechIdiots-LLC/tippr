@@ -46,7 +46,7 @@ from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
 from r2.lib.memoize import memoize
 from r2.lib.utils import GoldPrice, randstr, to_date
 from r2.models import Account
-from r2.models.subreddit import Frontpage
+from r2.models.vault import Frontpage
 from r2.models.wiki import WikiPage, WikiPageIniItem
 
 gold_bonus_cutoff = datetime(2010,7,27,0,0,0,0,g.tz)
@@ -548,51 +548,51 @@ def make_gold_message(thing, user_gilded):
     if c.user_is_loggedin and thing.author_id == c.user._id:
         if isinstance(thing, Comment):
             gilded_message = ungettext(
-                "a redditor gifted you a month of reddit gold for this "
+                "a redditor gifted you a month of tippr gold for this "
                 "comment.",
-                "redditors have gifted you %(months)d months of reddit gold "
+                "redditors have gifted you %(months)d months of tippr gold "
                 "for this comment.",
                 thing.gildings
             )
         else:
             gilded_message = ungettext(
-                "a redditor gifted you a month of reddit gold for this "
+                "a redditor gifted you a month of tippr gold for this "
                 "submission.",
-                "redditors have gifted you %(months)d months of reddit gold "
+                "redditors have gifted you %(months)d months of tippr gold "
                 "for this submission.",
                 thing.gildings
             )
     elif user_gilded:
         if isinstance(thing, Comment):
             gilded_message = ungettext(
-                "you have gifted reddit gold to %(recipient)s for this "
+                "you have gifted tippr gold to %(recipient)s for this "
                 "comment.",
                 "you and other redditors have gifted %(months)d months of "
-                "reddit gold to %(recipient)s for this comment.",
+                "tippr gold to %(recipient)s for this comment.",
                 thing.gildings
             )
         else:
             gilded_message = ungettext(
-                "you have gifted reddit gold to %(recipient)s for this "
+                "you have gifted tippr gold to %(recipient)s for this "
                 "submission.",
                 "you and other redditors have gifted %(months)d months of "
-                "reddit gold to %(recipient)s for this submission.",
+                "tippr gold to %(recipient)s for this submission.",
                 thing.gildings
             )
     else:
         if isinstance(thing, Comment):
             gilded_message = ungettext(
-                "a redditor has gifted reddit gold to %(recipient)s for this "
+                "a redditor has gifted tippr gold to %(recipient)s for this "
                 "comment.",
-                "redditors have gifted %(months)d months of reddit gold to "
+                "redditors have gifted %(months)d months of tippr gold to "
                 "%(recipient)s for this comment.",
                 thing.gildings
             )
         else:
             gilded_message = ungettext(
-                "a redditor has gifted reddit gold to %(recipient)s for this "
+                "a redditor has gifted tippr gold to %(recipient)s for this "
                 "submission.",
-                "redditors have gifted %(months)d months of reddit gold to "
+                "redditors have gifted %(months)d months of tippr gold to "
                 "%(recipient)s for this submission.",
                 thing.gildings
             )

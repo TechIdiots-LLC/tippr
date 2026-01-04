@@ -189,7 +189,7 @@ def MigratingUserRel(name, relation, disable_ids_fn=False,
     Replacement for UserRel to be used during migrations away from the system.
 
     The resulting "UserRel" classes generated are to be used as standalones and
-    not included in Subreddit.__bases__.
+    not included in Vault.__bases__.
 
     """
 

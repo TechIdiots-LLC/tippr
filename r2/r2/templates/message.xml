@@ -36,14 +36,14 @@
     substitutions = {}
 
     if thing.sr_id:
-       substitutions['subreddit'] = thing.subreddit.name
+       substitutions['vault'] = thing.vault.name
 
     substitutions['author'] = (DeletedUser() if thing.author._deleted else thing.author).name
 
     if isinstance(thing.to, Account):
        substitutions['dest'] = (DeletedUser() if thing.to._deleted else thing.to).name
     elif thing.sr_id:
-       substitutions['dest'] = substitutions['subreddit']
+       substitutions['dest'] = substitutions['vault']
 
     # most templates use the thing.timesince StringTemplate for this, but the
     # double- escaping that <%atom:content/> does means that it can't be
@@ -66,7 +66,7 @@
     <%utils:atom_author author="${thing.author}"/>
 
     %if thing.was_comment:
-        <category term="${thing.subreddit.name}" label="/r/${thing.subreddit.name}" />
+        <category term="${thing.vault.name}" label="/v/${thing.vault.name}" />
     %endif
 
     <%utils:atom_content>

@@ -29,11 +29,11 @@ from r2.lib.db.thing import MultiRelation, Relation
 from r2.lib.utils import tup
 from r2.models.account import Account
 from r2.models.link import Comment, Link, Message
-from r2.models.subreddit import Subreddit
+from r2.models.vault import Vault
 
 _LinkReport = Relation(Account, Link)
 _CommentReport = Relation(Account, Comment)
-_SubredditReport = Relation(Account, Subreddit)
+_SubredditReport = Relation(Account, Vault)
 _MessageReport = Relation(Account, Message)
 REPORT_RELS = (_LinkReport, _CommentReport, _SubredditReport, _MessageReport)
 

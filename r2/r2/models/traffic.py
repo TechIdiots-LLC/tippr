@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 """
-These models represent the traffic statistics stored for subreddits and
+These models represent the traffic statistics stored for vaults and
 promoted links.  They are written to by Pig-based MapReduce jobs and read from
 various places in the UI.
 
@@ -362,7 +362,7 @@ def campaign_history(cls, codenames, start, stop):
                 .filter(cls.codename.in_(codenames))
                 .filter(cls.date.in_(time_points))
                 .order_by(cls.date))
-    return [(r.date, r.codename, r.subreddit, (r.unique_count,
+    return [(r.date, r.codename, r.vault, (r.unique_count,
                                                r.pageview_count))
             for r in q.all()]
 
@@ -410,11 +410,11 @@ class SitewidePageviews(Base):
 
 
 class PageviewsBySubreddit(Base):
-    """Pageviews within a subreddit (i.e. /r/something/...)."""
+    """Pageviews within a vault (i.e. /r/something/...)."""
 
     __tablename__ = "traffic_subreddits"
 
-    subreddit = Column(String(), nullable=False, primary_key=True)
+    vault = Column(String(), nullable=False, primary_key=True)
     date = Column(DateTime(), nullable=False, primary_key=True)
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
@@ -422,29 +422,29 @@ class PageviewsBySubreddit(Base):
 
     @classmethod
     @memoize_traffic(time=3600)
-    def history(cls, interval, subreddit):
+    def history(cls, interval, vault):
         time_points, q = make_history_query(cls, interval)
-        q = q.filter(cls.subreddit == subreddit)
+        q = q.filter(cls.vault == vault)
         return fill_gaps(time_points, q, "unique_count", "pageview_count")
 
     @classmethod
     @memoize_traffic(time=3600 * 6)
     def top_last_month(cls, num=None):
-        return top_last_month(cls, "subreddit", num=num)
+        return top_last_month(cls, "vault", num=num)
 
     @classmethod
     @memoize_traffic(time=3600 * 6)
     def last_month(cls, srs):
         ids = [sr.name for sr in srs]
-        return top_last_month(cls, "subreddit", ids=ids)
+        return top_last_month(cls, "vault", ids=ids)
 
 
 class PageviewsBySubredditAndPath(Base):
-    """Pageviews within a subreddit with action included.
+    """Pageviews within a vault with action included.
 
-    `srpath` is the subreddit name, a dash, then the controller method called
-    to render the page the user viewed. e.g. reddit.com-GET_listing. This is
-    useful to determine how many pageviews in a subreddit are on listing pages,
+    `srpath` is the vault name, a dash, then the controller method called
+    to render the page the user viewed. e.g. tippr.net-GET_listing. This is
+    useful to determine how many pageviews in a vault are on listing pages,
     comment pages, or elsewhere.
 
     """
@@ -522,7 +522,7 @@ class TargetedClickthroughsByCodename(Base):
     __tablename__ = "traffic_clicktarget"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
-    subreddit = Column(String(), nullable=False, primary_key=True)
+    vault = Column(String(), nullable=False, primary_key=True)
     date = Column(DateTime(), nullable=False, primary_key=True)
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
@@ -603,7 +603,7 @@ class TargetedImpressionsByCodename(Base):
     __tablename__ = "traffic_thingtarget"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
-    subreddit = Column(String(), nullable=False, primary_key=True)
+    vault = Column(String(), nullable=False, primary_key=True)
     date = Column(DateTime(), nullable=False, primary_key=True)
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
@@ -625,7 +625,7 @@ class TargetedImpressionsByCodename(Base):
 
 
 class SubscriptionsBySubreddit(Base):
-    """Subscription statistics for subreddits.
+    """Subscription statistics for vaults.
 
     This table is different from the rest of the traffic ones.  It only
     contains data at a daily interval (hence no `interval` column) and is
@@ -636,15 +636,15 @@ class SubscriptionsBySubreddit(Base):
 
     __tablename__ = "traffic_subscriptions"
 
-    subreddit = Column(String(), nullable=False, primary_key=True)
+    vault = Column(String(), nullable=False, primary_key=True)
     date = Column(DateTime(), nullable=False, primary_key=True)
     subscriber_count = Column("unique", Integer())
 
     @classmethod
     @memoize_traffic(time=3600)
-    def history(cls, interval, subreddit):
+    def history(cls, interval, vault):
         time_points, q = make_history_query(cls, interval)
-        q = q.filter(cls.subreddit == subreddit)
+        q = q.filter(cls.vault == vault)
         return fill_gaps(time_points, q, "subscriber_count")
 
 

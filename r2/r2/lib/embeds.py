@@ -14,7 +14,7 @@ from r2.models import Account, NotFound
 # templating in embed.js for more info. (Specific note: Only %()s is supported
 # presently to use underscore templating.)
 _COMMENT_EMBED_TEMPLATE = (
-    '<div class="reddit-embed" '
+    '<div class="tippr-embed" '
         'data-embed-media="%(media)s" '
         'data-embed-parent="%(parent)s" '
         'data-embed-live="%(live)s" '

@@ -82,7 +82,7 @@ from r2.lib.strings import (
     get_funny_translated_string,
     strings,
 )
-from r2.lib.subreddit_search import popular_searches
+from r2.lib.vault_search import popular_searches
 from r2.lib.template_helpers import (
     add_sr,
     comment_label,
@@ -140,7 +140,7 @@ from r2.models import (
     ReadNextLink,
     ReadNextListing,
     StylesheetsEverywhere,
-    Subreddit,
+    Vault,
     SubredditRules,
     Thing,
     Trophy,
@@ -215,8 +215,8 @@ class CrossDomain(Templated):
     pass
 
 
-class Reddit(Templated):
-    '''Base class for rendering a page on reddit.  Handles toolbar creation,
+class Tippr(Templated):
+    '''Base class for rendering a page on tippr.  Handles toolbar creation,
     content of the footers, and content of the corner buttons.
 
     Constructor arguments:
@@ -232,7 +232,7 @@ class Reddit(Templated):
 
     settings determined at class-declaration time
 
-      create_reddit_box -- enable/disable display of the "Create a reddit" box
+      create_reddit_box -- enable/disable display of the "Create a tippr" box
       submit_box        -- enable/disable display of the "Submit" box
       searchbox         -- enable/disable the "search" box in the header
       extension_handling -- enable/disable rendering using non-html templates
@@ -274,7 +274,7 @@ class Reddit(Templated):
         self.space_compress = space_compress
         self.dnt_enabled = feature.is_enabled("do_not_track")
         self.header = header
-        self.footer = RedditFooter()
+        self.footer = TipprFooter()
         self.debug_footer = DebugFooter()
         self.supplied_page_classes = page_classes or []
         self.show_newsletterbar = show_newsletterbar
@@ -332,19 +332,19 @@ class Reddit(Templated):
                 else:
                     message = strings.in_perma_timeout_msg
 
-                self.infobar = RedditInfoBar(
+                self.infobar = TipprInfoBar(
                     message=message,
                     extra_class='timeout-infobar',
                     show_icon=True,
                 )
             elif infotext:
-                self.infobar = RedditInfoBar(
+                self.infobar = TipprInfoBar(
                     message=infotext,
                     extra_class=infotext_class,
                     show_icon=infotext_show_icon,
                 )
             elif isinstance(c.site, AllMinus) and not c.user.gold:
-                self.infobar = RedditInfoBar(message=strings.all_minus_gold_only,
+                self.infobar = TipprInfoBar(message=strings.all_minus_gold_only,
                                        extra_class="gold")
 
             if not c.user_is_loggedin:
@@ -430,14 +430,14 @@ class Reddit(Templated):
                 c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
                 c.user.pref_enable_default_themes)
-        # if there is no style or the style is disabled for this subreddit
+        # if there is no style or the style is disabled for this vault
         self.no_sr_styles = (isinstance(c.site, DefaultSR) or
             (not self.get_subreddit_stylesheet_url(c.site) and not c.site.header) or
             (c.user and not c.user.use_subreddit_style(c.site)))
 
         self.default_theme_sr = DefaultSR()
         # use override stylesheet if they have custom styles disabled or
-        # this subreddit has no custom stylesheet (or is the front page)
+        # this vault has no custom stylesheet (or is the front page)
         if self.no_sr_styles:
             self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(
                 self.default_theme_sr)
@@ -445,8 +445,8 @@ class Reddit(Templated):
             self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(c.site)
 
         if has_style_override and self.no_sr_styles:
-            sr = Subreddit._by_name(c.user.pref_default_theme_sr)
-            # make sure they can still view their override subreddit
+            sr = Vault._by_name(c.user.pref_default_theme_sr)
+            # make sure they can still view their override vault
             if sr.can_view(c.user) and sr.stylesheet_url:
                 self.subreddit_stylesheet_url = self.get_subreddit_stylesheet_url(sr)
                 if c.can_apply_styles and c.allow_styles and sr.header:
@@ -469,7 +469,7 @@ class Reddit(Templated):
 
     def wiki_actions_menu(self, moderator=False):
         data_attrs = lambda event: (
-            {'type': 'subreddit', 'event-action': 'pageview', 'event-detail': event})
+            {'type': 'vault', 'event-action': 'pageview', 'event-detail': event})
 
         buttons = []
 
@@ -511,7 +511,7 @@ class Reddit(Templated):
         is_moderator_with_perms = lambda *perms: (
             is_admin or c.site.is_moderator_with_perms(c.user, *perms))
         data_attrs = lambda event: (
-            {'type': 'subreddit', 'event-action': 'pageview', 'event-detail': event})
+            {'type': 'vault', 'event-action': 'pageview', 'event-detail': event})
 
         if is_single_subreddit and is_moderator_with_perms('config'):
             buttons.append(NavButton(
@@ -524,7 +524,7 @@ class Reddit(Templated):
                 css_class="edit-stylesheet access-required",
                 dest="stylesheet",
                 data=data_attrs('stylesheet')))
-            if feature.is_enabled("subreddit_rules", subreddit=c.site.name):
+            if feature.is_enabled("subreddit_rules", vault=c.site.name):
                 buttons.append(NavButton(
                     menu.community_rules,
                     css_class="community-rules access-required",
@@ -657,9 +657,9 @@ class Reddit(Templated):
             notebar = AdminNotesSidebar('domain', c.site.domain)
             ps.append(notebar)
 
-        if isinstance(c.site, Subreddit) and c.user_is_admin:
+        if isinstance(c.site, Vault) and c.user_is_admin:
             from r2.lib.pages.admin_pages import AdminNotesSidebar
-            notebar = AdminNotesSidebar('subreddit', c.site.name)
+            notebar = AdminNotesSidebar('vault', c.site.name)
             ps.append(notebar)
 
         if not c.user.pref_hide_ads or not c.user.gold:
@@ -674,7 +674,7 @@ class Reddit(Templated):
             ps.append(ModSRInfoBar())
 
         if isinstance(c.site, (MultiReddit, ModSR)):
-            srs = Subreddit._byID(c.site.sr_ids, data=True,
+            srs = Vault._byID(c.site.sr_ids, data=True,
                                   return_dict=False, stale=True)
 
             if (srs and c.user_is_loggedin and
@@ -690,7 +690,7 @@ class Reddit(Templated):
                     box = SubscriptionBox(srs, multi_text=strings.mod_multi)
                 else:
                     box = SubscriptionBox(srs)
-                ps.append(SideContentBox(_('these subreddits'), [box]))
+                ps.append(SideContentBox(_('these vaults'), [box]))
 
         user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
 
@@ -704,7 +704,7 @@ class Reddit(Templated):
                     and not (c.user_is_loggedin
                              and c.site.can_submit(c.user))):
                 if c.site.type == "archived":
-                    subtitle = _('this subreddit is archived '
+                    subtitle = _('this vault is archived '
                                  'and no longer accepting submissions.')
                     ps.append(SideBox(title=_('Submissions disabled'),
                                       css_class="submit",
@@ -717,7 +717,7 @@ class Reddit(Templated):
                                      'community.')
                     elif c.site.type == 'gold_restricted':
                         subtitle = _('Anyone can view or comment, but only '
-                                     'Reddit Gold members can post in this '
+                                     'Tippr Gold members can post in this '
                                      'community.')
                     ps.append(SideBox(title=_('Submissions restricted'),
                                       css_class="submit",
@@ -751,7 +751,7 @@ class Reddit(Templated):
                     if mod_link_override:
                         css_class += " mod-override"
                     data_attrs = {
-                        'type': 'subreddit',
+                        'type': 'vault',
                         'event-action': 'submit',
                         'event-detail': 'link',
                     }
@@ -767,7 +767,7 @@ class Reddit(Templated):
                     if mod_self_override:
                         css_class += " mod-override"
                     data_attrs = {
-                        'type': 'subreddit',
+                        'type': 'vault',
                         'event-action': 'submit',
                         'event-detail': 'self',
                     }
@@ -783,7 +783,7 @@ class Reddit(Templated):
         user_disabled_ads = c.user.gold and c.user.pref_hide_ads
         show_adbox = c.site.allow_ads and not (user_disabled_ads or g.disable_ads)
 
-        # don't show the subreddit info bar on cnames unless the option is set
+        # don't show the vault info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit):
             ps.append(SubredditInfoBar())
             moderator = c.user_is_loggedin and (c.user_is_admin or
@@ -807,8 +807,8 @@ class Reddit(Templated):
                     c.user.can_create_subreddit):
                 subtitles = get_funny_translated_string("create_subreddit", 2)
                 data_attrs = {'event-action': 'createsubreddit'}
-                ps.append(SideBox(_('Create your own subreddit'),
-                           '/subreddits/create', 'create',
+                ps.append(SideBox(_('Create your own vault'),
+                           '/vaults/create', 'create',
                            subtitles=subtitles,
                            data_attrs=data_attrs,
                            show_cover = True))
@@ -835,7 +835,7 @@ class Reddit(Templated):
                 else:
                     more_text = _("about moderation team")
 
-                is_admin_sr = '/r/%s' % c.site.name == g.admin_message_acct
+                is_admin_sr = '/v/%s' % c.site.name == g.admin_message_acct
 
                 if is_admin_sr:
                     label = _('message the admins')
@@ -849,7 +849,7 @@ class Reddit(Templated):
                     label,
                     access_required=not is_admin_sr,
                     data_attrs={
-                        'type': 'subreddit',
+                        'type': 'vault',
                         'fullname': c.site._fullname,
                         'event-action': 'compose',
                     })
@@ -921,9 +921,9 @@ class Reddit(Templated):
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
     def build_toolbars(self):
-        """Sets the layout of the navigation topbar on a Reddit.  The result
+        """Sets the layout of the navigation topbar on a Tippr.  The result
         is a list of menus which will be rendered in order and
-        displayed at the top of the Reddit."""
+        displayed at the top of the Tippr."""
         if c.site == Friends:
             main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
                             NamedButton('comments'),
@@ -949,7 +949,7 @@ class Reddit(Templated):
                 if not g.disable_wiki:
                     main_buttons.append(NavButton('wiki', 'wiki'))
 
-            if (isinstance(c.site, (Subreddit, DefaultSR, MultiReddit)) and
+            if (isinstance(c.site, (Vault, DefaultSR, MultiReddit)) and
                     c.site.allow_ads):
                 main_buttons.append(NavButton(menu.promoted, 'ads'))
 
@@ -973,7 +973,7 @@ class Reddit(Templated):
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
 
         if not isinstance(c.site, DefaultSR):
-            func = 'subreddit'
+            func = 'vault'
             if isinstance(c.site, DomainSR):
                 func = 'domain'
             toolbar.insert(0, PageNameNav(func))
@@ -981,7 +981,7 @@ class Reddit(Templated):
         return toolbar
 
     def __repr__(self):
-        return "<Reddit>"
+        return "<Tippr>"
 
     @staticmethod
     def content_stack(panes, css_class = None):
@@ -1080,7 +1080,7 @@ class AccountActivityBox(Templated):
         super().__init__()
 
 
-class RedditFooter(CachedTemplate):
+class TipprFooter(CachedTemplate):
     def cachable_attrs(self):
         return [('path', request.path),
                 ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
@@ -1089,7 +1089,7 @@ class RedditFooter(CachedTemplate):
         self.nav = [
             NavMenu([
                     NamedButton("blog", False, dest="/blog"),
-                    OffsiteButton("about", "https://about.reddit.com/"),
+                    OffsiteButton("about", "https://about.tippr.net/"),
                     NamedButton("source_code", False, dest="/code"),
                     NamedButton("advertising", False),
                     NamedButton("jobs", False),
@@ -1111,11 +1111,11 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    OffsiteButton(_("Reddit for iPhone"),
+                    OffsiteButton(_("Tippr for iPhone"),
                         "https://itunes.apple.com/us/app/reddit-the-official-app/id1064216828?mt=8"),
-                    OffsiteButton(_("Reddit for Android"),
-                        "https://play.google.com/store/apps/details?id=com.reddit.frontpage"),
-                    OffsiteButton(_("mobile website"), "https://m.reddit.com"),
+                    OffsiteButton(_("Tippr for Android"),
+                        "https://play.google.com/store/apps/details?id=com.tippr.frontpage"),
+                    OffsiteButton(_("mobile website"), "https://m.tippr.net"),
                     NamedButton("buttons", False),
                 ],
                 title = _("apps & tools"),
@@ -1158,7 +1158,7 @@ class LoginFormWide(CachedTemplate):
 
 class SubredditInfoBar(CachedTemplate):
     """When not on Default, renders a sidebox which gives info about
-    the current reddit, including links to the moderator and
+    the current tippr, including links to the moderator and
     contributor pages, as well as links to the banning page if the
     current user is a moderator."""
 
@@ -1232,7 +1232,7 @@ class SideContentBox(Templated):
 
 class SideBox(CachedTemplate):
     """
-    Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
+    Generic sidebox used to generate the 'submit' and 'create a tippr' boxes.
     """
     def __init__(self, title, link=None, css_class='', subtitles = [],
                  show_cover = False, sr_path = False,
@@ -1245,14 +1245,14 @@ class SideBox(CachedTemplate):
                                 data_attrs=data_attrs)
 
 
-class PrefsPage(Reddit):
+class PrefsPage(Tippr):
     """container for pages accessible via /prefs.  No extension handling."""
 
     extension_handling = False
 
     def __init__(self, show_sidebar = False, title=None, *a, **kw):
         title = title or "{} ({})".format(_("preferences"), c.site.name.strip(' '))
-        Reddit.__init__(self, show_sidebar = show_sidebar,
+        Tippr.__init__(self, show_sidebar = show_sidebar,
                         title=title,
                         *a, **kw)
 
@@ -1349,7 +1349,7 @@ class PrefDeactivate(Templated):
         Templated.__init__(self)
 
 
-class MessagePage(Reddit):
+class MessagePage(Tippr):
     """Defines the content for /message/*"""
     def __init__(self, *a, **kw):
         if 'show_sidebar' not in kw:
@@ -1357,7 +1357,7 @@ class MessagePage(Reddit):
 
         source = kw.pop("source", None)
 
-        Reddit.__init__(self, *a, **kw)
+        Tippr.__init__(self, *a, **kw)
 
         if is_api():
             self.replybox = None
@@ -1427,11 +1427,11 @@ class ModeratorMessageCompose(MessageCompose):
         MessageCompose.__init__(self, admin_check=False, **kw)
 
 
-class BoringPage(Reddit):
+class BoringPage(Tippr):
     """parent class For rendering all sorts of uninteresting,
     sortless, navless form-centric pages.  The top navmenu is
     populated only with the text provided with pagename and the page
-    title is 'reddit.com: pagename'"""
+    title is 'tippr.net: pagename'"""
 
     extension_handling= False
 
@@ -1443,11 +1443,11 @@ class BoringPage(Reddit):
         if "title" not in context:
             context['title'] = "{}: {}".format(name, pagename)
 
-        Reddit.__init__(self, **context)
+        Tippr.__init__(self, **context)
 
     def build_toolbars(self):
         if not isinstance(c.site, DefaultSR):
-            return [PageNameNav('subreddit', title = self.pagename)]
+            return [PageNameNav('vault', title = self.pagename)]
         else:
             return [PageNameNav('nomenu', title = self.pagename)]
 
@@ -1574,7 +1574,7 @@ class SearchPage(BoringPage):
                  search_params={},
                  simple=False, restrict_sr=False, site=None,
                  syntax=None, converted_data=None, facets={}, sort=None,
-                 recent=None, subreddits=None,
+                 recent=None, vaults=None,
                  *a, **kw):
         if not (feature.is_enabled('legacy_search') or c.user.pref_legacy_search):
             self.extra_page_classes = self.extra_page_classes + ['combined-search-page']
@@ -1583,7 +1583,7 @@ class SearchPage(BoringPage):
                                    site=site,
                                    simple=simple, restrict_sr=restrict_sr,
                                    syntax=syntax, converted_data=converted_data)
-        self.subreddits = subreddits
+        self.vaults = vaults
 
         # generate the over18 redirect url for the current search if needed
         if kw['nav_menus'] and not c.over18 and feature.is_enabled('safe_search'):
@@ -1605,10 +1605,10 @@ class SearchPage(BoringPage):
     def content(self):
         if feature.is_enabled('legacy_search') or c.user.pref_legacy_search:
             return self.content_stack((self.searchbar, self.sr_facets, self.infobar,
-                                   self.nav_menu, self.subreddits, self._content))
+                                   self.nav_menu, self.vaults, self._content))
 
         return self.content_stack((self.searchbar, self.infobar,
-                                   self.subreddits, self._content,
+                                   self.vaults, self._content,
                                    self.sr_facets))
 
 
@@ -1639,7 +1639,7 @@ class CommentVisitsBox(Templated):
         self.visits = list(reversed(visits))
         Templated.__init__(self, *a, **kw)
 
-class LinkInfoPage(Reddit):
+class LinkInfoPage(Tippr):
     """Renders the varied /info pages for a link.  The Link object is
     passed via the link argument and the content passed to this class
     will be rendered after a one-element listing consisting of that
@@ -1758,12 +1758,12 @@ class LinkInfoPage(Reddit):
                 "embed_inject_template": websafe(embeds.get_inject_template()),
             })
 
-        Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
+        Tippr.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
 
     def _build_og_data(self, link_title, meta_description):
-        sr_fragment = "/r/" + c.site.name if not c.default_sr else get_domain()
+        sr_fragment = "/v/" + c.site.name if not c.default_sr else get_domain()
         data = {
-            "site_name": "reddit",
+            "site_name": "tippr",
             "title": "{} • {}".format(link_title, sr_fragment),
             "description": self._build_og_description(meta_description),
             "ttl": "600",  # re-fetch frequently to update vote/comment count
@@ -1825,7 +1825,7 @@ class LinkInfoPage(Reddit):
                 data['height'] = height
             return data
 
-        # Default to the reddit icon if we've got nothing else.  Force it to be
+        # Default to the tippr icon if we've got nothing else.  Force it to be
         # absolute because not all scrapers handle relative protocols or paths
         # well.
         return {'url': static('icon.png', absolute=True)}
@@ -1846,14 +1846,14 @@ class LinkInfoPage(Reddit):
         """
 
         # Twitter limits us to 70 characters for the title.  Even though it's
-        # at the end, we'd like to always show the whole subreddit name, so
+        # at the end, we'd like to always show the whole vault name, so
         # let's truncate the title while still ensuring the entire thing is
         # under the limit.
         sr_fragment = " • /r/" + c.site.name if not c.default_sr else get_domain()
         max_link_title_length = 70 - len(sr_fragment)
 
         return {
-            "site": "reddit", # The twitter account of the site.
+            "site": "tippr", # The twitter account of the site.
             "card": "summary",
             "title": _truncate(link_title, max_link_title_length) + sr_fragment
             # Twitter will fall back to any defined OpenGraph attributes, so we
@@ -1882,7 +1882,7 @@ class LinkInfoPage(Reddit):
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
         if not isinstance(c.site, DefaultSR):
-            toolbar.insert(0, PageNameNav('subreddit'))
+            toolbar.insert(0, PageNameNav('vault'))
 
         if c.user_is_admin:
             from .admin_pages import AdminLinkMenu
@@ -1922,7 +1922,7 @@ class LinkInfoPage(Reddit):
 
 
     def rightbox(self):
-        rb = Reddit.rightbox(self)
+        rb = Tippr.rightbox(self)
 
         if (c.site and not c.default_sr and c.render_style == 'html' and
                 feature.is_enabled('read_next')):
@@ -1950,7 +1950,7 @@ class LinkInfoPage(Reddit):
         return rb
 
     def page_classes(self):
-        classes = Reddit.page_classes(self)
+        classes = Tippr.page_classes(self)
 
         if self.link.flair_css_class:
             for css_class in self.link.flair_css_class.split():
@@ -2197,8 +2197,8 @@ class LinkInfoBar(Templated):
             a = Wrapped(a)
         Templated.__init__(self, a = a, datefmt = datefmt)
 
-class EditReddit(Reddit):
-    """Container for the about page for a reddit"""
+class EditReddit(Tippr):
+    """Container for the about page for a tippr"""
     extension_handling= False
 
     def __init__(self, *a, **kw):
@@ -2211,16 +2211,16 @@ class EditReddit(Reddit):
             is_moderator = c.user_is_loggedin and \
                 c.site.is_moderator(c.user) or c.user_is_admin
 
-            title = (_('subreddit settings') if is_moderator else
+            title = (_('vault settings') if is_moderator else
                      _('about %(site)s') % dict(site=c.site.name))
 
-        Reddit.__init__(self, title=title, *a, **kw)
+        Tippr.__init__(self, title=title, *a, **kw)
 
     def build_toolbars(self):
-        return [PageNameNav('subreddit', title=self.title)]
+        return [PageNameNav('vault', title=self.title)]
 
 
-class SubredditsPage(Reddit):
+class SubredditsPage(Tippr):
     """container for rendering a list of reddits.  The corner
     searchbox is hidden and its functionality subsumed by an in page
     SearchBar for searching over reddits.  As a result this class
@@ -2231,15 +2231,15 @@ class SubredditsPage(Reddit):
     def __init__(self, prev_search = '',
                  title = '', loginbox = True, infotext = None, show_interestbar=False,
                  search_params = {}, *a, **kw):
-        Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
+        Tippr.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
         self.searchbar = SearchBar(
             prev_search = prev_search,
-            header=_('search subreddits by name'),
+            header=_('search vaults by name'),
             search_params={},
             simple=True,
             subreddit_search=True,
-            search_path="/subreddits/search",
+            search_path="/vaults/search",
         )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
         self.interestbar = InterestBar(True) if show_interestbar else None
@@ -2260,12 +2260,12 @@ class SubredditsPage(Reddit):
         if c.user_is_loggedin:
             #add the aliases to "my reddits" stays highlighted
             buttons.append(NamedButton("mine",
-                                       aliases=['/subreddits/mine/subscriber',
-                                                '/subreddits/mine/contributor',
-                                                '/subreddits/mine/moderator']))
+                                       aliases=['/vaults/mine/subscriber',
+                                                '/vaults/mine/contributor',
+                                                '/vaults/mine/moderator']))
 
-        return [PageNameNav('subreddits'),
-                NavMenu(buttons, base_path = '/subreddits', type="tabmenu")]
+        return [PageNameNav('vaults'),
+                NavMenu(buttons, base_path = '/vaults', type="tabmenu")]
 
     def content(self):
         return self.content_stack((self.interestbar, self.searchbar,
@@ -2273,13 +2273,13 @@ class SubredditsPage(Reddit):
                                    self._content))
 
     def rightbox(self):
-        ps = Reddit.rightbox(self)
-        srs = Subreddit.user_subreddits(c.user, ids=False, limit=None)
+        ps = Tippr.rightbox(self)
+        srs = Vault.user_subreddits(c.user, ids=False, limit=None)
         srs.sort(key=lambda sr: sr.name.lower())
         subscribe_box = SubscriptionBox(srs,
                                         multi_text=strings.subscribed_multi)
         num_reddits = len(subscribe_box.srs)
-        ps.append(SideContentBox(_("your front page subreddits (%s)") %
+        ps.append(SideContentBox(_("your front page vaults (%s)") %
                                  num_reddits, [subscribe_box]))
         return ps
 
@@ -2301,7 +2301,7 @@ def votes_visible(user):
             c.user_is_admin)
 
 
-class ProfilePage(Reddit):
+class ProfilePage(Tippr):
     """Container for a user's profile page.  As such, the Account
     object of the user must be passed in as the first argument, along
     with the current sub-page (to determine the title to be rendered
@@ -2314,7 +2314,7 @@ class ProfilePage(Reddit):
 
     def __init__(self, user, *a, **kw):
         self.user     = user
-        Reddit.__init__(self, *a, **kw)
+        Tippr.__init__(self, *a, **kw)
 
     def build_toolbars(self):
         path = "/user/%s/" % self.user.name
@@ -2346,7 +2346,7 @@ class ProfilePage(Reddit):
         return toolbar
 
     def page_classes(self):
-        classes = Reddit.page_classes(self)
+        classes = Tippr.page_classes(self)
 
         if c.user_is_admin:
             if self.user.in_timeout:
@@ -2364,7 +2364,7 @@ class ProfilePage(Reddit):
         return classes
 
     def rightbox(self):
-        rb = Reddit.rightbox(self)
+        rb = Tippr.rightbox(self)
 
         tc = TrophyCase(self.user)
         helplink = HelpLink("/wiki/awards", _("what's this?"))
@@ -2401,8 +2401,8 @@ class ProfilePage(Reddit):
             from .admin_pages import SponsorSidebar
             rb.push(SponsorSidebar(self.user))
 
-        mod_sr_ids = Subreddit.reverse_moderator_ids(self.user)
-        all_mod_srs = Subreddit._byID(mod_sr_ids, data=True,
+        mod_sr_ids = Vault.reverse_moderator_ids(self.user)
+        all_mod_srs = Vault._byID(mod_sr_ids, data=True,
                                       return_dict=False, stale=True)
         mod_srs = [sr for sr in all_mod_srs if sr.can_view_in_modlist(c.user)]
         if mod_srs:
@@ -2442,10 +2442,10 @@ class SidebarMultiList(Templated):
 
 
 class SidebarModList(Templated):
-    def __init__(self, subreddits):
+    def __init__(self, vaults):
         Templated.__init__(self)
         # primary sort is desc. subscribers, secondary is name
-        self.subreddits = sorted(subreddits,
+        self.vaults = sorted(vaults,
                                  key=lambda sr: (-sr._ups, sr.name.lower()))
 
 
@@ -2502,15 +2502,15 @@ class ProfileBar(Templated):
 
             if not self.viewing_self:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
-                self.giftmsg = _("give reddit gold to %(user)s to show "
+                self.giftmsg = _("give tippr gold to %(user)s to show "
                                  "your appreciation") % {'user': user.name}
             elif not user.gold:
                 self.goldlink = "/gold/about"
-                self.giftmsg = _("get extra features and help support reddit "
-                                 "with a reddit gold subscription")
+                self.giftmsg = _("get extra features and help support tippr "
+                                 "with a tippr gold subscription")
             elif gold_days_left < 7 and not user.gold_will_autorenew:
                 self.goldlink = "/gold/about"
-                self.giftmsg = _("renew your reddit gold")
+                self.giftmsg = _("renew your tippr gold")
 
             if not self.viewing_self:
                 self.is_friend = user._id in c.user.friends
@@ -2520,14 +2520,14 @@ class ProfileBar(Templated):
 
 
 class ServerSecondsBar(Templated):
-    my_message = _("you have helped pay for *%(time)s* of reddit server time.")
-    their_message = _("/u/%(user)s has helped pay for *%%(time)s* of reddit server "
+    my_message = _("you have helped pay for *%(time)s* of tippr server time.")
+    their_message = _("/u/%(user)s has helped pay for *%%(time)s* of tippr server "
                       "time.")
 
     my_gift_message = _("gifts on your behalf have helped pay for *%(time)s* of "
-                        "reddit server time.")
+                        "tippr server time.")
     their_gift_message = _("gifts on behalf of /u/%(user)s have helped pay for "
-                           "*%%(time)s* of reddit server time.")
+                           "*%%(time)s* of tippr server time.")
 
     def make_message(self, seconds, my_message, their_message):
         if not seconds:
@@ -2591,7 +2591,7 @@ class InfoBar(Templated):
         Templated.__init__(self, message=message, extra_class=extra_class)
 
 
-class RedditInfoBar(InfoBar):
+class TipprInfoBar(InfoBar):
     def __init__(self, message='', extra_class='', show_icon=False):
         self.show_icon = show_icon
         super().__init__(
@@ -2606,7 +2606,7 @@ class WelcomeBar(InfoBar):
         if messages:
             message = random.choice(messages).split(" / ")
         else:
-            message = (_("reddit is a platform for internet communities"),
+            message = (_("tippr is a platform for internet communities"),
                        _("where your votes shape what the world is talking about."))
         InfoBar.__init__(self, message=message)
 
@@ -2631,7 +2631,7 @@ class SidebarMessage(Templated):
     def __init__(self, message, extra_class=None):
         Templated.__init__(self, message=message, extra_class=extra_class)
 
-class RedditError(BoringPage):
+class TipprError(BoringPage):
     show_infobar = False
     site_tracking = False
 
@@ -2709,7 +2709,7 @@ class AdminInterstitial(Interstitial):
 
 
 class BannedInterstitial(Interstitial):
-    """The banned subreddit message."""
+    """The banned vault message."""
     pass
 
 
@@ -2732,12 +2732,12 @@ class InTimeoutInterstitial(BannedInterstitial):
 
 
 class PrivateInterstitial(Interstitial):
-    """The interstitial shown on private subreddits."""
+    """The interstitial shown on private vaults."""
     pass
 
 
 class GoldOnlyInterstitial(Interstitial):
-    """Interstitial for gold-only subreddits."""
+    """Interstitial for gold-only vaults."""
     pass
 
 
@@ -2804,7 +2804,7 @@ class SubredditTopBar(CachedTemplate):
             t += c.user._id
 
         # HACK: depends on something in the page's content calling
-        # Subreddit.default_subreddits so that c.location is set prior to this
+        # Vault.default_subreddits so that c.location is set prior to this
         # template being added to the header. set c.location as an attribute so
         # it is added to the render cache key.
         self.location = c.location or "no_location"
@@ -2814,14 +2814,14 @@ class SubredditTopBar(CachedTemplate):
     @property
     def my_reddits(self):
         if self._my_reddits is None:
-            self._my_reddits = Subreddit.user_subreddits(c.user, ids=False)
+            self._my_reddits = Vault.user_subreddits(c.user, ids=False)
         return self._my_reddits
 
     @property
     def pop_reddits(self):
         if self._pop_reddits is None:
-            defaults = Subreddit.default_subreddits(ids=False)
-            # sort the default subreddits by "popularity" descending
+            defaults = Vault.default_subreddits(ids=False)
+            # sort the default vaults by "popularity" descending
             defaults = sorted(defaults, key=lambda sr: sr._downs, reverse=True)
             self._pop_reddits = defaults
         return self._pop_reddits
@@ -2833,9 +2833,9 @@ class SubredditTopBar(CachedTemplate):
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
                                            sr_path = False,
                                            css_class = 'bottom-option',
-                                           dest = '/subreddits/'))
+                                           dest = '/vaults/'))
         return SubredditMenu(drop_down_buttons,
-                             title = _('my subreddits'),
+                             title = _('my vaults'),
                              type = 'srdrop')
 
     def subscribed_reddits(self):
@@ -2906,19 +2906,19 @@ class MultiInfoBar(Templated):
         self.description_md = multi.description_md
         self.srs = srs
         self.subreddit_selector = SubredditSelector(
-                placeholder=_("add subreddit"),
+                placeholder=_("add vault"),
                 class_name="sr-name",
                 include_user_subscriptions=False,
                 show_add=True,
             )
 
-        self.color_options = Subreddit.KEY_COLORS
+        self.color_options = Vault.KEY_COLORS
 
         self.icon_options = g.multi_icons
 
         explore_sr = g.live_config["listing_chooser_explore_sr"]
         if explore_sr:
-            self.share_url = "/r/{sr}/submit?url={url}".format(
+            self.share_url = "/v/{sr}/submit?url={url}".format(
                 sr=explore_sr,
                 url=g.origin + self.multi.path,
             )
@@ -2939,21 +2939,21 @@ class SubscriptionBox(Templated):
 
         # Construct MultiReddit path
         if multi_text:
-            self.multi_path = '/r/' + '+'.join([sr.name for sr in srs])
+            self.multi_path = '/v/' + '+'.join([sr.name for sr in srs])
 
-        if len(srs) > Subreddit.sr_limit and c.user_is_loggedin:
+        if len(srs) > Vault.sr_limit and c.user_is_loggedin:
             if not c.user.gold:
                 self.goldlink = "/gold"
-                self.goldmsg = _("raise it to %s") % Subreddit.gold_limit
+                self.goldmsg = _("raise it to %s") % Vault.gold_limit
                 self.prelink = ["/wiki/faq#wiki_how_many_subreddits_can_i_subscribe_to.3F",
-                                _("%s visible") % Subreddit.sr_limit]
+                                _("%s visible") % Vault.sr_limit]
             else:
                 self.goldlink = "/gold/about"
-                extra = min(len(srs) - Subreddit.sr_limit,
-                            Subreddit.gold_limit - Subreddit.sr_limit)
-                visible = min(len(srs), Subreddit.gold_limit)
+                extra = min(len(srs) - Vault.sr_limit,
+                            Vault.gold_limit - Vault.sr_limit)
+                visible = min(len(srs), Vault.gold_limit)
                 bonus = {"bonus": extra}
-                self.goldmsg = _("%(bonus)s bonus subreddits") % bonus
+                self.goldmsg = _("%(bonus)s bonus vaults") % bonus
                 self.prelink = ["/wiki/faq#wiki_how_many_subreddits_can_i_subscribe_to.3F",
                                 _("%s visible") % visible]
 
@@ -2984,15 +2984,15 @@ class AllInfoBar(Templated):
         self.css_class = None
         if isinstance(site, AllMinus) and c.user.gold:
             self.description = (strings.r_all_minus_description + "\n\n" +
-                " ".join("/r/" + sr.name for sr in site.exclude_srs))
+                " ".join("/v/" + sr.name for sr in site.exclude_srs))
             self.css_class = "gold-accent"
         else:
             self.description = strings.r_all_description
-            sr_ids = Subreddit.user_subreddits(user)
-            srs = Subreddit._byID(
+            sr_ids = Vault.user_subreddits(user)
+            srs = Vault._byID(
                 sr_ids, data=True, return_dict=False, stale=True)
             if srs:
-                self.allminus_url = '/r/all-' + '-'.join([sr.name for sr in srs])
+                self.allminus_url = '/v/all-' + '-'.join([sr.name for sr in srs])
 
         self.gilding_listing = False
         if request.path.startswith("/comments/gilded"):
@@ -3002,7 +3002,7 @@ class AllInfoBar(Templated):
 
 
 class CreateSubreddit(Templated):
-    """reddit creation form."""
+    """tippr creation form."""
     def __init__(self, site = None, name = '', captcha=None):
         allow_image_upload = site and not site.quarantine
         feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_previews")
@@ -3014,9 +3014,9 @@ class CreateSubreddit(Templated):
                            allow_image_upload=allow_image_upload,
                            feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                            )
-        self.color_options = Subreddit.KEY_COLORS
+        self.color_options = Vault.KEY_COLORS
         self.subreddit_selector = SubredditSelector(
-                placeholder=_("add subreddit"),
+                placeholder=_("add vault"),
                 class_name="sr-name",
                 include_user_subscriptions=False,
                 show_add=True,
@@ -3024,7 +3024,7 @@ class CreateSubreddit(Templated):
 
 
 class SubredditStylesheetBase(Templated):
-    """Base subreddit stylesheet page."""
+    """Base vault stylesheet page."""
     def __init__(self, stylesheet_contents, **kwargs):
         raw_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
         images = {name: make_url_protocol_relative(url)
@@ -3037,7 +3037,7 @@ class SubredditStylesheetBase(Templated):
 
 
 class SubredditStylesheet(SubredditStylesheetBase):
-    """form for editing or creating subreddit stylesheets"""
+    """form for editing or creating vault stylesheets"""
     def __init__(self, site=None, stylesheet_contents=''):
         allow_image_upload = site and not site.quarantine
         super().__init__(
@@ -3061,7 +3061,7 @@ class SubredditStylesheet(SubredditStylesheetBase):
         # try to find a link to use, otherwise give up and return
         links = normalized_hot([sr._id])
         if not links:
-            links = normalized_hot(Subreddit.default_subreddits())
+            links = normalized_hot(Vault.default_subreddits())
 
         if links:
             links = links[:25]
@@ -3091,12 +3091,12 @@ class SubredditStylesheet(SubredditStylesheetBase):
 
 
 class SubredditStylesheetSource(SubredditStylesheetBase):
-    """A view of the unminified source of a subreddit's stylesheet."""
+    """A view of the unminified source of a vault's stylesheet."""
     pass
 
 
 class AutoModeratorConfig(Templated):
-    """A view of a subreddit's AutoModerator configuration."""
+    """A view of a vault's AutoModerator configuration."""
     def __init__(self, automoderator_config):
         Templated.__init__(self, automoderator_config=automoderator_config)
 
@@ -3128,7 +3128,7 @@ class UploadedImage(Templated):
         return responsive(Templated.render(self, *a, **kw))
 
 class Thanks(Templated):
-    """The page to claim reddit gold trophies"""
+    """The page to claim tippr gold trophies"""
     def __init__(self, secret=None):
         if secret and secret.startswith("cr_"):
             status = "creddits"
@@ -3354,7 +3354,7 @@ class CreditGild(Templated):
     pass
 
 class GoldGiftCodeEmail(Templated):
-    """Email sent to a logged-out person that purchases a reddit
+    """Email sent to a logged-out person that purchases a tippr
     gold gift code."""
     pass
 
@@ -3369,19 +3369,19 @@ class ReportForm(CachedTemplate):
         self.system_rules = []
         self.thing_fullname = thing._fullname
         self.kind = None
-        subreddit = None
+        vault = None
 
         if isinstance(thing, (Comment, Link)):
-            subreddit = thing.subreddit_slow
+            vault = thing.subreddit_slow
             self.kind = thing.__class__.__name__.lower()
 
-        if (subreddit and
-                feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
-            for rule in SubredditRules.get_rules(subreddit, self.kind):
+        if (vault and
+                feature.is_enabled("subreddit_rules", vault=vault.name)):
+            for rule in SubredditRules.get_rules(vault, self.kind):
                 self.rules.append(rule["short_name"])
             if self.rules:
                 self.system_rules = SITEWIDE_RULES
-                self.rules_page_link = "/r/%s/about/rules" % subreddit.name
+                self.rules_page_link = "/v/%s/about/rules" % vault.name
         if not self.rules:
             self.rules = OLD_SITEWIDE_RULES
             self.rules_page_link = "/help/contentpolicy"
@@ -3395,19 +3395,19 @@ class SubredditReportForm(CachedTemplate):
         self.system_rules = SITEWIDE_RULES
         self.thing_fullname = thing._fullname
         self.kind = None
-        subreddit = None
+        vault = None
 
         if isinstance(thing, Comment, Link):
-            subreddit = thing.subreddit_slow
-            self.sr_name = subreddit.name
+            vault = thing.subreddit_slow
+            self.sr_name = vault.name
             if filter_by_kind:
                 self.kind = thing.__class__.__name__.lower()
         else:
             self.sr_name = None
 
-        if (subreddit and
-                feature.is_enabled("subreddit_rules", subreddit=subreddit.name)):
-            self.rules = SubredditRules.get_rules(subreddit, self.kind)
+        if (vault and
+                feature.is_enabled("subreddit_rules", vault=vault.name)):
+            self.rules = SubredditRules.get_rules(vault, self.kind)
 
         Templated.__init__(self)
 
@@ -3549,7 +3549,7 @@ class SearchForm(Templated):
 
 
 class SearchBar(Templated):
-    """More detailed search box for /search and /subreddits pages.
+    """More detailed search box for /search and /vaults pages.
 
     Displays the previous search as well
 
@@ -3769,22 +3769,22 @@ class ReadNext(Templated):
 
 
 class Embed(Templated):
-    """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
+    """wrapper for embedding /help into tippr as if it were not on a separate wiki."""
     def __init__(self,content = ''):
         Templated.__init__(self, content = content)
 
 
-def wrapped_flair(user, subreddit, force_show_flair):
-    if isinstance(subreddit, FakeSubreddit):
+def wrapped_flair(user, vault, force_show_flair):
+    if isinstance(vault, FakeSubreddit):
         # FakeSubreddits don't show user flair
         return False, 'right', '', ''
-    elif not (force_show_flair or subreddit.flair_enabled):
+    elif not (force_show_flair or vault.flair_enabled):
         return False, 'right', '', ''
 
-    enabled = user.flair_enabled_in_sr(subreddit._id)
-    position = subreddit.flair_position
-    text = user.flair_text(subreddit._id)
-    css_class = user.flair_css_class(subreddit._id)
+    enabled = user.flair_enabled_in_sr(vault._id)
+    position = vault.flair_position
+    text = user.flair_text(vault._id)
+    css_class = user.flair_css_class(vault._id)
 
     return enabled, position, text, css_class
 
@@ -3793,11 +3793,11 @@ class WrappedUser(CachedTemplate):
     FLAIR_CSS_PREFIX = 'flair-'
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
-                 subreddit = None, force_show_flair = None,
+                 vault = None, force_show_flair = None,
                  flair_template = None, flair_text_editable = False,
                  include_flair_selector = False):
-        if not subreddit:
-            subreddit = c.site
+        if not vault:
+            vault = c.site
 
         attribs.sort()
         author_cls = 'author'
@@ -3811,7 +3811,7 @@ class WrappedUser(CachedTemplate):
             if tup[1] == 'F' and '(' in tup[3]:
                 author_title = tup[3]
 
-        flair = wrapped_flair(user, subreddit or c.site, force_show_flair)
+        flair = wrapped_flair(user, vault or c.site, force_show_flair)
         flair_enabled, flair_position, flair_text, flair_css_class = flair
         has_flair = bool(
             c.user.pref_show_flair and (flair_text or flair_css_class))
@@ -4020,7 +4020,7 @@ class ModTableItem(InvitedModTableItem):
         return c.user != user and c.site.can_demod(c.user, user)
 
 
-class ModToolsPage(Reddit):
+class ModToolsPage(Tippr):
     """A mod tool page."""
 
     def __init__(self, **kwargs):
@@ -4031,7 +4031,7 @@ class ModToolsPage(Reddit):
 
 
 class Rules(Templated):
-    """Show subreddit rules for everyone and add edit controls for mods."""
+    """Show vault rules for everyone and add edit controls for mods."""
     def __init__(self, title, kind_labels):
         self.title = title
         self.can_edit = c.user_is_loggedin and (c.user_is_admin or
@@ -4045,7 +4045,7 @@ class Rules(Templated):
 class FlairPane(Templated):
     def __init__(self, num, after, reverse, name, user):
         # Make sure c.site isn't stale before rendering.
-        c.site = Subreddit._byID(c.site._id, data=True, stale=False)
+        c.site = Vault._byID(c.site._id, data=True, stale=False)
 
         tabs = [
             ('grant', _('grant flair'), FlairList(num, after, reverse, name,
@@ -4067,7 +4067,7 @@ class FlairPane(Templated):
                 c.site.link_flair_self_assign_enabled)
 
 class FlairList(Templated):
-    """List of users who are tagged with flair within a subreddit."""
+    """List of users who are tagged with flair within a vault."""
 
     def __init__(self, num, after, reverse, name, user):
         Templated.__init__(self, num=num, after=after, reverse=reverse,
@@ -4202,7 +4202,7 @@ class FlairTemplateSample(Templated):
     """Like a read-only version of FlairTemplateEditor."""
     def __init__(self, flair_template, flair_type):
         if flair_type == USER_FLAIR:
-            wrapped_user = WrappedUser(c.user, subreddit=c.site,
+            wrapped_user = WrappedUser(c.user, vault=c.site,
                                        force_show_flair=True,
                                        flair_template=flair_template)
         else:
@@ -4218,7 +4218,7 @@ class FlairPrefs(CachedTemplate):
                                      True)
         sr_flair_self_assign_enabled = getattr(
             c.site, 'flair_self_assign_enabled', True)
-        wrapped_user = WrappedUser(c.user, subreddit=c.site,
+        wrapped_user = WrappedUser(c.user, vault=c.site,
                                    force_show_flair=True,
                                    include_flair_selector=True)
         CachedTemplate.__init__(
@@ -4244,7 +4244,7 @@ class FlairSelectorLinkSample(CachedTemplate):
             )
 
 class FlairSelector(CachedTemplate):
-    """Provide user with flair options according to subreddit settings."""
+    """Provide user with flair options according to vault settings."""
     def __init__(self, user, site, link=None):
         admin = bool(
             c.user_is_admin or site.is_moderator_with_perms(c.user, 'flair'))
@@ -4269,7 +4269,7 @@ class FlairSelector(CachedTemplate):
             attr_pattern = 'flair_%s_%%s' % c.site._id
             target_wrapper = (
                 lambda flair_template: WrappedUser(
-                    user, subreddit=site, force_show_flair=True,
+                    user, vault=site, force_show_flair=True,
                     flair_template=flair_template,
                     flair_text_editable=admin or template.text_editable))
             self_assign_enabled = site.flair_self_assign_enabled
@@ -4356,7 +4356,7 @@ class DetailsPage(LinkInfoPage):
         return rb
 
 
-class PromotePage(Reddit):
+class PromotePage(Tippr):
     create_reddit_box  = False
     submit_box         = False
     extension_handling = False
@@ -4395,7 +4395,7 @@ class PromotePage(Reddit):
 
         kw['show_sidebar'] = False
         auction_announcement = not feature.is_enabled('ads_auction')
-        Reddit.__init__(self, nav_menus=nav_menus,
+        Tippr.__init__(self, nav_menus=nav_menus,
             auction_announcement=auction_announcement, *a, **kw)
 
 
@@ -4549,7 +4549,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.get_collections()
         self.get_mobile_versions()
 
-        user_srs = [sr for sr in Subreddit.user_subreddits(c.user, ids=False)
+        user_srs = [sr for sr in Vault.user_subreddits(c.user, ids=False)
                     if sr.can_submit(c.user, promotion=True) and sr.allow_ads]
         top_srs = sorted(user_srs, key=lambda sr: sr._ups, reverse=True)[:20]
         extra_subreddits = [(_("suggestions:"), top_srs)]
@@ -4561,9 +4561,9 @@ class PromoteLinkEdit(PromoteLinkBase):
                     "or [/r/selfserve](%(selfserve)s).")
         message %= {
             'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
-            'selfserve': 'https://www.reddit.com/r/selfserve'
+            'selfserve': 'https://www.tippr.net/r/selfserve'
         }
-        self.infobar = RedditInfoBar(message=message)
+        self.infobar = TipprInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)
 
         self.frequency_cap_min = g.frequency_cap_min
@@ -4696,7 +4696,7 @@ class RenderableCampaign(Templated):
         return spaceCompress(self.render(style='html'))
 
 
-class RefundPage(Reddit):
+class RefundPage(Tippr):
     def __init__(self, link, campaign):
         self.link = link
         self.campaign = campaign
@@ -4713,7 +4713,7 @@ class RefundPage(Reddit):
         self.printable_bid = format_currency(campaign.bid_dollars, 'USD',
             locale=c.locale)
         self.traffic_url = '/traffic/{}/{}'.format(link._id36, campaign._id36)
-        Reddit.__init__(self, title="refund", show_sidebar=False)
+        Tippr.__init__(self, title="refund", show_sidebar=False)
 
 class PromotePost(PromoteLinkBase):
     def __init__(self):
@@ -4791,8 +4791,8 @@ def make_link_child(item, show_media_preview=False):
 
             if media_embed:
                 if media_embed.sandbox:
-                    should_authenticate = (item.subreddit.type in Subreddit.private_types or
-                        item.subreddit.quarantine)
+                    should_authenticate = (item.vault.type in Vault.private_types or
+                        item.vault.quarantine)
                     media_embed = MediaEmbed(
                         media_domain=g.media_domain,
                         height=media_embed.height + 10,
@@ -4994,7 +4994,7 @@ class PaymentForm(Templated):
 
 class Bookings:
     def __init__(self):
-        self.subreddit = 0
+        self.vault = 0
         self.collection = 0
 
     def __add__(self, other):
@@ -5002,7 +5002,7 @@ class Bookings:
             return self
 
         added = Bookings()
-        added.subreddit = self.subreddit + other.subreddit
+        added.vault = self.vault + other.vault
         added.collection = self.collection + other.collection
 
         return added
@@ -5011,14 +5011,14 @@ class Bookings:
         return self.__add__(other)
 
     def __repr__(self):
-        if self.subreddit and not self.collection:
-            return format_number(self.subreddit)
-        elif self.collection and not self.subreddit:
+        if self.vault and not self.collection:
+            return format_number(self.vault)
+        elif self.collection and not self.vault:
             return "%s*" % format_number(self.collection)
-        elif not self.subreddit and not self.collection:
+        elif not self.vault and not self.collection:
             return format_number(0)
         else:
-            nums = tuple(map(format_number, (self.subreddit, self.collection)))
+            nums = tuple(map(format_number, (self.vault, self.collection)))
             return "%s (%s*)" % nums
 
 
@@ -5077,8 +5077,8 @@ class PromoteInventory(PromoteLinkBase):
                     total_by_date[date].collection += daily_impressions
                     imps_by_link[link._id][date].collection += daily_impressions
                 else:
-                    total_by_date[date].subreddit += daily_impressions
-                    imps_by_link[link._id][date].subreddit += daily_impressions
+                    total_by_date[date].vault += daily_impressions
+                    imps_by_link[link._id][date].vault += daily_impressions
 
         account_ids = {link.author_id for link in links_by_id.values()}
         accounts_by_id = Account._byID(account_ids, data=True)
@@ -5131,7 +5131,7 @@ class PromoteInventory(PromoteLinkBase):
 
         default_sr = None
         if not self.target.is_collection and self.sr_input:
-            default_sr = Subreddit._by_name(self.sr_input)
+            default_sr = Vault._by_name(self.sr_input)
         self.subreddit_selector = SubredditSelector(
                 default_sr=default_sr,
                 include_user_subscriptions=False)
@@ -5200,7 +5200,7 @@ class PromoteReport(PromoteLinkBase):
             outrow = []
         outrow.extend([_("link id"), _("owner"), _("campaign id"), _("target"),
             _("bid"), _("frontpage clicks"), _("frontpage impressions"),
-            _("subreddit clicks"), _("subreddit impressions"),
+            _("vault clicks"), _("vault impressions"),
             _("total clicks"), _("total impressions")])
         writer.writerow(outrow)
         for row in self.campaign_report:
@@ -5388,7 +5388,7 @@ class RawString(Templated):
        return unsafe(self.s)
 
 
-class TryCompact(Reddit):
+class TryCompact(Tippr):
     def __init__(self, dest, **kw):
         dest = dest or "/"
         u = UrlParser(dest)
@@ -5400,7 +5400,7 @@ class TryCompact(Reddit):
 
         u.set_extension("mobile")
         self.mobile = u.unparse()
-        Reddit.__init__(self, **kw)
+        Tippr.__init__(self, **kw)
 
 class AccountActivityPage(BoringPage):
     def __init__(self):
@@ -5543,13 +5543,13 @@ class ListingChooser(Templated):
             self.add_item("other", _("everything"),
                           path="/me/f/all",
                           extra_class="gold-perks",
-                          description=_("from all subreddits"))
+                          description=_("from all vaults"))
         else:
             self.add_item("other", _("everything"), site=All,
-                          description=_("from all subreddits"))
+                          description=_("from all vaults"))
         if c.user_is_loggedin and c.user.is_moderator_somewhere:
             self.add_item("other", _("moderating"), site=Mod,
-                          description=_("subreddits you mod"))
+                          description=_("vaults you mod"))
 
         self.add_item("other", _("saved"), path='/user/%s/saved' % c.user.name)
 
@@ -5568,7 +5568,7 @@ class ListingChooser(Templated):
 
             explore_sr = g.live_config["listing_chooser_explore_sr"]
             if explore_sr:
-                sr = Subreddit._by_name(explore_sr, stale=True)
+                sr = Vault._by_name(explore_sr, stale=True)
                 self.add_item("multi", name=_("explore multis"), site=sr)
 
             self.show_samples = not multis
@@ -5683,14 +5683,14 @@ class SubredditSelector(Templated):
         self.show_add = show_add
 
         if extra_subreddits:
-            self.subreddits = extra_subreddits
+            self.vaults = extra_subreddits
         else:
-            self.subreddits = []
+            self.vaults = []
 
         if include_user_subscriptions:
-            self.subreddits.append((
-                _('your subscribed subreddits'),
-                Subreddit.user_subreddits(c.user, ids=False)
+            self.vaults.append((
+                _('your subscribed vaults'),
+                Vault.user_subreddits(c.user, ids=False)
             ))
 
         self.default_sr = default_sr
@@ -5706,8 +5706,8 @@ class SubredditSelector(Templated):
     @property
     def subreddit_names(self):
         groups = []
-        for title, subreddits in self.subreddits:
-            names = [sr.name for sr in subreddits if sr.can_submit(c.user)]
+        for title, vaults in self.vaults:
+            names = [sr.name for sr in vaults if sr.can_submit(c.user)]
             names.sort(key=str.lower)
             groups.append((title, names))
         return groups

@@ -21,7 +21,7 @@
 ###############################################################################
 from r2.lib.errors import error_list
 from r2.lib.str import _force_unicode
-from r2.models import Subreddit
+from r2.models import Vault
 from r2.tests import RedditControllerTestCase
 
 from .common import LoginRegBase
@@ -35,7 +35,7 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
 
     def setUp(self):
         super().setUp()
-        self.autopatch(Subreddit, "_byID", return_value=[])
+        self.autopatch(Vault, "_byID", return_value=[])
         self.dest = "/foo"
 
     def assert_success(self, res):
@@ -50,7 +50,7 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
         self.assert_headers(
             res,
             "Set-Cookie",
-            lambda value: value.startswith("reddit_session=")
+            lambda value: value.startswith("tippr_session=")
         )
 
     def assert_failure(self, res, code=None):

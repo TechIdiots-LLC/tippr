@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="reddit" version="1.5">
+<schema name="tippr" version="1.5">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        version="x.y" is Solr's version number for the schema syntax and 
        semantics.  It should not normally be changed by applications.
@@ -128,8 +128,8 @@
    <field name="activity" type="int" indexed="true" stored="true"/>
    <field name="num_comments" type="int" indexed="true" stored="true"/>
    <field name="fullname" type="text_general" indexed="true" stored="true"/>
-   <field name="subreddit" type="text_general" indexed="true" stored="true"/>
-   <field name="reddit" type="text_general" indexed="true" stored="true"/>
+   <field name="vault" type="text_general" indexed="true" stored="true"/>
+   <field name="tippr" type="text_general" indexed="true" stored="true"/>
    <field name="title" type="text_general" indexed="true" stored="true"/>
    <field name="sr_id" type="int" indexed="true" stored="true"/>
    <field name="timestamp" type="int" indexed="true" stored="true"/>
@@ -263,8 +263,8 @@
 
    <copyField source="name" dest="text"/>
    <copyField source="fullname" dest="text"/>
-   <copyField source="subreddit" dest="text"/>
-   <copyField source="reddit" dest="text"/>
+   <copyField source="vault" dest="text"/>
+   <copyField source="tippr" dest="text"/>
    <copyField source="author" dest="text"/>
    <copyField source="author_fullname" dest="text"/>
    <copyField source="flair" dest="text"/>

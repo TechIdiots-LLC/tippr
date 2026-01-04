@@ -108,6 +108,18 @@ if [ ! -x /usr/local/bin/mcrouter ]; then
   if [ ! -d /opt/mcrouter ]; then
     git clone https://github.com/facebook/mcrouter.git /opt/mcrouter || true
   fi
+  # Enable ccache for C/C++ builds if available. Point CCACHE_DIR at the
+  # install user home (TIPPR_USER) so CI caching of ~/.ccache is used.
+  if command -v ccache >/dev/null 2>&1; then
+    CCACHE_DIR=/home/${TIPPR_USER:-runner}/.ccache
+    export CCACHE_DIR
+    mkdir -p "$CCACHE_DIR"
+    chmod 0777 "$CCACHE_DIR" || true
+    export CC="ccache gcc"
+    export CXX="ccache g++"
+    # Set a reasonable max size for cache
+    ccache -M 5G || true
+  fi
   pushd /opt/mcrouter >/dev/null 2>&1 || true
   # add known upstream fix branch if not already present
   git remote add markbhasawut https://github.com/markbhasawut/mcrouter.git 2>/dev/null || true

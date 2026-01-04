@@ -21,13 +21,13 @@
 ###############################################################################
 from r2.lib.db.operators import asc
 from r2.lib.utils import fetch_things2
-from r2.models import ModAction, ModActionBySRActionMod, Subreddit
+from r2.models import ModAction, ModActionBySRActionMod, Vault
 
 
 def backfill(after=None):
-    q = Subreddit._query(sort=asc('_date'))
+    q = Vault._query(sort=asc('_date'))
     if after:
-        sr = Subreddit._by_name(after)
+        sr = Vault._by_name(after)
         q = q._after(sr)
 
     for sr in fetch_things2(q):

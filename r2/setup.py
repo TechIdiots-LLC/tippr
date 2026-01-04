@@ -103,7 +103,7 @@ setup(
         # snudown requires compilation with gperf. On Ubuntu: apt install gperf build-essential python3-dev
         # Using master branch for Python 3.12 compatibility (v1.5.0 uses Py_InitModule3 which is Python 2 only)
         "snudown @ https://github.com/reddit/snudown/archive/refs/heads/master.zip",
-        # l2cs (Lucene to CloudSearch) was an internal Reddit library, not publicly available.
+        # l2cs (Lucene to CloudSearch) was an internal Tippr library, not publicly available.
         # Only needed for CloudSearch provider. Use Solr provider instead (search_provider = solr)
         # which doesn't require l2cs and is fully open source.
         # "l2cs>=2.0.2",

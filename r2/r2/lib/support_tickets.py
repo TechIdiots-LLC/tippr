@@ -37,7 +37,7 @@ def create_support_ticket(subject,
                           product=None,
                           ):
     requester_id = None
-    if requester_email == 'contact@reddit.com':
+    if requester_email == 'contact@tippr.net':
         requester_id = g.live_config['ticket_contact_user_id']
         
     custom_fields = []

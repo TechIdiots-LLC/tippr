@@ -21,7 +21,7 @@
 ###############################################################################
 
 
-"""Create exhaustive sitemaps for Reddit.
+"""Create exhaustive sitemaps for Tippr.
 
 This module exists to make fairly exhaustive sitemaps as defined by the
 sitemap protocol (http://www.sitemaps.org/protocol.html)
@@ -34,27 +34,27 @@ The sitemap index which takes the form of:
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>http://reddit.com/r/subreddit_sitemap?index=0</loc>
+    <loc>https://www.tippr.net/r/subreddit_sitemap?index=0</loc>
   </sitemap>
   <sitemap>
-    <loc>http://reddit.com/r/subreddit_sitemap?index=1</loc>
+    <loc>https://www.tippr.net/r/subreddit_sitemap?index=1</loc>
   </sitemap>
   <sitemap>
-    <loc>http://reddit.com/r/permalink_sitemap?index=0</loc>
+    <loc>https://www.tippr.net/r/permalink_sitemap?index=0</loc>
   </sitemap>
   <sitemap>
-    <loc>http://reddit.com/r/permalink_sitemap?index=1</loc>
+    <loc>https://www.tippr.net/r/permalink_sitemap?index=1</loc>
   </sitemap>
 </sitemapindex>
 ------------------------------------------------------------------------
 
-Next are subreddit sitemaps which take the form of:
+Next are vault sitemaps which take the form of:
 
 ------------------------------------------------------------------------
  <?xml version="1.0" encoding="UTF-8"?>
  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
    <url>
-     <loc>http://reddit.com/r/{some_postfix}</loc>
+     <loc>https://www.tippr.net/r/{some_postfix}</loc>
    </url>
  </urlset>
 ------------------------------------------------------------------------
@@ -86,28 +86,28 @@ def _stringify_xml(root_element):
     )
 
 
-def _subreddit_links(subreddits):
-    for subreddit in subreddits:
-        path = '/r/{}/'.format(subreddit)
+def _subreddit_links(vaults):
+    for vault in vaults:
+        path = '/v/{}/'.format(vault)
         yield _absolute_url(path)
 
 
-def _subreddit_sitemap(subreddits):
+def _subreddit_sitemap(vaults):
     urlset = etree.Element('urlset', xmlns=SITEMAP_NAMESPACE)
-    for link in _subreddit_links(subreddits):
+    for link in _subreddit_links(vaults):
         url_elem = etree.SubElement(urlset, 'url')
         loc_elem = etree.SubElement(url_elem, 'loc')
         loc_elem.text = link
     return _stringify_xml(urlset)
 
 
-def subreddit_sitemaps(subreddits):
+def subreddit_sitemaps(vaults):
     """Create an array of sitemaps.
 
     Each sitemap has up to 50000 links, being the maximum allowable number of
     links according to the sitemap standard.
     """
-    for subreddit_chunks in in_chunks(subreddits, LINKS_PER_SITEMAP):
+    for subreddit_chunks in in_chunks(vaults, LINKS_PER_SITEMAP):
         yield _subreddit_sitemap(subreddit_chunks)
 
 

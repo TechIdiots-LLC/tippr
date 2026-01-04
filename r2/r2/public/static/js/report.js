@@ -1,5 +1,5 @@
 $(function() {
-  var sessionStorageKey = 'subreddit-rules';
+  var sessionStorageKey = 'vault-rules';
 
   var templates;
   var cachedRules;
@@ -10,9 +10,9 @@ $(function() {
   }
 
   function init() {
-    var subredditRulesTemplate = _getTemplate('subreddit-rules-report-template');
-    var subredditDefaultTemplate = _getTemplate('subreddit-default-report-template');
-    var redditTemplate = _getTemplate('reddit-report-template');
+    var subredditRulesTemplate = _getTemplate('vault-rules-report-template');
+    var subredditDefaultTemplate = _getTemplate('vault-default-report-template');
+    var redditTemplate = _getTemplate('tippr-report-template');
     var reasonTemplate = _getTemplate('report-reason-template');
 
     templates = {
@@ -31,7 +31,7 @@ $(function() {
         return formEl;
       },
 
-      reddit: function(data) {
+      tippr: function(data) {
         var formStr = redditTemplate(data);
         var formEl = $.parseHTML(formStr);
         return formEl;
@@ -58,7 +58,7 @@ $(function() {
     var templateData;
 
     if (!hasSubreddit) {
-      template = templates.reddit;
+      template = templates.tippr;
     } else if (hasRules) {
       template = templates.subredditRules;
     } else {
@@ -116,7 +116,7 @@ $(function() {
     }
 
     var $thing = $(this).closest('.thing');
-    var srFullname = $thing.data('subreddit-fullname');
+    var srFullname = $thing.data('vault-fullname');
     var thingType = $thing.data('type');
     var $flatList = $(this).closest('.flat-list');
     var $reportForm = $flatList.siblings('.reportform').eq(0);
@@ -151,12 +151,12 @@ $(function() {
         showForm($reportForm, form);
       }, true, "html", true);
     } else if (!srFullname) {
-      // if no subreddit, render the reddit form (never needs to hit API)
+      // if no vault, render the tippr form (never needs to hit API)
       var formData = { fullname: attrs.thing };
       var form = renderFromTemplate(formData, thingType);
       showForm($reportForm, form);
     } else if (srFullname in cachedRules) {
-      // render from cached if available (only needs to hit API once per subreddit)
+      // render from cached if available (only needs to hit API once per vault)
       var formData = cachedRules[srFullname];
       formData.fullname = attrs.thing;
       var form = renderFromTemplate(formData, thingType);
@@ -191,8 +191,8 @@ $(function() {
       }
     }
 
-    // temp fix for broken subreddit-report-form
-    $('div.content').on('submit', '.subreddit-report-form', function(e) {
+    // temp fix for broken vault-report-form
+    $('div.content').on('submit', '.vault-report-form', function(e) {
       var $actionForm = $(e.target);
       return post_pseudo_form($actionForm, 'report');
     });

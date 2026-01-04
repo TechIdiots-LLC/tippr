@@ -34,7 +34,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing
 from r2.lib.str import _force_unicode
 from r2.lib.utils import Enum, to_datetime
-from r2.models.subreddit import Frontpage, Subreddit
+from r2.models.vault import Frontpage, Vault
 
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
                       "pending", "promoted", "finished", "edited_live")
@@ -286,7 +286,7 @@ class CollectionStorage(tdb_cassandra.View):
 
 
 class Target:
-    """Wrapper around either a Collection or a Subreddit name"""
+    """Wrapper around either a Collection or a Vault name"""
     def __init__(self, target):
         if isinstance(target, Collection):
             self.collection = target
@@ -295,9 +295,9 @@ class Target:
             self.subreddit_name = target
             self.is_collection = False
         else:
-            raise ValueError("target must be a Collection or Subreddit name")
+            raise ValueError("target must be a Collection or Vault name")
 
-        # defer looking up subreddits, we might only need their names
+        # defer looking up vaults, we might only need their names
         self._subreddits = None
 
     @property
@@ -305,8 +305,8 @@ class Target:
         if self.is_collection:
             return self.collection.over_18
         else:
-            subreddits = self.subreddits_slow
-            return subreddits and subreddits[0].over_18
+            vaults = self.subreddits_slow
+            return vaults and vaults[0].over_18
 
     @property
     def subreddit_names(self):
@@ -321,7 +321,7 @@ class Target:
             return self._subreddits
 
         sr_names = self.subreddit_names
-        srs = list(Subreddit._by_name(sr_names).values())
+        srs = list(Vault._by_name(sr_names).values())
         self._subreddits = srs
         return srs
 
@@ -341,7 +341,7 @@ class Target:
         elif self.subreddit_name == Frontpage.name:
             return _("frontpage")
         else:
-            return "/r/%s" % self.subreddit_name
+            return "/v/%s" % self.subreddit_name
 
     def __repr__(self):
         return "<{}: {}>".format(self.__class__.__name__, self.pretty_name)
@@ -387,7 +387,7 @@ class PromoCampaign(Thing):
     )
 
     SR_NAMES_DELIM = '|'
-    SUBREDDIT_TARGET = "subreddit"
+    SUBREDDIT_TARGET = "vault"
     MOBILE_TARGET_DELIM = ','
 
     @classmethod
@@ -429,7 +429,7 @@ class PromoCampaign(Thing):
 
         Thing objects are pickled for caching. The state of the object is
         obtained by calling the __getstate__ method. Remove the _target
-        attribute because it may contain Subreddits or other non-trivial objects
+        attribute because it may contain Vaults or other non-trivial objects
         that shouldn't be included.
 
         """
@@ -706,7 +706,7 @@ class PromotionPrices(tdb_cassandra.View):
     * country level targeting (but not if the metro targeting is used)
     * collection targeting
     * frontpage targeting
-    * subreddit targeting
+    * vault targeting
 
     The price is the maximum price for all matching conditions. If no special
     conditions are met use the global price.
@@ -737,7 +737,7 @@ class PromotionPrices(tdb_cassandra.View):
                 rowkey = "COLLECTION"
                 column_name = target.collection.name
             else:
-                rowkey = "SUBREDDIT"
+                rowkey = "VAULT"
                 column_name = target.subreddit_name
 
         if not rowkey or not column_name:
@@ -828,7 +828,7 @@ class PromotionPrices(tdb_cassandra.View):
         if user.selfserve_cpm_override_pennies:
             r = {
                 "COLLECTION": {},
-                "SUBREDDIT": {},
+                "VAULT": {},
                 "COUNTRY": {},
                 "METRO": {},
                 "COLLECTION_DEFAULT": user.selfserve_cpm_override_pennies,
@@ -839,7 +839,7 @@ class PromotionPrices(tdb_cassandra.View):
         else:
             r = {
                 "COLLECTION": {},
-                "SUBREDDIT": {},
+                "VAULT": {},
                 "COUNTRY": {},
                 "METRO": {},
                 "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
@@ -854,9 +854,9 @@ class PromotionPrices(tdb_cassandra.View):
                 collections = {}
 
             try:
-                subreddits = cls._cf.get("SUBREDDIT")
+                vaults = cls._cf.get("VAULT")
             except tdb_cassandra.NotFoundException:
-                subreddits = {}
+                vaults = {}
 
             try:
                 countries = cls._cf.get("COUNTRY")
@@ -871,8 +871,8 @@ class PromotionPrices(tdb_cassandra.View):
             for name, cpm in collections.items():
                 r["COLLECTION"][name] = cpm
 
-            for name, cpm in subreddits.items():
-                r["SUBREDDIT"][name] = cpm
+            for name, cpm in vaults.items():
+                r["VAULT"][name] = cpm
 
             for name, cpm in countries.items():
                 r["COUNTRY"][name] = cpm

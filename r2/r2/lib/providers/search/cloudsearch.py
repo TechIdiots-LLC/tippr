@@ -59,7 +59,7 @@ from r2.models import (
     Link,
     MultiReddit,
     NotFound,
-    Subreddit,
+    Vault,
     Thing,
 )
 
@@ -277,10 +277,10 @@ class LinkUploader(CloudSearchUploader):
         sr_ids = [thing.sr_id for thing in self.things
                   if hasattr(thing, 'sr_id')]
         try:
-            self.srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
+            self.srs = Vault._byID(sr_ids, data=True, return_dict=True)
         except NotFound:
             if self.use_safe_get:
-                self.srs = safe_get(Subreddit._byID, sr_ids, data=True,
+                self.srs = safe_get(Vault._byID, sr_ids, data=True,
                                     return_dict=True)
             else:
                 raise
@@ -290,14 +290,14 @@ class LinkUploader(CloudSearchUploader):
 
 
 class SubredditUploader(CloudSearchUploader):
-    types = (Subreddit,)
+    types = (Vault,)
     _version = CloudSearchUploader._version_seconds
 
     def fields(self, thing):
         return SubredditFields(thing).fields()
 
     def should_index(self, thing):
-        return thing._id != Subreddit.get_promote_srid()
+        return thing._id != Vault.get_promote_srid()
 
 
 def chunk_xml(xml, depth=0):
@@ -404,7 +404,7 @@ def rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
 
 
 rebuild_subreddit_index = functools.partial(rebuild_link_index,
-                                            cls=Subreddit,
+                                            cls=Vault,
                                             uploader=SubredditUploader,
                                             doc_api='CLOUDSEARCH_SUBREDDIT_DOC_API',
                                             estimate=200000,
@@ -422,8 +422,8 @@ def test_run_link(start_link, count=1000):
 
 
 def test_run_srs(*sr_names):
-    '''Inject Subreddits by name into the index'''
-    srs = list(Subreddit._by_name(sr_names).values())
+    '''Inject Vaults by name into the index'''
+    srs = list(Vault._by_name(sr_names).values())
     uploader = SubredditUploader(g.CLOUDSEARCH_SUBREDDIT_DOC_API, things=srs)
     return uploader.inject()
 
@@ -433,7 +433,7 @@ _SEARCH = "/2011-02-01/search?"
 INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-IncorrectFieldTypeInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
-DEFAULT_FACETS = {"reddit": {"count":20}}
+DEFAULT_FACETS = {"tippr": {"count":20}}
 def basic_query(query=None, bq=None, faceting=None, size=1000,
                 start=0, rank=None, rank_expressions=None,
                 return_fields=None, record_stats=False, search_api=None):
@@ -483,7 +483,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
 
 basic_link = functools.partial(basic_query, size=10, start=0,
                                rank="-relevance",
-                               return_fields=['title', 'reddit',
+                               return_fields=['title', 'tippr',
                                               'author_fullname'],
                                record_stats=False,
                                search_api=g.CLOUDSEARCH_SEARCH_API)
@@ -493,7 +493,7 @@ basic_subreddit = functools.partial(basic_query,
                                     faceting=None,
                                     size=10, start=0,
                                     rank="-activity",
-                                    return_fields=['title', 'reddit',
+                                    return_fields=['title', 'tippr',
                                                    'author_fullname'],
                                     record_stats=False,
                                     search_api=g.CLOUDSEARCH_SUBREDDIT_SEARCH_API)
@@ -647,7 +647,7 @@ class CloudSearchQuery:
         
         Example result set:
         
-        {u'facets': {u'reddit': {u'constraints':
+        {u'facets': {u'tippr': {u'constraints':
                                     [{u'count': 114, u'value': u'politics'},
                                     {u'count': 42, u'value': u'atheism'},
                                     {u'count': 27, u'value': u'wtf'},
@@ -792,9 +792,9 @@ class CloudSearchSubredditSearchQuery(CloudSearchQuery):
     default_syntax = "plain"
 
     def preprocess_query(self, query):
-        # Expand search for /r/subreddit to include subreddit name.
+        # Expand search for /r/vault to include vault name.
         sr = query.strip('/').split('/')
-        if len(sr) == 2 and sr[0] == 'r' and Subreddit.is_valid_name(sr[1]):
+        if len(sr) == 2 and sr[0] == 'r' and Vault.is_valid_name(sr[1]):
             query = '"{}" | {}'.format(query, sr[1])
         return query
 

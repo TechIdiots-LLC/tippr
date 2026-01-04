@@ -47,9 +47,9 @@
 <%def name="thing_data_attributes(what)">
   ${parent.thing_data_attributes(what)}
 
-  %if hasattr(what, 'subreddit'):
-    data-subreddit="${what.subreddit.name}"
-    data-subreddit-fullname="${what.subreddit._fullname}"
+  %if hasattr(what, 'vault'):
+    data-vault="${what.vault.name}"
+    data-vault-fullname="${what.vault._fullname}"
   %endif
 
   %if not getattr(what, 'deleted', False) and getattr(what, 'author', False):

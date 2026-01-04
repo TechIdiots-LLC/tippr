@@ -41,7 +41,7 @@ from r2.lib.utils import timeago
 from r2.models.account import Account
 from r2.models.award import Award
 from r2.models.link import Comment
-from r2.models.subreddit import DefaultSR
+from r2.models.vault import DefaultSR
 from r2.models.mail_queue import Email
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
@@ -53,7 +53,7 @@ def _system_email(email, plaintext_body, kind, reply_to="",
         suppress_username=False):
     """
     For sending email from the system to a user (reply address will be
-    feedback and the name will be reddit.com)
+    feedback and the name will be tippr.net)
     """
     if suppress_username:
         user = None

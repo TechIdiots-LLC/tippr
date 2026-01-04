@@ -31,7 +31,7 @@ from r2.lib.pages import ApiHelp, BoringPage
 from r2.lib.utils import Storage
 from r2.lib.validator import VOneOf, validate
 
-from .reddit_base import RedditController
+from .reddit_base import TipprController
 
 # API sections displayed in the documentation page.
 # Each section can have a title and a markdown-formatted description.
@@ -43,7 +43,7 @@ section_info = {
         'title': 'flair',
     },
     'gold': {
-        'title': 'reddit gold',
+        'title': 'tippr gold',
     },
     'links_and_comments': {
         'title': 'links & comments',
@@ -63,8 +63,8 @@ section_info = {
     'search': {
         'title': 'search',
     },
-    'subreddits': {
-        'title': 'subreddits',
+    'vaults': {
+        'title': 'vaults',
     },
     'multis': {
         'title': 'multis',
@@ -99,7 +99,7 @@ def api_doc(section, uses_site=False, **kwargs):
         return api_function
     return add_metadata
 
-class ApidocsController(RedditController):
+class ApidocsController(TipprController):
     @staticmethod
     def docs_from_controller(controller, url_prefix='/api', oauth_only=False):
         """
@@ -156,7 +156,7 @@ class ApidocsController(RedditController):
                     docs['supports_rss'] = False
 
                 if api_doc['uses_site']:
-                    docs["in-subreddit"] = True
+                    docs["in-vault"] = True
 
                 oauth_perms = getattr(func, 'oauth2_perms', {})
                 oauth_allowed = oauth_perms.get('oauth2_allowed', False)

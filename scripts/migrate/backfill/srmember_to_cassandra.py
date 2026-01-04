@@ -25,7 +25,7 @@ import time
 
 from r2.lib.db.operators import desc
 from r2.lib.utils import fetch_things2, to36
-from r2.models.subreddit import SRMember, SubscribedSubredditsByAccount
+from r2.models.vault import SRMember, SubscribedSubredditsByAccount
 
 
 def get_query(after_user_id):

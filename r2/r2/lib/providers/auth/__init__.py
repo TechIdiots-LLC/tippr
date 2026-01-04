@@ -26,7 +26,7 @@ class AuthenticationProvider:
 
     Authentication providers should look at the request environment and
     determine if a particular user is logged in to the site.  This may take the
-    form of cookies like on reddit.com or perhaps a web server provided HTTP
+    form of cookies like on tippr.net or perhaps a web server provided HTTP
     header in intranet environments.
 
     Authentication systems may allow users to select their login, or may force
@@ -41,7 +41,7 @@ class AuthenticationProvider:
 
         Some authentication systems, such as single sign-on on an intranet,
         pick up the authenticated user from an external system and logging out
-        of reddit would be meaningless.  If disallowed, some UI elements can be
+        of tippr would be meaningless.  If disallowed, some UI elements can be
         disabled to reduce confusion.
 
         """

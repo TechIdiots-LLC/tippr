@@ -32,7 +32,7 @@ from r2.config.extensions import set_extension
 from r2.lib.base import abort
 from r2.lib.db import tdb_cassandra
 from r2.lib.errors import BadRequestError, errors
-from r2.lib.pages import OAuth2AuthorizationPage, RedditError
+from r2.lib.pages import OAuth2AuthorizationPage, TipprError
 from r2.lib.require import RequirementException, require
 from r2.lib.strings import strings
 from r2.lib.utils import UrlParser, constant_time_compare, parse_http_basic
@@ -59,7 +59,7 @@ from r2.models.token import (
     OAuth2Scope,
 )
 
-from .reddit_base import MinimalController, RedditController, require_https
+from .reddit_base import MinimalController, TipprController, require_https
 
 
 def _update_redirect_uri(base_redirect_uri, params, as_fragment=False):
@@ -76,12 +76,12 @@ def get_device_id(client):
         return request.POST.get('device_id')
 
 
-class OAuth2FrontendController(RedditController):
+class OAuth2FrontendController(TipprController):
     def check_for_bearer_token(self):
         pass
 
     def pre(self):
-        RedditController.pre(self)
+        TipprController.pre(self)
         require_https()
 
     def _abort_oauth_error(self, error):
@@ -137,7 +137,7 @@ class OAuth2FrontendController(RedditController):
         # prove their identity to some external service
         if scope.scopes == {"identity"}:
             return
-        error_page = RedditError(
+        error_page = TipprError(
             title=_('this app has not been approved for use with employee accounts'),
             message="",
         )
@@ -244,14 +244,14 @@ class OAuth2FrontendController(RedditController):
             create_gift_gold(
                 buyer._id, c.user._id, g.mobile_auth_gild_time,
                 datetime.now(g.tz), signed=True, note='first_mobile_auth')
-            subject = 'Let there be gold! Reddit just sent you Reddit gold!'
+            subject = 'Let there be gold! Tippr just sent you Tippr gold!'
             message = (
-                "Thank you for using the Reddit mobile app!  As a thank you "
+                "Thank you for using the Tippr mobile app!  As a thank you "
                 "for logging in during launch week, you've been gifted %s of "
-                "Reddit Gold.\n\n"
-                "Reddit Gold is Reddit's premium membership program, which "
+                "Tippr Gold.\n\n"
+                "Tippr Gold is Tippr's premium membership program, which "
                 "grants you: \n"
-                "An ads-free experience in Reddit's mobile apps, and\n"
+                "An ads-free experience in Tippr's mobile apps, and\n"
                 "Extra site features on desktop\n\n"
                 "Discuss and get help on the features and perks at "
                 "r/goldbenefits."
@@ -288,7 +288,7 @@ class OAuth2AccessController(MinimalController):
                 require(constant_time_compare(client.secret, client_secret))
             return client
         except RequirementException:
-            abort(401, headers=[("WWW-Authenticate", 'Basic realm="reddit"')])
+            abort(401, headers=[("WWW-Authenticate", 'Basic realm="tippr"')])
 
     def OPTIONS_access_token(self):
         """Send CORS headers for access token requests
@@ -297,7 +297,7 @@ class OAuth2AccessController(MinimalController):
         * Only POST requests allowed to /api/v1/access_token
         * No ambient credentials
         * Authorization header required to identify the client
-        * Expose common reddit headers
+        * Expose common tippr headers
 
         """
         if "Origin" in request.headers:
@@ -317,7 +317,7 @@ class OAuth2AccessController(MinimalController):
                  "refresh_token",
                  "password",
                  "client_credentials",
-                 "https://oauth.reddit.com/grants/installed_client",
+                 "https://oauth.tippr.net/grants/installed_client",
             )
         ),
     )
@@ -344,13 +344,13 @@ class OAuth2AccessController(MinimalController):
         * ``refresh_token`` for renewing the access token.
         * ``password`` for script-type apps using password auth
         * ``client_credentials`` for application-only (signed out) access - confidential clients
-        * ``https://oauth.reddit.com/grants/installed_client`` extension grant for application-only (signed out)
+        * ``https://oauth.tippr.net/grants/installed_client`` extension grant for application-only (signed out)
                 access - non-confidential (installed) clients
 
         **redirect_uri** must exactly match the value that was used in the call
         to [/api/v1/authorize](#api_method_authorize) that created this grant.
 
-        See reddit's [OAuth2 wiki](https://github.com/reddit/reddit/wiki/OAuth2) for
+        See tippr's [OAuth2 wiki](https://github.com/reddit/reddit/wiki/OAuth2) for
         more information.
 
         """
@@ -363,7 +363,7 @@ class OAuth2AccessController(MinimalController):
             return self._access_token_password()
         elif grant_type == "client_credentials":
             return self._access_token_client_credentials()
-        elif grant_type == "https://oauth.reddit.com/grants/installed_client":
+        elif grant_type == "https://oauth.tippr.net/grants/installed_client":
             return self._access_token_extension_client_credentials()
         else:
             resp = {"error": "unsupported_grant_type"}
@@ -577,7 +577,7 @@ class OAuth2AccessController(MinimalController):
         * Only POST requests allowed to /api/v1/revoke_token
         * No ambient credentials
         * Authorization header required to identify the client
-        * Expose common reddit headers
+        * Expose common tippr headers
 
         """
         if "Origin" in request.headers:

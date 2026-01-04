@@ -182,7 +182,7 @@ def js_config(extra_config=None):
 
     if not feature.is_enabled("autoexpand_media_previews"):
         expando_preference = None
-    elif pref_media_preview == "subreddit":
+    elif pref_media_preview == "vault":
         expando_preference = "subreddit_default"
     elif pref_media_preview == "on":
         expando_preference = "auto_expand"
@@ -192,7 +192,7 @@ def js_config(extra_config=None):
     pref_beta = c.user.pref_beta
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
-    if isinstance(c.site, Subreddit) and not c.default_sr:
+    if isinstance(c.site, Vault) and not c.default_sr:
         cur_subreddit = c.site.name
         cur_sr_fullname = c.site._fullname
         cur_listing = cur_subreddit
@@ -218,7 +218,7 @@ def js_config(extra_config=None):
         "user_id": user_id,
         # is user in timeout?
         "user_in_timeout": user_in_timeout,
-        # the subreddit's name (for posts)
+        # the vault's name (for posts)
         "post_site": cur_subreddit,
         "cur_site": cur_sr_fullname,
         "cur_listing": cur_listing,
@@ -232,9 +232,9 @@ def js_config(extra_config=None):
         'store_visits': gold and c.user.pref_store_visits,
 
         # current domain
-        "cur_domain": get_domain(subreddit=False, no_www=True),
+        "cur_domain": get_domain(vault=False, no_www=True),
         # where do ajax requests go?
-        "ajax_domain": get_domain(subreddit=False),
+        "ajax_domain": get_domain(vault=False),
         "stats_domain": g.stats_domain or '',
         "stats_sample_rate": g.stats_sample_rate or 0,
         "extension": c.extension,
@@ -325,7 +325,7 @@ class JSPreload(js.DataSource):
 
 
 def class_dict():
-    t_cls = [Link, Comment, Message, Subreddit]
+    t_cls = [Link, Comment, Message, Vault]
     l_cls = [Listing, OrganicListing]
 
     classes  = [('%s: %s') % ('t'+ str(cl._type_id), cl.__name__ ) for cl in t_cls] \
@@ -429,10 +429,10 @@ def replace_render(listing, item, render_func):
 
     return _replace_render
 
-def get_domain(cname=False, subreddit=True, no_www=False):
+def get_domain(cname=False, vault=True, no_www=False):
     """
-    returns the domain on the current subreddit, possibly including
-    the subreddit part of the path, suitable for insertion after an
+    returns the domain on the current vault, possibly including
+    the vault part of the path, suitable for insertion after an
     "http://" and before a fullpath (i.e., something including the
     first '/') in a template.  The domain is updated to include the
     current port (request.port).  The effect of the arguments is:
@@ -443,8 +443,8 @@ def get_domain(cname=False, subreddit=True, no_www=False):
 
      * cname: deprecated.
 
-     * subreddit: flags whether or not to append to the domain the
-       subreddit path (without the trailing path).
+     * vault: flags whether or not to append to the domain the
+       vault path (without the trailing path).
 
     """
     # locally cache these lookups as this gets run in a loop in add_props
@@ -464,7 +464,7 @@ def get_domain(cname=False, subreddit=True, no_www=False):
     if hasattr(request, "port") and request.port:
         domain += ":" + str(request.port)
 
-    if subreddit:
+    if vault:
         domain += site.path.rstrip('/')
 
     return domain
@@ -476,7 +476,7 @@ def add_sr(
         force_extension=None):
     """
     Given a path (which may be a full-fledged url or a relative path),
-    parses the path and updates it to include the subreddit path
+    parses the path and updates it to include the vault path
     according to the rules set by its arguments:
 
      * sr_path: if a cname is not used for the domain, updates the
@@ -506,7 +506,7 @@ def add_sr(
         u.path_add_subreddit(c.site)
 
     if not u.hostname or force_hostname:
-        u.hostname = get_domain(subreddit=False)
+        u.hostname = get_domain(vault=False)
 
     if (c.secure and u.is_reddit_url()) or force_https:
         u.scheme = "https"
@@ -589,7 +589,7 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
         priority = 4
         cssclass = 'admin'
         if not label:
-            label = _('reddit admin, speaking officially')
+            label = _('tippr admin, speaking officially')
     elif kind in ('X', '@'):
         priority = 5
         cssclass = 'gray'
@@ -625,10 +625,10 @@ def add_admin_distinguish(distinguish_attribs_list):
     add_attr(distinguish_attribs_list, 'A')
 
 
-def add_moderator_distinguish(distinguish_attribs_list, subreddit):
-    link = '/r/%s/about/moderators' % subreddit.name
-    label = _('moderator of /r/%(reddit)s, speaking officially')
-    label %= {'reddit': subreddit.name}
+def add_moderator_distinguish(distinguish_attribs_list, vault):
+    link = '/v/%s/about/moderators' % vault.name
+    label = _('moderator of /r/%(tippr)s, speaking officially')
+    label %= {'tippr': vault.name}
     add_attr(distinguish_attribs_list, 'M', label=label, link=link)
 
 
@@ -641,7 +641,7 @@ def add_friend_distinguish(distinguish_attribs_list, note=None):
 
 
 def add_cakeday_distinguish(distinguish_attribs_list, user):
-    label = _("%(user)s just celebrated a reddit birthday!")
+    label = _("%(user)s just celebrated a tippr birthday!")
     label %= {"user": user.name}
     link = "/user/%s" % user.name
     add_attr(distinguish_attribs_list, kind="cake", label=label, link=link)
@@ -655,12 +655,12 @@ def add_special_distinguish(distinguish_attribs_list, user):
     add_attr(distinguish_attribs_list, **args)
 
 
-def add_submitter_distinguish(distinguish_attribs_list, link, subreddit):
-    permalink = link.make_permalink(subreddit)
+def add_submitter_distinguish(distinguish_attribs_list, link, vault):
+    permalink = link.make_permalink(vault)
     add_attr(distinguish_attribs_list, 'S', link=permalink)
 
 
-def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None, ref=None):
+def search_url(query, vault, restrict_sr="off", sort=None, recent=None, ref=None):
     import urllib.error
     import urllib.parse
     import urllib.request
@@ -674,7 +674,7 @@ def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None, ref=
         url_query["sort"] = sort
     if recent:
         url_query["t"] = recent
-    path = "/r/%s/search?" % subreddit if subreddit else "/search?"
+    path = "/v/%s/search?" % vault if vault else "/search?"
     path += urllib.parse.urlencode(url_query)
     return path
 

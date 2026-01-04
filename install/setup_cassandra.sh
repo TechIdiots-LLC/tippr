@@ -43,10 +43,10 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         apt-get install -y python3-six || true
     fi
 
-    cqlsh -e "CREATE KEYSPACE IF NOT EXISTS reddit WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};" || true
+    cqlsh -e "CREATE KEYSPACE IF NOT EXISTS tippr WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};" || true
 
     # Create permacache table
-    cqlsh -e "CREATE TABLE IF NOT EXISTS reddit.permacache (key text PRIMARY KEY, value blob);" || true
+    cqlsh -e "CREATE TABLE IF NOT EXISTS tippr.permacache (key text PRIMARY KEY, value blob);" || true
 
     echo "Cassandra keyspace and tables created."
 
@@ -63,14 +63,14 @@ else
 import pycassa
 sys = pycassa.SystemManager("localhost:9160")
 
-if "reddit" not in sys.list_keyspaces():
-    print "creating keyspace 'reddit'"
-    sys.create_keyspace("reddit", "SimpleStrategy", {"replication_factor": "1"})
+if "tippr" not in sys.list_keyspaces():
+    print "creating keyspace 'tippr'"
+    sys.create_keyspace("tippr", "SimpleStrategy", {"replication_factor": "1"})
     print "done"
 
-if "permacache" not in sys.get_keyspace_column_families("reddit"):
+if "permacache" not in sys.get_keyspace_column_families("tippr"):
     print "creating column family 'permacache'"
-    sys.create_column_family("reddit", "permacache")
+    sys.create_column_family("tippr", "permacache")
     print "done"
 END
 

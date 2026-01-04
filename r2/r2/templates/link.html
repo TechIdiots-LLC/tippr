@@ -181,8 +181,8 @@
     data-author-fullname="${what.author._fullname}"
   %endif
 
-  data-subreddit="${what.subreddit.name}"
-  data-subreddit-fullname="${what.subreddit._fullname}"
+  data-vault="${what.vault.name}"
+  data-vault-fullname="${what.vault._fullname}"
 
   data-timestamp="${js_timestamp(what._date)}"
 
@@ -195,9 +195,9 @@
   %endif
 </%def>
 
-<%def name="subreddit()" buffered="True">
-  ${plain_link('/r/' + thing.subreddit.name, thing.subreddit_path, _sr_path=False,
-               _class="subreddit hover may-blank")}
+<%def name="vault()" buffered="True">
+  ${plain_link('/v/' + thing.vault.name, thing.subreddit_path, _sr_path=False,
+               _class="vault hover may-blank")}
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
@@ -237,7 +237,7 @@
   <%
     taglinetext = conditional_websafe(thing.taglinetext).replace(" ", "&#32;")
   %>
-  ${unsafe(taglinetext % dict(reddit=self.subreddit(),
+  ${unsafe(taglinetext % dict(tippr=self.vault(),
                               score=capture(self.score, thing, tag='span'),
                               when=capture(thing_timestamp, thing, thing.timesince, live=True, include_tense=True),
                               author=WrappedUser(thing.author, thing.attribs, thing).render(),
@@ -245,7 +245,7 @@
                               ))}
   ${self.gildings()}
   %if thing.use_sticky_style:
-    &#32;-&#32;<span class="stickied-tagline" title="selected by this subreddit's moderators">announcement</span>
+    &#32;-&#32;<span class="stickied-tagline" title="selected by this vault's moderators">announcement</span>
   %endif
 
   %if getattr(thing, 'savedcategory', None) is not None:

@@ -27,12 +27,12 @@ from r2.lib.promote import *
 
 
 def add_allow_top_to_srs():
-    "Add the allow_top property to all stored subreddits"
+    "Add the allow_top property to all stored vaults"
     from r2.lib.db.operators import desc
     from r2.lib.utils import fetch_things2
-    from r2.models import Subreddit
+    from r2.models import Vault
 
-    q = Subreddit._query(Subreddit.c._spam == (True,False),
+    q = Vault._query(Vault.c._spam == (True,False),
                          sort = desc('_date'))
     for sr in fetch_things2(q):
         sr.allow_top = True; sr._commit()
@@ -40,10 +40,10 @@ def add_allow_top_to_srs():
 def subscribe_to_blog_and_annoucements(filename):
     import re
 
-    from r2.models import Account, Subreddit
+    from r2.models import Account, Vault
 
-    r_blog = Subreddit._by_name("blog")
-    r_announcements = Subreddit._by_name("announcements")
+    r_blog = Vault._by_name("blog")
+    r_announcements = Vault._by_name("announcements")
 
     contents = file(filename).read()
     numbers = [ int(s) for s in re.findall(r"\d+", contents) ]
@@ -106,9 +106,9 @@ def pushup_permacache(verbosity=1000):
     from r2.lib.db import queries
     from r2.lib.db.operators import desc
     from r2.lib.promote import promoted_memo_key
-    from r2.lib.subreddit_search import load_all_reddits
+    from r2.lib.vault_search import load_all_reddits
     from r2.lib.utils import fetch_things2, in_chunks, last_modified_key
-    from r2.models import Account, Link, Subreddit
+    from r2.models import Account, Link, Vault
 
     authority = g.permacache.caches[-1]
     nonauthority = CassandraCacheChain(g.permacache.caches[1:-1])
@@ -159,7 +159,7 @@ def pushup_permacache(verbosity=1000):
             yield queries.get_unread_selfreply(account).iden
             yield queries.get_sent(account).iden
 
-        sr_q = Subreddit._query(Subreddit.c._spam == (True, False),
+        sr_q = Vault._query(Vault.c._spam == (True, False),
                                 sort=desc('_date'),
                                 )
         for sr in fetch_things2(sr_q, verbosity):
@@ -257,7 +257,7 @@ def populate_spam_filtered():
         else:
             return False
 
-    q = Subreddit._query(sort = asc('_date'))
+    q = Vault._query(sort = asc('_date'))
     for sr in fetch_things2(q):
         print('Processing %s' % sr.name)
         links = Thing._by_fullname(get_spam_links(sr), data=True,

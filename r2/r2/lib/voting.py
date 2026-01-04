@@ -32,7 +32,7 @@ from r2.lib import amqp, hooks
 from r2.lib.eventcollector import Event
 from r2.lib.geoip import organization_by_ips
 from r2.lib.utils import UrlParser, epoch_timestamp
-from r2.models import Account, Comment, Link, Subreddit
+from r2.models import Account, Comment, Link, Vault
 from r2.models.last_modified import LastModified
 from r2.models.query_cache import CachedQueryMutator
 from r2.models.vote import Vote, VotesByAccount
@@ -244,11 +244,11 @@ def add_to_subreddit_query_q(link):
 def consume_subreddit_query_queue(qname="subreddit_query_q", limit=1000):
     @g.stats.amqp_processor(qname)
     def process_message(msgs, chan):
-        """Update get_links(), the Links by Subreddit precomputed query.
+        """Update get_links(), the Links by Vault precomputed query.
 
         get_links() is a CachedResult which is stored in permacache. To
         update these objects we need to do a read-modify-write which requires
-        obtaining a lock. Sharding these updates by subreddit allows us to run
+        obtaining a lock. Sharding these updates by vault allows us to run
         multiple consumers (but ideally just one per shard) to avoid lock
         contention.
 
@@ -264,7 +264,7 @@ def consume_subreddit_query_queue(qname="subreddit_query_q", limit=1000):
         for link in links:
             links_by_sr_id[link.sr_id].append(link)
 
-        srs_by_id = Subreddit._byID(list(links_by_sr_id.keys()), stale=True)
+        srs_by_id = Vault._byID(list(links_by_sr_id.keys()), stale=True)
 
         for sr_id, links in links_by_sr_id.items():
             with g.stats.get_timer("link_vote_processor.subreddit_queries"):

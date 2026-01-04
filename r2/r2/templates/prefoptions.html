@@ -121,7 +121,7 @@
       ${language_tool(allow_blank = False, show_regions = True,
                       default_lang = c.user.pref_lang)}
       &#32;<span class="details hover">(*) ${_("incomplete")}
-      &#32;<a href="https://www.reddit.com/r/i18n/wiki/getting_started">${_("volunteer to translate")}</a></span>
+      &#32;<a href="https://www.tippr.net/r/i18n/wiki/getting_started">${_("volunteer to translate")}</a></span>
     </td>
   </tr>
 
@@ -130,7 +130,7 @@
     <tr>
       <th>${_("location options")}</th>
       <td class="prefright">
-        ${checkbox(_("use the global default subreddits for my front page"), "use_global_defaults")}
+        ${checkbox(_("use the global default vaults for my front page"), "use_global_defaults")}
         <br/>
         ${checkbox(_("hide the location information bar"), "hide_locationbar")}
       </td>
@@ -156,7 +156,7 @@
       %if not c.user.pref_compress:
         ${media_radio("on", _("show thumbnails next to links"))}
         ${media_radio("off", _("don't show thumbnails next to links"))}
-        ${media_radio("subreddit", _("show thumbnails based on that subreddit's media preferences"))}
+        ${media_radio("vault", _("show thumbnails based on that vault's media preferences"))}
       %else:
         <p class="error">${_("to enable thumbnails, disable compressed link display")}</p>
         <input type="hidden" name="media" value="${c.user.pref_media}"/>
@@ -167,7 +167,7 @@
         <h6>${_("media previews")}</h6>
         ${media_preview_radio("on", _("auto-expand media previews"))}
         ${media_preview_radio("off", _("don't auto-expand media previews on comments pages"))}
-        ${media_preview_radio("subreddit", _("expand media previews based on that subreddit's media preferences"))}
+        ${media_preview_radio("vault", _("expand media previews based on that vault's media preferences"))}
         <br>
 
         <h6>${_("NSFW content")}</h6>
@@ -195,10 +195,10 @@
         </span>
       </p>
       <p>
-        ${checkbox(_("show trending subreddits on the front page"), "show_trending")}
+        ${checkbox(_("show trending vaults on the front page"), "show_trending")}
         &#32;
         <span class="details">
-          ${_("(a list of popular and notable subreddits to check out)")}
+          ${_("(a list of popular and notable vaults to check out)")}
         </span>
       </p>
 
@@ -207,7 +207,7 @@
       <p>${checkbox(_("show additional details in the domain text when available"), "domain_details")}
         &#32;
         <span class="details">
-          ${_("(such as the source subreddit or the content author's url/name)")}
+          ${_("(such as the source vault or the content author's url/name)")}
         </span>
       </p>
       <p>${checkbox(_("don't show me submissions after I've upvoted them"), "hide_ups")}
@@ -239,7 +239,7 @@
     </p>
     <p>
     ${checkbox(_(u"ignore suggested sorts"), "ignore_suggested_sort")}
-    &#32;<span class="details">${_("(suggested sorts may be set by community moderators for specific threads or subreddits, like Q&As)")}</span>
+    &#32;<span class="details">${_("(suggested sorts may be set by community moderators for specific threads or vaults, like Q&As)")}</span>
     </p>
     <p>
     ${checkbox(_(u"show a dagger (†) on comments voted controversial"), "highlight_controversial")}
@@ -303,10 +303,10 @@
   <tr>
     <th>${_("display options")}</th>
     <td class="prefright">
-      ${checkbox(_("allow subreddits to show me custom themes"), "show_stylesheets")}
+      ${checkbox(_("allow vaults to show me custom themes"), "show_stylesheets")}
       %if feature.is_enabled('stylesheets_everywhere'):
         &#32;<span class="details reddit-gold">
-          ${_("(you can also choose which subreddit themes to disable on an individual level)")}
+          ${_("(you can also choose which vault themes to disable on an individual level)")}
         </span>
       %endif
       <br/>
@@ -328,7 +328,7 @@
     <th>${_("content options")}</th>
     <td class="prefright">
       ${checkbox(_("I am over eighteen years old and willing to view adult content"), "over_18")}
-      &#32;<span class="details">(${_("required to view some subreddits")})</span>
+      &#32;<span class="details">(${_("required to view some vaults")})</span>
       <br/>
         ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
       <br/>
@@ -363,7 +363,7 @@
       &#32;
       <span class="details">
         (
-        <a href="https://www.reddit.com/wiki/noindex">${_("details")}</a>
+        <a href="https://www.tippr.net/wiki/noindex">${_("details")}</a>
         )
       </span>
     </td>
@@ -372,15 +372,15 @@
   <tr>
     <th>${_("beta options")}</th>
     <td class="prefright">
-      ${checkbox(_("I would like to beta test features for reddit"), "beta")}
+      ${checkbox(_("I would like to beta test features for tippr"), "beta")}
       &#32;
       <span class="details">
         <%
-          beta_sr_link = format_html('&#32;<a href="/r/%s">/r/%s</a>&#32;', g.beta_sr, g.beta_sr)
+          beta_sr_link = format_html('&#32;<a href="/v/%s">/r/%s</a>&#32;', g.beta_sr, g.beta_sr)
         %>
         (${_wsf("by enabling you'll be subscribed to %(beta_sr_link)s automatically.", beta_sr_link=beta_sr_link)}
           &#32;
-          <a href="/r/${g.beta_sr}/wiki">${_("details on the /r/{beta_sr} wiki").format(beta_sr=g.beta_sr)}</a>)
+          <a href="/v/${g.beta_sr}/wiki">${_("details on the /r/{beta_sr} wiki").format(beta_sr=g.beta_sr)}</a>)
       </span>
     </td>
   </tr>
@@ -415,9 +415,9 @@
     <th>${_("gold options")}</th>
     <td class="prefright">
       ${checkbox(_("highlight new comments"), "highlight_new_comments")}
-      <% gold_link = unsafe('&#32;<a href="/gold/about">' + _("reddit gold") + '</a>') %>
+      <% gold_link = unsafe('&#32;<a href="/gold/about">' + _("tippr gold") + '</a>') %>
       &#32;<span class="details">
-        (${_wsf("since you don't have %(gold_link)s, this will only apply in subreddits you moderate", gold_link=gold_link)})
+        (${_wsf("since you don't have %(gold_link)s, this will only apply in vaults you moderate", gold_link=gold_link)})
       </span>
     </td>
   </tr>
@@ -425,11 +425,11 @@
 
   %if feature.is_enabled('stylesheets_everywhere'):
     <tr class="gold-accent">
-      <th>${_("reddit themes")}</th>
+      <th>${_("tippr themes")}</th>
       <td class="prefright">
         <div class="reddit-themes-description">
           <span>
-            ${_("reddit themes change the appearance of reddit.  They are used anywhere another custom theme is not present.")}
+            ${_("tippr themes change the appearance of tippr.  They are used anywhere another custom theme is not present.")}
           </span>
           <br />
           <span class="details">
@@ -437,7 +437,7 @@
           </span>
         </div>
 
-        ${checkbox(_("use reddit theme"), "enable_default_themes")}
+        ${checkbox(_("use tippr theme"), "enable_default_themes")}
         &#32;<span class="details">(${_("hover to preview")})</span>
 
         <div class="container reddit-themes">
@@ -455,7 +455,7 @@
 
           <div class="theme select-custom-theme">
             <label><input type="radio" name="theme_selector" id="other_theme_selector" value="" ${"checked" if thing.use_other_theme else ""}>use theme from /r/</label>
-              <input type="text" class="text" size="21" maxlength="21" name="other_theme" placeholder="subreddit" ${"value=" + c.user.pref_default_theme_sr if thing.use_other_theme and c.user.pref_default_theme_sr else ""}>
+              <input type="text" class="text" size="21" maxlength="21" name="other_theme" placeholder="vault" ${"value=" + c.user.pref_default_theme_sr if thing.use_other_theme and c.user.pref_default_theme_sr else ""}>
               <span class="details">
                   (${_("warning: use non-featured themes at your own risk")})
               </span>

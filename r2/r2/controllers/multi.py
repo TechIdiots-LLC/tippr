@@ -28,9 +28,9 @@ from pylons.i18n import _
 from r2.config.extensions import set_extension
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
-from r2.controllers.reddit_base import RedditController, abort_with_error
+from r2.controllers.reddit_base import TipprController, abort_with_error
 from r2.lib.db import tdb_cassandra
-from r2.lib.errors import RedditError
+from r2.lib.errors import TipprError
 from r2.lib.jsontemplates import (
     LabeledMultiDescriptionJsonTemplate,
     LabeledMultiJsonTemplate,
@@ -51,10 +51,10 @@ from r2.lib.validator import (
     VValidatedJSON,
     validate,
 )
-from r2.models.subreddit import (
+from r2.models.vault import (
     FakeSubreddit,
     LabeledMulti,
-    Subreddit,
+    Vault,
     TooManySubredditsError,
 )
 
@@ -75,7 +75,7 @@ multi_json_spec = VValidatedJSON.PartialObject({
     'key_color': VColor('key_color'),
     'visibility': VOneOf('visibility', ('private', 'public', 'hidden')),
     'weighting_scheme': VOneOf('weighting_scheme', ('classic', 'fresh')),
-    'subreddits': VValidatedJSON.ArrayOf(multi_sr_data_json_spec),
+    'vaults': VValidatedJSON.ArrayOf(multi_sr_data_json_spec),
 })
 
 
@@ -84,13 +84,13 @@ multi_description_json_spec = VValidatedJSON.Object({
 })
 
 
-class MultiApiController(RedditController):
+class MultiApiController(TipprController):
     def on_validation_error(self, error):
         abort_with_error(error, error.code or 400)
 
     def pre(self):
         set_extension(request.environ, "json")
-        RedditController.pre(self)
+        TipprController.pre(self)
 
     def _format_multi_list(self, multis, viewer, expand_srs):
         templ = LabeledMultiJsonTemplate(expand_srs)
@@ -132,21 +132,21 @@ class MultiApiController(RedditController):
         uri_variants=['/api/filter/{filterpath}'],
     )
     def GET_multi(self, multi, expand_srs):
-        """Fetch a multi's data and subreddit list by name."""
+        """Fetch a multi's data and vault list by name."""
         return self._format_multi(multi, expand_srs)
 
     def _check_new_multi_path(self, path_info):
         if path_info['owner'].lower() != c.user.name.lower():
-            raise RedditError('MULTI_CANNOT_EDIT', code=403,
+            raise TipprError('MULTI_CANNOT_EDIT', code=403,
                               fields='multipath')
         return c.user
 
     def _add_multi_srs(self, multi, sr_datas):
-        srs = Subreddit._by_name(sr_data['name'] for sr_data in sr_datas)
+        srs = Vault._by_name(sr_data['name'] for sr_data in sr_datas)
 
         for sr in srs.values():
             if isinstance(sr, FakeSubreddit):
-                raise RedditError('MULTI_SPECIAL_SUBREDDIT',
+                raise TipprError('MULTI_SPECIAL_SUBREDDIT',
                                   msg_params={'path': sr.path},
                                   code=400)
 
@@ -155,7 +155,7 @@ class MultiApiController(RedditController):
             try:
                 sr = srs[sr_data['name']]
             except KeyError:
-                raise RedditError('SUBREDDIT_NOEXIST', code=400)
+                raise TipprError('SUBREDDIT_NOEXIST', code=400)
             else:
                 # name is passed in via the API data format, but should not be
                 # stored on the model.
@@ -165,12 +165,12 @@ class MultiApiController(RedditController):
         try:
             multi.add_srs(sr_props)
         except TooManySubredditsError:
-            raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
+            raise TipprError('MULTI_TOO_MANY_SUBREDDITS', code=409)
 
         return sr_props
 
     def _write_multi_data(self, multi, data):
-        srs = data.pop('subreddits', None)
+        srs = data.pop('vaults', None)
         if srs is not None:
             multi.clear_srs()
             try:
@@ -212,7 +212,7 @@ class MultiApiController(RedditController):
             path_info = VMultiPath("").run(path)
 
         if not path_info:
-            raise RedditError('BAD_MULTI_PATH', code=400)
+            raise TipprError('BAD_MULTI_PATH', code=400)
 
         owner = self._check_new_multi_path(path_info)
 
@@ -222,7 +222,7 @@ class MultiApiController(RedditController):
             multi = LabeledMulti.create(path_info['path'], owner)
             response.status = 201
         else:
-            raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
+            raise TipprError('MULTI_EXISTS', code=409, fields='multipath')
 
         self._write_multi_data(multi, data)
         return self._format_multi(multi)
@@ -267,7 +267,7 @@ class MultiApiController(RedditController):
 
         # rename requires same owner
         if rename and from_multi.owner != to_owner:
-            raise RedditError('MULTI_CANNOT_EDIT', code=400)
+            raise TipprError('MULTI_CANNOT_EDIT', code=400)
 
         try:
             LabeledMulti._byID(to_path_info['path'])
@@ -275,7 +275,7 @@ class MultiApiController(RedditController):
             to_multi = LabeledMulti.copy(to_path_info['path'], from_multi,
                                          owner=to_owner)
         else:
-            raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
+            raise TipprError('MULTI_EXISTS', code=409, fields='multipath')
 
         return to_multi
 
@@ -285,7 +285,7 @@ class MultiApiController(RedditController):
         VModhash(),
         from_multi=VMultiByPath("from", require_view=True, kinds='m'),
         to_path_info=VMultiPath("to", required=False,
-            docs={"to": "destination multireddit url path"},
+            docs={"to": "destination multivault url path"},
         ),
         display_name=VLength("display_name", max_length=MAX_DISP_NAME,
                              empty_error=None),
@@ -309,7 +309,7 @@ class MultiApiController(RedditController):
                 path = LabeledMulti.slugify(from_multi.owner, display_name)
                 to_path_info = VMultiPath("").run(path)
             else:
-                raise RedditError('BAD_MULTI_PATH', code=400)
+                raise TipprError('BAD_MULTI_PATH', code=400)
 
         to_multi = self._copy_multi(from_multi, to_path_info)
 
@@ -334,7 +334,7 @@ class MultiApiController(RedditController):
         VModhash(),
         from_multi=VMultiByPath("from", require_edit=True, kinds='m'),
         to_path_info=VMultiPath("to", required=False,
-            docs={"to": "destination multireddit url path"},
+            docs={"to": "destination multivault url path"},
         ),
         display_name=VLength("display_name", max_length=MAX_DISP_NAME,
                              empty_error=None),
@@ -350,7 +350,7 @@ class MultiApiController(RedditController):
                 path = LabeledMulti.slugify(from_multi.owner, display_name)
                 to_path_info = VMultiPath("").run(path)
             else:
-                raise RedditError('BAD_MULTI_PATH', code=400)
+                raise TipprError('BAD_MULTI_PATH', code=400)
 
         to_multi = self._copy_multi(from_multi, to_path_info, rename=True)
 
@@ -377,7 +377,7 @@ class MultiApiController(RedditController):
         uri_variants=['/api/filter/{filterpath}/r/{srname}'],
     )
     def GET_multi_subreddit(self, multi, sr):
-        """Get data about a subreddit in a multi."""
+        """Get data about a vault in a multi."""
         return self._get_multi_subreddit(multi, sr)
 
     @require_oauth2_scope("subscribe")
@@ -390,7 +390,7 @@ class MultiApiController(RedditController):
     )
     @api_doc(api_section.multis, extends=GET_multi_subreddit)
     def PUT_multi_subreddit(self, multi, sr_name, data):
-        """Add a subreddit to a multi."""
+        """Add a vault to a multi."""
 
         new = not any(sr.name.lower() == sr_name.lower() for sr in multi.srs)
 
@@ -413,7 +413,7 @@ class MultiApiController(RedditController):
     )
     @api_doc(api_section.multis, extends=GET_multi_subreddit)
     def DELETE_multi_subreddit(self, multi, sr):
-        """Remove a subreddit from a multi."""
+        """Remove a vault from a multi."""
         multi.del_srs(sr)
         multi._commit()
 
