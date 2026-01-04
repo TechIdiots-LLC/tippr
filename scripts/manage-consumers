@@ -18,34 +18,40 @@ CONSUMER_CONFIG="${TIPPR_CONSUMER_CONFIG:-/home/tippr/consumer-count.d}"
 
 if [ ! -d "$CONSUMER_CONFIG" ]; then
     echo "Consumer config directory not found: $CONSUMER_CONFIG" >&2
-    exit 1
+    exit 0  # Exit cleanly if no consumers configured
 fi
 
 for consumerpath in "$CONSUMER_CONFIG"/*; do
+    # Skip if no files match the glob
     [ -e "$consumerpath" ] || continue
 
+    # Only process regular files (skip directories, symlinks to directories, etc.)
+    [ -f "$consumerpath" ] || continue
+
     consumer=$(basename "$consumerpath")
+
+    # Skip hidden files and backup files
+    case "$consumer" in
+        .*|*~|*.bak|*.orig)
+            continue
+            ;;
+    esac
 
     # Allow targeting a specific consumer
     if [ "$TARGET" != "all" ] && [ "$TARGET" != "$consumer" ]; then
         continue
     fi
 
-    # Read instance count - strip whitespace and validate it's a number
-    if [ -f "$consumerpath" ]; then
-        instance_count=$(tr -d '[:space:]' < "$consumerpath" | grep -E '^[0-9]+$' || echo "0")
-    else
+    # Read instance count - read only first line, strip non-digits
+    instance_count=$(head -n1 "$consumerpath" 2>/dev/null | tr -cd '0-9')
+
+    # Default to 0 if empty or invalid
+    if [ -z "$instance_count" ]; then
         instance_count=0
     fi
 
-    # Ensure instance_count is a valid number
-    if ! [[ "$instance_count" =~ ^[0-9]+$ ]]; then
-        echo "Warning: Invalid instance count for $consumer, skipping" >&2
-        continue
-    fi
-
     # Skip if no instances configured
-    if [ "$instance_count" -eq 0 ]; then
+    if [ "$instance_count" -eq 0 ] 2>/dev/null; then
         echo "Skipping $consumer (0 instances configured)"
         continue
     fi
