@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 """
 Wrap a command, setuid/setgid, change directory to the tippr
 code, and send output to syslog.
@@ -34,28 +34,29 @@ import subprocess
 CONSUMER_PREFIX = "tippr-consumer-"
 
 
-# drop permissions
+# drop permissions (only if running as root)
 user = os.environ.get("TIPPR_USER", "tippr")
 group = os.environ.get("TIPPR_GROUP", user)
-uid = pwd.getpwnam(user).pw_uid
-gid = grp.getgrnam(group).gr_gid
-os.setgroups([])
-os.setgid(gid)
-os.setuid(uid)
+
+if os.getuid() == 0:
+    uid = pwd.getpwnam(user).pw_uid
+    gid = grp.getgrnam(group).gr_gid
+    os.setgroups([])
+    os.setgid(gid)
+    os.setuid(uid)
 
 # change directory to the tippr code root
-root = os.environ.get("TIPPR_ROOT", "/opt/tippr/lib/public/r2")
+root = os.environ.get("TIPPR_ROOT", "/home/tippr/src/tippr/r2")
 os.chdir(root)
 
-# configure syslog
-job_name = os.environ.get("UPSTART_JOB", "-".join(sys.argv[1:]))
+# configure syslog - use SYSTEMD_UNIT if available, fall back to command args
+job_name = os.environ.get("SYSTEMD_UNIT", os.environ.get("INVOCATION_ID", "-".join(sys.argv[1:])))
 if job_name.startswith(CONSUMER_PREFIX):
     # consumers are a bit different from crons, while crons want an
     # ident of tippr-job-JOBNAME, we want consumers to have an ident
     # of CONSUMERNAME_INSTANCE
-    job_name = (job_name[len(CONSUMER_PREFIX):] +
-                "_" +
-                os.environ.get("UPSTART_INSTANCE", ""))
+    job_name = job_name[len(CONSUMER_PREFIX):]
+
 facility = getattr(syslog, "LOG_" + os.environ.get("TIPPR_LOG_FACILITY", "CRON"))
 syslog.openlog(ident=job_name, facility=facility)
 
@@ -63,7 +64,8 @@ syslog.openlog(ident=job_name, facility=facility)
 child = subprocess.Popen(sys.argv[1:],
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT,
-                         bufsize=1)
+                         bufsize=1,
+                         text=True)
 
 # write out to syslog
 while True:
@@ -74,7 +76,7 @@ while True:
 
     line = line.rstrip('\n')
     syslog.syslog(syslog.LOG_NOTICE, line)
-    print line
+    print(line)
 
 # our success depends on our child's success
 child.wait()

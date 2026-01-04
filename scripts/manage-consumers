@@ -1,27 +1,83 @@
 #!/bin/bash
+# Manage tippr queue consumers via systemd
+#
+# Usage: manage-consumers [start|stop|restart|status] [consumer_name]
+#
+# This script reads consumer configuration from $TIPPR_CONSUMER_CONFIG
+# and manages the appropriate number of systemd service instances.
 
-command=${UPSTART_JOB#tippr-consumers-}
-for consumerpath in $TIPPR_CONSUMER_CONFIG/*; do
-    consumer=$(basename $consumerpath)
+set -e
 
-    # allow targeting which consumer the event is meant for (defaulting to 'all')
-    if [ ! -z "$TARGET" -a "x$TARGET" != "xall" -a "x$TARGET" != "x$consumer" ]; then
+COMMAND="${1:-start}"
+TARGET="${2:-all}"
+
+# Source the tippr environment
+if [ -f /etc/default/tippr ]; then
+    . /etc/default/tippr
+fi
+
+CONSUMER_CONFIG="${TIPPR_CONSUMER_CONFIG:-/home/tippr/consumer-count.d}"
+
+if [ ! -d "$CONSUMER_CONFIG" ]; then
+    echo "Consumer config directory not found: $CONSUMER_CONFIG" >&2
+    exit 1
+fi
+
+for consumerpath in "$CONSUMER_CONFIG"/*; do
+    [ -e "$consumerpath" ] || continue
+
+    consumer=$(basename "$consumerpath")
+
+    # Allow targeting a specific consumer
+    if [ "$TARGET" != "all" ] && [ "$TARGET" != "$consumer" ]; then
         continue
     fi
 
-    if [ -d $consumerpath ]; then
-        types=$consumerpath/*
+    # Read instance count
+    if [ -f "$consumerpath" ]; then
+        instance_count=$(cat "$consumerpath")
     else
-        types=$consumerpath
+        instance_count=0
     fi
 
-    for typepath in $types; do
-        instance_count=$(cat $typepath)
-        type_=$(basename $typepath)
+    # Skip if no instances configured
+    if [ "$instance_count" -eq 0 ] 2>/dev/null; then
+        echo "Skipping $consumer (0 instances configured)"
+        continue
+    fi
 
-        for i in $(seq 1 "$instance_count"); do
-            "/sbin/$command" "tippr-consumer-$consumer" "type=$type_" "x=$i"
-        done
+    # Manage each instance
+    for i in $(seq 1 "$instance_count"); do
+        unit="tippr-consumer@${consumer}${i}.service"
+        case "$COMMAND" in
+            start)
+                echo "Starting $unit"
+                systemctl start "$unit" || true
+                ;;
+            stop)
+                echo "Stopping $unit"
+                systemctl stop "$unit" || true
+                ;;
+            restart)
+                echo "Restarting $unit"
+                systemctl restart "$unit" || true
+                ;;
+            status)
+                systemctl status "$unit" --no-pager || true
+                ;;
+            enable)
+                echo "Enabling $unit"
+                systemctl enable "$unit" || true
+                ;;
+            disable)
+                echo "Disabling $unit"
+                systemctl disable "$unit" || true
+                ;;
+            *)
+                echo "Unknown command: $COMMAND" >&2
+                echo "Usage: $0 [start|stop|restart|status|enable|disable] [consumer_name]" >&2
+                exit 1
+                ;;
+        esac
     done
 done
-

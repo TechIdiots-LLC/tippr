@@ -1,0 +1,97 @@
+#!/bin/bash
+# Run a tippr queue consumer
+# Usage: run-consumer <consumer_name>
+#
+# This script is called by systemd to run queue consumers.
+# The consumer name determines which queue processing function to call.
+
+set -e
+
+CONSUMER="$1"
+if [ -z "$CONSUMER" ]; then
+    echo "Usage: $0 <consumer_name>" >&2
+    exit 1
+fi
+
+# Source the tippr environment
+if [ -f /etc/default/tippr ]; then
+    . /etc/default/tippr
+fi
+
+# Defaults assume TIPPR_USER=tippr; these are overridden by /etc/default/tippr
+TIPPR_INI=${TIPPR_INI:-/home/tippr/src/tippr/r2/run.ini}
+VENV=${VIRTUAL_ENV:-/home/tippr/venv}
+
+cd "${TIPPR_ROOT:-/home/tippr/src/tippr/r2}"
+
+# Map consumer names to their Python commands
+case "$CONSUMER" in
+    vote_link_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.voting import consume_link_vote_queue; consume_link_vote_queue()"
+        ;;
+    vote_comment_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.voting import consume_comment_vote_queue; consume_comment_vote_queue()"
+        ;;
+    commentstree_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_commentstree_q; run_commentstree_q()"
+        ;;
+    newcomments_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_newcomments_q; run_newcomments_q()"
+        ;;
+    scraper_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.scraper import run_scraper_q; run_scraper_q()"
+        ;;
+    markread_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_markread_q; run_markread_q()"
+        ;;
+    del_account_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_del_account_q; run_del_account_q()"
+        ;;
+    author_query_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_author_query_q; run_author_query_q()"
+        ;;
+    subreddit_query_q*|subtippr_query_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_subreddit_query_q; run_subreddit_query_q()"
+        ;;
+    domain_query_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.db.queries import run_domain_query_q; run_domain_query_q()"
+        ;;
+    butler_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.butler import run_butler_q; run_butler_q()"
+        ;;
+    automoderator_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.automoderator import run_automoderator_q; run_automoderator_q()"
+        ;;
+    search_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.search import run_search_q; run_search_q()"
+        ;;
+    event_collector_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.eventcollector import run_event_collector_q; run_event_collector_q()"
+        ;;
+    modmail_email_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.emailer import run_modmail_email_q; run_modmail_email_q()"
+        ;;
+    sitemaps_q*)
+        exec "$VENV/bin/paster" run --proctitle "$CONSUMER" "$TIPPR_INI" -c \
+            "from r2.lib.sitemaps import run_sitemaps_q; run_sitemaps_q()"
+        ;;
+    *)
+        echo "Unknown consumer: $CONSUMER" >&2
+        exit 1
+        ;;
+esac
