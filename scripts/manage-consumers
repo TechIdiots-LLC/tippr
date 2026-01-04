@@ -6,8 +6,6 @@
 # This script reads consumer configuration from $TIPPR_CONSUMER_CONFIG
 # and manages the appropriate number of systemd service instances.
 
-set -e
-
 COMMAND="${1:-start}"
 TARGET="${2:-all}"
 
@@ -33,15 +31,21 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
         continue
     fi
 
-    # Read instance count
+    # Read instance count - strip whitespace and validate it's a number
     if [ -f "$consumerpath" ]; then
-        instance_count=$(cat "$consumerpath")
+        instance_count=$(tr -d '[:space:]' < "$consumerpath" | grep -E '^[0-9]+$' || echo "0")
     else
         instance_count=0
     fi
 
+    # Ensure instance_count is a valid number
+    if ! [[ "$instance_count" =~ ^[0-9]+$ ]]; then
+        echo "Warning: Invalid instance count for $consumer, skipping" >&2
+        continue
+    fi
+
     # Skip if no instances configured
-    if [ "$instance_count" -eq 0 ] 2>/dev/null; then
+    if [ "$instance_count" -eq 0 ]; then
         echo "Skipping $consumer (0 instances configured)"
         continue
     fi
