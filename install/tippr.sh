@@ -901,12 +901,12 @@ else
 fi
 TIPPRRESTART
 
-helper-script /usr/local/bin/tippr-flush <<REDDITFLUSH
+helper-script /usr/local/bin/tippr-flush <<TIPPRFLUSH
 #!/bin/bash
 echo flush_all | nc localhost 11211
 TIPPRFLUSH
 
-helper-script /usr/local/bin/tippr-serve <<REDDITSERVE
+helper-script /usr/local/bin/tippr-serve <<TIPPRSERVE
 #!/bin/bash
 cd $TIPPR_SRC/tippr/r2
 export PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC:\$PYTHONPATH"
