@@ -42,8 +42,15 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
         continue
     fi
 
-    # Read instance count - read only first line, strip non-digits
-    instance_count=$(head -n1 "$consumerpath" 2>/dev/null | tr -cd '0-9')
+    # Skip files containing NUL bytes or binary content (avoid ELF/binary inputs)
+    if grep -q $'\x00' "$consumerpath" 2>/dev/null; then
+        echo "Skipping binary file: $consumerpath"
+        continue
+    fi
+
+    # Read instance count - read only first line, strip NULs and non-digits
+    raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000')
+    instance_count=$(printf '%s' "$raw" | tr -cd '0-9')
 
     # Default to 0 if empty or invalid
     if [ -z "$instance_count" ]; then
