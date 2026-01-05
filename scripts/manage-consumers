@@ -80,7 +80,7 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
                 systemctl restart "$unit" || true
                 ;;
             status)
-                systemctl status "$unit" --no-pager || true
+                systemctl status "$unit" --no-pager --no-color || true
                 ;;
             enable)
                 echo "Enabling $unit"
