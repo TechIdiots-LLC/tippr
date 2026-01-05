@@ -48,19 +48,25 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
         continue
     fi
 
-    # Read instance count - read only first line, strip NULs and non-digits
-    # Also filter out any escape sequences or control characters
-    raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000-\037\177')
-    instance_count=$(printf '%s' "$raw" | tr -cd '0-9')
-
-    # Default to 0 if empty or invalid
-    if [ -z "$instance_count" ]; then
-        instance_count=0
+    # Read instance count - read only first line, strip control characters, take first word only
+    raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000-\037\177' | awk '{print $1}')
+    
+    # Validate it's a number and within reasonable range (1-100)
+    if ! [[ "$raw" =~ ^[0-9]+$ ]]; then
+        echo "Skipping $consumer (invalid count in $consumerpath)" >&2
+        continue
     fi
-
-    # Skip if no instances configured
+    
+    instance_count="$raw"
+    
+    # Skip if no instances configured or if count is unreasonably high
     if [ "$instance_count" -eq 0 ] 2>/dev/null; then
         echo "Skipping $consumer (0 instances configured)"
+        continue
+    fi
+    
+    if [ "$instance_count" -gt 100 ] 2>/dev/null; then
+        echo "Skipping $consumer (instance count $instance_count exceeds maximum of 100)" >&2
         continue
     fi
 
