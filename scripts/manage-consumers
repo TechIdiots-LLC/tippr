@@ -44,12 +44,13 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
 
     # Skip files containing NUL bytes or binary content (avoid ELF/binary inputs)
     if grep -q $'\x00' "$consumerpath" 2>/dev/null; then
-        echo "Skipping binary file: $consumerpath"
+        echo "Skipping binary file: $consumerpath" >&2
         continue
     fi
 
     # Read instance count - read only first line, strip NULs and non-digits
-    raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000')
+    # Also filter out any escape sequences or control characters
+    raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000-\037\177')
     instance_count=$(printf '%s' "$raw" | tr -cd '0-9')
 
     # Default to 0 if empty or invalid
@@ -69,26 +70,26 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
         case "$COMMAND" in
             start)
                 echo "Starting $unit"
-                systemctl start "$unit" || true
+                systemctl start "$unit" --plain 2>&1 || true
                 ;;
             stop)
                 echo "Stopping $unit"
-                systemctl stop "$unit" || true
+                systemctl stop "$unit" --plain 2>&1 || true
                 ;;
             restart)
                 echo "Restarting $unit"
-                systemctl restart "$unit" || true
+                systemctl restart "$unit" --plain 2>&1 || true
                 ;;
             status)
-                systemctl status "$unit" --no-pager --no-color || true
+                systemctl status "$unit" --plain --no-pager 2>&1 || true
                 ;;
             enable)
                 echo "Enabling $unit"
-                systemctl enable "$unit" || true
+                systemctl enable "$unit" --plain 2>&1 || true
                 ;;
             disable)
                 echo "Disabling $unit"
-                systemctl disable "$unit" || true
+                systemctl disable "$unit" --plain 2>&1 || true
                 ;;
             *)
                 echo "Unknown command: $COMMAND" >&2
