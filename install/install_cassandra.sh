@@ -35,8 +35,10 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     # Install Java 11 (required for Cassandra)
     apt-get install $APTITUDE_OPTIONS openjdk-11-jdk
 
-    # Add Apache Cassandra 4.1.x repository
-    echo "deb https://debian.cassandra.apache.org 41x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+    # Add Apache Cassandra 4.1.x repository if not already present
+    if ! grep -q "debian.cassandra.apache.org" /etc/apt/sources.list.d/cassandra.sources.list 2>/dev/null; then
+        echo "deb https://debian.cassandra.apache.org 41x main" | sudo tee /etc/apt/sources.list.d/cassandra.sources.list
+    fi
 
     # Import Cassandra GPG key
     curl https://downloads.apache.org/cassandra/KEYS | sudo apt-key add -
