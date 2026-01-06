@@ -42,6 +42,11 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
         continue
     fi
 
+    # Skip executable files
+    if [ -x "$consumerpath" ]; then
+        continue
+    fi
+    
     # Skip files containing NUL bytes or binary content (avoid ELF/binary inputs)
     if grep -q $'\x00' "$consumerpath" 2>/dev/null; then
         echo "Skipping binary file: $consumerpath" >&2
@@ -52,20 +57,26 @@ for consumerpath in "$CONSUMER_CONFIG"/*; do
     raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000-\037\177' | awk '{print $1}')
     
     # Validate it's a number and within reasonable range (1-100)
-    if ! [[ "$raw" =~ ^[0-9]+$ ]]; then
+    if ! [[ "$raw" =~ ^[0-9]+$ ]] || [ -z "$raw" ]; then
         echo "Skipping $consumer (invalid count in $consumerpath)" >&2
         continue
     fi
     
     instance_count="$raw"
     
+    # Additional safety check: ensure instance_count is actually numeric before using in seq
+    if ! [ "$instance_count" -eq "$instance_count" ] 2>/dev/null; then
+        echo "Skipping $consumer (non-numeric count)" >&2
+        continue
+    fi
+    
     # Skip if no instances configured or if count is unreasonably high
-    if [ "$instance_count" -eq 0 ] 2>/dev/null; then
+    if [ "$instance_count" -eq 0 ]; then
         echo "Skipping $consumer (0 instances configured)"
         continue
     fi
     
-    if [ "$instance_count" -gt 100 ] 2>/dev/null; then
+    if [ "$instance_count" -gt 100 ]; then
         echo "Skipping $consumer (instance count $instance_count exceeds maximum of 100)" >&2
         continue
     fi
