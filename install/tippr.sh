@@ -375,6 +375,7 @@ function copy_systemd {
                 -e "s|@TIPPR_SRC@|$TIPPR_SRC|g" \
                 -e "s|@TIPPR_VENV@|$TIPPR_VENV|g" \
                 -e "s|@TIPPR_ROOT@|$TIPPR_SRC/tippr/r2|g" \
+                -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
                 "$f" > "$dest"
         done
         systemctl daemon-reload
@@ -427,6 +428,18 @@ clone_tippr_service_repo activity "$TIPPR_ACTIVITY_REPO"
 # Install systemd units from the current repository immediately
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     copy_systemd $RUNDIR/..
+fi
+
+# Create the environment file early so services can use it
+CONSUMER_CONFIG_ROOT=$TIPPR_HOME/consumer-count.d
+if [ ! -f /etc/default/tippr ]; then
+    cat > /etc/default/tippr <<DEFAULT
+TIPPR_ROOT=$TIPPR_SRC/tippr/r2
+TIPPR_INI=$TIPPR_SRC/tippr/r2/run.ini
+TIPPR_USER=$TIPPR_USER
+TIPPR_GROUP=$TIPPR_GROUP
+TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
+DEFAULT
 fi
 
 # Patch activity and websockets setup.py to use new baseplate module path
@@ -1198,19 +1211,8 @@ fi
 ###############################################################################
 # Job Environment
 ###############################################################################
-CONSUMER_CONFIG_ROOT=$TIPPR_HOME/consumer-count.d
-
-if [ ! -f /etc/default/tippr ]; then
-    cat > /etc/default/tippr <<DEFAULT
-export TIPPR_ROOT=$TIPPR_SRC/tippr/r2
-export TIPPR_INI=$TIPPR_SRC/tippr/r2/run.ini
-export TIPPR_USER=$TIPPR_USER
-export TIPPR_GROUP=$TIPPR_GROUP
-export TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
-alias wrap-job=$TIPPR_SRC/tippr/scripts/wrap-job
-alias manage-consumers=$TIPPR_SRC/tippr/scripts/manage-consumers
-DEFAULT
-fi
+# CONSUMER_CONFIG_ROOT is already defined earlier in the script.
+# /etc/default/tippr is already created earlier in the script.
 
 ###############################################################################
 # Queue Processors

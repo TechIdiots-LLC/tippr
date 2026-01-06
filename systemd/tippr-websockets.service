@@ -9,10 +9,10 @@ Type=simple
 User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 WorkingDirectory=@TIPPR_SRC@/websockets
-EnvironmentFile=/etc/default/tippr
+EnvironmentFile=-/etc/default/tippr
 Environment=PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_tippr
-ExecStartPre=/bin/mkdir -p /tmp/prometheus_tippr
-ExecStartPre=/bin/chown @TIPPR_USER@:@TIPPR_GROUP@ /tmp/prometheus_tippr
+ExecStartPre=+/bin/mkdir -p /tmp/prometheus_tippr
+ExecStartPre=+/bin/chown @TIPPR_USER@:@TIPPR_GROUP@ /tmp/prometheus_tippr
 ExecStart=@TIPPR_VENV@/bin/baseplate-serve --bind 127.0.0.1:9001 @TIPPR_SRC@/websockets/example.ini
 Restart=on-failure
 TimeoutStartSec=120
