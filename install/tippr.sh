@@ -375,6 +375,10 @@ function copy_systemd {
                 -e "s|@TIPPR_SRC@|$TIPPR_SRC|g" \
                 -e "s|@TIPPR_VENV@|$TIPPR_VENV|g" \
                 -e "s|@TIPPR_ROOT@|$TIPPR_SRC/tippr/r2|g" \
+                -e "s|@TIPPR_INI@|$TIPPR_SRC/tippr/r2/run.ini|g" \
+                -e "s|\${TIPPR_INI}|$TIPPR_SRC/tippr/r2/run.ini|g" \
+                -e "s|\"\${TIPPR_INI}\"|\"$TIPPR_SRC/tippr/r2/run.ini\"|g" \
+                -e "s|\${TIPPR_ROOT}|$TIPPR_SRC/tippr/r2|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job ||g" \
                 "$f" > "$dest"
@@ -436,11 +440,11 @@ CONSUMER_CONFIG_ROOT=$TIPPR_HOME/consumer-count.d
 export TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
 if [ ! -f /etc/default/tippr ]; then
     cat > /etc/default/tippr <<DEFAULT
-TIPPR_ROOT=$TIPPR_SRC/tippr/r2
-TIPPR_INI=$TIPPR_SRC/tippr/r2/run.ini
-TIPPR_USER=$TIPPR_USER
-TIPPR_GROUP=$TIPPR_GROUP
-TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
+TIPPR_ROOT=${TIPPR_SRC}/tippr/r2
+TIPPR_INI=${TIPPR_SRC}/tippr/r2/run.ini
+TIPPR_USER=${TIPPR_USER}
+TIPPR_GROUP=${TIPPR_GROUP}
+TIPPR_CONSUMER_CONFIG=${CONSUMER_CONFIG_ROOT}
 DEFAULT
 fi
 
