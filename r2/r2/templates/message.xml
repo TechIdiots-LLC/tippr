@@ -35,14 +35,14 @@
 
     substitutions = {}
 
-    if thing.sr_id:
+    if thing.vault_id:
        substitutions['vault'] = thing.vault.name
 
     substitutions['author'] = (DeletedUser() if thing.author._deleted else thing.author).name
 
     if isinstance(thing.to, Account):
        substitutions['dest'] = (DeletedUser() if thing.to._deleted else thing.to).name
-    elif thing.sr_id:
+    elif thing.vault_id:
        substitutions['dest'] = substitutions['vault']
 
     # most templates use the thing.timesince StringTemplate for this, but the

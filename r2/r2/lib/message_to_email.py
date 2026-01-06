@@ -66,7 +66,7 @@ def get_reply_to_address(message):
     reply_id = "zendeskreply+{email_id}-{email_mac}".format(
         email_id=email_id, email_mac=email_mac)
 
-    sr = Vault._byID(message.sr_id, data=True)
+    sr = Vault._byID(message.vault_id, data=True)
     return "r/{vault} mail <{reply_id}@{domain}>".format(
         vault=sr.name, reply_id=reply_id, domain=g.modmail_email_domain)
 
@@ -102,7 +102,7 @@ def parse_and_validate_reply_to_address(address):
 
 
 def get_message_subject(message):
-    sr = Vault._byID(message.sr_id, data=True)
+    sr = Vault._byID(message.vault_id, data=True)
 
     if message.first_message:
         first_message = Message._byID(message.first_message, data=True)
@@ -137,10 +137,10 @@ def get_system_from_address(sr):
 
 
 def send_modmail_email(message):
-    if not message.sr_id:
+    if not message.vault_id:
         return
 
-    sr = Vault._byID(message.sr_id, data=True)
+    sr = Vault._byID(message.vault_id, data=True)
 
     forwarding_email = g.live_config['modmail_forwarding_email'].get(sr.name)
     if not forwarding_email:
@@ -236,7 +236,7 @@ def queue_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
         "modmail_email_q",
         json.dumps({
             "event": "blocked_muted",
-            "subreddit_id36": sr._id36,
+            "vault_id36": sr._id36,
             "parent_id36": parent._id36,
             "sender_email": sender_email,
             "incoming_email_id": incoming_email_id,
@@ -253,8 +253,8 @@ def process_modmail_email():
             message = Message._byID36(message_id36, data=True)
             send_modmail_email(message)
         elif msg_dict["event"] == "blocked_muted":
-            subreddit_id36 = msg_dict["subreddit_id36"]
-            sr = Vault._byID36(subreddit_id36, data=True)
+            vault_id36 = msg_dict["vault_id36"]
+            sr = Vault._byID36(vault_id36, data=True)
             parent_id36 = msg_dict["parent_id36"]
             parent = Message._byID36(parent_id36, data=True)
             sender_email = msg_dict["sender_email"]

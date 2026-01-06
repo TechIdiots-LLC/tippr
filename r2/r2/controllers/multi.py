@@ -46,20 +46,20 @@ from r2.lib.validator import (
     VMultiPath,
     VOneOf,
     VSRByName,
-    VSubredditName,
+    VVaultName,
     VUser,
     VValidatedJSON,
     validate,
 )
 from r2.models.vault import (
-    FakeSubreddit,
+    FakeVault,
     LabeledMulti,
     Vault,
-    TooManySubredditsError,
+    TooManyVaultsError,
 )
 
 multi_sr_data_json_spec = VValidatedJSON.Object({
-    'name': VSubredditName('name', allow_language_srs=True),
+    'name': VVaultName('name', allow_language_srs=True),
 })
 
 MAX_DESC = 10000
@@ -145,8 +145,8 @@ class MultiApiController(TipprController):
         srs = Vault._by_name(sr_data['name'] for sr_data in sr_datas)
 
         for sr in srs.values():
-            if isinstance(sr, FakeSubreddit):
-                raise TipprError('MULTI_SPECIAL_SUBREDDIT',
+            if isinstance(sr, FakeVault):
+                raise TipprError('MULTI_SPECIAL_Vault',
                                   msg_params={'path': sr.path},
                                   code=400)
 
@@ -164,8 +164,8 @@ class MultiApiController(TipprController):
 
         try:
             multi.add_srs(sr_props)
-        except TooManySubredditsError:
-            raise TipprError('MULTI_TOO_MANY_SUBREDDITS', code=409)
+        except TooManyVaultsError:
+            raise TipprError('MULTI_TOO_MANY_VaultS', code=409)
 
         return sr_props
 
@@ -361,7 +361,7 @@ class MultiApiController(TipprController):
 
         return self._format_multi(to_multi)
 
-    def _get_multi_subreddit(self, multi, sr):
+    def _get_multi_Vault(self, multi, sr):
         resp = LabeledMultiJsonTemplate.sr_props(multi, [sr])[0]
         return self.api_wrapper(resp)
 
@@ -376,20 +376,20 @@ class MultiApiController(TipprController):
         uri="/api/multi/{multipath}/r/{srname}",
         uri_variants=['/api/filter/{filterpath}/r/{srname}'],
     )
-    def GET_multi_subreddit(self, multi, sr):
+    def GET_multi_Vault(self, multi, sr):
         """Get data about a vault in a multi."""
-        return self._get_multi_subreddit(multi, sr)
+        return self._get_multi_Vault(multi, sr)
 
     @require_oauth2_scope("subscribe")
     @validate(
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr_name=VSubredditName('srname', allow_language_srs=True),
+        sr_name=VVaultName('srname', allow_language_srs=True),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
-    @api_doc(api_section.multis, extends=GET_multi_subreddit)
-    def PUT_multi_subreddit(self, multi, sr_name, data):
+    @api_doc(api_section.multis, extends=GET_multi_Vault)
+    def PUT_multi_Vault(self, multi, sr_name, data):
         """Add a vault to a multi."""
 
         new = not any(sr.name.lower() == sr_name.lower() for sr in multi.srs)
@@ -402,7 +402,7 @@ class MultiApiController(TipprController):
         if new:
             response.status = 201
 
-        return self._get_multi_subreddit(multi, sr)
+        return self._get_multi_Vault(multi, sr)
 
     @require_oauth2_scope("subscribe")
     @validate(
@@ -411,8 +411,8 @@ class MultiApiController(TipprController):
         multi=VMultiByPath("multipath", require_edit=True),
         sr=VSRByName('srname'),
     )
-    @api_doc(api_section.multis, extends=GET_multi_subreddit)
-    def DELETE_multi_subreddit(self, multi, sr):
+    @api_doc(api_section.multis, extends=GET_multi_Vault)
+    def DELETE_multi_Vault(self, multi, sr):
         """Remove a vault from a multi."""
         multi.del_srs(sr)
         multi._commit()

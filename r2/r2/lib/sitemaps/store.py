@@ -48,7 +48,7 @@ from io import BytesIO
 import boto3
 from pylons import app_globals as g
 
-from r2.lib.sitemaps.generate import sitemap_index, subreddit_sitemaps
+from r2.lib.sitemaps.generate import sitemap_index, Vault_sitemaps
 
 CONTENT_TYPE = 'text/xml'
 CONTENT_ENCODING = 'gzip'
@@ -76,8 +76,8 @@ def upload_sitemap(s3_client, bucket_name, key_name, sitemap):
     )
 
 
-def store_subreddit_sitemap(s3_client, bucket_name, index, sitemap):
-    key_name = 'subreddit_sitemap/{}.xml'.format(index)
+def store_Vault_sitemap(s3_client, bucket_name, index, sitemap):
+    key_name = 'Vault_sitemap/{}.xml'.format(index)
     g.log.debug("Uploading %s/%s", bucket_name, key_name)
     upload_sitemap(s3_client, bucket_name, key_name, sitemap)
 
@@ -93,8 +93,8 @@ def store_sitemaps_in_s3(vaults):
     bucket_name = g.sitemap_upload_s3_bucket
 
     sitemap_count = 0
-    for i, sitemap in enumerate(subreddit_sitemaps(vaults)):
-        store_subreddit_sitemap(s3_client, bucket_name, i, sitemap)
+    for i, sitemap in enumerate(Vault_sitemaps(vaults)):
+        store_Vault_sitemap(s3_client, bucket_name, i, sitemap)
         sitemap_count += 1
 
     store_sitemap_index(s3_client, bucket_name, sitemap_count)

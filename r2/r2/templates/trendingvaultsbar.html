@@ -21,25 +21,19 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import format_html
+    from r2.models import Link
 %>
-<%namespace file="utils.html" import="plain_link"/>
 
-<div id="sr-header-area">
-  <div class="width-clip">
-    ${thing.my_subreddits_dropdown}
-
-    <div class="sr-list">
-      %for m in thing.sr_bar():
-        ${m.render()}
-      %endfor
-
-      <%
-        editmore = 'edit' if c.user_is_loggedin else 'more'
-      %>
-    </div>
-
-    ${plain_link(format_html("%s &raquo;", _(editmore)),
-                 "/vaults/", id="sr-more-link")}
+<div class="trending-vaults">
+  <div class="rank-spacer"></div>
+  <div class="midcol-spacer"></div>
+  <div class="trending-vaults-content">
+    <strong>${_('trending vaults')}</strong>
+    <ul>
+    %for i, Vault_name in enumerate(thing.Vault_names):
+      <li><a href="${Link.tracking_link('/v/%s'%Vault_name, context='trending_Vaults_bar', element_name='trending_sr_%s'%(i+1))}" target="_blank">/r/${Vault_name}</a></li>
+    %endfor
+    </ul>
+    <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>
   </div>
 </div>

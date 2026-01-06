@@ -32,7 +32,7 @@ from r2.lib.inventory_optimization import get_maximized_pageviews
 from r2.lib.utils import to_date, tup
 from r2.models.bidding import Bid, PromotionWeights
 from r2.models.promo import NO_TRANSACTION, Location, PromoCampaign
-from r2.models.vault import DefaultSR, FakeSubreddit, LocalizedDefaultSubreddits, Vault
+from r2.models.vault import DefaultVault, FakeVault, LocalizedDefaultVaults, Vault
 from r2.models import traffic
 from r2.models.promo_metrics import LocationPromoMetrics, PromoMetrics
 
@@ -56,7 +56,7 @@ def update_prediction_data():
 
     # combine front page values (sometimes frontpage gets '' for its name)
     if '' in min_daily_by_sr:
-        fp = DefaultSR.name.lower()
+        fp = DefaultVault.name.lower()
         min_daily_by_sr[fp] = min_daily_by_sr.get(fp, 0) + min_daily_by_sr['']
         del min_daily_by_sr['']
 
@@ -73,7 +73,7 @@ def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
     stop = end_date
     start = stop - timedelta(ndays)
     time_points = traffic.get_time_points('day', start, stop)
-    cls = traffic.PageviewsBySubredditAndPath
+    cls = traffic.PageviewsByVaultAndPath
     q = (traffic.Session.query(cls.srpath, func.min(cls.pageview_count))
                                .filter(cls.interval == 'day')
                                .filter(cls.date.in_(time_points))
@@ -155,13 +155,13 @@ def get_predicted_pageviews(srs, location=None):
     sr_names = [sr.name for sr in srs]
 
     # default vaults require a different inventory factor
-    default_srids = LocalizedDefaultSubreddits.get_global_defaults()
+    default_srids = LocalizedDefaultVaults.get_global_defaults()
 
     if location:
         no_location = Location(None)
-        r = LocationPromoMetrics.get(DefaultSR, [no_location, location])
-        location_pageviews = r[(DefaultSR, location)]
-        all_pageviews = r[(DefaultSR, no_location)]
+        r = LocationPromoMetrics.get(DefaultVault, [no_location, location])
+        location_pageviews = r[(DefaultVault, location)]
+        all_pageviews = r[(DefaultVault, no_location)]
         if all_pageviews:
             location_factor = float(location_pageviews) / float(all_pageviews)
         else:
@@ -173,7 +173,7 @@ def get_predicted_pageviews(srs, location=None):
     daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
     ret = {}
     for sr in srs:
-        if not isinstance(sr, FakeSubreddit) and sr._id in default_srids:
+        if not isinstance(sr, FakeVault) and sr._id in default_srids:
             default_factor = DEFAULT_INVENTORY_FACTOR
         else:
             default_factor = INVENTORY_FACTOR
@@ -188,7 +188,7 @@ def get_predicted_pageviews(srs, location=None):
 
 def make_target_name(target):
     name = ("collection: %s" % target.collection.name if target.is_collection
-                                           else target.subreddit_name)
+                                           else target.Vault_name)
     return name
 
 
@@ -205,7 +205,7 @@ def find_campaigns(srs, start, end, ignore):
             iter(new_campaigns_by_date.values())))
         all_campaigns.update(new_campaigns)
         new_sr_names = set(chain.from_iterable(
-            campaign.target.subreddit_names for campaign in new_campaigns
+            campaign.target.Vault_names for campaign in new_campaigns
         ))
         new_sr_names -= all_sr_names
         srs = set(Vault._by_name(new_sr_names).values())
@@ -242,13 +242,13 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
     # get all the campaigns directly and indirectly involved in our target
     targets, is_single = tup(targets, ret_is_single=True)
     target_srs = list(chain.from_iterable(
-        target.subreddits_slow for target in targets))
+        target.Vaults_slow for target in targets))
     all_campaigns = find_campaigns(target_srs, start, end, ignore)
 
     # get predicted pageviews for each vault and location
     all_sr_names = {sr.name for sr in target_srs}
     all_sr_names |= set(chain.from_iterable(
-        campaign.target.subreddit_names for campaign in all_campaigns
+        campaign.target.Vault_names for campaign in all_campaigns
     ))
     all_srs = list(Vault._by_name(all_sr_names).values())
     pageviews_dict = {location: get_predicted_pageviews(all_srs, location)
@@ -264,7 +264,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
 
     for campaign in all_campaigns:
         camp_dates = set(get_date_range(campaign.start_date, campaign.end_date))
-        sr_names = tuple(sorted(campaign.target.subreddit_names))
+        sr_names = tuple(sorted(campaign.target.Vault_names))
         daily_impressions = campaign.impressions / campaign.ndays
 
         for location in locations:
@@ -281,7 +281,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
     ret = {}
     for target in targets:
         name = make_target_name(target)
-        subreddit_names = target.subreddit_names
+        Vault_names = target.Vault_names
         ret[name] = {}
         for date in dates:
             pageviews_by_location = {}
@@ -290,7 +290,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
                 booked_by_target = booked_dict[date][location]
                 pageviews_by_sr_name = pageviews_dict[location]
                 pageviews_by_location[location] = get_maximized_pageviews(
-                    subreddit_names, booked_by_target, pageviews_by_sr_name)
+                    Vault_names, booked_by_target, pageviews_by_sr_name)
             # available pageviews is the minimum from all locations
             min_pageviews = min(pageviews_by_location.values())
             if PERCENT_MOBILE != 0:

@@ -61,7 +61,7 @@ class WebLogController(TipprController):
         # Whitelist tags to keep the frontend from creating too many keys in statsd
         valid_frontend_log_tags = {
             'unknown',
-            'reddit-config-migrate-error',
+            'tippr-config-migrate-error',
         }
 
         # prevent simple CSRF by requiring a custom header

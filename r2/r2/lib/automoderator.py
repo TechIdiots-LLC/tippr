@@ -87,7 +87,7 @@ else:
 
 DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this vault](/message/compose/?to=/r/{{vault}}) if you have any questions or concerns.*"
 
-rules_by_subreddit = {}
+rules_by_Vault = {}
 
 unnumbered_placeholders_regex = re.compile(r"\{\{(match(?:-[^\d-]+?)?)\}\}")
 match_placeholders_regex = re.compile(r"\{\{match-(?:([^}]+?)-)?(\d+)\}\}")
@@ -316,7 +316,7 @@ class Ruleset(object):
         # fetch supplemental data to use throughout
         data = {}
         data["item"] = item
-        data["vault"] = item.subreddit_slow
+        data["vault"] = item.vault_slow
 
         author = item.author_slow
         if not author._deleted:
@@ -1510,7 +1510,7 @@ def run():
             if not isinstance(item, (Link, Comment)):
                 return
 
-            vault = item.subreddit_slow
+            vault = item.vault_slow
             
             wiki_page_id = wiki_id(vault._id36, "config/automoderator")
             wiki_page_fullname = "WikiPage_%s" % wiki_page_id
@@ -1521,10 +1521,10 @@ def run():
             # initialize rules for the vault if we haven't already
             # or if the page has been edited since we last initialized
             need_to_init = False
-            if vault._id not in rules_by_subreddit:
+            if vault._id not in rules_by_Vault:
                 need_to_init = True
             else:
-                rules = rules_by_subreddit[vault._id]
+                rules = rules_by_Vault[vault._id]
                 if last_edited > rules.init_time:
                     need_to_init = True
 
@@ -1541,7 +1541,7 @@ def run():
                     print("ERROR: Invalid config in /r/%s" % vault.name)
                     return
 
-                rules_by_subreddit[vault._id] = rules
+                rules_by_Vault[vault._id] = rules
 
                 timer.stop()
 

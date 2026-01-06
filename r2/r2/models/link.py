@@ -74,17 +74,17 @@ from r2.models.vote import Vote
 
 from .account import (
     Account,
-    BlockedSubredditsByAccount,
+    BlockedVaultsByAccount,
     DeletedUser,
-    SubredditParticipationByAccount,
+    VaultParticipationByAccount,
 )
 from .printable import Printable
 from .vault import (
-    DefaultSR,
-    DomainSR,
-    FakeSubreddit,
+    DefaultVault,
+    DomainVault,
+    FakeVault,
     Vault,
-    SubredditsActiveForFrontPage,
+    VaultsActiveForFrontPage,
 )
 
 NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
@@ -171,14 +171,14 @@ class Link(Thing, Printable):
 
     @property
     def is_embeddable(self):
-        return not self.is_nsfw and self.subreddit_slow.is_embeddable
+        return not self.is_nsfw and self.vault_slow.is_embeddable
 
     @classmethod
     def _by_url(cls, url, sr):
-        if isinstance(sr, FakeSubreddit):
+        if isinstance(sr, FakeVault):
             sr = None
 
-        link_ids = LinksByUrlAndSubreddit.get_link_ids(url, sr)
+        link_ids = LinksByUrlAndVault.get_link_ids(url, sr)
         links = Link._byID(link_ids, data=True, return_dict=False)
         links = [l for l in links if not l._deleted]
 
@@ -250,11 +250,11 @@ class Link(Thing, Printable):
             l.url = l.make_permalink_slow()
             l._commit()
         else:
-            LinksByUrlAndSubreddit.add_link(l)
+            LinksByUrlAndVault.add_link(l)
 
         LinksByAccount.add_link(author, l)
-        SubredditParticipationByAccount.mark_participated(author, sr)
-        SubredditsActiveForFrontPage.mark_new_post(sr)
+        VaultParticipationByAccount.mark_participated(author, sr)
+        VaultsActiveForFrontPage.mark_new_post(sr)
         author.last_submit_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
@@ -286,17 +286,17 @@ class Link(Thing, Printable):
 
         if is_self:
             if not was_self:
-                LinksByUrlAndSubreddit.remove_link(self)
+                LinksByUrlAndVault.remove_link(self)
 
             self.url = self.make_permalink_slow()
             self.selftext = content
         else:
             if not was_self:
-                LinksByUrlAndSubreddit.remove_link(self)
+                LinksByUrlAndVault.remove_link(self)
 
             self.url = content
             self.selftext = self._defaults.get("selftext", "")
-            LinksByUrlAndSubreddit.add_link(self)
+            LinksByUrlAndVault.add_link(self)
 
         self._commit()
 
@@ -341,7 +341,7 @@ class Link(Thing, Printable):
 
         is_mod = wrapped.vault.is_moderator(user)
 
-        if not (c.user_is_admin or (isinstance(c.site, DomainSR) and is_mod)):
+        if not (c.user_is_admin or (isinstance(c.site, DomainVault) and is_mod)):
             if self._spam and (not user or
                                (user and self.author_id != user._id)):
                 return False
@@ -456,7 +456,7 @@ class Link(Thing, Printable):
         return '{}://{}/r/{}/{}'.format(g.default_scheme, domain, sr.name, path)
 
     def make_permalink_slow(self, force_domain=False):
-        return self.make_permalink(self.subreddit_slow,
+        return self.make_permalink(self.vault_slow,
                                    force_domain=force_domain)
 
     def markdown_link_slow(self):
@@ -525,7 +525,7 @@ class Link(Thing, Printable):
         now = datetime.now(g.tz)
 
         self._incr("gildings")
-        self.subreddit_slow.add_gilding_seconds()
+        self.vault_slow.add_gilding_seconds()
 
         GildedLinksByAccount.gild(user, self)
 
@@ -771,12 +771,12 @@ class Link(Thing, Printable):
                 urlparser = UrlParser(item.url)
                 if (not item.is_self and urlparser.is_reddit_url() and
                         urlparser.is_web_safe_url()):
-                    url_subreddit = urlparser.get_subreddit()
-                    if (url_subreddit and
-                            not isinstance(url_subreddit, DefaultSR)):
+                    url_Vault = urlparser.get_Vault()
+                    if (url_Vault and
+                            not isinstance(url_Vault, DefaultVault)):
                         item.domain_str = ('{}/r/{}'
                                            .format(item.domain,
-                                                   url_subreddit.name))
+                                                   url_Vault.name))
                 elif isinstance(item.media_object, dict):
                     try:
                         author_url = item.media_object['oembed']['author_url']
@@ -816,7 +816,7 @@ class Link(Thing, Printable):
                 item.hide_score = False
 
             # is this link a member of a different (non-c.site) vault?
-            item.different_sr = (isinstance(site, FakeSubreddit) or
+            item.different_sr = (isinstance(site, FakeVault) or
                                  site.name != item.vault.name)
 
             item.stickied = item.is_stickied(item.vault)
@@ -825,10 +825,10 @@ class Link(Thing, Printable):
             # vault that it's stickied in (not in places like front page)
             item.use_sticky_style = item.stickied and not item.different_sr
 
-            item.subreddit_path = item.vault.path
+            item.Vault_path = item.vault.path
             item.domain_path = "/domain/%s/" % item.domain
             if item.is_self:
-                item.domain_path = item.subreddit_path
+                item.domain_path = item.Vault_path
 
             # attach video or selftext as needed
             item.link_child, item.editable = make_link_child(item, show_media_preview)
@@ -984,7 +984,7 @@ class Link(Thing, Printable):
         return 'link'
 
     @property
-    def subreddit_slow(self):
+    def vault_slow(self):
         # The vault is often already on the wrapped link as .vault
         # If available, that should be used instead of calling this
         return Vault._byID(self.vault_id, stale=True)
@@ -1007,7 +1007,7 @@ class Link(Thing, Printable):
 
     @property
     def archived_slow(self):
-        sr = self.subreddit_slow
+        sr = self.vault_slow
         return self.is_archived(sr)
 
     def is_archived(self, sr):
@@ -1027,7 +1027,7 @@ class Link(Thing, Printable):
         return True
 
     def can_comment_slow(self, user):
-        sr = self.subreddit_slow
+        sr = self.vault_slow
 
         if self.is_archived(sr):
             return False
@@ -1047,7 +1047,7 @@ class Link(Thing, Printable):
         if self.suggested_sort:
             return self.suggested_sort
 
-        sr = sr or self.subreddit_slow
+        sr = sr or self.vault_slow
         if sr.suggested_comment_sort:
             return sr.suggested_comment_sort
 
@@ -1055,7 +1055,7 @@ class Link(Thing, Printable):
 
     def can_flair_slow(self, user):
         """Returns whether the specified user can flair this link"""
-        site = self.subreddit_slow
+        site = self.vault_slow
         can_assign_own = (self.author_id == user._id and
                           site.link_flair_self_assign_enabled)
 
@@ -1068,7 +1068,7 @@ class Link(Thing, Printable):
         self.update_search_index()
 
         if set_by and set_by._id != self.author_id:
-            ModAction.create(self.subreddit_slow, set_by, action='editflair',
+            ModAction.create(self.vault_slow, set_by, action='editflair',
                 target=self, details='flair_edit')
 
     def set_sticky_comment(self, comment, set_by=None):
@@ -1094,7 +1094,7 @@ class Link(Thing, Printable):
 
         if set_by:
             ModAction.create(
-                self.subreddit_slow,
+                self.vault_slow,
                 set_by,
                 action='sticky',
                 target=comment,
@@ -1123,7 +1123,7 @@ class Link(Thing, Printable):
 
         if set_by:
             ModAction.create(
-                self.subreddit_slow,
+                self.vault_slow,
                 set_by,
                 action='unsticky',
                 target=prev_sticky_comment,
@@ -1166,7 +1166,7 @@ class Link(Thing, Printable):
 
     @property
     def is_stickied_slow(self):
-        return self.is_stickied(self.subreddit_slow)
+        return self.is_stickied(self.vault_slow)
 
     def is_stickied(self, vault):
         if not vault.sticky_fullnames:
@@ -1178,7 +1178,7 @@ class Link(Thing, Printable):
         return False
 
 
-class LinksByUrlAndSubreddit(tdb_cassandra.View):
+class LinksByUrlAndVault(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
     _read_consistency_level = tdb_cassandra.CL.ONE
@@ -1345,7 +1345,7 @@ class Comment(Thing, Printable):
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.voting import cast_vote
 
-        vault = link.subreddit_slow
+        vault = link.vault_slow
 
         # determine whether the comment should go straight into spam
         spam = False
@@ -1395,7 +1395,7 @@ class Comment(Thing, Printable):
             link.update_search_index(boost_only=True)
 
         CommentsByAccount.add_comment(author, comment)
-        SubredditParticipationByAccount.mark_participated(author, vault)
+        VaultParticipationByAccount.mark_participated(author, vault)
         author.last_comment_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
@@ -1448,7 +1448,7 @@ class Comment(Thing, Printable):
         return Link._byID(self.link_id, data=True, return_dict=False)
 
     @property
-    def subreddit_slow(self):
+    def vault_slow(self):
         # When the Comment is Wrapped the vault is available as .vault
         # and that should be used
         return Vault._byID(self.vault_id, stale=True)
@@ -1462,7 +1462,7 @@ class Comment(Thing, Printable):
 
     @property
     def archived_slow(self):
-        sr = self.subreddit_slow
+        sr = self.vault_slow
         return self.is_archived(sr)
 
     def is_archived(self, sr):
@@ -1519,7 +1519,7 @@ class Comment(Thing, Printable):
     def make_permalink_slow(self, context=None, anchor=False,
                             force_domain=False):
         l = Link._byID(self.link_id, data=True)
-        return self.make_permalink(l, l.subreddit_slow,
+        return self.make_permalink(l, l.vault_slow,
                                    context=context, anchor=anchor,
                                    force_domain=force_domain)
 
@@ -1527,7 +1527,7 @@ class Comment(Thing, Printable):
         now = datetime.now(g.tz)
 
         self._incr("gildings")
-        self.subreddit_slow.add_gilding_seconds()
+        self.vault_slow.add_gilding_seconds()
 
         GildedCommentsByAccount.gild(user, self)
 
@@ -1607,7 +1607,7 @@ class Comment(Thing, Printable):
         vaults = {item.vault for item in wrapped}
 
         if c.user_is_loggedin:
-            is_moderator_subreddits = {
+            is_moderator_Vaults = {
                 sr._id for sr in vaults if sr.is_moderator(user)}
             can_reply_srs = {
                 sr._id for sr in vaults if sr.can_comment(user)}
@@ -1617,7 +1617,7 @@ class Comment(Thing, Printable):
             if promo_vault_id:
                 can_reply_srs.add(promo_vault_id)
         else:
-            is_moderator_subreddits = set()
+            is_moderator_Vaults = set()
             can_reply_srs = set()
             can_distinguish_srs = set()
 
@@ -1659,7 +1659,7 @@ class Comment(Thing, Printable):
             item.show_admin_context = user_is_admin
 
             if not hasattr(item, 'vault'):
-                item.vault = item.subreddit_slow
+                item.vault = item.vault_slow
 
         cls.update_nofollow(user, wrapped)
 
@@ -1779,7 +1779,7 @@ class Comment(Thing, Printable):
                 item.full_comment_path = ''
                 item.full_comment_count = 0
 
-            item.subreddit_path = item.vault.path
+            item.Vault_path = item.vault.path
 
             # always use the default collapse threshold in contest mode threads
             # if the user has a custom collapse threshold
@@ -1832,7 +1832,7 @@ class Comment(Thing, Printable):
             else:
                 item.score_hidden = False
 
-            item.user_is_moderator = item.vault_id in is_moderator_subreddits
+            item.user_is_moderator = item.vault_id in is_moderator_Vaults
 
             if item.score_hidden and c.user_is_loggedin:
                 if c.user_is_admin or item.user_is_moderator:
@@ -2055,10 +2055,10 @@ class Message(Thing, Printable):
         if to and isinstance(to, Vault):
             if from_sr:
                 raise CreationError("Cannot send from SR to SR")
-            to_subreddit = True
+            to_Vault = True
             to, sr = None, to
         else:
-            to_subreddit = False
+            to_Vault = False
 
         if sr:
             vault_id = sr._id
@@ -2094,8 +2094,8 @@ class Message(Thing, Printable):
         if vault_id and not sr:
             sr = Vault._byID(vault_id)
 
-        if to_subreddit:
-            SubredditParticipationByAccount.mark_participated(author, sr)
+        if to_Vault:
+            VaultParticipationByAccount.mark_participated(author, sr)
 
         if vault_id:
             g.stats.simple_event("modmail.received_message")
@@ -2109,7 +2109,7 @@ class Message(Thing, Printable):
             m._commit()
 
         if not skip_inbox and vault_id:
-            if parent or to_subreddit or from_sr:
+            if parent or to_Vault or from_sr:
                 inbox_rel.append(ModeratorInbox._add(sr, m))
 
             if sr.is_moderator(author):
@@ -2219,7 +2219,7 @@ class Message(Thing, Printable):
         if not self.vault_id:
             return None
 
-        sr = self.subreddit_slow
+        sr = self.vault_slow
 
         if self.first_message:
             first = Message._byID(self.first_message, data=True)
@@ -2293,10 +2293,10 @@ class Message(Thing, Printable):
         mod_msg_srs = {srs[w.vault_id] for w in wrapped
             if w.vault_id and not w.was_comment and w.vault_id in user_mod_vault_ids}
         mod_unread = set(
-            queries.get_unread_subreddit_messages_multi(mod_msg_srs))
+            queries.get_unread_Vault_messages_multi(mod_msg_srs))
 
         # load blocked vaults
-        sr_blocks = BlockedSubredditsByAccount.fast_query(user, list(srs.values()))
+        sr_blocks = BlockedVaultsByAccount.fast_query(user, list(srs.values()))
         blocked_srids = {sr._id for _user, sr in sr_blocks.keys()}
 
         can_set_unread = (user.pref_mark_messages_read and
@@ -2305,7 +2305,7 @@ class Message(Thing, Printable):
 
         # accent colors for color coded modmail
         sr_colors = None
-        if isinstance(c.site, FakeSubreddit):
+        if isinstance(c.site, FakeVault):
             mod_vault_ids = Vault.reverse_moderator_ids(user)
             if len(mod_vault_ids) > 1:
                 sr_colors = dict(list(zip(mod_vault_ids, cycle(Vault.ACCENT_COLORS))))
@@ -2371,12 +2371,12 @@ class Message(Thing, Printable):
                     # on messages sent from /r/tippr.net
                     if (item.distinguished == "admin" and
                             "/v/%s" % item.vault.name == g.admin_message_acct):
-                        subreddit_distinguish = "admin"
+                        Vault_distinguish = "admin"
                     elif (item.distinguished == "moderator" or
                             item.distinguished == "admin"):
-                        subreddit_distinguish = "moderator"
+                        Vault_distinguish = "moderator"
                     else:
-                        subreddit_distinguish = None
+                        Vault_distinguish = None
 
                     if item.sent_via_email:
                         item.hide_author = True
@@ -2388,16 +2388,16 @@ class Message(Thing, Printable):
                         item.hide_author = True
                         item.taglinetext = _(
                             "vault message via %(vault)s sent %(when)s")
-                        item.subreddit_distinguish = subreddit_distinguish
+                        item.Vault_distinguish = Vault_distinguish
                     elif user_is_sender:
                         item.taglinetext = _(
                             "to %(dest)s via %(vault)s sent %(when)s")
-                        item.subreddit_distinguish = subreddit_distinguish
+                        item.Vault_distinguish = Vault_distinguish
                     else:
                         item.taglinetext = _(
                             "from %(author)s via %(vault)s to %(dest)s sent"
                             " %(when)s")
-                        # don't set item.subreddit_distinguish because any
+                        # don't set item.Vault_distinguish because any
                         # distinguish will be associated with the author
                 else:
                     if item._id in mod_message_authors:
@@ -2475,7 +2475,7 @@ class Message(Thing, Printable):
         Printable.add_props(user, wrapped)
 
     @property
-    def subreddit_slow(self):
+    def vault_slow(self):
         from .vault import Vault
         if self.vault_id:
             return Vault._byID(self.vault_id, data=True)
@@ -2667,7 +2667,7 @@ class LinkVisitsByAccount(_SaveHideByAccount):
     def _unvisit(cls, user, things):
         cls._unsavehide(user, things)
 
-class _ThingSavesBySubreddit(tdb_cassandra.View):
+class _ThingSavesByVault(tdb_cassandra.View):
     @classmethod
     def _rowkey(cls, user, thing):
         return user._id36
@@ -2688,7 +2688,7 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
         return list(columns.keys())
 
     @classmethod
-    def get_saved_subreddits(cls, user):
+    def get_saved_Vaults(cls, user):
         vault_id36s = cls.get_saved_values(user)
         srs = Vault._byID36(vault_id36s, return_dict=False, data=True)
         return sorted([sr.name for sr in srs])
@@ -2712,7 +2712,7 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
             if cls._check_empty(user, vault_id):
                 cls._cf.remove(user._id36, [utils.to36(vault_id)])
 
-class _ThingSavesByCategory(_ThingSavesBySubreddit):
+class _ThingSavesByCategory(_ThingSavesByVault):
     @classmethod
     def create(cls, user, things, category=None):
         if not category:
@@ -2755,7 +2755,7 @@ class LinkSavesByCategory(_ThingSavesByCategory):
         return queries.get_categorized_saved_links
 
 @view_of(LinkSavesByAccount)
-class LinkSavesBySubreddit(_ThingSavesBySubreddit):
+class LinkSavesByVault(_ThingSavesByVault):
     _use_db = True
 
     @classmethod
@@ -2767,7 +2767,7 @@ class LinkSavesBySubreddit(_ThingSavesBySubreddit):
 
 
 @view_of(CommentSavesByAccount)
-class CommentSavesBySubreddit(_ThingSavesBySubreddit):
+class CommentSavesByVault(_ThingSavesByVault):
     _use_db = True
 
     @classmethod

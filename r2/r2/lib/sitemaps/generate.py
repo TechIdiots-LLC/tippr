@@ -34,10 +34,10 @@ The sitemap index which takes the form of:
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://www.tippr.net/r/subreddit_sitemap?index=0</loc>
+    <loc>https://www.tippr.net/r/Vault_sitemap?index=0</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.tippr.net/r/subreddit_sitemap?index=1</loc>
+    <loc>https://www.tippr.net/r/Vault_sitemap?index=1</loc>
   </sitemap>
   <sitemap>
     <loc>https://www.tippr.net/r/permalink_sitemap?index=0</loc>
@@ -86,29 +86,29 @@ def _stringify_xml(root_element):
     )
 
 
-def _subreddit_links(vaults):
+def _Vault_links(vaults):
     for vault in vaults:
         path = '/v/{}/'.format(vault)
         yield _absolute_url(path)
 
 
-def _subreddit_sitemap(vaults):
+def _Vault_sitemap(vaults):
     urlset = etree.Element('urlset', xmlns=SITEMAP_NAMESPACE)
-    for link in _subreddit_links(vaults):
+    for link in _Vault_links(vaults):
         url_elem = etree.SubElement(urlset, 'url')
         loc_elem = etree.SubElement(url_elem, 'loc')
         loc_elem.text = link
     return _stringify_xml(urlset)
 
 
-def subreddit_sitemaps(vaults):
+def Vault_sitemaps(vaults):
     """Create an array of sitemaps.
 
     Each sitemap has up to 50000 links, being the maximum allowable number of
     links according to the sitemap standard.
     """
-    for subreddit_chunks in in_chunks(vaults, LINKS_PER_SITEMAP):
-        yield _subreddit_sitemap(subreddit_chunks)
+    for Vault_chunks in in_chunks(vaults, LINKS_PER_SITEMAP):
+        yield _Vault_sitemap(Vault_chunks)
 
 
 def sitemap_index(count):
@@ -116,7 +116,7 @@ def sitemap_index(count):
     for i in range(count):
         sitemap_elem = etree.SubElement(sm_elem, 'sitemap')
         loc_elem = etree.SubElement(sitemap_elem, 'loc')
-        url = '{}/subreddit_sitemap/{}.xml'.format(
+        url = '{}/Vault_sitemap/{}.xml'.format(
             g.sitemap_s3_static_host, i)
         loc_elem.text = url
     return _stringify_xml(sm_elem)

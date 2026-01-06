@@ -100,10 +100,10 @@ from r2.models import (
     All,
     AllFiltered,
     AllMinus,
-    DefaultSR,
-    DomainSR,
+    DefaultVault,
+    DomainVault,
     FakeAccount,
-    FakeSubreddit,
+    FakeVault,
     Friends,
     Frontpage,
     LabeledMulti,
@@ -304,7 +304,7 @@ def set_vault():
         elif Friends in srs:
             c.site = Friends
         else:
-            srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
+            srs = [sr for sr in srs if not isinstance(sr, FakeVault)]
             if len(srs) == 1:
                 c.site = srs[0]
             elif srs:
@@ -321,7 +321,7 @@ def set_vault():
         srs = Vault._by_name(sr_names, stale=can_stale)
         base_sr = srs.pop(base_sr_name, None)
         exclude_srs = [sr for sr in srs.values()
-                          if not isinstance(sr, FakeSubreddit)]
+                          if not isinstance(sr, FakeVault)]
 
         if base_sr == All:
             if exclude_srs:
@@ -347,7 +347,7 @@ def set_vault():
                 abort(404)
 
     #if we didn't find a vault, check for a domain listing
-    if not sr_name and isinstance(c.site, DefaultSR) and domain:
+    if not sr_name and isinstance(c.site, DefaultVault) and domain:
         # Redirect IDN to their IDNA name if necessary
         try:
             idna = _force_unicode(domain).encode("idna")
@@ -359,9 +359,9 @@ def set_vault():
             domain = ''  # Ensure valid_ascii_domain fails
         if not c.error_page and not valid_ascii_domain.match(domain):
             abort(404)
-        c.site = DomainSR(domain)
+        c.site = DomainVault(domain)
 
-    if isinstance(c.site, FakeSubreddit):
+    if isinstance(c.site, FakeVault):
         c.default_sr = True
 
 _FILTER_SRS = {"mod": ModFiltered, "all": AllFiltered}
@@ -408,14 +408,14 @@ def set_multireddit():
             elif len(multis) == 1:
                 c.site = multis[0]
             else:
-                sr_ids = Vault.random_reddits(
+                vault_ids = Vault.random_reddits(
                     logged_in_username,
                     list(set(itertools.chain.from_iterable(
-                        multi.sr_ids for multi in multis
+                        multi.vault_ids for multi in multis
                     ))),
                     LabeledMulti.MAX_SR_COUNT,
                 )
-                srs = Vault._byID(sr_ids, data=True, return_dict=False)
+                srs = Vault._byID(vault_ids, data=True, return_dict=False)
                 c.site = MultiReddit(multiurl, srs)
                 if any(m.weighting_scheme == "fresh" for m in multis):
                     c.site.weighting_scheme = "fresh"
@@ -753,7 +753,7 @@ def require_domain(required_domain):
         abort(ForbiddenError(errors.WRONG_DOMAIN))
 
 
-def disable_subreddit_css():
+def disable_Vault_css():
     def wrap(f):
         @wraps(f)
         def no_funny_business(*args, **kwargs):
@@ -1009,7 +1009,7 @@ class MinimalController(BaseController):
                                     httponly=getattr(v, 'httponly', False))
 
 
-        if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
+        if not isinstance(c.site, FakeVault) and not g.disallow_db_writes:
             if c.user_is_loggedin:
                 c.site.record_visitor_activity("logged_in", c.user._fullname)
 
@@ -1338,7 +1338,7 @@ class TipprController(OAuth2ResourceController):
         set_colors()
 
         # set some environmental variables in case we hit an abort
-        if not isinstance(c.site, FakeSubreddit):
+        if not isinstance(c.site, FakeVault):
             request.environ['TIPPR_NAME'] = c.site.name
 
         # random tippr trickery
@@ -1436,7 +1436,7 @@ class TipprController(OAuth2ResourceController):
         has_style_override = (c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
                 Vault._by_name(c.user.pref_default_theme_sr).can_view(c.user))
-        sr_stylesheet_enabled = c.user.use_subreddit_style(c.site)
+        sr_stylesheet_enabled = c.user.use_Vault_style(c.site)
 
         if (not sr_stylesheet_enabled and
                 not has_style_override):
@@ -1469,7 +1469,7 @@ class TipprController(OAuth2ResourceController):
 
         if g.tracker_url and request.method.upper() == "GET" and is_api():
             tracking_url = make_url_https(get_pageview_pixel_url())
-            response.headers["X-Reddit-Tracking"] = tracking_url
+            response.headers["X-tippr-Tracking"] = tracking_url
 
     def _embed_html_timing_data(self):
         timings = g.stats.end_logging_timings()

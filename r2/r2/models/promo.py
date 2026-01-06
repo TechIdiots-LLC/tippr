@@ -292,44 +292,44 @@ class Target:
             self.collection = target
             self.is_collection = True
         elif isinstance(target, str):
-            self.subreddit_name = target
+            self.Vault_name = target
             self.is_collection = False
         else:
             raise ValueError("target must be a Collection or Vault name")
 
         # defer looking up vaults, we might only need their names
-        self._subreddits = None
+        self._Vaults = None
 
     @property
     def over_18(self):
         if self.is_collection:
             return self.collection.over_18
         else:
-            vaults = self.subreddits_slow
+            vaults = self.Vaults_slow
             return vaults and vaults[0].over_18
 
     @property
-    def subreddit_names(self):
+    def Vault_names(self):
         if self.is_collection:
             return self.collection.sr_names
         else:
-            return [self.subreddit_name]
+            return [self.Vault_name]
 
     @property
-    def subreddits_slow(self):
-        if self._subreddits is not None:
-            return self._subreddits
+    def Vaults_slow(self):
+        if self._Vaults is not None:
+            return self._Vaults
 
-        sr_names = self.subreddit_names
+        sr_names = self.Vault_names
         srs = list(Vault._by_name(sr_names).values())
-        self._subreddits = srs
+        self._Vaults = srs
         return srs
 
     def __eq__(self, other):
         if self.is_collection != other.is_collection:
             return False
 
-        return set(self.subreddit_names) == set(other.subreddit_names)
+        return set(self.Vault_names) == set(other.Vault_names)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -338,10 +338,10 @@ class Target:
     def pretty_name(self):
         if self.is_collection:
             return _("collection: %(name)s") % {'name': self.collection.name}
-        elif self.subreddit_name == Frontpage.name:
+        elif self.Vault_name == Frontpage.name:
             return _("frontpage")
         else:
-            return "/v/%s" % self.subreddit_name
+            return "/v/%s" % self.Vault_name
 
     def __repr__(self):
         return "<{}: {}>".format(self.__class__.__name__, self.pretty_name)
@@ -387,7 +387,7 @@ class PromoCampaign(Thing):
     )
 
     SR_NAMES_DELIM = '|'
-    SUBREDDIT_TARGET = "vault"
+    Vault_TARGET = "vault"
     MOBILE_TARGET_DELIM = ','
 
     @classmethod
@@ -458,10 +458,10 @@ class PromoCampaign(Thing):
     @classmethod
     def unpack_target(cls, target):
         """Convert a Target into attributes suitable for storage."""
-        sr_names = target.subreddit_names
+        sr_names = target.Vault_names
         target_sr_names = cls.SR_NAMES_DELIM.join(sr_names)
         target_name = (target.collection.name if target.is_collection
-                                              else cls.SUBREDDIT_TARGET)
+                                              else cls.Vault_TARGET)
         return target_sr_names, target_name
 
     @classmethod
@@ -545,7 +545,7 @@ class PromoCampaign(Thing):
             return self._target
 
         sr_names = self.target_sr_names.split(self.SR_NAMES_DELIM)
-        if self.target_name == self.SUBREDDIT_TARGET:
+        if self.target_name == self.Vault_TARGET:
             sr_name = sr_names[0]
             target = Target(sr_name)
         else:
@@ -724,7 +724,7 @@ class PromotionPrices(tdb_cassandra.View):
     }
 
     COLLECTION_DEFAULT = g.cpm_selfserve_collection.pennies
-    SUBREDDIT_DEFAULT = g.cpm_selfserve.pennies
+    Vault_DEFAULT = g.cpm_selfserve.pennies
     COUNTRY_DEFAULT = g.cpm_selfserve_geotarget_country.pennies
     METRO_DEFAULT = g.cpm_selfserve_geotarget_metro.pennies
 
@@ -738,7 +738,7 @@ class PromotionPrices(tdb_cassandra.View):
                 column_name = target.collection.name
             else:
                 rowkey = "VAULT"
-                column_name = target.subreddit_name
+                column_name = target.Vault_name
 
         if not rowkey or not column_name:
             raise ValueError("target must be Target")
@@ -809,7 +809,7 @@ class PromotionPrices(tdb_cassandra.View):
 
         # set target specific prices or use default
         if (not target.is_collection and
-                target.subreddit_name == Frontpage.name):
+                target.Vault_name == Frontpage.name):
             # Frontpage is priced as a collection
             prices.append(cls.COLLECTION_DEFAULT)
         elif target.is_collection:
@@ -817,9 +817,9 @@ class PromotionPrices(tdb_cassandra.View):
                 target, cls.COLLECTION_DEFAULT)
             prices.append(collection_price)
         else:
-            subreddit_price = cls.lookup_target_price(
-                target, cls.SUBREDDIT_DEFAULT)
-            prices.append(subreddit_price)
+            Vault_price = cls.lookup_target_price(
+                target, cls.Vault_DEFAULT)
+            prices.append(Vault_price)
 
         return max(prices)
 
@@ -832,7 +832,7 @@ class PromotionPrices(tdb_cassandra.View):
                 "COUNTRY": {},
                 "METRO": {},
                 "COLLECTION_DEFAULT": user.selfserve_cpm_override_pennies,
-                "SUBREDDIT_DEFAULT": user.selfserve_cpm_override_pennies,
+                "Vault_DEFAULT": user.selfserve_cpm_override_pennies,
                 "COUNTRY_DEFAULT": user.selfserve_cpm_override_pennies,
                 "METRO_DEFAULT": user.selfserve_cpm_override_pennies,
             }
@@ -843,7 +843,7 @@ class PromotionPrices(tdb_cassandra.View):
                 "COUNTRY": {},
                 "METRO": {},
                 "COLLECTION_DEFAULT": g.cpm_selfserve_collection.pennies,
-                "SUBREDDIT_DEFAULT": g.cpm_selfserve.pennies,
+                "Vault_DEFAULT": g.cpm_selfserve.pennies,
                 "COUNTRY_DEFAULT": g.cpm_selfserve_geotarget_country.pennies,
                 "METRO_DEFAULT": g.cpm_selfserve_geotarget_metro.pennies,
             }

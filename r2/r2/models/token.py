@@ -210,8 +210,8 @@ class OAuth2Scope:
                 "Change editors and visibility of wiki pages"
                 " in vaults I moderate."),
         },
-        "mysubreddits": {
-            "id": "mysubreddits",
+        "myVaults": {
+            "id": "myVaults",
             "name": _("My Vaults"),
             "description": _(
                 "Access the list of vaults I moderate, contribute to,"
@@ -278,26 +278,26 @@ class OAuth2Scope:
         if scope_str:
             self._parse_scope_str(scope_str)
         elif vaults is not None or scopes is not None:
-            self.subreddit_only = bool(vaults)
+            self.Vault_only = bool(vaults)
             self.vaults = vaults
             self.scopes = scopes
         else:
-            self.subreddit_only = False
+            self.Vault_only = False
             self.vaults = set()
             self.scopes = set()
 
     def _parse_scope_str(self, scope_str):
         srs, sep, scopes = scope_str.rpartition(':')
         if sep:
-            self.subreddit_only = True
+            self.Vault_only = True
             self.vaults = set(srs.split('+'))
         else:
-            self.subreddit_only = False
+            self.Vault_only = False
             self.vaults = set()
         self.scopes = set(scopes.replace(',', ' ').split(' '))
 
     def __str__(self):
-        if self.subreddit_only:
+        if self.Vault_only:
             sr_part = '+'.join(sorted(self.vaults)) + ':'
         else:
             sr_part = ''
@@ -306,7 +306,7 @@ class OAuth2Scope:
     def has_access(self, vault, required_scopes):
         if self.FULL_ACCESS in self.scopes:
             return True
-        if self.subreddit_only and vault not in self.vaults:
+        if self.Vault_only and vault not in self.vaults:
             return False
         return (self.scopes >= required_scopes)
 
@@ -338,7 +338,7 @@ class OAuth2Scope:
         """
         merged = {}
         for scope in scopes:
-            srs = scope.vaults if scope.subreddit_only else (None,)
+            srs = scope.vaults if scope.Vault_only else (None,)
             for sr in srs:
                 if sr in merged:
                     merged[sr].scopes.update(scope.scopes)
@@ -347,7 +347,7 @@ class OAuth2Scope:
                     new_scope.vaults = {sr}
                     new_scope.scopes = scope.scopes
                     if sr is not None:
-                        new_scope.subreddit_only = True
+                        new_scope.Vault_only = True
                     merged[sr] = new_scope
         return merged
 

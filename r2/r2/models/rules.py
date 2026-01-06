@@ -85,7 +85,7 @@ class VaultRules(tdb_cassandra.View):
         except tdb_cassandra.NotFoundException:
             priority = 0
 
-        if priority >= MAX_RULES_PER_SUBREDDIT:
+        if priority >= MAX_RULES_PER_Vault:
             return
 
         blob = self.get_rule_blob(short_name, description, priority,

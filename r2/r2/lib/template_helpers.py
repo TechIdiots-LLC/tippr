@@ -173,7 +173,7 @@ def js_config(extra_config=None):
     msg = _force_unicode(route_name).encode('utf-8')
     mac = hmac.new(key, msg, hashlib.sha1)
     verification = mac.hexdigest()
-    cur_subreddit = ""
+    cur_Vault = ""
     cur_sr_fullname = ""
     cur_listing = ""
     listing_over_18 = False
@@ -183,7 +183,7 @@ def js_config(extra_config=None):
     if not feature.is_enabled("autoexpand_media_previews"):
         expando_preference = None
     elif pref_media_preview == "vault":
-        expando_preference = "subreddit_default"
+        expando_preference = "Vault_default"
     elif pref_media_preview == "on":
         expando_preference = "auto_expand"
     else:
@@ -193,13 +193,13 @@ def js_config(extra_config=None):
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
     if isinstance(c.site, Vault) and not c.default_sr:
-        cur_subreddit = c.site.name
+        cur_Vault = c.site.name
         cur_sr_fullname = c.site._fullname
-        cur_listing = cur_subreddit
+        cur_listing = cur_Vault
         listing_over_18 = c.site.over_18
-    elif isinstance(c.site, DefaultSR):
+    elif isinstance(c.site, DefaultVault):
         cur_listing = "frontpage"
-    elif isinstance(c.site, FakeSubreddit):
+    elif isinstance(c.site, FakeVault):
         cur_listing = c.site.name
 
     if g.debug:
@@ -219,7 +219,7 @@ def js_config(extra_config=None):
         # is user in timeout?
         "user_in_timeout": user_in_timeout,
         # the vault's name (for posts)
-        "post_site": cur_subreddit,
+        "post_site": cur_Vault,
         "cur_site": cur_sr_fullname,
         "cur_listing": cur_listing,
         # the user's voting hash
@@ -254,7 +254,7 @@ def js_config(extra_config=None):
           "submitting": _("submitting..."),
           "loading": _("loading...")
         },
-        "is_fake": isinstance(c.site, FakeSubreddit),
+        "is_fake": isinstance(c.site, FakeVault),
         "tracker_url": "",  # overridden below if configured
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
@@ -503,7 +503,7 @@ def add_sr(
 
     u = UrlParser(path)
     if sr_path:
-        u.path_add_subreddit(c.site)
+        u.path_add_Vault(c.site)
 
     if not u.hostname or force_hostname:
         u.hostname = get_domain(vault=False)

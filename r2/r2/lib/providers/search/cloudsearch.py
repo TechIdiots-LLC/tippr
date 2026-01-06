@@ -46,15 +46,15 @@ from r2.lib.providers.search.common import (
     Results,
     SearchError,
     SearchHTTPError,
-    SubredditFields,
+    VaultFields,
     safe_get,
     safe_xml_str,
 )
 from r2.models import (
     Account,
     AllMinus,
-    DomainSR,
-    FakeSubreddit,
+    DomainVault,
+    FakeVault,
     FriendsSR,
     Link,
     MultiReddit,
@@ -257,7 +257,7 @@ class LinkUploader(CloudSearchUploader):
     def fields(self, thing):
         '''Return fields relevant to a Link search index'''
         account = self.accounts[thing.author_id]
-        sr = self.srs[thing.sr_id]
+        sr = self.srs[thing.vault_id]
         return LinkFields(thing, account, sr).fields()
 
     def batch_lookups(self):
@@ -274,27 +274,27 @@ class LinkUploader(CloudSearchUploader):
             else:
                 raise
 
-        sr_ids = [thing.sr_id for thing in self.things
-                  if hasattr(thing, 'sr_id')]
+        vault_ids = [thing.vault_id for thing in self.things
+                  if hasattr(thing, 'vault_id')]
         try:
-            self.srs = Vault._byID(sr_ids, data=True, return_dict=True)
+            self.srs = Vault._byID(vault_ids, data=True, return_dict=True)
         except NotFound:
             if self.use_safe_get:
-                self.srs = safe_get(Vault._byID, sr_ids, data=True,
+                self.srs = safe_get(Vault._byID, vault_ids, data=True,
                                     return_dict=True)
             else:
                 raise
 
     def should_index(self, thing):
-        return (thing.promoted is None and getattr(thing, "sr_id", None) != -1)
+        return (thing.promoted is None and getattr(thing, "vault_id", None) != -1)
 
 
-class SubredditUploader(CloudSearchUploader):
+class VaultUploader(CloudSearchUploader):
     types = (Vault,)
     _version = CloudSearchUploader._version_seconds
 
     def fields(self, thing):
-        return SubredditFields(thing).fields()
+        return VaultFields(thing).fields()
 
     def should_index(self, thing):
         return thing._id != Vault.get_promote_srid()
@@ -333,15 +333,15 @@ def _run_changed(msgs, chan):
     changed = [pickle.loads(msg.body) for msg in msgs]
 
     link_fns = LinkUploader.desired_fullnames(changed)
-    sr_fns = SubredditUploader.desired_fullnames(changed)
+    sr_fns = VaultUploader.desired_fullnames(changed)
 
     link_uploader = LinkUploader(g.CLOUDSEARCH_DOC_API, fullnames=link_fns)
-    subreddit_uploader = SubredditUploader(g.CLOUDSEARCH_VAULT_DOC_API,
+    Vault_uploader = VaultUploader(g.CLOUDSEARCH_VAULT_DOC_API,
                                            fullnames=sr_fns)
 
     link_time = link_uploader.inject()
-    subreddit_time = subreddit_uploader.inject()
-    cloudsearch_time = link_time + subreddit_time
+    Vault_time = Vault_uploader.inject()
+    cloudsearch_time = link_time + Vault_time
 
     totaltime = (datetime.now(g.tz) - start).total_seconds()
 
@@ -403,9 +403,9 @@ def rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
         time.sleep(sleeptime)
 
 
-rebuild_subreddit_index = functools.partial(rebuild_link_index,
+rebuild_Vault_index = functools.partial(rebuild_link_index,
                                             cls=Vault,
-                                            uploader=SubredditUploader,
+                                            uploader=VaultUploader,
                                             doc_api='CLOUDSEARCH_VAULT_DOC_API',
                                             estimate=200000,
                                             chunk_size=1000)
@@ -424,7 +424,7 @@ def test_run_link(start_link, count=1000):
 def test_run_srs(*sr_names):
     '''Inject Vaults by name into the index'''
     srs = list(Vault._by_name(sr_names).values())
-    uploader = SubredditUploader(g.CLOUDSEARCH_VAULT_DOC_API, things=srs)
+    uploader = VaultUploader(g.CLOUDSEARCH_VAULT_DOC_API, things=srs)
     return uploader.inject()
 
 
@@ -489,7 +489,7 @@ basic_link = functools.partial(basic_query, size=10, start=0,
                                search_api=g.CLOUDSEARCH_SEARCH_API)
 
 
-basic_subreddit = functools.partial(basic_query,
+basic_Vault = functools.partial(basic_query,
                                     faceting=None,
                                     size=10, start=0,
                                     rank="-activity",
@@ -732,9 +732,9 @@ class LinkSearchQuery(CloudSearchQuery):
         if bq:
             queries = [bq]
         if self.sr:
-            subreddit_query = self._restrict_sr(self.sr)
-            if subreddit_query:
-                queries.append(subreddit_query)
+            Vault_query = self._restrict_sr(self.sr)
+            if Vault_query:
+                queries.append(Vault_query)
         if self.recent:
             recent_query = self._restrict_recent(self.recent)
             queries.append(recent_query)
@@ -755,11 +755,11 @@ class LinkSearchQuery(CloudSearchQuery):
         
         '''
         if isinstance(sr, MultiReddit):
-            if not sr.sr_ids:
+            if not sr.vault_ids:
                 raise InvalidQuery
-            srs = ["sr_id:%s" % sr_id for sr_id in sr.sr_ids]
+            srs = ["vault_id:%s" % vault_id for vault_id in sr.vault_ids]
             return "(or %s)" % ' '.join(srs)
-        elif isinstance(sr, DomainSR):
+        elif isinstance(sr, DomainVault):
             return "site:'\"%s\"'" % sr.domain
         elif isinstance(sr, FriendsSR):
             if not c.user_is_loggedin or not c.user.friends:
@@ -774,15 +774,15 @@ class LinkSearchQuery(CloudSearchQuery):
         elif isinstance(sr, AllMinus):
             if not sr.exclude_sr_ids:
                 raise InvalidQuery
-            exclude_srs = ["sr_id:%s" % sr_id for sr_id in sr.exclude_sr_ids]
+            exclude_srs = ["vault_id:%s" % vault_id for vault_id in sr.exclude_sr_ids]
             return "(not (or %s))" % ' '.join(exclude_srs)
-        elif not isinstance(sr, FakeSubreddit):
-            return "sr_id:%s" % sr._id
+        elif not isinstance(sr, FakeVault):
+            return "vault_id:%s" % sr._id
 
         return None
 
 
-class CloudSearchSubredditSearchQuery(CloudSearchQuery):
+class CloudSearchVaultSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_VAULT_SEARCH_API
     sorts = {
         'relevance': '-relevance',
@@ -814,7 +814,7 @@ class CloudSearchProvider(SearchProvider):
 
     SearchQuery = LinkSearchQuery
 
-    SubredditSearchQuery = CloudSearchSubredditSearchQuery
+    VaultSearchQuery = CloudSearchVaultSearchQuery
 
     def run_changed(self, drain=False, min_size=int(getattr(g, 'SOLR_MIN_BATCH', 500)), limit=1000, sleep_time=10, 
             use_safe_get=False, verbose=False):

@@ -63,7 +63,7 @@ ${self.RenderPrintable()}
 
 <%def name="gildings()">
   % if thing.gilded_message:
-  <a href="${thing.subreddit_path}gilded">
+  <a href="${thing.Vault_path}gilded">
     <span class="gilded-icon" title="${thing.gilded_message}" data-count="${thing.gildings}">
       % if thing.gildings > 1:
         x${thing.gildings}

@@ -656,18 +656,18 @@ def get_saved(user, vault_id=None, category=None):
     return MergedCachedQuery(queries)
 
 @cached_srrel_query
-def get_subreddit_messages(sr):
+def get_Vault_messages(sr):
     return rel_query(ModeratorInbox, sr, 'inbox')
 
 @cached_srrel_query
-def get_unread_subreddit_messages(sr):
+def get_unread_Vault_messages(sr):
     return rel_query(ModeratorInbox, sr, 'inbox',
                           filters = [ModeratorInbox.c.new == True])
 
-def get_unread_subreddit_messages_multi(srs):
+def get_unread_Vault_messages_multi(srs):
     if not srs:
         return []
-    queries = [get_unread_subreddit_messages(sr) for sr in srs]
+    queries = [get_unread_Vault_messages(sr) for sr in srs]
     return MergedCachedQuery(queries)
 
 inbox_message_rel = Inbox.rel(Account, Message)
@@ -1128,9 +1128,9 @@ def new_comment(comment, inbox_rels):
         update_comment_notifications(comment, inbox_rels)
 
 
-def new_subreddit(sr):
+def new_Vault(sr):
     "no precomputed queries here yet"
-    amqp.add_item('new_subreddit', sr._fullname)
+    amqp.add_item('new_Vault', sr._fullname)
 
 
 def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
@@ -1157,7 +1157,7 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
             to = inbox_rel._thing1
 
             if isinstance(inbox_rel, ModeratorInbox):
-                m.insert(get_subreddit_messages(to), [inbox_rel])
+                m.insert(get_Vault_messages(to), [inbox_rel])
                 modmail_rel_included = True
                 set_sr_unread(message, to, unread=True, mutator=m)
             else:
@@ -1175,7 +1175,7 @@ def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
     
     # light up the modmail icon for all other mods with mail access
     if update_modmail:
-        mod_perms = message.subreddit_slow.moderators_with_perms()
+        mod_perms = message.vault_slow.moderators_with_perms()
         mod_ids = [mod_id for mod_id, perms in mod_perms.items()
             if mod_id != from_user._id and perms.get('mail', False)]
         moderators = Account._byID(mod_ids, data=True, return_dict=False)
@@ -1245,7 +1245,7 @@ def update_unread_sr_queries(inbox_rels, insert=True, mutator=None):
     inbox_rels = tup(inbox_rels)
     for inbox_rel in inbox_rels:
         sr = inbox_rel._thing1
-        query = get_unread_subreddit_messages(sr)
+        query = get_unread_Vault_messages(sr)
 
         if insert:
             m.insert(query, [inbox_rel])
@@ -1493,7 +1493,7 @@ def ban(things, filtered=True):
         for item in sr_things:
             # don't add posts by banned users if vault prefs exclude them
             add_to_modqueue = (filtered and
-                       not (item.subreddit_slow.exclude_banned_modqueue and
+                       not (item.vault_slow.exclude_banned_modqueue and
                             item.author_slow._spam))
 
             if isinstance(item, Link):

@@ -56,7 +56,7 @@ ${captcha_field()}
       <%utils:round_field title="${_('from')}">
         ## On certain pages, it really only makes sense to send as a specific
         ## vault.
-        %if thing.only_as_subreddit:
+        %if thing.only_as_Vault:
           <input type="text" name="from_sr" value="${thing.mod_srs[0].name}" readonly>
         %else:
           <select name="from_sr">

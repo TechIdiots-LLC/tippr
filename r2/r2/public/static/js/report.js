@@ -10,23 +10,23 @@ $(function() {
   }
 
   function init() {
-    var subredditRulesTemplate = _getTemplate('vault-rules-report-template');
-    var subredditDefaultTemplate = _getTemplate('vault-default-report-template');
+    var VaultRulesTemplate = _getTemplate('vault-rules-report-template');
+    var VaultDefaultTemplate = _getTemplate('vault-default-report-template');
     var redditTemplate = _getTemplate('tippr-report-template');
     var reasonTemplate = _getTemplate('report-reason-template');
 
     templates = {
-      subredditRules: function(data) {
+      VaultRules: function(data) {
         var rulesStr = data.rules.map(reasonTemplate).join('\n');
-        var formStr = subredditRulesTemplate(data);
+        var formStr = VaultRulesTemplate(data);
         var formEl = $.parseHTML(formStr);
         var rulesEls = $.parseHTML(rulesStr);
         $(formEl).find('.report-reason-list').prepend(rulesEls);
         return formEl;
       },
 
-      subredditDefault: function(data) {
-        var formStr = subredditDefaultTemplate(data);
+      VaultDefault: function(data) {
+        var formStr = VaultDefaultTemplate(data);
         var formEl = $.parseHTML(formStr);
         return formEl;
       },
@@ -52,17 +52,17 @@ $(function() {
   }
 
   function renderFromTemplate(data, thingType) {
-    var hasSubreddit = !!data.sr_name;
+    var hasVault = !!data.sr_name;
     var hasRules = data.rules && data.rules.length > 0;
     var template;
     var templateData;
 
-    if (!hasSubreddit) {
+    if (!hasVault) {
       template = templates.tippr;
     } else if (hasRules) {
-      template = templates.subredditRules;
+      template = templates.VaultRules;
     } else {
-      template = templates.subredditDefault;
+      template = templates.VaultDefault;
     }
 
     if (hasRules) {

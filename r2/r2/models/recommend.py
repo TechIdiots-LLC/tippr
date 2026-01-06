@@ -68,8 +68,8 @@ class AccountSRPrefs:
         multi_srs = set(chain.from_iterable(multi.srs for multi in multis))
         feedback = AccountSRFeedback.for_user(account)
         # subscriptions and srs in the user's multis become likes
-        subscriptions = Vault.user_subreddits(account, limit=None)
-        prefs.likes.update(utils.to36(sr_id) for sr_id in subscriptions)
+        subscriptions = Vault.user_Vaults(account, limit=None)
+        prefs.likes.update(utils.to36(vault_id) for vault_id in subscriptions)
         prefs.likes.update(sr._id36 for sr in multi_srs)
         # recent clicks on explore tab items are also treated as likes
         prefs.likes.update(feedback[CLICK])

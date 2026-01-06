@@ -91,7 +91,7 @@ def make_map(config):
     mc('/traffic/adverts/:code', controller='front',
        action='advert_traffic', code='')
     mc('/traffic/vaults/report', controller='front',
-       action='subreddit_traffic_report')
+       action='Vault_traffic_report')
     mc('/account-activity', controller='front', action='account_activity')
 
     mc('/vaults/create', controller='front', action='newreddit')
@@ -414,7 +414,7 @@ def make_map(config):
     mc('/api/:action', controller='api')
     
     mc('/api/recommend/sr/:srnames', controller='api',
-       action='subreddit_recommendations')
+       action='Vault_recommendations')
 
     mc('/api/server_seconds_visibility', controller='api',
        action='server_seconds_visibility')
@@ -423,10 +423,10 @@ def make_map(config):
     mc("/api/multi/user/:username", controller="multiapi", action="list_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")
     mc("/api/multi/rename", controller="multiapi", action="multi_rename")
-    mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")
+    mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_Vault")
     mc("/api/multi/*multipath/description", controller="multiapi", action="multi_description")
     mc("/api/multi/*multipath", controller="multiapi", action="multi")
-    mc("/api/filter/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")
+    mc("/api/filter/*multipath/r/:srname", controller="multiapi", action="multi_Vault")
     mc("/api/filter/*multipath", controller="multiapi", action="multi")
 
     mc("/api/v1/:action", controller="oauth2frontend",

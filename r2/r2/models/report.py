@@ -140,7 +140,7 @@ class Report(MultiRelation('report', *REPORT_RELS)):
 
             reports = cls.for_thing(wrapped.lookups[0])
 
-            query = SRMember._query(SRMember.c._thing1_id == wrapped.sr_id,
+            query = SRMember._query(SRMember.c._thing1_id == wrapped.vault_id,
                                     SRMember.c._name == "moderator")
             mod_dates = {rel._thing2_id: rel._date for rel in query}
 

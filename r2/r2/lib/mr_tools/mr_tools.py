@@ -53,7 +53,7 @@ def join_things(fields, deleted=False, spam=True):
                 val = format_dataspec(val,
                                       ['data_type', # e.g. 'data'
                                        'thing_type', # e.g. 'link'
-                                       'key', # e.g. 'sr_id'
+                                       'key', # e.g. 'vault_id'
                                        'value'])
                 if val.key in fields:
                     data[val.key] = val.value

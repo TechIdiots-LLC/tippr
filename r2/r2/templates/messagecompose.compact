@@ -46,7 +46,7 @@
       ${error_field("VAULT_NOEXIST", "to")}
       ${error_field("USER_BLOCKED", "to")}
       ${error_field("USER_MUTED", "to")}
-      ${error_field("MUTED_FROM_SUBREDDIT", "to")}
+      ${error_field("MUTED_FROM_Vault", "to")}
     </%utils:round_field>
   %endif
 

@@ -49,7 +49,7 @@ try:
     from r2.lib.strings import get_funny_translated_string
     from r2.lib.template_helpers import static
     from r2.models.link import Link
-    from r2.models.vault import DefaultSR, Vault
+    from r2.models.vault import DefaultVault, Vault
 except Exception as e:
     if g.debug:
         # if debug mode, let the error filter up to pylons to be handled
@@ -147,7 +147,7 @@ class ErrorController(TipprController):
             return res.render()
 
     def send403(self):
-        c.site = DefaultSR()
+        c.site = DefaultVault()
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         else:

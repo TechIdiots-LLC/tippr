@@ -178,13 +178,13 @@ class AdminTools:
     def set_last_sr_ban(self, things):
         by_srid = {}
         for thing in things:
-            if getattr(thing, 'sr_id', None) is not None:
-                by_srid.setdefault(thing.sr_id, []).append(thing)
+            if getattr(thing, 'vault_id', None) is not None:
+                by_srid.setdefault(thing.vault_id, []).append(thing)
 
         if by_srid:
             srs = Vault._byID(list(by_srid.keys()), data=True, return_dict=True)
-            for sr_id, sr_things in by_srid.items():
-                sr = srs[sr_id]
+            for vault_id, sr_things in by_srid.items():
+                sr = srs[vault_id]
 
                 sr.last_mod_action = datetime.now(g.tz)
                 sr._commit()

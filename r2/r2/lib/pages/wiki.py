@@ -28,7 +28,7 @@ from r2.lib.pages.pages import (
     AutoModeratorConfig,
     RawCode,
     Tippr,
-    SubredditStylesheetSource,
+    VaultStylesheetSource,
 )
 from r2.lib.wrapped import Templated
 
@@ -42,7 +42,7 @@ class WikiView(Templated):
         elif renderer == 'tippr':
             self.page_content = safemarkdown(content)
         elif renderer == 'stylesheet':
-            self.page_content = SubredditStylesheetSource(content).render()
+            self.page_content = VaultStylesheetSource(content).render()
         elif renderer == "automoderator":
             self.page_content = AutoModeratorConfig(content).render()
         elif renderer == "rawcode":

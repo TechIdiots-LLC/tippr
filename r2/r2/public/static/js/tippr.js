@@ -319,10 +319,10 @@ function unsubscribe(reddit_name) {
     };
 };
 
-function quarantine_optout(subreddit_name) {
+function quarantine_optout(Vault_name) {
     return function() {
         if (r.config.logged) {
-            $.request("quarantine_optout", {sr: subreddit_name});
+            $.request("quarantine_optout", {sr: Vault_name});
             $.redirect("/");
         }
     };

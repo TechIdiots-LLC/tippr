@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.lib import sr_pops; sr_pops.run()'
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.lib import vault_pops; vault_pops.run()'
 
 Nice=10
 

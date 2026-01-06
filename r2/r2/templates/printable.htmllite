@@ -50,7 +50,7 @@ ${self.Child()}
 <%def name="static_arrows(thing)">
   <%
    from r2.lib.template_helpers import get_domain
-   domain = get_domain(subreddit=False)
+   domain = get_domain(vault=False)
    permalink = "%s://%s%s" % (g.default_scheme, domain, thing.permalink)
    if thing.likes == False:
       arrow = "%s://%s/static/widget_arrows_down.gif"
@@ -60,7 +60,7 @@ ${self.Child()}
       arrow = "%s://%s/static/widget_arrows.gif"
    arrow = arrow % (g.default_scheme, domain)
    %>
-  <a href="${permalink}" class="reddit-voting-arrows" target="_blank"
+  <a href="${permalink}" class="tippr-voting-arrows" target="_blank"
      ${optionalstyle("float:left; display:block;")}>
     <img src="${arrow}" alt="vote" 
          ${optionalstyle("border:none;margin-top:3px;")}/>
@@ -71,16 +71,16 @@ ${self.Child()}
   <% 
    from r2.lib.template_helpers import get_domain
    %>
-  <div class="reddit-voting-arrows" 
+  <div class="tippr-voting-arrows" 
      ${optionalstyle("float:left; margin: 1px;")}>
     <script type="text/javascript">
       var reddit_bordercolor="FFFFFF";
     </script>
     <%
-       from r2.models import FakeSubreddit
+       from r2.models import FakeVault
        url = ("%s://%s/static/button/button4.html?t=4&id=%s&sr=%s" %
-               (g.default_scheme, get_domain(subreddit=False), thing._fullname,
-               c.site.name if not isinstance(c.site, FakeSubreddit) else ""))
+               (g.default_scheme, get_domain(vault=False), thing._fullname,
+               c.site.name if not isinstance(c.site, FakeVault) else ""))
        if c.bgcolor:
           url += "&bgcolor=%s&bordercolor=%s" % (c.bgcolor, c.bgcolor)
        else:

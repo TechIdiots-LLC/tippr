@@ -463,7 +463,7 @@ class FeatureState:
 
         # If we've restricted the experiment to certain page types, make sure
         # the request is for one of those
-        if (experiment.get('subreddit_only', False) and
+        if (experiment.get('Vault_only', False) and
                 type_name != 'vault'):
             return None
 

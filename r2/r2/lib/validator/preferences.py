@@ -155,5 +155,5 @@ def filter_prefs(prefs, user):
                 prefs['pref_default_theme_sr'] = override_sr.name
             else:
                 # don't update if they can't view the chosen vault
-                c.errors.add(errors.SUBREDDIT_NO_ACCESS, field='stylesheet_override')
+                c.errors.add(errors.Vault_NO_ACCESS, field='stylesheet_override')
                 del prefs['pref_default_theme_sr']

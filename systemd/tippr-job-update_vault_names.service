@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.lib import subreddit_search; subreddit_search.load_all_reddits()'
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.lib import vault_search; vault_search.load_all_reddits()'
 
 Nice=10
 

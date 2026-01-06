@@ -192,8 +192,8 @@ class LinkFields(FieldsBase):
         return self.link.title
 
     @field(cloudsearch_type=int)
-    def sr_id(self):
-        return self.link.sr_id
+    def vault_id(self):
+        return self.link.vault_id
 
     @field(cloudsearch_type=int, lucene_type=datetime)
     def timestamp(self):
@@ -266,7 +266,7 @@ class LinkFields(FieldsBase):
         return NotImplemented
 
 
-class SubredditFields(FieldsBase):
+class VaultFields(FieldsBase):
     def __init__(self, sr):
         self.sr = sr
 
@@ -324,7 +324,7 @@ class Results:
         self.docs = docs
         self.hits = hits
         self._facets = facets
-        self._subreddits = []
+        self._Vaults = []
 
     def __repr__(self):
         return '{}({!r}, {!r}, {!r})'.format(self.__class__.__name__,
@@ -333,9 +333,9 @@ class Results:
                                    self._facets)
 
     @property
-    def subreddit_facets(self):
+    def Vault_facets(self):
         '''Filter out vaults that the user isn't allowed to see'''
-        if not self._subreddits and 'tippr' in self._facets:
+        if not self._Vaults and 'tippr' in self._facets:
             sr_facets = [(sr['value'], sr['count']) for sr in
                          self._facets['tippr']]
 
@@ -347,7 +347,7 @@ class Results:
                          in sr_facets if name in srs_by_name]
 
             # filter by can_view
-            self._subreddits = [(sr, count) for sr, count in sr_facets
+            self._Vaults = [(sr, count) for sr, count in sr_facets
                                 if sr.can_view(c.user)]
 
-        return self._subreddits
+        return self._Vaults

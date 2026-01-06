@@ -21,19 +21,36 @@
 ###############################################################################
 
 <%!
-    from r2.models import Link
-%>
+   from r2.lib.strings import strings
+   %>
+<%inherit  file="printable.mobile"/>
 
-<div class="trending-vaults">
-  <div class="rank-spacer"></div>
-  <div class="midcol-spacer"></div>
-  <div class="trending-vaults-content">
-    <strong>${_('trending vaults')}</strong>
-    <ul>
-    %for i, subreddit_name in enumerate(thing.subreddit_names):
-      <li><a href="${Link.tracking_link('/v/%s'%subreddit_name, context='trending_subreddits_bar', element_name='trending_sr_%s'%(i+1))}" target="_blank">/r/${subreddit_name}</a></li>
-    %endfor
-    </ul>
-    <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>
-  </div>
-</div>
+<%namespace file="utils.html" import="plain_link"/>
+
+<%def name="numcol()">
+</%def>
+
+<%def name="entry()">
+<% fullname = thing._fullname %>
+<p class="Vault">
+  ${plain_link(thing.title, thing.path, _class="title")}
+  &#32;<span class="domain">(${thing.path})</span> 
+</p>
+</%def>
+
+<%def name="tagline()">
+</%def>
+
+<%def name="child()">
+</%def>
+
+<%def name="buttons()">
+  ${parent.delete_or_report_buttons(delete=False)}
+  ${parent.buttons()}
+</%def>
+
+<%def name="leave_button(name, where)">
+${self.yes_no_button("leave", name, _("leave"), 
+  "return deletetoggle(this, 'leave');", _("left"),
+  location = where)}
+</%def>

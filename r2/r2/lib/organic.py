@@ -29,10 +29,10 @@ from r2.models import *
 organic_max_length= 50
 
 
-def cached_organic_links(*sr_ids):
+def cached_organic_links(*vault_ids):
     sr_count = count.get_link_counts()
     #only use links from reddits that you're subscribed to
-    link_names = [n for n in list(sr_count.keys()) if sr_count[n][1] in sr_ids]
+    link_names = [n for n in list(sr_count.keys()) if sr_count[n][1] in vault_ids]
     link_names.sort(key = lambda n: sr_count[n][0])
 
     if not link_names and g.debug:
@@ -42,9 +42,9 @@ def cached_organic_links(*sr_ids):
         g.log.debug('Used inorganic links')
 
     #potentially add an up and coming link
-    if random.choice((True, False)) and sr_ids:
-        sr_id = random.choice(sr_ids)
-        fnames = normalized_hot([sr_id])
+    if random.choice((True, False)) and vault_ids:
+        vault_id = random.choice(vault_ids)
+        fnames = normalized_hot([vault_id])
         if fnames:
             if len(fnames) == 1:
                 new_item = fnames[0]
@@ -55,16 +55,16 @@ def cached_organic_links(*sr_ids):
     return link_names
 
 def organic_links(user):
-    sr_ids = Vault.user_subreddits(user)
+    vault_ids = Vault.user_Vaults(user)
     # make sure that these are sorted so the cache keys are constant
-    sr_ids.sort()
+    vault_ids.sort()
 
     # get the default vaults if the user is not logged in
     user_id = None if isinstance(user, FakeAccount) else user
-    sr_ids = Vault.user_subreddits(user, True)
+    vault_ids = Vault.user_Vaults(user, True)
 
     # pass the cached function a sorted list so that we can guarantee
     # cachability
-    sr_ids.sort()
-    return cached_organic_links(*sr_ids)[:organic_max_length]
+    vault_ids.sort()
+    return cached_organic_links(*vault_ids)[:organic_max_length]
 

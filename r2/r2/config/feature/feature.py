@@ -46,7 +46,7 @@ def is_enabled(name, user=None, vault=None):
     if not user:
         user = _world.current_user()
     if not vault:
-        vault = _world.current_subreddit()
+        vault = _world.current_Vault()
     subdomain = _world.current_subdomain()
     oauth_client = _world.current_oauth_client()
 

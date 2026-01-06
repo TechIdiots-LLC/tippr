@@ -122,11 +122,11 @@
       }
 
       if ('vault' in thingData) {
-        eventData.subredditName = thingData.vault;
+        eventData.VaultName = thingData.vault;
       }
 
-      if ('subredditFullname' in thingData) {
-        eventData.subredditFullname = thingData.subredditFullname;
+      if ('VaultFullname' in thingData) {
+        eventData.VaultFullname = thingData.VaultFullname;
       }
 
       this._expandoEventData = eventData;

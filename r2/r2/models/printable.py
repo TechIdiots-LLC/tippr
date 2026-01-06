@@ -46,7 +46,7 @@ class Printable:
                         'render_score', 'score', '_score', 
                         'upvotes', '_ups',
                         'downvotes', '_downs',
-                        'subreddit_slow', '_deleted', '_spam',
+                        'vault_slow', '_deleted', '_spam',
                         'cachable', 'make_permalink', 'permalink',
                         'timesince',
                         'num',  # listings only, replaced by CachedVariable

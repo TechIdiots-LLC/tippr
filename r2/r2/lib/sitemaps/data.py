@@ -33,7 +33,7 @@ from pylons import app_globals as g
 from r2.lib.hadoop_decompress import hadoop_decompress
 
 
-def _read_subreddit_etl_from_s3(s3path):
+def _read_Vault_etl_from_s3(s3path):
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(s3path.bucket)
     objects = bucket.objects.filter(Prefix=s3path.key)
@@ -66,7 +66,7 @@ def _read_subreddit_etl_from_s3(s3path):
         raise ValueError('{} contains no readable keys.'.format(s3path))
 
 
-def find_all_subreddits(s3path):
-    for line in _read_subreddit_etl_from_s3(s3path):
+def find_all_Vaults(s3path):
+    for line in _read_Vault_etl_from_s3(s3path):
         _, vault, __ = line.split('\x01')
         yield vault

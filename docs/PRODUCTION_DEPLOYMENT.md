@@ -2303,7 +2303,7 @@ You could also consider:
 ### Reddit Scaling Resources
 - [Original Reddit Scaling Talk](https://www.youtube.com/watch?v=nUcO7n4hek4) - Jeremy Edberg at RAMP Conference
 - [High Scalability - Reddit Lessons](http://highscalability.com/blog/2013/8/26/reddit-lessons-learned-from-mistakes-made-scaling-to-1-billi.html)
-- [Reddit Engineering (RedditEng subreddit)](https://www.reddit.com/r/RedditEng/)
+- [Reddit Engineering (RedditEng vault)](https://www.tippr.net/r/RedditEng/)
 
 ---
 

@@ -39,7 +39,7 @@ from r2.lib.comment_tree import (
   get_comment_scores,
   moderator_messages,
   sr_conversation,
-  subreddit_messages,
+  Vault_messages,
   tree_sort_fn,
   user_messages,
 )
@@ -116,13 +116,13 @@ class Builder:
                        if a.cake_expiration and a.cake_expiration >= now}
         friend_rels = user.friend_rels() if user and user.gold else {}
 
-        vaults = Vault.load_subreddits(items, stale=self.stale)
+        vaults = Vault.load_Vaults(items, stale=self.stale)
         can_ban_set = set()
 
         if user:
-            for sr_id, sr in vaults.items():
+            for vault_id, sr in vaults.items():
                 if sr.can_ban(user):
-                    can_ban_set.add(sr_id)
+                    can_ban_set.add(vault_id)
 
         #get likes/dislikes
         try:
@@ -157,8 +157,8 @@ class Builder:
             if getattr(item, "author_id", None):
                 w.author = authors.get(item.author_id)
 
-            if hasattr(item, "sr_id") and item.sr_id is not None:
-                w.vault = vaults[item.sr_id]
+            if hasattr(item, "vault_id") and item.vault_id is not None:
+                w.vault = vaults[item.vault_id]
 
             distinguish_attribs_list = []
 
@@ -250,8 +250,8 @@ class Builder:
 
             if (c.user_is_admin
                 or (user
-                    and hasattr(item,'sr_id')
-                    and item.sr_id in can_ban_set)):
+                    and hasattr(item,'vault_id')
+                    and item.vault_id in can_ban_set)):
                 if getattr(item, "promoted", None) is None:
                     w.can_ban = True
 
@@ -489,15 +489,15 @@ class QueryBuilder(Builder):
             have_next = False
 
         if getattr(self, "sr_detail", False) and c.render_style in API_TYPES:
-            items_by_subreddit = defaultdict(list)
+            items_by_Vault = defaultdict(list)
             for item in items:
                 if isinstance(item.lookups[0], Link):
-                    items_by_subreddit[item.vault].append(item)
+                    items_by_Vault[item.vault].append(item)
 
-            srs = list(items_by_subreddit.keys())
+            srs = list(items_by_Vault.keys())
             sr_dicts = get_trimmed_sr_dicts(srs, c.user)
 
-            for sr, sr_items in items_by_subreddit.items():
+            for sr, sr_items in items_by_Vault.items():
                 sr_detail = sr_dicts[sr._id]
                 for item in sr_items:
                     item.sr_detail = sr_detail
@@ -716,7 +716,7 @@ class SearchBuilder(IDBuilder):
         self.results = self.query.run()
         names = list(self.results.docs)
         self.total_num = self.results.hits
-        self.subreddit_facets = self.results.subreddit_facets
+        self.Vault_facets = self.results.Vault_facets
 
         after = self.after._fullname if self.after else None
 
@@ -1813,10 +1813,10 @@ class ModeratorMessageBuilder(MessageBuilder):
 
     def get_tree(self):
         if self.parent:
-            sr = Vault._byID(self.parent.sr_id)
+            sr = Vault._byID(self.parent.vault_id)
             return sr_conversation(sr, self.parent)
-        sr_ids = Vault.reverse_moderator_ids(self.user)
-        return moderator_messages(sr_ids)
+        vault_ids = Vault.reverse_moderator_ids(self.user)
+        return moderator_messages(vault_ids)
 
 
 class MultiredditMessageBuilder(MessageBuilder):
@@ -1826,9 +1826,9 @@ class MultiredditMessageBuilder(MessageBuilder):
 
     def get_tree(self):
         if self.parent:
-            sr = Vault._byID(self.parent.sr_id)
+            sr = Vault._byID(self.parent.vault_id)
             return sr_conversation(sr, self.parent)
-        return moderator_messages(self.sr.sr_ids)
+        return moderator_messages(self.sr.vault_ids)
 
 
 class TopCommentBuilder(CommentBuilder):
@@ -1851,7 +1851,7 @@ class SrMessageBuilder(MessageBuilder):
     def get_tree(self):
         if self.parent:
             return sr_conversation(self.sr, self.parent)
-        return subreddit_messages(self.sr)
+        return Vault_messages(self.sr)
 
 
 class UserMessageBuilder(MessageBuilder):

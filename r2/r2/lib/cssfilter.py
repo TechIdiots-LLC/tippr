@@ -382,7 +382,7 @@ ERROR_MESSAGES = {
 
 
 MAX_SIZE_KIB = 100
-SUBREDDIT_IMAGE_URL_PLACEHOLDER = re.compile(r"\A%%([a-zA-Z0-9\-]+)%%\Z")
+Vault_IMAGE_URL_PLACEHOLDER = re.compile(r"\A%%([a-zA-Z0-9\-]+)%%\Z")
 
 
 def strip_vendor_prefix(identifier):
@@ -413,7 +413,7 @@ class StylesheetValidator:
         self.images = images
 
     def validate_url(self, url_node):
-        m = SUBREDDIT_IMAGE_URL_PLACEHOLDER.match(url_node.value)
+        m = Vault_IMAGE_URL_PLACEHOLDER.match(url_node.value)
         if not m:
             return ValidationError(url_node.source_line, "NON_PLACEHOLDER_URL")
 

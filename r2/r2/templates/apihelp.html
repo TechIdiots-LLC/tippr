@@ -222,7 +222,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
             if docs['uri'] != uri:
               continue
 
-            in_subreddit = 'in-vault' in docs
+            in_Vault = 'in-vault' in docs
 
             extends = docs.get('extends')
           %>
@@ -232,7 +232,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
             </div>
             <h3>
               <span class="method">${method}&nbsp;</span>
-              ${api_uri_with_sr_maybe(uri, in_subreddit)}
+              ${api_uri_with_sr_maybe(uri, in_Vault)}
               %if docs['oauth_scopes']:
                 <span class="oauth-scope-list">
                   %for scope in docs['oauth_scopes']:
@@ -251,7 +251,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
             %if 'uri_variants' in docs:
               <ul class="uri-variants">
                 %for variant in docs['uri_variants']:
-                <li id="${api_method_id(variant, method)}">&rarr; ${api_uri_with_sr_maybe(variant, in_subreddit)}</li>
+                <li id="${api_method_id(variant, method)}">&rarr; ${api_uri_with_sr_maybe(variant, in_Vault)}</li>
                 %endfor
               </ul>
             %endif

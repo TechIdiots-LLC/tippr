@@ -26,7 +26,7 @@
 <%namespace file="utils.html" import="error_field" />
   <%
     additional_cls = ""
-    if not feature.is_enabled("subreddit_rules", vault=c.site.name):
+    if not feature.is_enabled("Vault_rules", vault=c.site.name):
         additional_cls = "report-action-form"
   %>
   <form id="report-action-form" class="action-form ${additional_cls} rounded" data-form-action="report">

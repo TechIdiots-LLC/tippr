@@ -34,7 +34,7 @@ from r2.models import rules
 from .account import *
 from .link import *
 from .report import *
-from .vault import AllSR, DefaultSR, Frontpage
+from .vault import AllSR, DefaultVault, Frontpage
 from .vote import *
 
 
@@ -339,8 +339,8 @@ class SearchListing(LinkListing):
 
     def listing(self, legacy_render_class=False, *args, **kwargs):
         wrapped = LinkListing.listing(self, *args, **kwargs)
-        if hasattr(self.builder, 'subreddit_facets'):
-            self.subreddit_facets = self.builder.subreddit_facets
+        if hasattr(self.builder, 'Vault_facets'):
+            self.Vault_facets = self.builder.Vault_facets
         if hasattr(self.builder, 'start_time'):
             self.timing = time.time() - self.builder.start_time
 
@@ -392,7 +392,7 @@ class SpotlightListing(Listing):
                                  for keyword in keywords])
         self.navigable = kw.get('navigable', True)
         self.things = kw.get('organic_links', [])
-        self.show_placeholder = isinstance(c.site, (DefaultSR, AllSR))
+        self.show_placeholder = isinstance(c.site, (DefaultVault, AllSR))
 
     def get_items(self):
         from r2.lib.template_helpers import replace_render

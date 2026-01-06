@@ -29,7 +29,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}">
   <head>
     <link rel="apple-touch-icon" 
-          href="/static/compact/reddit-apple-mobile-device.png"/>
+          href="/static/compact/tippr-apple-mobile-device.png"/>
     <link rel="apple-touch-startup-image" 
           href="/static/compact/reddit_startimg.png" />
     <link rel="canonical" href="${thing.canonical_link}" />
@@ -47,11 +47,11 @@
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
 
     <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('reddit-init'))}
+      ${unsafe(js.use('tippr-init'))}
     <!-- <![endif]-->
 
     <!--[if lt IE 9]>
-      ${unsafe(js.use('reddit-init-legacy'))}
+      ${unsafe(js.use('tippr-init-legacy'))}
     <![endif]-->
 
     ${js_setup(thing.extra_js_config)}

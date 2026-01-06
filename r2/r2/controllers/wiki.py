@@ -72,7 +72,7 @@ from r2.lib.validator.wiki import (
     this_may_revise,
     this_may_view,
 )
-from r2.models import DefaultSR, LinkListing
+from r2.models import DefaultVault, LinkListing
 from r2.models.builder import WikiRecentRevisionBuilder, WikiRevisionBuilder
 from r2.models.listing import WikiRevisionListing
 from r2.models.modaction import ModAction
@@ -348,7 +348,7 @@ class WikiController(TipprController):
             self.handle_error(403, 'WIKI_DOWN')
         if not c.site._should_wiki:
             self.handle_error(404, 'NOT_WIKIABLE')  # /r/mod for an example
-        frontpage = isinstance(c.site, DefaultSR)
+        frontpage = isinstance(c.site, DefaultVault)
         c.wiki_base_url = join_urls(c.site.path, 'wiki')
         c.wiki_api_url = join_urls(c.site.path, '/api/wiki')
         c.wiki_id = g.default_sr if frontpage else c.site.name

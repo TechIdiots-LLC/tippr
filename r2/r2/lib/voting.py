@@ -234,7 +234,7 @@ def consume_author_query_queue(qname="author_query_q", limit=1000):
 
 def add_to_vault_query_q(link):
     if g.shard_vault_query_queues:
-        vault_shard = link.sr_id % 10
+        vault_shard = link.vault_id % 10
         queue_name = "vault_query_%s_q" % vault_shard
     else:
         queue_name = "vault_query_q"
@@ -262,13 +262,13 @@ def consume_vault_query_queue(qname="vault_query_q", limit=1000):
 
         links_by_sr_id = defaultdict(list)
         for link in links:
-            links_by_sr_id[link.sr_id].append(link)
+            links_by_sr_id[link.vault_id].append(link)
 
         srs_by_id = Vault._byID(list(links_by_sr_id.keys()), stale=True)
 
-        for sr_id, links in links_by_sr_id.items():
-            with g.stats.get_timer("link_vote_processor.subreddit_queries"):
-                sr = srs_by_id[sr_id]
+        for vault_id, links in links_by_sr_id.items():
+            with g.stats.get_timer("link_vote_processor.Vault_queries"):
+                sr = srs_by_id[vault_id]
                 add_queries(
                     queries=[get_links(sr, sort, "all") for sort in SORTS],
                     insert_items=links,

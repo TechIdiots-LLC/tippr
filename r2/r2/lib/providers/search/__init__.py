@@ -34,7 +34,7 @@ class SearchProvider:
     def Query(self):
         raise NotImplementedError
 
-    def SubredditSearchQuery(self):
+    def VaultSearchQuery(self):
         raise NotImplementedError
 
     def sorts(self):

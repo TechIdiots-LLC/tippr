@@ -43,11 +43,11 @@ thingcls_by_name = {
 data_fields_by_name = {
     "link": {
         "url": str,
-        "sr_id": int,
+        "vault_id": int,
         "author_id": int,
     },
     "comment": {
-        "sr_id": int,
+        "vault_id": int,
         "author_id": int,
     },
 }
@@ -94,9 +94,9 @@ def time_listings(intervals, thing_type):
                 continue
 
             if thing.thing_type == "link":
-                yield ("sr/link/top/%s/%d" % (interval, thing.sr_id),
+                yield ("sr/link/top/%s/%d" % (interval, thing.vault_id),
                        thing_score, thing.timestamp, fname)
-                yield ("sr/link/controversial/%s/%d" % (interval, thing.sr_id),
+                yield ("sr/link/controversial/%s/%d" % (interval, thing.vault_id),
                        thing_controversy, thing.timestamp, fname)
 
                 if thing.url:

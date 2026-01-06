@@ -305,7 +305,7 @@
     <td class="prefright">
       ${checkbox(_("allow vaults to show me custom themes"), "show_stylesheets")}
       %if feature.is_enabled('stylesheets_everywhere'):
-        &#32;<span class="details reddit-gold">
+        &#32;<span class="details tippr-gold">
           ${_("(you can also choose which vault themes to disable on an individual level)")}
         </span>
       %endif
@@ -353,7 +353,7 @@
       &#32;
       <span class="details">
        (
-         <a href="https://www.reddit.com/r/redditdev/comments/dtg4j/want_to_help_reddit_build_a_recommender_a_public/">
+         <a href="https://www.tippr.net/r/redditdev/comments/dtg4j/want_to_help_reddit_build_a_recommender_a_public/">
            ${_("details")}
          </a>
        )
@@ -427,7 +427,7 @@
     <tr class="gold-accent">
       <th>${_("tippr themes")}</th>
       <td class="prefright">
-        <div class="reddit-themes-description">
+        <div class="tippr-themes-description">
           <span>
             ${_("tippr themes change the appearance of tippr.  They are used anywhere another custom theme is not present.")}
           </span>
@@ -440,7 +440,7 @@
         ${checkbox(_("use tippr theme"), "enable_default_themes")}
         &#32;<span class="details">(${_("hover to preview")})</span>
 
-        <div class="container reddit-themes">
+        <div class="container tippr-themes">
           % if thing.themes:
             % for theme in thing.themes:
               ${theme_item(

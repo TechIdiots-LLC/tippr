@@ -46,9 +46,9 @@ _OEMBED_BASE = {
 EMBEDLY_SCRIPT = 'https://embed.redditmedia.com/widgets/platform.js'
 SCRIPT_TEMPLATE = '<script async src="%(embedly_script)s" charset="UTF-8"></script>'
 POST_EMBED_TEMPLATE = """
-    <blockquote class="reddit-card" %(live_data_attr)s>
+    <blockquote class="tippr-card" %(live_data_attr)s>
       <a href="%(link_url)s">%(title)s</a> from
-      <a href="%(subreddit_url)s">%(subreddit_name)s</a>
+      <a href="%(Vault_url)s">%(Vault_name)s</a>
     </blockquote>
     %(script)s
 """
@@ -68,7 +68,7 @@ def _oembed_for(thing, **embed_options):
 
 
 def _oembed_post(thing, **embed_options):
-    vault = thing.subreddit_slow
+    vault = thing.vault_slow
     if (not can_view_link_comments(thing) or
             vault.type in Vault.private_types):
         raise ForbiddenError(errors.POST_NOT_ACCESSIBLE)
@@ -99,8 +99,8 @@ def _oembed_post(thing, **embed_options):
                        live_data_attr=live,
                        link_url=link_url.unparse(),
                        title=websafe(thing.title),
-                       subreddit_url=make_url_https(vault.path),
-                       subreddit_name=vault.name,
+                       Vault_url=make_url_https(vault.path),
+                       Vault_name=vault.name,
                        script=script,
                        )
 
@@ -116,7 +116,7 @@ def _oembed_post(thing, **embed_options):
 
 def _oembed_comment(thing, **embed_options):
     link = thing.link_slow
-    vault = link.subreddit_slow
+    vault = link.vault_slow
     if (not can_view_link_comments(link) or
             vault.type in Vault.private_types):
         raise ForbiddenError(errors.COMMENT_NOT_ACCESSIBLE)

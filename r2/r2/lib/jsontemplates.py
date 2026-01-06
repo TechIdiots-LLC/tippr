@@ -38,7 +38,7 @@ from r2.lib.filters import _force_unicode, safemarkdown, spaceCompress
 from r2.models.account import Account
 from r2.models.link import Comment, Link
 from r2.models.report import Report
-from r2.models.vault import Vault, SubredditUserRelations
+from r2.models.vault import Vault, VaultUserRelations
 from r2.models.award import Trophy
 from r2.models.token import OAuth2Scope, extra_oauth2_scope
 from r2.models.wiki import ImagesByWikiPage
@@ -271,7 +271,7 @@ class VaultJsonTemplate(ThingJsonTemplate):
         submit_text_label="submit_text_label",
         submit_text="submit_text",
         submit_text_html="submit_text_html",
-        subreddit_type="type",
+        Vault_type="type",
         subscribers="_ups",
         suggested_comment_sort="suggested_comment_sort",
         title="title",
@@ -313,8 +313,8 @@ class VaultJsonTemplate(ThingJsonTemplate):
         # remove this when feature is enabled and use _data_attrs instead
         if feature.is_enabled('mobile_settings'):
             data['key_color'] = self.thing_attr(thing, 'key_color')
-        if feature.is_enabled('related_subreddits'):
-            data['related_subreddits'] = self.thing_attr(thing, 'related_subreddits')
+        if feature.is_enabled('related_Vaults'):
+            data['related_Vaults'] = self.thing_attr(thing, 'related_Vaults')
 
         permissions = getattr(thing, 'mod_permissions', None)
         if permissions:
@@ -358,7 +358,7 @@ class VaultJsonTemplate(ThingJsonTemplate):
             return safemarkdown(thing.submit_text)
         elif attr == 'user_sr_style_enabled':
             if c.user_is_loggedin:
-                return c.user.use_subreddit_style(thing)
+                return c.user.use_Vault_style(thing)
             else:
                 return True
         elif attr == 'wiki_enabled':
@@ -446,7 +446,7 @@ def get_trimmed_sr_dicts(srs, user):
     else:
         # backwards compatibility: for loggedout users don't return boolean,
         # instead return None for all relations.
-        NO_SR_USER_RELATIONS = SubredditUserRelations(
+        NO_SR_USER_RELATIONS = VaultUserRelations(
             subscriber=None,
             moderator=None,
             contributor=None,
@@ -639,13 +639,13 @@ def get_author_attributes(item):
     data = {}
     if not item.author._deleted:
         author = item.author
-        sr_id = item.vault._id
+        vault_id = item.vault._id
 
         data["author"] = author.name
 
-        if author.flair_enabled_in_vault(sr_id):
-            flair_text = getattr(author, 'flair_%s_text' % sr_id, None)
-            flair_css = getattr(author, 'flair_%s_css_class' % sr_id, None)
+        if author.flair_enabled_in_vault(vault_id):
+            flair_text = getattr(author, 'flair_%s_text' % vault_id, None)
+            flair_css = getattr(author, 'flair_%s_css_class' % vault_id, None)
         else:
             flair_text = None
             flair_css = None
@@ -829,7 +829,7 @@ class LinkJsonTemplate(ThingTemplate):
             "score": item.score,
             "stickied": item.stickied,
             "vault": item.vault.name,
-            "subreddit_id": item.vault._fullname,
+            "vault_id": item.vault._fullname,
             "suggested_sort": item.sort_if_suggested(sr=item.vault),
             "thumbnail": item.thumbnail,
             "title": item.title,
@@ -900,7 +900,7 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
         })
 
         del data["vault"]
-        del data["subreddit_id"]
+        del data["vault_id"]
         return data
 
 
@@ -952,7 +952,7 @@ class CommentJsonTemplate(ThingTemplate):
             "score": item.score,
             "score_hidden": item.score_hidden,
             "vault": item.vault.name,
-            "subreddit_id": item.vault._fullname,
+            "vault_id": item.vault._fullname,
             "ups": item.score,
             "replies": cls.render_child(item),
             "parent_id": cls.get_parent_id(item),
@@ -1054,7 +1054,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
             else:
                 return "#" + thing.vault.name
         elif attr == "vault":
-            if thing.sr_id:
+            if thing.vault_id:
                 return thing.vault.name
             return None
         elif attr == "body_html":
@@ -1148,9 +1148,9 @@ class SearchListingJsonTemplate(ListingJsonTemplate):
             return {'name': sr.name, 'url': sr.path, 'count': count}
 
         facets = {}
-        if thing.subreddit_facets:
+        if thing.Vault_facets:
             facets['vaults'] = [format_sr(sr, count)
-                                    for sr, count in thing.subreddit_facets]
+                                    for sr, count in thing.Vault_facets]
         data['facets'] = facets
 
         return data
@@ -1417,7 +1417,7 @@ class StylesheetTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         images='_images',
         stylesheet='stylesheet_contents',
-        subreddit_id='_fullname',
+        vault_id='_fullname',
     )
 
     def kind(self, wrapped):
@@ -1462,8 +1462,8 @@ class VaultSettingsTemplate(ThingJsonTemplate):
         submit_link_label='site.submit_link_label',
         submit_text_label='site.submit_text_label',
         submit_text='site.submit_text',
-        subreddit_id='site._fullname',
-        subreddit_type='site.type',
+        vault_id='site._fullname',
+        Vault_type='site.type',
         suggested_comment_sort="site.suggested_comment_sort",
         title='site.title',
         wiki_edit_age='site.wiki_edit_age',
@@ -1475,14 +1475,14 @@ class VaultSettingsTemplate(ThingJsonTemplate):
     )
 
     def kind(self, wrapped):
-        return 'subreddit_settings'
+        return 'Vault_settings'
 
     def thing_attr(self, thing, attr):
         if attr.startswith('site.') and thing.site:
             return getattr(thing.site, attr[5:])
-        if attr == 'related_subreddits' and thing.site:
+        if attr == 'related_Vaults' and thing.site:
             # string used for form input
-            return '\n'.join(thing.site.related_subreddits)
+            return '\n'.join(thing.site.related_Vaults)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
@@ -1491,8 +1491,8 @@ class VaultSettingsTemplate(ThingJsonTemplate):
         # remove this when feature is enabled and use _data_attrs instead
         if feature.is_enabled('mobile_settings'):
             data['key_color'] = self.thing_attr(thing, 'key_color')
-        if feature.is_enabled('related_subreddits'):
-            data['related_subreddits'] = self.thing_attr(thing, 'related_subreddits')
+        if feature.is_enabled('related_Vaults'):
+            data['related_Vaults'] = self.thing_attr(thing, 'related_Vaults')
 
         return data
 

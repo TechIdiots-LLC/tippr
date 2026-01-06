@@ -50,7 +50,7 @@
     </form>
 </%def>
 
-<%def name="subreddit_report_form(fullname, system_rules, rules, sr_name)">
+<%def name="Vault_report_form(fullname, system_rules, rules, sr_name)">
     <%
         rules_page_link = "/v/%s/about/rules" % sr_name
     %>
@@ -142,7 +142,7 @@
 </%def>
 
 %if thing.rules:
-    ${self.subreddit_report_form(
+    ${self.Vault_report_form(
         fullname=thing.thing_fullname,
         rules=thing.rules,
         system_rules=thing.system_rules,

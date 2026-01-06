@@ -276,7 +276,7 @@ class MessageButtons(PrintableButtons):
         permalink = thing.permalink
         # don't allow replying to self unless it's modmail
         valid_recipient = (thing.author_id != c.user._id or
-                           thing.sr_id)
+                           thing.vault_id)
 
         can_reply = (c.user_is_loggedin and
                      getattr(thing, "repliable", True) and
@@ -293,8 +293,8 @@ class MessageButtons(PrintableButtons):
             if getattr(thing, 'first_message', False):
                 first_message = Message._byID(thing.first_message, data=True)
 
-            if thing.sr_id:
-                sr = thing.subreddit_slow
+            if thing.vault_id:
+                sr = thing.vault_slow
                 is_admin_message = '/v/%s' % sr.name == g.admin_message_acct
 
                 if (sr.is_muted(first_message.author_slow) or

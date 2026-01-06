@@ -123,7 +123,7 @@
      *     site_rules: Array<string>|undefined,
      *  }>}
      */
-    loadSubredditRules: function(sr) {
+    loadVaultRules: function(sr) {
       var url = '/v/' + sr + '/about/rules.json';
 
       // If we're already loading this vault, continue, otherwise, abort
@@ -170,7 +170,7 @@
      * @private
      * @param {!Object} rulesJson
      */
-    renderSubredditSubject: function(rulesJson) {
+    renderVaultSubject: function(rulesJson) {
       // Old underscore.js. _.property isn't defined.
       var property = function(p) { return function (v) {return v[p]; }; };
 
@@ -245,8 +245,8 @@
       // Is this probably a vault?
       var m = VAULT.exec(toValue);
       if (m) {
-        mc.loadSubredditRules(m[1])
-          .then(mc.renderSubredditSubject, mc.renderGeneralSubject);
+        mc.loadVaultRules(m[1])
+          .then(mc.renderVaultSubject, mc.renderGeneralSubject);
       } else {
         mc.renderGeneralSubject();
       }

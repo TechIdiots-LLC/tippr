@@ -77,15 +77,15 @@
 
 <%def name="domain()" buffered="True">
   %if thing.is_self:
-    <a class="domain" href="${thing.subreddit.path}.mobile">${thing.subreddit.name}</a>
+    <a class="domain" href="${thing.Vault.path}.mobile">${thing.Vault.name}</a>
   %else:
     <a class="domain" href="/domain/${thing.domain}/.mobile">${thing.domain}</a>
   %endif
 </%def>
 
-<%def name="subreddit()" buffered="True">
-  <a href="${thing.subreddit.path}.mobile" class="subreddit">
-    ${thing.subreddit.name}
+<%def name="Vault()" buffered="True">
+  <a href="${thing.Vault.path}.mobile" class="Vault">
+    ${thing.Vault.name}
   </a>
 </%def>
 
@@ -93,17 +93,17 @@
 <%def name="tagline()">
   <% 
     from r2.lib.utils import timeago
-    from r2.models import FakeSubreddit
+    from r2.models import FakeVault
 
-    if isinstance(c.site, FakeSubreddit) and thing.is_self:
+    if isinstance(c.site, FakeVault) and thing.is_self:
         taglinetext = _("%(when)s ago by %(author)s to %(domain)s")
-    elif isinstance(c.site, FakeSubreddit):
+    elif isinstance(c.site, FakeVault):
         taglinetext = _("%(when)s ago by %(author)s to %(reddit)s from %(domain)s")
     else:
         taglinetext = _("%(when)s ago by %(author)s from %(domain)s")
     taglinetext = conditional_websafe(taglinetext).replace(" ", "&#32;")
   %>
-  ${unsafe(taglinetext % dict(reddit = self.subreddit(),
+  ${unsafe(taglinetext % dict(reddit = self.Vault(),
                               domain = self.domain(),
                               when = thing.timesince,
                               author= self.author()))}

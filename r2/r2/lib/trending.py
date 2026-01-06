@@ -27,15 +27,15 @@ from pylons import app_globals as g
 from r2.models import NotFound, Vault, Thing
 from r2.models.keyvalue import NamedGlobals
 
-_SUBREDDIT_RE = re.compile(r'/v/(\w+)')
-TRENDING_SUBREDDITS_KEY = 'trending_subreddits'
+_Vault_RE = re.compile(r'/v/(\w+)')
+TRENDING_VaultS_KEY = 'trending_Vaults'
 
 
-def get_trending_subreddits():
-    return NamedGlobals.get(TRENDING_SUBREDDITS_KEY, None)
+def get_trending_Vaults():
+    return NamedGlobals.get(TRENDING_VaultS_KEY, None)
 
 
-def update_trending_subreddits():
+def update_trending_Vaults():
     try:
         trending_sr = Vault._by_name(g.config['trending_sr'])
     except NotFound:
@@ -49,13 +49,13 @@ def update_trending_subreddits():
                    g.config['trending_sr'])
         return
 
-    subreddit_names = _SUBREDDIT_RE.findall(link.title)
+    Vault_names = _Vault_RE.findall(link.title)
     trending_data = {
-        'subreddit_names': subreddit_names,
+        'Vault_names': Vault_names,
         'permalink': link.make_permalink(trending_sr),
         'link_id': link._id,
     }
-    NamedGlobals.set(TRENDING_SUBREDDITS_KEY, trending_data)
+    NamedGlobals.set(TRENDING_VaultS_KEY, trending_data)
     g.log.debug("Trending vault data set to %r", trending_data)
 
 

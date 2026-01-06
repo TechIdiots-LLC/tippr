@@ -60,7 +60,7 @@ from r2.models import (
     Bid,
     Collection,
     FakeAccount,
-    FakeSubreddit,
+    FakeVault,
     Frontpage,
     Link,
     MultiReddit,
@@ -233,7 +233,7 @@ def add_trackers(items, sr, adserver_click_urls=None):
             item.campaign = NO_CAMPAIGN
 
         tracking_name_fields = [item.fullname, item.campaign]
-        if not isinstance(sr, FakeSubreddit):
+        if not isinstance(sr, FakeVault):
             tracking_name_fields.append(sr.name)
 
         tracking_name = '-'.join(tracking_name_fields)
@@ -871,7 +871,7 @@ def live_campaigns_by_link(link, sr=None):
 def promote_link(link, campaign):
     if (not link.over_18 and
         not link.over_18_override and
-        any(sr.over_18 for sr in campaign.target.subreddits_slow)):
+        any(sr.over_18 for sr in campaign.target.Vaults_slow)):
         link.over_18 = True
         link._commit()
 
@@ -1007,7 +1007,7 @@ PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 def all_live_promo_srnames():
     now = promo_datetime_now()
     srnames = itertools.chain.from_iterable(
-        camp.target.subreddit_names for camp, link in get_promos(now)
+        camp.target.Vault_names for camp, link in get_promos(now)
                                     if is_live_promo(link, camp)
     )
     return set(srnames)
@@ -1035,7 +1035,7 @@ def srnames_from_site(user, site, include_subscriptions=True):
     over_18 = is_site_over18(site)
     srnames = set()
 
-    if not isinstance(site, FakeSubreddit):
+    if not isinstance(site, FakeVault):
         srnames.add(site.name)
     elif isinstance(site, MultiReddit):
         srnames = srnames | {sr.name for sr in site.srs}
@@ -1043,7 +1043,7 @@ def srnames_from_site(user, site, include_subscriptions=True):
         srnames.add(Frontpage.name)
 
         if is_logged_in and include_subscriptions:
-            subscriptions = Vault.user_subreddits(
+            subscriptions = Vault.user_Vaults(
                 user,
                 ids=False,
             )
@@ -1088,7 +1088,7 @@ def keywords_from_context(
         live_srnames = all_live_promo_srnames()
         keywords = live_srnames.intersection(keywords)
 
-    if (not isinstance(site,FakeSubreddit) and
+    if (not isinstance(site,FakeVault) and
             site._downs > g.live_config["ads_popularity_threshold"]):
         keywords.add("s.popular")
 
@@ -1119,7 +1119,7 @@ def _get_live_promotions(sanitized_names):
             weight = (camp.total_budget_dollars / camp.ndays)
             pt = PromoTuple(link=link._fullname, weight=weight,
                             campaign=camp._fullname)
-            for sr_name in camp.target.subreddit_names:
+            for sr_name in camp.target.Vault_names:
                 if sr_name in sr_names:
                     sanitized_name = SPECIAL_NAMES.get(sr_name, sr_name)
                     ret[sanitized_name].append(pt)
@@ -1274,7 +1274,7 @@ def failed_payment_method(user, link):
 
 
 def Run(verbose=True):
-    """reddit-job-update_promos: Intended to be run hourly to pull in
+    """tippr-job-update_promos: Intended to be run hourly to pull in
     scheduled changes to ads
 
     """

@@ -252,7 +252,7 @@ class DomainMiddleware:
         return self.app(environ, start_response)
 
 
-class SubredditMiddleware:
+class VaultMiddleware:
     sr_pattern = re.compile(r'^/v/([^/]{2,})')
 
     def __init__(self, app):
@@ -576,7 +576,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
         app = ProfilingMiddleware(app, profile_directory)
 
     app = DomainListingMiddleware(app)
-    app = SubredditMiddleware(app)
+    app = VaultMiddleware(app)
     app = ExtensionMiddleware(app)
     app = DomainMiddleware(app, config=config)
 

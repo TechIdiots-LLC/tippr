@@ -1,13 +1,13 @@
 /*
 requires Backbone
 requires r.errors
-requires r.models.SubredditRule
-requires r.models.SubredditRuleCollection
+requires r.models.VaultRule
+requires r.models.VaultRuleCollection
 requires r.ui.TextCounter
  */
 
 !function(r, Backbone, undefined) {
-  var SubredditRuleBaseView = Backbone.View.extend({
+  var VaultRuleBaseView = Backbone.View.extend({
     countersInitialized: false,
     state: '',
 
@@ -41,7 +41,7 @@ requires r.ui.TextCounter
     },
 
     delegateEvents: function() {
-      SubredditRuleBaseView.__super__.delegateEvents.apply(this, arguments);
+      VaultRuleBaseView.__super__.delegateEvents.apply(this, arguments);
 
       this.listenTo(this.model, 'request', this.disableForm);
       this.listenTo(this.model, 'invalid', function(model, error) {
@@ -137,16 +137,16 @@ requires r.ui.TextCounter
   });
 
 
-  var SubredditRuleView = SubredditRuleBaseView.extend({
+  var VaultRuleView = VaultRuleBaseView.extend({
     DELETING_STATE: 'deleting',
 
     initialize: function(options) {
-      SubredditRuleView.__super__.initialize.apply(this, arguments);
+      VaultRuleView.__super__.initialize.apply(this, arguments);
       this.ruleTemplate = options.ruleTemplate;
     },
 
     delegateEvents: function() {
-      SubredditRuleView.__super__.delegateEvents.apply(this, arguments);
+      VaultRuleView.__super__.delegateEvents.apply(this, arguments);
       this.listenTo(this.model, 'sync:update', this.cancel);
       this.listenTo(this.model, 'sync:delete', this.remove);
     },
@@ -175,7 +175,7 @@ requires r.ui.TextCounter
     },
 
     render: function() {
-      SubredditRuleView.__super__.render.call(this);
+      VaultRuleView.__super__.render.call(this);
 
       if (this.state === this.DELETING_STATE) {
         this.$el.addClass('mod-action-deleting');
@@ -202,11 +202,11 @@ requires r.ui.TextCounter
   });
 
 
-  var AddSubredditRuleView = SubredditRuleBaseView.extend({
+  var AddVaultRuleView = VaultRuleBaseView.extend({
     DISABLED_STATE: 'disabled',
 
     initialize: function(options) {
-      AddSubredditRuleView.__super__.initialize.apply(this, arguments);
+      AddVaultRuleView.__super__.initialize.apply(this, arguments);
       this.collection = options.collection;
       this.initializeNewModel();
       this.$collapsedDisplay = this.$el.find('.vault-rule-add-form-buttons');
@@ -220,7 +220,7 @@ requires r.ui.TextCounter
     },
 
     delegateEvents: function() {
-      AddSubredditRuleView.__super__.delegateEvents.apply(this, arguments);
+      AddVaultRuleView.__super__.delegateEvents.apply(this, arguments);
       this.listenTo(this.collection, 'enabled', function() {
         if (this.state === this.DISABLED_STATE) {
           this.setState(this.DEFAULT_STATE);
@@ -259,7 +259,7 @@ requires r.ui.TextCounter
 
     render: function() {
       this.$collapsedDisplay.detach();
-      AddSubredditRuleView.__super__.render.call(this);
+      AddVaultRuleView.__super__.render.call(this);
 
       if (this.state === this.DISABLED_STATE) {
         this.$maxRulesNotice.removeAttr('hidden');
@@ -285,17 +285,17 @@ requires r.ui.TextCounter
   });
 
   
-  var SubredditRulesPage = Backbone.View.extend({
+  var VaultRulesPage = Backbone.View.extend({
     initialize: function(options) {
       this.ruleTemplate = options.ruleTemplate;
       this.formTemplate = options.formTemplate;
       var collectionOptions = {
-        subredditName: r.config.post_site,
-        subredditFullname: r.config.cur_site,
+        VaultName: r.config.post_site,
+        VaultFullname: r.config.cur_site,
       };
-      this.collection = new r.models.SubredditRuleCollection(null, collectionOptions);
+      this.collection = new r.models.VaultRuleCollection(null, collectionOptions);
 
-      this.newRuleForm = new AddSubredditRuleView({
+      this.newRuleForm = new AddVaultRuleView({
         el: options.addForm,
         collection: this.collection,
         formTemplate: this.formTemplate,
@@ -304,8 +304,8 @@ requires r.ui.TextCounter
       // initialize views for the rules prerendered on the page
       var ruleItems = this.$el.find('.vault-rule-item').toArray();
       ruleItems.forEach(function(el) {
-        var model = this.createSubredditRuleModel(el);
-        this.createSubredditRuleView(el, model);
+        var model = this.createVaultRuleModel(el);
+        this.createVaultRuleView(el, model);
       }, this);
 
       if (!this.collection.length) {
@@ -318,11 +318,11 @@ requires r.ui.TextCounter
     },
 
     delegateEvents: function() {
-      SubredditRulesPage.__super__.delegateEvents.apply(this, arguments);
+      VaultRulesPage.__super__.delegateEvents.apply(this, arguments);
 
       this.listenTo(this.newRuleForm, 'success', function(model) {
         var props = model.toJSON();
-        var newModel = new r.models.SubredditRule(props);
+        var newModel = new r.models.VaultRule(props);
         this.addNewRule(newModel);
       });
 
@@ -331,10 +331,10 @@ requires r.ui.TextCounter
       });
     },
 
-    createSubredditRuleModel: function(el) {
+    createVaultRuleModel: function(el) {
       var $el = $(el);
 
-      return new r.models.SubredditRule({
+      return new r.models.VaultRule({
         priority: parseInt($el.data('priority'), 10),
         short_name: $el.find('.vault-rule-title').text(),
         description: $el.data('description'),
@@ -343,10 +343,10 @@ requires r.ui.TextCounter
       });
     },
 
-    createSubredditRuleView: function(el, model) {
+    createVaultRuleView: function(el, model) {
       this.collection.add(model);
 
-      return new SubredditRuleView({
+      return new VaultRuleView({
         el: el,
         model: model,
         ruleTemplate: this.ruleTemplate,
@@ -356,7 +356,7 @@ requires r.ui.TextCounter
 
     addNewRule: function(model) {
       var el = $.parseHTML('<div class="vault-rule-item"></div>')[0];
-      var view = this.createSubredditRuleView(el, model);
+      var view = this.createVaultRuleView(el, model);
       view.render();
       this.$el.append(el);
     },
@@ -367,7 +367,7 @@ requires r.ui.TextCounter
         var storageKey = r.rulesSessionStorageKey;
         var rulesCache = window.sessionStorage.getItem(storageKey);
         rulesCache = rulesCache ? JSON.parse(rulesCache) : {};
-        rulesCache[this.collection.subredditFullname] = newRules;
+        rulesCache[this.collection.VaultFullname] = newRules;
         rulesCache = JSON.stringify(rulesCache);
         window.sessionStorage.setItem(storageKey, rulesCache);
       } catch (err) {
@@ -392,7 +392,7 @@ requires r.ui.TextCounter
       throw 'Vault rule templates not found!';
     }
 
-    new SubredditRulesPage({
+    new VaultRulesPage({
       el: ruleList,
       addForm: addForm,
       ruleTemplate: _.template(ruleTemplate.innerHTML),

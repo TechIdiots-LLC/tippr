@@ -74,7 +74,7 @@ def monitor_mentions(comment):
     if sender.in_timeout:
         return
 
-    vault = comment.subreddit_slow
+    vault = comment.vault_slow
     usernames = extract_user_mentions(comment.body)
     inbox_class = Inbox.rel(Account, Comment)
 

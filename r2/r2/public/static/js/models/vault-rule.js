@@ -56,7 +56,7 @@
   };
 
 
-  var SubredditRule = Backbone.Model.extend({
+  var VaultRule = Backbone.Model.extend({
     idAttribute: 'short_name',
 
     SHORT_NAME_MAX_LENGTH: SHORT_NAME_MAX_LENGTH,
@@ -72,7 +72,7 @@
         var data = model.toJSON();
         delete data.description_html;
         return {
-          url: 'add_subreddit_rule',
+          url: 'add_Vault_rule',
           data: data,
         };
       },
@@ -82,7 +82,7 @@
         data.old_short_name = model._old_short_name;
         delete data.description_html;
         return {
-          url: 'update_subreddit_rule',
+          url: 'update_Vault_rule',
           data: data,
         };
       },
@@ -90,7 +90,7 @@
       delete: function(model) {
         var data = { short_name: model._old_short_name };
         return {
-          url: 'remove_subreddit_rule',
+          url: 'remove_Vault_rule',
           data: data,
         };
       },
@@ -181,20 +181,20 @@
 
   var RULES_COLLECTION_MAX_LENGTH = 10;
 
-  var SubredditRuleCollection = Backbone.Collection.extend({
-    model: SubredditRule,
+  var VaultRuleCollection = Backbone.Collection.extend({
+    model: VaultRule,
     maxLength: RULES_COLLECTION_MAX_LENGTH,
-    subredditName: null,
-    subredditFullname: null,
+    VaultName: null,
+    VaultFullname: null,
 
     initialize: function(models, options) {
       this._disabled = this.length >= this.maxLength;
       
-      if (options && options.subredditName) {
-        this.subredditName = options.subredditName;
+      if (options && options.VaultName) {
+        this.VaultName = options.VaultName;
       }
-      if (options && options.subredditFullname) {
-        this.subredditFullname = options.subredditFullname;
+      if (options && options.VaultFullname) {
+        this.VaultFullname = options.VaultFullname;
       }
 
       this.on('add', function() {
@@ -214,7 +214,7 @@
 
     toApiJSON: function() {
       return {
-        sr_name: this.subredditName,
+        sr_name: this.VaultName,
         rules: this.models.map(function(model) {
           return model.toApiJSON();
         }),
@@ -223,6 +223,6 @@
   });
 
 
-  r.models.SubredditRule = SubredditRule;
-  r.models.SubredditRuleCollection = SubredditRuleCollection;
+  r.models.VaultRule = VaultRule;
+  r.models.VaultRuleCollection = VaultRuleCollection;
 }(r, Backbone);

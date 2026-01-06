@@ -39,7 +39,7 @@ class ButtonsController(TipprController):
             if link:
                 links = [link]
             else:
-                sr = None if isinstance(c.site, FakeSubreddit) else c.site
+                sr = None if isinstance(c.site, FakeVault) else c.site
                 try:
                     links = Link._by_url(url, sr)
                 except NotFound:
@@ -105,7 +105,7 @@ class ButtonsController(TipprController):
 
     def GET_button_demo_page(self):
         # no buttons for domain listings -> redirect to top level
-        if isinstance(c.site, DomainSR):
+        if isinstance(c.site, DomainVault):
             return self.redirect('/buttons')
         return BoringPage(_("tippr buttons"),
                           show_sidebar = False, 

@@ -46,13 +46,13 @@
 <%def name="entry()">
 <% 
    from r2.lib.strings import Score
-   domain = get_domain(subreddit=False)
+   domain = get_domain(vault=False)
    permalink = "%s://%s%s" % (g.default_scheme, domain, thing.permalink)
    expanded = request.GET.get("expanded")
    two_col = request.GET.has_key("twocolumn") if l else False
  %>
   ${self.arrows(thing)}
-  <div class="reddit-entry entry ${thing.like_cls}" 
+  <div class="tippr-entry entry ${thing.like_cls}" 
        %if expanded:
          ${optionalstyle("margin-left: 58px;")}
        %else:
@@ -62,7 +62,7 @@
     %if c.site.link_flair_position == 'left' and thing.flair_text:
       ${flair()}
     %endif
-    <a class="reddit-link-title may-blank"
+    <a class="tippr-link-title may-blank"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
        %if thing.is_self:
          href="${permalink}"
@@ -115,7 +115,7 @@
       </span>
       &#32;|&#32;
       %endif
-      <a class="reddit-comment-link may-blank"
+      <a class="tippr-comment-link may-blank"
          ${optionalstyle("color:gray")}
          %if c.link_target:
            target="${c.link_target}"
@@ -123,5 +123,5 @@
          href="${permalink}">${thing.comment_label}</a>
     </small>
   </div>
-  <div class="reddit-link-end" ${optionalstyle("clear:left; padding:3px;")}></div>
+  <div class="tippr-link-end" ${optionalstyle("clear:left; padding:3px;")}></div>
 </%def>

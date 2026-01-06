@@ -42,8 +42,8 @@ from r2.models.traffic import (
     AdImpressionsByCodename,
     ClickthroughsByCodename,
     PageviewsByLanguage,
-    PageviewsBySubreddit,
-    PageviewsBySubredditAndPath,
+    PageviewsByVault,
+    PageviewsByVaultAndPath,
     SitewidePageviews,
     TargetedClickthroughsByCodename,
     TargetedImpressionsByCodename,
@@ -69,15 +69,15 @@ if g.TRAFFIC_SECRET_KEY:
 s3_connection = boto3.resource('s3', **_s3_kwargs)
 emr_connection = boto3.client('emr', **_emr_kwargs)
 
-traffic_categories = (SitewidePageviews, PageviewsBySubreddit,
-                      PageviewsBySubredditAndPath, PageviewsByLanguage,
+traffic_categories = (SitewidePageviews, PageviewsByVault,
+                      PageviewsByVaultAndPath, PageviewsByLanguage,
                       ClickthroughsByCodename, TargetedClickthroughsByCodename,
                       AdImpressionsByCodename, TargetedImpressionsByCodename)
 
 traffic_subdirectories = {
     SitewidePageviews: 'sitewide',
-    PageviewsBySubreddit: 'vault',
-    PageviewsBySubredditAndPath: 'srpath',
+    PageviewsByVault: 'vault',
+    PageviewsByVaultAndPath: 'srpath',
     PageviewsByLanguage: 'lang',
     ClickthroughsByCodename: 'clicks',
     TargetedClickthroughsByCodename: 'clicks_targeted',
@@ -170,8 +170,8 @@ def _name_to_kw(category_cls, name):
                 'vault': vault}
 
     d = {SitewidePageviews: lambda n: {},
-         PageviewsBySubreddit: lambda n: {'vault': n},
-         PageviewsBySubredditAndPath: lambda n: {'srpath': n},
+         PageviewsByVault: lambda n: {'vault': n},
+         PageviewsByVaultAndPath: lambda n: {'srpath': n},
          PageviewsByLanguage: lambda n: {'lang': n},
          ClickthroughsByCodename: lambda n: {'codename': name},
          AdImpressionsByCodename: lambda n: {'codename': name},

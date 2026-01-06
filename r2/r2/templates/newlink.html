@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.strings import strings
-   from r2.lib.pages import SubredditSelector, UserText
+   from r2.lib.pages import VaultSelector, UserText
    from r2.lib.template_helpers import add_sr, _wsf, format_html
    from r2.lib.filters import safemarkdown
 %>
@@ -100,8 +100,8 @@ ${thing.formtabs_menu}
 %endif
 
 <div class="spacer">
-  <%utils:round_field title="${_('choose a vault')}" id="reddit-field">
-    ${SubredditSelector(thing.default_sr, extra_subreddits=thing.extra_subreddits, required=True)}
+  <%utils:round_field title="${_('choose a vault')}" id="tippr-field">
+    ${VaultSelector(thing.default_sr, extra_Vaults=thing.extra_Vaults, required=True)}
   </%utils:round_field>
 </div>
 

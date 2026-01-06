@@ -441,8 +441,8 @@ class Email:
             timestamp = time.mktime(self.date.timetuple())
             msg['Date'] = utf8(email.utils.formatdate(timestamp))
             if self.user:
-                msg['X-Reddit-username'] = utf8(self.user.name)
-            msg['X-Reddit-ID'] = self.msg_hash
+                msg['X-tippr-username'] = utf8(self.user.name)
+            msg['X-tippr-ID'] = self.msg_hash
             if self.reply_to:
                 msg['Reply-To'] = utf8(self.reply_to)
             return msg

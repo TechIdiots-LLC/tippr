@@ -34,10 +34,10 @@
 <div class="thing message id-${thing._fullname} ${'unread' if thing.new else ''}">
   <p class="subject">
     %if getattr(thing, "is_parent", False):
-       %if thing.sr_id:
+       %if thing.vault_id:
          <span class="correspondent reddit rounded">
-           <a href="${thing.subreddit.path}message/moderator/inbox.compact">
-             /r/${thing.subreddit.name}
+           <a href="${thing.Vault.path}message/moderator/inbox.compact">
+             /r/${thing.Vault.name}
            </a>
          </span>
        %else:
@@ -59,15 +59,15 @@
   <%
     substitutions = {}
 
-    if thing.sr_id:
-        substitutions['subreddit'] = format_html(u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>', path=thing.subreddit.path)
+    if thing.vault_id:
+        substitutions['Vault'] = format_html(u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>', path=thing.Vault.path)
 
     substitutions['author'] = format_html(u"<b>%s</b>", WrappedUser(thing.author, thing.attribs, thing))
 
     if isinstance(thing.to, Account):
         substitutions['dest'] = format_html(u"<b>%s</b>", WrappedUser(thing.to, [], thing))
-    elif thing.sr_id:
-        substitutions['dest'] = substitutions['subreddit']
+    elif thing.vault_id:
+        substitutions['dest'] = substitutions['Vault']
 
     substitutions['when'] = thing.timesince
 

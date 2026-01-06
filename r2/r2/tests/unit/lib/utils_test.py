@@ -491,19 +491,19 @@ class TestTruncString(unittest.TestCase):
 
 class TestUrlToThing(unittest.TestCase):
 
-    def test_subreddit_noslash(self):
-        with patch('r2.models.Vault') as MockSubreddit:
+    def test_Vault_noslash(self):
+        with patch('r2.models.Vault') as MockVault:
             mock_sr = MagicMock()
-            MockSubreddit._by_name.return_value = mock_sr
+            MockVault._by_name.return_value = mock_sr
             self.assertEqual(
                 utils.url_to_thing('http://reddit.local/v/pics'),
                 mock_sr,
             )
 
-    def test_subreddit(self):
-        with patch('r2.models.Vault') as MockSubreddit:
+    def test_Vault(self):
+        with patch('r2.models.Vault') as MockVault:
             mock_sr = MagicMock()
-            MockSubreddit._by_name.return_value = mock_sr
+            MockVault._by_name.return_value = mock_sr
             self.assertEqual(
                 utils.url_to_thing('http://reddit.local/v/pics/'),
                 mock_sr,

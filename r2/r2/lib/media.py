@@ -391,7 +391,7 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 
 def _get_scrape_url(link):
     if not link.is_self:
-        sr_name = link.subreddit_slow.name
+        sr_name = link.vault_slow.name
         if not feature.is_enabled("imgur_gif_conversion", vault=sr_name):
             return link.url
         p = UrlParser(link.url)
@@ -420,7 +420,7 @@ def _get_scrape_url(link):
 
 
 def _set_media(link, force=False, **kwargs):
-    sr = link.subreddit_slow
+    sr = link.vault_slow
     
     # Do not process thumbnails for quarantined vaults
     if sr.quarantine:

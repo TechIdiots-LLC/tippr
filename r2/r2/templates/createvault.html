@@ -33,7 +33,7 @@
 
 <%namespace name="utils" file="utils.html"/>
  
-%if not thing.site and not c.user.can_create_subreddit:
+%if not thing.site and not c.user.can_create_Vault:
 <div class="infobar">${_md("""
 # your account is too new to create a vault
     
@@ -482,7 +482,7 @@ try participating in other communities on tippr for a little while first before 
     </%utils:line_field>
 %endif
 
-%if thing.site and feature.is_enabled('related_subreddits'):
+%if thing.site and feature.is_enabled('related_Vaults'):
   <%utils:line_field title="${_('related vaults')}">
     <div class="delete-field">
       <p class="little gray">${_('similar or related vaults.')}</p>
@@ -491,7 +491,7 @@ try participating in other communities on tippr for a little while first before 
           <a href=""></a>
           <button class="remove-sr" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
         </li>
-        %for sr in thing.site.related_subreddits:
+        %for sr in thing.site.related_Vaults:
           %if sr:
             <li data-name="${sr.lower()}">
               <a href="/v/${sr}">/r/${sr}</a>
@@ -500,17 +500,17 @@ try participating in other communities on tippr for a little while first before 
           %endif
         %endfor
       </ul>
-      %if hasattr(thing, 'subreddit_selector'):
+      %if hasattr(thing, 'Vault_selector'):
       <form id="add-related-sr" onsubmit="return add_related_sr(this)">
-        ${thing.subreddit_selector}
+        ${thing.Vault_selector}
       </form>
       %endif
-      <textarea id="related_subreddits" name="related_subreddits" style="display:none;">
-        ${keep_space('\n'.join(thing.site.related_subreddits))}
+      <textarea id="related_Vaults" name="related_Vaults" style="display:none;">
+        ${keep_space('\n'.join(thing.site.related_Vaults))}
       </textarea>
-      ${error_field("BAD_VAULT_NAME", "related_subreddits")}
-      ${error_field("TOO_MANY_SUBREDDITS", "related_subreddits")}
-      ${error_field("VAULT_NOEXIST", "related_subreddits")}
+      ${error_field("BAD_VAULT_NAME", "related_Vaults")}
+      ${error_field("TOO_MANY_VaultS", "related_Vaults")}
+      ${error_field("VAULT_NOEXIST", "related_Vaults")}
       <script type="text/javascript">
         function add_related_sr(form) {
           $('.VAULT_NOEXIST.field-sr').hide();
@@ -532,7 +532,7 @@ try participating in other communities on tippr for a little while first before 
               $sr_item.appendTo($sr_list);
 
               var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
-              var $input = $('#related_subreddits');
+              var $input = $('#related_Vaults');
               $input.val($input.val().replace(re, '').trim() + '\n' + sr_name);
 
               $('#sr-autocomplete').val('');
@@ -552,7 +552,7 @@ try participating in other communities on tippr for a little while first before 
           $sr_item.remove();
 
           var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
-          var $input = $('#related_subreddits');
+          var $input = $('#related_Vaults');
           $input.val($input.val().replace(re, '\n').trim());
         }
       </script>

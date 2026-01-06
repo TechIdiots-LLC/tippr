@@ -42,7 +42,7 @@ def calc_rising():
     rising = []
     for link in list(links.values()):
         if link._ups > 1:
-            rising.append((link._fullname, score(link), link.sr_id))
+            rising.append((link._fullname, score(link), link.vault_id))
 
     # return rising sorted by score
     return sorted(rising, key=lambda x: x[1], reverse=True)
@@ -58,35 +58,35 @@ def get_all_rising():
 
 def get_rising(sr):
     rising = get_all_rising()
-    return [link for link, score, sr_id in rising if sr.keep_for_rising(sr_id)]
+    return [link for link, score, vault_id in rising if sr.keep_for_rising(vault_id)]
 
 
-def get_rising_tuples(sr_ids):
+def get_rising_tuples(vault_ids):
     rising = get_all_rising()
 
-    tuples_by_srid = {sr_id: [] for sr_id in sr_ids}
+    tuples_by_srid = {vault_id: [] for vault_id in vault_ids}
     top_rising = {}
 
-    for link, score, sr_id in rising:
-        if sr_id not in sr_ids:
+    for link, score, vault_id in rising:
+        if vault_id not in vault_ids:
             continue
 
-        if sr_id not in top_rising:
-            top_rising[sr_id] = score
+        if vault_id not in top_rising:
+            top_rising[vault_id] = score
 
-        norm_score = score / top_rising[sr_id]
-        tuples_by_srid[sr_id].append((-norm_score, -score, link))
+        norm_score = score / top_rising[vault_id]
+        tuples_by_srid[vault_id].append((-norm_score, -score, link))
 
     return tuples_by_srid
 
 
-def normalized_rising(sr_ids):
-    if not sr_ids:
+def normalized_rising(vault_ids):
+    if not vault_ids:
         return []
 
     tuples_by_srid = sgm(
         cache=g.gencache,
-        keys=sr_ids,
+        keys=vault_ids,
         miss_fn=get_rising_tuples,
         prefix='rising:',
         time=90,

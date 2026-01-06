@@ -24,7 +24,7 @@
    from r2.lib.template_helpers import add_sr
  %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
-<%namespace file="subreddit.html" import="tagline, permission_icons"/>
+<%namespace file="Vault.html" import="tagline, permission_icons"/>
 <%namespace file="utils.html" import="plain_link" />
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
@@ -35,7 +35,7 @@
      elif getattr(thing, "likes", None) is False:
          like_cls = "dislikes"
    %>
-<div class="thing subreddit id-${thing._fullname}">
+<div class="thing Vault id-${thing._fullname}">
   <div class="midcol"
   ${toggle_button("fancy-toggle-button", "+", "-",
                   "subscribe('%s')" % thing._fullname, 

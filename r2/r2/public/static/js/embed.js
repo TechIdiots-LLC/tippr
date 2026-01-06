@@ -191,7 +191,7 @@
             'user_agent': navigator.userAgent,
             'user_id': r.config.user_id,
             'logged_in_status': !!r.config.logged,
-            'sr_id': r.utils.fullnameToId(r.config.cur_site),
+            'vault_id': r.utils.fullnameToId(r.config.cur_site),
             'sr_name': r.config.post_site,
             'embed_id': r.utils.fullnameToId($el.thing_id()),
             'embed_created_ts': ts,

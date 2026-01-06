@@ -136,7 +136,7 @@ def get_recommended_content(prefs, src, settings):
     rising_items = discovery_items = comment_items = hot_items = []
 
     # make a list of srs that shouldn't be recommended
-    default_srid36s = [to36(srid) for srid in Vault.default_subreddits()]
+    default_srid36s = [to36(srid) for srid in Vault.default_Vaults()]
     omit_srid36s = list(prefs.likes.union(prefs.dislikes,
                                           prefs.recent_views,
                                           default_srid36s))
@@ -203,20 +203,20 @@ def get_hot_items(srs, item_type, src):
     hot_links = Link._by_fullname(hot_link_fullnames, return_dict=False)
     hot_items = []
     for l in hot_links:
-        hot_items.append(ExploreItem(item_type, src, hot_srs[l.sr_id], l))
+        hot_items.append(ExploreItem(item_type, src, hot_srs[l.vault_id], l))
     return hot_items
 
 
 def get_rising_items(omit_sr_ids, count=4):
     """Get links that are rising right now."""
     all_rising = rising.get_all_rising()
-    candidate_sr_ids = {sr_id for link, score, sr_id in all_rising}.difference(omit_sr_ids)
-    link_fullnames = [link for link, score, sr_id in all_rising if sr_id in candidate_sr_ids]
+    candidate_sr_ids = {vault_id for link, score, vault_id in all_rising}.difference(omit_sr_ids)
+    link_fullnames = [link for link, score, vault_id in all_rising if vault_id in candidate_sr_ids]
     link_fullnames_to_show = random_sample(link_fullnames, count)
     rising_links = Link._by_fullname(link_fullnames_to_show,
                                      return_dict=False,
                                      data=True)
-    rising_items = [ExploreItem(TYPE_RISING, 'ris', Vault._byID(l.sr_id), l)
+    rising_items = [ExploreItem(TYPE_RISING, 'ris', Vault._byID(l.vault_id), l)
                    for l in rising_links]
     return rising_items
 
@@ -235,11 +235,11 @@ def get_comment_items(srs, src, count=4):
                                  load_more=False)
         listing = NestedListing(builder, parent_name=link._fullname).listing()
         top_comments.extend(listing.things)
-    srs = Vault._byID([com.sr_id for com in top_comments])
+    srs = Vault._byID([com.vault_id for com in top_comments])
     links = Link._byID([com.link_id for com in top_comments])
     comment_items = [ExploreItem(TYPE_COMMENT,
                                  src,
-                                 srs[com.sr_id],
+                                 srs[com.vault_id],
                                  links[com.link_id],
                                  com) for com in top_comments]
     return comment_items

@@ -25,17 +25,17 @@
 <%!
    from pylons.i18n import _
    from r2.lib.template_helpers import get_domain, style_line, format_html, _wsf
-   from r2.models.vault import FakeSubreddit, DefaultSR
+   from r2.models.vault import FakeVault, DefaultVault
 %>
 
 <div class="rembeddit"
      ${optionalstyle("font-family:verdana,arial,helvetica,sans-serif;" + 
                      style_line(bgcolor="FFFFFF", bordercolor="336699"))}>
   %if not request.GET.get("nobranding"):
-  <div class="reddit-header" 
+  <div class="tippr-header" 
        ${optionalstyle("padding: 5px; padding-bottom:1px;" + 
                     ("background-color:#CEE3F8" if not c.bgcolor else ""))}>
-  <h4 class="reddit-title" 
+  <h4 class="tippr-title" 
       ${optionalstyle("margin:0;" + 
                       "padding-bottom:3px")}
       >
@@ -44,14 +44,14 @@
          target="${c.link_target}"
       %endif
        >
-      <img src="${g.default_scheme}://${get_domain(subreddit=False)}/static/spreddit1.gif"
+      <img src="${g.default_scheme}://${get_domain(vault=False)}/static/spreddit1.gif"
            alt="" 
            ${optionalstyle("border:none")} />
     </a>
     <%
        style = unsafe(capture(optionalstyle, "text-decoration:none;color:#336699"))
        name = c.site.name
-       if not isinstance(c.site, FakeSubreddit):
+       if not isinstance(c.site, FakeVault):
            name += ".%s" % g.domain
        if c.link_target:
           link = format_html('<a %s href="%s://%s/" target="%s">%s</a></h3>',
@@ -62,9 +62,9 @@
      %>
     ${self.titlebar(link)}
   </h4>
-  %if g.domain != "reddit.com":
+  %if g.domain != "tippr.net":
   <p ${optionalstyle("margin: 0px 30px 5px 30px; color: gray;")}
-     class="powered-by-reddit">
+     class="powered-by-tippr">
     <small>
       powered by&#32; 
       <a href="${g.default_scheme}://${g.domain}"
@@ -73,7 +73,7 @@
           target="${c.link_target}"
         %endif
       >
-        ${DefaultSR.name}
+        ${DefaultVault.name}
       </a>
     </small>
   </p>

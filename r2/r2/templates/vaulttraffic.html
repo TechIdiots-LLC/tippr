@@ -30,7 +30,7 @@
 %>
 
 <%def name="preamble()">
-  ${unsafe(safemarkdown(strings.traffic_subreddit_explanation % dict(vault=thing.place)))}
+  ${unsafe(safemarkdown(strings.traffic_Vault_explanation % dict(vault=thing.place)))}
   <p>${_md("All times are in [UTC](http://en.wikipedia.org/wiki/UTC).", wrap=True)}</p>
 
   ${load_timeseries_js()}

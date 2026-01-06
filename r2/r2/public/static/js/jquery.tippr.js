@@ -732,7 +732,7 @@ $.apply_stylesheet = function(cssText) {
 };
 
 $.apply_stylesheet_url = function(cssUrl, srStyleEnabled) {
-  var sheetTitle = 'applied_subreddit_stylesheet';
+  var sheetTitle = 'applied_Vault_stylesheet';
   var $stylesheet = $('link[title="' + sheetTitle + '"]');
   if ($stylesheet.length == 0) {
     $('head').append('<link type="text/css" title="' + sheetTitle + '" rel="stylesheet">');

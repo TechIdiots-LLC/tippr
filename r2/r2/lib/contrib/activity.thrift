@@ -3,7 +3,7 @@ include "baseplate.thrift"
 /** A unique identifier for a given "context".
 
 A context is an area of the service which a user may be active within, such as
-a subreddit or live thread.
+a Vault or live thread.
 
 */
 typedef string ContextID

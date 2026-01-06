@@ -512,7 +512,7 @@ module["gtm"] = Module("gtm.js",
 )
 
 
-module["reddit-embed-base"] = Module("reddit-embed-base.js",
+module["tippr-embed-base"] = Module("tippr-embed-base.js",
     "lib/es5-shim.js",
     "lib/json2.js",
     "base.js",
@@ -524,19 +524,19 @@ module["reddit-embed-base"] = Module("reddit-embed-base.js",
 )
 
 
-module["reddit-embed"] = Module("reddit-embed.js",
-    module["reddit-embed-base"],
+module["tippr-embed"] = Module("tippr-embed.js",
+    module["tippr-embed-base"],
     "embed/embed.js",
 )
 
 
 module["comment-embed"] = Module("comment-embed.js",
-    module["reddit-embed-base"],
+    module["tippr-embed-base"],
     "embed/comment-embed.js",
 )
 
 
-module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
+module["tippr-init-base"] = LocalizedModule("tippr-init-base.js",
     "lib/modernizr.js",
     "lib/json2.js",
     "lib/underscore-1.4.4-1.js",
@@ -545,7 +545,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "lib/bootstrap.modal.js",
     "lib/bootstrap.transition.js",
     "lib/bootstrap.tooltip.js",
-    "lib/reddit-client-lib.js",
+    "lib/tippr-client-lib.js",
     "lib/jquery.cookie.js",
     "lib/event-tracker.js",
     "lib/hmac-sha256.js",
@@ -568,7 +568,7 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     "analytics.js",
     "events.js",
     "access.js",
-    "reddit-init-hook.js",
+    "tippr-init-hook.js",
     "jquery.tippr.js",
     "stateify.js",
     "validator.js",
@@ -582,19 +582,19 @@ module["reddit-init-base"] = LocalizedModule("reddit-init-base.js",
     ],
 )
 
-module["reddit-init-legacy"] = LocalizedModule("reddit-init-legacy.js",
+module["tippr-init-legacy"] = LocalizedModule("tippr-init-legacy.js",
     "lib/html5shiv.js",
     "lib/jquery-1.11.1.js",
     "lib/es5-shim.js",
     "lib/es5-sham.js",
-    module["reddit-init-base"],
+    module["tippr-init-base"],
     wrap=catch_errors,
 )
 
-module["reddit-init"] = LocalizedModule("reddit-init.js",
+module["tippr-init"] = LocalizedModule("tippr-init.js",
     "lib/jquery-2.1.1.js",
     "lib/es5-shim.js",
-    module["reddit-init-base"],
+    module["tippr-init-base"],
     wrap=catch_errors,
 )
 
@@ -644,7 +644,7 @@ module["tippr"] = LocalizedModule("tippr.js",
     "saved.js",
     "cache-poisoning-detection.js",
     "messages.js",
-    "reddit-hook.js",
+    "tippr-hook.js",
     "link-click-tracking.js",
     "warn-on-unload.js",
     PermissionsDataSource({
@@ -652,7 +652,7 @@ module["tippr"] = LocalizedModule("tippr.js",
         "moderator_invite": ModeratorPermissionSet,
     }),
     wrap=catch_errors,
-    filter_module=module["reddit-init-base"],
+    filter_module=module["tippr-init-base"],
 )
 
 module["modtools"] = Module("modtools.js",
@@ -674,7 +674,7 @@ module["mobile"] = LocalizedModule("mobile.js",
     module["tippr"],
     "lib/jquery.lazyload.js",
     "compact.js",
-    filter_module=module["reddit-init-base"],
+    filter_module=module["tippr-init-base"],
 )
 
 

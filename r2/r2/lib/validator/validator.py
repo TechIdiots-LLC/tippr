@@ -69,7 +69,7 @@ from r2.models.rules import MAX_RULES_PER_VAULT, VaultRules
 
 
 def can_view_link_comments(article):
-    return (article.subreddit_slow.can_view(c.user) and
+    return (article.vault_slow.can_view(c.user) and
             article.can_view_promo(c.user))
 
 
@@ -880,7 +880,7 @@ class VVaultByNames(Validator):
         }
 
 
-class VSubredditTitle(Validator):
+class VVaultTitle(Validator):
     def run(self, title):
         if not title:
             self.set_error(errors.NO_TITLE)
@@ -889,14 +889,14 @@ class VSubredditTitle(Validator):
         else:
             return title
 
-class VSubredditDesc(Validator):
+class VVaultDesc(Validator):
     def run(self, description):
         if description and len(description) > 500:
             self.set_error(errors.DESC_TOO_LONG)
         return unkeep_space(description or '')
 
 
-class VAvailableSubredditRuleName(Validator):
+class VAvailableVaultRuleName(Validator):
     def __init__(self, short_name, updating=False):
         Validator.__init__(self, short_name)
         self.updating = updating
@@ -1312,7 +1312,7 @@ class VCanDistinguish(VByName):
             if item.author_id == c.user._id:
                 if isinstance(item, Message) and c.user.employee:
                     return True
-                vault = item.subreddit_slow
+                vault = item.vault_slow
 
                 if (how in ("yes", "no") and
                         vault.can_distinguish(c.user)):
@@ -1351,7 +1351,7 @@ class VSrCanAlter(VByName):
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and
                 # comments
-                vault = item.subreddit_slow
+                vault = item.vault_slow
                 if vault.can_distinguish(c.user):
                     can_alter = True
 
@@ -1370,11 +1370,11 @@ class VSrCanBan(VByName):
             item = VByName.run(self, thing_name)
 
             if isinstance(item, (Link, Comment)):
-                sr = item.subreddit_slow
+                sr = item.vault_slow
                 if sr.is_moderator_with_perms(c.user, 'posts'):
                     return True
             elif isinstance(item, Message):
-                sr = item.subreddit_slow
+                sr = item.vault_slow
                 if sr and sr.is_moderator_with_perms(c.user, 'mail'):
                     return True
         abort(403,'forbidden')
@@ -1388,7 +1388,7 @@ class VSrSpecial(VByName):
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
-            vault = item.subreddit_slow
+            vault = item.vault_slow
             if vault.is_special(c.user):
                 return True
         abort(403,'forbidden')
@@ -1419,7 +1419,7 @@ class VSubmitParent(VByName):
             return parent
 
         elif isinstance(parent, Link):
-            sr = parent.subreddit_slow
+            sr = parent.vault_slow
 
             if parent.is_archived(sr):
                 self.set_error(errors.TOO_OLD)
@@ -1430,7 +1430,7 @@ class VSubmitParent(VByName):
                 return parent
 
         elif isinstance(parent, Comment):
-            sr = parent.subreddit_slow
+            sr = parent.vault_slow
 
             if parent._deleted:
                 self.set_error(errors.DELETED_COMMENT)
@@ -1489,7 +1489,7 @@ class VSubmitSR(Validator):
             return
 
         if not sr.allow_ads and self.promotion:
-            self.set_error(errors.SUBREDDIT_DISABLED_ADS)
+            self.set_error(errors.Vault_DISABLED_ADS)
             return
 
         if self.require_linktype:
@@ -1514,9 +1514,9 @@ class VSubscribeSR(VByName):
     def __init__(self, srid_param, srname_param):
         VByName.__init__(self, (srid_param, srname_param))
 
-    def run(self, sr_id, sr_name):
-        if sr_id:
-            return VByName.run(self, sr_id)
+    def run(self, vault_id, sr_name):
+        if vault_id:
+            return VByName.run(self, vault_id)
         elif not sr_name:
             return
 
@@ -1961,24 +1961,24 @@ class VMessageRecipient(VExistingUname):
     def run(self, name):
         if not name:
             return self.error()
-        is_subreddit = False
+        is_Vault = False
         if name.startswith('/v/'):
             name = name[3:]
-            is_subreddit = True
+            is_Vault = True
         elif name.startswith('#'):
             name = name[1:]
-            is_subreddit = True
+            is_Vault = True
 
         # A user in timeout should only be able to message us, the admins.
         if (c.user.in_timeout and
-                not (is_subreddit and
+                not (is_Vault and
                      '/v/%s' % name == g.admin_message_acct)):
             abort(403, 'forbidden')
 
-        if is_subreddit:
+        if is_Vault:
             try:
                 s = Vault._by_name(name)
-                if isinstance(s, FakeSubreddit):
+                if isinstance(s, FakeVault):
                     raise NotFound("fake vault")
                 if s._spam:
                     raise NotFound("banned vault")
@@ -2902,7 +2902,7 @@ class VFlairTemplateByID(VRequired):
 
     def run(self, flair_template_id):
         try:
-            return FlairTemplateBySubredditIndex.get_template(
+            return FlairTemplateByVaultIndex.get_template(
                 c.site._id, flair_template_id)
         except tdb_cassandra.NotFound:
             return None
@@ -3303,7 +3303,7 @@ class VVaultList(Validator):
 
         if len(unique_srs) > self.limit:
             return self.set_error(
-                errors.TOO_MANY_SUBREDDITS, {'max': self.limit}, code=400)
+                errors.TOO_MANY_VaultS, {'max': self.limit}, code=400)
 
         # return list of vault names as entered
         return vaults

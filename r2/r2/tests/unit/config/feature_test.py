@@ -64,7 +64,7 @@ class TestFeatureBase(RedditTestCase):
     def setUp(self):
         self.world = MockWorld()
         self.world.current_user = mock.Mock(return_value='')
-        self.world.current_subreddit = mock.Mock(return_value='')
+        self.world.current_Vault = mock.Mock(return_value='')
         self.world.current_loid = mock.Mock(return_value='')
 
 
@@ -77,7 +77,7 @@ class TestFeatureBase(RedditTestCase):
         super().setUp()
         self.world = MockWorld()
         self.world.current_user = mock.Mock(return_value='')
-        self.world.current_subreddit = mock.Mock(return_value='')
+        self.world.current_Vault = mock.Mock(return_value='')
         self.world.current_loid = mock.Mock(return_value='')
 
     @classmethod
@@ -283,7 +283,7 @@ class TestFeature(TestFeatureBase):
         featurestate = self.world._make_state(cfg)
         self.assertFalse(featurestate.is_enabled(user=gary))
 
-    def test_subreddit_in(self):
+    def test_Vault_in(self):
         cfg = {'vaults': ['WTF']}
         feature_state = self.world._make_state(cfg)
         self.assertTrue(feature_state.is_enabled(vault='wtf'))
@@ -296,7 +296,7 @@ class TestFeature(TestFeatureBase):
         feature_state = self.world._make_state(cfg)
         self.assertTrue(feature_state.is_enabled(vault='wtf'))
 
-    def test_subreddit_not_in(self):
+    def test_Vault_not_in(self):
         cfg = {'vaults': []}
         feature_state = self.world._make_state(cfg)
         self.assertFalse(feature_state.is_enabled(vault='wtf'))

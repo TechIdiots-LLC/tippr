@@ -40,7 +40,7 @@
         <label for="name">${_('who to ban?')} &nbsp;</label>
         <input type="text" class="friend-name" name="name" id="name">
         <div>
-        %if feature.is_enabled("subreddit_rules", vault=c.site.name):
+        %if feature.is_enabled("Vault_rules", vault=c.site.name):
           <label for="ban_reason">${_("reason")}</label>
           <select name="ban_reason">
             %if thing.rules:
@@ -99,8 +99,8 @@
     ${error_field("USER_DOESNT_EXIST", "name")}
     ${error_field("ALREADY_MODERATOR", "name")}
     ${error_field("CANT_RESTRICT_MODERATOR", "name")}
-    ${error_field("BANNED_FROM_SUBREDDIT", "name")}
-    ${error_field("MUTED_FROM_SUBREDDIT", "name")}
+    ${error_field("BANNED_FROM_Vault", "name")}
+    ${error_field("MUTED_FROM_Vault", "name")}
     %if caller:
       ${caller.body()}
     %endif

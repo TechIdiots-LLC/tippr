@@ -124,24 +124,24 @@ class FlairTemplateByVaultIndex(tdb_cassandra.Thing):
     }
 
     @classmethod
-    def _new(cls, sr_id, flair_type=USER_FLAIR):
-        idx = cls(_id=to36(sr_id), sr_id=sr_id)
+    def _new(cls, vault_id, flair_type=USER_FLAIR):
+        idx = cls(_id=to36(vault_id), vault_id=vault_id)
         idx._commit()
         return idx
 
     @classmethod
-    def by_sr(cls, sr_id, create=False):
+    def by_sr(cls, vault_id, create=False):
         try:
-            return cls._byID(to36(sr_id))
+            return cls._byID(to36(vault_id))
         except tdb_cassandra.NotFound:
             if create:
-                return cls._new(sr_id)
+                return cls._new(vault_id)
             raise
 
     @classmethod
-    def create_template(cls, sr_id, text='', css_class='', text_editable=False,
+    def create_template(cls, vault_id, text='', css_class='', text_editable=False,
                         flair_type=USER_FLAIR):
-        idx = cls.by_sr(sr_id, create=True)
+        idx = cls.by_sr(vault_id, create=True)
 
         if len(idx._index_keys(flair_type)) >= cls.MAX_FLAIR_TEMPLATES:
             raise OverflowError
@@ -152,27 +152,27 @@ class FlairTemplateByVaultIndex(tdb_cassandra.Thing):
         return ft
 
     @classmethod
-    def get_template_ids(cls, sr_id, flair_type=USER_FLAIR):
+    def get_template_ids(cls, vault_id, flair_type=USER_FLAIR):
         try:
-            return list(cls.by_sr(sr_id).iter_template_ids(flair_type))
+            return list(cls.by_sr(vault_id).iter_template_ids(flair_type))
         except tdb_cassandra.NotFound:
             return []
 
     @classmethod
-    def get_template(cls, sr_id, ft_id, flair_type=None):
+    def get_template(cls, vault_id, ft_id, flair_type=None):
         if flair_type:
             flair_types = [flair_type]
         else:
             flair_types = [USER_FLAIR, LINK_FLAIR]
         for flair_type in flair_types:
-            if ft_id in cls.get_template_ids(sr_id, flair_type=flair_type):
+            if ft_id in cls.get_template_ids(vault_id, flair_type=flair_type):
                 return FlairTemplate._byID(ft_id)
         return None
 
     @classmethod
-    def clear(cls, sr_id, flair_type=USER_FLAIR):
+    def clear(cls, vault_id, flair_type=USER_FLAIR):
         try:
-            idx = cls.by_sr(sr_id)
+            idx = cls.by_sr(vault_id)
         except tdb_cassandra.NotFound:
             # Everything went better than expected.
             return

@@ -44,7 +44,7 @@ from r2.lib.template_helpers import format_number
 from r2.lib.utils import Storage, timedelta_by_name, to_date
 from r2.lib.wrapped import Templated
 from r2.models import Link, PromoCampaign, Thing, traffic
-from r2.models.vault import Vault, _DefaultSR
+from r2.models.vault import Vault, _DefaultVault
 
 COLORS = Storage(UPVOTE_ORANGE="#ff5700",
                  DOWNVOTE_BLUE="#9494ff",
@@ -206,7 +206,7 @@ class TipprTraffic(Templated):
         raise NotImplementedError()
 
 
-def make_subreddit_traffic_report(vaults=None, num=None):
+def make_Vault_traffic_report(vaults=None, num=None):
     """Return a report of vault traffic in the last full month.
 
     If given a list of vaults, those vaults will be put in the report
@@ -215,13 +215,13 @@ def make_subreddit_traffic_report(vaults=None, num=None):
     """
 
     if vaults:
-        subreddit_summary = traffic.PageviewsBySubreddit.last_month(vaults)
+        Vault_summary = traffic.PageviewsByVault.last_month(vaults)
     else:
-        subreddit_summary = traffic.PageviewsBySubreddit.top_last_month(num)
+        Vault_summary = traffic.PageviewsByVault.top_last_month(num)
 
     report = []
-    for srname, data in subreddit_summary:
-        if srname == _DefaultSR.name:
+    for srname, data in Vault_summary:
+        if srname == _DefaultVault.name:
             name = _("[frontpage]")
             url = None
         elif srname in Vault._specials:
@@ -238,7 +238,7 @@ def make_subreddit_traffic_report(vaults=None, num=None):
 class SitewideTraffic(TipprTraffic):
     """An overview of all traffic to the site."""
     def __init__(self):
-        self.subreddit_summary = make_subreddit_traffic_report(num=250)
+        self.Vault_summary = make_Vault_traffic_report(num=250)
         TipprTraffic.__init__(self, g.domain)
 
     def get_dow_summary(self):
@@ -415,7 +415,7 @@ class AdvertTraffic(TipprTraffic):
         return traffic.zip_timeseries(imps, clicks)
 
 
-class SubredditTraffic(TipprTraffic):
+class VaultTraffic(TipprTraffic):
     def __init__(self):
         TipprTraffic.__init__(self, "/v/" + c.site.name)
 
@@ -447,10 +447,10 @@ class SubredditTraffic(TipprTraffic):
         return "/v/{}/search?{}".format(c.site.name, query)
 
     def get_dow_summary(self):
-        return traffic.PageviewsBySubreddit.history("day", c.site.name)
+        return traffic.PageviewsByVault.history("day", c.site.name)
 
     def get_data_for_interval(self, interval, columns):
-        pageviews = traffic.PageviewsBySubreddit.history(interval, c.site.name)
+        pageviews = traffic.PageviewsByVault.history(interval, c.site.name)
 
         if interval == "day":
             columns.append(dict(color=COLORS.MISCELLANEOUS,
@@ -458,7 +458,7 @@ class SubredditTraffic(TipprTraffic):
                                 shortname=_("subscriptions")))
 
             sr_name = c.site.name
-            subscriptions = traffic.SubscriptionsBySubreddit.history(interval,
+            subscriptions = traffic.SubscriptionsByVault.history(interval,
                                                                      sr_name)
 
             return traffic.zip_timeseries(pageviews, subscriptions)
@@ -776,7 +776,7 @@ class PromotedLinkTraffic(Templated):
         return out.getvalue()
 
 
-class SubredditTrafficReport(Templated):
+class VaultTrafficReport(Templated):
     def __init__(self):
         self.srs, self.invalid_srs, self.report = [], [], []
 
@@ -793,7 +793,7 @@ class SubredditTrafficReport(Templated):
                     self.invalid_srs.append(srname)
 
             if vaults:
-                self.report = make_subreddit_traffic_report(list(vaults.values()))
+                self.report = make_Vault_traffic_report(list(vaults.values()))
 
             param = urllib.parse.quote(self.textarea)
             self.csv_url = "/traffic/vaults/report.csv?vaults=" + param

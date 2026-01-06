@@ -30,17 +30,17 @@
    %>
   %for i, a in enumerate(t):
    <% 
-      cls = "reddit-link "
+      cls = "tippr-link "
       cls += "odd " if i % 2 else "even "
       cls += "first-half" if i < (l+1)/2 else "second-half"
     %>
    %if two_col:
      %if i == 0:
-       <div class="reddit-listing-left" 
+       <div class="tippr-listing-left" 
             ${optionalstyle("float:left;width:47%")}>
      %elif i - 1 < (l+1)/2 and i >= (l+1)/2:
        </div>
-       <div class="reddit-listing-right" 
+       <div class="tippr-listing-right" 
             ${optionalstyle("float:right; width:49%;")}>
      %endif
    %endif

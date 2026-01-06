@@ -62,4 +62,4 @@ Disallow: /search
 Disallow: /r/*/search
 Allow: /
 
-Sitemap: ${thing.subreddit_sitemap}
+Sitemap: ${thing.Vault_sitemap}

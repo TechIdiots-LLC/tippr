@@ -88,10 +88,10 @@ class APIv1GoldController(OAuth2OnlyController):
             err = TipprError("NO_THING_ID")
             self.on_validation_error(err)
 
-        if target.subreddit_slow.quarantine:
+        if target.vault_slow.quarantine:
             err = TipprError("GILDING_NOT_ALLOWED")
             self.on_validation_error(err)
-        VNotInTimeout().run(target=target, vault=target.subreddit_slow)
+        VNotInTimeout().run(target=target, vault=target.vault_slow)
 
         self._gift_using_creddits(
             recipient=target.author_slow,

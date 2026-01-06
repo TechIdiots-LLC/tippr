@@ -158,7 +158,7 @@ class Vote:
             if change:
                 self.thing.author_slow.incr_karma(
                     kind=self.thing.affects_karma_type,
-                    sr=self.thing.subreddit_slow,
+                    sr=self.thing.vault_slow,
                     amt=change,
                 )
 

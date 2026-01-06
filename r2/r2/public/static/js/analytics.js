@@ -29,7 +29,7 @@ r.analytics = {
       loid_created: null,
       referrer_url: document.referrer || '',
       referrer_domain: null,
-      sr_id: r.config.cur_site ? r.utils.fullnameToId(r.config.cur_site) : null,
+      vault_id: r.config.cur_site ? r.utils.fullnameToId(r.config.cur_site) : null,
       sr_name: r.config.post_site || null,
       user_id: null,
       user_name: null,
@@ -365,7 +365,7 @@ r.analytics = {
     var eventType = 'cs.screenview';
     var payload = this.addContextData([
       'sr_name',
-      'sr_id',
+      'vault_id',
       'listing_name',
       'language',
       'dnt',
@@ -403,7 +403,7 @@ r.analytics = {
     var eventType = 'cs.loggedout_' + actionName;
     var payload = this.addContextData([
       'sr_name',
-      'sr_id',
+      'vault_id',
       'listing_name',
       'referrer_domain',
       'referrer_url',
@@ -433,7 +433,7 @@ r.analytics = {
     var eventType = 'cs.forbidden_' + actionName;
     var payload = this.addContextData([
       'sr_name',
-      'sr_id',
+      'vault_id',
     ]);
 
     payload['process_notes'] = 'IN_TIMEOUT';
@@ -501,12 +501,12 @@ r.analytics = {
       payload['target_author_id'] = r.utils.fullnameToId(targetData.authorFullname);
     }
       
-    if ('subredditName' in targetData) {
-      payload['sr_name'] = targetData.subredditName;
+    if ('VaultName' in targetData) {
+      payload['sr_name'] = targetData.VaultName;
     }
 
-    if ('subredditFullname' in targetData) {
-      payload['sr_id'] = r.utils.fullnameToId(targetData.subredditFullname);
+    if ('VaultFullname' in targetData) {
+      payload['vault_id'] = r.utils.fullnameToId(targetData.VaultFullname);
     }
 
     r.events.track(eventTopic, eventType, payload).send();

@@ -37,7 +37,7 @@ from r2.lib.utils import tup
 class ModAction(tdb_cassandra.UuidThing):
     """
     Columns:
-    sr_id - Vault id36
+    vault_id - Vault id36
     mod_id - Account id36 of moderator
     action - specific name of action, must be in ModAction.actions
     target_fullname - optional fullname of the target of the action
@@ -209,13 +209,13 @@ class ModAction(tdb_cassandra.UuidThing):
 
     @classmethod
     def create(cls, sr, mod, action, details=None, target=None, description=None):
-        from r2.models import DefaultSR
+        from r2.models import DefaultVault
 
         if action not in cls.actions:
             raise ValueError("Invalid ModAction: %s" % action)
 
         # Front page should insert modactions into the base sr
-        sr = sr._base if isinstance(sr, DefaultSR) else sr
+        sr = sr._base if isinstance(sr, DefaultVault) else sr
 
         kw = dict(sr_id36=sr._id36, mod_id36=mod._id36, action=action)
 

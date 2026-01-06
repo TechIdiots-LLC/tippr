@@ -9,7 +9,7 @@ import pytz
 from pylons import app_globals as g
 
 from r2.lib.s3_helpers import parse_s3_path
-from r2.lib.sitemaps.data import find_all_subreddits
+from r2.lib.sitemaps.data import find_all_Vaults
 from r2.lib.sitemaps.store import store_sitemaps_in_s3
 
 """Watch for SQS messages informing us to read, generate, and store sitemaps.
@@ -28,7 +28,7 @@ def watcher():
         _process_message()
 
 
-def _subreddit_sitemap_key():
+def _Vault_sitemap_key():
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(g.sitemap_upload_s3_bucket)
     try:
@@ -44,7 +44,7 @@ def _datetime_from_timestamp(timestamp):
 
 
 def _before_last_sitemap(timestamp):
-    sitemap_key = _subreddit_sitemap_key()
+    sitemap_key = _Vault_sitemap_key()
     if sitemap_key is None:
         return False
 
@@ -79,7 +79,7 @@ def _process_message():
 
     g.log.info("Got import job %r", js)
 
-    vaults = find_all_subreddits(s3path)
+    vaults = find_all_Vaults(s3path)
     store_sitemaps_in_s3(vaults)
 
     message.delete()

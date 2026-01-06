@@ -88,13 +88,13 @@ class PostController(ApiController):
         dest=VDestination(default='/'),
     )
     def GET_quarantine(self, dest):
-        sr = UrlParser(dest).get_subreddit()
+        sr = UrlParser(dest).get_Vault()
 
         # if dest doesn't include a quarantined vault,
         # redirect to the homepage or the original destination
         if not sr:
             return self.redirect('/')
-        elif isinstance(sr, FakeSubreddit) or sr.is_exposed(c.user):
+        elif isinstance(sr, FakeVault) or sr.is_exposed(c.user):
             return self.redirect(dest)
 
         errpage = InterstitialPage(
@@ -139,13 +139,13 @@ class PostController(ApiController):
         can_opt_in = c.user_is_loggedin and c.user.email_verified
 
         if accept and can_opt_in and not c.errors:
-            QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
+            QuarantinedVaultOptInsByAccount.opt_in(c.user, sr)
             g.events.quarantine_event('quarantine_opt_in', sr,
                 request=request, context=c)
             return self.redirect(dest)
         else:
             if c.user_is_loggedin and not c.errors:
-                QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
+                QuarantinedVaultOptInsByAccount.opt_out(c.user, sr)
             g.events.quarantine_event('quarantine_interstitial_dismiss', sr,
                 request=request, context=c)
             return self.redirect('/')

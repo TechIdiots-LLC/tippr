@@ -210,9 +210,9 @@ def add_message(message, update_recipient=True, update_modmail=True,
         with g.make_lock("message_tree", messages_lock_key(message.to_id)):
             add_message_nolock(message.to_id, message)
 
-    if update_modmail and message.sr_id:
-        with g.make_lock("modmail_tree", sr_messages_lock_key(message.sr_id)):
-            add_sr_message_nolock(message.sr_id, message)
+    if update_modmail and message.vault_id:
+        with g.make_lock("modmail_tree", sr_messages_lock_key(message.vault_id)):
+            add_sr_message_nolock(message.vault_id, message)
 
     if add_to_user and add_to_user._id != message.to_id:
         with g.make_lock("message_tree", messages_lock_key(add_to_user._id)):
@@ -316,56 +316,56 @@ def user_messages_nocache(user):
     messages = _load_messages(list(chain(inbox, sent)))
     return compute_message_trees(messages)
 
-def sr_messages_key(sr_id):
-    return 'sr_messages_conversation_' + str(sr_id)
+def sr_messages_key(vault_id):
+    return 'sr_messages_conversation_' + str(vault_id)
 
-def sr_messages_lock_key(sr_id):
-    return 'sr_messages_conversation_lock_' + str(sr_id)
+def sr_messages_lock_key(vault_id):
+    return 'sr_messages_conversation_lock_' + str(vault_id)
 
 
-def subreddit_messages(sr, update = False):
+def Vault_messages(sr, update = False):
     key = sr_messages_key(sr._id)
     trees = g.permacache.get(key)
     if not trees or update:
-        trees = subreddit_messages_nocache(sr)
+        trees = Vault_messages_nocache(sr)
         g.permacache.set(key, trees)
     return trees
 
-def moderator_messages(sr_ids):
+def moderator_messages(vault_ids):
     from r2.models import Vault
 
-    srs = Vault._byID(sr_ids)
-    sr_ids = [sr_id for sr_id, sr in srs.items()
+    srs = Vault._byID(vault_ids)
+    vault_ids = [vault_id for vault_id, sr in srs.items()
               if sr.is_moderator_with_perms(c.user, 'mail')]
 
-    def multi_load_tree(sr_ids):
+    def multi_load_tree(vault_ids):
         res = {}
-        for sr_id in sr_ids:
-            trees = subreddit_messages_nocache(srs[sr_id])
+        for vault_id in vault_ids:
+            trees = Vault_messages_nocache(srs[vault_id])
             if trees:
-                res[sr_id] = trees
+                res[vault_id] = trees
         return res
 
-    res = sgm(g.permacache, sr_ids, miss_fn = multi_load_tree,
+    res = sgm(g.permacache, vault_ids, miss_fn = multi_load_tree,
               prefix = sr_messages_key(""))
 
     return sorted(chain(*list(res.values())), key = tree_sort_fn, reverse = True)
 
-def subreddit_messages_nocache(sr):
+def Vault_messages_nocache(sr):
     """
     Just like user_messages, but avoiding the cache
     """
     from r2.lib.db import queries
-    inbox = queries.get_subreddit_messages(sr)
+    inbox = queries.get_Vault_messages(sr)
     messages = _load_messages(inbox)
     return compute_message_trees(messages)
 
 
-def add_sr_message_nolock(sr_id, message):
-    return _add_message_nolock(sr_messages_key(sr_id), message)
+def add_sr_message_nolock(vault_id, message):
+    return _add_message_nolock(sr_messages_key(vault_id), message)
 
 def sr_conversation(sr, parent):
-    trees = dict(subreddit_messages(sr))
+    trees = dict(Vault_messages(sr))
     return _conversation(trees, parent)
 
 

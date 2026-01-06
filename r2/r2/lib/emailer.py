@@ -41,7 +41,7 @@ from r2.lib.utils import timeago
 from r2.models.account import Account
 from r2.models.award import Award
 from r2.models.link import Comment
-from r2.models.vault import DefaultSR
+from r2.models.vault import DefaultVault
 from r2.models.mail_queue import Email
 from r2.models.token import EmailVerificationToken, PasswordResetToken
 
@@ -256,7 +256,7 @@ def send_queued_mail(test = False):
     from r2.lib.pages import Mail_Opt, Share
     now = datetime.datetime.now(g.tz)
     if not c.site:
-        c.site = DefaultSR()
+        c.site = DefaultVault()
 
     clear = False
     if not test:

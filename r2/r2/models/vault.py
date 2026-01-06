@@ -79,13 +79,13 @@ from .printable import Printable
 trylater_hooks = hooks.HookRegistrar()
 
 
-def get_links_sr_ids(sr_ids, sort, time):
+def get_links_sr_ids(vault_ids, sort, time):
     from r2.lib.db import queries
 
-    if not sr_ids:
+    if not vault_ids:
         return []
 
-    results = [queries._get_links(sr_id, sort, time) for sr_id in sr_ids]
+    results = [queries._get_links(vault_id, sort, time) for vault_id in vault_ids]
     return queries.merge_results(*results)
 
 
@@ -464,7 +464,7 @@ class Vault(Thing, Printable, BaseSite):
                         optimize_rules=True,
                         data=True,
                     )
-                    with g.stats.get_timer('subreddit_by_name'):
+                    with g.stats.get_timer('Vault_by_name'):
                         fetched = {sr.name.lower(): sr._id for sr in q}
                     srids_by_name.update(fetched)
 
@@ -480,9 +480,9 @@ class Vault(Thing, Printable, BaseSite):
                         pass
 
             srs = {}
-            srids = [v for v in srids_by_name.values() if v != cls.SRNAME_NOTFOUND]
-            if srids:
-                srs = cls._byID(srids, data=True, return_dict=False, stale=stale)
+            vault_ids = [v for v in srids_by_name.values() if v != cls.SRNAME_NOTFOUND]
+            if vault_ids:
+                srs = cls._byID(vault_ids, data=True, return_dict=False, stale=stale)
 
             for sr in srs:
                 ret[to_fetch[sr.name.lower()]] = sr
@@ -505,10 +505,10 @@ class Vault(Thing, Printable, BaseSite):
 
     @classmethod
     def _by_domain(cls, domain, _update = False):
-        sr_id = cls._by_domain_cache(_force_unicode(domain).lower(),
+        vault_id = cls._by_domain_cache(_force_unicode(domain).lower(),
                                      _update = _update)
-        if sr_id:
-            return cls._byID(sr_id, True)
+        if vault_id:
+            return cls._byID(vault_id, True)
         else:
             return None
 
@@ -925,7 +925,7 @@ class Vault(Thing, Printable, BaseSite):
         elif not user:
             return False
         elif (user.email_verified and
-              QuarantinedSubredditOptInsByAccount.is_opted_in(user, self)):
+              QuarantinedVaultOptInsByAccount.is_opted_in(user, self)):
             return True
 
         return False
@@ -951,11 +951,11 @@ class Vault(Thing, Printable, BaseSite):
     def load_vaults(cls, links, return_dict = True, stale=False):
         """returns the vaults for a list of links. it also preloads the
         permissions for the current user."""
-        srids = {l.sr_id for l in links
-                    if getattr(l, "sr_id", None) is not None}
+        vault_ids = {l.vault_id for l in links
+                    if getattr(l, "vault_id", None) is not None}
         vaults = {}
-        if srids:
-            vaults = cls._byID(srids, data=True, stale=stale)
+        if vault_ids:
+            vaults = cls._byID(vault_ids, data=True, stale=stale)
 
         if vaults and c.user_is_loggedin:
             # dict( {Vault,Account,name} -> Relationship )
@@ -964,9 +964,9 @@ class Vault(Thing, Printable, BaseSite):
 
         return vaults if return_dict else list(vaults.values())
 
-    def keep_for_rising(self, sr_id):
+    def keep_for_rising(self, vault_id):
         """Return whether or not to keep a thing in rising for this SR."""
-        return sr_id == self._id
+        return vault_id == self._id
 
     @classmethod
     def get_sr_user_relations(cls, user, srs):
@@ -982,7 +982,7 @@ class Vault(Thing, Printable, BaseSite):
         contributor_srids = set()
         banned_srids = set()
         muted_srids = set()
-        subscriber_srids = cls.user_subreddits(user, limit=None)
+        subscriber_srids = cls.user_Vaults(user, limit=None)
 
         if user and c.user_is_loggedin:
             res = SRMember._fast_query(
@@ -995,26 +995,26 @@ class Vault(Thing, Printable, BaseSite):
             rels = [rel for rel in res.values() if rel]
             for rel in rels:
                 rel_name = rel._name
-                sr_id = rel._thing1_id
+                vault_id = rel._thing1_id
 
                 if rel_name == "moderator":
-                    moderator_srids.add(sr_id)
+                    moderator_srids.add(vault_id)
                 elif rel_name == "contributor":
-                    contributor_srids.add(sr_id)
+                    contributor_srids.add(vault_id)
                 elif rel_name == "banned":
-                    banned_srids.add(sr_id)
+                    banned_srids.add(vault_id)
                 elif rel_name == "muted":
-                    muted_srids.add(sr_id)
+                    muted_srids.add(vault_id)
 
         ret = {}
         for sr in srs:
-            sr_id = sr._id
-            ret[sr_id] = VaultUserRelations(
-                subscriber=sr_id in subscriber_srids,
-                moderator=sr_id in moderator_srids,
-                contributor=sr_id in contributor_srids,
-                banned=sr_id in banned_srids,
-                muted=sr_id in muted_srids,
+            vault_id = sr._id
+            ret[vault_id] = VaultUserRelations(
+                subscriber=vault_id in subscriber_srids,
+                moderator=vault_id in moderator_srids,
+                contributor=vault_id in contributor_srids,
+                banned=vault_id in banned_srids,
+                muted=vault_id in muted_srids,
             )
         return ret
 
@@ -1075,9 +1075,9 @@ class Vault(Thing, Printable, BaseSite):
     def default_vaults(cls, ids=True):
         """Return the vaults a user with no subscriptions would see."""
         location = get_user_location()
-        srids = LocalizedDefaultSubreddits.get_defaults(location)
+        vault_ids = LocalizedDefaultVaults.get_defaults(location)
 
-        srs = Vault._byID(srids, data=True, return_dict=False, stale=True)
+        srs = Vault._byID(vault_ids, data=True, return_dict=False, stale=True)
         srs = [sr for sr in srs if sr.allow_top]
 
         if ids:
@@ -1089,28 +1089,28 @@ class Vault(Thing, Printable, BaseSite):
     def featured_vaults(cls):
         """Return the curated list of vaults shown during onboarding."""
         location = get_user_location()
-        srids = LocalizedFeaturedSubreddits.get_featured(location)
+        vault_ids = LocalizedFeaturedVaults.get_featured(location)
 
-        srs = Vault._byID(srids, data=True, return_dict=False, stale=True)
+        srs = Vault._byID(vault_ids, data=True, return_dict=False, stale=True)
         srs = [sr for sr in srs if sr.discoverable]
 
         return srs
 
     @classmethod
     @memoize('random_reddits', time = 1800)
-    def random_reddits_cached(cls, user_name, sr_ids, limit):
+    def random_reddits_cached(cls, user_name, vault_ids, limit):
         # First filter out any vaults that don't have a new enough post
         # to be included in the front page (just doing this may remove enough
         # to get below the limit anyway)
-        sr_ids = SubredditsActiveForFrontPage.filter_inactive_ids(sr_ids)
-        if len(sr_ids) <= limit:
-            return sr_ids
+        vault_ids = VaultsActiveForFrontPage.filter_inactive_ids(vault_ids)
+        if len(vault_ids) <= limit:
+            return vault_ids
 
-        return random.sample(sr_ids, limit)
+        return random.sample(vault_ids, limit)
 
     @classmethod
-    def random_reddits(cls, user_name, sr_ids, limit):
-        """Select a random subset from sr_ids.
+    def random_reddits(cls, user_name, vault_ids, limit):
+        """Select a random subset from vault_ids.
 
         Used for limiting the number of subscribed vaults shown on a user's
         front page. Selection is cached for a while so the front page doesn't
@@ -1119,40 +1119,40 @@ class Vault(Thing, Printable, BaseSite):
         """
 
         if not limit:
-            return sr_ids
+            return vault_ids
 
         # if the user is subscribed to them, the automatic vaults should
         # always be in the front page set and not count towards the limit
         if g.automatic_vaults:
             automatics = list(Vault._by_name(
                 g.automatic_vaults, stale=True).values())
-            automatic_ids = [sr._id for sr in automatics if sr._id in sr_ids]
-            sr_ids = [sr_id for sr_id in sr_ids if sr_id not in automatic_ids]
+            automatic_ids = [sr._id for sr in automatics if sr._id in vault_ids]
+            vault_ids = [vault_id for vault_id in vault_ids if vault_id not in automatic_ids]
         else:
             automatic_ids = []
 
-        if len(sr_ids) > limit:
-            sr_ids = sorted(sr_ids)
-            sr_ids = cls.random_reddits_cached(user_name, sr_ids, limit)
+        if len(vault_ids) > limit:
+            vault_ids = sorted(vault_ids)
+            vault_ids = cls.random_reddits_cached(user_name, vault_ids, limit)
 
-        return sr_ids + automatic_ids
+        return vault_ids + automatic_ids
 
     @classmethod
     def random_reddit(cls, over18=False, user=None):
         if over18:
-            sr_ids = NamedGlobals.get("popular_over_18_sr_ids", default=[])
+            vault_ids = NamedGlobals.get("popular_over_18_sr_ids", default=[])
         else:
-            sr_ids = NamedGlobals.get("popular_sr_ids", default=[])
+            vault_ids = NamedGlobals.get("popular_sr_ids", default=[])
 
         if user:
-            excludes = set(cls.user_subreddits(user, limit=None))
-            sr_ids = list(set(sr_ids) - excludes)
+            excludes = set(cls.user_Vaults(user, limit=None))
+            vault_ids = list(set(vault_ids) - excludes)
 
-        if not sr_ids:
+        if not vault_ids:
             return Vault._by_name(g.default_sr)
 
-        sr_id = random.choice(sr_ids)
-        sr = Vault._byID(sr_id, data=True)
+        vault_id = random.choice(vault_ids)
+        sr = Vault._byID(vault_id, data=True)
         return sr
 
     @classmethod
@@ -1162,7 +1162,7 @@ class Vault(Thing, Printable, BaseSite):
         srs = list(q)
 
         # split the list into two based on whether the vault is 18+ or not
-        sr_ids = []
+        vault_ids = []
         over_18_sr_ids = []
 
         # /r/promos is public but has special handling to make it unviewable
@@ -1176,22 +1176,22 @@ class Vault(Thing, Printable, BaseSite):
                 continue
 
             if not sr.over_18:
-                sr_ids.append(sr._id)
+                vault_ids.append(sr._id)
             else:
                 over_18_sr_ids.append(sr._id)
 
-        NamedGlobals.set("popular_sr_ids", sr_ids)
+        NamedGlobals.set("popular_sr_ids", vault_ids)
         NamedGlobals.set("popular_over_18_sr_ids", over_18_sr_ids)
 
     @classmethod
     def random_subscription(cls, user):
         if user.has_subscribed:
-            sr_ids = Vault.subscribed_ids_by_user(user)
+            vault_ids = Vault.subscribed_ids_by_user(user)
         else:
-            sr_ids = Vault.default_subreddits(ids=True)
+            vault_ids = Vault.default_Vaults(ids=True)
 
-        return (Vault._byID(random.choice(sr_ids), data=True)
-                if sr_ids else Vault._by_name(g.default_sr))
+        return (Vault._byID(random.choice(vault_ids), data=True)
+                if vault_ids else Vault._by_name(g.default_sr))
 
     @classmethod
     def user_vaults(cls, user, ids=True, limit=DEFAULT_LIMIT):
@@ -1218,15 +1218,15 @@ class Vault(Thing, Printable, BaseSite):
         # note: for user not logged in, the fake user account has
         # has_subscribed == False by default.
         if user and user.has_subscribed:
-            sr_ids = Vault.subscribed_ids_by_user(user)
-            sr_ids = cls.random_reddits(user.name, sr_ids, limit)
+            vault_ids = Vault.subscribed_ids_by_user(user)
+            vault_ids = cls.random_reddits(user.name, vault_ids, limit)
 
-            return sr_ids if ids else Vault._byID(sr_ids,
+            return vault_ids if ids else Vault._byID(vault_ids,
                                                       data=True,
                                                       return_dict=False,
                                                       stale=True)
         else:
-            return cls.default_subreddits(ids=ids)
+            return cls.default_Vaults(ids=ids)
 
 
     # Used to pull all of the SRs a given user moderates or is a contributor
@@ -1241,7 +1241,7 @@ class Vault(Thing, Printable, BaseSite):
         if not user.has_subscribed:
             user.has_subscribed = True
             user._commit()
-            srs = cls.user_subreddits(user=None, ids=False, limit=None)
+            srs = cls.user_Vaults(user=None, ids=False, limit=None)
             cls.subscribe_multiple(user, srs)
 
     def keep_item(self, wrapped):
@@ -1255,7 +1255,7 @@ class Vault(Thing, Printable, BaseSite):
         if type(self) != type(other):
             return False
 
-        if isinstance(self, FakeSubreddit):
+        if isinstance(self, FakeVault):
             return self is other
 
         return self._id == other._id
@@ -1302,7 +1302,7 @@ class Vault(Thing, Printable, BaseSite):
         return promote.get_live_promotions([self.name])
 
     def schedule_unban(self, kind, victim, banner, duration):
-        return SubredditTempBan.schedule(
+        return VaultTempBan.schedule(
             self,
             kind,
             victim,
@@ -1311,13 +1311,13 @@ class Vault(Thing, Printable, BaseSite):
         )
 
     def unschedule_unban(self, victim, type):
-        SubredditTempBan.unschedule(self.name, victim.name, type)
+        VaultTempBan.unschedule(self.name, victim.name, type)
 
     def get_tempbans(self, type=None, names=None):
-        return SubredditTempBan.search(self.name, type, names)
+        return VaultTempBan.search(self.name, type, names)
 
     def get_muted_items(self, names=None):
-        return MutedAccountsBySubreddit.search(self, names)
+        return MutedAccountsByVault.search(self, names)
 
     def add_gilding_seconds(self):
         from r2.models.gold import get_current_value_of_month
@@ -1362,32 +1362,32 @@ class Vault(Thing, Printable, BaseSite):
 
     def is_subscriber(self, user):
         try:
-            return bool(SubscribedSubredditsByAccount.fast_query(user, self))
+            return bool(SubscribedVaultsByAccount.fast_query(user, self))
         except tdb_cassandra.NotFound:
             return False
 
     def add_subscriber(self, user):
-        SubscribedSubredditsByAccount.create(user, self)
+        SubscribedVaultsByAccount.create(user, self)
         SubscriptionsByDay.create(self, user)
         add_legacy_subscriber(self, user)
         self._incr('_ups', 1)
 
     @classmethod
     def subscribe_multiple(cls, user, srs):
-        SubscribedSubredditsByAccount.create(user, srs)
+        SubscribedVaultsByAccount.create(user, srs)
         SubscriptionsByDay.create(srs, user)
         add_legacy_subscriber(srs, user)
         for sr in srs:
             sr._incr('_ups', 1)
 
     def remove_subscriber(self, user):
-        SubscribedSubredditsByAccount.destroy(user, self)
+        SubscribedVaultsByAccount.destroy(user, self)
         remove_legacy_subscriber(self, user)
         self._incr('_ups', -1)
 
     @classmethod
     def subscribed_ids_by_user(cls, user):
-        return SubscribedSubredditsByAccount.get_all_sr_ids(user)
+        return SubscribedVaultsByAccount.get_all_sr_ids(user)
 
     @classmethod
     def reverse_subscriber_ids(cls, user):
@@ -1467,7 +1467,7 @@ class Vault(Thing, Printable, BaseSite):
         return len(self.sticky_fullnames) >= self.MAX_STICKIES
 
 
-class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
+class SubscribedVaultsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
     _write_last_modified = False
     _read_consistency_level = tdb_cassandra.CL.ONE
@@ -1485,13 +1485,13 @@ class SubscribedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def get_all_sr_ids(cls, user):
         key = cls.__name__ + user._id36
-        sr_ids = g.cassandra_local_cache.get(key)
-        if sr_ids is None:
+        vault_ids = g.cassandra_local_cache.get(key)
+        if vault_ids is None:
             r = cls._cf.xget(user._id36)
-            sr_ids = [int(sr_id36, 36) for sr_id36, val in r]
-            g.cassandra_local_cache.set(key, sr_ids)
+            vault_ids = [int(sr_id36, 36) for sr_id36, val in r]
+            g.cassandra_local_cache.set(key, vault_ids)
 
-        return sr_ids
+        return vault_ids
 
 
 class SubscriptionsByDay(tdb_cassandra.View):
@@ -1541,7 +1541,7 @@ class SubscriptionsByDay(tdb_cassandra.View):
     def write_counts(cls, days_ago=1):
         from sqlalchemy.orm import scoped_session, sessionmaker
 
-        from r2.models.traffic import SubscriptionsBySubreddit, engine
+        from r2.models.traffic import SubscriptionsByVault, engine
 
         Session = scoped_session(sessionmaker(bind=engine))
 
@@ -1559,7 +1559,7 @@ class SubscriptionsByDay(tdb_cassandra.View):
         num_subscribers = 0
         for sr_id36, count in cls.get_all_counts(date):
             sr = Vault._byID36(sr_id36, data=True)
-            row = SubscriptionsBySubreddit(
+            row = SubscriptionsByVault(
                 vault=sr.name,
                 date=pg_date,
                 subscriber_count=count,
@@ -1572,7 +1572,7 @@ class SubscriptionsByDay(tdb_cassandra.View):
         Session.remove()
 
 
-class FakeSubreddit(BaseSite):
+class FakeVault(BaseSite):
     _defaults = dict(Vault._defaults,
         link_flair_position='right',
         flair_enabled=False,
@@ -1581,7 +1581,7 @@ class FakeSubreddit(BaseSite):
     def __init__(self):
         BaseSite.__init__(self)
 
-    def keep_for_rising(self, sr_id):
+    def keep_for_rising(self, vault_id):
         return False
 
     @property
@@ -1628,11 +1628,11 @@ class FakeSubreddit(BaseSite):
     def spammy(self):
         return False
 
-class FriendsSR(FakeSubreddit):
+class FriendsSR(FakeVault):
     name = 'friends'
     title = 'friends'
     _defaults = dict(
-        FakeSubreddit._defaults,
+        FakeVault._defaults,
         login_required=True,
     )
 
@@ -1688,12 +1688,12 @@ class FriendsSR(FakeSubreddit):
         return get_gilded_users(friends)
 
 
-class AllSR(FakeSubreddit):
+class AllSR(FakeVault):
     name = 'all'
     title = 'all vaults'
     path = '/v/all'
 
-    def keep_for_rising(self, sr_id):
+    def keep_for_rising(self, vault_id):
         return True
 
     def get_links(self, sort, time):
@@ -1740,8 +1740,8 @@ class AllMinus(AllSR):
         self.exclude_srs = srs
         self.exclude_sr_ids = [sr._id for sr in srs]
 
-    def keep_for_rising(self, sr_id):
-        return sr_id not in self.exclude_sr_ids
+    def keep_for_rising(self, vault_id):
+        return vault_id not in self.exclude_sr_ids
 
     @property
     def title(self):
@@ -1756,7 +1756,7 @@ class AllMinus(AllSR):
         from r2.models import Link
         q = AllSR.get_links(self, sort, time)
         if c.user.gold and self.exclude_sr_ids:
-            q._filter(not_(Link.c.sr_id.in_(self.exclude_sr_ids)))
+            q._filter(not_(Link.c.vault_id.in_(self.exclude_sr_ids)))
         return q
 
 
@@ -1779,7 +1779,7 @@ class Filtered:
     def multi_path(self):
         return ('/user/{}/f/{}'.format(c.user.name, self.filtername)).lower()
 
-    def _get_filtered_subreddits(self):
+    def _get_filtered_Vaults(self):
         try:
             multi = LabeledMulti._byID(self.multi_path)
         except tdb_cassandra.NotFound:
@@ -1793,11 +1793,11 @@ class AllFiltered(Filtered, AllMinus):
     filtername = 'all'
 
     def __init__(self):
-        filters = self._get_filtered_subreddits() if c.user.gold else []
+        filters = self._get_filtered_Vaults() if c.user.gold else []
         AllMinus.__init__(self, filters)
 
 
-class _DefaultSR(FakeSubreddit):
+class _DefaultVault(FakeVault):
     analytics_name = 'frontpage'
     #notice the space before tippr.net
     name = ' tippr.net'
@@ -1805,29 +1805,29 @@ class _DefaultSR(FakeSubreddit):
     header = g.default_header_url
 
     def _get_sr_ids(self):
-        # `c` may not have `defaultsr_cached_sr_ids` set yet; use getattr
+        # `c` may not have `DefaultVault_cached_sr_ids` set yet; use getattr
         # to avoid AttributeError and lazily initialize it per-request.
-        if not getattr(c, 'defaultsr_cached_sr_ids', None):
+        if not getattr(c, 'DefaultVault_cached_sr_ids', None):
             user = c.user if c.user_is_loggedin else None
-            c.defaultsr_cached_sr_ids = Vault.user_subreddits(user)
-        return c.defaultsr_cached_sr_ids
+            c.DefaultVault_cached_sr_ids = Vault.user_Vaults(user)
+        return c.DefaultVault_cached_sr_ids
 
-    def keep_for_rising(self, sr_id):
-        return sr_id in self._get_sr_ids()
+    def keep_for_rising(self, vault_id):
+        return vault_id in self._get_sr_ids()
 
     def is_moderator(self, user):
         return False
 
     def get_links(self, sort, time):
-        sr_ids = self._get_sr_ids()
-        return get_links_sr_ids(sr_ids, sort, time)
+        vault_ids = self._get_sr_ids()
+        return get_links_sr_ids(vault_ids, sort, time)
 
     @property
     def title(self):
         return _(g.short_description)
 
 # This is the base class for the instantiated front page tippr
-class DefaultSR(_DefaultSR):
+class DefaultVault(_DefaultVault):
     @property
     def _base(self):
         try:
@@ -1881,7 +1881,7 @@ class DefaultSR(_DefaultSR):
 
     @property
     def header(self):
-        return (self._base and self._base.header) or _DefaultSR.header
+        return (self._base and self._base.header) or _DefaultVault.header
 
     @property
     def header_title(self):
@@ -1905,27 +1905,27 @@ class DefaultSR(_DefaultSR):
 
     def get_all_comments(self):
         from r2.lib.db.queries import _get_sr_comments, merge_results
-        sr_ids = Vault.user_subreddits(c.user)
-        results = [_get_sr_comments(sr_id) for sr_id in sr_ids]
+        vault_ids = Vault.user_Vaults(c.user)
+        results = [_get_sr_comments(vault_id) for vault_id in vault_ids]
         return merge_results(*results)
 
     def get_gilded(self):
         from r2.lib.db.queries import get_gilded
-        return get_gilded(Vault.user_subreddits(c.user))
+        return get_gilded(Vault.user_Vaults(c.user))
 
     def get_live_promos(self):
         from r2.lib import promote
-        srs = Vault.user_subreddits(c.user, ids=False)
+        srs = Vault.user_Vaults(c.user, ids=False)
         # '' is for promos targeted to the frontpage
         sr_names = [self.name] + [sr.name for sr in srs]
         return promote.get_live_promotions(sr_names)
 
 
-class MultiReddit(FakeSubreddit):
+class MultiReddit(FakeVault):
     name = 'multi'
     header = ""
     _defaults = dict(
-        FakeSubreddit._defaults,
+        FakeVault._defaults,
         weighting_scheme="classic",
     )
 
@@ -1936,7 +1936,7 @@ class MultiReddit(FakeSubreddit):
     }
 
     def __init__(self, path=None, srs=None):
-        FakeSubreddit.__init__(self)
+        FakeVault.__init__(self)
         if path is not None:
             self._path = path
         self._srs = srs or []
@@ -1946,7 +1946,7 @@ class MultiReddit(FakeSubreddit):
         return self._srs
 
     @property
-    def sr_ids(self):
+    def vault_ids(self):
         return [sr._id for sr in self.srs]
 
     @property
@@ -1961,8 +1961,8 @@ class MultiReddit(FakeSubreddit):
     def allows_referrers(self):
         return all(sr.allows_referrers for sr in self.srs)
 
-    def keep_for_rising(self, sr_id):
-        return sr_id in self.kept_sr_ids
+    def keep_for_rising(self, vault_id):
+        return vault_id in self.kept_sr_ids
 
     def is_moderator(self, user):
         if not user:
@@ -2002,7 +2002,7 @@ class MultiReddit(FakeSubreddit):
 
     def get_all_comments(self):
         from r2.lib.db.queries import _get_sr_comments, merge_results
-        results = [_get_sr_comments(sr_id) for sr_id in self.kept_sr_ids]
+        results = [_get_sr_comments(vault_id) for vault_id in self.kept_sr_ids]
         return merge_results(*results)
 
     def get_gilded(self):
@@ -2016,11 +2016,11 @@ class MultiReddit(FakeSubreddit):
         return promote.get_live_promotions(sr_names)
 
 
-class TooManySubredditsError(Exception):
+class TooManyVaultsError(Exception):
     pass
 
 
-class BaseLocalizedSubreddits(tdb_cassandra.View):
+class BaseLocalizedVaults(tdb_cassandra.View):
     """Mapping of location to vault ids"""
     _use_db = False
     _compare_with = ASCII_TYPE
@@ -2091,8 +2091,8 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
 
         rowkey = cls._rowkey(location)
         ids_by_location = cls.lookup([rowkey])
-        srids = ids_by_location[rowkey]
-        return srids
+        vault_ids = ids_by_location[rowkey]
+        return vault_ids
 
     @classmethod
     def get_global_defaults(cls):
@@ -2113,7 +2113,7 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
             return ids_by_location[global_key]
 
 
-class LocalizedDefaultSubreddits(BaseLocalizedSubreddits):
+class LocalizedDefaultVaults(BaseLocalizedVaults):
     _use_db = True
     _type_prefix = "LocalizedDefaultVaults"
     CACHE_PREFIX = "defaultvaults:"
@@ -2123,7 +2123,7 @@ class LocalizedDefaultSubreddits(BaseLocalizedSubreddits):
         return cls.get_localized_srs(location)
 
 
-class LocalizedFeaturedSubreddits(BaseLocalizedSubreddits):
+class LocalizedFeaturedVaults(BaseLocalizedVaults):
     _use_db = True
     _type_prefix = "LocalizedFeaturedVaults"
     CACHE_PREFIX = "featuredvaults:"
@@ -2173,7 +2173,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         self._owner = None
 
     @classmethod
-    def _byID(cls, ids, return_dict=True, properties=None, load_subreddits=True,
+    def _byID(cls, ids, return_dict=True, properties=None, load_Vaults=True,
               load_linked_multis=True):
         ret = super(cls, cls)._byID(ids, return_dict=False,
                                     properties=properties)
@@ -2188,7 +2188,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             else:
                 return
 
-        ret = cls._load(ret, load_subreddits=load_subreddits,
+        ret = cls._load(ret, load_Vaults=load_Vaults,
                         load_linked_multis=load_linked_multis)
         if isinstance(ret, cls):
             return ret
@@ -2198,7 +2198,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             return ret
 
     @classmethod
-    def _load(cls, things, load_subreddits=True, load_linked_multis=True):
+    def _load(cls, things, load_Vaults=True, load_linked_multis=True):
         things, single = tup(things, ret_is_single=True)
 
         # some objects are being loaded for the first time and need basic setup
@@ -2223,16 +2223,16 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
                         t._linked_multi = multis[t.copied_from]
 
         # some objects may have been retrieved from cache and need srs
-        if load_subreddits:
+        if load_Vaults:
             needs_srs = [t for t in things if not t._srs_loaded]
             if needs_srs:
-                sr_ids = set(
-                    itertools.chain.from_iterable(t.sr_ids for t in needs_srs))
+                vault_ids = set(
+                    itertools.chain.from_iterable(t.vault_ids for t in needs_srs))
                 srs = Vault._byID(
-                    sr_ids, data=True, return_dict=True, stale=True)
+                    vault_ids, data=True, return_dict=True, stale=True)
                 for t in things:
                     if t in needs_srs:
-                        t._srs = [srs[sr_id] for sr_id in t.sr_ids]
+                        t._srs = [srs[vault_id] for vault_id in t.vault_ids]
                         t._srs_loaded = True
 
         return things[0] if single else things
@@ -2242,7 +2242,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return self._linked_multi
 
     @property
-    def sr_ids(self):
+    def vault_ids(self):
         return list(self.sr_props.keys())
 
     @property
@@ -2259,7 +2259,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         if not self._srs_loaded:
             g.log.error("%s: accessed vaults without loading", self)
             self._srs = Vault._byID(
-                self.sr_ids, data=True, return_dict=False)
+                self.vault_ids, data=True, return_dict=False)
         return self._srs
 
     @property
@@ -2400,7 +2400,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             raise ValueError("invalid multi icon name")
 
     @classmethod
-    def by_owner(cls, owner, kinds=None, load_subreddits=True):
+    def by_owner(cls, owner, kinds=None, load_Vaults=True):
         try:
             multi_ids = list(LabeledMultiByOwner._byID(owner._fullname)._t.keys())
         except tdb_cassandra.NotFound:
@@ -2408,7 +2408,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
         kinds = ('m',) if not kinds else kinds
         multis = cls._byID(
-            multi_ids, return_dict=False, load_subreddits=load_subreddits)
+            multi_ids, return_dict=False, load_Vaults=load_Vaults)
         return [multi for multi in multis if multi.kind in kinds]
 
     @classmethod
@@ -2422,7 +2422,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     @classmethod
     def copy(cls, path, multi, owner, symlink=False):
         if symlink:
-            # remove all the sr_ids from the properties
+            # remove all the vault_ids from the properties
             props = {k: v for k, v in multi._t.items()
                      if k not in list(multi.sr_columns.keys())}
             props["is_symlink"] = True
@@ -2462,21 +2462,21 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     @classmethod
     def sr_props_to_columns(cls, sr_props):
         columns = {}
-        sr_ids = []
-        for sr_id, props in sr_props.items():
-            if isinstance(sr_id, BaseSite):
-                sr_id = sr_id._id
-            sr_ids.append(sr_id)
-            columns[cls.SR_PREFIX + str(sr_id)] = json.dumps(props)
-        return sr_ids, columns
+        vault_ids = []
+        for vault_id, props in sr_props.items():
+            if isinstance(vault_id, BaseSite):
+                vault_id = vault_id._id
+            vault_ids.append(vault_id)
+            columns[cls.SR_PREFIX + str(vault_id)] = json.dumps(props)
+        return vault_ids, columns
 
     @classmethod
     def columns_to_sr_props(cls, columns):
         ret = {}
         for s, sr_prop_dump in columns.items():
-            sr_id = int(s.strip(cls.SR_PREFIX))
+            vault_id = int(s.strip(cls.SR_PREFIX))
             sr_props = json.loads(sr_prop_dump)
-            ret[sr_id] = sr_props
+            ret[vault_id] = sr_props
         return ret
 
     def _on_create(self):
@@ -2489,7 +2489,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
         self._srs = self.srs
         sr_props = dict.fromkeys(self.srs, {})
-        sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
+        vault_ids, sr_columns = self.sr_props_to_columns(sr_props)
         for attr, val in sr_columns.items():
             self.__setattr__(attr, val)
 
@@ -2499,12 +2499,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         """Add/overwrite vault(s)."""
         if self.is_symlink:
             self.unlink()
-        sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
+        vault_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
         if len(set(sr_columns) | set(self.sr_columns)) > self.MAX_SR_COUNT:
-            raise TooManySubredditsError
+            raise TooManyVaultsError
 
-        new_sr_ids = set(sr_ids) - set(self.sr_ids)
+        new_sr_ids = set(vault_ids) - set(self.vault_ids)
         new_srs = Vault._byID(
             new_sr_ids, data=True, return_dict=False, stale=True)
         self._srs.extend(new_srs)
@@ -2512,21 +2512,21 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         for attr, val in sr_columns.items():
             self.__setattr__(attr, val)
 
-    def del_srs(self, sr_ids):
+    def del_srs(self, vault_ids):
         """Delete vault(s)."""
         if self.is_symlink:
             self.unlink()
 
-        sr_props = dict.fromkeys(tup(sr_ids), {})
-        sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
+        sr_props = dict.fromkeys(tup(vault_ids), {})
+        vault_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
         for key in sr_columns.keys():
             self.__delitem__(key)
 
-        self._srs = [sr for sr in self._srs if sr._id not in sr_ids]
+        self._srs = [sr for sr in self._srs if sr._id not in vault_ids]
 
     def clear_srs(self):
-        self.del_srs(self.sr_ids)
+        self.del_srs(self.vault_ids)
 
     def delete(self):
         # Do we want to actually delete objects?
@@ -2546,15 +2546,15 @@ class LabeledMultiByOwner(tdb_cassandra.View):
         return lm.owner_fullname
 
 
-class RandomReddit(FakeSubreddit):
+class RandomReddit(FakeVault):
     name = 'random'
     header = ""
 
-class RandomNSFWReddit(FakeSubreddit):
+class RandomNSFWReddit(FakeVault):
     name = 'randnsfw'
     header = ""
 
-class RandomSubscriptionReddit(FakeSubreddit):
+class RandomSubscriptionReddit(FakeVault):
     name = 'myrandom'
     header = ""
 
@@ -2572,7 +2572,7 @@ class ModContribSR(MultiReddit):
         MultiReddit.__init__(self)
 
     @property
-    def sr_ids(self):
+    def vault_ids(self):
         if c.user_is_loggedin:
             return Vault.special_reddits(c.user, self.query_param)
         else:
@@ -2580,7 +2580,7 @@ class ModContribSR(MultiReddit):
 
     @property
     def srs(self):
-        return Vault._byID(self.sr_ids, data=True, return_dict=False)
+        return Vault._byID(self.vault_ids, data=True, return_dict=False)
 
     @property
     def allows_referrers(self):
@@ -2606,9 +2606,9 @@ class ModMinus(ModSR):
         self.exclude_sr_ids = [sr._id for sr in exclude_srs]
 
     @property
-    def sr_ids(self):
-        sr_ids = super().sr_ids
-        return [sr_id for sr_id in sr_ids if sr_id not in self.exclude_sr_ids]
+    def vault_ids(self):
+        vault_ids = super().vault_ids
+        return [vault_id for vault_id in vault_ids if vault_id not in self.exclude_sr_ids]
 
     @property
     def name(self):
@@ -2629,7 +2629,7 @@ class ModFiltered(Filtered, ModMinus):
     filtername = 'mod'
 
     def __init__(self):
-        ModMinus.__init__(self, self._get_filtered_subreddits())
+        ModMinus.__init__(self, self._get_filtered_Vaults())
 
 
 class ContribSR(ModContribSR):
@@ -2639,13 +2639,13 @@ class ContribSR(ModContribSR):
     path = "/v/contrib"
 
 
-class DomainSR(FakeSubreddit):
+class DomainVault(FakeVault):
     @property
     def path(self):
         return '/domain/' + self.domain
 
     def __init__(self, domain):
-        FakeSubreddit.__init__(self)
+        FakeVault.__init__(self)
         domain = domain.lower()
         self.domain = domain
         self.name = domain
@@ -2673,7 +2673,7 @@ class DomainSR(FakeSubreddit):
         return False
 
 
-class SearchResultSubreddit(Vault):
+class SearchResultVault(Vault):
     _nodb = True
 
     @classmethod
@@ -2682,7 +2682,7 @@ class SearchResultSubreddit(Vault):
         Vault.add_props(user, wrapped)
         for item in wrapped:
             url = UrlParser(item.path)
-            url.update_query(ref="search_subreddits")
+            url.update_query(ref="search_Vaults")
             item.search_path = url.unparse()
             can_view = item.can_view(user)
             if isinstance(user, UnloggedUser):
@@ -2699,7 +2699,7 @@ class SearchResultSubreddit(Vault):
                 item.display_type = "public"
         Printable.add_props(user, wrapped)
 
-Frontpage = DefaultSR()
+Frontpage = DefaultVault()
 Friends = FriendsSR()
 Mod = ModSR()
 Contrib = ContribSR()

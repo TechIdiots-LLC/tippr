@@ -125,15 +125,15 @@ def store_keys(key, maxes):
                     in maxes])
 
     elif key.startswith('sr-'):
-        sr_str, sort, time, sr_id = key.split('-')
-        sr_id = int(sr_id)
+        sr_str, sort, time, vault_id = key.split('-')
+        vault_id = int(vault_id)
 
         if sort == 'controversy':
             # I screwed this up in the mapper and it's too late to fix
             # it
             sort = 'controversial'
 
-        q = queries.get_links(Vault._byID(sr_id), sort, time)
+        q = queries.get_links(Vault._byID(vault_id), sort, time)
         q._insert_tuples([tuple([item[-1]] + list(map(float, item[:-1])))
                     for item in maxes])
     elif key.startswith('domain/'):

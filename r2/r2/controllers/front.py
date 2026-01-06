@@ -36,7 +36,7 @@ from r2.controllers.ipn import GoldException, generate_blob, validate_blob
 from r2.controllers.tippr_base import (
     TipprController,
     base_listing,
-    disable_subreddit_css,
+    disable_Vault_css,
     paginated_listing,
     require_https,
 )
@@ -76,7 +76,7 @@ class FrontController(TipprController):
     def GET_link_id_redirect(self, link):
         if not link:
             abort(404)
-        elif not link.subreddit_slow.can_view(c.user):
+        elif not link.vault_slow.can_view(c.user):
             # don't disclose the vault/title of a post via the redirect url
             abort(403)
         else:
@@ -103,7 +103,7 @@ class FrontController(TipprController):
             new_id = max_link_id - int(article._id)
             return self.redirect('/info/' + to36(new_id) + '/' + rest)
         if type == 'old':
-            if not article.subreddit_slow.can_view(c.user):
+            if not article.vault_slow.can_view(c.user):
                 self.abort403()
 
             new_url = "/%s/%s/%s" % \
@@ -151,7 +151,7 @@ class FrontController(TipprController):
         else:
             return self.redirect(add_sr('/'))
 
-    @disable_subreddit_css()
+    @disable_Vault_css()
     @validate(
         VAdmin(),
         thing=VByName('article'),
@@ -254,7 +254,7 @@ class FrontController(TipprController):
         if comment and comment.link_id != article._id:
             return self.abort404()
 
-        sr = Vault._byID(article.sr_id, True)
+        sr = Vault._byID(article.vault_id, True)
 
         if sr.name == g.takedown_sr:
             request.environ['TIPPR_TAKEDOWN'] = article._fullname
@@ -559,7 +559,7 @@ class FrontController(TipprController):
         VNotInTimeout().run(action_name="pageview", details_text="newreddit")
         title = _('create a vault')
         captcha = Captcha() if c.user.needs_captcha() else None
-        content = CreateSubreddit(name=name or '', captcha=captcha)
+        content = CreateVault(name=name or '', captcha=captcha)
         res = FormPage(_("create a vault"),
                        content=content,
                        captcha=captcha,
@@ -571,14 +571,14 @@ class FrontController(TipprController):
     def GET_stylesheet(self):
         """Redirect to the vault's stylesheet if one exists.
 
-        See also: [/api/subreddit_stylesheet](#POST_api_subreddit_stylesheet).
+        See also: [/api/Vault_stylesheet](#POST_api_Vault_stylesheet).
 
         """
         # de-stale the vault object so we don't poison downstream caches
-        if not isinstance(c.site, FakeSubreddit):
+        if not isinstance(c.site, FakeVault):
             c.site = Vault._byID(c.site._id, data=True, stale=False)
 
-        url = Tippr.get_subreddit_stylesheet_url(c.site)
+        url = Tippr.get_Vault_stylesheet_url(c.site)
         if url:
             return self.redirect(url)
         else:
@@ -603,7 +603,7 @@ class FrontController(TipprController):
     modname_splitter = re.compile('[ ,]+')
 
     @require_oauth2_scope("modlog")
-    @disable_subreddit_css()
+    @disable_Vault_css()
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(
         mod=nop('mod', docs={"mod": "(optional) a moderator filter"}),
@@ -645,7 +645,7 @@ class FrontController(TipprController):
             mod = mod or None
 
         if isinstance(c.site, (MultiReddit, ModSR)):
-            srs = Vault._byID(c.site.sr_ids, return_dict=False)
+            srs = Vault._byID(c.site.vault_ids, return_dict=False)
 
             # grab all moderators
             mod_ids = set(Vault.get_all_mod_ids(srs))
@@ -653,7 +653,7 @@ class FrontController(TipprController):
 
             pane = self._make_moderationlog(srs, num, after, reverse, count,
                                             mod=mod, action=action)
-        elif isinstance(c.site, FakeSubreddit):
+        elif isinstance(c.site, FakeVault):
             return self.abort404()
         else:
             mod_ids = c.site.moderators
@@ -800,24 +800,24 @@ class FrontController(TipprController):
 
             c.allow_styles = True
             c.site = Vault._byID(c.site._id, data=True, stale=False)
-            pane.append(CreateSubreddit(site=c.site))
+            pane.append(CreateVault(site=c.site))
         elif (location == 'stylesheet'
               and c.site.can_change_stylesheet(c.user)
               and not g.css_killswitch):
             stylesheet_contents = c.site.fetch_stylesheet_source()
             c.allow_styles = True
-            pane = SubredditStylesheet(site=c.site,
+            pane = VaultStylesheet(site=c.site,
                                        stylesheet_contents=stylesheet_contents)
         elif (location == 'stylesheet'
               and c.site.can_view(c.user)
               and not g.css_killswitch):
             stylesheet = c.site.fetch_stylesheet_source()
-            pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
+            pane = VaultStylesheetSource(stylesheet_contents=stylesheet)
         elif (location == 'traffic' and
               (c.site.public_traffic or
                (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user.employee)))):
-            pane = trafficpages.SubredditTraffic()
+            pane = trafficpages.VaultTraffic()
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)
         else:
@@ -829,7 +829,7 @@ class FrontController(TipprController):
 
     @require_oauth2_scope("read")
     @base_listing
-    @disable_subreddit_css()
+    @disable_Vault_css()
     @validate(
         VSrModerator(perms='posts'),
         location=nop('location'),
@@ -888,7 +888,7 @@ class FrontController(TipprController):
                           extension_handling=extension_handling).render()
 
     @base_listing
-    @disable_subreddit_css()
+    @disable_Vault_css()
     @validate(
         VSrModerator(perms='flair'),
         name=nop('name'),
@@ -907,7 +907,7 @@ class FrontController(TipprController):
         return EditReddit(content=pane, location='flair').render()
 
     @require_oauth2_scope("modconfig")
-    @disable_subreddit_css()
+    @disable_Vault_css()
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),
                              default='false'))
@@ -921,7 +921,7 @@ class FrontController(TipprController):
 
         """
         c.profilepage = True
-        if isinstance(c.site, FakeSubreddit):
+        if isinstance(c.site, FakeVault):
             return self.abort404()
         else:
             VNotInTimeout().run(action_name="pageview",
@@ -934,7 +934,7 @@ class FrontController(TipprController):
         """Return information about the vault.
 
         Data includes the subscriber count, description, and header image."""
-        if not is_api() or isinstance(c.site, FakeSubreddit):
+        if not is_api() or isinstance(c.site, FakeVault):
             return self.abort404()
 
         # we do this here so that item.accounts_active_count is only present on
@@ -960,9 +960,9 @@ class FrontController(TipprController):
     @api_doc(api_section.vaults, uri='/v/{vault}/about/rules')
     def GET_rules(self):
         """Get the rules for the current vault"""
-        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
+        if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
-        if isinstance(c.site, FakeSubreddit):
+        if isinstance(c.site, FakeVault):
             abort(404)
 
         kind_labels = {
@@ -1053,7 +1053,7 @@ class FrontController(TipprController):
     @base_listing
     @require_oauth2_scope("read")
     @validate(query=nop('q', docs={"q": "a search query"}),
-              sort=VMenu('sort', SubredditSearchSortMenu, remember=False))
+              sort=VMenu('sort', VaultSearchSortMenu, remember=False))
     @api_doc(api_section.vaults, uri='/vaults/search', supports_rss=True)
     def GET_search_reddits(self, query, reverse, after, count, num, sort):
         """Search vaults by title and description."""
@@ -1077,7 +1077,7 @@ class FrontController(TipprController):
             include_over18 = True
 
         if query:
-            q = g.search.SubredditSearchQuery(query, sort=sort, faceting={},
+            q = g.search.VaultSearchQuery(query, sort=sort, faceting={},
                                               include_over18=include_over18)
             content = self._search(q, num=num, reverse=reverse,
                                    after=after, count=count,
@@ -1095,7 +1095,7 @@ class FrontController(TipprController):
                 event_target['target_after'] = after._fullname
         extra_js_config = {'event_target': event_target}
 
-        res = SubredditsPage(content=content,
+        res = VaultsPage(content=content,
                              prev_search=query,
                              page_classes=['vaults-page'],
                              extra_js_config=extra_js_config,
@@ -1138,11 +1138,11 @@ class FrontController(TipprController):
                 return self.redirect("/submit" + query_string({'url':url}))
 
         if not restrict_sr:
-            site = DefaultSR()
+            site = DefaultVault()
         else:
             site = c.site
 
-        has_query = query or not isinstance(site, (DefaultSR, AllSR))
+        has_query = query or not isinstance(site, (DefaultVault, AllSR))
 
         if not syntax:
             syntax = g.search.SearchQuery.default_syntax
@@ -1181,7 +1181,7 @@ class FrontController(TipprController):
         nav_menus = None
         cleanup_message = None
         converted_data = None
-        subreddit_facets = None
+        Vault_facets = None
         legacy_render_class = feature.is_enabled('legacy_search') or c.user.pref_legacy_search
 
         if num > 0 and has_query:
@@ -1196,7 +1196,7 @@ class FrontController(TipprController):
                                        heading=_('posts'), nav_menus=nav_menus,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
-                subreddit_facets = content.subreddit_facets
+                Vault_facets = content.Vault_facets
 
             except g.search.InvalidQuery:
                 g.stats.simple_event('cloudsearch.error.invalidquery')
@@ -1216,7 +1216,7 @@ class FrontController(TipprController):
                                        count=count, heading=_('posts'), nav_menus=nav_menus,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
-                subreddit_facets = content.subreddit_facets
+                Vault_facets = content.Vault_facets
 
                 if cleaned:
                     cleanup_message = strings.invalid_search_query % {
@@ -1231,7 +1231,7 @@ class FrontController(TipprController):
 
         # extra search request for vault results
         if sr_num > 0 and has_query:
-            sr_q = g.search.SubredditSearchQuery(query, sort='relevance',
+            sr_q = g.search.VaultSearchQuery(query, sort='relevance',
                                                  faceting={},
                                                  include_over18=include_over18)
             vaults = self._search(sr_q, num=sr_num, reverse=reverse,
@@ -1240,8 +1240,8 @@ class FrontController(TipprController):
                                       legacy_render_class=legacy_render_class)
 
             # backfill with facets if no vault search results
-            if subreddit_facets and not vaults.things:
-                names = [sr._fullname for sr, count in subreddit_facets]
+            if Vault_facets and not vaults.things:
+                names = [sr._fullname for sr, count in Vault_facets]
                 builder = IDBuilder(names, num=sr_num)
                 listing = SearchListing(builder, nextprev=False)
                 vaults = listing.listing(
@@ -1275,7 +1275,7 @@ class FrontController(TipprController):
                          restrict_sr=restrict_sr,
                          syntax=syntax,
                          converted_data=converted_data,
-                         facets=subreddit_facets,
+                         facets=Vault_facets,
                          sort=sort,
                          recent=recent,
                          extra_js_config=extra_js_config,
@@ -1296,7 +1296,7 @@ class FrontController(TipprController):
             if isinstance(thing, Link):
                 w.render_class = SearchResultLink
             elif isinstance(thing, Vault):
-                w.render_class = SearchResultSubreddit
+                w.render_class = SearchResultVault
             return w
         return wrapper_fn
 
@@ -1392,15 +1392,15 @@ class FrontController(TipprController):
         if not (c.default_sr or c.site.can_submit(c.user)):
             abort(403, "forbidden")
 
-        target = c.site if not isinstance(c.site, FakeSubreddit) else None
+        target = c.site if not isinstance(c.site, FakeVault) else None
         VNotInTimeout().run(action_name="pageview", details_text="submit",
             target=target)
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
-        extra_subreddits = []
+        extra_Vaults = []
         if isinstance(c.site, MultiReddit):
-            extra_subreddits.append((
+            extra_Vaults.append((
                 _('%s vaults') % c.site.name,
                 c.site.srs
             ))
@@ -1413,7 +1413,7 @@ class FrontController(TipprController):
             captcha=captcha,
             resubmit=resubmit,
             default_sr=c.site if not c.default_sr else None,
-            extra_subreddits=extra_subreddits,
+            extra_Vaults=extra_Vaults,
             show_link=c.default_sr or c.site.can_submit_link(c.user),
             show_self=((c.default_sr or c.site.can_submit_text(c.user))
                       and not request.GET.get('no_self')),
@@ -1460,8 +1460,8 @@ class FrontController(TipprController):
         return trafficpages.AdvertTrafficPage(code).render()
 
     @validate(VEmployee())
-    def GET_subreddit_traffic_report(self):
-        content = trafficpages.SubredditTrafficReport()
+    def GET_Vault_traffic_report(self):
+        content = trafficpages.VaultTrafficReport()
 
         if c.render_style == 'csv':
             return content.as_csv()
@@ -1683,7 +1683,7 @@ class FormsController(TipprController):
         return BoringPage(_('emails unsubscribed'),
                           content=MessageNotificationEmailsUnsubscribe()).render()
 
-    @disable_subreddit_css()
+    @disable_Vault_css()
     @validate(VUser(),
               location=nop("location"),
               verified=VBoolean("verified"))
@@ -1833,7 +1833,7 @@ class FormsController(TipprController):
             thing = payment_blob['comment']
         if (not thing or
             thing._deleted or
-            not thing.subreddit_slow.can_view(c.user)):
+            not thing.vault_slow.can_view(c.user)):
             self.abort404()
 
         if isinstance(thing, Comment):
@@ -1885,7 +1885,7 @@ class FormsController(TipprController):
         VNotInTimeout().run(action_name="pageview", details_text="gold",
             target=thing)
         if thing:
-            thing_sr = Vault._byID(thing.sr_id, data=True)
+            thing_sr = Vault._byID(thing.vault_id, data=True)
             if (thing._deleted or
                     thing._spam or
                     not thing_sr.can_view(c.user) or

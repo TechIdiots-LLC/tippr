@@ -104,7 +104,7 @@ class MailgunWebhookController(TipprController):
 
         parent = Message._byID36(message_id36, data=True)
         to = Account._byID(parent.author_id, data=True)
-        sr = Vault._byID(parent.sr_id, data=True)
+        sr = Vault._byID(parent.vault_id, data=True)
 
         if stripped_text.startswith(ZENDESK_PREFIX):
             stripped_text = stripped_text[len(ZENDESK_PREFIX):].lstrip()

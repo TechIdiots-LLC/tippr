@@ -46,7 +46,7 @@ from r2.lib.providers.search.common import (
     Results,
     SearchError,
     SearchHTTPError,
-    SubredditFields,
+    VaultFields,
     safe_get,
     safe_xml_str,
 )
@@ -54,9 +54,9 @@ from r2.models import (
     Account,
     All,
     AllMinus,
-    DefaultSR,
-    DomainSR,
-    FakeSubreddit,
+    DefaultVault,
+    DomainVault,
+    FakeVault,
     Friends,
     Link,
     MultiReddit,
@@ -123,14 +123,14 @@ basic_link = functools.partial(basic_query, size=10, start=0,
                                search_api=g.solr_search_host)
 
 
-basic_subreddit = functools.partial(basic_query,
+basic_Vault = functools.partial(basic_query,
                                     faceting=None,
                                     size=10, start=0,
                                     rank="activity",
                                     return_fields=['title', 'tippr',
                                                    'author_fullname'],
                                     record_stats=False,
-                                    search_api=g.solr_subreddit_search_host)
+                                    search_api=g.solr_Vault_search_host)
 
 
 class SolrSearchQuery:
@@ -251,7 +251,7 @@ class SolrSearchQuery:
                         u'author_s': u'grandpa', 
                         u'over18': False, 
                         u'timestamp': 1427180669, 
-                        u'sr_id': 2, 
+                        u'vault_id': 2, 
                         u'author_fullname': u't2_1', 
                         u'is_self': False, 
                         u'vault': u'coffee', 
@@ -311,9 +311,9 @@ class LinkSearchQuery(SolrSearchQuery):
 
     def customize_query(self, bq):
         queries = [bq]
-        subreddit_query = self._get_sr_restriction(self.sr)
-        if subreddit_query:
-            queries.append(subreddit_query)
+        Vault_query = self._get_sr_restriction(self.sr)
+        if Vault_query:
+            queries.append(Vault_query)
         if self.recent:
             recent_query = self._restrict_recent(self.recent)
             queries.append(recent_query)
@@ -341,12 +341,12 @@ class LinkSearchQuery(SolrSearchQuery):
         
         '''
         bq = []
-        if (not sr) or sr == All or isinstance(sr, DefaultSR):
+        if (not sr) or sr == All or isinstance(sr, DefaultVault):
             return None
         elif isinstance(sr, MultiReddit):
-            for sr_id in sr.sr_ids:
-                bq.append("sr_id:%s" % sr_id)
-        elif isinstance(sr, DomainSR):
+            for vault_id in sr.vault_ids:
+                bq.append("vault_id:%s" % vault_id)
+        elif isinstance(sr, DomainVault):
             bq = ["site:'%s'" % sr.domain]
         elif sr == Friends:
             if not c.user_is_loggedin or not c.user.friends:
@@ -357,15 +357,15 @@ class LinkSearchQuery(SolrSearchQuery):
                        for id_ in friend_ids]
             bq.extend(friends)
         elif isinstance(sr, AllMinus):
-            for sr_id in sr.exclude_sr_ids:
-                bq.append("-sr_id:%s" % sr_id)
-        elif not isinstance(sr, FakeSubreddit):
-            bq = ["sr_id:%s" % sr._id]
+            for vault_id in sr.exclude_sr_ids:
+                bq.append("-vault_id:%s" % vault_id)
+        elif not isinstance(sr, FakeVault):
+            bq = ["vault_id:%s" % sr._id]
         return ' OR '.join(bq)
 
 
-class SolrSubredditSearchQuery(SolrSearchQuery):
-    search_api = g.solr_subreddit_search_host
+class SolrVaultSearchQuery(SolrSearchQuery):
+    search_api = g.solr_Vault_search_host
     sorts = {
         'relevance': 'activity desc',
     }
@@ -625,15 +625,15 @@ def _run_changed(msgs, chan):
     changed = [pickle.loads(msg.body) for msg in msgs]
 
     link_fns = SolrLinkUploader.desired_fullnames(changed)
-    sr_fns = SolrSubredditUploader.desired_fullnames(changed)
+    sr_fns = SolrVaultUploader.desired_fullnames(changed)
 
     link_uploader = SolrLinkUploader(g.solr_doc_host, fullnames=link_fns)
-    subreddit_uploader = SolrSubredditUploader(g.solr_subreddit_doc_host,
+    Vault_uploader = SolrVaultUploader(g.solr_Vault_doc_host,
                                            fullnames=sr_fns)
 
     link_time = link_uploader.inject()
-    subreddit_time = subreddit_uploader.inject()
-    solrsearch_time = link_time + subreddit_time
+    Vault_time = Vault_uploader.inject()
+    solrsearch_time = link_time + Vault_time
 
     totaltime = (datetime.now(g.tz) - start).total_seconds()
 
@@ -655,7 +655,7 @@ class SolrLinkUploader(SolrSearchUploader):
     def fields(self, thing):
         '''Return fields relevant to a Link search index'''
         account = self.accounts[thing.author_id]
-        sr = self.srs[thing.sr_id]
+        sr = self.srs[thing.vault_id]
         return LinkFields(thing, account, sr).fields()
 
     def batch_lookups(self):
@@ -672,26 +672,26 @@ class SolrLinkUploader(SolrSearchUploader):
             else:
                 raise
 
-        sr_ids = [thing.sr_id for thing in self.things
-                  if hasattr(thing, 'sr_id')]
+        vault_ids = [thing.vault_id for thing in self.things
+                  if hasattr(thing, 'vault_id')]
         try:
-            self.srs = Vault._byID(sr_ids, data=True, return_dict=True)
+            self.srs = Vault._byID(vault_ids, data=True, return_dict=True)
         except NotFound:
             if self.use_safe_get:
-                self.srs = safe_get(Vault._byID, sr_ids, data=True,
+                self.srs = safe_get(Vault._byID, vault_ids, data=True,
                                     return_dict=True)
             else:
                 raise
 
     def should_index(self, thing):
-        return (thing.promoted is None and getattr(thing, "sr_id", None) != -1)
+        return (thing.promoted is None and getattr(thing, "vault_id", None) != -1)
     
 
-class SolrSubredditUploader(SolrSearchUploader):
+class SolrVaultUploader(SolrSearchUploader):
     types = (Vault,)
 
     def fields(self, thing):
-        return SubredditFields(thing).fields()
+        return VaultFields(thing).fields()
 
     def should_index(self, thing):
         return thing._id != Vault.get_promote_srid()
@@ -735,9 +735,9 @@ def _rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
         time.sleep(sleeptime)
 
 
-rebuild_subreddit_index = functools.partial(_rebuild_link_index,
+rebuild_Vault_index = functools.partial(_rebuild_link_index,
                                             cls=Vault,
-                                            uploader=SolrSubredditUploader,
+                                            uploader=SolrVaultUploader,
                                             estimate=200000,
                                             chunk_size=1000)
 
@@ -755,7 +755,7 @@ def test_run_link(start_link, count=1000):
 def test_run_srs(*sr_names):
     '''Inject Vaults by name into the index'''
     srs = list(Vault._by_name(sr_names).values())
-    uploader = SolrSubredditUploader(things=srs)
+    uploader = SolrVaultUploader(things=srs)
     return uploader.inject()
 
 
@@ -780,9 +780,9 @@ class SolrSearchProvider(SearchProvider):
     # hostname or IP for link upload
     solr_doc_host = 127.0.0.1
     # hostname or IP for vault search
-    solr_subreddit_search_host = 127.0.0.1
+    solr_Vault_search_host = 127.0.0.1
     # hostname or IP vault upload
-    solr_subreddit_doc_host = 127.0.0.1
+    solr_Vault_doc_host = 127.0.0.1
     # solr port (assumed same on all hosts)
     solr_port = 8080
     # solr4 core name (not used with Solr 1.x)
@@ -806,8 +806,8 @@ class SolrSearchProvider(SearchProvider):
         ConfigValue.str: [
             "solr_search_host",
             "solr_doc_host",
-            "solr_subreddit_search_host",
-            "solr_subreddit_doc_host",
+            "solr_Vault_search_host",
+            "solr_Vault_doc_host",
             "solr_core",
             "solr_version",
         ],
@@ -818,7 +818,7 @@ class SolrSearchProvider(SearchProvider):
 
     SearchQuery = LinkSearchQuery
 
-    SubredditSearchQuery = SolrSubredditSearchQuery
+    VaultSearchQuery = SolrVaultSearchQuery
     
     def run_changed(self, drain=False, min_size=int(getattr(g, 'solr_min_batch', 500)), limit=1000, sleep_time=10, 
             use_safe_get=False, verbose=False):

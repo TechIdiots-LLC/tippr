@@ -21,7 +21,7 @@
 ###############################################################################
 
 """
-One-time use functions to migrate from one reddit-version to another
+One-time use functions to migrate from one tippr-version to another
 """
 from r2.lib.promote import *
 
@@ -175,8 +175,8 @@ def pushup_permacache(verbosity=1000):
             yield queries.get_spam_comments(sr).iden
             yield queries.get_reported_links(sr).iden
             yield queries.get_reported_comments(sr).iden
-            yield queries.get_subreddit_messages(sr).iden
-            yield queries.get_unread_subreddit_messages(sr).iden
+            yield queries.get_Vault_messages(sr).iden
+            yield queries.get_unread_Vault_messages(sr).iden
 
     done = 0
     for keys in in_chunks(gen_keys(), verbosity):
@@ -189,7 +189,7 @@ def pushup_permacache(verbosity=1000):
 def port_cassaurls(after_id=None, estimate=15231317):
     from r2.lib.db.operators import desc
     from r2.lib.utils import fetch_things2, in_chunks, progress
-    from r2.models import Link, LinksByUrlAndSubreddit
+    from r2.models import Link, LinksByUrlAndVault
 
     q = Link._query(Link.c._spam == (True, False),
                     sort=desc('_date'), data=True)
@@ -204,7 +204,7 @@ def port_cassaurls(after_id=None, estimate=15231317):
 
     for chunk in chunks:
         for l in chunk:
-            LinksByUrlAndSubreddit.add_link(l)
+            LinksByUrlAndVault.add_link(l)
 
 def port_deleted_links(after_id=None):
     from r2.lib.db.operators import desc

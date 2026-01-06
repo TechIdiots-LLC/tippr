@@ -27,14 +27,14 @@
 
 %>
 <%namespace file="utils.html" import="error_field, image_upload"/>
-<%namespace file="subredditstylesheetbase.html" import="make_li"/>
+<%namespace file="Vaultstylesheetbase.html" import="make_li"/>
 
 <div class="stylesheet-customize-container">
   <form
-     onsubmit="return post_form(this, 'subreddit_stylesheet')"
-     name="subreddit_stylesheet" id="subreddit_stylesheet"
+     onsubmit="return post_form(this, 'Vault_stylesheet')"
+     name="Vault_stylesheet" id="Vault_stylesheet"
      class="pretty-form sr-form"
-     action="/post/subreddit_stylesheet" method="post" >
+     action="/post/Vault_stylesheet" method="post" >
     
   <input type="hidden" name="r"  value="${thing.site.name}" />
   <input type="hidden" name="op"  value="" />
@@ -76,7 +76,7 @@
   <div class="errors" style="display:none">
     <h2>${_("errors")}</h2>
     <ul><li></li>
-      <!-- populated from AJAX requests to /api/subreddit_stylesheet -->
+      <!-- populated from AJAX requests to /api/Vault_stylesheet -->
     </ul>
   </div>
   

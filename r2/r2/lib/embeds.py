@@ -92,7 +92,7 @@ def set_up_comment_embed(sr, thing, showedits):
         "showedits": showedits,
         "thing": {
             "id": thing._id,
-            "sr_id": sr._id,
+            "vault_id": sr._id,
             "sr_name": sr.name,
             "edited": edited_after(thing, iso_timestamp, showedits),
             "deleted": thing.deleted or author._deleted,

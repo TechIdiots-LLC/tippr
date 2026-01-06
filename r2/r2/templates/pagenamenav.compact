@@ -28,15 +28,15 @@
   </span>
 </%def>
 
-<%def name="subreddit()">
+<%def name="Vault()">
   <span class="hover pagename redditname">
     ${plain_link(c.site.name, c.site.user_path, _sr_path=False)}
   </span>
 </%def>
 
-<%def name="subreddits()">
+<%def name="Vaults()">
   <span class="hover pagename redditname">
-    ${plain_link(_("subreddits"), "/subreddits/", _sr_path=False)}
+    ${plain_link(_("Vaults"), "/Vaults/", _sr_path=False)}
   </span>
 </%def>
 

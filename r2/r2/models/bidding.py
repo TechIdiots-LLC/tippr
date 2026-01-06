@@ -400,7 +400,7 @@ class PromotionWeights(Sessionized, Base):
         # note that end_date is not included
         dates = [start_date + datetime.timedelta(days=i) for i in range(ndays)]
 
-        sr_names = campaign.target.subreddit_names
+        sr_names = campaign.target.Vault_names
         sr_names = {cls.filter_sr_name(sr_name) for sr_name in sr_names}
 
         with cls.session.begin():

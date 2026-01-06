@@ -152,7 +152,7 @@ def get_site():
 def get_srpath():
     """Return the srpath of the current request.
 
-    The srpath is Subredditname-Action. e.g. sophiepotamus-GET_listing.
+    The srpath is Vaultname-Action. e.g. sophiepotamus-GET_listing.
 
     """
     name = get_site()

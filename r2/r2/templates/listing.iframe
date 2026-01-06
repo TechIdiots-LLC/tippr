@@ -26,9 +26,9 @@
 
 
 %if len(thing.things):
-  <ol class="reddit-embed-list">
+  <ol class="tippr-embed-list">
     %for i, t in enumerate(thing.things):
-      <li class="reddit-embed-list-item">
+      <li class="tippr-embed-list-item">
         ${t}
       </li>
     %endfor

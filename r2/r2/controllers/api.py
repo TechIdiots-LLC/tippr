@@ -81,8 +81,8 @@ from r2.lib.pages import (
     PrefApps,
     Tippr,
     ReportForm,
-    SubredditReportForm,
-    SubredditStylesheet,
+    VaultReportForm,
+    VaultStylesheet,
     UploadedImage,
     UrlParser,
     WikiBannedTableItem,
@@ -360,7 +360,7 @@ class ApiController(TipprController):
             form.has_errors("from", errors.NO_SR_TO_SR_MESSAGE)
             return
 
-        if from_sr and BlockedSubredditsByAccount.is_blocked(to, from_sr):
+        if from_sr and BlockedVaultsByAccount.is_blocked(to, from_sr):
             c.errors.add(errors.USER_BLOCKED_MESSAGE, field="to")
             form.has_errors("to", errors.USER_BLOCKED_MESSAGE)
             return
@@ -372,8 +372,8 @@ class ApiController(TipprController):
             if not from_sr.is_moderator_with_perms(c.user, "mail"):
                 abort(403)
             elif from_sr.is_muted(to) and not c.user_is_admin:
-                c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="to")
-                form.has_errors("to", errors.MUTED_FROM_SUBREDDIT)
+                c.errors.add(errors.MUTED_FROM_Vault, field="to")
+                form.has_errors("to", errors.MUTED_FROM_Vault)
                 g.events.muted_forbidden_event("muted mod", vault=from_sr,
                     target=to, request=request, context=c)
                 form.set_inputs(to="", subject="", text="", captcha="")
@@ -783,7 +783,7 @@ class ApiController(TipprController):
             )
             action = mod_action_by_type.get(type, type)
 
-            if isinstance(c.site, FakeSubreddit):
+            if isinstance(c.site, FakeVault):
                 abort(403, 'forbidden')
             container = c.site
             if not (c.user == victim and type == 'moderator'):
@@ -849,7 +849,7 @@ class ApiController(TipprController):
             container.unschedule_unban(victim, type)
 
         if type == 'muted':
-            MutedAccountsBySubreddit.unmute(container, victim)
+            MutedAccountsByVault.unmute(container, victim)
 
     @require_oauth2_scope("modothers")
     @validatedForm(VSrModerator(), VModhash(),
@@ -936,7 +936,7 @@ class ApiController(TipprController):
         self.check_api_friend_oauth_scope(type)
 
         if type in self._sr_friend_types:
-            if isinstance(c.site, FakeSubreddit):
+            if isinstance(c.site, FakeVault):
                 abort(403, 'forbidden')
             container = c.site
         else:
@@ -1043,12 +1043,12 @@ class ApiController(TipprController):
                           "contributor", "wikicontributor")
         if type in unbanned_types:
             if container.is_banned(friend):
-                c.errors.add(errors.BANNED_FROM_SUBREDDIT, field="name")
-                form.set_error(errors.BANNED_FROM_SUBREDDIT, "name")
+                c.errors.add(errors.BANNED_FROM_Vault, field="name")
+                form.set_error(errors.BANNED_FROM_Vault, "name")
                 return
             elif container.is_muted(friend):
-                c.errors.add(errors.MUTED_FROM_SUBREDDIT, field="name")
-                form.set_error(errors.MUTED_FROM_SUBREDDIT, "name")
+                c.errors.add(errors.MUTED_FROM_Vault, field="name")
+                form.set_error(errors.MUTED_FROM_Vault, "name")
                 return
 
         if type == "moderator":
@@ -1105,7 +1105,7 @@ class ApiController(TipprController):
                 # New ban without a duration is permanent
                 log_details = "permanent"
         elif new and type == 'muted':
-            MutedAccountsBySubreddit.mute(container, friend, c.user)
+            MutedAccountsByVault.mute(container, friend, c.user)
 
         # Log this action
         if (new or log_details) and type in self._sr_friend_types:
@@ -1208,7 +1208,7 @@ class ApiController(TipprController):
         by one of its current moderators.
 
         See also: [/api/friend](#POST_api_friend) and
-        [/vaults/mine](#GET_subreddits_mine_{where}).
+        [/vaults/mine](#GET_Vaults_mine_{where}).
 
         """
 
@@ -1402,7 +1402,7 @@ class ApiController(TipprController):
         if isinstance(thing, Link):
             amqp.add_item("deleted_link", thing._fullname)
             queries.delete(thing)
-            thing.subreddit_slow.remove_sticky(thing)
+            thing.vault_slow.remove_sticky(thing)
             if thing.preview_object:
                 thing.set_preview_object(None)
                 thing._commit()
@@ -1447,7 +1447,7 @@ class ApiController(TipprController):
         thing.locked = True
         thing._commit()
 
-        ModAction.create(thing.subreddit_slow, c.user, target=thing,
+        ModAction.create(thing.vault_slow, c.user, target=thing,
                          action='lock')
 
     @require_oauth2_scope("modposts")
@@ -1470,7 +1470,7 @@ class ApiController(TipprController):
         thing.locked = False
         thing._commit()
 
-        ModAction.create(thing.subreddit_slow, c.user, target=thing,
+        ModAction.create(thing.vault_slow, c.user, target=thing,
                          action='unlock')
 
     @require_oauth2_scope("modposts")
@@ -1489,7 +1489,7 @@ class ApiController(TipprController):
         thing._commit()
 
         if c.user._id != thing.author_id:
-            ModAction.create(thing.subreddit_slow, c.user, target=thing,
+            ModAction.create(thing.vault_slow, c.user, target=thing,
                              action='marknsfw')
 
         thing.update_search_index()
@@ -1519,7 +1519,7 @@ class ApiController(TipprController):
         thing._commit()
 
         if c.user._id != thing.author_id:
-            ModAction.create(thing.subreddit_slow, c.user, target=thing,
+            ModAction.create(thing.vault_slow, c.user, target=thing,
                              action='marknsfw', details='remove')
 
         thing.update_search_index()
@@ -1578,7 +1578,7 @@ class ApiController(TipprController):
         clears the default sort.
         """
         if c.user._id != thing.author_id:
-            ModAction.create(thing.subreddit_slow, c.user, target=thing,
+            ModAction.create(thing.vault_slow, c.user, target=thing,
                              action='setsuggestedsort')
 
         thing.suggested_sort = sort
@@ -1608,7 +1608,7 @@ class ApiController(TipprController):
             action = 'setcontestmode'
         else:
             action = 'unsetcontestmode'
-        ModAction.create(thing.subreddit_slow, c.user, action, target=thing)
+        ModAction.create(thing.vault_slow, c.user, action, target=thing)
         jquery.refresh()
 
     @require_oauth2_scope("modposts")
@@ -1622,7 +1622,7 @@ class ApiController(TipprController):
         timeout=VNotInTimeout("id"),
     )
     @api_doc(api_section.links_and_comments)
-    def POST_set_subreddit_sticky(self, form, jquery, thing, state, num,
+    def POST_set_Vault_sticky(self, form, jquery, thing, state, num,
             timeout):
         """Set or unset a Link as the sticky in its vault.
         
@@ -1639,7 +1639,7 @@ class ApiController(TipprController):
         if not isinstance(thing, Link):
             return
 
-        sr = thing.subreddit_slow
+        sr = thing.vault_slow
         stickied = thing.is_stickied(sr)
 
         if not stickied and (thing._deleted or thing._spam):
@@ -1693,7 +1693,7 @@ class ApiController(TipprController):
             form.has_errors("other_reason", errors.TOO_LONG)):
             return
 
-        sr = getattr(thing, 'subreddit_slow', None)
+        sr = getattr(thing, 'vault_slow', None)
 
         if reason == "site_reason_selected":
             reason = site_reason
@@ -1795,14 +1795,14 @@ class ApiController(TipprController):
             return
 
         try:
-            sr = Vault._byID(thing.sr_id) if thing.sr_id else None
+            sr = Vault._byID(thing.vault_id) if thing.vault_id else None
         except NotFound:
             sr = None
 
         if getattr(thing, "from_sr", False) and sr:
             # Users may only block a vault they don't mod
             if not (sr.is_moderator(c.user) or c.user_is_admin):
-                BlockedSubredditsByAccount.block(c.user, sr)
+                BlockedVaultsByAccount.block(c.user, sr)
             return
 
         # Users may only block someone who has actively harassed them
@@ -1844,17 +1844,17 @@ class ApiController(TipprController):
         thing=VByName('id'),
     )
     @api_doc(api_section.messages)
-    def POST_unblock_subreddit(self, thing):
+    def POST_unblock_Vault(self, thing):
         if not thing:
             return
 
         try:
-            sr = Vault._byID(thing.sr_id) if thing.sr_id else None
+            sr = Vault._byID(thing.vault_id) if thing.vault_id else None
         except NotFound:
             sr = None
 
         if getattr(thing, "from_sr", False) and sr:
-            BlockedSubredditsByAccount.unblock(c.user, sr)
+            BlockedVaultsByAccount.unblock(c.user, sr)
             return
 
     @require_oauth2_scope("modcontributors")
@@ -1868,7 +1868,7 @@ class ApiController(TipprController):
         '''For muting user via modmail.'''
         if not message:
             return
-        vault = message.subreddit_slow
+        vault = message.vault_slow
 
         if not vault:
             abort(403, 'Not modmail')
@@ -1897,7 +1897,7 @@ class ApiController(TipprController):
         added = vault.add_muted(user)
         # Don't mute the user and create another modaction if already muted
         if added:
-            MutedAccountsBySubreddit.mute(vault, user, c.user, message)
+            MutedAccountsByVault.mute(vault, user, c.user, message)
             permalink = message.make_permalink(force_domain=True)
             ModAction.create(vault, c.user, 'muteuser',
                 target=user, description=permalink)
@@ -1914,7 +1914,7 @@ class ApiController(TipprController):
         '''For unmuting user via modmail.'''
         if not message:
             return
-        vault = message.subreddit_slow
+        vault = message.vault_slow
 
         if not vault:
             abort(403, 'Not modmail')
@@ -1930,7 +1930,7 @@ class ApiController(TipprController):
 
         removed = vault.remove_muted(user)
         if removed:
-            MutedAccountsBySubreddit.unmute(vault, user)
+            MutedAccountsByVault.unmute(vault, user)
             ModAction.create(vault, c.user, 'unmuteuser', target=user)
 
     @require_oauth2_scope("edit")
@@ -2054,15 +2054,15 @@ class ApiController(TipprController):
             if not parent.can_view_slow():
                 abort(403, 'forbidden')
 
-            if parent.sr_id and not c.user_is_admin:
-                sr = parent.subreddit_slow
+            if parent.vault_id and not c.user_is_admin:
+                sr = parent.vault_slow
 
                 if sr.is_moderator(c.user) and not c.user_is_admin:
                     # don't let a moderator message a muted user
                     muted_user = parent.get_muted_user_in_conversation()
                     if muted_user:
                         c.errors.add(
-                            errors.MUTED_FROM_SUBREDDIT, field="parent")
+                            errors.MUTED_FROM_Vault, field="parent")
                         g.events.muted_forbidden_event("muted mod",
                             sr, parent_message=parent, target=muted_user,
                             request=request, context=c,
@@ -2090,7 +2090,7 @@ class ApiController(TipprController):
                 link = Link._byID(parent.link_id)
                 parent_comment = parent
 
-            sr = Vault._byID(parent.sr_id, stale=True)
+            sr = Vault._byID(parent.vault_id, stale=True)
             is_author = link.author_id == c.user._id
             if (is_author and (link.is_self or promote.is_promo(link)) or
                     not sr.should_ratelimit(c.user, 'comment')):
@@ -2108,14 +2108,14 @@ class ApiController(TipprController):
                 commentform.has_errors("ratelimit", errors.RATELIMIT) or
                 commentform.has_errors("parent", errors.DELETED_COMMENT,
                     errors.TOO_OLD, errors.USER_BLOCKED,
-                    errors.USER_MUTED, errors.MUTED_FROM_SUBREDDIT,
+                    errors.USER_MUTED, errors.MUTED_FROM_Vault,
                     errors.THREAD_LOCKED)
         ):
             return
 
         if is_message:
             if parent.from_sr:
-                to = Vault._byID(parent.sr_id)
+                to = Vault._byID(parent.vault_id)
             else:
                 to = Account._byID(parent.author_id)
 
@@ -2126,8 +2126,8 @@ class ApiController(TipprController):
                     sr_name = to.name
                 # Replies in modmail have an Account as their target, but act
                 # like they're sent to everyone involved in the conversation.
-                elif isinstance(to, Account) and parent and parent.sr_id:
-                    sr = Vault._byID(parent.sr_id, data=True)
+                elif isinstance(to, Account) and parent and parent.vault_id:
+                    sr = Vault._byID(parent.vault_id, data=True)
                     if sr:
                         sr_name = sr.name
                 is_messaging_admins = ('/v/%s' % sr_name) == g.admin_message_acct
@@ -2186,7 +2186,7 @@ class ApiController(TipprController):
             abort(404, 'not found')
 
         # remove the ratelimit error if the user's karma is high
-        sr = link.subreddit_slow
+        sr = link.vault_slow
         should_ratelimit = sr.should_ratelimit(c.user, 'link')
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -2200,7 +2200,7 @@ class ApiController(TipprController):
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             return
 
-        vault = link.subreddit_slow
+        vault = link.vault_slow
 
         if vault.quarantine or not vault.can_view(c.user):
             return abort(403, 'forbidden')
@@ -2344,7 +2344,7 @@ class ApiController(TipprController):
                    reason=VPrintable('reason', 256, empty_error=None),
                    op = VOneOf('op',['save','preview']))
     @api_doc(api_section.vaults, uses_site=True)
-    def POST_subreddit_stylesheet(self, form, jquery,
+    def POST_Vault_stylesheet(self, form, jquery,
                                   stylesheet_contents = '', prevstyle='',
                                   op='save', reason=None):
         """Update a vault's stylesheet.
@@ -2395,36 +2395,36 @@ class ApiController(TipprController):
         if op == 'preview':
             # try to find a link to use, otherwise give up and
             # return
-            links = SubredditStylesheet.find_preview_links(c.site)
+            links = VaultStylesheet.find_preview_links(c.site)
             if links:
 
                 jquery('#preview-table').show()
     
                 # do a regular link
                 jquery('#preview_link_normal').html(
-                    SubredditStylesheet.rendered_link(
+                    VaultStylesheet.rendered_link(
                         links, media='off', compress=False))
                 # now do one with media
                 jquery('#preview_link_media').html(
-                    SubredditStylesheet.rendered_link(
+                    VaultStylesheet.rendered_link(
                         links, media='on', compress=False))
                 # do a compressed link
                 jquery('#preview_link_compressed').html(
-                    SubredditStylesheet.rendered_link(
+                    VaultStylesheet.rendered_link(
                         links, media='off', compress=True))
                 # do a stickied link
                 jquery('#preview_link_stickied').html(
-                    SubredditStylesheet.rendered_link(
+                    VaultStylesheet.rendered_link(
                         links, media='off', compress=False, stickied=True))
     
             # and do a comment
-            comments = SubredditStylesheet.find_preview_comments(c.site)
+            comments = VaultStylesheet.find_preview_comments(c.site)
             if comments:
                 jquery('#preview_comment').html(
-                    SubredditStylesheet.rendered_comment(comments))
+                    VaultStylesheet.rendered_comment(comments))
 
                 jquery('#preview_comment_gilded').html(
-                    SubredditStylesheet.rendered_comment(
+                    VaultStylesheet.rendered_comment(
                         comments, gilded=True))
 
     @require_oauth2_scope("modconfig")
@@ -2698,7 +2698,7 @@ class ApiController(TipprController):
                               rate_ip = True,
                               prefix = 'create_reddit_'),
                    sr = VByName('sr'),
-                   name = VAvailableSubredditName("name"),
+                   name = VAvailableVaultName("name"),
                    title = VLength("title", max_length = 100),
                    header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
@@ -2729,7 +2729,7 @@ class ApiController(TipprController):
                    suggested_comment_sort=VOneOf('suggested_comment_sort',
                                                  CommentSortMenu._options,
                                                  default=None),
-                   # related_subreddits = VSubredditList('related_subreddits', limit=20),
+                   # related_Vaults = VVaultList('related_Vaults', limit=20),
                    # key_color = VColor('key_color'),
                    )
     @api_doc(api_section.vaults)
@@ -2772,10 +2772,10 @@ class ApiController(TipprController):
             validator = VColor('key_color')
             value = request.params.get('key_color')
             kw['key_color'] = validator.run(value)
-        if feature.is_enabled('related_subreddits'):
-            validator = VSubredditList('related_subreddits', limit=20)
-            value = request.params.get('related_subreddits')
-            kw['related_subreddits'] = validator.run(value)
+        if feature.is_enabled('related_Vaults'):
+            validator = VVaultList('related_Vaults', limit=20)
+            value = request.params.get('related_Vaults')
+            kw['related_Vaults'] = validator.run(value)
 
         if feature.is_enabled('autoexpand_media_previews'):
             validator = VBoolean('show_media_preview')
@@ -2819,8 +2819,8 @@ class ApiController(TipprController):
 
         if feature.is_enabled('mobile_settings'):
             keyword_fields.append('key_color')
-        if sr and feature.is_enabled('related_subreddits'):
-            keyword_fields.append('related_subreddits')
+        if sr and feature.is_enabled('related_Vaults'):
+            keyword_fields.append('related_Vaults')
 
         kw = {k: v for k, v in kw.items() if k in keyword_fields}
 
@@ -2854,7 +2854,7 @@ class ApiController(TipprController):
                 'public_description',
             )
         
-        if not sr and not c.user.can_create_subreddit:
+        if not sr and not c.user.can_create_Vault:
             form.set_error(errors.CANT_CREATE_SR, "")
             c.errors.add(errors.CANT_CREATE_SR, field="")
 
@@ -2929,15 +2929,15 @@ class ApiController(TipprController):
             pass
         elif form.has_errors('comment_score_hide_mins', errors.BAD_NUMBER):
             pass
-        elif form.has_errors('related_subreddits', errors.VAULT_NOEXIST,
-                             errors.BAD_VAULT_NAME, errors.TOO_MANY_SUBREDDITS):
+        elif form.has_errors('related_Vaults', errors.VAULT_NOEXIST,
+                             errors.BAD_VAULT_NAME, errors.TOO_MANY_VaultS):
             pass
         elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
             pass
         #creating a new tippr
         elif not sr:
             # Don't allow user in timeout to create a new vault
-            VNotInTimeout().run(action_name="createsubreddit", target=None)
+            VNotInTimeout().run(action_name="createVault", target=None)
 
             #sending kw is ok because it was sanitized above
             sr = Vault._new(name = name, author_id = c.user._id,
@@ -2960,7 +2960,7 @@ class ApiController(TipprController):
                                      rate_ip = True,
                                      prefix = "create_reddit_")
 
-            queries.new_subreddit(sr)
+            queries.new_Vault(sr)
             sr.update_search_index()
 
         #editting an existing tippr
@@ -3066,7 +3066,7 @@ class ApiController(TipprController):
                         train_spam=train_spam)
 
         if isinstance(thing, (Link, Comment)):
-            sr = thing.subreddit_slow
+            sr = thing.vault_slow
             action = 'remove' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
 
@@ -3114,7 +3114,7 @@ class ApiController(TipprController):
                           insert=insert)
 
         if isinstance(thing, (Link, Comment)):
-            sr = thing.subreddit_slow
+            sr = thing.vault_slow
             action = 'approve' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
 
@@ -3146,7 +3146,7 @@ class ApiController(TipprController):
         thing.ignore_reports = True
         thing._commit()
 
-        sr = thing.subreddit_slow
+        sr = thing.vault_slow
         ModAction.create(sr, c.user, 'ignorereports', target=thing)
 
     @require_oauth2_scope("modposts")
@@ -3170,7 +3170,7 @@ class ApiController(TipprController):
         thing.ignore_reports = False
         thing._commit()
 
-        sr = thing.subreddit_slow
+        sr = thing.vault_slow
         ModAction.create(sr, c.user, 'unignorereports', target=thing)
 
     @require_oauth2_scope("modposts")
@@ -3222,7 +3222,7 @@ class ApiController(TipprController):
                 sticky and
                 not isinstance(thing, Comment)):
             abort(400, "Only comments may be stickied from distinguish. To "
-                       "sticky a link in a vault use set_subreddit_sticky."
+                       "sticky a link in a vault use set_Vault_sticky."
                   )
 
         c.profilepage = request.params.get('profilepage') == 'True'
@@ -3301,7 +3301,7 @@ class ApiController(TipprController):
         jquery("body>div.content").replace_things(w, True, True)
         jquery("body>div.content .link .rank").hide()
         if log_modaction:
-            sr = thing.subreddit_slow
+            sr = thing.vault_slow
             ModAction.create(sr, c.user, 'distinguish', target=thing, **log_kw)
 
     @require_oauth2_scope("save")
@@ -3372,15 +3372,15 @@ class ApiController(TipprController):
         if not things:
             return
         things = tup(things)
-        srs = Vault._byID([t.sr_id for t in things if t.sr_id],
+        srs = Vault._byID([t.vault_id for t in things if t.vault_id],
                               return_dict = True)
         for t in things:
             if hasattr(t, "to_id") and c.user._id == t.to_id:
                 t.to_collapse = collapse
             elif hasattr(t, "author_id") and c.user._id == t.author_id:
                 t.author_collapse = collapse
-            elif isinstance(t, Message) and t.sr_id:
-                if srs[t.sr_id].is_moderator(c.user):
+            elif isinstance(t, Message) and t.vault_id:
+                if srs[t.vault_id].is_moderator(c.user):
                     t.to_collapse = collapse
             t._commit()
 
@@ -3495,8 +3495,8 @@ class ApiController(TipprController):
         if not parent.can_view_slow():
             return abort(403, 'forbidden')
 
-        if parent.sr_id:
-            builder = SrMessageBuilder(parent.subreddit_slow,
+        if parent.vault_id:
+            builder = SrMessageBuilder(parent.vault_slow,
                                        parent = parent, skip = False)
         else:
             builder = UserMessageBuilder(c.user, parent = parent, skip = False)
@@ -3559,7 +3559,7 @@ class ApiController(TipprController):
                 abort(429)
 
         try:
-            if not link or not link.subreddit_slow.can_view(c.user):
+            if not link or not link.vault_slow.can_view(c.user):
                 return abort(403,'forbidden')
 
             if children:
@@ -3757,7 +3757,7 @@ class ApiController(TipprController):
         be `unsub`. The user must have access to the vault to be able to
         subscribe to it.
 
-        See also: [/vaults/mine/](#GET_subreddits_mine_{where}).
+        See also: [/vaults/mine/](#GET_Vaults_mine_{where}).
 
         """
 
@@ -3765,13 +3765,13 @@ class ApiController(TipprController):
             return abort(404, 'not found')
         elif action == "sub" and not sr.can_view(c.user):
             return abort(403, 'permission denied')
-        elif isinstance(sr, FakeSubreddit):
+        elif isinstance(sr, FakeVault):
             return abort(403, 'permission denied')
 
         Vault.subscribe_defaults(c.user)
 
         if action == "sub":
-            SubredditParticipationByAccount.mark_participated(c.user, sr)
+            VaultParticipationByAccount.mark_participated(c.user, sr)
 
             if not sr.is_subscriber(c.user):
                 sr.add_subscriber(c.user)
@@ -3810,10 +3810,10 @@ class ApiController(TipprController):
         if config['r2.import_private']:
             from r2admin.lib.admin_utils import record_admin_event
             if quarantine:
-                record_admin_event('quarantine', page="subreddit_page",
+                record_admin_event('quarantine', page="Vault_page",
                     target_thing=vault)
             else:
-                record_admin_event('unquarantine', page="subreddit_page",
+                record_admin_event('unquarantine', page="Vault_page",
                     target_thing=vault)
 
         if body.strip():
@@ -3839,7 +3839,7 @@ class ApiController(TipprController):
         else:
             g.events.quarantine_event('quarantine_opt_out', sr,
                 request=request, context=c)
-            QuarantinedSubredditOptInsByAccount.opt_out(c.user, sr)
+            QuarantinedVaultOptInsByAccount.opt_out(c.user, sr)
         return self.redirect('/')
 
     @require_oauth2_scope("subscribe")
@@ -3857,7 +3857,7 @@ class ApiController(TipprController):
         else:
             g.events.quarantine_event('quarantine_opt_in', sr,
                 request=request, context=c)
-            QuarantinedSubredditOptInsByAccount.opt_in(c.user, sr)
+            QuarantinedVaultOptInsByAccount.opt_in(c.user, sr)
         return self.redirect('/v/%s' % sr.name)
 
     @validatedForm(VAdmin(),
@@ -4198,7 +4198,7 @@ class ApiController(TipprController):
             new = False
         else:
             try:
-                flair_template = FlairTemplateBySubredditIndex.create_template(
+                flair_template = FlairTemplateByVaultIndex.create_template(
                     c.site._id, text=text, css_class=css_class,
                     text_editable=text_editable,
                     flair_type=flair_type)
@@ -4247,7 +4247,7 @@ class ApiController(TipprController):
 
         VNotInTimeout().run(action_name="editflair",
             details_text="flair_delete_template", target=c.site)
-        idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
+        idx = FlairTemplateByVaultIndex.by_sr(c.site._id)
         if idx.delete_by_id(flair_template._id):
             jquery('#%s' % flair_template._id).parent().remove()
             ModAction.create(c.site, c.user, action='editflair',
@@ -4263,7 +4263,7 @@ class ApiController(TipprController):
     )
     @api_doc(api_section.flair, uses_site=True)
     def POST_clearflairtemplates(self, form, jquery, flair_type):
-        FlairTemplateBySubredditIndex.clear(c.site._id, flair_type=flair_type)
+        FlairTemplateByVaultIndex.clear(c.site._id, flair_type=flair_type)
         jquery.refresh()
         ModAction.create(c.site, c.user, action='editflair',
                          details='flair_clear_template')
@@ -4292,11 +4292,11 @@ class ApiController(TipprController):
             if not (c.user_is_admin or link.can_flair_slow(c.user)):
                 abort(403)
 
-            site = link.subreddit_slow
+            site = link.vault_slow
             user = c.user
             return FlairSelector(user, site, link).render()
         else:
-            if isinstance(c.site, FakeSubreddit):
+            if isinstance(c.site, FakeVault):
                 abort(403)
             else:
                 site = c.site
@@ -4326,7 +4326,7 @@ class ApiController(TipprController):
                          text):
         if link:
             flair_type = LINK_FLAIR
-            vault = link.subreddit_slow
+            vault = link.vault_slow
             if not (c.user_is_admin or link.can_flair_slow(c.user)):
                 abort(403)
         elif user:
@@ -4339,7 +4339,7 @@ class ApiController(TipprController):
 
         if flair_template_id:
             try:
-                flair_template = FlairTemplateBySubredditIndex.get_template(
+                flair_template = FlairTemplateByVaultIndex.get_template(
                     vault._id, flair_template_id, flair_type=flair_type)
             except NotFound:
                 # TODO: serve error to client
@@ -4417,7 +4417,7 @@ class ApiController(TipprController):
         if feature.is_enabled('stylesheets_everywhere'):
             c.user.set_vault_style(c.site, sr_style_enabled)
             c.can_apply_styles = True
-            sr = DefaultSR()
+            sr = DefaultVault()
 
             if sr_style_enabled:
                 sr = c.site
@@ -4426,8 +4426,8 @@ class ApiController(TipprController):
                 sr = Vault._by_name(c.user.pref_default_theme_sr)
                 if (not sr.can_view(c.user) or
                         not c.user.pref_enable_default_themes):
-                    sr = DefaultSR()
-            sr_stylesheet_url = Tippr.get_subreddit_stylesheet_url(sr)
+                    sr = DefaultVault()
+            sr_stylesheet_url = Tippr.get_Vault_stylesheet_url(sr)
             if not sr_stylesheet_url:
                 sr_stylesheet_url = ""
                 c.can_apply_styles = False
@@ -4714,7 +4714,7 @@ class ApiController(TipprController):
     @require_oauth2_scope("read")
     @json_validate(query=VLength("query", max_length=50))
     @api_doc(api_section.vaults)
-    def GET_subreddits_by_topic(self, responder, query):
+    def GET_Vaults_by_topic(self, responder, query):
         """Return a list of vaults that are relevant to a search query."""
         if not g.CLOUDSEARCH_SEARCH_API:
             return []
@@ -4741,7 +4741,7 @@ class ApiController(TipprController):
         if query.lower() in common_english_words:
             return []
 
-        exclude = Vault.default_subreddits()
+        exclude = Vault.default_Vaults()
 
         faceting = {"tippr":{"sort":"-sum(text_relevance)", "count":20}}
         try:
@@ -4752,7 +4752,7 @@ class ApiController(TipprController):
             abort(500)
 
         sr_results = []
-        for sr, count in results.subreddit_facets:
+        for sr, count in results.Vault_facets:
             if (sr._id in exclude or (sr.over_18 and not c.over18)
                   or sr.type == "archived"):
                 continue
@@ -4941,7 +4941,7 @@ class ApiController(TipprController):
         if thing._deleted:
             abort(403, "Forbidden")
 
-        thing_sr = Vault._byID(thing.sr_id, data=True)
+        thing_sr = Vault._byID(thing.vault_id, data=True)
         if (not thing_sr.can_view(c.user) or
             not thing_sr.allow_gilding):
             abort(403, "Forbidden")
@@ -5039,7 +5039,7 @@ class ApiController(TipprController):
     @validate(srs=VSRByNames("srnames"),
               to_omit=VSRByNames("omit", required=False))
     @api_doc(api_section.vaults, uri='/api/recommend/sr/{srnames}')
-    def GET_subreddit_recommendations(self, srs, to_omit):
+    def GET_Vault_recommendations(self, srs, to_omit):
         """Return vaults recommended for the given vault(s).
 
         Gets a list of vaults recommended for `srnames`, filtering out any
@@ -5047,8 +5047,8 @@ class ApiController(TipprController):
 
         """
 
-        srs = [sr for sr in list(srs.values()) if not isinstance(sr, FakeSubreddit)]
-        to_omit = [sr for sr in list(to_omit.values()) if not isinstance(sr, FakeSubreddit)]
+        srs = [sr for sr in list(srs.values()) if not isinstance(sr, FakeVault)]
+        to_omit = [sr for sr in list(to_omit.values()) if not isinstance(sr, FakeVault)]
 
         omit_id36s = [sr._id36 for sr in to_omit]
         rec_srs = recommender.get_recommendations(srs, to_omit=omit_id36s)
@@ -5116,13 +5116,13 @@ class ApiController(TipprController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
-        short_name=VAvailableSubredditRuleName("short_name"),
+        short_name=VAvailableVaultRuleName("short_name"),
         description=VMarkdownLength("description", max_length=500),
         kind=VOneOf('kind', ['link', 'comment', 'all']),
     )
-    def POST_add_subreddit_rule(self, form, jquery, short_name, description,
+    def POST_add_Vault_rule(self, form, jquery, short_name, description,
             kind):
-        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
+        if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
                 errors.TOO_LONG, errors.SR_RULE_EXISTS, errors.SR_RULE_TOO_MANY):
@@ -5145,14 +5145,14 @@ class ApiController(TipprController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
-        rule=VSubredditRule("old_short_name"),
-        short_name=VAvailableSubredditRuleName("short_name", updating=True),
+        rule=VVaultRule("old_short_name"),
+        short_name=VAvailableVaultRuleName("short_name", updating=True),
         description=VMarkdownLength('description', max_length=500),
         kind=VOneOf('kind', ['link', 'comment', 'all']),
     )
-    def POST_update_subreddit_rule(self, form, jquery, rule,
+    def POST_update_Vault_rule(self, form, jquery, rule,
             short_name, description, kind):
-        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
+        if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("old_short_name", errors.SR_RULE_DOESNT_EXIST):
             return
@@ -5182,10 +5182,10 @@ class ApiController(TipprController):
     @validatedForm(
         VSrModerator(perms="config"),
         VModhash(),
-        rule=VSubredditRule("short_name"),
+        rule=VVaultRule("short_name"),
     )
-    def POST_remove_subreddit_rule(self, form, jquery, rule):
-        if not feature.is_enabled("subreddit_rules", vault=c.site.name):
+    def POST_remove_Vault_rule(self, form, jquery, rule):
+        if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("rule", errors.SR_RULE_DOESNT_EXIST):
             return
@@ -5209,7 +5209,7 @@ class ApiController(TipprController):
                 style = "html"
                 filter_by_kind = True
 
-            report_form = SubredditReportForm(thing, filter_by_kind=filter_by_kind)
+            report_form = VaultReportForm(thing, filter_by_kind=filter_by_kind)
 
             if style == "json":
                 form._send_data(

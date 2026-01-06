@@ -171,8 +171,8 @@ class LinkMock(Link):
         return _mock_id(self)
 
     @property
-    def subreddit_slow(self):
-        return SubredditMock()
+    def vault_slow(self):
+        return VaultMock()
 
     def _commit(self):
         pass
@@ -201,7 +201,7 @@ class AccountMock(ThingMock):
         pass
 
 
-class SubredditMock(ThingMock):
+class VaultMock(ThingMock):
     @property
     def lang(self):
         return "en"
@@ -223,19 +223,19 @@ class TestSubmit(unittest.TestCase):
     def setUp(self):
         from r2.models import (
             LinksByAccount,
-            LinksByUrlAndSubreddit,
-            SubredditParticipationByAccount,
-            SubredditsActiveForFrontPage,
+            LinksByUrlAndVault,
+            VaultParticipationByAccount,
+            VaultsActiveForFrontPage,
         )
 
         LinksByAccount.add_link = MagicMock()
-        SubredditParticipationByAccount.mark_participated = MagicMock()
-        SubredditsActiveForFrontPage.mark_new_post = MagicMock()
+        VaultParticipationByAccount.mark_participated = MagicMock()
+        VaultsActiveForFrontPage.mark_new_post = MagicMock()
 
         self.links_by_url_add_link = MagicMock()
-        LinksByUrlAndSubreddit.add_link = self.links_by_url_add_link
+        LinksByUrlAndVault.add_link = self.links_by_url_add_link
         self.links_by_url_remove_link = MagicMock()
-        LinksByUrlAndSubreddit.remove_link = self.links_by_url_remove_link
+        LinksByUrlAndVault.remove_link = self.links_by_url_remove_link
 
     def test_new_self_post_has_url(self):
         l = LinkMock._submit(
@@ -243,7 +243,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=SubredditMock(),
+            sr=VaultMock(),
             author=AccountMock()
         )
 
@@ -255,7 +255,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=SubredditMock(),
+            sr=VaultMock(),
             author=AccountMock()
         )
 
@@ -268,7 +268,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=SubredditMock(),
+            sr=VaultMock(),
             author=AccountMock()
         )
 
@@ -281,7 +281,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=SubredditMock(),
+            sr=VaultMock(),
             author=AccountMock()
         )
         l.promoted = True
@@ -304,7 +304,7 @@ class TestSubmit(unittest.TestCase):
             content=url1,
             title="test post",
             ip="127.0.0.1",
-            sr=SubredditMock(),
+            sr=VaultMock(),
             author=AccountMock()
         )
         l.promoted = True
@@ -324,7 +324,7 @@ class TestSubmit(unittest.TestCase):
             content=url,
             title="test post",
             ip="127.0.0.1",
-            sr=SubredditMock(),
+            sr=VaultMock(),
             author=AccountMock()
         )
         l.promoted = True

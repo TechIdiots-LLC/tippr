@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.strings import strings
-   from r2.lib.pages import SubredditSelector, UserText
+   from r2.lib.pages import VaultSelector, UserText
    from r2.lib.template_helpers import add_sr
 %>
 
@@ -97,8 +97,8 @@ ${thing.formtabs_menu}
 %endif
 
 <div class="spacer">
-  <%utils:round_field title="${_('subreddit')}" id="reddit-field">
-    ${SubredditSelector(thing.default_sr, extra_subreddits=thing.extra_subreddits)}
+  <%utils:round_field title="${_('Vault')}" id="tippr-field">
+    ${VaultSelector(thing.default_sr, extra_Vaults=thing.extra_Vaults)}
   </%utils:round_field>
 </div>
 

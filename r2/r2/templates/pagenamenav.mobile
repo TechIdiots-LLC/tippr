@@ -26,15 +26,15 @@
   </span>
 </%def>
 
-<%def name="subreddit()">
+<%def name="Vault()">
   <span class="hover pagename redditname">
     <a href="${c.site.path}">${c.site.name}</a>
   </span>
 </%def>
 
-<%def name="subreddits()">
+<%def name="Vaults()">
   <span class="hover pagename redditname">
-    <a href="/subreddits/">${_("subreddits")}</a>
+    <a href="/Vaults/">${_("Vaults")}</a>
   </span>
 </%def>
 

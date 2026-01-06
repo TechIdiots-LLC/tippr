@@ -41,8 +41,8 @@
 </%def>
 
 <%def name="comment_css_class(thing, hide_edits)">
-  ${"reddit-embed-comment-deleted" if thing.deleted else ""}
-  ${"reddit-embed-comment-edited" if hide_edits else ""}
+  ${"tippr-embed-comment-deleted" if thing.deleted else ""}
+  ${"tippr-embed-comment-edited" if hide_edits else ""}
 </%def>
 
 <%def name="entry()">
@@ -50,27 +50,27 @@
     edited_recently = c.embed_config.get("thing").get("edited")
     hide_edits = (not thing.edits_visible) and edited_recently
   %>
-  <article class="reddit-embed-comment ${comment_css_class(thing, hide_edits)}">
+  <article class="tippr-embed-comment ${comment_css_class(thing, hide_edits)}">
     %if thing.deleted:
       ${_("This comment was deleted.")}
     %else:
-      <header class="reddit-embed-comment-header">
+      <header class="tippr-embed-comment-header">
         %if thing.author._deleted:
-          <span class="reddit-embed-author reddit-embed-author-deleted">
+          <span class="tippr-embed-author tippr-embed-author-deleted">
             ${_("[account deleted]")}
           </span>
         %else:
-          <span class="reddit-embed-author">
+          <span class="tippr-embed-author">
             ${thing.author.name}
           </span>
         %endif
         %if hide_edits:
           ${_("%(name)s's comment was changed.") % dict(name="")}
         %else:
-        <div class="reddit-embed-comment-meta">
+        <div class="tippr-embed-comment-meta">
           %if not thing.score_hidden:
             <a href="${add_sr(thing.permalink)}?context=3"
-               class="reddit-embed-comment-meta-item reddit-embed-score"
+               class="tippr-embed-comment-meta-item tippr-embed-score"
                data-redirect-type="score"
                data-redirect-thing="${thing._id}">
               ${websafe(Score.safepoints(thing.score))}
@@ -78,14 +78,14 @@
           %endif
           %if thing.edits_visible and edited_recently:
             <a href="${add_sr(thing.permalink)}?context=3"
-               class="reddit-embed-comment-meta-item reddit-embed-edited"
+               class="tippr-embed-comment-meta-item tippr-embed-edited"
                data-redirect-type="edited"
                data-redirect-thing="${thing._id}">
               edited
             </a>
           %endif
           <a href="${add_sr(thing.permalink)}?context=3"
-             class="reddit-embed-comment-meta-item reddit-embed-permalink"
+             class="tippr-embed-comment-meta-item tippr-embed-permalink"
              data-redirect-type="timestamp"
              data-redirect-thing="${thing._id}">
             ${thing_timestamp(thing, thing.timesince, live=True, include_tense=True)}
@@ -100,10 +100,10 @@
           ${_("View the current version on reddit.")}
         </a>
       %else:
-        <blockquote class="reddit-embed-comment-body">
+        <blockquote class="tippr-embed-comment-body">
           ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
         </blockquote>
-        <a class="reddit-embed-comment-more" href="javascript:;" target="_self"
+        <a class="tippr-embed-comment-more" href="javascript:;" target="_self"
            data-track-action="read_more">
           ${_("Read more")}
         </a>

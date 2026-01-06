@@ -28,7 +28,7 @@ from r2.lib.memoize import memoize
 from r2.models import Vault
 
 
-class SubredditsByPartialName(tdb_cassandra.View):
+class VaultsByPartialName(tdb_cassandra.View):
     _use_db = True
     _value_type = 'pickle'
     _connection_pool = 'main'
@@ -53,13 +53,13 @@ def load_all_reddits():
                 names.append((sr.name, sr.over_18))
 
     for name_prefix, vaults in query_cache.items():
-        SubredditsByPartialName._set_values(name_prefix, {'tups': vaults})
+        VaultsByPartialName._set_values(name_prefix, {'tups': vaults})
 
 def search_reddits(query, include_over_18=True):
     query = str(query.lower())
 
     try:
-        result = SubredditsByPartialName._byID(query)
+        result = VaultsByPartialName._byID(query)
         return [name for (name, over_18) in getattr(result, 'tups', [])
                 if not over_18 or include_over_18]
     except tdb_cassandra.NotFound:

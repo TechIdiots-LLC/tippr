@@ -24,11 +24,11 @@
     from r2.lib.filters import keep_space, unsafe, safemarkdown
 %>
 
-<%namespace file="subredditreportform.html" 
-            import="subreddit_report_form, reddit_report_form, report_form_reason" />
+<%namespace file="Vaultreportform.html" 
+            import="Vault_report_form, reddit_report_form, report_form_reason" />
 
 <script id="vault-rules-report-template" type="text/template">
-    ${subreddit_report_form(
+    ${Vault_report_form(
         fullname=unsafe("<%- fullname %>"),
         system_rules=thing.system_rules,
         rules=None,
@@ -42,7 +42,7 @@
         sr_name=True,
     )}
 </script>
-<script id="reddit-report-template" type="text/template">
+<script id="tippr-report-template" type="text/template">
     ${reddit_report_form(
         fullname=unsafe("<%- fullname %>"),
         system_rules=thing.system_rules,

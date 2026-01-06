@@ -47,7 +47,7 @@ time psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
                    from reddit_data_link d
-                  where d.key = 'author_id' or d.key = 'sr_id') to 'reddit_data_link.dump'"
+                  where d.key = 'author_id' or d.key = 'vault_id') to 'reddit_data_link.dump'"
 pv reddit_data_link.dump reddit_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
 pv links.joined | ./mr_permacache "link_listings()" | sort -T. -S200m > links.listings
 
@@ -104,11 +104,11 @@ from r2.models import *
                                                # for this function
 
 def join_links():
-    join_things(('author_id', 'sr_id'))
+    join_things(('author_id', 'vault_id'))
 
 def link_listings():
     @dataspec_m_thing(('author_id', int),
-                      ('sr_id', int))
+                      ('vault_id', int))
     def process(link):
         assert link.thing_type == 'link'
 
@@ -118,21 +118,21 @@ def link_listings():
 
         yield 'user-submitted-%d' % author_id, timestamp, fname
         if not link.spam:
-            sr_id = link.sr_id
+            vault_id = link.vault_id
             ups, downs = link.ups, link.downs
 
-            yield ('sr-hot-all-%d' % sr_id, _hot(ups, downs, timestamp),
+            yield ('sr-hot-all-%d' % vault_id, _hot(ups, downs, timestamp),
                    timestamp, fname)
-            yield 'sr-new-all-%d' % sr_id, timestamp, fname
-            yield 'sr-top-all-%d' % sr_id, score(ups, downs), timestamp, fname
-            yield ('sr-controversial-all-%d' % sr_id,
+            yield 'sr-new-all-%d' % vault_id, timestamp, fname
+            yield 'sr-top-all-%d' % vault_id, score(ups, downs), timestamp, fname
+            yield ('sr-controversial-all-%d' % vault_id,
                    controversy(ups, downs), timestamp, fname)
             for time in '1 year', '1 month', '1 week', '1 day', '1 hour':
                 if timestamp > epoch_seconds(timeago(time)):
                     tkey = time.split(' ')[1]
-                    yield ('sr-top-%s-%d' % (tkey, sr_id),
+                    yield ('sr-top-%s-%d' % (tkey, vault_id),
                            score(ups, downs), timestamp, fname)
-                    yield ('sr-controversial-%s-%d' % (tkey, sr_id),
+                    yield ('sr-controversial-%s-%d' % (tkey, vault_id),
                            controversy(ups, downs),
                            timestamp, fname)
 
@@ -189,15 +189,15 @@ def store_keys(key, maxes):
                             for (timestamp, fname)
                             in maxes ])
     elif key.startswith('sr-'):
-        sr_str, sort, time, sr_id = key.split('-')
-        sr_id = int(sr_id)
+        sr_str, sort, time, vault_id = key.split('-')
+        vault_id = int(vault_id)
 
         if sort == 'controversy':
             # I screwed this up in the mapper and it's too late to fix
             # it
             sort = 'controversial'
 
-        q = queries.get_links(Vault._byID(sr_id), sort, time)
+        q = queries.get_links(Vault._byID(vault_id), sort, time)
         insert_to_query(q, [tuple([item[-1]] + list(map(float, item[:-1])))
                             for item in maxes])
 

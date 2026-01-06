@@ -488,7 +488,7 @@ class UrlParser:
     correspondingly updated via update_query).  The extension of the
     path can also be set and queried.
 
-    The class also contains reddit-specific functions for setting,
+    The class also contains tippr-specific functions for setting,
     checking, and getting a path's vault.
     """
 
@@ -679,14 +679,14 @@ class UrlParser:
                 self.path.replace('//', '/'),
                 self.params, q, self.fragment)
 
-    def path_has_subreddit(self):
+    def path_has_Vault(self):
         """
         utility method for checking if the path starts with a
         vault specifier (namely /r/ or /vaults/).
         """
         return self.path.startswith(('/v/', '/vaults/', '/reddits/'))
 
-    def get_subreddit(self):
+    def get_Vault(self):
         """checks if the current url refers to a vault and returns
         that vault object.  The cases here are:
 
@@ -697,7 +697,7 @@ class UrlParser:
 
         On failure to find a vault, returns None.
         """
-        from r2.models import DefaultSR, NotFound, Vault
+        from r2.models import DefaultVault, NotFound, Vault
         try:
             if (not self.hostname or
                     is_subdomain(self.hostname, g.domain) or
@@ -705,7 +705,7 @@ class UrlParser:
                 if self.path.startswith('/v/'):
                     return Vault._by_name(self.path.split('/')[2])
                 else:
-                    return DefaultSR()
+                    return DefaultVault()
             elif self.hostname:
                 return Vault._by_domain(self.hostname)
         except NotFound:
@@ -793,12 +793,12 @@ class UrlParser:
             for subdomain in g.offsite_subdomains
         )
 
-    def path_add_subreddit(self, vault):
+    def path_add_Vault(self, vault):
         """
         Adds the vault's path to the path if another vault's
         prefix is not already present.
         """
-        if not (self.path_has_subreddit()
+        if not (self.path_has_Vault()
                 or self.path.startswith(vault.user_path)):
             self.path = (vault.user_path + self.path)
         return self
@@ -884,9 +884,9 @@ def url_to_thing(url):
         /r/somesr/comments/j2jx - Link
         /r/somesr/comments/j2jx/slug/k2js - Comment
     """
-    from r2.config.middleware import SubredditMiddleware
+    from r2.config.middleware import VaultMiddleware
     from r2.models import Comment, Link, Message, NotFound, Vault
-    sr_pattern = SubredditMiddleware.sr_pattern
+    sr_pattern = VaultMiddleware.sr_pattern
 
     urlparser = UrlParser(_force_utf8(url))
     # Prefer to avoid touching non-tippr domains, but allow explicit
@@ -1175,10 +1175,10 @@ def fix_if_broken(thing, delete = True, fudge_links = False):
                 raise
 
             if isinstance(thing, Link) and fudge_links:
-                if attr == "sr_id":
-                    thing.sr_id = 6
-                    print("Fudging %s.sr_id to %d" % (thing._fullname,
-                                                      thing.sr_id))
+                if attr == "vault_id":
+                    thing.vault_id = 6
+                    print("Fudging %s.vault_id to %d" % (thing._fullname,
+                                                      thing.vault_id))
                 elif attr == "author_id":
                     thing.author_id = 8244672
                     print("Fudging %s.author_id to %d" % (thing._fullname,
@@ -1331,9 +1331,9 @@ def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
                    if link._fullname != exclude ]
 
     if public_srs_only and not c.user_is_admin:
-        vaults = Vault._byID([link.sr_id for link in links], data=True)
+        vaults = Vault._byID([link.vault_id for link in links], data=True)
         links = [link for link in links
-                 if vaults[link.sr_id].type not in Vault.private_types]
+                 if vaults[link.vault_id].type not in Vault.private_types]
 
     links.sort(key=attrgetter('num_comments'), reverse=True)
 

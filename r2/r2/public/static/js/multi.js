@@ -15,7 +15,7 @@ r.multi = {
                 model: multi,
                 el: detailsEl
             }).render()
-            var subredditList = new r.multi.SubredditList({
+            var VaultList = new r.multi.VaultList({
                 model: multi,
                 el: detailsEl
             })
@@ -114,7 +114,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return res
     },
 
-    addSubreddit: function(names, options) {
+    addVault: function(names, options) {
         names = r.utils.tup(names)
         if (names.length == 1) {
             this.vaults.create({name: names[0]}, options)
@@ -136,7 +136,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
         }
     },
 
-    removeSubreddit: function(name, options) {
+    removeVault: function(name, options) {
         this.vaults.getByName(name).destroy(options)
     },
 
@@ -170,7 +170,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return this._copyOp('rename', newCollection, name)
     },
 
-    getSubredditNames: function() {
+    getVaultNames: function() {
         return this.vaults.pluck('name')
     }
 })
@@ -216,13 +216,13 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
     }
 })
 
-r.multi.MultiSubredditItem = Backbone.View.extend({
+r.multi.MultiVaultItem = Backbone.View.extend({
     tagName: 'li',
 
     template: _.template('<a href="/v/<%- sr_name %>">/r/<%- sr_name %></a><button class="remove-sr">x</button>'),
 
     events: {
-        'click .remove-sr': 'removeSubreddit'
+        'click .remove-sr': 'removeVault'
     },
 
     render: function() {
@@ -248,14 +248,14 @@ r.multi.MultiSubredditItem = Backbone.View.extend({
         Backbone.View.prototype.remove.apply(this)
     },
 
-    removeSubreddit: function(ev) {
-        this.options.multi.removeSubreddit(this.model.get('name'))
+    removeVault: function(ev) {
+        this.options.multi.removeVault(this.model.get('name'))
     }
 })
 
-r.multi.SubredditList = Backbone.View.extend({
+r.multi.VaultList = Backbone.View.extend({
     events: {
-        'submit .add-sr': 'addSubreddit'
+        'submit .add-sr': 'addVault'
     },
 
     initialize: function() {
@@ -272,7 +272,7 @@ r.multi.SubredditList = Backbone.View.extend({
             r.ui.showWorkingDeferred(this.$el, xhr)
         }, this)
 
-        this.itemView = this.options.itemView || r.multi.MultiSubredditItem
+        this.itemView = this.options.itemView || r.multi.MultiVaultItem
         this.itemViews = {}
         this.bubbleGroup = {}
         this.$('.vaults').empty()
@@ -300,7 +300,7 @@ r.multi.SubredditList = Backbone.View.extend({
         delete this.itemViews[sr.id]
     },
 
-    addSubreddit: function(ev) {
+    addVault: function(ev) {
         ev.preventDefault()
 
         var nameEl = this.$('.add-sr .sr-name'),
@@ -315,7 +315,7 @@ r.multi.SubredditList = Backbone.View.extend({
 
         nameEl.val('')
         this.$('.add-error').css('visibility', 'hidden')
-        this.model.addSubreddit(srNames, {
+        this.model.addVault(srNames, {
             wait: true,
             success: _.bind(function() {
                 this.$('.add-error').hide()
@@ -363,19 +363,19 @@ r.multi.MultiDetails = Backbone.View.extend({
  
         // fetch initial data
         if (!this.model.vaults.isEmpty()) {
-            recs.fetchForSrs(this.model.getSubredditNames())
+            recs.fetchForSrs(this.model.getVaultNames())
         }
  
         // update recs when multi changes
         this.listenTo(this.model.vaults, 'add remove reset',
             function() {
-                var srNames = this.model.getSubredditNames()
+                var srNames = this.model.getVaultNames()
                 recs.fetchForSrs(srNames)
             })
         // update multi when a rec is selected
         this.recsView.bind('recs:select',
             function(data) {
-                this.model.addSubreddit(data['srName'])
+                this.model.addVault(data['srName'])
             }, this)
     },
 
@@ -584,9 +584,9 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
         var checkbox = $(ev.target),
             multi = r.multi.mine.get(checkbox.data('path'))
         if (checkbox.is(':checked')) {
-            multi.addSubreddit(this.options.srName)
+            multi.addVault(this.options.srName)
         } else {
-            multi.removeSubreddit(this.options.srName)
+            multi.removeVault(this.options.srName)
         }
     }
 })

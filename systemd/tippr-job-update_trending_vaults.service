@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.lib.trending import update_trending_subreddits; update_trending_subreddits()'
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.lib.trending import update_trending_vaults; update_trending_vaults()'
 
 Nice=10
 

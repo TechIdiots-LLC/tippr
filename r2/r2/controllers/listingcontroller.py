@@ -260,7 +260,7 @@ class ListingController(TipprController):
     def GET_listing(self, **env):
         if isinstance(c.site, ModSR):
             VNotInTimeout().run(action_name="pageview",
-                details_text="mod_subreddit")
+                details_text="mod_Vault")
         if self.can_send_referrer():
             c.referrer_policy = "always"
         # If validators didn't populate `vuser`, try to resolve it from the
@@ -291,7 +291,7 @@ listing_api_doc = partial(
 )
 
 
-class SubredditListingController(ListingController):
+class VaultListingController(ListingController):
     private_referrer = False
 
     def _build_og_title(self, max_length=256):
@@ -327,7 +327,7 @@ class SubredditListingController(ListingController):
 
         https://www.tippr.net/
 
-        See SubredditMiddleware for more information.
+        See VaultMiddleware for more information.
 
         This method constructs our url from scratch given other information.
         """
@@ -343,7 +343,7 @@ class SubredditListingController(ListingController):
     def render_params(self):
         render_params = {}
 
-        if isinstance(c.site, DefaultSR):
+        if isinstance(c.site, DefaultVault):
             render_params.update({'show_locationbar': True})
         else:
             if not c.user_is_loggedin:
@@ -356,7 +356,7 @@ class SubredditListingController(ListingController):
                     # attributes, so we don't need to define
                     # 'twitter:image' or 'twitter:description'.
                 }
-                hook = hooks.get_hook('subreddit_listing.twitter_card')
+                hook = hooks.get_hook('Vault_listing.twitter_card')
                 hook.call(tags=twitter_card, sr_name=c.site.name)
 
                 render_params.update({
@@ -373,7 +373,7 @@ class SubredditListingController(ListingController):
         event_target = {
             'target_type': 'listing',
         }
-        if not isinstance(c.site, FakeSubreddit):
+        if not isinstance(c.site, FakeVault):
             event_target['target_fullname'] = c.site._fullname
             event_target['target_id'] = c.site._id
         if hasattr(self, 'sort'):
@@ -395,7 +395,7 @@ class SubredditListingController(ListingController):
         return render_params
 
 
-class ListingWithPromos(SubredditListingController):
+class ListingWithPromos(VaultListingController):
     show_organic = False
 
     def make_requested_ad(self, requested_ad):
@@ -479,7 +479,7 @@ class ListingWithPromos(SubredditListingController):
             spotlight = None
             show_sponsors = not c.user.pref_hide_ads or not c.user.gold
             show_organic = self.show_organic and c.user.pref_organic
-            on_frontpage = isinstance(c.site, DefaultSR)
+            on_frontpage = isinstance(c.site, DefaultVault)
             requested_ad = request.GET.get('ad')
 
             if on_frontpage:
@@ -510,9 +510,9 @@ class HotController(ListingWithPromos):
 
     def query(self):
 
-        if isinstance(c.site, DefaultSR):
-            sr_ids = Vault.user_subreddits(c.user)
-            return normalized_hot(sr_ids)
+        if isinstance(c.site, DefaultVault):
+            vault_ids = Vault.user_Vaults(c.user)
+            return normalized_hot(vault_ids)
         elif isinstance(c.site, MultiReddit):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False,
                                   ageweight=c.site.ageweight)
@@ -544,14 +544,14 @@ class HotController(ListingWithPromos):
         if not c.user.pref_show_trending:
             return None
 
-        trending_data = trending.get_trending_subreddits()
+        trending_data = trending.get_trending_Vaults()
 
         if not trending_data:
             return None
 
         link = Link._byID(trending_data['link_id'], data=True, stale=True)
         return {
-            'subreddit_names': trending_data['subreddit_names'],
+            'Vault_names': trending_data['Vault_names'],
             'comment_url': trending_data['permalink'],
             'comment_count': link.num_comments,
         }
@@ -571,12 +571,12 @@ class HotController(ListingWithPromos):
                     hot_pane,
                     self.listing_obj
                 ]
-            elif isinstance(c.site, DefaultSR) and not self.listing_obj.prev:
+            elif isinstance(c.site, DefaultVault) and not self.listing_obj.prev:
                 trending_info = self.trending_info()
                 if trending_info:
                     stack = [
                         self.spotlight,
-                        TrendingSubredditsBar(**trending_info),
+                        TrendingVaultsBar(**trending_info),
                         self.listing_obj,
                     ]
 
@@ -628,9 +628,9 @@ class RisingController(NewController):
     extra_page_classes = ListingController.extra_page_classes + ['rising-page']
 
     def query(self):
-        if isinstance(c.site, DefaultSR):
-            sr_ids = Vault.user_subreddits(c.user)
-            return normalized_rising(sr_ids)
+        if isinstance(c.site, DefaultVault):
+            vault_ids = Vault.user_Vaults(c.user)
+            return normalized_rising(vault_ids)
         elif isinstance(c.site, MultiReddit):
             return normalized_rising(c.site.kept_sr_ids)
 
@@ -692,7 +692,7 @@ class BrowseController(ListingWithPromos):
         return ListingController.GET_listing(self, **env)
 
 
-class AdsController(SubredditListingController):
+class AdsController(VaultListingController):
     where = 'ads'
     builder_cls = CampaignBuilder
     title_text = _('promoted links')
@@ -729,7 +729,7 @@ class AdsController(SubredditListingController):
         self.promos = set()
         if not c.site.allow_ads:
             self.abort404()
-        return SubredditListingController.GET_listing(self, *a, **kw)
+        return VaultListingController.GET_listing(self, *a, **kw)
 
 
 class RandomrisingController(ListingWithPromos):
@@ -794,8 +794,8 @@ class UserController(ListingController):
                 else:
                     res.append(TimeMenu(default = self.time))
         if self.where == 'saved' and c.user.gold:
-            srnames = LinkSavesBySubreddit.get_saved_subreddits(self.vuser)
-            srnames += CommentSavesBySubreddit.get_saved_subreddits(self.vuser)
+            srnames = LinkSavesByVault.get_saved_Vaults(self.vuser)
+            srnames += CommentSavesByVault.get_saved_Vaults(self.vuser)
             srs = Vault._by_name(set(srnames), stale=True)
             srnames = [name for name, sr in srs.items()
                             if sr.can_view(c.user)]
@@ -916,8 +916,8 @@ class UserController(ListingController):
         elif self.where == 'saved':
             if not self.savedcategory and c.user.gold:
                 self.builder_cls = SavedBuilder
-            sr_id = self.savedsr._id if self.savedsr else None
-            q = queries.get_saved(self.vuser, sr_id,
+            vault_id = self.savedsr._id if self.savedsr else None
+            q = queries.get_saved(self.vuser, vault_id,
                                   category=self.savedcategory)
         elif self.where == 'actions':
             if not votes_visible(self.vuser):
@@ -1272,8 +1272,8 @@ class MessageController(ListingController):
                 message_cls = SrMessageBuilder
             elif self.where == 'moderator' and self.subwhere != 'unread':
                 message_cls = ModeratorMessageBuilder
-            elif self.message and self.message.sr_id:
-                sr = self.message.subreddit_slow
+            elif self.message and self.message.vault_id:
+                sr = self.message.vault_slow
                 if sr.is_moderator_with_perms(c.user, 'mail'):
                     # this is a moderator message and the user is a moderator.
                     # use the ModeratorMessageBuilder because not all messages
@@ -1291,17 +1291,17 @@ class MessageController(ListingController):
             elif c.user.pref_threaded_messages:
                 skip = (c.render_style == "html")
 
-            if (message_cls is UserMessageBuilder and parent and parent.sr_id
+            if (message_cls is UserMessageBuilder and parent and parent.vault_id
                 and not parent.from_sr):
                 # Make sure we use the vault message builder for modmail,
                 # because the per-user cache will be wrong if more than two
                 # parties are involved in the thread.
-                root = Vault._byID(parent.sr_id)
+                root = Vault._byID(parent.vault_id)
                 message_cls = SrMessageBuilder
 
             enable_threaded = (
                 (self.where == "moderator" or
-                    parent and parent.sr_id) and
+                    parent and parent.vault_id) and
                 c.user.pref_threaded_modmail and
                 c.render_style == "html"
             )
@@ -1342,7 +1342,7 @@ class MessageController(ListingController):
 
     def listing(self):
         if not c.default_sr:
-            target = c.site if not isinstance(c.site, FakeSubreddit) else None
+            target = c.site if not isinstance(c.site, FakeVault) else None
             VNotInTimeout().run(action_name="pageview",
                 details_text="modmail", target=target)
         if (self.where == 'messages' and
@@ -1376,16 +1376,16 @@ class MessageController(ListingController):
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
         elif self.where == 'multi' and self.subwhere == 'unread':
-            q = queries.get_unread_subreddit_messages_multi(c.site.kept_sr_ids)
+            q = queries.get_unread_Vault_messages_multi(c.site.kept_sr_ids)
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
-                srids = Vault.reverse_moderator_ids(c.user)
-                srs = [sr for sr in Vault._byID(srids, data=False,
+                vault_ids = Vault.reverse_moderator_ids(c.user)
+                srs = [sr for sr in Vault._byID(vault_ids, data=False,
                                                     return_dict=False)
                        if sr.is_moderator_with_perms(c.user, 'mail')]
-                q = queries.get_unread_subreddit_messages_multi(srs)
+                q = queries.get_unread_Vault_messages_multi(srs)
             else:
-                q = queries.get_unread_subreddit_messages(c.site)
+                q = queries.get_unread_Vault_messages(c.site)
         elif self.where in ('moderator', 'multi'):
             if c.have_mod_messages and self.mark != 'false':
                 c.have_mod_messages = False
@@ -1482,31 +1482,31 @@ class MessageController(ListingController):
     )
     def GET_compose(self, to, subject, message):
         mod_srs = []
-        subreddit_message = False
-        only_as_subreddit = False
+        Vault_message = False
+        only_as_Vault = False
         self.where = "compose"
 
         if isinstance(c.site, MultiReddit):
             mod_srs = c.site.srs_with_perms(c.user, "mail")
             if not mod_srs:
                 abort(403)
-            subreddit_message = True
-        elif not isinstance(c.site, FakeSubreddit):
+            Vault_message = True
+        elif not isinstance(c.site, FakeVault):
             if not c.site.is_moderator_with_perms(c.user, "mail"):
                 abort(403)
             mod_srs = [c.site]
-            subreddit_message = True
-            only_as_subreddit = True
+            Vault_message = True
+            only_as_Vault = True
         elif c.user.is_moderator_somewhere:
             mod_srs = Mod.srs_with_perms(c.user, "mail")
-            subreddit_message = bool(mod_srs)
+            Vault_message = bool(mod_srs)
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
-        if subreddit_message:
+        if Vault_message:
             content = ModeratorMessageCompose(
                 mod_srs,
-                only_as_subreddit=only_as_subreddit,
+                only_as_Vault=only_as_Vault,
                 to=to,
                 subject=subject,
                 captcha=captcha,
@@ -1528,7 +1528,7 @@ class MessageController(ListingController):
 
 
 class VaultsController(ListingController):
-    render_cls = SubredditsPage
+    render_cls = VaultsPage
     extra_page_classes = ListingController.extra_page_classes + ['vaults-page']
 
     def title(self):
@@ -1597,12 +1597,12 @@ class VaultsController(ListingController):
             elif self.where == 'default':
                 return [
                     sr._fullname
-                    for sr in Vault.default_subreddits(ids=False)
+                    for sr in Vault.default_Vaults(ids=False)
                 ]
             elif self.where == 'featured':
                 return [
                     sr._fullname
-                    for sr in Vault.featured_subreddits()
+                    for sr in Vault.featured_Vaults()
                 ]
             else:
                 reddits = Vault._query( write_cache = True,
@@ -1662,7 +1662,7 @@ class VaultsController(ListingController):
         return ListingController.GET_listing(self, **env)
 
 class MyredditsController(ListingController):
-    render_cls = MySubredditsPage
+    render_cls = MyVaultsPage
     extra_page_classes = ListingController.extra_page_classes + ['vaults-page']
 
     @property
@@ -1690,7 +1690,7 @@ class MyredditsController(ListingController):
             return []
 
         if self.where == "subscriber":
-            sr_ids = Vault.subscribed_ids_by_user(c.user)
+            vault_ids = Vault.subscribed_ids_by_user(c.user)
         else:
             q = SRMember._simple_query(
                 ["_thing1_id"],
@@ -1700,10 +1700,10 @@ class MyredditsController(ListingController):
                 #adding it's own date
                 sort=(desc('_t1_ups'), desc('_t1_date')),
             )
-            sr_ids = [row._thing1_id for row in q]
+            vault_ids = [row._thing1_id for row in q]
 
         sr_fullnames = [
-            Vault._fullname_from_id36(to36(sr_id)) for sr_id in sr_ids]
+            Vault._fullname_from_id36(to36(vault_id)) for vault_id in vault_ids]
         return sr_fullnames
 
     def content(self):
@@ -1747,7 +1747,7 @@ class MyredditsController(ListingController):
 
         return render_params
 
-    @require_oauth2_scope("mysubreddits")
+    @require_oauth2_scope("myVaults")
     @validate(VUser())
     @listing_api_doc(section=api_section.vaults,
                      uri='/vaults/mine/{where}',
@@ -1770,7 +1770,7 @@ class MyredditsController(ListingController):
         return ListingController.GET_listing(self, **env)
 
 
-class CommentsController(SubredditListingController):
+class CommentsController(VaultListingController):
     title_text = _('comments')
 
     def keep_fn(self):
@@ -1997,7 +1997,7 @@ class UserListListingController(ListingController):
                         'banned', 'muted', 'wikibanned', 'contributors',
                         'wikicontributors', 'moderators']])
     def GET_listing(self, where, user=None, **kw):
-        if isinstance(c.site, FakeSubreddit):
+        if isinstance(c.site, FakeVault):
             return self.abort404()
 
         self.where = where
@@ -2079,13 +2079,13 @@ class UserListListingController(ListingController):
         return self.build_listing(**kw)
 
 
-class GildedController(SubredditListingController):
+class GildedController(VaultListingController):
     where = 'gilded'
     title_text = _("gilded")
 
     @property
     def infotext(self):
-        if isinstance(c.site, FakeSubreddit):
+        if isinstance(c.site, FakeVault):
             return ''
 
         seconds = c.site.gilding_server_seconds

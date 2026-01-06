@@ -46,7 +46,7 @@ r.ui.init = function() {
     })
 
     $('.submit_text').each(function(idx, el) {
-        $(el).data('SubredditSubmitText', new r.ui.SubredditSubmitText({el: el}))
+        $(el).data('VaultSubmitText', new r.ui.VaultSubmitText({el: el}))
     })
 
     /* Open links in new tabs if they have the preference set or are logged out
@@ -986,7 +986,7 @@ r.ui.ConfirmButton = Backbone.View.extend({
     }
 })
 
-r.ui.SubredditSubmitText = Backbone.View.extend({
+r.ui.VaultSubmitText = Backbone.View.extend({
     initialize: function() {
         this.lookup = _.throttle(this._lookup, 500)
         this.cache = new r.utils.LRUCache()

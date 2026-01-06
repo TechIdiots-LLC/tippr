@@ -22,7 +22,7 @@
 
 <%!
    from r2.config import feature
-   from r2.models.vault import DefaultSR, AllSR
+   from r2.models.vault import DefaultVault, AllSR
    from r2.lib.template_helpers import add_sr, static
 %>
 
@@ -69,19 +69,19 @@
     </button>
   %endif
 
-  %if thing.subreddit_search:
+  %if thing.Vault_search:
     %if thing.over18_url and thing.prev_search:
       <p><a id="search_over18" href="${thing.over18_url}" rel="nofollow">${_('enable NSFW results')}</a></p>
     %endif
   %elif thing.simple:
   <div id="searchexpando" class="infobar">
-    %if not isinstance(c.site, (DefaultSR, AllSR)):
+    %if not isinstance(c.site, (DefaultVault, AllSR)):
       <label><input type="checkbox" name="restrict_sr" tabindex="21">${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
     % endif
     ${search_faq()}
   </div>
   %else:
-    %if not thing.site or isinstance(thing.site, (DefaultSR, AllSR)):
+    %if not thing.site or isinstance(thing.site, (DefaultVault, AllSR)):
       <input type="hidden" name="restrict_sr">
     %else:
       <label><input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" tabindex="21">

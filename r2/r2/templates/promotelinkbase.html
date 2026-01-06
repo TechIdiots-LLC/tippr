@@ -751,9 +751,9 @@
         </div>
       </label>
       <label class="form-group">
-        <input id="subreddit_targeting" class="nomargin"
+        <input id="Vault_targeting" class="nomargin"
                type="radio" value="one" name="targeting"
-               onclick="r.sponsored.subreddit_targeting()"
+               onclick="r.sponsored.Vault_targeting()"
                %if default_checked == 'one':
                  checked="checked"
                %endif
@@ -796,7 +796,7 @@
            >
         <span class="label">vault</span>
         ${error_field("OVERSOLD", "sr", "div")}
-        ${thing.subreddit_selector}
+        ${thing.Vault_selector}
       </div>
       <div class="target-change-warning error">
         ${_('changing the target for a live campaign requires reapproval.')}
@@ -830,13 +830,13 @@
   </%utils:line_field>
 </%def>
 
-<%def name="subreddit_targeting_field(subreddit_selector)">
+<%def name="Vault_targeting_field(Vault_selector)">
   <%utils:line_field title="${_('vault targeting')}" css_class="rounded vault-targeting-field">
     <div class="target-group group">
       <div class="vault-targeting">
         <span class="label">vault</span>
         ${error_field("OVERSOLD", "sr", "div")}
-        ${subreddit_selector}
+        ${Vault_selector}
       </div>
     </div>
   </%utils:line_field>

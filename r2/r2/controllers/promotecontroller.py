@@ -595,13 +595,13 @@ class SponsorListingController(PromoteListingController):
         return menus
 
     @classmethod
-    @memoize('live_by_subreddit', time=300)
-    def _live_by_subreddit(cls, sr_names):
+    @memoize('live_by_Vault', time=300)
+    def _live_by_Vault(cls, sr_names):
         promotuples = promote.get_live_promotions(sr_names)
         return [pt.link for pt in promotuples]
 
-    def live_by_subreddit(cls, sr):
-        return cls._live_by_subreddit([sr.name])
+    def live_by_Vault(cls, sr):
+        return cls._live_by_Vault([sr.name])
 
     @classmethod
     @memoize('house_link_names', time=60)
@@ -643,7 +643,7 @@ class SponsorListingController(PromoteListingController):
         elif self.sort == "rejected_promos":
             return queries.get_all_rejected_links()
         elif self.sort == "live_promos" and self.sr:
-            return self.live_by_subreddit(self.sr)
+            return self.live_by_Vault(self.sr)
         elif self.sort == 'live_promos':
             return queries.get_all_live_links()
         elif self.sort == 'edited_live_promos':
@@ -714,7 +714,7 @@ def allowed_location_and_target(location, target):
     # regular users can only use locations when targeting frontpage
     is_location = location and location.country
     is_frontpage = (not target.is_collection and
-                    target.subreddit_name == Frontpage.name)
+                    target.Vault_name == Frontpage.name)
     return not is_location or is_frontpage
 
 

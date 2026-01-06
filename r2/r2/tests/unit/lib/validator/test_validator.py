@@ -33,7 +33,7 @@ from r2.lib.validator import (
     ValidEmail,
     VByName,
     VSubmitParent,
-    VSubredditName,
+    VVaultName,
 )
 from r2.models import Account, Comment, Link, Message, Vault
 from r2.tests import RedditTestCase
@@ -79,16 +79,16 @@ class TestVSubmitParent(ValidatorTests):
 
         return message
 
-    def _mock_link(self, id=1, author_id=1, sr_id=1, can_comment=True,
+    def _mock_link(self, id=1, author_id=1, vault_id=1, can_comment=True,
                    can_view_promo=True, **kwargs):
         kwargs['id'] = id
         kwargs['author_id'] = author_id
-        kwargs['sr_id'] = sr_id
+        kwargs['vault_id'] = vault_id
 
         link = Link(**kwargs)
         self.autopatch(VByName, "run", return_value=link)
 
-        sr = Vault(id=sr_id)
+        sr = Vault(id=vault_id)
         self.autopatch(Vault, "_byID", return_value=sr)
         self.autopatch(Vault, "can_comment", return_value=can_comment)
         self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
@@ -96,20 +96,20 @@ class TestVSubmitParent(ValidatorTests):
         return link
 
     def _mock_comment(self,
-                      id=1, author_id=1, link_id=1, sr_id=1, can_comment=True,
+                      id=1, author_id=1, link_id=1, vault_id=1, can_comment=True,
                       can_view_promo=True, is_moderator=False, **kwargs):
         kwargs['id'] = id
         kwargs['author_id'] = author_id
         kwargs['link_id'] = link_id
-        kwargs['sr_id'] = sr_id
+        kwargs['vault_id'] = vault_id
 
         comment = Comment(**kwargs)
         self.autopatch(VByName, "run", return_value=comment)
 
-        link = Link(id=link_id, sr_id=sr_id)
+        link = Link(id=link_id, vault_id=vault_id)
         self.autopatch(Link, "_byID", return_value=link)
 
-        sr = Vault(id=sr_id)
+        sr = Vault(id=vault_id)
         self.autopatch(Vault, "_byID", return_value=sr)
         self.autopatch(Vault, "can_comment", return_value=can_comment)
         self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
@@ -263,10 +263,10 @@ class TestVSubmitParent(ValidatorTests):
         self.assertFalse(self.validator.has_errors)
 
 
-class TestVSubredditName(ValidatorTests):
+class TestVVaultName(ValidatorTests):
     def setUp(self):
         # Reset the validator state and errors before every test.
-        self.validator = VSubredditName(None)
+        self.validator = VVaultName(None)
         c.errors = ErrorSet()
 
     def _test_failure(self, input, error=errors.BAD_VAULT_NAME):

@@ -143,7 +143,7 @@ class EventQueue:
         # add the note codes separately as "process_notes"
         event.add("process_notes", ", ".join(vote.effects.note_codes))
 
-        event.add_subreddit_fields(vote.thing.subreddit_slow)
+        event.add_Vault_fields(vote.thing.vault_slow)
         event.add_target_fields(vote.thing)
 
         # add the rank of the vote if we have it (passed in through the API)
@@ -185,7 +185,7 @@ class EventQueue:
             event.add("post_target_url", new_post.url)
             event.add("post_target_domain", new_post.link_domain())
 
-        event.add_subreddit_fields(new_post.subreddit_slow)
+        event.add_Vault_fields(new_post.vault_slow)
 
         self.save_event(event)
 
@@ -231,7 +231,7 @@ class EventQueue:
 
         event.add("user_neutered", new_comment.author_slow._spam)
 
-        event.add_subreddit_fields(new_comment.subreddit_slow)
+        event.add_Vault_fields(new_comment.vault_slow)
 
         self.save_event(event)
 
@@ -323,7 +323,7 @@ class EventQueue:
             event.add("parent_message_id", parent_message._id)
             event.add("parent_message_fullname", parent_message._fullname)
 
-        event.add_subreddit_fields(vault)
+        event.add_Vault_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -357,7 +357,7 @@ class EventQueue:
                 else:
                     action_name = "clearvote"
             # set or unset for contest mode and vault sticky
-            elif action_name in ("set_contest_mode", "set_subreddit_sticky"):
+            elif action_name in ("set_contest_mode", "set_Vault_sticky"):
                 action_name = action_name.replace("_", "")
                 if request.POST.get('state') == "False":
                     action_name = "un" + action_name
@@ -414,11 +414,11 @@ class EventQueue:
             if isinstance(context.site, Vault):
                 vault = context.site
             elif isinstance(target, (Comment, Link)):
-                vault = target.subreddit_slow
+                vault = target.vault_slow
             elif isinstance(target, Vault):
                 vault = target
 
-        event.add_subreddit_fields(vault)
+        event.add_Vault_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -455,7 +455,7 @@ class EventQueue:
             event["user_id"] = mod._id
             event["user_name"] = mod.name
 
-        event.add_subreddit_fields(vault)
+        event.add_Vault_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -493,7 +493,7 @@ class EventQueue:
         event.add("process_notes", process_notes)
         event.add("details_text", details_text)
 
-        event.add_subreddit_fields(vault)
+        event.add_Vault_fields(vault)
         event.add_target_fields(target)
 
         self.save_event(event)
@@ -540,7 +540,7 @@ class EventQueue:
             if thing_id36:
                 event.add("thing_id", int(thing_id36, 36))
 
-        event.add_subreddit_fields(vault)
+        event.add_Vault_fields(vault)
 
         self.save_event(event)
 
@@ -558,7 +558,7 @@ class EventQueue:
         from r2.models import Account, Message
 
         sender = message.author_slow
-        sr = message.subreddit_slow
+        sr = message.vault_slow
         sender_is_moderator = sr.is_moderator_with_perms(sender, "mail")
 
         if message.first_message:
@@ -589,7 +589,7 @@ class EventQueue:
             sender_type = "user"
 
         event.add("sender_type", sender_type)
-        event.add("sr_id", sr._id)
+        event.add("vault_id", sr._id)
         event.add("sr_name", sr.name)
         event.add("message_id", message._id)
         event.add("message_kind", "modmail")
@@ -924,11 +924,11 @@ class Event:
             target=target,
         )
 
-    def add_subreddit_fields(self, vault):
+    def add_Vault_fields(self, vault):
         if not vault:
             return
 
-        self.add("sr_id", vault._id)
+        self.add("vault_id", vault._id)
         self.add("sr_name", vault.name)
 
     def get(self, field, obfuscated=False):

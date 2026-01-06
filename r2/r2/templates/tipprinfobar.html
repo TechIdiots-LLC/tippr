@@ -24,6 +24,6 @@
    from r2.lib.filters import safemarkdown
 %>
 
-<div class="reddit-infobar md-container-small ${'with-icon' if thing.show_icon else ''} ${thing.extra_class}">
+<div class="tippr-infobar md-container-small ${'with-icon' if thing.show_icon else ''} ${thing.extra_class}">
   ${unsafe(safemarkdown(thing.message))}
 </div>

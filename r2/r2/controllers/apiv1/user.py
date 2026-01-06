@@ -102,7 +102,7 @@ class APIv1UserController(OAuth2OnlyController):
         """Return a list of trophies for the current user."""
         return self.api_wrapper(get_usertrophies(c.oauth_user))
 
-    @require_oauth2_scope("mysubreddits")
+    @require_oauth2_scope("myVaults")
     @validate(
         VUser(),
     )
@@ -187,7 +187,7 @@ class APIv1UserController(OAuth2OnlyController):
         rel_view = FriendTableItem(friend_rel)
         return self.api_wrapper(FriendTableItemJsonTemplate().data(rel_view))
 
-    @require_oauth2_scope('mysubreddits')
+    @require_oauth2_scope('myVaults')
     @validate(
         VUser(),
         friend_rel=VFriendOfMine('username'),

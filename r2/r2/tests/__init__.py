@@ -345,7 +345,7 @@ class RedditControllerTestCase(RedditTestCase):
                     _cls, "_type_name", _cls.__name__.lower(),
                     create=True)
         # The same is true for _by_name on Vault and Account
-        self.subreddit_by_name = self.autopatch(Vault, "_by_name")
+        self.Vault_by_name = self.autopatch(Vault, "_by_name")
         self.account_by_name = self.autopatch(Account, "_by_name")
 
         # mock out any Memcached side effects

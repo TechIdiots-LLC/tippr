@@ -419,7 +419,7 @@ class OffsiteButton(NavButton):
         ]
 
 
-class SubredditButton(NavButton):
+class VaultButton(NavButton):
     from r2.models.vault import All, Frontpage, Mod, Random, RandomSubscription
     # TRANSLATORS: This refers to /r/mod
     name_overrides = {Mod: N_("mod"),
@@ -618,7 +618,7 @@ class SearchSortMenu(SortMenu):
         return buttons
 
 
-class SubredditSearchSortMenu(SortMenu):
+class VaultSearchSortMenu(SortMenu):
     """Sort menu for vault search pages."""
     _default = 'relevance'
     _options = ('relevance', 'activity')
@@ -671,7 +671,7 @@ class ControversyTimeMenu(TimeMenu):
     button_cls = PostButton
 
 
-class SubredditMenu(NavMenu):
+class VaultMenu(NavMenu):
     def find_selected(self):
         """Always return False so the title is always displayed"""
         return None

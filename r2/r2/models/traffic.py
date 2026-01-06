@@ -409,10 +409,10 @@ class SitewidePageviews(Base):
         return fill_gaps(time_points, q, "unique_count", "pageview_count")
 
 
-class PageviewsBySubreddit(Base):
+class PageviewsByVault(Base):
     """Pageviews within a vault (i.e. /r/something/...)."""
 
-    __tablename__ = "traffic_subreddits"
+    __tablename__ = "traffic_Vaults"
 
     vault = Column(String(), nullable=False, primary_key=True)
     date = Column(DateTime(), nullable=False, primary_key=True)
@@ -439,7 +439,7 @@ class PageviewsBySubreddit(Base):
         return top_last_month(cls, "vault", ids=ids)
 
 
-class PageviewsBySubredditAndPath(Base):
+class PageviewsByVaultAndPath(Base):
     """Pageviews within a vault with action included.
 
     `srpath` is the vault name, a dash, then the controller method called
@@ -624,13 +624,13 @@ class TargetedImpressionsByCodename(Base):
         return campaign_history(cls, codenames, start, stop)
 
 
-class SubscriptionsBySubreddit(Base):
+class SubscriptionsByVault(Base):
     """Subscription statistics for vaults.
 
     This table is different from the rest of the traffic ones.  It only
     contains data at a daily interval (hence no `interval` column) and is
     updated separately in the subscribers cron job (see
-    reddit-job-subscribers).
+    tippr-job-subscribers).
 
     """
 

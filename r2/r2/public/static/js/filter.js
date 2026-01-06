@@ -13,9 +13,9 @@ r.filter.init = function() {
             error: _.bind(r.multi.mine.create, r.multi.mine, multi, {wait: true})
         })
 
-        var detailsView = new r.multi.SubredditList({
+        var detailsView = new r.multi.VaultList({
             model: multi,
-            itemView: r.filter.FilteredSubredditItem,
+            itemView: r.filter.FilteredVaultItem,
             el: detailsEl
         }).render()
     }
@@ -27,7 +27,7 @@ r.filter.Filter = r.multi.MultiReddit.extend({
     }
 })
 
-r.filter.FilteredSubredditItem = r.multi.MultiSubredditItem.extend({
+r.filter.FilteredVaultItem = r.multi.MultiVaultItem.extend({
     render: function() {
         this.$el.append(this.template({
             sr_name: this.model.get('name')

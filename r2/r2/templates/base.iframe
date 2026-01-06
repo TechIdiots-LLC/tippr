@@ -32,7 +32,7 @@
 
 <%
     link_data = {"redirect-type": "link", "redirect-thing": thing.link._id}
-    sr_data = {"redirect-type": "subreddit"}
+    sr_data = {"redirect-type": "Vault"}
     reddit_data = {"redirect-type": "logo"}
 %>
 
@@ -42,28 +42,28 @@
         <meta charset=utf-8>
         <base target="_blank" href="${add_sr("/", sr_path=False, force_hostname=True)}">
         <title></title>
-        ${less_stylesheet("reddit-embed.less")}
+        ${less_stylesheet("tippr-embed.less")}
     </head>
     <body>
-        <div class="reddit-embed">
-          <div class="reddit-embed-content">
+        <div class="tippr-embed">
+          <div class="tippr-embed-content">
             ${next.body()}
           </div>
-          <footer class="reddit-embed-footer" role="contentinfo">
+          <footer class="tippr-embed-footer" role="contentinfo">
             <p>
                 ${text_with_links(
-                    _("from discussion %(link)s on %(subreddit)s"),
+                    _("from discussion %(link)s on %(Vault)s"),
                     link=dict(link_text=thing.link.title, path=thing.link.permalink, data=link_data),
-                    subreddit=dict(link_text=("/r/%s" % c.site.name), path=c.site.path, data=sr_data),
+                    vault=dict(link_text=("/r/%s" % c.site.name), path=c.site.path, data=sr_data),
                 )}
             </p>
-            ${plain_link("reddit", "/", _sr_path=False, _class="reddit-embed-footer-img", data=reddit_data)}
+            ${plain_link("reddit", "/", _sr_path=False, _class="tippr-embed-footer-img", data=reddit_data)}
           </footer>
         </div>
         <script>
             window.REDDIT_EMBED_CONFIG = ${unsafe(json.dumps(c.embed_config))};
         </script>
-        ${unsafe(js.use('reddit-embed'))}
+        ${unsafe(js.use('tippr-embed'))}
         ${less_js()}
     </body>
 </html>

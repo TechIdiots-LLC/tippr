@@ -55,7 +55,7 @@ class World:
         if c.user_is_loggedin:
             return self.stacked_proxy_safe_get(c, 'user')
 
-    def current_subreddit(self):
+    def current_Vault(self):
         site = self.stacked_proxy_safe_get(c, 'site')
         if not site:
             # In non-request code (eg queued jobs), there isn't necessarily a

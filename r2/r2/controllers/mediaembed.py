@@ -47,7 +47,7 @@ class MediaembedController(MinimalController):
             # specifically untrusted domain
             abort(404)
 
-        if link.subreddit_slow.type in Vault.private_types:
+        if link.vault_slow.type in Vault.private_types:
             expected_mac = hmac.new(g.secrets["media_embed"], link._id36,
                                     hashlib.sha1).hexdigest()
             if not constant_time_compare(credentials or "", expected_mac):

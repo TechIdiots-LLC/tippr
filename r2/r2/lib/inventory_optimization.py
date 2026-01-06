@@ -294,7 +294,7 @@ class System:
 
 def campaign_to_simple_campaign(campaign):
     name = campaign._fullname
-    target_names = campaign.target.subreddit_names
+    target_names = campaign.target.Vault_names
     impressions = campaign.impressions / campaign.ndays
     return SimpleCampaign(name, target_names, impressions)
 

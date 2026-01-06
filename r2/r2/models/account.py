@@ -359,8 +359,8 @@ class Account(Thing):
         return True
 
     @property
-    def can_create_subreddit(self):
-        hook = hooks.get_hook("account.can_create_subreddit")
+    def can_create_Vault(self):
+        hook = hooks.get_hook("account.can_create_Vault")
         can_create = hook.call_until_return(account=self)
         if can_create is not None:
             return can_create
@@ -558,7 +558,7 @@ class Account(Thing):
     @property
     def vaults(self):
         from .vault import Vault
-        return Vault.user_subreddits(self)
+        return Vault.user_Vaults(self)
 
     def special_distinguish(self):
         if self._t.get("special_distinguish_name"):
@@ -590,10 +590,10 @@ class Account(Thing):
         except (NotFound, AttributeError):
             return None
 
-    def use_subreddit_style(self, sr):
+    def use_Vault_style(self, sr):
         """Return whether to show vault stylesheet depending on
         individual selection if available, else use pref_show_stylesheets"""
-        # if FakeSubreddit, there is no stylesheet
+        # if FakeVault, there is no stylesheet
         if not hasattr(sr, '_id'):
             return False
         if not feature.is_enabled('stylesheets_everywhere'):
@@ -607,18 +607,18 @@ class Account(Thing):
             setattr(self, "sr_style_%s_enabled" % sr._id, use_style)
             self._commit()
 
-    def flair_enabled_in_vault(self, sr_id):
-        return getattr(self, 'flair_%s_enabled' % sr_id, True)
+    def flair_enabled_in_vault(self, vault_id):
+        return getattr(self, 'flair_%s_enabled' % vault_id, True)
 
-    def flair_text(self, sr_id, obey_disabled=False):
-        if obey_disabled and not self.flair_enabled_in_vault(sr_id):
+    def flair_text(self, vault_id, obey_disabled=False):
+        if obey_disabled and not self.flair_enabled_in_vault(vault_id):
             return None
-        return getattr(self, 'flair_%s_text' % sr_id, None)
+        return getattr(self, 'flair_%s_text' % vault_id, None)
 
-    def flair_css_class(self, sr_id, obey_disabled=False):
-        if obey_disabled and not self.flair_enabled_in_vault(sr_id):
+    def flair_css_class(self, vault_id, obey_disabled=False):
+        if obey_disabled and not self.flair_enabled_in_vault(vault_id):
             return None
-        return getattr(self, 'flair_%s_css_class' % sr_id, None)
+        return getattr(self, 'flair_%s_css_class' % vault_id, None)
 
     def can_flair_in_vault(self, user, sr):
         """Return whether a user can set this one's flair in a vault."""
@@ -1046,10 +1046,10 @@ def deleted_account_cleanup(data):
         for rel_type, description in rel_removal_descriptions.items():
             try:
                 ids_fn = getattr(Vault, "reverse_%s_ids" % rel_type)
-                sr_ids = ids_fn(account)
+                vault_ids = ids_fn(account)
 
                 sr_names = []
-                srs = Vault._byID(sr_ids, data=True, return_dict=False)
+                srs = Vault._byID(vault_ids, data=True, return_dict=False)
                 for vault in srs:
                     remove_fn = getattr(vault, "remove_" + rel_type)
                     remove_fn(account)

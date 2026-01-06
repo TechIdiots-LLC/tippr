@@ -21,36 +21,25 @@
 ###############################################################################
 
 <%!
-   from r2.lib.strings import strings
-   %>
-<%inherit  file="printable.mobile"/>
-
+   from r2.lib.template_helpers import format_html
+%>
 <%namespace file="utils.html" import="plain_link"/>
 
-<%def name="numcol()">
-</%def>
+<div id="sr-header-area">
+  <div class="width-clip">
+    ${thing.my_Vaults_dropdown}
 
-<%def name="entry()">
-<% fullname = thing._fullname %>
-<p class="subreddit">
-  ${plain_link(thing.title, thing.path, _class="title")}
-  &#32;<span class="domain">(${thing.path})</span> 
-</p>
-</%def>
+    <div class="sr-list">
+      %for m in thing.sr_bar():
+        ${m.render()}
+      %endfor
 
-<%def name="tagline()">
-</%def>
+      <%
+        editmore = 'edit' if c.user_is_loggedin else 'more'
+      %>
+    </div>
 
-<%def name="child()">
-</%def>
-
-<%def name="buttons()">
-  ${parent.delete_or_report_buttons(delete=False)}
-  ${parent.buttons()}
-</%def>
-
-<%def name="leave_button(name, where)">
-${self.yes_no_button("leave", name, _("leave"), 
-  "return deletetoggle(this, 'leave');", _("left"),
-  location = where)}
-</%def>
+    ${plain_link(format_html("%s &raquo;", _(editmore)),
+                 "/vaults/", id="sr-more-link")}
+  </div>
+</div>

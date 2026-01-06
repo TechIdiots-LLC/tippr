@@ -158,7 +158,7 @@ apps below.
     traffic_processing_normal = _("Traffic processing occurs on an hourly basis. The latest data available is from %(date)s. This page will be updated as new data becomes available."),
     traffic_help_email = _("Questions? Email self serve support: %(email)s"),
 
-    traffic_subreddit_explanation = _("""
+    traffic_Vault_explanation = _("""
 Below are the traffic statistics for your vault. Each graph represents one of the following over the interval specified.
 
 * **pageviews** are all hits to %(vault)s, including both listing pages and comment pages.

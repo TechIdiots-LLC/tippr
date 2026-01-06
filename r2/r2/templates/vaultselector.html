@@ -44,7 +44,7 @@ ${error_field("VAULT_NOTALLOWED", "sr", "div")}
 ${error_field("VAULT_REQUIRED", "sr", "div")}
 
 <div id="suggested-reddits">
-  % for title, vaults in thing.subreddit_names:
+  % for title, vaults in thing.Vault_names:
     <h3>${title}</h3>
     <ul>
       %for name in vaults:

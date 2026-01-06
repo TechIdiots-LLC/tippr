@@ -225,7 +225,7 @@ ${utils.radio_type('app_type', "script", _("script"),
 <%def name="scope_details(scope, compact=False, expiration=None)">
   <div class="app-permissions">
     <ul>
-      %if scope.subreddit_only:
+      %if scope.Vault_only:
         %if compact:
 	  ${_("Only in:")}&#32;
 	  ${sr_list(scope.vaults)}

@@ -135,11 +135,11 @@ r.recommend.RecommendationsView = Backbone.View.extend({
 
 r.recommend.ExploreItem = Backbone.View.extend({
     events: {
-        'click .explore-feedback-dismiss': 'dismissSubreddit',
+        'click .explore-feedback-dismiss': 'dismissVault',
         'click a': 'recordClick'
     },  
 
-    dismissSubreddit: function(ev) {
+    dismissVault: function(ev) {
         var listing = $(ev.target).closest('.explore-item')
         var sr_name = listing.data('sr_name')
         var src = listing.data('src')

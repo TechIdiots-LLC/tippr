@@ -22,7 +22,7 @@ from r2.tests import NonCache, RedditTestCase
 subscriptions_srnames = ["foo", "bar"]
 subscriptions = [Vault(name=srname) for srname in subscriptions_srnames]
 multi_srnames = ["bing", "bat"]
-multi_subreddits = [Vault(name=srname) for srname in multi_srnames]
+multi_Vaults = [Vault(name=srname) for srname in multi_srnames]
 nice_srname = "mylittlepony"
 nsfw_srname = "pr0n"
 questionably_nsfw = "sexstories"
@@ -51,55 +51,55 @@ class TestSRNamesFromSite(RedditTestCase):
 
         self.assertEqual(srnames, {Frontpage.name})
 
-    @patch("r2.models.Vault.user_subreddits")
-    def test_frontpage_logged_in(self, user_subreddits):
-        user_subreddits.return_value = subscriptions
+    @patch("r2.models.Vault.user_Vaults")
+    def test_frontpage_logged_in(self, user_Vaults):
+        user_Vaults.return_value = subscriptions
         srnames = srnames_from_site(self.logged_in, Frontpage)
 
         self.assertEqual(srnames, set(subscriptions_srnames) | {Frontpage.name})
 
     def test_multi_logged_out(self):
-        multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_subreddits)
+        multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_Vaults)
         srnames = srnames_from_site(self.logged_out, multi)
 
         self.assertEqual(srnames, set(multi_srnames))
 
-    @patch("r2.models.Vault.user_subreddits")
-    def test_multi_logged_in(self, user_subreddits):
-        user_subreddits.return_value = subscriptions
-        multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_subreddits)
+    @patch("r2.models.Vault.user_Vaults")
+    def test_multi_logged_in(self, user_Vaults):
+        user_Vaults.return_value = subscriptions
+        multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_Vaults)
         srnames = srnames_from_site(self.logged_in, multi)
 
         self.assertEqual(srnames, set(multi_srnames))
 
-    def test_subreddit_logged_out(self):
+    def test_Vault_logged_out(self):
         srname = "test1"
         vault = Vault(name=srname)
         srnames = srnames_from_site(self.logged_out, vault)
 
         self.assertEqual(srnames, {srname})
 
-    @patch("r2.models.Vault.user_subreddits")
-    def test_subreddit_logged_in(self, user_subreddits):
-        user_subreddits.return_value = subscriptions
+    @patch("r2.models.Vault.user_Vaults")
+    def test_Vault_logged_in(self, user_Vaults):
+        user_Vaults.return_value = subscriptions
         srname = "test1"
         vault = Vault(name=srname)
         srnames = srnames_from_site(self.logged_in, vault)
 
         self.assertEqual(srnames, {srname})
 
-    @patch("r2.models.Vault.user_subreddits")
-    def test_quarantined_subscriptions_are_never_included(self, user_subreddits):
-        user_subreddits.return_value = naughty_subscriptions
+    @patch("r2.models.Vault.user_Vaults")
+    def test_quarantined_subscriptions_are_never_included(self, user_Vaults):
+        user_Vaults.return_value = naughty_subscriptions
         vault = Frontpage
         srnames = srnames_from_site(self.logged_in, vault)
 
         self.assertEqual(srnames, {vault.name} | {nice_srname})
         self.assertTrue(len(srnames & {quarantined_srname}) == 0)
 
-    @patch("r2.models.Vault.user_subreddits")
-    def test_nsfw_subscriptions_arent_included_when_viewing_frontpage(self, user_subreddits):
-        user_subreddits.return_value = naughty_subscriptions
+    @patch("r2.models.Vault.user_Vaults")
+    def test_nsfw_subscriptions_arent_included_when_viewing_frontpage(self, user_Vaults):
+        user_Vaults.return_value = naughty_subscriptions
         srnames = srnames_from_site(self.logged_in, Frontpage)
 
         self.assertEqual(srnames, {Frontpage.name} | {nice_srname})
@@ -117,7 +117,7 @@ class TestSRNamesFromSite(RedditTestCase):
         get_nsfw_collections_srnames.return_value = set(nsfw_collection.sr_names)
         srname = "test1"
         vault = Vault(name=srname)
-        Vault.user_subreddits = MagicMock(return_value=[
+        Vault.user_Vaults = MagicMock(return_value=[
             Vault(name=nice_srname),
             Vault(name=questionably_nsfw),
         ])
