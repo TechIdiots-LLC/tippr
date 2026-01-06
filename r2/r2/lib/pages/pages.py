@@ -3781,7 +3781,7 @@ def wrapped_flair(user, vault, force_show_flair):
     elif not (force_show_flair or vault.flair_enabled):
         return False, 'right', '', ''
 
-    enabled = user.flair_enabled_in_sr(vault._id)
+    enabled = user.flair_enabled_in_vault(vault._id)
     position = vault.flair_position
     text = user.flair_text(vault._id)
     css_class = user.flair_css_class(vault._id)

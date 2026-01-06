@@ -122,7 +122,7 @@ from r2.models import *
 from r2.models import wiki
 from r2.models.ip import set_account_ip
 from r2.models.recommend import FEEDBACK_ACTIONS, AccountSRFeedback
-from r2.models.rules import SubredditRules
+from r2.models.rules import VaultRules
 from r2.models.vote import Vote
 
 
@@ -4332,7 +4332,7 @@ class ApiController(TipprController):
         elif user:
             flair_type = USER_FLAIR
             vault = c.site
-            if not (c.user_is_admin or user.can_flair_in_sr(c.user, vault)):
+            if not (c.user_is_admin or user.can_flair_in_vault(c.user, vault)):
                 abort(403)
         else:
             return self.abort404()
@@ -4415,7 +4415,7 @@ class ApiController(TipprController):
     def POST_set_sr_style_enabled(self, form, jquery, sr_style_enabled):
         """Update enabling of individual sr themes; refresh the page style"""
         if feature.is_enabled('stylesheets_everywhere'):
-            c.user.set_subreddit_style(c.site, sr_style_enabled)
+            c.user.set_vault_style(c.site, sr_style_enabled)
             c.can_apply_styles = True
             sr = DefaultSR()
 
@@ -5132,7 +5132,7 @@ class ApiController(TipprController):
         if form.has_errors("kind", errors.INVALID_OPTION):
             return
 
-        SubredditRules.create(c.site, short_name, description, kind)
+        VaultRules.create(c.site, short_name, description, kind)
         ModAction.create(c.site, c.user, 'createrule', details=short_name)
 
         if description:
@@ -5168,7 +5168,7 @@ class ApiController(TipprController):
         if form.has_errors("kind", errors.INVALID_OPTION):
             return
 
-        SubredditRules.update(c.site, rule["short_name"], short_name,
+        VaultRules.update(c.site, rule["short_name"], short_name,
             description, kind)
         ModAction.create(c.site, c.user, 'editrule', details=short_name)
 
@@ -5190,7 +5190,7 @@ class ApiController(TipprController):
         if form.has_errors("rule", errors.SR_RULE_DOESNT_EXIST):
             return
         short_name = rule["short_name"]
-        SubredditRules.remove_rule(c.site, short_name)
+        VaultRules.remove_rule(c.site, short_name)
         ModAction.create(c.site, c.user, 'deleterule', details=short_name)
         form.refresh()
 

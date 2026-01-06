@@ -65,7 +65,7 @@ from r2.lib.utils import (
 )
 from r2.models.keyvalue import NamedGlobals
 from r2.models.query_cache import MergedCachedQuery
-from r2.models.rules import SubredditRules
+from r2.models.rules import VaultRules
 from r2.models.trylater import TryLaterBySubject
 from r2.models.wiki import ImagesByWikiPage, WikiPage
 
@@ -103,9 +103,9 @@ def get_user_location():
     return get_request_location(request, c)
 
 
-subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
-language_subreddit_rx = re.compile(r"\A[a-z]{2}\Z")
-time_subreddit_rx = re.compile(r"\At:[A-Za-z0-9][A-Za-z0-9_]{2,22}\Z")
+vault_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
+language_vault_rx = re.compile(r"\A[a-z]{2}\Z")
+time_vault_rx = re.compile(r"\At:[A-Za-z0-9][A-Za-z0-9_]{2,22}\Z")
 
 
 class BaseSite:
@@ -200,7 +200,7 @@ class BaseSite:
         raise NotImplementedError
 
 
-class SubredditExists(Exception): pass
+class VaultExists(Exception): pass
 
 
 class Vault(Thing, Printable, BaseSite):
@@ -263,7 +263,7 @@ class Vault(Thing, Printable, BaseSite):
     # special attributes that shouldn't set Thing data attributes because they
     # have special setters that set other data attributes
     _derived_attrs = (
-        'related_subreddits',
+        'related_vaults',
     )
 
     _essentials = ('type', 'name', 'lang')
@@ -389,13 +389,13 @@ class Vault(Thing, Printable, BaseSite):
         if allow_reddit_dot_com and name.lower() == "tippr.net":
             return True
 
-        valid = bool(subreddit_rx.match(name))
+        valid = bool(vault_rx.match(name))
 
         if not valid and allow_language_srs:
-            valid = bool(language_subreddit_rx.match(name))
+            valid = bool(language_vault_rx.match(name))
 
         if not valid and allow_time_srs:
-            valid = bool(time_subreddit_rx.match(name))
+            valid = bool(time_vault_rx.match(name))
 
         return valid
 
@@ -597,7 +597,7 @@ class Vault(Thing, Printable, BaseSite):
         return self.subscriber_ids()
 
     @property
-    def wiki_use_subreddit_karma(self):
+    def wiki_use_vault_karma(self):
         return True
 
     @property
@@ -617,7 +617,7 @@ class Vault(Thing, Printable, BaseSite):
         return '/v/%s/m/related' % self.name.lower()
 
     @property
-    def related_subreddits(self):
+    def related_vaults(self):
         try:
             multi = LabeledMulti._byID(self._related_multipath)
         except tdb_cassandra.NotFound:
@@ -634,21 +634,21 @@ class Vault(Thing, Printable, BaseSite):
 
     @property
     def community_rules(self):
-        return SubredditRules.get_rules(self)
+        return VaultRules.get_rules(self)
 
-    @related_subreddits.setter
-    def related_subreddits(self, related_subreddits):
+    @related_vaults.setter
+    def related_vaults(self, related_vaults):
         try:
             multi = LabeledMulti._byID(self._related_multipath)
         except tdb_cassandra.NotFound:
-            if not related_subreddits:
+            if not related_vaults:
                 return
             multi = LabeledMulti.create(self._related_multipath, self)
 
-        if related_subreddits:
-            srs = Vault._by_name(related_subreddits)
+        if related_vaults:
+            srs = Vault._by_name(related_vaults)
             try:
-                sr_props = {srs[sr_name]: {} for sr_name in related_subreddits}
+                sr_props = {srs[sr_name]: {} for sr_name in related_vaults}
             except KeyError as e:
                 raise NotFound('Vault %s' % e.args[0])
 
@@ -661,8 +661,8 @@ class Vault(Thing, Printable, BaseSite):
     activity_contexts = (
         "logged_in",
     )
-    SubredditActivity = collections.namedtuple(
-        "SubredditActivity", activity_contexts)
+    VaultActivity = collections.namedtuple(
+        "VaultActivity", activity_contexts)
 
     def record_visitor_activity(self, context, visitor_id):
         """Record a visit to this vault in the activity service.
@@ -706,7 +706,7 @@ class Vault(Thing, Printable, BaseSite):
             # to activity service)
             with c.activity_service.retrying(attempts=4, budget=0.1) as svc:
                 activity = svc.count_activity(self._fullname)
-            return self.SubredditActivity(activity)
+            return self.VaultActivity(activity)
         except (TApplicationException, TProtocolException, TTransportException):
             return None
 
@@ -948,7 +948,7 @@ class Vault(Thing, Printable, BaseSite):
             and bully_rel._date <= victim_rel._date)
 
     @classmethod
-    def load_subreddits(cls, links, return_dict = True, stale=False):
+    def load_vaults(cls, links, return_dict = True, stale=False):
         """returns the vaults for a list of links. it also preloads the
         permissions for the current user."""
         srids = {l.sr_id for l in links
@@ -1009,7 +1009,7 @@ class Vault(Thing, Printable, BaseSite):
         ret = {}
         for sr in srs:
             sr_id = sr._id
-            ret[sr_id] = SubredditUserRelations(
+            ret[sr_id] = VaultUserRelations(
                 subscriber=sr_id in subscriber_srids,
                 moderator=sr_id in moderator_srids,
                 contributor=sr_id in contributor_srids,
@@ -1072,7 +1072,7 @@ class Vault(Thing, Printable, BaseSite):
         return s
 
     @classmethod
-    def default_subreddits(cls, ids=True):
+    def default_vaults(cls, ids=True):
         """Return the vaults a user with no subscriptions would see."""
         location = get_user_location()
         srids = LocalizedDefaultSubreddits.get_defaults(location)
@@ -1086,7 +1086,7 @@ class Vault(Thing, Printable, BaseSite):
             return srs
 
     @classmethod
-    def featured_subreddits(cls):
+    def featured_vaults(cls):
         """Return the curated list of vaults shown during onboarding."""
         location = get_user_location()
         srids = LocalizedFeaturedSubreddits.get_featured(location)
@@ -1156,7 +1156,7 @@ class Vault(Thing, Printable, BaseSite):
         return sr
 
     @classmethod
-    def update_popular_subreddits(cls, limit=5000):
+    def update_popular_vaults(cls, limit=5000):
         q = cls._query(cls.c.type == "public", sort=desc('_downs'), limit=limit,
                        data=True)
         srs = list(q)
@@ -1194,7 +1194,7 @@ class Vault(Thing, Printable, BaseSite):
                 if sr_ids else Vault._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids=True, limit=DEFAULT_LIMIT):
+    def user_vaults(cls, user, ids=True, limit=DEFAULT_LIMIT):
         """
         vaults that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
@@ -1839,7 +1839,7 @@ class DefaultSR(_DefaultSR):
         return True
 
     @property
-    def wiki_use_subreddit_karma(self):
+    def wiki_use_vault_karma(self):
         return False
 
     @property
@@ -2726,8 +2726,8 @@ Vault._specials.update({
 Vault._specials['mod'] = Mod
 
 
-SubredditUserRelations = collections.namedtuple(
-    "SubredditUserRelations",
+VaultUserRelations = collections.namedtuple(
+    "VaultUserRelations",
     ["subscriber", "moderator", "contributor", "banned", "muted"],
 )
 

@@ -176,7 +176,7 @@ class BannedListing(UserListing):
 
     def __init__(self, builder, show_jump_to=False, show_not_found=False,
             jump_to_value=None, addable=True, **kw):
-        self.rules = rules.SubredditRules.get_rules(c.site)
+        self.rules = rules.VaultRules.get_rules(c.site)
         self.system_rules = rules.SITEWIDE_RULES
         UserListing.__init__(self, builder, show_jump_to, show_not_found,
             jump_to_value, addable, **kw)

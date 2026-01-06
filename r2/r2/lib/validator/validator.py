@@ -65,7 +65,7 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.utils import constant_time_compare
 from r2.models import *
 from r2.models.promo import Location
-from r2.models.rules import MAX_RULES_PER_SUBREDDIT
+from r2.models.rules import MAX_RULES_PER_VAULT, VaultRules
 
 
 def can_view_link_comments(article):
@@ -910,17 +910,17 @@ class VAvailableSubredditRuleName(Validator):
         if not short_name:
             return None
 
-        if SubredditRules.get_rule(c.site, short_name):
+        if VaultRules.get_rule(c.site, short_name):
             self.set_error(errors.SR_RULE_EXISTS)
         elif not self.updating:
-            number_rules = len(SubredditRules.get_rules(c.site))
-            if number_rules >= MAX_RULES_PER_SUBREDDIT:
+            number_rules = len(VaultRules.get_rules(c.site))
+            if number_rules >= MAX_RULES_PER_VAULT:
                 self.set_error(errors.SR_RULE_TOO_MANY)
                 return None
         return short_name
 
 
-class VSubredditRule(Validator):
+class VVaultRule(Validator):
     def run(self, short_name):
         short_name = VLength(
             self.param,
@@ -931,7 +931,7 @@ class VSubredditRule(Validator):
             self.set_error(errors.SR_RULE_DOESNT_EXIST)
             return None
 
-        rule = SubredditRules.get_rule(c.site, short_name)
+        rule = VaultRules.get_rule(c.site, short_name)
         if not rule:
             self.set_error(errors.SR_RULE_DOESNT_EXIST)
         else:

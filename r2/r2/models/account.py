@@ -602,25 +602,25 @@ class Account(Thing):
         return bool(getattr(self, "sr_style_%s_enabled" % sr._id,
             self.pref_show_stylesheets))
 
-    def set_subreddit_style(self, sr, use_style):
+    def set_vault_style(self, sr, use_style):
         if hasattr(sr, '_id'):
             setattr(self, "sr_style_%s_enabled" % sr._id, use_style)
             self._commit()
 
-    def flair_enabled_in_sr(self, sr_id):
+    def flair_enabled_in_vault(self, sr_id):
         return getattr(self, 'flair_%s_enabled' % sr_id, True)
 
     def flair_text(self, sr_id, obey_disabled=False):
-        if obey_disabled and not self.flair_enabled_in_sr(sr_id):
+        if obey_disabled and not self.flair_enabled_in_vault(sr_id):
             return None
         return getattr(self, 'flair_%s_text' % sr_id, None)
 
     def flair_css_class(self, sr_id, obey_disabled=False):
-        if obey_disabled and not self.flair_enabled_in_sr(sr_id):
+        if obey_disabled and not self.flair_enabled_in_vault(sr_id):
             return None
         return getattr(self, 'flair_%s_css_class' % sr_id, None)
 
-    def can_flair_in_sr(self, user, sr):
+    def can_flair_in_vault(self, user, sr):
         """Return whether a user can set this one's flair in a vault."""
         can_assign_own = self._id == user._id and sr.flair_self_assign_enabled
 

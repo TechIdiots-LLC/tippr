@@ -108,11 +108,23 @@ if [ ! -x /usr/local/bin/mcrouter ]; then
   if [ ! -d /opt/mcrouter ]; then
     git clone https://github.com/facebook/mcrouter.git /opt/mcrouter || true
   fi
-  # Disable ccache as it causes build failures on Ubuntu 24.04 with Folly/ASM
+  # Disable ccache as it causes build failures on Ubuntu 24.04 with Folly/ASM.
+  # We force the path to bypass /usr/lib/ccache and explicitly set the assembler.
+  export PATH=$(echo $PATH | sed -e 's/:\/usr\/lib\/ccache//g' -e 's/\/usr\/lib\/ccache://g' -e 's/:\/usr\/bin\/ccache//g')
   export CC="gcc"
   export CXX="g++"
+  export AS="/usr/bin/as"
+  export CMAKE_ASM_COMPILER="/usr/bin/as"
+  export CCACHE_DISABLE=1
   unset CMAKE_C_COMPILER_LAUNCHER
   unset CMAKE_CXX_COMPILER_LAUNCHER
+  
+  # Remove possibly corrupted or ccache-polluted build directories
+  rm -rf /opt/mcrouter/mcrouter-install/pkgs/folly
+  rm -rf /opt/mcrouter/mcrouter-install/pkgs/fbthrift
+  rm -rf /opt/mcrouter/mcrouter-install/pkgs/fizz
+  rm -rf /opt/mcrouter/mcrouter-install/pkgs/wangle
+
   pushd /opt/mcrouter >/dev/null 2>&1 || true
   # add known upstream fix branch if not already present
   git remote add markbhasawut https://github.com/markbhasawut/mcrouter.git 2>/dev/null || true
