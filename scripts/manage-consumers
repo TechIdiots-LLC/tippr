@@ -4,27 +4,50 @@
 # Otherwise, we can try to infer it.
 action=${1:-start}
 
-for consumerpath in $TIPPR_CONSUMER_CONFIG/*; do
-    consumer=$(basename $consumerpath)
+if [ -f /etc/default/tippr ]; then
+    . /etc/default/tippr
+fi
+
+if [ -z "$TIPPR_CONSUMER_CONFIG" ]; then
+    echo "TIPPR_CONSUMER_CONFIG is not set. Exiting."
+    exit 0
+fi
+
+if [ ! -d "$TIPPR_CONSUMER_CONFIG" ]; then
+    echo "TIPPR_CONSUMER_CONFIG directory $TIPPR_CONSUMER_CONFIG does not exist. Exiting."
+    exit 0
+fi
+
+for consumerpath in "$TIPPR_CONSUMER_CONFIG"/*; do
+    if [ ! -e "$consumerpath" ]; then
+        continue
+    fi
+    consumer=$(basename "$consumerpath")
 
     # allow targeting which consumer the event is meant for (defaulting to 'all')
     if [ ! -z "$TARGET" -a "x$TARGET" != "xall" -a "x$TARGET" != "x$consumer" ]; then
         continue
     fi
 
-    if [ -d $consumerpath ]; then
-        types=$consumerpath/*
+    if [ -d "$consumerpath" ]; then
+        types="$consumerpath"/*
     else
-        types=$consumerpath
+        types="$consumerpath"
     fi
 
     for typepath in $types; do
-        instance_count=$(cat $typepath)
-        type_=$(basename $typepath)
+        if [ ! -f "$typepath" ]; then
+            continue
+        fi
+        instance_count=$(cat "$typepath")
+        type_=$(basename "$typepath")
 
-        for i in $(seq 1 "$instance_count"); do
-            systemctl "$action" "tippr-consumer-$consumer@$i"
-        done
+        # Ensure instance_count is a number
+        if [[ "$instance_count" =~ ^[0-9]+$ ]]; then
+            for i in $(seq 1 "$instance_count"); do
+                systemctl "$action" "tippr-consumer-$consumer@$i"
+            done
+        fi
     done
 done
 

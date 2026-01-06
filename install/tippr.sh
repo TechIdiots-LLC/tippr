@@ -1266,7 +1266,9 @@ if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     systemctl start tippr.target || true
     
     if [ -f /etc/default/tippr ]; then
+        set -a
         . /etc/default/tippr
+        set +a
     fi
     $TIPPR_SRC/tippr/scripts/manage-consumers start || true
 else
