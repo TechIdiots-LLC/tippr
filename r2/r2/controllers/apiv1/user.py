@@ -26,7 +26,7 @@ import r2.lib.errors as errors
 import r2.lib.validator.preferences as vprefs
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
-from r2.controllers.reddit_base import OAuth2OnlyController
+from r2.controllers.tippr_base import OAuth2OnlyController
 from r2.lib.jsontemplates import (
     FriendTableItemJsonTemplate,
     IdentityJsonTemplate,

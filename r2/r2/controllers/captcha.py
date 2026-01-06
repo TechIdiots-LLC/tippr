@@ -28,7 +28,7 @@ import r2.lib.captcha as captcha
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import allow_oauth2_access
 
-from .reddit_base import TipprController
+from .tippr_base import TipprController
 
 
 class CaptchaController(TipprController):

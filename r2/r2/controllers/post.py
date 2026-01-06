@@ -40,7 +40,7 @@ from r2.models import *
 from r2.models.recommend import ExploreSettings
 
 from .api import ApiController
-from .reddit_base import delete_over18_cookie, set_over18_cookie
+from .tippr_base import delete_over18_cookie, set_over18_cookie
 
 
 class PostController(ApiController):

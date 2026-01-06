@@ -39,7 +39,7 @@ from pylons.i18n import N_, _
 from r2.config import feature
 from r2.controllers.api import ApiController
 from r2.controllers.listingcontroller import ListingController
-from r2.controllers.reddit_base import TipprController
+from r2.controllers.tippr_base import TipprController
 from r2.lib import (
     hooks,
     inventory,

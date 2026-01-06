@@ -59,7 +59,7 @@ from r2.models.token import (
     OAuth2Scope,
 )
 
-from .reddit_base import MinimalController, TipprController, require_https
+from .tippr_base import MinimalController, TipprController, require_https
 
 
 def _update_redirect_uri(base_redirect_uri, params, as_fragment=False):

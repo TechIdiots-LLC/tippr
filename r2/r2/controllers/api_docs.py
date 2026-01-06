@@ -31,7 +31,7 @@ from r2.lib.pages import ApiHelp, BoringPage
 from r2.lib.utils import Storage
 from r2.lib.validator import VOneOf, validate
 
-from .reddit_base import TipprController
+from .tippr_base import TipprController
 
 # API sections displayed in the documentation page.
 # Each section can have a title and a markdown-formatted description.

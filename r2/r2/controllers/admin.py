@@ -23,7 +23,7 @@
 from r2.lib.pages import AdminCreddits, AdminGold, AdminPage
 from r2.lib.validator import VAdmin, nop, validate
 
-from .reddit_base import TipprController
+from .tippr_base import TipprController
 
 
 class AdminToolController(TipprController):

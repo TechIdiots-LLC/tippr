@@ -23,7 +23,7 @@
 from r2.lib.pages import AdminAwardGive, AdminAwards, AdminAwardWinners, AdminPage
 from r2.lib.validator import *
 
-from .reddit_base import TipprController
+from .tippr_base import TipprController
 
 
 class AwardsController(TipprController):

@@ -35,7 +35,7 @@ try:
     # get caught and the stack trace won't be presented to the user in
     # production
     from r2.config import extensions
-    from r2.controllers.reddit_base import TipprController, UnloggedUser
+    from r2.controllers.tippr_base import TipprController, UnloggedUser
     from r2.lib import log, pages
     from r2.lib.base import abort
     from r2.lib.cookies import Cookies

@@ -29,7 +29,7 @@ from r2.lib.pages.things import wrap_links
 from r2.lib.validator import *
 from r2.models import *
 
-from .reddit_base import TipprController, UnloggedUser
+from .tippr_base import TipprController, UnloggedUser
 
 
 class ButtonsController(TipprController):

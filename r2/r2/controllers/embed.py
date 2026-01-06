@@ -28,7 +28,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
-from r2.controllers.reddit_base import TipprController
+from r2.controllers.tippr_base import TipprController
 from r2.lib.base import proxyurl
 from r2.lib.csrf import csrf_exempt
 from r2.lib.filters import SC_OFF, SC_ON

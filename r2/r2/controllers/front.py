@@ -33,7 +33,7 @@ import r2.lib.db.thing as thing
 from r2.config import feature
 from r2.config.extensions import API_TYPES, RSS_TYPES, is_api
 from r2.controllers.ipn import GoldException, generate_blob, validate_blob
-from r2.controllers.reddit_base import (
+from r2.controllers.tippr_base import (
     TipprController,
     base_listing,
     disable_subreddit_css,

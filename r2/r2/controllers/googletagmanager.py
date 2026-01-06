@@ -24,7 +24,7 @@ from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c
 
-from r2.controllers.reddit_base import MinimalController
+from r2.controllers.tippr_base import MinimalController
 from r2.lib.pages import (
     GoogleTagManager,
     GoogleTagManagerJail,

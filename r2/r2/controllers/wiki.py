@@ -84,7 +84,7 @@ from r2.models.wiki import (
     modactions,
 )
 
-from .reddit_base import TipprController, base_listing, paginated_listing
+from .tippr_base import TipprController, base_listing, paginated_listing
 
 page_descriptions = {
     "config/stylesheet": _("This page is the vault stylesheet, changes here apply to the vault css"),

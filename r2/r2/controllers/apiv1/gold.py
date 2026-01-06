@@ -27,7 +27,7 @@ from pylons import tmpl_context as c
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.ipn import send_gift
 from r2.controllers.oauth2 import require_oauth2_scope
-from r2.controllers.reddit_base import OAuth2OnlyController
+from r2.controllers.tippr_base import OAuth2OnlyController
 from r2.lib.errors import TipprError
 from r2.lib.validator import (
     VAccountByName,

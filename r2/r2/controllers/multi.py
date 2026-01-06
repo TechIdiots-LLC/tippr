@@ -28,7 +28,7 @@ from pylons.i18n import _
 from r2.config.extensions import set_extension
 from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
-from r2.controllers.reddit_base import TipprController, abort_with_error
+from r2.controllers.tippr_base import TipprController, abort_with_error
 from r2.lib.db import tdb_cassandra
 from r2.lib.errors import TipprError
 from r2.lib.jsontemplates import (

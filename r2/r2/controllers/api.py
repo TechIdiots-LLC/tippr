@@ -33,7 +33,7 @@ from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.ipn import generate_blob, update_blob
 from r2.controllers.login import handle_login, handle_register
 from r2.controllers.oauth2 import allow_oauth2_access, require_oauth2_scope
-from r2.controllers.reddit_base import (
+from r2.controllers.tippr_base import (
     MinimalController,
     TipprController,
     abort_with_error,

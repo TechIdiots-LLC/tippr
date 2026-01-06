@@ -68,7 +68,7 @@ from r2.models.query_cache import CachedQuery, MergedCachedQuery
 
 from .api_docs import api_doc, api_section
 from .oauth2 import require_oauth2_scope
-from .reddit_base import TipprController, base_listing, paginated_listing
+from .tippr_base import TipprController, base_listing, paginated_listing
 
 
 class ListingController(TipprController):

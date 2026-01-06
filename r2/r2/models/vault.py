@@ -2678,7 +2678,7 @@ class SearchResultSubreddit(Vault):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        from r2.controllers.reddit_base import UnloggedUser
+        from r2.controllers.tippr_base import UnloggedUser
         Vault.add_props(user, wrapped)
         for item in wrapped:
             url = UrlParser(item.path)
