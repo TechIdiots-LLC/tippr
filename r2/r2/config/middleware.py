@@ -198,7 +198,7 @@ class DomainMiddleware:
         if domain == "localhost" or is_media_only_domain:
             return self.app(environ, start_response)
 
-        # tell reddit_base to redirect to the appropriate vault for
+        # tell tippr_base to redirect to the appropriate vault for
         # a legacy CNAME
         if not is_subdomain(domain, g.domain):
             environ['legacy-cname'] = domain

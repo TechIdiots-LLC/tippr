@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.controllers.reddit_base import TipprController
+from r2.controllers.tippr_base import TipprController
 from r2.lib.pages import Newsletter
 
 

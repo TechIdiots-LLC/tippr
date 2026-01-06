@@ -25,7 +25,7 @@ from pylons import app_globals as g
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
-from r2.controllers.reddit_base import TipprController
+from r2.controllers.tippr_base import TipprController
 from r2.lib.base import abort
 from r2.lib.db import tdb_cassandra
 from r2.lib.filters import generate_table_of_contents, unsafe, wikimarkdown

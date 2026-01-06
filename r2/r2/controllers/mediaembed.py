@@ -28,7 +28,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons.controllers.util import abort
 
-from r2.controllers.reddit_base import MinimalController
+from r2.controllers.tippr_base import MinimalController
 from r2.lib.media import get_media_embed
 from r2.lib.pages import MediaEmbedBody
 from r2.lib.utils import constant_time_compare

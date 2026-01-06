@@ -28,7 +28,7 @@ import time
 from pylons import app_globals as g
 from pylons import request
 
-from r2.controllers.reddit_base import TipprController
+from r2.controllers.tippr_base import TipprController
 from r2.lib.base import abort
 from r2.lib.csrf import csrf_exempt
 from r2.lib.db import queries

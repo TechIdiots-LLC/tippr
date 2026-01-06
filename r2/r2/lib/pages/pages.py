@@ -2016,7 +2016,7 @@ class CommentPane(Templated):
         return key
 
     def __init__(self, article, sort, comment, context, num, **kw):
-        from r2.controllers.reddit_base import UnloggedUser
+        from r2.controllers.tippr_base import UnloggedUser
         from r2.models import Builder, CommentBuilder, NestedListing
 
         self.sort = sort

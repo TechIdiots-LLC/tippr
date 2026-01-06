@@ -30,7 +30,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _
 from sqlalchemy.exc import IntegrityError
 
-from r2.controllers.reddit_base import TipprController
+from r2.controllers.tippr_base import TipprController
 from r2.lib.base import abort
 from r2.lib.csrf import csrf_exempt
 from r2.lib.emailer import _system_email

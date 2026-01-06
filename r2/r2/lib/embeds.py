@@ -6,7 +6,7 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons.controllers.util import abort
 
-from r2.controllers.reddit_base import UnloggedUser
+from r2.controllers.tippr_base import UnloggedUser
 from r2.lib import js
 from r2.models import Account, NotFound
 

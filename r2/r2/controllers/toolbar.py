@@ -33,7 +33,7 @@ from r2.lib.validator import *
 from r2.models import *
 from r2.models.admintools import is_shamed_domain
 
-from .reddit_base import TipprController
+from .tippr_base import TipprController
 
 # strips /r/foo/, /s/, or both
 strip_sr          = re.compile(r'\A/r/[a-zA-Z0-9_-]+')

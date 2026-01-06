@@ -25,7 +25,7 @@
 <%!
    from pylons.i18n import _
    from r2.lib.template_helpers import get_domain, style_line, format_html, _wsf
-   from r2.models.subreddit import FakeSubreddit, DefaultSR
+   from r2.models.vault import FakeSubreddit, DefaultSR
 %>
 
 <div class="rembeddit"

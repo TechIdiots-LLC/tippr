@@ -22,7 +22,7 @@
 from pylons import app_globals as g
 from pylons import request, response
 
-from r2.controllers.reddit_base import MinimalController
+from r2.controllers.tippr_base import MinimalController
 from r2.lib import utils
 from r2.lib.base import abort
 from r2.lib.pages import CrossDomain, Robots

@@ -27,7 +27,7 @@ from pylons import response
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
-from r2.controllers.reddit_base import MinimalController
+from r2.controllers.tippr_base import MinimalController
 from r2.lib import embeds
 from r2.lib.base import abort
 from r2.lib.errors import ForbiddenError, errors
