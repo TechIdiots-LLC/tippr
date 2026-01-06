@@ -866,7 +866,8 @@ helper-script /usr/local/bin/tippr-start <<TIPPRSTART
 #!/bin/bash
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     systemctl start tippr.target
-    manage-consumers start
+    [ -f /etc/default/tippr ] && . /etc/default/tippr
+    $TIPPR_SRC/tippr/scripts/manage-consumers start
 else
     echo "No systemctl found; cannot start services"
 fi
@@ -875,7 +876,8 @@ TIPPRSTART
 helper-script /usr/local/bin/tippr-stop <<TIPPRSTOP
 #!/bin/bash
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    manage-consumers stop
+    [ -f /etc/default/tippr ] && . /etc/default/tippr
+    $TIPPR_SRC/tippr/scripts/manage-consumers stop
     systemctl stop tippr.target
 else
     echo "No systemctl found; cannot stop services"
@@ -1251,10 +1253,17 @@ tippr-run -c 'print("ok done")'
 
 # ok, now start everything else up (portable)
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    # Ensure all units are installed even if we didn't clone (e.g. running from local checkout)
+    copy_systemd $RUNDIR/..
+
     systemctl enable tippr.target || true
     systemctl stop tippr.target || true
     systemctl start tippr.target || true
-    manage-consumers start || true
+    
+    if [ -f /etc/default/tippr ]; then
+        . /etc/default/tippr
+    fi
+    $TIPPR_SRC/tippr/scripts/manage-consumers start || true
 else
     echo "No systemctl found; services not started."
 fi
