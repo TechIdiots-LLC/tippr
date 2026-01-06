@@ -379,6 +379,7 @@ function copy_systemd {
                 -e "s|\${TIPPR_INI}|$TIPPR_SRC/tippr/r2/run.ini|g" \
                 -e "s|\"\${TIPPR_INI}\"|\"$TIPPR_SRC/tippr/r2/run.ini\"|g" \
                 -e "s|\${TIPPR_ROOT}|$TIPPR_SRC/tippr/r2|g" \
+                -e "s|EnvironmentFile=-/etc/default/tippr|EnvironmentFile=-/etc/default/tippr\nEnvironment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nEnvironment=PYTHONPATH=$TIPPR_SRC:$TIPPR_SRC/tippr|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job ||g" \
                 "$f" > "$dest"
@@ -445,6 +446,8 @@ TIPPR_INI=${TIPPR_SRC}/tippr/r2/run.ini
 TIPPR_USER=${TIPPR_USER}
 TIPPR_GROUP=${TIPPR_GROUP}
 TIPPR_CONSUMER_CONFIG=${CONSUMER_CONFIG_ROOT}
+PATH=${TIPPR_VENV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHONPATH=${TIPPR_SRC}:${TIPPR_SRC}/tippr
 DEFAULT
 fi
 
