@@ -1,0 +1,16 @@
+[Unit]
+Description=Gunicorn geoip server for tippr
+After=network.target tippr.target
+PartOf=tippr.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+WorkingDirectory=@TIPPR_SRC@/tippr/scripts
+EnvironmentFile=-/etc/default/tippr
+ExecStart=@TIPPR_VENV@/bin/gunicorn --bind 127.0.0.1:5000 --workers=1 --limit-request-line=8190 geoip_service:application
+Restart=on-failure
+
+[Install]
+WantedBy=tippr.target

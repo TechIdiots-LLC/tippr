@@ -1,0 +1,16 @@
+[Unit]
+Description=Tippr API (paster)
+After=network.target tippr.target
+PartOf=tippr.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+WorkingDirectory=@TIPPR_ROOT@
+EnvironmentFile=/etc/default/tippr
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster serve $TIPPR_INI
+Restart=always
+
+[Install]
+WantedBy=tippr.target

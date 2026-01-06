@@ -1,0 +1,17 @@
+[Unit]
+Description=send modmail emails using mailgun
+PartOf=tippr.target
+After=network.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run --proctitle modmail_email_q%i "${TIPPR_INI}" "@TIPPR_ROOT@"/r2/lib/message_to_email.py -c 'process_modmail_email()'
+Restart=always
+Nice=10
+
+[Install]
+WantedBy=tippr.target

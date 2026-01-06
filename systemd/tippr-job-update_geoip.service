@@ -1,0 +1,18 @@
+[Unit]
+Description=refresh the geoip databases
+
+
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=geoipupdate
+    service gunicorn reload geoip.conf
+
+Nice=10
+
+[Install]
+WantedBy=tippr.target

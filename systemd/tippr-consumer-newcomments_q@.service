@@ -1,0 +1,17 @@
+[Unit]
+Description=newcomments_q - update the /comments pages
+PartOf=tippr.target
+After=network.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run --proctitle newcomments_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c 'run_new_comments()'
+Restart=always
+Nice=10
+
+[Install]
+WantedBy=tippr.target

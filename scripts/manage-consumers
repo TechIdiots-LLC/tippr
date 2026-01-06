@@ -1,6 +1,9 @@
 #!/bin/bash
 
-command=${UPSTART_JOB#tippr-consumers-}
+# If being called from a systemd service, the first argument should be the action.
+# Otherwise, we can try to infer it.
+action=${1:-start}
+
 for consumerpath in $TIPPR_CONSUMER_CONFIG/*; do
     consumer=$(basename $consumerpath)
 
@@ -20,7 +23,7 @@ for consumerpath in $TIPPR_CONSUMER_CONFIG/*; do
         type_=$(basename $typepath)
 
         for i in $(seq 1 "$instance_count"); do
-            "/sbin/$command" "tippr-consumer-$consumer" "type=$type_" "x=$i"
+            systemctl "$action" "tippr-consumer-$consumer@$i"
         done
     done
 done

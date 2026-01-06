@@ -1,0 +1,17 @@
+[Unit]
+Description=update links by author precomputed queries
+PartOf=tippr.target
+After=network.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run --proctitle author_query_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/voting.py -c "consume_author_query_queue()"
+Restart=always
+Nice=10
+
+[Install]
+WantedBy=tippr.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Gunicorn click server for tippr
+After=network.target tippr.target
+PartOf=tippr.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+WorkingDirectory=@TIPPR_SRC@/tippr/scripts
+EnvironmentFile=-/etc/default/tippr
+Environment=PYTHONPATH=@TIPPR_SRC@:@TIPPR_SRC@/tippr
+Environment=PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_tippr
+ExecStart=@TIPPR_VENV@/bin/gunicorn --bind unix:/var/opt/tippr/click.sock --workers=1 tracker:application
+Restart=on-failure
+
+[Install]
+WantedBy=tippr.target
