@@ -130,6 +130,7 @@ if [ ! -x /usr/local/bin/mcrouter ]; then
   rm -rf /opt/mcrouter/mcrouter-install/pkgs/fbthrift
   rm -rf /opt/mcrouter/mcrouter-install/pkgs/fizz
   rm -rf /opt/mcrouter/mcrouter-install/pkgs/wangle
+  rm -rf /opt/mcrouter/mcrouter-install/install
 
   pushd /opt/mcrouter >/dev/null 2>&1 || true
   # add known upstream fix branch if not already present
@@ -137,9 +138,19 @@ if [ ! -x /usr/local/bin/mcrouter ]; then
   git fetch markbhasawut 2>/dev/null || true
   git merge --no-edit markbhasawut/fix-oss-build 2>/dev/null || true
 
+  # fix for missing thrift annotations in carbon build
+  # we inject an include path that thrift1 can use
+  export THRIFT1_INCLUDES="-I $(pwd)/mcrouter-install/install/include"
+
   # run the Ubuntu 24.04 helper to install deps and mcrouter
   if [ -x ./mcrouter/scripts/install_ubuntu_24.04.sh ]; then
     ./mcrouter/scripts/install_ubuntu_24.04.sh "$(pwd)"/mcrouter-install deps || true
+    
+    # Patch Makefile.am in lib/carbon to include the prefix include path for thrift1
+    if [ -f ./mcrouter/lib/carbon/Makefile.am ]; then
+      sed -i 's/\$(THRIFT1)/\$(THRIFT1) -I \$(prefix)\/include/g' ./mcrouter/lib/carbon/Makefile.am
+    fi
+
     ./mcrouter/scripts/install_ubuntu_24.04.sh "$(pwd)"/mcrouter-install mcrouter || true
   fi
   popd >/dev/null 2>&1 || true
