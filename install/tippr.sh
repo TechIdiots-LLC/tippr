@@ -171,6 +171,17 @@ PYURL
     fi
 done
 
+# Add tippr source to the virtualenv path so all modules (pylons, r2, etc)
+# are findable regardless of working directory or manual vs service start.
+for p in "$TIPPR_VENV"/lib/python*/site-packages; do
+    if [ -d "$p" ]; then
+        cat > "$p/tippr.pth" <<PTH
+$TIPPR_SRC/tippr
+$TIPPR_SRC/tippr/r2
+PTH
+    fi
+done
+
 # Provide a compatibility module for Python 2 `imp` module.
 # The `imp` module was removed in Python 3.12. Some legacy packages
 # still use it. This shim provides the commonly used functions
@@ -379,7 +390,7 @@ function copy_systemd {
                 -e "s|\${TIPPR_INI}|$TIPPR_SRC/tippr/r2/run.ini|g" \
                 -e "s|\"\${TIPPR_INI}\"|\"$TIPPR_SRC/tippr/r2/run.ini\"|g" \
                 -e "s|\${TIPPR_ROOT}|$TIPPR_SRC/tippr/r2|g" \
-                -e "s|EnvironmentFile=-/etc/default/tippr|EnvironmentFile=-/etc/default/tippr\nEnvironment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nEnvironment=PYTHONPATH=$TIPPR_SRC:$TIPPR_SRC/tippr|g" \
+                -e "s|EnvironmentFile=-/etc/default/tippr|EnvironmentFile=-/etc/default/tippr\nEnvironment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nEnvironment=PYTHONPATH=$TIPPR_SRC/tippr:$TIPPR_SRC/tippr/r2|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job ||g" \
                 "$f" > "$dest"
@@ -447,7 +458,7 @@ TIPPR_USER=${TIPPR_USER}
 TIPPR_GROUP=${TIPPR_GROUP}
 TIPPR_CONSUMER_CONFIG=${CONSUMER_CONFIG_ROOT}
 PATH=${TIPPR_VENV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-PYTHONPATH=${TIPPR_SRC}:${TIPPR_SRC}/tippr
+PYTHONPATH=${TIPPR_SRC}/tippr:${TIPPR_SRC}/tippr/r2
 DEFAULT
 fi
 
