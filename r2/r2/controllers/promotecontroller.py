@@ -401,7 +401,7 @@ class SponsorController(PromoteController):
                 sr = Vault._by_name(sr_name)
                 target = Target(sr.name)
             except NotFound:
-                c.errors.add(errors.SUBREDDIT_NOEXIST, field='sr_name')
+                c.errors.add(errors.VAULT_NOEXIST, field='sr_name')
         elif collection_name:
             collection = Collection.by_name(collection_name)
             if not collection:
@@ -1203,9 +1203,9 @@ class PromoteApiController(ApiController):
 
         if not target:
             # run form.has_errors to populate the errors in the response
-            form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                            errors.SUBREDDIT_NOTALLOWED,
-                            errors.SUBREDDIT_REQUIRED)
+            form.has_errors('sr', errors.VAULT_NOEXIST,
+                            errors.VAULT_NOTALLOWED,
+                            errors.VAULT_REQUIRED)
             form.has_errors('collection', errors.COLLECTION_NOEXIST)
             form.has_errors('targeting', errors.INVALID_TARGET)
             return

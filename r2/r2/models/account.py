@@ -96,7 +96,7 @@ class Account(Thing):
                      pref_label_nsfw = True,
                      pref_show_stylesheets = True,
                      pref_enable_default_themes=False,
-                     pref_default_theme_sr=None,
+                     pref_default_theme_vault=None,
                      pref_show_flair = True,
                      pref_show_link_flair = True,
                      pref_mark_messages_read = True,
@@ -122,7 +122,7 @@ class Account(Thing):
                      report_ignored = 0,
                      spammer = 0,
                      sort_options = {},
-                     has_subscribed = False,
+                     has_vault_subscriptions = False,
                      pref_media = 'vault',
                      pref_media_preview = 'vault',
                      wiki_override = None,
@@ -178,7 +178,7 @@ class Account(Thing):
 
     def has_interacted_with(self, sr):
         try:
-            r = SubredditParticipationByAccount.fast_query(self, [sr])
+            r = VaultParticipationByAccount.fast_query(self, [sr])
         except tdb_cassandra.NotFound:
             return False
 
@@ -751,7 +751,7 @@ class Account(Thing):
         if not self.pref_enable_default_themes:
             return None
 
-        return self.pref_default_theme_sr
+        return self.pref_default_theme_vault
 
     def has_been_atoed(self):
         """Return true if this account has ever been required to reset their password
@@ -982,9 +982,9 @@ class DeletedUser(FakeAccount):
             object.__setattr__(self, attr, val)
 
 
-class BlockedSubredditsByAccount(tdb_cassandra.DenormalizedRelation):
+class BlockedVaultsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
-    _last_modified_name = 'block_subreddit'
+    _last_modified_name = 'block_vault'
     _read_consistency_level = tdb_cassandra.CL.QUORUM
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     _connection_pool = 'main'
@@ -1040,7 +1040,7 @@ def deleted_account_cleanup(data):
             "wikibanned": "Un-wikibanned",
             "wikicontributor": "Removed as wiki contributor",
         }
-        if account.has_subscribed:
+        if account.has_vault_subscriptions:
             rel_removal_descriptions["subscriber"] = "Unsubscribed"
 
         for rel_type, description in rel_removal_descriptions.items():
@@ -1123,7 +1123,7 @@ class AccountsByCanonicalEmail(tdb_cassandra.View, metaclass=tdb_cassandra.Thing
         return Account._byID36(account_id36s, data=True, return_dict=False)
 
 
-class SubredditParticipationByAccount(tdb_cassandra.DenormalizedRelation):
+class VaultParticipationByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
     _write_last_modified = False
     _views = []
@@ -1141,9 +1141,9 @@ class SubredditParticipationByAccount(tdb_cassandra.DenormalizedRelation):
         cls.create(account, [vault])
 
 
-class QuarantinedSubredditOptInsByAccount(tdb_cassandra.DenormalizedRelation):
+class QuarantinedVaultOptInsByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = True
-    _last_modified_name = 'QuarantineSubredditOptin'
+    _last_modified_name = 'QuarantineVaultOptin'
     _read_consistency_level = tdb_cassandra.CL.QUORUM
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     _extra_schema_creation_args = {

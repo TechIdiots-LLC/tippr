@@ -924,15 +924,15 @@ class Globals:
         cache_chains.update(memoizecache=self.memoizecache)
 
         if stalecaches:
-            self.srmembercache = StaleCacheChain(
+            self.vaultmembercache = StaleCacheChain(
                 localcache_cls(),
                 stalecaches,
                 self.mcrouter,
             )
         else:
-            self.srmembercache = MemcacheChain(
+            self.vaultmembercache = MemcacheChain(
                 (localcache_cls(), self.mcrouter))
-        cache_chains.update(srmembercache=self.srmembercache)
+        cache_chains.update(vaultmembercache=self.vaultmembercache)
 
         if stalecaches:
             self.relcache = StaleCacheChain(

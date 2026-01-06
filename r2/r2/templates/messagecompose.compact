@@ -43,7 +43,7 @@
              onchange="admincheck(this)"/>
       ${error_field("NO_USER", "to")}
       ${error_field("USER_DOESNT_EXIST", "to")}
-      ${error_field("SUBREDDIT_NOEXIST", "to")}
+      ${error_field("VAULT_NOEXIST", "to")}
       ${error_field("USER_BLOCKED", "to")}
       ${error_field("USER_MUTED", "to")}
       ${error_field("MUTED_FROM_SUBREDDIT", "to")}

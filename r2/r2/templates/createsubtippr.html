@@ -56,8 +56,8 @@ try participating in other communities on tippr for a little while first before 
         <input type="text" name="name" id="name" class="text"
               value="${thing.name}"/>
         %if not thing.site:
-          ${error_field("SUBREDDIT_EXISTS", "name")}
-          ${error_field("BAD_SR_NAME", "name")}
+          ${error_field("VAULT_EXISTS", "name")}
+          ${error_field("BAD_VAULT_NAME", "name")}
         %endif
       </div>
     </%utils:line_field>
@@ -508,12 +508,12 @@ try participating in other communities on tippr for a little while first before 
       <textarea id="related_subreddits" name="related_subreddits" style="display:none;">
         ${keep_space('\n'.join(thing.site.related_subreddits))}
       </textarea>
-      ${error_field("BAD_SR_NAME", "related_subreddits")}
+      ${error_field("BAD_VAULT_NAME", "related_subreddits")}
       ${error_field("TOO_MANY_SUBREDDITS", "related_subreddits")}
-      ${error_field("SUBREDDIT_NOEXIST", "related_subreddits")}
+      ${error_field("VAULT_NOEXIST", "related_subreddits")}
       <script type="text/javascript">
         function add_related_sr(form) {
-          $('.SUBREDDIT_NOEXIST.field-sr').hide();
+          $('.VAULT_NOEXIST.field-sr').hide();
 
           var sr_name = form.sr.value.trim();
           if (sr_name) {
@@ -538,7 +538,7 @@ try participating in other communities on tippr for a little while first before 
               $('#sr-autocomplete').val('');
             })
             .fail(function() {
-              $('.SUBREDDIT_NOEXIST.field-sr').text(r._("that vault doesn't exist")).show();
+              $('.VAULT_NOEXIST.field-sr').text(r._("that vault doesn't exist")).show();
             });
           }
 

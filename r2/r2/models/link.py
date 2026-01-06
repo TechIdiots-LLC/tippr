@@ -133,7 +133,7 @@ class Link(Thing, Printable):
                      removed_link_child=None,
                      precomputed_sorts=None,
                      )
-    _essentials = ('sr_id', 'author_id')
+    _essentials = ('vault_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
 
     SELFTEXT_MAX_LENGTH = 40000
@@ -235,7 +235,7 @@ class Link(Thing, Printable):
             _spam=spam,
             author_id=author._id,
             sendreplies=sendreplies,
-            sr_id=sr._id,
+            vault_id=sr._id,
             lang=sr.lang,
             ip=ip,
             is_self=is_self,
@@ -533,7 +533,7 @@ class Link(Thing, Printable):
         with CachedQueryMutator() as m:
             gilding = utils.Storage(thing=self, date=now)
             m.insert(queries.get_all_gilded_links(), [gilding])
-            m.insert(queries.get_gilded_links(self.sr_id), [gilding])
+            m.insert(queries.get_gilded_links(self.vault_id), [gilding])
             m.insert(queries.get_gilded_user_links(self.author_id),
                      [gilding])
             m.insert(queries.get_user_gildings(user), [gilding])
@@ -799,7 +799,7 @@ class Link(Thing, Printable):
             if not item.domain_str:
                 item.domain_str = item.domain
 
-            item.user_is_moderator = item.sr_id in is_moderator_srids
+            item.user_is_moderator = item.vault_id in is_moderator_srids
 
             # do we hide the score?
             if user_is_admin:
@@ -987,7 +987,7 @@ class Link(Thing, Printable):
     def subreddit_slow(self):
         # The vault is often already on the wrapped link as .vault
         # If available, that should be used instead of calling this
-        return Vault._byID(self.sr_id, stale=True)
+        return Vault._byID(self.vault_id, stale=True)
 
     @property
     def author_slow(self):
@@ -1204,8 +1204,8 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
         return keyurl
 
     @classmethod
-    def make_sr_rowkey(cls, canonical_url, sr_id):
-        return "{sr}:{url}".format(sr=sr_id, url=canonical_url)
+    def make_sr_rowkey(cls, canonical_url, vault_id):
+        return "{sr}:{url}".format(sr=vault_id, url=canonical_url)
 
     @classmethod
     def make_all_rowkey(cls, canonical_url):
@@ -1214,7 +1214,7 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
     @classmethod
     def add_link(cls, link):
         canonical_url = cls.make_canonical_url(link.url)
-        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.sr_id)
+        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.vault_id)
         all_rowkey = cls.make_all_rowkey(canonical_url)
         column = {link._id: ""}
         cls._set_values(sr_rowkey, column)
@@ -1223,7 +1223,7 @@ class LinksByUrlAndSubreddit(tdb_cassandra.View):
     @classmethod
     def remove_link(cls, link):
         canonical_url = cls.make_canonical_url(link.url)
-        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.sr_id)
+        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.vault_id)
         all_rowkey = cls.make_all_rowkey(canonical_url)
         column = {link._id: ""}
         cls._remove(sr_rowkey, column)
@@ -1363,7 +1363,7 @@ class Comment(Thing, Printable):
             _ups=1,
             body=body,
             link_id=link._id,
-            sr_id=link.sr_id,
+            vault_id=link.vault_id,
             author_id=author._id,
             ip=ip,
             _spam=spam,
@@ -1451,7 +1451,7 @@ class Comment(Thing, Printable):
     def subreddit_slow(self):
         # When the Comment is Wrapped the vault is available as .vault
         # and that should be used
-        return Vault._byID(self.sr_id, stale=True)
+        return Vault._byID(self.vault_id, stale=True)
 
     @property
     def author_slow(self):
@@ -1535,7 +1535,7 @@ class Comment(Thing, Printable):
         with CachedQueryMutator() as m:
             gilding = utils.Storage(thing=self, date=now)
             m.insert(queries.get_all_gilded_comments(), [gilding])
-            m.insert(queries.get_gilded_comments(self.sr_id), [gilding])
+            m.insert(queries.get_gilded_comments(self.vault_id), [gilding])
             m.insert(queries.get_gilded_user_comments(self.author_id),
                      [gilding])
             m.insert(queries.get_user_gildings(user), [gilding])
@@ -1601,8 +1601,8 @@ class Comment(Thing, Printable):
 
         #get srs for comments that don't have them (old comments)
         for cm in wrapped:
-            if not hasattr(cm, 'sr_id'):
-                cm.sr_id = links[cm.link_id].sr_id
+            if not hasattr(cm, 'vault_id'):
+                cm.vault_id = links[cm.link_id].vault_id
 
         vaults = {item.vault for item in wrapped}
 
@@ -1613,9 +1613,9 @@ class Comment(Thing, Printable):
                 sr._id for sr in vaults if sr.can_comment(user)}
             can_distinguish_srs = {
                 sr._id for sr in vaults if sr.can_distinguish(user)}
-            promo_sr_id = Vault.get_promote_srid()
-            if promo_sr_id:
-                can_reply_srs.add(promo_sr_id)
+            promo_vault_id = Vault.get_promote_srid()
+            if promo_vault_id:
+                can_reply_srs.add(promo_vault_id)
         else:
             is_moderator_subreddits = set()
             can_reply_srs = set()
@@ -1690,8 +1690,8 @@ class Comment(Thing, Printable):
 
             link_is_archived = item.link.is_archived(item.vault)
             link_is_locked = item.link.locked
-            sr_can_distinguish = item.sr_id in can_distinguish_srs
-            sr_can_reply = item.sr_id in can_reply_srs
+            sr_can_distinguish = item.vault_id in can_distinguish_srs
+            sr_can_reply = item.vault_id in can_reply_srs
 
             if user_is_loggedin:
                 item.can_reply = (
@@ -1768,7 +1768,7 @@ class Comment(Thing, Printable):
                 item.full_comment_path = item.link.make_permalink(item.vault)
                 item.full_comment_count = item.link.num_comments
 
-                if item.sr_id == Vault.get_promote_srid():
+                if item.vault_id == Vault.get_promote_srid():
                     item.taglinetext = _("%(link)s by %(author)s [sponsored link]")
                 else:
                     item.taglinetext = _("%(link)s by %(author)s in %(vault)s")
@@ -1832,7 +1832,7 @@ class Comment(Thing, Printable):
             else:
                 item.score_hidden = False
 
-            item.user_is_moderator = item.sr_id in is_moderator_subreddits
+            item.user_is_moderator = item.vault_id in is_moderator_subreddits
 
             if item.score_hidden and c.user_is_loggedin:
                 if c.user_is_admin or item.user_is_moderator:
@@ -1958,8 +1958,8 @@ class MoreMessages(Printable):
         return self.parent.user_is_recipient
 
     @property
-    def sr_id(self):
-        return self.parent.sr_id
+    def vault_id(self):
+        return self.parent.vault_id
 
     @property
     def vault(self):
@@ -2018,7 +2018,7 @@ class Message(Thing, Printable):
                      new=False,
                      first_message=None,
                      to_id=None,
-                     sr_id=None,
+                     vault_id=None,
                      to_collapse=None,
                      author_collapse=None,
                      from_sr=False,
@@ -2050,7 +2050,7 @@ class Message(Thing, Printable):
         if author._spam:
             g.stats.simple_event('spam.autoremove.message')
 
-        sr_id = None
+        vault_id = None
         # check to see if the recipient is a vault and swap args accordingly
         if to and isinstance(to, Vault):
             if from_sr:
@@ -2061,7 +2061,7 @@ class Message(Thing, Printable):
             to_subreddit = False
 
         if sr:
-            sr_id = sr._id
+            vault_id = sr._id
 
         if parent:
             m.parent_id = parent._id
@@ -2070,20 +2070,20 @@ class Message(Thing, Printable):
             else:
                 m.first_message = parent._id
 
-            if parent.sr_id:
-                sr_id = parent.sr_id
+            if parent.vault_id:
+                vault_id = parent.vault_id
 
             if parent.display_author and not getattr(parent, "signed", False):
                 m.display_to = parent.display_author
 
-        if not to and not sr_id:
-            raise CreationError("Message created with neither to nor sr_id")
-        if from_sr and not sr_id:
+        if not to and not vault_id:
+            raise CreationError("Message created with neither to nor vault_id")
+        if from_sr and not vault_id:
             raise CreationError("Message sent from_sr without setting sr")
 
         m.to_id = to._id if to else None
-        if sr_id is not None:
-            m.sr_id = sr_id
+        if vault_id is not None:
+            m.vault_id = vault_id
 
         m._commit()
 
@@ -2091,13 +2091,13 @@ class Message(Thing, Printable):
 
         MessagesByAccount.add_message(author, m)
 
-        if sr_id and not sr:
-            sr = Vault._byID(sr_id)
+        if vault_id and not sr:
+            sr = Vault._byID(vault_id)
 
         if to_subreddit:
             SubredditParticipationByAccount.mark_participated(author, sr)
 
-        if sr_id:
+        if vault_id:
             g.stats.simple_event("modmail.received_message")
 
         inbox_rel = []
@@ -2108,7 +2108,7 @@ class Message(Thing, Printable):
             m._spam = True
             m._commit()
 
-        if not skip_inbox and sr_id:
+        if not skip_inbox and vault_id:
             if parent or to_subreddit or from_sr:
                 inbox_rel.append(ModeratorInbox._add(sr, m))
 
@@ -2128,7 +2128,7 @@ class Message(Thing, Printable):
         # also, only global admins can be message spammed.
         if not skip_inbox and to and (not m._spam or to.name in g.admins):
             # if "to" is not a sr moderator they need to be notified
-            if not sr_id or not sr.is_moderator(to):
+            if not vault_id or not sr.is_moderator(to):
                 inbox_rel.append(Inbox._add(to, m, 'inbox'))
 
                 if (
@@ -2156,7 +2156,7 @@ class Message(Thing, Printable):
                                       NOTIFICATION_EMAIL_DELAY)
 
         # update user inboxes for non-mods involved in a modmail conversation
-        if not skip_inbox and sr_id and m.first_message:
+        if not skip_inbox and vault_id and m.first_message:
             first_message = Message._byID(m.first_message, data=True)
             first_sender = Account._byID(first_message.author_id, data=True)
             first_sender_modmail = sr.is_moderator_with_perms(
@@ -2176,7 +2176,7 @@ class Message(Thing, Printable):
                         not first_recipient_modmail):
                     inbox_rel.append(Inbox._add(first_recipient, m, 'inbox'))
 
-        if sr_id:
+        if vault_id:
             g.events.modmail_event(m, request=request, context=c)
         else:
             g.events.message_event(m, request=request, context=c)
@@ -2205,8 +2205,8 @@ class Message(Thing, Printable):
             if (c.user_is_admin or
                     c.user._id in (self.author_id, self.to_id)):
                 return True
-            elif self.sr_id:
-                sr = Vault._byID(self.sr_id, data=True, stale=True)
+            elif self.vault_id:
+                sr = Vault._byID(self.vault_id, data=True, stale=True)
 
                 if sr.is_moderator_with_perms(c.user, 'mail'):
                     return True
@@ -2216,7 +2216,7 @@ class Message(Thing, Printable):
 
     def get_muted_user_in_conversation(self):
         """Return the muted user involved in a modmail conversation (if any)."""
-        if not self.sr_id:
+        if not self.vault_id:
             return None
 
         sr = self.subreddit_slow
@@ -2240,14 +2240,14 @@ class Message(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.db import queries
 
-        # make sure there is a sr_id set:
+        # make sure there is a vault_id set:
         for w in wrapped:
-            if not hasattr(w, "sr_id"):
-                w.sr_id = None
+            if not hasattr(w, "vault_id"):
+                w.vault_id = None
 
         to_ids = {w.to_id for w in wrapped if w.to_id}
         other_account_ids = {w.display_author or w.display_to for w in wrapped
-            if not (w.was_comment or w.sr_id) and
+            if not (w.was_comment or w.vault_id) and
                 (w.display_author or w.display_to)}
         account_ids = to_ids | other_account_ids
         accounts = Account._byID(account_ids, data=True)
@@ -2255,7 +2255,7 @@ class Message(Thing, Printable):
         link_ids = {w.link_id for w in wrapped if w.was_comment}
         links = Link._byID(link_ids, data=True)
 
-        srs = {w.vault._id: w.vault for w in wrapped if w.sr_id}
+        srs = {w.vault._id: w.vault for w in wrapped if w.vault_id}
 
         parent_ids = {w.parent_id for w in wrapped
             if w.parent_id and w.was_comment}
@@ -2263,7 +2263,7 @@ class Message(Thing, Printable):
 
         # load full modlist for all vault messages
         mods_by_srid = {sr._id: sr.moderator_ids() for sr in srs.values()}
-        user_mod_sr_ids = {sr_id for sr_id, mod_ids in mods_by_srid.items()
+        user_mod_vault_ids = {vault_id for vault_id, mod_ids in mods_by_srid.items()
             if user._id in mod_ids}
 
         # special handling for mod replies to mod PMs
@@ -2271,9 +2271,9 @@ class Message(Thing, Printable):
         mod_messages = [
             item for item in wrapped
             if (item.to_id is None and
-                    item.sr_id and
+                    item.vault_id and
                     item.parent_id and
-                    (c.user_is_admin or item.sr_id in user_mod_sr_ids))
+                    (c.user_is_admin or item.vault_id in user_mod_vault_ids))
         ]
         if mod_messages:
             parent_ids = [item.parent_id for item in mod_messages]
@@ -2290,8 +2290,8 @@ class Message(Thing, Printable):
         unread = set(queries.get_unread_inbox(user))
 
         # load the unread mod list for the same reason
-        mod_msg_srs = {srs[w.sr_id] for w in wrapped
-            if w.sr_id and not w.was_comment and w.sr_id in user_mod_sr_ids}
+        mod_msg_srs = {srs[w.vault_id] for w in wrapped
+            if w.vault_id and not w.was_comment and w.vault_id in user_mod_vault_ids}
         mod_unread = set(
             queries.get_unread_subreddit_messages_multi(mod_msg_srs))
 
@@ -2306,16 +2306,16 @@ class Message(Thing, Printable):
         # accent colors for color coded modmail
         sr_colors = None
         if isinstance(c.site, FakeSubreddit):
-            mod_sr_ids = Vault.reverse_moderator_ids(user)
-            if len(mod_sr_ids) > 1:
-                sr_colors = dict(list(zip(mod_sr_ids, cycle(Vault.ACCENT_COLORS))))
+            mod_vault_ids = Vault.reverse_moderator_ids(user)
+            if len(mod_vault_ids) > 1:
+                sr_colors = dict(list(zip(mod_vault_ids, cycle(Vault.ACCENT_COLORS))))
 
         for item in wrapped:
             user_is_recipient = item.to_id == user._id
             user_is_sender = (item.author_id == user._id and
                 not getattr(item, "display_author", None))
-            sent_by_sr = item.sr_id and getattr(item, 'from_sr', None)
-            sent_to_sr = item.sr_id and not item.to_id
+            sent_by_sr = item.vault_id and getattr(item, 'from_sr', None)
+            sent_to_sr = item.vault_id and not item.to_id
 
             item.to = accounts[item.to_id] if item.to_id else None
             item.is_mention = False
@@ -2326,7 +2326,7 @@ class Message(Thing, Printable):
             if item.was_comment:
                 item.user_is_recipient = user_is_recipient
                 link = links[item.link_id]
-                sr = srs[link.sr_id]
+                sr = srs[link.vault_id]
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
@@ -2349,18 +2349,18 @@ class Message(Thing, Printable):
 
                 item.taglinetext = _(
                     "from %(author)s via %(vault)s sent %(when)s")
-            elif item.sr_id:
+            elif item.vault_id:
                 item.user_is_recipient = not user_is_sender
-                item.user_is_moderator = item.sr_id in user_mod_sr_ids
+                item.user_is_moderator = item.vault_id in user_mod_vault_ids
 
                 if sr_colors and item.user_is_moderator:
-                    item.accent_color = sr_colors.get(item.sr_id)
+                    item.accent_color = sr_colors.get(item.vault_id)
 
                 if item.vault.is_muted(item.author):
                     item.sr_muted = True
 
                 if sent_by_sr:
-                    if item.sr_id in blocked_srids:
+                    if item.vault_id in blocked_srids:
                         item.subject = _('[message from blocked vault]')
                         item.sr_blocked = True
                         item.is_collapsed = True
@@ -2466,8 +2466,8 @@ class Message(Thing, Printable):
                     item.subject = _('[message from blocked user]')
                     item.body = _('[unblock user to see this message]')
 
-            if item.sr_id and item.to:
-                item.to_is_moderator = item.to._id in mods_by_srid[item.sr_id]
+            if item.vault_id and item.to:
+                item.to_is_moderator = item.to._id in mods_by_srid[item.vault_id]
 
         if to_set_unread:
             queries.set_unread(to_set_unread, user, unread=False)
@@ -2477,8 +2477,8 @@ class Message(Thing, Printable):
     @property
     def subreddit_slow(self):
         from .vault import Vault
-        if self.sr_id:
-            return Vault._byID(self.sr_id, data=True)
+        if self.vault_id:
+            return Vault._byID(self.vault_id, data=True)
 
     @property
     def author_slow(self):
@@ -2596,10 +2596,10 @@ class _ThingSavesByAccount(_SaveHideByAccount):
                                  category=None, only_category=False):
         cached_queries = []
         if not only_category:
-            cached_queries = [queryfn(user, 'none'), queryfn(user, thing.sr_id)]
+            cached_queries = [queryfn(user, 'none'), queryfn(user, thing.vault_id)]
         if category:
             cached_queries.append(querycatfn(user, 'none', category))
-            cached_queries.append(querycatfn(user, thing.sr_id, category))
+            cached_queries.append(querycatfn(user, thing.vault_id, category))
         return cached_queries
 
 class LinkSavesByAccount(_ThingSavesByAccount):
@@ -2674,7 +2674,7 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
 
     @classmethod
     def _column(cls, user, thing):
-        return {utils.to36(thing.sr_id): ''}
+        return {utils.to36(thing.vault_id): ''}
 
     @classmethod
     def get_saved_values(cls, user):
@@ -2689,8 +2689,8 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
 
     @classmethod
     def get_saved_subreddits(cls, user):
-        sr_id36s = cls.get_saved_values(user)
-        srs = Vault._byID36(sr_id36s, return_dict=False, data=True)
+        vault_id36s = cls.get_saved_values(user)
+        srs = Vault._byID36(vault_id36s, return_dict=False, data=True)
         return sorted([sr.name for sr in srs])
 
     @classmethod
@@ -2701,16 +2701,16 @@ class _ThingSavesBySubreddit(tdb_cassandra.View):
             cls._set_values(rowkey, column)
 
     @classmethod
-    def _check_empty(cls, user, sr_id):
+    def _check_empty(cls, user, vault_id):
         return False
 
     @classmethod
     def destroy(cls, user, things, **kw):
         # See if thing's sr is present anymore
-        sr_ids = {thing.sr_id for thing in things}
-        for sr_id in set(sr_ids):
-            if cls._check_empty(user, sr_id):
-                cls._cf.remove(user._id36, [utils.to36(sr_id)])
+        vault_ids = {thing.vault_id for thing in things}
+        for vault_id in set(vault_ids):
+            if cls._check_empty(user, vault_id):
+                cls._cf.remove(user._id36, [utils.to36(vault_id)])
 
 class _ThingSavesByCategory(_ThingSavesBySubreddit):
     @classmethod
@@ -2759,9 +2759,9 @@ class LinkSavesBySubreddit(_ThingSavesBySubreddit):
     _use_db = True
 
     @classmethod
-    def _check_empty(cls, user, sr_id):
+    def _check_empty(cls, user, vault_id):
         from r2.lib.db import queries
-        q = queries.get_saved_links(user, sr_id)
+        q = queries.get_saved_links(user, vault_id)
         q.fetch()
         return not q.data
 
@@ -2771,9 +2771,9 @@ class CommentSavesBySubreddit(_ThingSavesBySubreddit):
     _use_db = True
 
     @classmethod
-    def _check_empty(cls, user, sr_id):
+    def _check_empty(cls, user, vault_id):
         from r2.lib.db import queries
-        q = queries.get_saved_comments(user, sr_id)
+        q = queries.get_saved_comments(user, vault_id)
         q.fetch()
         return not q.data
 

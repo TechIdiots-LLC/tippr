@@ -792,9 +792,9 @@ class VSavedCategory(Validator):
         }
 
 
-class VSubredditName(VRequired):
+class VVaultName(VRequired):
     def __init__(self, item, allow_language_srs=False, *a, **kw):
-        VRequired.__init__(self, item, errors.BAD_SR_NAME, *a, **kw)
+        VRequired.__init__(self, item, errors.BAD_VAULT_NAME, *a, **kw)
         self.allow_language_srs = allow_language_srs
 
     def run(self, name):
@@ -816,18 +816,18 @@ class VSubredditName(VRequired):
         }
 
 
-class VAvailableSubredditName(VSubredditName):
+class VAvailableVaultName(VVaultName):
     def run(self, name):
-        name = VSubredditName.run(self, name)
+        name = VVaultName.run(self, name)
         if name:
             try:
                 a = Vault._by_name(name)
-                return self.error(errors.SUBREDDIT_EXISTS)
+                return self.error(errors.VAULT_EXISTS)
             except NotFound:
                 return name
 
 
-class VSRByName(Validator):
+class VVaultByName(Validator):
     def __init__(self, sr_name, required=True, return_srname=False):
         self.required = required
         self.return_srname = return_srname
@@ -836,7 +836,7 @@ class VSRByName(Validator):
     def run(self, sr_name):
         if not sr_name:
             if self.required:
-                self.set_error(errors.BAD_SR_NAME, code=400)
+                self.set_error(errors.BAD_VAULT_NAME, code=400)
         else:
             sr_name = sr_path_rx.sub(r'\g<name>', sr_name.strip())
             try:
@@ -846,7 +846,7 @@ class VSRByName(Validator):
                 else:
                     return sr
             except NotFound:
-                self.set_error(errors.SUBREDDIT_NOEXIST, code=400)
+                self.set_error(errors.VAULT_NOEXIST, code=400)
 
     def param_docs(self):
         return {
@@ -854,7 +854,7 @@ class VSRByName(Validator):
         }
 
 
-class VSRByNames(Validator):
+class VVaultByNames(Validator):
     """Returns a dict mapping vault names to vault objects.
 
     sr_names_csv - a comma delimited string of vault names
@@ -871,7 +871,7 @@ class VSRByNames(Validator):
                         for s in sr_names_csv.split(',')]
             return Vault._by_name(sr_names)
         elif self.required:
-            self.set_error(errors.BAD_SR_NAME, code=400)
+            self.set_error(errors.BAD_VAULT_NAME, code=400)
         return {}
 
     def param_docs(self):
@@ -1474,18 +1474,18 @@ class VSubmitSR(Validator):
 
     def run(self, sr_name, link_type = None):
         if not sr_name:
-            self.set_error(errors.SUBREDDIT_REQUIRED)
+            self.set_error(errors.VAULT_REQUIRED)
             return None
 
         try:
             sr_name = sr_path_rx.sub(r'\g<name>', str(sr_name).strip())
             sr = Vault._by_name(sr_name)
         except (NotFound, AttributeError, UnicodeEncodeError):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
+            self.set_error(errors.VAULT_NOEXIST)
             return
 
         if not c.user_is_loggedin or not sr.can_submit(c.user, self.promotion):
-            self.set_error(errors.SUBREDDIT_NOTALLOWED)
+            self.set_error(errors.VAULT_NOTALLOWED)
             return
 
         if not sr.allow_ads and self.promotion:
@@ -1523,7 +1523,7 @@ class VSubscribeSR(VByName):
         try:
             sr = Vault._by_name(str(sr_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
+            self.set_error(errors.VAULT_NOEXIST)
             return
 
         return sr
@@ -1986,7 +1986,7 @@ class VMessageRecipient(VExistingUname):
                     self.set_error(errors.USER_MUTED)
                 return s
             except NotFound:
-                self.set_error(errors.SUBREDDIT_NOEXIST)
+                self.set_error(errors.VAULT_NOEXIST)
         else:
             account = VExistingUname.run(self, name)
             if account and account._id in c.user.enemies:
@@ -3273,7 +3273,7 @@ class VMultiByPath(Validator):
 
 
 sr_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
-class VSubredditList(Validator):
+class VVaultList(Validator):
 
     def __init__(self, param, limit=20, allow_language_srs=True):
         Validator.__init__(self, param)
@@ -3292,14 +3292,14 @@ class VSubredditList(Validator):
             valid_name = Vault.is_valid_name(
                 name, allow_language_srs=self.allow_language_srs)
             if not valid_name:
-                return self.set_error(errors.BAD_SR_NAME, code=400)
+                return self.set_error(errors.BAD_VAULT_NAME, code=400)
 
         unique_srs = set(vaults)
 
         if vaults:
             valid_srs = set(Vault._by_name(vaults).keys())
             if unique_srs - valid_srs:
-                return self.set_error(errors.SUBREDDIT_NOEXIST, code=400)
+                return self.set_error(errors.VAULT_NOEXIST, code=400)
 
         if len(unique_srs) > self.limit:
             return self.set_error(

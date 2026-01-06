@@ -658,6 +658,6 @@ class UserQueryCache(_BaseQueryCache):
     _use_db = True
 
 
-class SubredditQueryCache(_BaseQueryCache):
+class VaultQueryCache(_BaseQueryCache):
     """A query cache column family for vault-keyed queries."""
     _use_db = True

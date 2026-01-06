@@ -339,14 +339,14 @@ class ApiController(TipprController):
         """
         if (form.has_errors("to",
                     errors.USER_DOESNT_EXIST, errors.NO_USER,
-                    errors.SUBREDDIT_NOEXIST, errors.USER_BLOCKED,
+                    errors.VAULT_NOEXIST, errors.USER_BLOCKED,
                 ) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("subject", errors.TOO_LONG) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("message", errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA) or
-                form.has_errors("from_sr", errors.SUBREDDIT_NOEXIST)):
+                form.has_errors("from_sr", errors.VAULT_NOEXIST)):
             return
 
         if form.has_errors("to", errors.USER_MUTED):
@@ -468,9 +468,9 @@ class ApiController(TipprController):
             return
 
         if form.has_errors('sr',
-                errors.SUBREDDIT_NOEXIST,
-                errors.SUBREDDIT_NOTALLOWED,
-                errors.SUBREDDIT_REQUIRED,
+                errors.VAULT_NOEXIST,
+                errors.VAULT_NOTALLOWED,
+                errors.VAULT_REQUIRED,
                 errors.INVALID_OPTION,
                 errors.NO_SELFS,
                 errors.NO_LINKS,
@@ -982,8 +982,8 @@ class ApiController(TipprController):
         if type == 'moderator_invite':
             invites = sum(1 for i in container.each_moderator_invite())
             if invites >= g.sr_invite_limit:
-                c.errors.add(errors.SUBREDDIT_RATELIMIT, field="name")
-                form.set_error(errors.SUBREDDIT_RATELIMIT, "name")
+                c.errors.add(errors.VAULT_RATELIMIT, field="name")
+                form.set_error(errors.VAULT_RATELIMIT, "name")
                 return
 
         if (type in self._sr_friend_types and
@@ -995,9 +995,9 @@ class ApiController(TipprController):
                 limit=getattr(g, "sr_%s_quota" % type),
             )
             if not sr_ratelimit.record_and_check():
-                form.set_text(".status", errors.SUBREDDIT_RATELIMIT)
-                c.errors.add(errors.SUBREDDIT_RATELIMIT)
-                form.set_error(errors.SUBREDDIT_RATELIMIT, None)
+                form.set_text(".status", errors.VAULT_RATELIMIT)
+                c.errors.add(errors.VAULT_RATELIMIT)
+                form.set_error(errors.VAULT_RATELIMIT, None)
                 return
 
         # if we are (strictly) friending, the container
@@ -1888,7 +1888,7 @@ class ApiController(TipprController):
                     limit=g.sr_muted_quota,
                 )
                 if not sr_ratelimit.record_and_check():
-                    abort(403, errors.SUBREDDIT_RATELIMIT)
+                    abort(403, errors.VAULT_RATELIMIT)
 
         # Don't allow a user in timeout to mute users
         VNotInTimeout().run(action_name="muteuser", details_text="modmail",
@@ -2911,8 +2911,8 @@ class ApiController(TipprController):
             c.errors.add(errors.CANT_CONVERT_TO_GOLD_ONLY, field='type')
         elif form.has_errors('type', errors.GOLD_REQUIRED):
             pass
-        elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
-                                        errors.BAD_SR_NAME):
+        elif not sr and form.has_errors("name", errors.VAULT_EXISTS,
+                                        errors.BAD_VAULT_NAME):
             form.find('#example_name').hide()
         elif form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG):
             form.find('#example_title').hide()
@@ -2929,8 +2929,8 @@ class ApiController(TipprController):
             pass
         elif form.has_errors('comment_score_hide_mins', errors.BAD_NUMBER):
             pass
-        elif form.has_errors('related_subreddits', errors.SUBREDDIT_NOEXIST,
-                             errors.BAD_SR_NAME, errors.TOO_MANY_SUBREDDITS):
+        elif form.has_errors('related_subreddits', errors.VAULT_NOEXIST,
+                             errors.BAD_VAULT_NAME, errors.TOO_MANY_SUBREDDITS):
             pass
         elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
             pass

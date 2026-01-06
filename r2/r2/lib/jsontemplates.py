@@ -239,7 +239,7 @@ class ThingJsonTemplate(JsonTemplate):
         return ObjectTemplate(dict(kind = self.kind(thing),
                                    data = self.data(thing)))
 
-class SubredditJsonTemplate(ThingJsonTemplate):
+class VaultJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(
         accounts_active="accounts_active_count",
         banner_img="banner_img",
@@ -261,7 +261,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         public_description="public_description",
         public_description_html="public_description_html",
         public_traffic="public_traffic",
-        # related_subreddits="related_subreddits",
+        # related_vaults="related_vaults",
         hide_ads="hide_ads",
         quarantine="quarantine",
         show_media="show_media",
@@ -1439,7 +1439,7 @@ class StylesheetTemplate(ThingJsonTemplate):
             return c.site._fullname
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
-class SubredditSettingsTemplate(ThingJsonTemplate):
+class VaultSettingsTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(
         allow_images='site.allow_images',
         collapse_deleted_comments='site.collapse_deleted_comments',
@@ -1455,7 +1455,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         over_18='site.over_18',
         public_description='site.public_description',
         public_traffic='site.public_traffic',
-        # related_subreddits='site.related_subreddits',
+        # related_vaults='site.related_vaults',
         hide_ads="site.hide_ads",
         show_media='site.show_media',
         show_media_preview='site.show_media_preview',

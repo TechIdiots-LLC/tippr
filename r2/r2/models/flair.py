@@ -104,7 +104,7 @@ class FlairTemplate(tdb_cassandra.Thing):
         return self.text_editable or (not text_editable and self.text == text)
 
 
-class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
+class FlairTemplateByVaultIndex(tdb_cassandra.Thing):
     """Lists of FlairTemplate IDs for a vault.
 
     The FlairTemplate references are stored as an arbitrary number of attrs.
@@ -114,7 +114,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
 
     MAX_FLAIR_TEMPLATES = 350
 
-    _int_props = ('sr_id',)
+    _int_props = ('vault_id',)
     _use_db = True
     _connection_pool = 'main'
 

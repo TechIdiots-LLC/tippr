@@ -155,7 +155,7 @@ class MultiApiController(TipprController):
             try:
                 sr = srs[sr_data['name']]
             except KeyError:
-                raise TipprError('SUBREDDIT_NOEXIST', code=400)
+                raise TipprError('VAULT_NOEXIST', code=400)
             else:
                 # name is passed in via the API data format, but should not be
                 # stored on the model.

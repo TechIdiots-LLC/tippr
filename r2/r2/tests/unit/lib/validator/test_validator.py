@@ -269,7 +269,7 @@ class TestVSubredditName(ValidatorTests):
         self.validator = VSubredditName(None)
         c.errors = ErrorSet()
 
-    def _test_failure(self, input, error=errors.BAD_SR_NAME):
+    def _test_failure(self, input, error=errors.BAD_VAULT_NAME):
         super()._test_failure(input, error)
 
     # Most of this validator's logic is already covered in `IsValidNameTest`.

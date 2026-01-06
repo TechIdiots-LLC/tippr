@@ -149,7 +149,7 @@ def filter_prefs(prefs, user):
         if not override_sr:
             del prefs['pref_default_theme_sr']
             if prefs['pref_enable_default_themes']:
-                c.errors.add(c.errors.add(errors.SUBREDDIT_REQUIRED, field="stylesheet_override"))
+                c.errors.add(c.errors.add(errors.VAULT_REQUIRED, field="stylesheet_override"))
         else:
             if override_sr.can_view(user):
                 prefs['pref_default_theme_sr'] = override_sr.name

@@ -105,6 +105,12 @@ fi
 # the community build scripts and copy the installed binary to /usr/local/bin.
 if [ ! -x /usr/local/bin/mcrouter ]; then
   echo "mcrouter binary not found in /usr/local/bin; attempting build in /opt/mcrouter"
+  
+  # Ensure python command exists (required for mcrouter's configure)
+  if ! command -v python >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get install -y python-is-python3 || true
+  fi
+
   if [ ! -d /opt/mcrouter ]; then
     git clone https://github.com/facebook/mcrouter.git /opt/mcrouter || true
   fi

@@ -72,7 +72,7 @@ from r2.models.wiki import ImagesByWikiPage, WikiPage
 from .account import (
     Account,
     FakeAccount,
-    QuarantinedSubredditOptInsByAccount,
+    QuarantinedVaultOptInsByAccount,
 )
 from .printable import Printable
 
@@ -272,7 +272,7 @@ class Vault(Thing, Printable, BaseSite):
                                                'gilding_server_seconds',
                                                'ban_count')
 
-    sr_limit = 50
+    vault_limit = 50
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
@@ -359,10 +359,10 @@ class Vault(Thing, Printable, BaseSite):
              over_18 = False, **kw):
         if not cls.is_valid_name(name):
             raise ValueError("bad vault name")
-        with g.make_lock("create_sr", 'create_sr_' + name.lower()):
+        with g.make_lock("create_vault", 'create_vault_' + name.lower()):
             try:
                 sr = Vault._by_name(name)
-                raise SubredditExists
+                raise VaultExists
             except NotFound:
                 if "allow_top" not in kw:
                     kw['allow_top'] = True
@@ -970,9 +970,9 @@ class Vault(Thing, Printable, BaseSite):
 
     @classmethod
     def get_sr_user_relations(cls, user, srs):
-        """Return SubredditUserRelations for the user and vaults.
+        """Return VaultUserRelations for the user and vaults.
 
-        The SubredditUserRelation objects indicate whether the user is a
+        The VaultUserRelation objects indicate whether the user is a
         moderator, contributor, subscriber, banned, or muted. This method
         batches the lookups of all the relations for all the vaults.
 
@@ -1213,7 +1213,7 @@ class Vault(Thing, Printable, BaseSite):
                 # Goldies get extra vaults
                 limit = Vault.gold_limit
             else:
-                limit = Vault.sr_limit
+                limit = Vault.vault_limit
 
         # note: for user not logged in, the fake user account has
         # has_subscribed == False by default.
@@ -2732,11 +2732,11 @@ VaultUserRelations = collections.namedtuple(
 )
 
 
-class SRMember(Relation(Vault, Account)):
+class VaultMember(Relation(Vault, Account)):
     _defaults = dict(encoded_permissions=None)
     _permission_class = None
-    _cache = g.srmembercache
-    _rel_cache = g.srmembercache
+    _cache = g.vaultmembercache
+    _rel_cache = g.vaultmembercache
 
     @classmethod
     def _cache_prefix(cls):
@@ -2785,8 +2785,8 @@ class SRMember(Relation(Vault, Account)):
         return self.get_permissions().is_superuser()
 
 
-class FakeSRMember:
-    """All-permission granting stub for SRMember, used by FakeSubreddits."""
+class FakeVaultMember:
+    """All-permission granting stub for VaultMember, used by FakeVaults."""
     def __init__(self, permission_class):
         self.permission_class = permission_class
 
@@ -2801,22 +2801,22 @@ class FakeSRMember:
 
 
 Vault.__bases__ += (
-    UserRel('moderator', SRMember,
+    UserRel('moderator', VaultMember,
             permission_class=ModeratorPermissionSet),
-    UserRel('moderator_invite', SRMember,
+    UserRel('moderator_invite', VaultMember,
             permission_class=ModeratorPermissionSet),
-    UserRel('contributor', SRMember, disable_ids_fn=True),
-    UserRel('banned', SRMember, disable_ids_fn=True),
-    UserRel('muted', SRMember, disable_ids_fn=True),
-    UserRel('wikibanned', SRMember),
-    UserRel('wikicontributor', SRMember),
+    UserRel('contributor', VaultMember, disable_ids_fn=True),
+    UserRel('banned', VaultMember, disable_ids_fn=True),
+    UserRel('muted', VaultMember, disable_ids_fn=True),
+    UserRel('wikibanned', VaultMember),
+    UserRel('wikicontributor', VaultMember),
 )
 
 
 def add_legacy_subscriber(srs, user):
     srs = tup(srs)
     for sr in srs:
-        rel = SRMember(sr, user, "subscriber")
+        rel = VaultMember(sr, user, "subscriber")
         try:
             rel._commit()
         except CreationError:
@@ -2824,13 +2824,13 @@ def add_legacy_subscriber(srs, user):
 
 
 def remove_legacy_subscriber(sr, user):
-    rels = SRMember._fast_query([sr], [user], "subscriber")
+    rels = VaultMember._fast_query([sr], [user], "subscriber")
     rel = rels.get((sr, user, "subscriber"))
     if rel:
         rel._delete()
 
 
-class SubredditTempBan:
+class VaultTempBan:
     def __init__(self, sr, kind, victim, banner, duration):
         self.sr = sr._id36
         self._srname = sr.name
@@ -2863,11 +2863,11 @@ class SubredditTempBan:
 
     @classmethod
     def cancel_rowkey(cls, name, type):
-        return "srunban:{}:{}".format(name, type)
+        return "vunban:{}:{}".format(name, type)
 
     @classmethod
     def schedule_rowkey(cls):
-        return "srunban"
+        return "vunban"
 
     @classmethod
     def search(cls, srname, bantype, subjects):
@@ -2891,8 +2891,8 @@ class SubredditTempBan:
         )
 
 
-@trylater_hooks.on('trylater.srunban')
-def on_subreddit_unban(data):
+@trylater_hooks.on('trylater.vunban')
+def on_vault_unban(data):
     from r2.models.modaction import ModAction
     for blob in data.values():
         baninfo = json.loads(blob)
@@ -2913,7 +2913,7 @@ def on_subreddit_unban(data):
                              description="was temporary")
 
 
-class MutedAccountsBySubreddit:
+class MutedAccountsByVault:
     @classmethod
     def mute(cls, sr, user, muter, parent_message=None):
         NUM_HOURS = 72
@@ -2936,14 +2936,14 @@ class MutedAccountsBySubreddit:
 
         #if the user has interacted with the vault before, message them
         if user.has_interacted_with(sr):
-            subject = "You have been muted from r/%(subredditname)s"
-            subject %= dict(subredditname=sr.name)
+            subject = "You have been muted from v/%(vaultname)s"
+            subject %= dict(vaultname=sr.name)
             message = ("You have been [temporarily muted](%(muting_link)s) "
-                "from r/%(subredditname)s. You will not be able to message "
-                "the moderators of r/%(subredditname)s for %(num_hours)s hours.")
+                "from v/%(vaultname)s. You will not be able to message "
+                "the moderators of v/%(vaultname)s for %(num_hours)s hours.")
             message %= dict(
                 muting_link="https://reddit.zendesk.com/hc/en-us/articles/205269739",
-                subredditname=sr.name,
+                vaultname=sr.name,
                 num_hours=NUM_HOURS,
             )
             if parent_message:
@@ -2964,11 +2964,11 @@ class MutedAccountsBySubreddit:
 
     @classmethod
     def cancel_rowkey(cls, vault):
-        return "srmute:%s" % vault.name
+        return "vmute:%s" % vault.name
 
     @classmethod
     def schedule_rowkey(cls):
-        return "srmute"
+        return "vmute"
 
     @classmethod
     def search(cls, vault, subjects):
@@ -2996,7 +2996,7 @@ class MutedAccountsBySubreddit:
             ModAction.create(sr, unmuter, 'unmuteuser', target=user)
 
 
-@trylater_hooks.on('trylater.srmute')
+@trylater_hooks.on('trylater.vmute')
 def unmute_hook(data):
     for blob in data.values():
         muteinfo = json.loads(blob)
@@ -3004,10 +3004,10 @@ def unmute_hook(data):
         user = Account._byID36(muteinfo['who'], data=True)
 
         vault.remove_muted(user)
-        MutedAccountsBySubreddit.unmute(vault, user, automatic=True)
+        MutedAccountsByVault.unmute(vault, user, automatic=True)
 
 
-class SubredditsActiveForFrontPage(tdb_cassandra.View):
+class VaultsActiveForFrontPage(tdb_cassandra.View):
     """Tracks which vaults currently have valid frontpage posts.
 
     The front page's "hot" page only includes posts that are newer than
@@ -3041,14 +3041,14 @@ class SubredditsActiveForFrontPage(tdb_cassandra.View):
         cls._set_values(cls.ROWKEY, {vault._id36: ""})
 
     @classmethod
-    def filter_inactive_ids(cls, subreddit_ids):
-        sr_id36s = [to36(sr_id) for sr_id in subreddit_ids]
+    def filter_inactive_ids(cls, vault_ids):
+        vault_id36s = [to36(vault_id) for vault_id in vault_ids]
         try:
-            results = cls._cf.get(cls.ROWKEY, columns=sr_id36s)
+            results = cls._cf.get(cls.ROWKEY, columns=vault_id36s)
         except tdb_cassandra.NotFoundException:
             results = {}
 
-        num_filtered = len(subreddit_ids) - len(results)
+        num_filtered = len(vault_ids) - len(results)
         g.stats.simple_event("frontpage.filter_inactive", delta=num_filtered)
 
-        return [int(sr_id36, 36) for sr_id36 in list(results.keys())]
+        return [int(vault_id36, 36) for vault_id36 in list(results.keys())]
