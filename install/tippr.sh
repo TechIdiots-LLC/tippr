@@ -361,22 +361,25 @@ if [ ! -d $TIPPR_SRC ]; then
     chown $TIPPR_USER $TIPPR_SRC
 fi
 
-function copy_upstart {
-    if [ -d ${1}/upstart ]; then
-        # Prefer Upstart directory if present (older Ubuntu), otherwise
-        # place the files in /etc/init.d so they are available on systemd
-        # hosts for later conversion or wrapper usage.
-        if [ -d /etc/init ]; then
-            # Copy any tippr- or legacy reddit- upstart jobs; fall back to
-            # copying all upstart files. Ignore errors if patterns don't match.
-            cp ${1}/upstart/tippr-* ${1}/upstart/reddit-* ${1}/upstart/* /etc/init/ 2>/dev/null || true
-        else
-            mkdir -p /etc/init.d
-            cp ${1}/upstart/tippr-* ${1}/upstart/reddit-* ${1}/upstart/* /etc/init.d/ 2>/dev/null || true
-            # Make copied files executable so they can be used as simple
-            # wrappers or inspected by administrators.
-            chmod +x /etc/init.d/* || true
-        fi
+function copy_systemd {
+    if [ -d "${1}/systemd" ]; then
+        echo "Copying and templating systemd units from ${1}/systemd to /etc/systemd/system/..."
+        # Iterate over files to perform variable substitution before installation
+        for f in "${1}"/systemd/*.service "${1}"/systemd/*.target; do
+            [ -e "$f" ] || continue
+            dest="/etc/systemd/system/$(basename "$f")"
+            echo "  -> Templating $(basename "$f")"
+            sed -e "s|@TIPPR_USER@|$TIPPR_USER|g" \
+                -e "s|@TIPPR_GROUP@|$TIPPR_GROUP|g" \
+                -e "s|@TIPPR_HOME@|$TIPPR_HOME|g" \
+                -e "s|@TIPPR_SRC@|$TIPPR_SRC|g" \
+                -e "s|@TIPPR_VENV@|$TIPPR_VENV|g" \
+                -e "s|@TIPPR_ROOT@|$TIPPR_SRC/tippr/r2|g" \
+                -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
+                -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job ||g" \
+                "$f" > "$dest"
+        done
+        systemctl daemon-reload
     fi
 }
 
@@ -407,7 +410,7 @@ function clone_tippr_repo {
         fi
     fi
 
-    copy_upstart $destination
+    copy_systemd $destination
 }
 
 function clone_tippr_service_repo {
@@ -422,6 +425,24 @@ clone_tippr_repo tippr TechIdiots-LLC/tippr
 clone_tippr_repo i18n TechIdiots-LLC/tippr-i18n
 clone_tippr_service_repo websockets "$TIPPR_WEBSOCKETS_REPO"
 clone_tippr_service_repo activity "$TIPPR_ACTIVITY_REPO"
+
+# Install systemd units from the current repository immediately
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    copy_systemd $RUNDIR/..
+fi
+
+# Create the environment file early so services can use it
+CONSUMER_CONFIG_ROOT=$TIPPR_HOME/consumer-count.d
+export TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
+if [ ! -f /etc/default/tippr ]; then
+    cat > /etc/default/tippr <<DEFAULT
+TIPPR_ROOT=$TIPPR_SRC/tippr/r2
+TIPPR_INI=$TIPPR_SRC/tippr/r2/run.ini
+TIPPR_USER=$TIPPR_USER
+TIPPR_GROUP=$TIPPR_GROUP
+TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
+DEFAULT
+fi
 
 # Patch activity and websockets setup.py to use new baseplate module path
 # (baseplate.integration was renamed to baseplate.frameworks in baseplate 1.0)
@@ -729,7 +750,7 @@ else
     SKIP_I18N=1
 fi
 for plugin in $TIPPR_AVAILABLE_PLUGINS; do
-    copy_upstart $TIPPR_SRC/$plugin
+    copy_systemd $TIPPR_SRC/$plugin
     install_tippr_repo $plugin
 done
 install_tippr_repo websockets
@@ -864,40 +885,38 @@ TIPPRSHELL
 
 helper-script /usr/local/bin/tippr-start <<TIPPRSTART
 #!/bin/bash
-if command -v initctl >/dev/null 2>&1; then
-    initctl emit tippr-start
-elif command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    # Restart common tippr units if systemd is available
-    systemctl restart tippr-websockets tippr-activity gunicorn-click gunicorn-geoip || true
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    systemctl start tippr.target
+    [ -f /etc/default/tippr ] && . /etc/default/tippr
+    $TIPPR_SRC/tippr/scripts/manage-consumers start
 else
-    echo "No initctl or systemctl found; cannot start services"
+    echo "No systemctl found; cannot start services"
 fi
 TIPPRSTART
 
 helper-script /usr/local/bin/tippr-stop <<TIPPRSTOP
 #!/bin/bash
-if command -v initctl >/dev/null 2>&1; then
-    initctl emit tippr-stop
-elif command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl stop tippr-websockets tippr-activity gunicorn-click gunicorn-geoip || true
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    [ -f /etc/default/tippr ] && . /etc/default/tippr
+    $TIPPR_SRC/tippr/scripts/manage-consumers stop
+    systemctl stop tippr.target
 else
-    echo "No initctl or systemctl found; cannot stop services"
+    echo "No systemctl found; cannot stop services"
 fi
 TIPPRSTOP
 
 helper-script /usr/local/bin/tippr-restart <<TIPPRRESTART
 #!/bin/bash
-if command -v initctl >/dev/null 2>&1; then
-    initctl emit tippr-restart TARGET=${1:-all}
-elif command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     # If a specific target is provided, attempt to restart matching unit(s)
     if [ -n "$1" ] && [ "$1" != "all" ]; then
         systemctl restart "$1" || true
     else
-        systemctl restart tippr-websockets tippr-activity gunicorn-click gunicorn-geoip || true
+        systemctl restart tippr.target
+        $TIPPR_SRC/tippr/scripts/manage-consumers restart
     fi
 else
-    echo "No initctl or systemctl found; cannot restart services"
+    echo "No systemctl found; cannot restart services"
 fi
 TIPPRRESTART
 
@@ -916,28 +935,7 @@ TIPPRSERVE
 # Create a systemd unit for tippr-serve that uses the installer helper
 # script so systemd runs paster with the correct PYTHONPATH and venv.
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/tippr-serve.service <<UNIT
-[Unit]
-Description=Tippr web app (paster serve)
-After=network.target
-
-[Service]
-Type=simple
-User=$TIPPR_USER
-Group=$TIPPR_USER
-WorkingDirectory=$TIPPR_SRC/tippr/r2
-Environment=VIRTUAL_ENV=$TIPPR_VENV
-Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
-Environment=MAKO_MODULE_DIRECTORY=/var/opt/tippr/mako
-ExecStart=/usr/local/bin/tippr-serve
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-    systemctl daemon-reload || true
-    systemctl enable --now tippr-serve.service || true
+    systemctl enable --now tippr-paster.service || true
 fi
 
 ###############################################################################
@@ -977,27 +975,6 @@ fi
 # Create a per-app systemd service for the click server so it can be managed
 # under systemd on modern systems. Only create/enable when systemd is present.
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/gunicorn-click.service <<UNIT
-[Unit]
-Description=Gunicorn click server for tippr
-After=network.target
-
-[Service]
-Type=simple
-User=$TIPPR_USER
-Group=$TIPPR_GROUP
-WorkingDirectory=$TIPPR_SRC/tippr/scripts
-Environment=PATH=$TIPPR_VENV/bin
-Environment=PYTHONPATH=$TIPPR_SRC:$TIPPR_SRC/tippr
-Environment=PROMETHEUS_MULTIPROC_DIR=$PROMETHEUS_DIR
-ExecStart=$TIPPR_VENV/bin/gunicorn --bind unix:/var/opt/tippr/click.sock --workers=1 tracker:application
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-    systemctl daemon-reload || true
     systemctl enable --now gunicorn-click.service || true
 fi
 
@@ -1193,61 +1170,8 @@ service haproxy restart
 # websocket service
 ###############################################################################
  
-# Only install Upstart jobs if /etc/init exists (do not create it)
-if [ -d /etc/init ]; then
-    if [ ! -f /etc/init/tippr-websockets.conf ]; then
-        cat > /etc/init/tippr-websockets.conf << UPSTART_WEBSOCKETS
-description "websockets service"
-
-stop on runlevel [!2345] or tippr-restart all or tippr-restart websockets
-start on runlevel [2345] or tippr-restart all or tippr-restart websockets
-
-respawn
-respawn limit 10 5
-kill timeout 15
-
-limit nofile 65535 65535
-
-exec $TIPPR_VENV/bin/baseplate-serve --bind localhost:9001 $TIPPR_SRC/websockets/example.ini
-UPSTART_WEBSOCKETS
-    fi
-fi
-
 # Create a systemd unit for websockets (preferred on modern systems)
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/tippr-websockets.service <<UNIT
-[Unit]
-Description=Tippr Websockets Service
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-Type=simple
-User=$TIPPR_USER
-# Use the app user as group to avoid permission issues with user-owned venvs
-Group=$TIPPR_USER
-WorkingDirectory=$TIPPR_SRC/websockets
-# Provide the venv bin first, but keep system PATH entries so helpers are found
-# Omit /sbin which can cause the service to fail on some systems
-Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
-Environment=VIRTUAL_ENV=$TIPPR_VENV
-Environment=PROMETHEUS_MULTIPROC_DIR=$PROMETHEUS_DIR
-
-# Ensure prometheus multiproc dir exists and is owned by the service user
-ExecStartPre=/bin/mkdir -p $PROMETHEUS_DIR
-ExecStartPre=/bin/chown $TIPPR_USER:$TIPPR_USER $PROMETHEUS_DIR
-
-# Bind to 127.0.0.1 to avoid potential localhost resolution issues
-Environment=HOME=/home/$TIPPR_USER
-ExecStart=$TIPPR_VENV/bin/baseplate-serve --bind 127.0.0.1:9001 $TIPPR_SRC/websockets/example.ini
-Restart=on-failure
-TimeoutStartSec=120
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-    systemctl daemon-reload || true
     systemctl enable --now tippr-websockets.service || service tippr-websockets restart || true
 fi
 
@@ -1255,53 +1179,8 @@ fi
 # activity service
 ###############################################################################
 
-# Only install Upstart jobs if /etc/init exists (do not create it)
-if [ -d /etc/init ]; then
-    if [ ! -f /etc/init/tippr-activity.conf ]; then
-        cat > /etc/init/tippr-activity.conf << UPSTART_ACTIVITY
-description "activity service"
-
-stop on runlevel [!2345] or tippr-restart all or tippr-restart activity
-start on runlevel [2345] or tippr-restart all or tippr-restart activity
-
-respawn
-respawn limit 10 5
-kill timeout 15
-
-exec $TIPPR_VENV/bin/baseplate-serve --bind localhost:9002 $TIPPR_SRC/activity/example.ini
-UPSTART_ACTIVITY
-    fi
-fi
-
 # Create a systemd unit for activity service
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/tippr-activity.service <<UNIT
-[Unit]
-Description=Tippr Activity Service
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-Type=simple
-User=$TIPPR_USER
-Group=$TIPPR_GROUP
-WorkingDirectory=$TIPPR_SRC/activity
-# Provide the venv bin first and common system paths; omit /sbin for compatibility
-Environment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
-Environment=VIRTUAL_ENV=$TIPPR_VENV
-Environment=PROMETHEUS_MULTIPROC_DIR=$PROMETHEUS_DIR
-Environment=HOME=/home/$TIPPR_USER
-ExecStartPre=/bin/mkdir -p $PROMETHEUS_DIR
-ExecStartPre=/bin/chown $TIPPR_USER:$TIPPR_USER $PROMETHEUS_DIR
-ExecStart=$TIPPR_VENV/bin/baseplate-serve --bind 127.0.0.1:9002 $TIPPR_SRC/activity/example.ini
-Restart=on-failure
-TimeoutStartSec=120
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-    systemctl daemon-reload || true
     systemctl enable --now tippr-activity.service || service tippr-activity restart || true
 fi
 
@@ -1328,44 +1207,14 @@ fi
 
 # Create a per-app systemd service for the geoip server
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/gunicorn-geoip.service <<UNIT
-[Unit]
-Description=Gunicorn geoip server for tippr
-After=network.target
-
-[Service]
-Type=simple
-User=$TIPPR_USER
-Group=$TIPPR_GROUP
-WorkingDirectory=$TIPPR_SRC/tippr/scripts
-Environment=PATH=$TIPPR_VENV/bin
-ExecStart=$TIPPR_VENV/bin/gunicorn --bind 127.0.0.1:5000 --workers=1 --limit-request-line=8190 geoip_service:application
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-    systemctl daemon-reload || true
     systemctl enable --now gunicorn-geoip.service || true
 fi
 
 ###############################################################################
 # Job Environment
 ###############################################################################
-CONSUMER_CONFIG_ROOT=$TIPPR_HOME/consumer-count.d
-
-if [ ! -f /etc/default/tippr ]; then
-    cat > /etc/default/tippr <<DEFAULT
-export TIPPR_ROOT=$TIPPR_SRC/tippr/r2
-export TIPPR_INI=$TIPPR_SRC/tippr/r2/run.ini
-export TIPPR_USER=$TIPPR_USER
-export TIPPR_GROUP=$TIPPR_GROUP
-export TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
-alias wrap-job=$TIPPR_SRC/tippr/scripts/wrap-job
-alias manage-consumers=$TIPPR_SRC/tippr/scripts/manage-consumers
-DEFAULT
-fi
+# CONSUMER_CONFIG_ROOT is already defined earlier in the script.
+# /etc/default/tippr is already created earlier in the script.
 
 ###############################################################################
 # Queue Processors
@@ -1413,14 +1262,19 @@ done
 tippr-run -c 'print("ok done")'
 
 # ok, now start everything else up (portable)
-if command -v initctl >/dev/null 2>&1; then
-    initctl emit tippr-stop
-    initctl emit tippr-start
-elif command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl stop tippr-websockets tippr-activity gunicorn-click gunicorn-geoip || true
-    systemctl start tippr-websockets tippr-activity gunicorn-click gunicorn-geoip || true
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    systemctl enable tippr.target || true
+    systemctl stop tippr.target || true
+    systemctl start tippr.target || true
+    
+    if [ -f /etc/default/tippr ]; then
+        set -a
+        . /etc/default/tippr
+        set +a
+    fi
+    $TIPPR_SRC/tippr/scripts/manage-consumers start || true
 else
-    echo "No init system found (initctl/systemctl); services not started."
+    echo "No systemctl found; services not started."
 fi
 
 ###############################################################################
@@ -1428,16 +1282,13 @@ fi
 ###############################################################################
 if [ ! -f /etc/cron.d/tippr ]; then
     cat > /etc/cron.d/tippr <<CRON
-0    3 * * * root /sbin/start --quiet tippr-job-update_sr_names
-30  16 * * * root /sbin/start --quiet tippr-job-update_reddits
-0    * * * * root /sbin/start --quiet tippr-job-update_promos
-*/5  * * * * root /sbin/start --quiet tippr-job-clean_up_hardcache
-*/2  * * * * root /sbin/start --quiet tippr-job-broken_things
-*/2  * * * * root /sbin/start --quiet tippr-job-rising
-0    * * * * root /sbin/start --quiet tippr-job-trylater
-
-# liveupdate
-*    * * * * root /sbin/start --quiet tippr-job-liveupdate_activity
+0    3 * * * root systemctl start tippr-job-update_sr_names
+30  16 * * * root systemctl start tippr-job-update_tipprs
+0    * * * * root systemctl start tippr-job-update_promos
+*/5  * * * * root systemctl start tippr-job-clean_up_hardcache
+*/2  * * * * root systemctl start tippr-job-broken_things
+*/2  * * * * root systemctl start tippr-job-rising
+0    * * * * root systemctl start tippr-job-trylater
 
 # jobs that recalculate time-limited listings (e.g. top this year)
 PGPASSWORD=password
@@ -1445,8 +1296,8 @@ PGPASSWORD=password
 */15 * * * * $TIPPR_USER $TIPPR_SRC/tippr/scripts/compute_time_listings comment year "['hour', 'day', 'week', 'month', 'year']"
 
 # disabled by default, uncomment if you need these jobs
-#*    * * * * root /sbin/start --quiet tippr-job-email
-#0    0 * * * root /sbin/start --quiet tippr-job-update_gold_users
+#*    * * * * root systemctl start tippr-job-email
+#0    0 * * * root systemctl start tippr-job-update_gold_users
 CRON
 fi
 

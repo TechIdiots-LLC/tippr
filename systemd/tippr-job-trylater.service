@@ -1,0 +1,17 @@
+[Unit]
+Description=run events scheduled for later
+
+After=network.target
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run ${TIPPR_INI} -c 'from r2.models.trylater import TryLater; TryLater.run()'
+
+Nice=10
+
+[Install]
+WantedBy=tippr.target

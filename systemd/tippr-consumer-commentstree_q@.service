@@ -1,0 +1,18 @@
+[Unit]
+Description=place new comments in the precomputed comment trees
+PartOf=tippr.target
+After=network.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+Environment=type=commentstree_q
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run --proctitle ${type}%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c "run_commentstree(qname='${type}')"
+Restart=always
+Nice=10
+
+[Install]
+WantedBy=tippr.target

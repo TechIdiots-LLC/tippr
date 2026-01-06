@@ -1,0 +1,6 @@
+[Unit]
+Description=Tippr Application Stack
+After=network.target
+
+[Install]
+WantedBy=multi-user.target

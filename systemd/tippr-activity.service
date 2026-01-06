@@ -1,0 +1,18 @@
+[Unit]
+Description=Tippr Activity Service
+Wants=network-online.target
+After=network-online.target tippr.target
+PartOf=tippr.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+WorkingDirectory=@TIPPR_SRC@/activity
+EnvironmentFile=-/etc/default/tippr
+ExecStart=@TIPPR_VENV@/bin/baseplate-serve --bind 127.0.0.1:9002 @TIPPR_SRC@/activity/example.ini
+Restart=on-failure
+TimeoutStartSec=120
+
+[Install]
+WantedBy=tippr.target

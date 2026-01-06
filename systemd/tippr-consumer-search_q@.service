@@ -1,0 +1,17 @@
+[Unit]
+Description=update the cloudsearch index with new/changed documents
+PartOf=tippr.target
+After=network.target
+
+[Service]
+Type=simple
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster run --proctitle search_q%i ${TIPPR_INI} -c 'from pylons import app_globals; app_globals.search.run_changed()'
+Restart=always
+Nice=10
+
+[Install]
+WantedBy=tippr.target
