@@ -362,12 +362,13 @@ if [ ! -d $TIPPR_SRC ]; then
 fi
 
 function copy_systemd {
-    if [ -d ${1}/systemd ]; then
-        echo "Copying and templating systemd units from ${1}/systemd..."
+    if [ -d "${1}/systemd" ]; then
+        echo "Copying and templating systemd units from ${1}/systemd to /etc/systemd/system/..."
         # Iterate over files to perform variable substitution before installation
-        for f in ${1}/systemd/*.service ${1}/systemd/*.target; do
+        for f in "${1}"/systemd/*.service "${1}"/systemd/*.target; do
             [ -e "$f" ] || continue
-            dest="/etc/systemd/system/$(basename $f)"
+            dest="/etc/systemd/system/$(basename "$f")"
+            echo "  -> Templating $(basename "$f")"
             sed -e "s|@TIPPR_USER@|$TIPPR_USER|g" \
                 -e "s|@TIPPR_GROUP@|$TIPPR_GROUP|g" \
                 -e "s|@TIPPR_HOME@|$TIPPR_HOME|g" \
@@ -422,6 +423,11 @@ clone_tippr_repo tippr TechIdiots-LLC/tippr
 clone_tippr_repo i18n TechIdiots-LLC/tippr-i18n
 clone_tippr_service_repo websockets "$TIPPR_WEBSOCKETS_REPO"
 clone_tippr_service_repo activity "$TIPPR_ACTIVITY_REPO"
+
+# Install systemd units from the current repository immediately
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    copy_systemd $RUNDIR/..
+fi
 
 # Patch activity and websockets setup.py to use new baseplate module path
 # (baseplate.integration was renamed to baseplate.frameworks in baseplate 1.0)
@@ -1253,9 +1259,6 @@ tippr-run -c 'print("ok done")'
 
 # ok, now start everything else up (portable)
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    # Ensure all units are installed even if we didn't clone (e.g. running from local checkout)
-    copy_systemd $RUNDIR/..
-
     systemctl enable tippr.target || true
     systemctl stop tippr.target || true
     systemctl start tippr.target || true
