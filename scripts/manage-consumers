@@ -1,27 +1,118 @@
 #!/bin/bash
+# Manage tippr queue consumers via systemd
+#
+# Usage: manage-consumers [start|stop|restart|status] [consumer_name]
+#
+# This script reads consumer configuration from $TIPPR_CONSUMER_CONFIG
+# and manages the appropriate number of systemd service instances.
 
-command=${UPSTART_JOB#tippr-consumers-}
-for consumerpath in $TIPPR_CONSUMER_CONFIG/*; do
-    consumer=$(basename $consumerpath)
+COMMAND="${1:-start}"
+TARGET="${2:-all}"
 
-    # allow targeting which consumer the event is meant for (defaulting to 'all')
-    if [ ! -z "$TARGET" -a "x$TARGET" != "xall" -a "x$TARGET" != "x$consumer" ]; then
+# Source the tippr environment
+if [ -f /etc/default/tippr ]; then
+    . /etc/default/tippr
+fi
+
+CONSUMER_CONFIG="${TIPPR_CONSUMER_CONFIG:-/home/tippr/consumer-count.d}"
+
+if [ ! -d "$CONSUMER_CONFIG" ]; then
+    echo "Consumer config directory not found: $CONSUMER_CONFIG" >&2
+    exit 0  # Exit cleanly if no consumers configured
+fi
+
+for consumerpath in "$CONSUMER_CONFIG"/*; do
+    # Skip if no files match the glob
+    [ -e "$consumerpath" ] || continue
+
+    # Only process regular files (skip directories, symlinks to directories, etc.)
+    [ -f "$consumerpath" ] || continue
+
+    consumer=$(basename "$consumerpath")
+
+    # Skip hidden files and backup files
+    case "$consumer" in
+        .*|*~|*.bak|*.orig)
+            continue
+            ;;
+    esac
+
+    # Allow targeting a specific consumer
+    if [ "$TARGET" != "all" ] && [ "$TARGET" != "$consumer" ]; then
         continue
     fi
 
-    if [ -d $consumerpath ]; then
-        types=$consumerpath/*
-    else
-        types=$consumerpath
+    # Skip executable files
+    if [ -x "$consumerpath" ]; then
+        continue
+    fi
+    
+    # Skip files containing NUL bytes or binary content (avoid ELF/binary inputs)
+    if grep -q $'\x00' "$consumerpath" 2>/dev/null; then
+        echo "Skipping binary file: $consumerpath" >&2
+        continue
     fi
 
-    for typepath in $types; do
-        instance_count=$(cat $typepath)
-        type_=$(basename $typepath)
+    # Read instance count - read only first line, strip control characters, take first word only
+    raw=$(head -n1 "$consumerpath" 2>/dev/null | tr -d '\000-\037\177' | awk '{print $1}')
+    
+    # Validate it's a number and within reasonable range (1-100)
+    if ! [[ "$raw" =~ ^[0-9]+$ ]] || [ -z "$raw" ]; then
+        echo "Skipping $consumer (invalid count in $consumerpath)" >&2
+        continue
+    fi
+    
+    instance_count="$raw"
+    
+    # Additional safety check: ensure instance_count is actually numeric before using in seq
+    if ! [ "$instance_count" -eq "$instance_count" ] 2>/dev/null; then
+        echo "Skipping $consumer (non-numeric count)" >&2
+        continue
+    fi
+    
+    # Skip if no instances configured or if count is unreasonably high
+    if [ "$instance_count" -eq 0 ]; then
+        echo "Skipping $consumer (0 instances configured)"
+        continue
+    fi
+    
+    if [ "$instance_count" -gt 100 ]; then
+        echo "Skipping $consumer (instance count $instance_count exceeds maximum of 100)" >&2
+        continue
+    fi
 
-        for i in $(seq 1 "$instance_count"); do
-            "/sbin/$command" "tippr-consumer-$consumer" "type=$type_" "x=$i"
-        done
+    # Manage each instance
+    for i in $(seq 1 "$instance_count"); do
+        unit="tippr-consumer@${consumer}${i}.service"
+        case "$COMMAND" in
+            start)
+                echo "Starting $unit"
+                systemctl start "$unit" --plain 2>&1 || true
+                ;;
+            stop)
+                echo "Stopping $unit"
+                systemctl stop "$unit" --plain 2>&1 || true
+                ;;
+            restart)
+                echo "Restarting $unit"
+                systemctl restart "$unit" --plain 2>&1 || true
+                ;;
+            status)
+                systemctl status "$unit" --plain --no-pager 2>&1 || true
+                ;;
+            enable)
+                echo "Enabling $unit"
+                systemctl enable "$unit" --plain 2>&1 || true
+                ;;
+            disable)
+                echo "Disabling $unit"
+                systemctl disable "$unit" --plain 2>&1 || true
+                ;;
+            *)
+                echo "Unknown command: $COMMAND" >&2
+                echo "Usage: $0 [start|stop|restart|status|enable|disable] [consumer_name]" >&2
+                exit 1
+                ;;
+        esac
     done
 done
-

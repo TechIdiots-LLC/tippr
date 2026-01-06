@@ -33,11 +33,11 @@ from babel.messages.extract import extract_javascript
 from pylons.i18n.translation import LanguageError, NullTranslations, translation
 
 try:
-    import reddit_i18n
+    import tippr_i18n
 except ImportError:
     I18N_PATH = ''
 else:
-    I18N_PATH = os.path.dirname(reddit_i18n.__file__)
+    I18N_PATH = os.path.dirname(tippr_i18n.__file__)
 
 # Different from the default lang (as defined in the ini file)
 # Source language is what is in the source code
