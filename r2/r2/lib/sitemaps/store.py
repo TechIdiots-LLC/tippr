@@ -83,7 +83,7 @@ def store_subreddit_sitemap(s3_client, bucket_name, index, sitemap):
 
 
 def store_sitemap_index(s3_client, bucket_name, count):
-    key_name = g.sitemap_subreddit_keyname
+    key_name = g.sitemap_vault_keyname
     g.log.debug("Uploading %s/%s", bucket_name, key_name)
     upload_sitemap(s3_client, bucket_name, key_name, sitemap_index(count))
 

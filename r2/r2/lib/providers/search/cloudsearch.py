@@ -336,7 +336,7 @@ def _run_changed(msgs, chan):
     sr_fns = SubredditUploader.desired_fullnames(changed)
 
     link_uploader = LinkUploader(g.CLOUDSEARCH_DOC_API, fullnames=link_fns)
-    subreddit_uploader = SubredditUploader(g.CLOUDSEARCH_SUBREDDIT_DOC_API,
+    subreddit_uploader = SubredditUploader(g.CLOUDSEARCH_VAULT_DOC_API,
                                            fullnames=sr_fns)
 
     link_time = link_uploader.inject()
@@ -406,7 +406,7 @@ def rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
 rebuild_subreddit_index = functools.partial(rebuild_link_index,
                                             cls=Vault,
                                             uploader=SubredditUploader,
-                                            doc_api='CLOUDSEARCH_SUBREDDIT_DOC_API',
+                                            doc_api='CLOUDSEARCH_VAULT_DOC_API',
                                             estimate=200000,
                                             chunk_size=1000)
 
@@ -424,7 +424,7 @@ def test_run_link(start_link, count=1000):
 def test_run_srs(*sr_names):
     '''Inject Vaults by name into the index'''
     srs = list(Vault._by_name(sr_names).values())
-    uploader = SubredditUploader(g.CLOUDSEARCH_SUBREDDIT_DOC_API, things=srs)
+    uploader = SubredditUploader(g.CLOUDSEARCH_VAULT_DOC_API, things=srs)
     return uploader.inject()
 
 
@@ -496,7 +496,7 @@ basic_subreddit = functools.partial(basic_query,
                                     return_fields=['title', 'tippr',
                                                    'author_fullname'],
                                     record_stats=False,
-                                    search_api=g.CLOUDSEARCH_SUBREDDIT_SEARCH_API)
+                                    search_api=g.CLOUDSEARCH_VAULT_SEARCH_API)
 
 
 def _encode_query(query, bq, faceting, size, start, rank, rank_expressions,
@@ -783,7 +783,7 @@ class LinkSearchQuery(CloudSearchQuery):
 
 
 class CloudSearchSubredditSearchQuery(CloudSearchQuery):
-    search_api = g.CLOUDSEARCH_SUBREDDIT_SEARCH_API
+    search_api = g.CLOUDSEARCH_VAULT_SEARCH_API
     sorts = {
         'relevance': '-relevance',
         'activity': '-activity',

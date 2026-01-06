@@ -258,7 +258,7 @@ class Globals:
             'trust_local_proxies',
             'shard_commentstree_queues',
             'shard_author_query_queues',
-            'shard_subreddit_query_queues',
+            'shard_vault_query_queues',
             'shard_domain_query_queues',
             'authnet_validate',
             'ENFORCE_RATELIMIT',

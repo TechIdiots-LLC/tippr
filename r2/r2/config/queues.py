@@ -104,12 +104,12 @@ def declare_queues(g):
         }
         queues.declare(sharded_author_query_queues)
 
-    if g.shard_subreddit_query_queues:
-        sharded_subreddit_query_queues = {
-            "subreddit_query_%d_q" % i: MessageQueue(bind_to_self=True)
+    if g.shard_vault_query_queues:
+        sharded_vault_query_queues = {
+            "vault_query_%d_q" % i: MessageQueue(bind_to_self=True)
             for i in range(10)
         }
-        queues.declare(sharded_subreddit_query_queues)
+        queues.declare(sharded_vault_query_queues)
 
     if g.shard_domain_query_queues:
         sharded_domain_query_queues = {

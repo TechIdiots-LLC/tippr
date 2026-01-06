@@ -172,7 +172,7 @@ def consume_link_vote_queue(qname="vote_link_q"):
         link_valid = not (link._spam or link._deleted)
         if vote_valid and link_valid:
             add_to_author_query_q(link)
-            add_to_subreddit_query_q(link)
+            add_to_vault_query_q(link)
             add_to_domain_query_q(link)
 
         timer.stop()
@@ -232,16 +232,16 @@ def consume_author_query_queue(qname="author_query_q", limit=1000):
     amqp.handle_items(qname, process_message, limit=limit)
 
 
-def add_to_subreddit_query_q(link):
-    if g.shard_subreddit_query_queues:
-        subreddit_shard = link.sr_id % 10
-        queue_name = "subreddit_query_%s_q" % subreddit_shard
+def add_to_vault_query_q(link):
+    if g.shard_vault_query_queues:
+        vault_shard = link.sr_id % 10
+        queue_name = "vault_query_%s_q" % vault_shard
     else:
-        queue_name = "subreddit_query_q"
+        queue_name = "vault_query_q"
     amqp.add_item(queue_name, link._fullname)
 
 
-def consume_subreddit_query_queue(qname="subreddit_query_q", limit=1000):
+def consume_vault_query_queue(qname="vault_query_q", limit=1000):
     @g.stats.amqp_processor(qname)
     def process_message(msgs, chan):
         """Update get_links(), the Links by Vault precomputed query.

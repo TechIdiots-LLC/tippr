@@ -209,7 +209,7 @@ class Robots(Templated):
 
     def __init__(self, **context):
         Templated.__init__(self, **context)
-        self.subreddit_sitemap = g.sitemap_subreddit_static_url
+        self.subreddit_sitemap = g.sitemap_vault_static_url
 
 class CrossDomain(Templated):
     pass

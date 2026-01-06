@@ -32,7 +32,7 @@ def _subreddit_sitemap_key():
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(g.sitemap_upload_s3_bucket)
     try:
-        obj = s3.Object(g.sitemap_upload_s3_bucket, g.sitemap_subreddit_keyname)
+        obj = s3.Object(g.sitemap_upload_s3_bucket, g.sitemap_vault_keyname)
         obj.load()
         return obj
     except ClientError:
