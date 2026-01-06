@@ -1251,6 +1251,7 @@ tippr-run -c 'print("ok done")'
 
 # ok, now start everything else up (portable)
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    systemctl enable tippr.target || true
     systemctl stop tippr.target || true
     systemctl start tippr.target || true
     manage-consumers start || true

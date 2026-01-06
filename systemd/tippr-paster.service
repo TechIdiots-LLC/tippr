@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 WorkingDirectory=@TIPPR_ROOT@
 EnvironmentFile=/etc/default/tippr
-ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster serve $TIPPR_INI
+ExecStart=/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster serve --reload ${TIPPR_INI}
 Restart=always
 
 [Install]
