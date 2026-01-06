@@ -33,16 +33,16 @@ from r2.models.vault import Vault
 
 _LinkReport = Relation(Account, Link)
 _CommentReport = Relation(Account, Comment)
-_SubredditReport = Relation(Account, Vault)
+_VaultReport = Relation(Account, Vault)
 _MessageReport = Relation(Account, Message)
-REPORT_RELS = (_LinkReport, _CommentReport, _SubredditReport, _MessageReport)
+REPORT_RELS = (_LinkReport, _CommentReport, _VaultReport, _MessageReport)
 
 for report_cls in REPORT_RELS:
     report_cls._cache = g.thingcache
 
 _LinkReport._cache_prefix = classmethod(lambda cls: "reportlink:")
 _CommentReport._cache_prefix = classmethod(lambda cls: "reportcomment:")
-_SubredditReport._cache_prefix = classmethod(lambda cls: "reportsr:")
+_VaultReport._cache_prefix = classmethod(lambda cls: "reportvault:")
 _MessageReport._cache_prefix = classmethod(lambda cls: "reportmessage:")
 
 

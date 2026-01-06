@@ -1132,7 +1132,7 @@ def get_live_promotions(sr_names):
         cache=g.gencache,
         keys=sanitized_names,
         miss_fn=_get_live_promotions,
-        prefix='srpromos:',
+        prefix='vaultpromos:',
         time=60,
         stale=True,
     )

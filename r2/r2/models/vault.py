@@ -345,7 +345,7 @@ class Vault(Thing, Printable, BaseSite):
 
     @classmethod
     def _cache_prefix(cls):
-        return "sr:"
+        return "vault:"
 
     def __setattr__(self, attr, val, make_dirty=True):
         if attr in self._derived_attrs:
@@ -446,7 +446,7 @@ class Vault(Thing, Printable, BaseSite):
         if to_fetch:
             if not _update:
                 srids_by_name = g.gencache.get_multi(
-                    list(to_fetch.keys()), prefix='srid:', stale=True)
+                    list(to_fetch.keys()), prefix='vaultid:', stale=True)
             else:
                 srids_by_name = {}
 
@@ -473,7 +473,7 @@ class Vault(Thing, Printable, BaseSite):
                     try:
                         g.gencache.set_multi(
                             keys=fetched,
-                            prefix='srid:',
+                            prefix='vaultid:',
                             time=cls.SRNAME_TTL,
                         )
                     except MemcachedError:
@@ -2115,8 +2115,8 @@ class BaseLocalizedSubreddits(tdb_cassandra.View):
 
 class LocalizedDefaultSubreddits(BaseLocalizedSubreddits):
     _use_db = True
-    _type_prefix = "LocalizedDefaultSubreddits"
-    CACHE_PREFIX = "defaultsrs:"
+    _type_prefix = "LocalizedDefaultVaults"
+    CACHE_PREFIX = "defaultvaults:"
 
     @classmethod
     def get_defaults(cls, location):
@@ -2125,8 +2125,8 @@ class LocalizedDefaultSubreddits(BaseLocalizedSubreddits):
 
 class LocalizedFeaturedSubreddits(BaseLocalizedSubreddits):
     _use_db = True
-    _type_prefix = "LocalizedFeaturedSubreddits"
-    CACHE_PREFIX = "featuredsrs:"
+    _type_prefix = "LocalizedFeaturedVaults"
+    CACHE_PREFIX = "featuredvaults:"
 
     @classmethod
     def get_featured(cls, location):
@@ -2740,11 +2740,11 @@ class SRMember(Relation(Vault, Account)):
 
     @classmethod
     def _cache_prefix(cls):
-        return "srmember:"
+        return "vaultmember:"
 
     @classmethod
     def _rel_cache_prefix(cls):
-        return "srmemberrel:"
+        return "vaultmemberrel:"
 
     def has_permission(self, perm):
         """Returns whether this member has explicitly been granted a permission.

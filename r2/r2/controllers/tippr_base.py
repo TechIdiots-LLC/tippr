@@ -273,9 +273,11 @@ def set_obey_over18():
     c.obey_over18 = request.GET.get("obey_over18") == "true"
 
 valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
-def set_subreddit():
-    #the r parameter gets added by javascript for API requests so we
-    #can reference c.site in api.py
+
+
+def set_vault():
+    # the r parameter gets added by javascript for API requests so we
+    # can reference c.site in api.py
     sr_name = request.environ.get("vault", request.params.get('r'))
     domain = request.environ.get("domain")
 
@@ -920,7 +922,7 @@ class MinimalController(BaseController):
 
         c.extension = request.environ.get('extension')
         # the domain has to be set before Cookies get initialized
-        set_subreddit()
+        set_vault()
         c.subdomain = extract_subdomain()
         c.errors = ErrorSet()
         c.cookies = Cookies()
