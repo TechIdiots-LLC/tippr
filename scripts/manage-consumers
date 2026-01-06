@@ -8,8 +8,8 @@ if [ -f /etc/default/tippr ]; then
     . /etc/default/tippr
 fi
 
-if [ -z "$TIPPR_CONSUMER_CONFIG" ]; then
-    echo "TIPPR_CONSUMER_CONFIG is not set. Exiting."
+if [ -z "$TIPPR_CONSUMER_CONFIG" ] || [ "$TIPPR_CONSUMER_CONFIG" = "/" ]; then
+    echo "TIPPR_CONSUMER_CONFIG is not set correctly. Exiting."
     exit 0
 fi
 
@@ -18,32 +18,29 @@ if [ ! -d "$TIPPR_CONSUMER_CONFIG" ]; then
     exit 0
 fi
 
+# Use a more explicit loop to avoid issues with empty directories or unexpected paths.
 for consumerpath in "$TIPPR_CONSUMER_CONFIG"/*; do
-    if [ ! -e "$consumerpath" ]; then
-        continue
-    fi
+    # Skip if the glob didn't match anything
+    [ -e "$consumerpath" ] || continue
+    # Only process directories in the config root
+    [ -d "$consumerpath" ] || continue
+    
     consumer=$(basename "$consumerpath")
 
     # allow targeting which consumer the event is meant for (defaulting to 'all')
-    if [ ! -z "$TARGET" -a "x$TARGET" != "xall" -a "x$TARGET" != "x$consumer" ]; then
+    if [ ! -z "$TARGET" ] && [ "$TARGET" != "all" ] && [ "$TARGET" != "$consumer" ]; then
         continue
     fi
 
-    if [ -d "$consumerpath" ]; then
-        types="$consumerpath"/*
-    else
-        types="$consumerpath"
-    fi
-
-    for typepath in $types; do
-        if [ ! -f "$typepath" ]; then
-            continue
-        fi
+    # Inner loop for types (e.g. author_query_q, etc.)
+    for typepath in "$consumerpath"/*; do
+        [ -f "$typepath" ] || continue
+        
         instance_count=$(cat "$typepath")
         type_=$(basename "$typepath")
 
-        # Ensure instance_count is a number
-        if [[ "$instance_count" =~ ^[0-9]+$ ]]; then
+        # Ensure instance_count is a number and greater than 0
+        if [[ "$instance_count" =~ ^[0-9]+$ ]] && [ "$instance_count" -gt 0 ]; then
             for i in $(seq 1 "$instance_count"); do
                 systemctl "$action" "tippr-consumer-$consumer@$i"
             done

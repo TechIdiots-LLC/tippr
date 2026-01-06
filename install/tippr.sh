@@ -376,6 +376,7 @@ function copy_systemd {
                 -e "s|@TIPPR_VENV@|$TIPPR_VENV|g" \
                 -e "s|@TIPPR_ROOT@|$TIPPR_SRC/tippr/r2|g" \
                 -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
+                -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job ||g" \
                 "$f" > "$dest"
         done
         systemctl daemon-reload
@@ -432,6 +433,7 @@ fi
 
 # Create the environment file early so services can use it
 CONSUMER_CONFIG_ROOT=$TIPPR_HOME/consumer-count.d
+export TIPPR_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
 if [ ! -f /etc/default/tippr ]; then
     cat > /etc/default/tippr <<DEFAULT
 TIPPR_ROOT=$TIPPR_SRC/tippr/r2
@@ -911,7 +913,7 @@ if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
         systemctl restart "$1" || true
     else
         systemctl restart tippr.target
-        manage-consumers restart
+        $TIPPR_SRC/tippr/scripts/manage-consumers restart
     fi
 else
     echo "No systemctl found; cannot restart services"
