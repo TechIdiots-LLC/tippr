@@ -31,7 +31,7 @@ from pylons.i18n import _
 from r2.lib.db import tdb_cassandra
 from r2.lib.validator import (
     Validator,
-    VSrModerator,
+    VVaultModerator,
 )
 from r2.models.wiki import WikiBadRevision, WikiPage, WikiRevision
 
@@ -54,8 +54,8 @@ def this_may_view(page):
         return True
     return may_view(c.site, user, page)
 
-def may_revise(sr, user, page=None):    
-    if sr.is_moderator_with_perms(user, 'wiki'):
+def may_revise(vault, user, page=None):    
+    if vault.is_moderator_with_perms(user, 'wiki'):
         # Mods may always contribute to non-config pages
         if not page or not page.special:
             return True
@@ -65,15 +65,15 @@ def may_revise(sr, user, page=None):
         # (Except for special pages)
         return False
 
-    if sr.is_wikibanned(user):
+    if vault.is_wikibanned(user):
         # Users who are wiki banned in the vault may not contribute
         return False
     
-    if sr.is_banned(user):
+    if vault.is_banned(user):
         # If the user is banned from the vault, do not allow them to contribute
         return False
     
-    if page and not may_view(sr, user, page):
+    if page and not may_view(vault, user, page):
         # Users who are not allowed to view the page may not contribute to the page
         return False
     
@@ -86,7 +86,7 @@ def may_revise(sr, user, page=None):
         return True
 
     if (page and page.special and
-            sr.is_moderator_with_perms(user, 'config')):
+            vault.is_moderator_with_perms(user, 'config')):
         return True
 
     if page and page.special:
@@ -100,33 +100,33 @@ def may_revise(sr, user, page=None):
         # A normal user should not be allowed to revise
         return False
     
-    if sr.is_wikicontributor(user):
+    if vault.is_wikicontributor(user):
         # If the user is a wiki contributor, they may revise
         return True
     
-    if sr.wikimode != 'anyone':
+    if vault.wikimode != 'anyone':
         # If the user is not a page editor or wiki contributor,
         # and the mode is not everyone,
         # the user may not edit.
         return False
     
-    if not sr.wiki_can_submit(user):
+    if not vault.wiki_can_submit(user):
         # If the user can not submit to the vault
         # They should not be able to contribute
         return False
 
     # Use global karma for the frontpage wiki
-    karma_sr = sr if sr.wiki_use_Vault_karma else None
+    karma_sr = vault if vault.wiki_use_Vault_karma else None
 
     # Use link or comment karma, whichever is greater
     karma = max(user.karma('link', karma_sr), user.karma('comment', karma_sr))
 
-    if karma < (sr.wiki_edit_karma or 0):
+    if karma < (vault.wiki_edit_karma or 0):
         # If the user has too few karma, they should not contribute
         return False
     
     age = (datetime.datetime.now(g.tz) - user._date).days
-    if age < (sr.wiki_edit_age or 0):
+    if age < (vault.wiki_edit_age or 0):
         # If they user's account is too young
         # They should not contribute
         return False
@@ -134,9 +134,9 @@ def may_revise(sr, user, page=None):
     # Otherwise, allow them to contribute
     return True
 
-def may_view(sr, user, page):
+def may_view(vault, user, page):
     # User being None means not logged in
-    mod = sr.is_moderator_with_perms(user, 'wiki') if user else False
+    mod = vault.is_moderator_with_perms(user, 'wiki') if user else False
     
     if mod:
         # Mods may always view
@@ -184,15 +184,15 @@ class AbortWikiError(Exception):
 
 page_match_regex = re.compile(r'^[\w_\-/]+\Z')
 
-class VWikiModerator(VSrModerator):
+class VWikiModerator(VVaultModerator):
     def __init__(self, fatal=False, *a, **kw):
-        VSrModerator.__init__(self, param='page', fatal=fatal, *a, **kw)
+        VVaultModerator.__init__(self, param='page', fatal=fatal, *a, **kw)
 
     def run(self, page):
         self.perms = ['wiki']
         if page and WikiPage.is_special(page):
             self.perms += ['config']
-        VSrModerator.run(self)
+        VVaultModerator.run(self)
 
 class VWikiPageName(Validator):
     def __init__(self, param, error_on_name_normalized=False, *a, **kw):

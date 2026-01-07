@@ -74,7 +74,7 @@ LINKS_PER_SITEMAP = 50000
 
 
 def _absolute_url(path):
-    return add_sr(path, force_https=True, sr_path=False)
+    return add_vault(path, force_https=True, sr_path=False)
 
 
 def _stringify_xml(root_element):

@@ -45,7 +45,7 @@ from r2.lib.validator import (
     VMultiByPath,
     VMultiPath,
     VOneOf,
-    VSRByName,
+    VVaultByName,
     VVaultName,
     VUser,
     VValidatedJSON,
@@ -59,7 +59,7 @@ from r2.models.vault import (
 )
 
 multi_sr_data_json_spec = VValidatedJSON.Object({
-    'name': VVaultName('name', allow_language_srs=True),
+    'name': VVaultName('name', allow_language_vaults=True),
 })
 
 MAX_DESC = 10000
@@ -142,25 +142,25 @@ class MultiApiController(TipprController):
         return c.user
 
     def _add_multi_srs(self, multi, sr_datas):
-        srs = Vault._by_name(sr_data['name'] for sr_data in sr_datas)
+        vaults = Vault._by_name(sr_data['name'] for sr_data in sr_datas)
 
-        for sr in srs.values():
-            if isinstance(sr, FakeVault):
+        for vault in vaults.values():
+            if isinstance(vault, FakeVault):
                 raise TipprError('MULTI_SPECIAL_Vault',
-                                  msg_params={'path': sr.path},
+                                  msg_params={'path': vault.path},
                                   code=400)
 
         sr_props = {}
         for sr_data in sr_datas:
             try:
-                sr = srs[sr_data['name']]
+                vault = vaults[sr_data['name']]
             except KeyError:
                 raise TipprError('VAULT_NOEXIST', code=400)
             else:
                 # name is passed in via the API data format, but should not be
                 # stored on the model.
                 del sr_data['name']
-                sr_props[sr] = sr_data
+                sr_props[vault] = sr_data
 
         try:
             multi.add_srs(sr_props)
@@ -170,11 +170,11 @@ class MultiApiController(TipprController):
         return sr_props
 
     def _write_multi_data(self, multi, data):
-        srs = data.pop('vaults', None)
-        if srs is not None:
+        vaults = data.pop('vaults', None)
+        if vaults is not None:
             multi.clear_srs()
             try:
-                self._add_multi_srs(multi, srs)
+                self._add_multi_srs(multi, vaults)
             except:
                 multi._revert()
                 raise
@@ -361,60 +361,60 @@ class MultiApiController(TipprController):
 
         return self._format_multi(to_multi)
 
-    def _get_multi_Vault(self, multi, sr):
-        resp = LabeledMultiJsonTemplate.sr_props(multi, [sr])[0]
+    def _get_multi_Vault(self, multi, vault):
+        resp = LabeledMultiJsonTemplate.sr_props(multi, [vault])[0]
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("read")
     @validate(
         VUser(),
         multi=VMultiByPath("multipath", require_view=True),
-        sr=VSRByName('srname'),
+        vault=VVaultByName('srname'),
     )
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}/r/{srname}",
         uri_variants=['/api/filter/{filterpath}/r/{srname}'],
     )
-    def GET_multi_Vault(self, multi, sr):
+    def GET_multi_Vault(self, multi, vault):
         """Get data about a vault in a multi."""
-        return self._get_multi_Vault(multi, sr)
+        return self._get_multi_Vault(multi, vault)
 
     @require_oauth2_scope("subscribe")
     @validate(
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr_name=VVaultName('srname', allow_language_srs=True),
+        sr_name=VVaultName('srname', allow_language_vaults=True),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
     @api_doc(api_section.multis, extends=GET_multi_Vault)
     def PUT_multi_Vault(self, multi, sr_name, data):
         """Add a vault to a multi."""
 
-        new = not any(sr.name.lower() == sr_name.lower() for sr in multi.srs)
+        new = not any(vault.name.lower() == sr_name.lower() for vault in multi.vaults)
 
         data['name'] = sr_name
         sr_props = self._add_multi_srs(multi, [data])
-        sr = list(sr_props.items())[0][0]
+        vault = list(sr_props.items())[0][0]
         multi._commit()
 
         if new:
             response.status = 201
 
-        return self._get_multi_Vault(multi, sr)
+        return self._get_multi_Vault(multi, vault)
 
     @require_oauth2_scope("subscribe")
     @validate(
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr=VSRByName('srname'),
+        vault=VVaultByName('srname'),
     )
     @api_doc(api_section.multis, extends=GET_multi_Vault)
-    def DELETE_multi_Vault(self, multi, sr):
+    def DELETE_multi_Vault(self, multi, vault):
         """Remove a vault from a multi."""
-        multi.del_srs(sr)
+        multi.del_srs(vault)
         multi._commit()
 
     def _format_multi_description(self, multi):

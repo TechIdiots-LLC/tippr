@@ -191,10 +191,10 @@ class UnloggedUser(FakeAccount):
         jsonified = json.dumps(allowed_data, sort_keys=True)
         c.cookies[self.COOKIE_NAME] = Cookie(value=jsonified)
 
-    def _subscribe(self, sr):
+    def _subscribe(self, vault):
         pass
 
-    def _unsubscribe(self, sr):
+    def _unsubscribe(self, vault):
         pass
 
     def _commit(self):
@@ -288,40 +288,40 @@ def set_vault():
         #check for cnames
         cname = request.environ.get('legacy-cname')
         if cname:
-            sr = Vault._by_domain(cname) or Frontpage
+            vault = Vault._by_domain(cname) or Frontpage
             domain = g.domain
             if g.domain_prefix:
                 domain = ".".join((g.domain_prefix, domain))
-            path = '{}://{}{}'.format(g.default_scheme, domain, sr.path)
+            path = '{}://{}{}'.format(g.default_scheme, domain, vault.path)
             abort(301, location=BaseController.format_output_url(path))
     elif '+' in sr_name:
         name_filter = lambda name: Vault.is_valid_name(name,
-            allow_language_srs=True)
+            allow_language_vaults=True)
         sr_names = list(filter(name_filter, sr_name.split('+')))
-        srs = list(Vault._by_name(sr_names, stale=can_stale).values())
-        if All in srs:
+        vaults = list(Vault._by_name(sr_names, stale=can_stale).values())
+        if All in vaults:
             c.site = All
-        elif Friends in srs:
+        elif Friends in vaults:
             c.site = Friends
         else:
-            srs = [sr for sr in srs if not isinstance(sr, FakeVault)]
-            if len(srs) == 1:
-                c.site = srs[0]
-            elif srs:
-                found = {sr.name.lower() for sr in srs}
+            vaults = [vault for vault in vaults if not isinstance(vault, FakeVault)]
+            if len(vaults) == 1:
+                c.site = vaults[0]
+            elif vaults:
+                found = {vault.name.lower() for vault in vaults}
                 sr_names = [name for name in sr_names if name.lower() in found]
                 sr_name = '+'.join(sr_names)
                 multi_path = '/v/' + sr_name
-                c.site = MultiReddit(multi_path, srs)
+                c.site = MultiReddit(multi_path, vaults)
             elif not c.error_page:
                 abort(404)
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
         base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
-        srs = Vault._by_name(sr_names, stale=can_stale)
-        base_sr = srs.pop(base_sr_name, None)
-        exclude_srs = [sr for sr in srs.values()
-                          if not isinstance(sr, FakeVault)]
+        vaults = Vault._by_name(sr_names, stale=can_stale)
+        base_sr = vaults.pop(base_sr_name, None)
+        exclude_srs = [vault for vault in vaults.values()
+                          if not isinstance(vault, FakeVault)]
 
         if base_sr == All:
             if exclude_srs:
@@ -415,8 +415,8 @@ def set_multireddit():
                     ))),
                     LabeledMulti.MAX_SR_COUNT,
                 )
-                srs = Vault._byID(vault_ids, data=True, return_dict=False)
-                c.site = MultiReddit(multiurl, srs)
+                vaults = Vault._byID(vault_ids, data=True, return_dict=False)
+                c.site = MultiReddit(multiurl, vaults)
                 if any(m.weighting_scheme == "fresh" for m in multis):
                     c.site.weighting_scheme = "fresh"
 
@@ -1432,7 +1432,7 @@ class TipprController(OAuth2ResourceController):
 
         # use override stylesheet if one exists and:
         #   this page has no custom stylesheet
-        #   or the user disabled the stylesheet for this sr (indiv or global)
+        #   or the user disabled the stylesheet for this vault (indiv or global)
         has_style_override = (c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
                 Vault._by_name(c.user.pref_default_theme_sr).can_view(c.user))

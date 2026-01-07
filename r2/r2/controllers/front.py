@@ -149,7 +149,7 @@ class FrontController(TipprController):
             redirect_url = links[0].make_permalink_slow(force_domain=True)
             return self.redirect(redirect_url)
         else:
-            return self.redirect(add_sr('/'))
+            return self.redirect(add_vault('/'))
 
     @disable_Vault_css()
     @validate(
@@ -254,13 +254,13 @@ class FrontController(TipprController):
         if comment and comment.link_id != article._id:
             return self.abort404()
 
-        sr = Vault._byID(article.vault_id, True)
+        vault = Vault._byID(article.vault_id, True)
 
-        if sr.name == g.takedown_sr:
+        if vault.name == g.takedown_sr:
             request.environ['TIPPR_TAKEDOWN'] = article._fullname
             return self.abort404()
 
-        if not c.default_sr and c.site._id != sr._id:
+        if not c.default_sr and c.site._id != vault._id:
             return self.abort404()
 
         if not can_view_link_comments(article):
@@ -275,14 +275,14 @@ class FrontController(TipprController):
         ):
             return self.intermediate_redirect("/over18", sr_path=False)
 
-        canonical_link = article.make_canonical_link(sr)
+        canonical_link = article.make_canonical_link(vault)
 
         # Determine if we should show the embed link for comments
         c.can_embed = bool(comment) and article.is_embeddable
 
         is_embed = embeds.prepare_embed_request()
         if is_embed and comment:
-            embeds.set_up_comment_embed(sr, comment, showedits=showedits)
+            embeds.set_up_comment_embed(vault, comment, showedits=showedits)
 
         # Temporary hook until IAMA app "OP filter" is moved from partners
         # Not to be open-sourced
@@ -301,7 +301,7 @@ class FrontController(TipprController):
         if comment:
             c.focal_comment = comment._id36
         elif (c.user_is_loggedin and
-                (c.user.gold or sr.is_moderator(c.user)) and
+                (c.user.gold or vault.is_moderator(c.user)) and
                 c.user.pref_highlight_new_comments):
             timer = g.stats.get_timer("gold.comment_visits")
             timer.start()
@@ -318,7 +318,7 @@ class FrontController(TipprController):
             submit_title = request.GET.get('submit_title') or ""
             resubmit_url = Link.resubmit_link(submit_url, submit_title)
             if c.user_is_loggedin and c.site.can_submit(c.user):
-                resubmit_url = add_sr(resubmit_url)
+                resubmit_url = add_vault(resubmit_url)
             infotext = strings.already_submitted % resubmit_url
         elif article.archived_slow:
             infotext = strings.archived_post_message
@@ -331,7 +331,7 @@ class FrontController(TipprController):
 
         if not c.user.pref_num_comments:
             num = g.num_comments
-        elif c.user_is_loggedin and (c.user.gold or sr.is_moderator(c.user)):
+        elif c.user_is_loggedin and (c.user.gold or vault.is_moderator(c.user)):
             num = min(c.user.pref_num_comments, g.max_comments_gold)
         else:
             num = min(c.user.pref_num_comments, g.max_comments)
@@ -356,7 +356,7 @@ class FrontController(TipprController):
         if limit and limit > 0:
             num = limit
 
-        if c.user_is_loggedin and (c.user.gold or sr.is_moderator(c.user)):
+        if c.user_is_loggedin and (c.user.gold or vault.is_moderator(c.user)):
             if num > g.max_comments_gold:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
@@ -422,7 +422,7 @@ class FrontController(TipprController):
             suggested_sort = None
 
         if article.contest_mode:
-            if c.user_is_loggedin and sr.is_moderator(c.user):
+            if c.user_is_loggedin and vault.is_moderator(c.user):
                 # Default to top for contest mode to make determining winners
                 # easier, but allow them to override it for moderation
                 # purposes.
@@ -457,7 +457,7 @@ class FrontController(TipprController):
                                              g.max_comments, gold=False)
 
             if (c.user_is_loggedin and
-                    (c.user.gold or sr.is_moderator(c.user)) and
+                    (c.user.gold or vault.is_moderator(c.user)) and
                     article.num_comments > g.max_comments):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
@@ -591,8 +591,8 @@ class FrontController(TipprController):
         """
         return ShareClose().render()
 
-    def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
-        query = Vault.get_modactions(srs, mod=mod, action=action)
+    def _make_moderationlog(self, vaults, num, after, reverse, count, mod=None, action=None):
+        query = Vault.get_modactions(vaults, mod=mod, action=action)
         builder = ModActionBuilder(
             query, num=num, after=after, count=count, reverse=reverse,
             wrap=default_thing_wrapper())
@@ -645,13 +645,13 @@ class FrontController(TipprController):
             mod = mod or None
 
         if isinstance(c.site, (MultiReddit, ModSR)):
-            srs = Vault._byID(c.site.vault_ids, return_dict=False)
+            vaults = Vault._byID(c.site.vault_ids, return_dict=False)
 
             # grab all moderators
-            mod_ids = set(Vault.get_all_mod_ids(srs))
+            mod_ids = set(Vault.get_all_mod_ids(vaults))
             mods = Account._byID(mod_ids, data=True)
 
-            pane = self._make_moderationlog(srs, num, after, reverse, count,
+            pane = self._make_moderationlog(vaults, num, after, reverse, count,
                                             mod=mod, action=action)
         elif isinstance(c.site, FakeVault):
             return self.abort404()
@@ -819,7 +819,7 @@ class FrontController(TipprController):
                 (c.site.is_moderator(c.user) or c.user.employee)))):
             pane = trafficpages.VaultTraffic()
         elif (location == "about") and is_api():
-            return self.redirect(add_sr('about.json'), code=301)
+            return self.redirect(add_vault('about.json'), code=301)
         else:
             return self.abort404()
 
@@ -831,7 +831,7 @@ class FrontController(TipprController):
     @base_listing
     @disable_Vault_css()
     @validate(
-        VSrModerator(perms='posts'),
+        VVaultModerator(perms='posts'),
         location=nop('location'),
         only=VOneOf('only', ('links', 'comments')),
         timeout=VNotInTimeout(),
@@ -890,7 +890,7 @@ class FrontController(TipprController):
     @base_listing
     @disable_Vault_css()
     @validate(
-        VSrModerator(perms='flair'),
+        VVaultModerator(perms='flair'),
         name=nop('name'),
         timeout=VNotInTimeout(),
     )
@@ -1163,14 +1163,14 @@ class FrontController(TipprController):
 
         # no vault results if fielded search or structured syntax
         if syntax == 'cloudsearch' or (query and ':' in query):
-            result_types = result_types - {'sr'}
+            result_types = result_types - {'vault'}
 
         # combined results on first page only
-        if not after and not restrict_sr and result_types == {'link', 'sr'}:
+        if not after and not restrict_sr and result_types == {'link', 'vault'}:
             # hardcoded to 3 vaults (or fewer)
             sr_num = min(3, int(num / 3))
             num = num - sr_num
-        elif result_types == {'sr'}:
+        elif result_types == {'vault'}:
             sr_num = num
             num = 0
         else:
@@ -1235,13 +1235,13 @@ class FrontController(TipprController):
                                                  faceting={},
                                                  include_over18=include_over18)
             vaults = self._search(sr_q, num=sr_num, reverse=reverse,
-                                      after=after, count=count, type='sr',
+                                      after=after, count=count, type='vault',
                                       skip_deleted_authors=False, heading=_('vaults'),
                                       legacy_render_class=legacy_render_class)
 
             # backfill with facets if no vault search results
             if Vault_facets and not vaults.things:
-                names = [sr._fullname for sr, count in Vault_facets]
+                names = [vault._fullname for vault, count in Vault_facets]
                 builder = IDBuilder(names, num=sr_num)
                 listing = SearchListing(builder, nextprev=False)
                 vaults = listing.listing(
@@ -1368,7 +1368,7 @@ class FrontController(TipprController):
                 return would_keep and getattr(item, "promoted", None) is None
 
             listing = hot_links_by_url_listing(
-                url, sr=c.site, num=100, skip=True, keep_fn=keep_fn)
+                url, vault=c.site, num=100, skip=True, keep_fn=keep_fn)
             links = listing.things
 
             if links and len(links) == 1:
@@ -1380,7 +1380,7 @@ class FrontController(TipprController):
                 # show the user a listing of all the other links with this url
                 # an infotext to resubmit it
                 resubmit_url = Link.resubmit_link(url, title)
-                sr_resubmit_url = add_sr(resubmit_url)
+                sr_resubmit_url = add_vault(resubmit_url)
                 infotext = strings.multiple_submitted % sr_resubmit_url
                 res = BoringPage(
                     _("seen it"), content=listing, infotext=infotext).render()
@@ -1402,7 +1402,7 @@ class FrontController(TipprController):
         if isinstance(c.site, MultiReddit):
             extra_Vaults.append((
                 _('%s vaults') % c.site.name,
-                c.site.srs
+                c.site.vaults
             ))
 
         newlink = NewLink(

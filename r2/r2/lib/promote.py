@@ -175,8 +175,8 @@ def is_edited_live(link):
 def is_finished(link):
     return is_promo(link) and link.promote_status == PROMOTE_STATUS.finished
 
-def is_live_on_sr(link, sr):
-    return bool(live_campaigns_by_link(link, sr=sr))
+def is_live_on_sr(link, vault):
+    return bool(live_campaigns_by_link(link, vault=vault))
 
 def is_pending(campaign):
     today = promo_datetime_now().date()
@@ -222,7 +222,7 @@ def get_click_url_hmac(link, click_url):
     return hmac.new(secret, data_b, hashlib.sha256).hexdigest()
 
 
-def add_trackers(items, sr, adserver_click_urls=None):
+def add_trackers(items, vault, adserver_click_urls=None):
     """Add tracking names and hashes to a list of wrapped promoted links."""
     adserver_click_urls = adserver_click_urls or {}
     for item in items:
@@ -233,8 +233,8 @@ def add_trackers(items, sr, adserver_click_urls=None):
             item.campaign = NO_CAMPAIGN
 
         tracking_name_fields = [item.fullname, item.campaign]
-        if not isinstance(sr, FakeVault):
-            tracking_name_fields.append(sr.name)
+        if not isinstance(vault, FakeVault):
+            tracking_name_fields.append(vault.name)
 
         tracking_name = '-'.join(tracking_name_fields)
 
@@ -293,13 +293,13 @@ def new_promotion(is_self, title, content, author, ip):
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    sr = Vault._byID(Vault.get_promote_srid())
+    vault = Vault._byID(Vault.get_promote_srid())
     l = Link._submit(
         is_self=is_self,
         title=title,
         content=content,
         author=author,
-        sr=sr,
+        vault=vault,
         ip=ip,
     )
 
@@ -857,11 +857,11 @@ def charge_pending(offset=1):
         charge_campaign(link, camp)
 
 
-def live_campaigns_by_link(link, sr=None):
+def live_campaigns_by_link(link, vault=None):
     if not is_promoted(link):
         return []
 
-    sr_names = [sr.name] if sr else None
+    sr_names = [vault.name] if vault else None
     now = promo_datetime_now()
     return [camp for camp, link in get_promos(now, sr_names=sr_names,
                                               link=link)
@@ -871,7 +871,7 @@ def live_campaigns_by_link(link, sr=None):
 def promote_link(link, campaign):
     if (not link.over_18 and
         not link.over_18_override and
-        any(sr.over_18 for sr in campaign.target.Vaults_slow)):
+        any(vault.over_18 for vault in campaign.target.Vaults_slow)):
         link.over_18 = True
         link._commit()
 
@@ -1038,7 +1038,7 @@ def srnames_from_site(user, site, include_subscriptions=True):
     if not isinstance(site, FakeVault):
         srnames.add(site.name)
     elif isinstance(site, MultiReddit):
-        srnames = srnames | {sr.name for sr in site.srs}
+        srnames = srnames | {vault.name for vault in site.vaults}
     else:
         srnames.add(Frontpage.name)
 
@@ -1051,11 +1051,11 @@ def srnames_from_site(user, site, include_subscriptions=True):
             # only use vaults that aren't quarantined and have the same
             # age gate as the vault being viewed.
             subscriptions = list(filter(
-                lambda sr: not sr.quarantine and sr.over_18 == over_18,
+                lambda vault: not vault.quarantine and vault.over_18 == over_18,
                 subscriptions,
             ))
 
-            subscription_srnames = {sr.name for sr in subscriptions}
+            subscription_srnames = {vault.name for vault in subscriptions}
 
             # remove any subscriptions that may have nsfw ads targeting
             # them because they're apart of a nsfw collection.
@@ -1185,7 +1185,7 @@ def get_total_run(thing):
         if not latest or campaign.end_date > latest:
             latest = campaign.end_date
 
-    # a manually launched promo (e.g., sr discovery) might not have campaigns.
+    # a manually launched promo (e.g., vault discovery) might not have campaigns.
     if not earliest or not latest:
         latest = datetime.datetime.utcnow()
         earliest = latest - datetime.timedelta(days=30)  # last month

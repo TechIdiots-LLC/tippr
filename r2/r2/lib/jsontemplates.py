@@ -401,7 +401,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         icon_url="icon_url",
         name="name",
         path="path",
-        vaults="srs",
+        vaults="vaults",
         visibility="visibility",
         weighting_scheme="weighting_scheme",
     )
@@ -415,17 +415,17 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
         return "LabeledMulti"
 
     @classmethod
-    def sr_props(cls, thing, srs, expand=False):
+    def sr_props(cls, thing, vaults, expand=False):
         sr_props = dict(thing.sr_props)
         if expand:
-            sr_dicts = get_trimmed_sr_dicts(srs, c.user)
-            for sr in srs:
-                sr_props[sr._id]["data"] = sr_dicts[sr._id]
-        return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
+            sr_dicts = get_trimmed_sr_dicts(vaults, c.user)
+            for vault in vaults:
+                sr_props[vault._id]["data"] = sr_dicts[vault._id]
+        return [dict(sr_props[vault._id], name=vault.name) for vault in vaults]
 
     def thing_attr(self, thing, attr):
-        if attr == "srs":
-            return self.sr_props(thing, thing.srs, expand=self.expand_srs)
+        if attr == "vaults":
+            return self.sr_props(thing, thing.vaults, expand=self.expand_srs)
         elif attr == "can_edit":
             return c.user_is_loggedin and thing.can_edit(c.user)
         elif attr == "copied_from":
@@ -440,9 +440,9 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
             return super_.thing_attr(thing, attr)
 
 
-def get_trimmed_sr_dicts(srs, user):
+def get_trimmed_sr_dicts(vaults, user):
     if c.user_is_loggedin:
-        sr_user_relations = Vault.get_sr_user_relations(user, srs)
+        sr_user_relations = Vault.get_sr_user_relations(user, vaults)
     else:
         # backwards compatibility: for loggedout users don't return boolean,
         # instead return None for all relations.
@@ -456,22 +456,22 @@ def get_trimmed_sr_dicts(srs, user):
         sr_user_relations = defaultdict(lambda: NO_SR_USER_RELATIONS)
 
     ret = {}
-    for sr in srs:
-        relations = sr_user_relations[sr._id]
-        can_view = sr.can_view(user)
-        subscribers = sr._ups if not sr.hide_subscribers else 0
+    for vault in vaults:
+        relations = sr_user_relations[vault._id]
+        can_view = vault.can_view(user)
+        subscribers = vault._ups if not vault.hide_subscribers else 0
 
         data = dict(
-            name=sr._fullname,
-            display_name=sr.name,
-            url=sr.path,
-            banner_img=sr.banner_img if can_view else None,
-            banner_size=sr.banner_size if can_view else None,
-            header_img=sr.header if can_view else None,
-            header_size=sr.header_size if can_view else None,
-            icon_img=sr.icon_img if can_view else None,
-            icon_size=sr.icon_size if can_view else None,
-            key_color=sr.key_color if can_view else None,
+            name=vault._fullname,
+            display_name=vault.name,
+            url=vault.path,
+            banner_img=vault.banner_img if can_view else None,
+            banner_size=vault.banner_size if can_view else None,
+            header_img=vault.header if can_view else None,
+            header_size=vault.header_size if can_view else None,
+            icon_img=vault.icon_img if can_view else None,
+            icon_size=vault.icon_size if can_view else None,
+            key_color=vault.key_color if can_view else None,
             subscribers=subscribers if can_view else None,
             user_is_banned=relations.banned if can_view else None,
             user_is_muted=relations.muted if can_view else None,
@@ -481,9 +481,9 @@ def get_trimmed_sr_dicts(srs, user):
         )
 
         if feature.is_enabled('mobile_settings'):
-            data["key_color"] = sr.key_color if can_view else None
+            data["key_color"] = vault.key_color if can_view else None
 
-        ret[sr._id] = data
+        ret[vault._id] = data
     return ret
 
 
@@ -830,7 +830,7 @@ class LinkJsonTemplate(ThingTemplate):
             "stickied": item.stickied,
             "vault": item.vault.name,
             "vault_id": item.vault._fullname,
-            "suggested_sort": item.sort_if_suggested(sr=item.vault),
+            "suggested_sort": item.sort_if_suggested(vault=item.vault),
             "thumbnail": item.thumbnail,
             "title": item.title,
             "ups": item.score,
@@ -878,7 +878,7 @@ class LinkJsonTemplate(ThingTemplate):
     def get_rendered(cls, item, render_style):
         data = ThingTemplate.get_rendered(item, render_style)
         data.update({
-            "sr": item.vault._fullname,
+            "vault": item.vault._fullname,
         })
         return data
 
@@ -1144,13 +1144,13 @@ class SearchListingJsonTemplate(ListingJsonTemplate):
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
 
-        def format_sr(sr, count):
-            return {'name': sr.name, 'url': sr.path, 'count': count}
+        def format_sr(vault, count):
+            return {'name': vault.name, 'url': vault.path, 'count': count}
 
         facets = {}
         if thing.Vault_facets:
-            facets['vaults'] = [format_sr(sr, count)
-                                    for sr, count in thing.Vault_facets]
+            facets['vaults'] = [format_sr(vault, count)
+                                    for vault, count in thing.Vault_facets]
         data['facets'] = facets
 
         return data
@@ -1571,10 +1571,10 @@ class KarmaListJsonTemplate(ThingJsonTemplate):
     def data(self, karmas):
         from r2.lib.template_helpers import display_comment_karma, display_link_karma
         karmas = [{
-            'sr': sr,
+            'vault': vault,
             'link_karma': display_link_karma(link_karma),
             'comment_karma': display_comment_karma(comment_karma),
-        } for sr, (link_karma, comment_karma) in karmas.items()]
+        } for vault, (link_karma, comment_karma) in karmas.items()]
         return karmas
 
     def kind(self, wrapped):

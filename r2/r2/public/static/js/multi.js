@@ -219,15 +219,15 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
 r.multi.MultiVaultItem = Backbone.View.extend({
     tagName: 'li',
 
-    template: _.template('<a href="/v/<%- sr_name %>">/r/<%- sr_name %></a><button class="remove-sr">x</button>'),
+    template: _.template('<a href="/v/<%- vault_name %>">/r/<%- vault_name %></a><button class="remove-vault">x</button>'),
 
     events: {
-        'click .remove-sr': 'removeVault'
+        'click .remove-vault': 'removeVault'
     },
 
     render: function() {
         this.$el.append(this.template({
-            sr_name: this.model.get('name')
+            vault_name: this.model.get('name')
         }))
 
         if (r.config.logged) {
@@ -255,7 +255,7 @@ r.multi.MultiVaultItem = Backbone.View.extend({
 
 r.multi.VaultList = Backbone.View.extend({
     events: {
-        'submit .add-sr': 'addVault'
+        'submit .add-vault': 'addVault'
     },
 
     initialize: function() {
@@ -279,35 +279,35 @@ r.multi.VaultList = Backbone.View.extend({
         this.model.vaults.each(this.addOne, this)
     },
     
-    addOne: function(sr) {
+    addOne: function(vault) {
         var view = new this.itemView({
-            model: sr,
+            model: vault,
             multi: this.model,
             bubbleGroup: this.bubbleGroup
         })
-        this.itemViews[sr.id] = view
+        this.itemViews[vault.id] = view
         this.$('.vaults').append(view.render().$el)
     },
 
     resort: function() {
-        this.model.vaults.each(function(sr) {
-            this.itemViews[sr.id].$el.appendTo(this.$('.vaults'))
+        this.model.vaults.each(function(vault) {
+            this.itemViews[vault.id].$el.appendTo(this.$('.vaults'))
         }, this)
     },
 
-    removeOne: function(sr) {
-        this.itemViews[sr.id].remove()
-        delete this.itemViews[sr.id]
+    removeOne: function(vault) {
+        this.itemViews[vault.id].remove()
+        delete this.itemViews[vault.id]
     },
 
     addVault: function(ev) {
         ev.preventDefault()
 
-        var nameEl = this.$('.add-sr .sr-name'),
+        var nameEl = this.$('.add-vault .vault-name'),
             srNames = nameEl.val()
         srNames = srNames.split(/[+,\-\s]+/)
         // Strip any /r/ or r/ prefixes.
-        srNames = srNames.map(function(sr) { return sr.replace(/^\/?r\//, '') })
+        srNames = srNames.map(function(vault) { return vault.replace(/^\/?r\//, '') })
         srNames = _.compact(srNames)
         if (!srNames.length) {
             return
@@ -348,7 +348,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.listenTo(this.model.vaults, 'add remove reset', this.render)
 
         this.addBubble = new r.multi.MultiAddNoticeBubble({
-            parent: this.$('.add-sr .sr-name'),
+            parent: this.$('.add-vault .vault-name'),
             trackHover: false
         })
     },
@@ -487,7 +487,7 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     focusAdd: function() {
-        this.$('.add-sr .sr-name').focus()
+        this.$('.add-vault .vault-name').focus()
     }
 })
 
@@ -516,7 +516,7 @@ r.multi.SubscribeButton = Backbone.View.extend({
         this.bubble = new r.multi.MultiSubscribeBubble({
             parent: this.$el,
             group: this.options.bubbleGroup,
-            srName: String(this.$el.data('sr_name'))
+            srName: String(this.$el.data('vault_name'))
         })
 
         var bubbleClass = this.$el.data('bubble_class')
@@ -531,7 +531,7 @@ r.multi.SubscribeButton = Backbone.View.extend({
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
-    template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/v/<%- sr_name %>">/r/<%- sr_name %></a></div><div class="throbber"></div>'),
+    template: _.template('<div class="title"><strong><%- title %></strong><a class="vault" href="/v/<%- vault_name %>">/r/<%- vault_name %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank" title="<%- open_multi %>">&rsaquo;</a></label>'),
     itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- create_msg %>"><div class="error create-multi-error"></div></form></label>'),
 
@@ -552,7 +552,7 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     render: function() {
         this.$el.html(this.template({
             title: r._('categorize'),
-            sr_name: this.options.srName
+            vault_name: this.options.srName
         }))
 
         var content = $('<div class="multi-list">')

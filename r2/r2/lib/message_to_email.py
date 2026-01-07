@@ -66,9 +66,9 @@ def get_reply_to_address(message):
     reply_id = "zendeskreply+{email_id}-{email_mac}".format(
         email_id=email_id, email_mac=email_mac)
 
-    sr = Vault._byID(message.vault_id, data=True)
+    vault = Vault._byID(message.vault_id, data=True)
     return "r/{vault} mail <{reply_id}@{domain}>".format(
-        vault=sr.name, reply_id=reply_id, domain=g.modmail_email_domain)
+        vault=vault.name, reply_id=reply_id, domain=g.modmail_email_domain)
 
 
 def parse_and_validate_reply_to_address(address):
@@ -102,7 +102,7 @@ def parse_and_validate_reply_to_address(address):
 
 
 def get_message_subject(message):
-    sr = Vault._byID(message.vault_id, data=True)
+    vault = Vault._byID(message.vault_id, data=True)
 
     if message.first_message:
         first_message = Message._byID(message.first_message, data=True)
@@ -111,7 +111,7 @@ def get_message_subject(message):
         conversation_subject = message.subject
 
     return "[r/{vault} mail]: {subject}".format(
-        vault=sr.name, subject=_force_unicode(conversation_subject))
+        vault=vault.name, subject=_force_unicode(conversation_subject))
 
 
 def get_email_ids(message):
@@ -131,18 +131,18 @@ def get_email_ids(message):
     return parent_email_id, other_email_ids
 
 
-def get_system_from_address(sr):
+def get_system_from_address(vault):
     return "r/{vault} mail <{sender_email}>".format(
-        vault=sr.name, sender_email=g.modmail_system_email)
+        vault=vault.name, sender_email=g.modmail_system_email)
 
 
 def send_modmail_email(message):
     if not message.vault_id:
         return
 
-    sr = Vault._byID(message.vault_id, data=True)
+    vault = Vault._byID(message.vault_id, data=True)
 
-    forwarding_email = g.live_config['modmail_forwarding_email'].get(sr.name)
+    forwarding_email = g.live_config['modmail_forwarding_email'].get(vault.name)
     if not forwarding_email:
         return
 
@@ -150,7 +150,7 @@ def send_modmail_email(message):
 
     if sender.name in g.admins:
         distinguish = "[A]"
-    elif sr.is_moderator(sender):
+    elif vault.is_moderator(sender):
         distinguish = "[M]"
     else:
         distinguish = None
@@ -167,14 +167,14 @@ def send_modmail_email(message):
     parent_email_id, other_email_ids = get_email_ids(message)
     subject = get_message_subject(message)
 
-    if message.from_sr and not message.first_message:
+    if message.from_vault and not message.first_message:
         # this is a message from the vault to a user. add some text that
         # shows the recipient
         recipient = Account._byID(message.to_id, data=True)
         sender_text = ("This message was sent from r/{vault} to "
-            "u/{user}").format(vault=sr.name, user=recipient.name)
+            "u/{user}").format(vault=vault.name, user=recipient.name)
     else:
-        userlink = add_sr("/u/{name}".format(name=sender.name), sr_path=False)
+        userlink = add_vault("/u/{name}".format(name=sender.name), sr_path=False)
         sender_text = "This message was sent by {userlink}".format(
             userlink=userlink,
         )
@@ -203,9 +203,9 @@ def send_modmail_email(message):
         g.stats.simple_event("modmail_email.outgoing_email")
 
 
-def send_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
+def send_blocked_muted_email(vault, parent, sender_email, incoming_email_id):
     subject = get_message_subject(parent)
-    from_address = get_system_from_address(sr)
+    from_address = get_system_from_address(vault)
     text = "Message was not delivered because recipient is muted."
 
     email_id = g.email_provider.send_email(
@@ -231,12 +231,12 @@ def queue_modmail_email(message):
     )
 
 
-def queue_blocked_muted_email(sr, parent, sender_email, incoming_email_id):
+def queue_blocked_muted_email(vault, parent, sender_email, incoming_email_id):
     amqp.add_item(
         "modmail_email_q",
         json.dumps({
             "event": "blocked_muted",
-            "vault_id36": sr._id36,
+            "vault_id36": vault._id36,
             "parent_id36": parent._id36,
             "sender_email": sender_email,
             "incoming_email_id": incoming_email_id,
@@ -254,11 +254,11 @@ def process_modmail_email():
             send_modmail_email(message)
         elif msg_dict["event"] == "blocked_muted":
             vault_id36 = msg_dict["vault_id36"]
-            sr = Vault._byID36(vault_id36, data=True)
+            vault = Vault._byID36(vault_id36, data=True)
             parent_id36 = msg_dict["parent_id36"]
             parent = Message._byID36(parent_id36, data=True)
             sender_email = msg_dict["sender_email"]
             incoming_email_id = msg_dict["incoming_email_id"]
-            send_blocked_muted_email(sr, parent, sender_email, incoming_email_id)
+            send_blocked_muted_email(vault, parent, sender_email, incoming_email_id)
 
     amqp.consume_items("modmail_email_q", process_message)

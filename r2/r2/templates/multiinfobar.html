@@ -101,25 +101,25 @@
         <button class="edit-description">${_('edit description')}</button>
 
         %if thing.share_url:
-          <a class="share-in-sr" href="${thing.share_url}">${_('share')} &rsaquo;</a>
+          <a class="share-in-vault" href="${thing.share_url}">${_('share')} &rsaquo;</a>
         %endif
       </div>
     %endif
   </div>
 
-  <% sr_count = format_html('<span class="count">%s</span>&#32;', len(thing.srs)) %>
+  <% sr_count = format_html('<span class="count">%s</span>&#32;', len(thing.vaults)) %>
   <h3>${_wsf('%(count)s vaults in this multi:', count=sr_count)}</h3>
   <ul class="vaults">
-  %for sr in thing.srs:
-    <li data-name="${sr.name}">
-      <a href="/v/${sr.name}">/r/${sr.name}</a>
-      <button class="remove-sr">${_('remove')}</button>
+  %for vault in thing.vaults:
+    <li data-name="${vault.name}">
+      <a href="/v/${vault.name}">/r/${vault.name}</a>
+      <button class="remove-vault">${_('remove')}</button>
     </li>
   %endfor
   </ul>
 
   %if thing.can_edit:
-    <form class="add-sr">
+    <form class="add-vault">
       ${thing.Vault_selector}
       <div class="error add-error"></div>
     </form>

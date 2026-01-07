@@ -778,7 +778,7 @@ class PromotedLinkTraffic(Templated):
 
 class VaultTrafficReport(Templated):
     def __init__(self):
-        self.srs, self.invalid_srs, self.report = [], [], []
+        self.vaults, self.invalid_srs, self.report = [], [], []
 
         self.textarea = request.params.get("vaults")
         if self.textarea:
@@ -788,7 +788,7 @@ class VaultTrafficReport(Templated):
 
             for srname in requested_srs:
                 if srname in vaults:
-                    self.srs.append(srname)
+                    self.vaults.append(srname)
                 else:
                     self.invalid_srs.append(srname)
 

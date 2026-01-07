@@ -59,7 +59,7 @@ class TestSRNamesFromSite(RedditTestCase):
         self.assertEqual(srnames, set(subscriptions_srnames) | {Frontpage.name})
 
     def test_multi_logged_out(self):
-        multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_Vaults)
+        multi = MultiReddit(path="/user/test/m/multi_test", vaults=multi_Vaults)
         srnames = srnames_from_site(self.logged_out, multi)
 
         self.assertEqual(srnames, set(multi_srnames))
@@ -67,7 +67,7 @@ class TestSRNamesFromSite(RedditTestCase):
     @patch("r2.models.Vault.user_Vaults")
     def test_multi_logged_in(self, user_Vaults):
         user_Vaults.return_value = subscriptions
-        multi = MultiReddit(path="/user/test/m/multi_test", srs=multi_Vaults)
+        multi = MultiReddit(path="/user/test/m/multi_test", vaults=multi_Vaults)
         srnames = srnames_from_site(self.logged_in, multi)
 
         self.assertEqual(srnames, set(multi_srnames))

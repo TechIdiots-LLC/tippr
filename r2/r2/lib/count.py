@@ -40,9 +40,9 @@ def get_link_counts(period = count_period):
     return {l._fullname: (0, l.vault_id) for l in links}
 
 def get_sr_counts():
-    srs = utils.fetch_things2(Vault._query(sort=desc("_date")))
+    vaults = utils.fetch_things2(Vault._query(sort=desc("_date")))
 
-    return {sr._fullname: sr._ups for sr in srs}
+    return {vault._fullname: vault._ups for vault in vaults}
 
 
 if config['r2.import_private']:

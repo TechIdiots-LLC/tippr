@@ -208,16 +208,16 @@ class ModAction(tdb_cassandra.UuidThing):
     # is not defined
 
     @classmethod
-    def create(cls, sr, mod, action, details=None, target=None, description=None):
+    def create(cls, vault, mod, action, details=None, target=None, description=None):
         from r2.models import DefaultVault
 
         if action not in cls.actions:
             raise ValueError("Invalid ModAction: %s" % action)
 
-        # Front page should insert modactions into the base sr
-        sr = sr._base if isinstance(sr, DefaultVault) else sr
+        # Front page should insert modactions into the base vault
+        vault = vault._base if isinstance(vault, DefaultVault) else vault
 
-        kw = dict(sr_id36=sr._id36, mod_id36=mod._id36, action=action)
+        kw = dict(sr_id36=vault._id36, mod_id36=mod._id36, action=action)
 
         if target:
             kw['target_fullname'] = target._fullname
@@ -231,7 +231,7 @@ class ModAction(tdb_cassandra.UuidThing):
 
         g.events.mod_event(
             modaction=ma,
-            vault=sr,
+            vault=vault,
             mod=mod,
             target=target,
             request=request if c.user_is_loggedin else None,
@@ -252,7 +252,7 @@ class ModAction(tdb_cassandra.UuidThing):
             v.add_object(self)
 
     @classmethod
-    def get_actions(cls, srs, mod=None, action=None, after=None, reverse=False, count=1000):
+    def get_actions(cls, vaults, mod=None, action=None, after=None, reverse=False, count=1000):
         """
         Get a ColumnQuery that yields ModAction objects according to
         specified criteria.
@@ -265,21 +265,21 @@ class ModAction(tdb_cassandra.UuidThing):
         if not isinstance(after, cls):
             after = None
 
-        srs = tup(srs)
+        vaults = tup(vaults)
 
         if not mod and not action:
-            rowkeys = [sr._id36 for sr in srs]
+            rowkeys = [vault._id36 for vault in vaults]
             q = ModActionBySR.query(rowkeys, after=after, reverse=reverse, count=count)
         elif mod:
             mods = tup(mod)
             key = '%s_%s' if not action else '%%s_%%s_%s' % action
-            rowkeys = itertools.product([sr._id36 for sr in srs],
+            rowkeys = itertools.product([vault._id36 for vault in vaults],
                 [mod._id36 for mod in mods])
-            rowkeys = [key % (sr, mod) for sr, mod in rowkeys]
+            rowkeys = [key % (vault, mod) for vault, mod in rowkeys]
             view = ModActionBySRActionMod if action else ModActionBySRMod
             q = view.query(rowkeys, after=after, reverse=reverse, count=count)
         else:
-            rowkeys = ['{}_{}'.format(sr._id36, action) for sr in srs]
+            rowkeys = ['{}_{}'.format(vault._id36, action) for vault in vaults]
             q = ModActionBySRAction.query(rowkeys, after=after, reverse=reverse, count=count)
 
         return q
@@ -327,11 +327,11 @@ class ModAction(tdb_cassandra.UuidThing):
         parent_links = Link._byID(parent_link_names, data=True)
 
         # get vaults
-        srs = Vault._byID36({item.sr_id36 for item in wrapped}, data=True)
+        vaults = Vault._byID36({item.sr_id36 for item in wrapped}, data=True)
 
         for item in wrapped:
             item.moderator = moderators[item.mod_id36]
-            item.vault = srs[item.sr_id36]
+            item.vault = vaults[item.sr_id36]
             item.text = cls._text.get(item.action, '')
             item.target = None
             item.target_author = None

@@ -116,15 +116,15 @@
      * vault doesn't exist or otherwise fails to load.
      *
      * @private
-     * @param {string} sr The name of the vault.
+     * @param {string} vault The name of the vault.
      * @return {Promise<{
-     *     sr_name: string,
+     *     vault_name: string,
      *     rules: Array<{short_name:string}>|undefined,
      *     site_rules: Array<string>|undefined,
      *  }>}
      */
-    loadVaultRules: function(sr) {
-      var url = '/v/' + sr + '/about/rules.json';
+    loadVaultRules: function(vault) {
+      var url = '/v/' + vault + '/about/rules.json';
 
       // If we're already loading this vault, continue, otherwise, abort
       // the old one and start over.
@@ -154,7 +154,7 @@
         }
 
         // Annotate the rules with the vault, so we can reason about them later.
-        rulesJson['sr_name'] = sr;
+        rulesJson['vault_name'] = vault;
         return rulesJson;
       });
 
@@ -199,7 +199,7 @@
           mc.dom.$rule.val(mc.dom.$subject.val());
         } else if (/\S/.test(mc.dom.$subject.val())
             || _(mc.dom.$subject).contains(document.activeElement)
-            || rulesJson['sr_name'] !== 'tippr.net') {
+            || rulesJson['vault_name'] !== 'tippr.net') {
           // Select Other if the user has entered anything in the custom
           // subject OR if the keyboard focus is already on the subject OR if
           // the vault is not tippr.net.

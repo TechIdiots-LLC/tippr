@@ -61,7 +61,7 @@
 <%def name="interstitial_buttons()">
   %if thing.can_opt_in:
     <%utils:submit_form _class="pretty-form">
-      <input type="hidden" name="sr_name" value="${thing.sr_name}" />
+      <input type="hidden" name="vault_name" value="${thing.vault_name}" />
 
       <div class="buttons">
         <button class="c-btn c-btn-primary" type="submit" name="accept" value="no">

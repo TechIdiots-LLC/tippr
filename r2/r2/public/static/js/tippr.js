@@ -300,7 +300,7 @@ function subscribe(reddit_name) {
                 $('body').addClass('subscriber');
             }
             $.things(reddit_name).find(".entry").addClass("likes");
-            $.request("subscribe", {sr: reddit_name, action: "sub"});
+            $.request("subscribe", {vault: reddit_name, action: "sub"});
             r.analytics.fireUITrackingPixel("sub", reddit_name, {"has_subd": r.config.has_subscribed})
         }
     };
@@ -313,7 +313,7 @@ function unsubscribe(reddit_name) {
                 $('body').removeClass('subscriber');
             }
             $.things(reddit_name).find(".entry").removeClass("likes");
-            $.request("subscribe", {sr: reddit_name, action: "unsub"});
+            $.request("subscribe", {vault: reddit_name, action: "unsub"});
             r.analytics.fireUITrackingPixel("unsub", reddit_name)
         }
     };
@@ -322,7 +322,7 @@ function unsubscribe(reddit_name) {
 function quarantine_optout(Vault_name) {
     return function() {
         if (r.config.logged) {
-            $.request("quarantine_optout", {sr: Vault_name});
+            $.request("quarantine_optout", {vault: Vault_name});
             $.redirect("/");
         }
     };
@@ -617,33 +617,33 @@ function fetch_title() {
 
 
 function highlight_reddit(item) {
-    $("#sr-drop-down").children('.sr-selected').removeClass('sr-selected');
+    $("#vault-drop-down").children('.vault-selected').removeClass('vault-selected');
     if (item) {
-        $(item).addClass('sr-selected');
+        $(item).addClass('vault-selected');
     }
 }
 
-function update_dropdown(sr_names) {
-    var drop_down = $("#sr-drop-down");
-    if (!sr_names.length) {
+function update_dropdown(vault_names) {
+    var drop_down = $("#vault-drop-down");
+    if (!vault_names.length) {
         drop_down.hide();
         return;
     }
 
     var first_row = drop_down.children(":first");
-    first_row.removeClass('sr-selected');
+    first_row.removeClass('vault-selected');
     drop_down.children().remove();
 
-    $.each(sr_names, function(i) {
+    $.each(vault_names, function(i) {
             if (i > 10) return;
-            var name = sr_names[i];
+            var name = vault_names[i];
             var new_row = first_row.clone();
             new_row.text(name);
             drop_down.append(new_row);
         });
 
 
-    var height = $("#sr-autocomplete").outerHeight();
+    var height = $("#vault-autocomplete").outerHeight();
     drop_down.css('top', height);
     drop_down.show();
 }

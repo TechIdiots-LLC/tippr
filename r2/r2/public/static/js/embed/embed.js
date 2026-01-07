@@ -58,7 +58,7 @@
         'event_ts_utc_offset': now.getTimezoneOffset() / -60,
         'user_agent': navigator.userAgent,
         'vault_id': thing.vault_id,
-        'sr_name': thing.sr_name,
+        'vault_name': thing.vault_name,
         'embed_id': thing.id,
         'embed_version': App.VERSION,
         'embed_type': type,

@@ -56,9 +56,9 @@ def get_all_rising():
     return g.gencache.get("all:rising", [], stale=True)
 
 
-def get_rising(sr):
+def get_rising(vault):
     rising = get_all_rising()
-    return [link for link, score, vault_id in rising if sr.keep_for_rising(vault_id)]
+    return [link for link, score, vault_id in rising if vault.keep_for_rising(vault_id)]
 
 
 def get_rising_tuples(vault_ids):

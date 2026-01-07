@@ -445,27 +445,27 @@ class Tippr(Templated):
             self.Vault_stylesheet_url = self.get_Vault_stylesheet_url(c.site)
 
         if has_style_override and self.no_sr_styles:
-            sr = Vault._by_name(c.user.pref_default_theme_sr)
+            vault = Vault._by_name(c.user.pref_default_theme_sr)
             # make sure they can still view their override vault
-            if sr.can_view(c.user) and sr.stylesheet_url:
-                self.Vault_stylesheet_url = self.get_Vault_stylesheet_url(sr)
-                if c.can_apply_styles and c.allow_styles and sr.header:
-                    self.default_theme_sr = sr
+            if vault.can_view(c.user) and vault.stylesheet_url:
+                self.Vault_stylesheet_url = self.get_Vault_stylesheet_url(vault)
+                if c.can_apply_styles and c.allow_styles and vault.header:
+                    self.default_theme_sr = vault
 
 
     @staticmethod
-    def get_Vault_stylesheet_url(sr):
+    def get_Vault_stylesheet_url(vault):
         if not g.css_killswitch and c.can_apply_styles and c.allow_styles:
             if c.secure:
-                if sr.stylesheet_url:
-                    return make_url_https(sr.stylesheet_url)
-                elif sr.stylesheet_url_https:
-                    return sr.stylesheet_url_https
+                if vault.stylesheet_url:
+                    return make_url_https(vault.stylesheet_url)
+                elif vault.stylesheet_url_https:
+                    return vault.stylesheet_url_https
             else:
-                if sr.stylesheet_url:
-                    return sr.stylesheet_url
-                elif sr.stylesheet_url_http:
-                    return sr.stylesheet_url_http
+                if vault.stylesheet_url:
+                    return vault.stylesheet_url
+                elif vault.stylesheet_url_http:
+                    return vault.stylesheet_url_http
 
     def wiki_actions_menu(self, moderator=False):
         data_attrs = lambda event: (
@@ -674,22 +674,22 @@ class Tippr(Templated):
             ps.append(ModSRInfoBar())
 
         if isinstance(c.site, (MultiReddit, ModSR)):
-            srs = Vault._byID(c.site.vault_ids, data=True,
+            vaults = Vault._byID(c.site.vault_ids, data=True,
                                   return_dict=False, stale=True)
 
-            if (srs and c.user_is_loggedin and
+            if (vaults and c.user_is_loggedin and
                     (c.user_is_admin or c.site.is_moderator(c.user))):
                 ps.append(self.sr_admin_menu())
 
             if isinstance(c.site, LabeledMulti):
-                ps.append(MultiInfoBar(c.site, srs, c.user))
+                ps.append(MultiInfoBar(c.site, vaults, c.user))
                 c.js_preload.set_wrapped(
                     '/api/multi/%s' % c.site.path.lstrip('/'), c.site)
-            elif srs:
+            elif vaults:
                 if isinstance(c.site, ModSR):
-                    box = SubscriptionBox(srs, multi_text=strings.mod_multi)
+                    box = SubscriptionBox(vaults, multi_text=strings.mod_multi)
                 else:
-                    box = SubscriptionBox(srs)
+                    box = SubscriptionBox(vaults)
                 ps.append(SideContentBox(_('these vaults'), [box]))
 
         user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
@@ -1166,16 +1166,16 @@ class VaultInfoBar(CachedTemplate):
         site = site or c.site
 
         # hackity hack. do i need to add all the others props?
-        self.sr = list(wrap_links(site))[0]
-        self.description_usertext = UserText(self.sr, self.sr.description)
+        self.vault = list(wrap_links(site))[0]
+        self.description_usertext = UserText(self.vault, self.vault.description)
 
         # we want to cache on the number of subscribers
-        self.subscribers = self.sr._ups
+        self.subscribers = self.vault._ups
 
         # so the menus cache properly
         self.path = request.path
 
-        self.active_visitors = self.sr.count_activity()
+        self.active_visitors = self.vault.count_activity()
 
         if c.user_is_loggedin and c.user.pref_show_flair:
             self.flair_prefs = FlairPrefs()
@@ -1185,29 +1185,29 @@ class VaultInfoBar(CachedTemplate):
         self.sr_style_toggle = False
         self.use_Vault_style = True
 
-        self.quarantine = self.sr.quarantine
+        self.quarantine = self.vault.quarantine
 
-        has_custom_stylesheet = (self.sr.stylesheet_url or
-            self.sr.stylesheet_url_https or self.sr.stylesheet_url_http)
+        has_custom_stylesheet = (self.vault.stylesheet_url or
+            self.vault.stylesheet_url_https or self.vault.stylesheet_url_http)
         if (c.user_is_loggedin and
-                (has_custom_stylesheet or self.sr.header) and
+                (has_custom_stylesheet or self.vault.header) and
                 feature.is_enabled('stylesheets_everywhere')):
             # defaults to c.user.pref_show_stylesheets if a match doesn't exist
             self.sr_style_toggle = True
             self.use_Vault_style = c.user.use_Vault_style(c.site)
 
-        if c.user_is_admin and hasattr(self.sr, 'ban_info'):
-            self.sr_ban_info = self.sr.ban_info
+        if c.user_is_admin and hasattr(self.vault, 'ban_info'):
+            self.sr_ban_info = self.vault.ban_info
 
         CachedTemplate.__init__(self)
 
     @property
     def creator_text(self):
-        if self.sr.author:
-            if self.sr.is_moderator(self.sr.author) or self.sr.author._deleted:
-                return WrappedUser(self.sr.author).render()
+        if self.vault.author:
+            if self.vault.is_moderator(self.vault.author) or self.vault.author._deleted:
+                return WrappedUser(self.vault.author).render()
             else:
-                return self.sr.author.name
+                return self.vault.author.name
         return None
 
 
@@ -1422,7 +1422,7 @@ class MessageCompose(Templated):
 
 class ModeratorMessageCompose(MessageCompose):
     def __init__(self, mod_srs, only_as_Vault=False, **kw):
-        self.mod_srs = sorted(mod_srs, key=lambda sr: sr.name.lower())
+        self.mod_srs = sorted(mod_srs, key=lambda vault: vault.name.lower())
         self.only_as_Vault = only_as_Vault
         MessageCompose.__init__(self, admin_check=False, **kw)
 
@@ -1587,7 +1587,7 @@ class SearchPage(BoringPage):
 
         # generate the over18 redirect url for the current search if needed
         if kw['nav_menus'] and not c.over18 and feature.is_enabled('safe_search'):
-            u = UrlParser(add_sr('/search'))
+            u = UrlParser(add_vault('/search'))
             if prev_search:
                 u.update_query(q=prev_search)
             if restrict_sr:
@@ -2044,8 +2044,8 @@ class CommentPane(Templated):
         )
 
         if c.user_is_loggedin:
-            sr = article.vault_slow
-            try_cache &= not bool(sr.can_ban(c.user))
+            vault = article.vault_slow
+            try_cache &= not bool(vault.can_ban(c.user))
 
             user_threshold = c.user.pref_min_comment_score
             default_threshold = Account._defaults["pref_min_comment_score"]
@@ -2274,11 +2274,11 @@ class VaultsPage(Tippr):
 
     def rightbox(self):
         ps = Tippr.rightbox(self)
-        srs = Vault.user_Vaults(c.user, ids=False, limit=None)
-        srs.sort(key=lambda sr: sr.name.lower())
-        subscribe_box = SubscriptionBox(srs,
+        vaults = Vault.user_Vaults(c.user, ids=False, limit=None)
+        vaults.sort(key=lambda vault: vault.name.lower())
+        subscribe_box = SubscriptionBox(vaults,
                                         multi_text=strings.subscribed_multi)
-        num_reddits = len(subscribe_box.srs)
+        num_reddits = len(subscribe_box.vaults)
         ps.append(SideContentBox(_("your front page vaults (%s)") %
                                  num_reddits, [subscribe_box]))
         return ps
@@ -2404,7 +2404,7 @@ class ProfilePage(Tippr):
         mod_sr_ids = Vault.reverse_moderator_ids(self.user)
         all_mod_srs = Vault._byID(mod_sr_ids, data=True,
                                       return_dict=False, stale=True)
-        mod_srs = [sr for sr in all_mod_srs if sr.can_view_in_modlist(c.user)]
+        mod_srs = [vault for vault in all_mod_srs if vault.can_view_in_modlist(c.user)]
         if mod_srs:
             rb.push(SideContentBox(title=_("moderator of"),
                                    content=[SidebarModList(mod_srs)]))
@@ -2446,7 +2446,7 @@ class SidebarModList(Templated):
         Templated.__init__(self)
         # primary sort is desc. subscribers, secondary is name
         self.vaults = sorted(vaults,
-                                 key=lambda sr: (-sr._ups, sr.name.lower()))
+                                 key=lambda vault: (-vault._ups, vault.name.lower()))
 
 
 class ProfileBar(Templated):
@@ -2822,14 +2822,14 @@ class VaultTopBar(CachedTemplate):
         if self._pop_reddits is None:
             defaults = Vault.default_Vaults(ids=False)
             # sort the default vaults by "popularity" descending
-            defaults = sorted(defaults, key=lambda sr: sr._downs, reverse=True)
+            defaults = sorted(defaults, key=lambda vault: vault._downs, reverse=True)
             self._pop_reddits = defaults
         return self._pop_reddits
 
     def my_reddits_dropdown(self):
         drop_down_buttons = []
-        for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
-            drop_down_buttons.append(VaultButton(sr))
+        for vault in sorted(self.my_reddits, key = lambda vault: vault.name.lower()):
+            drop_down_buttons.append(VaultButton(vault))
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
                                            sr_path = False,
                                            css_class = 'bottom-option',
@@ -2839,23 +2839,23 @@ class VaultTopBar(CachedTemplate):
                              type = 'srdrop')
 
     def subscribed_reddits(self):
-        srs = [VaultButton(sr) for sr in
+        vaults = [VaultButton(vault) for vault in
                         sorted(self.my_reddits,
-                               key = lambda sr: sr._downs,
+                               key = lambda vault: vault._downs,
                                reverse=True)
                         ]
-        return NavMenu(srs,
+        return NavMenu(vaults,
                        type='flatlist', separator = '-',
-                       css_class = 'sr-bar')
+                       css_class = 'vault-bar')
 
     def popular_reddits(self, exclude_mine=False):
         exclude = self.my_reddits if exclude_mine else []
-        buttons = [VaultButton(sr) for sr in self.pop_reddits
-                                       if sr not in exclude]
+        buttons = [VaultButton(vault) for vault in self.pop_reddits
+                                       if vault not in exclude]
 
         return NavMenu(buttons,
                        type='flatlist', separator = '-',
-                       css_class = 'sr-bar', _id = 'sr-bar')
+                       css_class = 'vault-bar', _id = 'vault-bar')
 
     def special_reddits(self):
         css_classes = {Random: "random",
@@ -2870,10 +2870,10 @@ class VaultTopBar(CachedTemplate):
                 reddits.append(Friends)
             if c.user.is_moderator_somewhere:
                 reddits.append(Mod)
-        return NavMenu([VaultButton(sr, css_class=css_classes.get(sr))
-                        for sr in reddits],
+        return NavMenu([VaultButton(vault, css_class=css_classes.get(vault))
+                        for vault in reddits],
                        type = 'flatlist', separator = '-',
-                       css_class = 'sr-bar')
+                       css_class = 'vault-bar')
 
     def sr_bar (self):
         sep = '<span class="separator">&nbsp;|&nbsp;</span>'
@@ -2896,18 +2896,18 @@ class VaultTopBar(CachedTemplate):
 
 
 class MultiInfoBar(Templated):
-    def __init__(self, multi, srs, user):
+    def __init__(self, multi, vaults, user):
         Templated.__init__(self)
         self.multi = wrap_things(multi)[0]
         self.can_edit = multi.can_edit(user)
         self.can_copy = c.user_is_loggedin
         self.can_rename = c.user_is_loggedin and multi.owner == c.user
-        srs.sort(key=lambda sr: sr.name.lower())
+        vaults.sort(key=lambda vault: vault.name.lower())
         self.description_md = multi.description_md
-        self.srs = srs
+        self.vaults = vaults
         self.Vault_selector = VaultSelector(
                 placeholder=_("add vault"),
-                class_name="sr-name",
+                class_name="vault-name",
                 include_user_subscriptions=False,
                 show_add=True,
             )
@@ -2918,8 +2918,8 @@ class MultiInfoBar(Templated):
 
         explore_sr = g.live_config["listing_chooser_explore_sr"]
         if explore_sr:
-            self.share_url = "/v/{sr}/submit?url={url}".format(
-                sr=explore_sr,
+            self.share_url = "/v/{vault}/submit?url={url}".format(
+                vault=explore_sr,
                 url=g.origin + self.multi.path,
             )
         else:
@@ -2929,8 +2929,8 @@ class MultiInfoBar(Templated):
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
-    def __init__(self, srs, multi_text=None):
-        self.srs = srs
+    def __init__(self, vaults, multi_text=None):
+        self.vaults = vaults
         self.goldlink = None
         self.goldmsg = None
         self.prelink = None
@@ -2939,9 +2939,9 @@ class SubscriptionBox(Templated):
 
         # Construct MultiReddit path
         if multi_text:
-            self.multi_path = '/v/' + '+'.join([sr.name for sr in srs])
+            self.multi_path = '/v/' + '+'.join([vault.name for vault in vaults])
 
-        if len(srs) > Vault.sr_limit and c.user_is_loggedin:
+        if len(vaults) > Vault.sr_limit and c.user_is_loggedin:
             if not c.user.gold:
                 self.goldlink = "/gold"
                 self.goldmsg = _("raise it to %s") % Vault.gold_limit
@@ -2949,20 +2949,20 @@ class SubscriptionBox(Templated):
                                 _("%s visible") % Vault.sr_limit]
             else:
                 self.goldlink = "/gold/about"
-                extra = min(len(srs) - Vault.sr_limit,
+                extra = min(len(vaults) - Vault.sr_limit,
                             Vault.gold_limit - Vault.sr_limit)
-                visible = min(len(srs), Vault.gold_limit)
+                visible = min(len(vaults), Vault.gold_limit)
                 bonus = {"bonus": extra}
                 self.goldmsg = _("%(bonus)s bonus vaults") % bonus
                 self.prelink = ["/wiki/faq#wiki_how_many_Vaults_can_i_subscribe_to.3F",
                                 _("%s visible") % visible]
 
-        Templated.__init__(self, srs=srs, goldlink=self.goldlink,
+        Templated.__init__(self, vaults=vaults, goldlink=self.goldlink,
                            goldmsg=self.goldmsg)
 
     @property
     def reddits(self):
-        return wrap_links(self.srs)
+        return wrap_links(self.vaults)
 
 
 class ModSRInfoBar(Templated):
@@ -2979,20 +2979,20 @@ class FilteredInfoBar(Templated):
 
 class AllInfoBar(Templated):
     def __init__(self, site, user):
-        self.sr = site
+        self.vault = site
         self.allminus_url = None
         self.css_class = None
         if isinstance(site, AllMinus) and c.user.gold:
             self.description = (strings.r_all_minus_description + "\n\n" +
-                " ".join("/v/" + sr.name for sr in site.exclude_srs))
+                " ".join("/v/" + vault.name for vault in site.exclude_srs))
             self.css_class = "gold-accent"
         else:
             self.description = strings.r_all_description
             vault_ids = Vault.user_Vaults(user)
-            srs = Vault._byID(
+            vaults = Vault._byID(
                 vault_ids, data=True, return_dict=False, stale=True)
-            if srs:
-                self.allminus_url = '/v/all-' + '-'.join([sr.name for sr in srs])
+            if vaults:
+                self.allminus_url = '/v/all-' + '-'.join([vault.name for vault in vaults])
 
         self.gilding_listing = False
         if request.path.startswith("/comments/gilded"):
@@ -3017,7 +3017,7 @@ class CreateVault(Templated):
         self.color_options = Vault.KEY_COLORS
         self.Vault_selector = VaultSelector(
                 placeholder=_("add vault"),
-                class_name="sr-name",
+                class_name="vault-name",
                 include_user_subscriptions=False,
                 show_add=True,
             )
@@ -3047,8 +3047,8 @@ class VaultStylesheet(VaultStylesheetBase):
         )
 
     @staticmethod
-    def find_preview_comments(sr):
-        comments = queries.get_sr_comments(sr)
+    def find_preview_comments(vault):
+        comments = queries.get_sr_comments(vault)
         comments = list(comments)
         if not comments:
             comments = queries.get_all_comments()
@@ -3057,9 +3057,9 @@ class VaultStylesheet(VaultStylesheetBase):
         return Thing._by_fullname(comments[:25], data=True, return_dict=False)
 
     @staticmethod
-    def find_preview_links(sr):
+    def find_preview_links(vault):
         # try to find a link to use, otherwise give up and return
-        links = normalized_hot([sr._id])
+        links = normalized_hot([vault._id])
         if not links:
             links = normalized_hot(Vault.default_Vaults())
 
@@ -3536,7 +3536,7 @@ class SearchForm(Templated):
 
         # generate the over18 redirect url for the current search if needed
         if not c.over18 and feature.is_enabled('safe_search'):
-            u = UrlParser(add_sr(search_path))
+            u = UrlParser(add_vault(search_path))
             if prev_search:
                 u.update_query(q=prev_search)
             if restrict_sr:
@@ -3762,9 +3762,9 @@ class Ads(Templated):
 
 
 class ReadNext(Templated):
-    def __init__(self, sr, links):
+    def __init__(self, vault, links):
         Templated.__init__(self)
-        self.sr = sr
+        self.vault = vault
         self.links = links
 
 
@@ -4549,9 +4549,9 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.get_collections()
         self.get_mobile_versions()
 
-        user_srs = [sr for sr in Vault.user_Vaults(c.user, ids=False)
-                    if sr.can_submit(c.user, promotion=True) and sr.allow_ads]
-        top_srs = sorted(user_srs, key=lambda sr: sr._ups, reverse=True)[:20]
+        user_srs = [vault for vault in Vault.user_Vaults(c.user, ids=False)
+                    if vault.can_submit(c.user, promotion=True) and vault.allow_ads]
+        top_srs = sorted(user_srs, key=lambda vault: vault._ups, reverse=True)[:20]
         extra_Vaults = [(_("suggestions:"), top_srs)]
         self.Vault_selector = VaultSelector(
             extra_Vaults=extra_Vaults, include_user_subscriptions=False)
@@ -5060,9 +5060,9 @@ class PromoteInventory(PromoteLinkBase):
         return out.getvalue()
 
     def setup(self):
-        srs = self.target.Vaults_slow
+        vaults = self.target.Vaults_slow
         campaigns_by_date = inventory.get_campaigns_by_date(
-            srs, self.start, self.end)
+            vaults, self.start, self.end)
         link_ids = {camp.link_id for camp
                     in chain.from_iterable(iter(campaigns_by_date.values()))}
         links_by_id = Link._byID(link_ids, data=True)
@@ -5106,7 +5106,7 @@ class PromoteInventory(PromoteLinkBase):
         )
         rows.append(total_row)
 
-        predicted_pageviews_by_sr = inventory.get_predicted_pageviews(srs)
+        predicted_pageviews_by_sr = inventory.get_predicted_pageviews(vaults)
         predicted_pageviews = sum(pageviews for pageviews
                                   in predicted_pageviews_by_sr.values())
         predicted_row = Storage(
@@ -5243,20 +5243,20 @@ class PromoteReport(PromoteLinkBase):
         clicks = traffic.TargetedClickthroughsByCodename.campaign_history(
             codenames, start, end)
 
-        for date, codename, sr, (uniques, pageviews) in imps:
+        for date, codename, vault, (uniques, pageviews) in imps:
             # convert from utc hour to campaign date
             traffic_date = (date + promote.timezone_offset).date()
 
-            if sr == '':
+            if vault == '':
                 # LEGACY: traffic uses '' to indicate Frontpage
                 fp_imps_by_date[traffic_date][codename] += pageviews
             else:
                 sr_imps_by_date[traffic_date][codename] += pageviews
 
-        for date, codename, sr, (uniques, pageviews) in clicks:
+        for date, codename, vault, (uniques, pageviews) in clicks:
             traffic_date = (date + promote.timezone_offset).date()
 
-            if sr == '':
+            if vault == '':
                 # NOTE: clicks use hourly uniques
                 fp_clicks_by_date[traffic_date][codename] += uniques
             else:
@@ -5498,17 +5498,17 @@ class Goldvertisement(Templated):
 class LinkCommentsSettings(Templated):
     def __init__(self, link, sort, suggested_sort):
         Templated.__init__(self)
-        self.sr = link.vault_slow
+        self.vault = link.vault_slow
         self.link = link
         self.is_author = c.user_is_loggedin and c.user._id == link.author_id
         self.contest_mode = link.contest_mode
-        self.stickied = link.is_stickied(self.sr)
-        self.stickies_full = self.sr.has_max_stickies
+        self.stickied = link.is_stickied(self.vault)
+        self.stickies_full = self.vault.has_max_stickies
         self.sendreplies = link.sendreplies
         self.can_edit = (
             c.user_is_loggedin and
             (c.user_is_admin or
-                self.sr.is_moderator_with_perms(c.user, "posts"))
+                self.vault.is_moderator_with_perms(c.user, "posts"))
         )
         self.can_sticky = False
         if self.can_edit:
@@ -5568,8 +5568,8 @@ class ListingChooser(Templated):
 
             explore_sr = g.live_config["listing_chooser_explore_sr"]
             if explore_sr:
-                sr = Vault._by_name(explore_sr, stale=True)
-                self.add_item("multi", name=_("explore multis"), site=sr)
+                vault = Vault._by_name(explore_sr, stale=True)
+                self.add_item("multi", name=_("explore multis"), site=vault)
 
             self.show_samples = not multis
 
@@ -5655,19 +5655,19 @@ class Newsletter(BoringPage):
 
 
 class SubscribeButton(Templated):
-    def __init__(self, sr, bubble_class=None):
+    def __init__(self, vault, bubble_class=None):
         Templated.__init__(self)
-        self.sr = sr
-        self.data_attrs = {"sr_name": sr.name}
+        self.vault = vault
+        self.data_attrs = {"sr_name": vault.name}
         if bubble_class:
             self.data_attrs["bubble_class"] = bubble_class
 
 
 class QuarantineOptoutButton(Templated):
-    def __init__(self, sr, bubble_class=None):
+    def __init__(self, vault, bubble_class=None):
         Templated.__init__(self)
-        self.sr = sr
-        self.data_attrs = {"sr_name": sr.name}
+        self.vault = vault
+        self.data_attrs = {"sr_name": vault.name}
         if bubble_class:
             self.data_attrs["bubble_class"] = bubble_class
 
@@ -5707,7 +5707,7 @@ class VaultSelector(Templated):
     def Vault_names(self):
         groups = []
         for title, vaults in self.vaults:
-            names = [sr.name for sr in vaults if sr.can_submit(c.user)]
+            names = [vault.name for vault in vaults if vault.can_submit(c.user)]
             names.sort(key=str.lower)
             groups.append((title, names))
         return groups
@@ -5749,19 +5749,19 @@ class UnreadMessagesSuggestions(Templated):
 class ExploreItem(Templated):
     """For managing recommended content."""
 
-    def __init__(self, item_type, rec_src, sr, link, comment=None):
+    def __init__(self, item_type, rec_src, vault, link, comment=None):
         """Constructor.
 
         item_type - string that helps templates know how to render this item.
         rec_src - code that lets us track where the rec originally came from,
             useful for comparing performance of data sources or algorithms
-        sr and link are required
+        vault and link are required
         comment is optional
 
         See r2.lib.recommender for valid values of item_type and rec_src.
 
         """
-        self.sr = sr
+        self.vault = vault
         self.link = link
         self.comment = comment
         self.type = item_type
@@ -5769,7 +5769,7 @@ class ExploreItem(Templated):
         Templated.__init__(self)
 
     def is_over18(self):
-        return self.sr.over_18 or self.link.is_nsfw
+        return self.vault.over_18 or self.link.is_nsfw
 
 
 class ExploreItemListing(Templated):
@@ -5777,13 +5777,13 @@ class ExploreItemListing(Templated):
         self.things = []
         self.settings = settings
         if recs:
-            links, srs = list(zip(*[(rec.link, rec.sr) for rec in recs]))
+            links, vaults = list(zip(*[(rec.link, rec.vault) for rec in recs]))
             wrapped_links = {l._id: l for l in wrap_links(links).things}
-            wrapped_srs = {sr._id: sr for sr in wrap_things(*srs)}
+            wrapped_srs = {vault._id: vault for vault in wrap_things(*vaults)}
             for rec in recs:
                 if rec.link._id in wrapped_links:
                     rec.link = wrapped_links[rec.link._id]
-                    rec.sr = wrapped_srs[rec.sr._id]
+                    rec.vault = wrapped_srs[rec.vault._id]
                     self.things.append(rec)
         Templated.__init__(self)
 

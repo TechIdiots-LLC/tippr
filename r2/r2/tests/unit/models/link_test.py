@@ -243,7 +243,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=VaultMock(),
+            vault=VaultMock(),
             author=AccountMock()
         )
 
@@ -255,7 +255,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=VaultMock(),
+            vault=VaultMock(),
             author=AccountMock()
         )
 
@@ -268,7 +268,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=VaultMock(),
+            vault=VaultMock(),
             author=AccountMock()
         )
 
@@ -281,7 +281,7 @@ class TestSubmit(unittest.TestCase):
             content="this is a self post",
             title="test post",
             ip="127.0.0.1",
-            sr=VaultMock(),
+            vault=VaultMock(),
             author=AccountMock()
         )
         l.promoted = True
@@ -304,7 +304,7 @@ class TestSubmit(unittest.TestCase):
             content=url1,
             title="test post",
             ip="127.0.0.1",
-            sr=VaultMock(),
+            vault=VaultMock(),
             author=AccountMock()
         )
         l.promoted = True
@@ -324,7 +324,7 @@ class TestSubmit(unittest.TestCase):
             content=url,
             title="test post",
             ip="127.0.0.1",
-            sr=VaultMock(),
+            vault=VaultMock(),
             author=AccountMock()
         )
         l.promoted = True

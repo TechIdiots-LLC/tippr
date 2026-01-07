@@ -116,7 +116,7 @@ from r2.lib.validator import (
     VSponsor,
     VSponsorAdmin,
     VSponsorAdminOrAdminSecret,
-    VSubmitSR,
+    VSubmitVault,
     VTitle,
     VUrl,
     VVerifiedSponsor,
@@ -398,8 +398,8 @@ class SponsorController(PromoteController):
         target = Target(Frontpage.name)
         if sr_name:
             try:
-                sr = Vault._by_name(sr_name)
-                target = Target(sr.name)
+                vault = Vault._by_name(sr_name)
+                target = Target(vault.name)
             except NotFound:
                 c.errors.add(errors.VAULT_NOEXIST, field='sr_name')
         elif collection_name:
@@ -600,8 +600,8 @@ class SponsorListingController(PromoteListingController):
         promotuples = promote.get_live_promotions(sr_names)
         return [pt.link for pt in promotuples]
 
-    def live_by_Vault(cls, sr):
-        return cls._live_by_Vault([sr.name])
+    def live_by_Vault(cls, vault):
+        return cls._live_by_Vault([vault.name])
 
     @classmethod
     @memoize('house_link_names', time=60)
@@ -642,8 +642,8 @@ class SponsorListingController(PromoteListingController):
             return queries.get_all_unpaid_links()
         elif self.sort == "rejected_promos":
             return queries.get_all_rejected_links()
-        elif self.sort == "live_promos" and self.sr:
-            return self.live_by_Vault(self.sr)
+        elif self.sort == "live_promos" and self.vault:
+            return self.live_by_Vault(self.vault)
         elif self.sort == 'live_promos':
             return queries.get_all_live_links()
         elif self.sort == 'edited_live_promos':
@@ -684,14 +684,14 @@ class SponsorListingController(PromoteListingController):
 
     @validate(
         VSponsorAdmin(),
-        srname=nop('sr'),
+        srname=nop('vault'),
         include_managed=VBoolean("include_managed"),
         exclude_unpaid=VBoolean("exclude_unpaid"),
     )
     def GET_listing(self, srname=None, include_managed=False,
                     exclude_unpaid=None, sort="all", **kw):
         self.sort = sort
-        self.sr = None
+        self.vault = None
         self.include_managed = include_managed
 
         if "exclude_unpaid" not in request.GET:
@@ -701,7 +701,7 @@ class SponsorListingController(PromoteListingController):
 
         if srname:
             try:
-                self.sr = Vault._by_name(srname)
+                self.vault = Vault._by_name(srname)
             except NotFound:
                 pass
         return ListingController.GET_listing(self, **kw)
@@ -719,21 +719,21 @@ def allowed_location_and_target(location, target):
 
 
 class PromoteApiController(ApiController):
-    @json_validate(sr=VSubmitSR('sr', promotion=True),
+    @json_validate(vault=VSubmitVault('vault', promotion=True),
                    collection=VCollection('collection'),
                    location=VLocation(),
                    start=VDate('startdate'),
                    end=VDate('enddate'),
                    platform=VOneOf('platform', ('mobile', 'desktop', 'all'),
                                    default='all'))
-    def GET_check_inventory(self, responder, sr, collection, location, start,
+    def GET_check_inventory(self, responder, vault, collection, location, start,
                             end, platform):
         if collection:
             target = Target(collection)
-            sr = None
+            vault = None
         else:
-            sr = sr or Frontpage
-            target = Target(sr.name)
+            vault = vault or Frontpage
+            target = Target(vault.name)
 
         if not allowed_location_and_target(location, target):
             return abort(403, 'forbidden')
@@ -1203,7 +1203,7 @@ class PromoteApiController(ApiController):
 
         if not target:
             # run form.has_errors to populate the errors in the response
-            form.has_errors('sr', errors.VAULT_NOEXIST,
+            form.has_errors('vault', errors.VAULT_NOEXIST,
                             errors.VAULT_NOTALLOWED,
                             errors.VAULT_REQUIRED)
             form.has_errors('collection', errors.COLLECTION_NOEXIST)
@@ -1644,7 +1644,7 @@ class PromoteApiController(ApiController):
             )
             path = ("/api/ad_s3_callback?hmac=%s&ts=%s" %
                 (signature, _format_expires(now)))
-            redirect = add_sr(path, sr_path=False)
+            redirect = add_vault(path, sr_path=False)
 
         return s3_helpers.get_post_args(
             bucket=g.s3_client_uploads_bucket,

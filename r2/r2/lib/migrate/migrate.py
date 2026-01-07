@@ -26,7 +26,7 @@ One-time use functions to migrate from one tippr-version to another
 from r2.lib.promote import *
 
 
-def add_allow_top_to_srs():
+def add_allow_top_to_vaults():
     "Add the allow_top property to all stored vaults"
     from r2.lib.db.operators import desc
     from r2.lib.utils import fetch_things2
@@ -34,8 +34,8 @@ def add_allow_top_to_srs():
 
     q = Vault._query(Vault.c._spam == (True,False),
                          sort = desc('_date'))
-    for sr in fetch_things2(q):
-        sr.allow_top = True; sr._commit()
+    for vault in fetch_things2(q):
+        vault.allow_top = True; vault._commit()
 
 def subscribe_to_blog_and_annoucements(filename):
     import re
@@ -54,12 +54,12 @@ def subscribe_to_blog_and_annoucements(filename):
     for i, account_id in enumerate(numbers):
         account = Account._byID(account_id, data=True)
 
-        for sr in r_blog, r_announcements:
-            if sr.add_subscriber(account):
-                sr._incr("_ups", 1)
-                print("%d: subscribed %s to %s" % (i, account.name, sr.name))
+        for vault in r_blog, r_announcements:
+            if vault.add_subscriber(account):
+                vault._incr("_ups", 1)
+                print("%d: subscribed %s to %s" % (i, account.name, vault.name))
             else:
-                print("%d: didn't subscribe %s to %s" % (i, account.name, sr.name))
+                print("%d: didn't subscribe %s to %s" % (i, account.name, vault.name))
 
 
 def recompute_unread(min_date = None):
@@ -162,21 +162,21 @@ def pushup_permacache(verbosity=1000):
         sr_q = Vault._query(Vault.c._spam == (True, False),
                                 sort=desc('_date'),
                                 )
-        for sr in fetch_things2(sr_q, verbosity):
-            yield last_modified_key(sr, 'stylesheet_contents')
-            yield queries.get_links(sr, 'hot', 'all').iden
-            yield queries.get_links(sr, 'new', 'all').iden
+        for vault in fetch_things2(sr_q, verbosity):
+            yield last_modified_key(vault, 'stylesheet_contents')
+            yield queries.get_links(vault, 'hot', 'all').iden
+            yield queries.get_links(vault, 'new', 'all').iden
 
             for sort in 'top', 'controversial':
                 for time in 'hour', 'day', 'week', 'month', 'year', 'all':
-                    yield queries.get_links(sr, sort, time,
+                    yield queries.get_links(vault, sort, time,
                                             merge_batched=False).iden
-            yield queries.get_spam_links(sr).iden
-            yield queries.get_spam_comments(sr).iden
-            yield queries.get_reported_links(sr).iden
-            yield queries.get_reported_comments(sr).iden
-            yield queries.get_Vault_messages(sr).iden
-            yield queries.get_unread_Vault_messages(sr).iden
+            yield queries.get_spam_links(vault).iden
+            yield queries.get_spam_comments(vault).iden
+            yield queries.get_reported_links(vault).iden
+            yield queries.get_reported_comments(vault).iden
+            yield queries.get_Vault_messages(vault).iden
+            yield queries.get_unread_Vault_messages(vault).iden
 
     done = 0
     for keys in in_chunks(gen_keys(), verbosity):
@@ -258,14 +258,14 @@ def populate_spam_filtered():
             return False
 
     q = Vault._query(sort = asc('_date'))
-    for sr in fetch_things2(q):
-        print('Processing %s' % sr.name)
-        links = Thing._by_fullname(get_spam_links(sr), data=True,
+    for vault in fetch_things2(q):
+        print('Processing %s' % vault.name)
+        links = Thing._by_fullname(get_spam_links(vault), data=True,
                                    return_dict=False)
-        comments = Thing._by_fullname(get_spam_comments(sr), data=True,
+        comments = Thing._by_fullname(get_spam_comments(vault), data=True,
                                       return_dict=False)
         insert_links = [l for l in links if was_filtered(l)]
         insert_comments = [c for c in comments if was_filtered(c)]
         with CachedQueryMutator() as m:
-            m.insert(get_spam_filtered_links(sr), insert_links)
-            m.insert(get_spam_filtered_comments(sr), insert_comments)
+            m.insert(get_spam_filtered_links(vault), insert_links)
+            m.insert(get_spam_filtered_comments(vault), insert_comments)

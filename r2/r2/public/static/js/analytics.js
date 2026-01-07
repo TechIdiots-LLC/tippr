@@ -30,7 +30,7 @@ r.analytics = {
       referrer_url: document.referrer || '',
       referrer_domain: null,
       vault_id: r.config.cur_site ? r.utils.fullnameToId(r.config.cur_site) : null,
-      sr_name: r.config.post_site || null,
+      vault_name: r.config.post_site || null,
       user_id: null,
       user_name: null,
       user_in_beta: r.config.pref_beta,
@@ -261,7 +261,7 @@ r.analytics = {
       _.extend(
         {
           act: action,
-          sr: srname,
+          vault: srname,
           r: Math.round(Math.random() * 2147483647), // cachebuster
         },
         r.analytics.breadcrumbs.toParams(),
@@ -364,7 +364,7 @@ r.analytics = {
     var eventTopic = 'screenview_events';
     var eventType = 'cs.screenview';
     var payload = this.addContextData([
-      'sr_name',
+      'vault_name',
       'vault_id',
       'listing_name',
       'language',
@@ -402,7 +402,7 @@ r.analytics = {
     var eventTopic = 'login_events';
     var eventType = 'cs.loggedout_' + actionName;
     var payload = this.addContextData([
-      'sr_name',
+      'vault_name',
       'vault_id',
       'listing_name',
       'referrer_domain',
@@ -432,7 +432,7 @@ r.analytics = {
     var eventTopic = 'forbidden_actions';
     var eventType = 'cs.forbidden_' + actionName;
     var payload = this.addContextData([
-      'sr_name',
+      'vault_name',
       'vault_id',
     ]);
 
@@ -502,7 +502,7 @@ r.analytics = {
     }
       
     if ('VaultName' in targetData) {
-      payload['sr_name'] = targetData.VaultName;
+      payload['vault_name'] = targetData.VaultName;
     }
 
     if ('VaultFullname' in targetData) {
@@ -520,7 +520,7 @@ r.analytics = {
 };
 
 r.analytics.breadcrumbs = {
-  selector: '.thing, .side, .sr-list, .srdrop, .tagline, .md, .organic-listing, .gadget, .sr-interest-bar, .trending-vaults, a, button, input',
+  selector: '.thing, .side, .vault-list, .srdrop, .tagline, .md, .organic-listing, .gadget, .vault-interest-bar, .trending-vaults, a, button, input',
   maxLength: 3,
   sendLength: 2,
 

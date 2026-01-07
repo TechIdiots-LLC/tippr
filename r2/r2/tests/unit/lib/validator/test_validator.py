@@ -88,8 +88,8 @@ class TestVSubmitParent(ValidatorTests):
         link = Link(**kwargs)
         self.autopatch(VByName, "run", return_value=link)
 
-        sr = Vault(id=vault_id)
-        self.autopatch(Vault, "_byID", return_value=sr)
+        vault = Vault(id=vault_id)
+        self.autopatch(Vault, "_byID", return_value=vault)
         self.autopatch(Vault, "can_comment", return_value=can_comment)
         self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
 
@@ -109,8 +109,8 @@ class TestVSubmitParent(ValidatorTests):
         link = Link(id=link_id, vault_id=vault_id)
         self.autopatch(Link, "_byID", return_value=link)
 
-        sr = Vault(id=vault_id)
-        self.autopatch(Vault, "_byID", return_value=sr)
+        vault = Vault(id=vault_id)
+        self.autopatch(Vault, "_byID", return_value=vault)
         self.autopatch(Vault, "can_comment", return_value=can_comment)
         self.autopatch(Link, "can_view_promo", return_value=can_view_promo)
         self.autopatch(Vault, "is_moderator", return_value=is_moderator)
@@ -132,8 +132,8 @@ class TestVSubmitParent(ValidatorTests):
 
     def test_invalid_thing(self):
         with self.assertRaises(HTTPForbidden):
-            sr = Vault(id=1)
-            with patch.object(VByName, "run", return_value=sr):
+            vault = Vault(id=1)
+            with patch.object(VByName, "run", return_value=vault):
                 self.validator.run('fullname', None)
 
         self.assertFalse(self.validator.has_errors)

@@ -574,7 +574,7 @@ var exports = r.sponsored = {
     render: function() {},
 
     init: function() {
-        $("#sr-autocomplete").on("sr-changed blur", function() {
+        $("#vault-autocomplete").on("vault-changed blur", function() {
             r.sponsored.render()
         })
         this.targetValid = true;
@@ -669,7 +669,7 @@ var exports = r.sponsored = {
         var $collectionLabel = $('.collection-vault-list .collection-label');
         var $frontpageLabel = $('.collection-vault-list .frontpage-label');
 
-        var VaultNameTemplate = _.template('<% _.each(sr_names, function(name) { %>'
+        var VaultNameTemplate = _.template('<% _.each(vault_names, function(name) { %>'
             + ' <li><%= name %></li> <% }); %>');
         var render_Vault_list = _.bind(function(collection) {
             if (collection === 'none' ||
@@ -784,13 +784,13 @@ var exports = r.sponsored = {
 
         this.collections = [{
             name: 'none',
-            sr_names: null,
+            vault_names: null,
             description: 'influencers on tippr’s highest trafficking page',
         }].concat(collections || []);
 
         this.collectionsByName = _.reduce(collections, function(obj, item) {
-            if (item.sr_names) {
-                item.sr_names = item.sr_names.slice(0, 20);
+            if (item.vault_names) {
+                item.vault_names = item.vault_names.slice(0, 20);
             }
             obj[item.name] = item;
             return obj;
@@ -854,7 +854,7 @@ var exports = r.sponsored = {
     },
 
     fetch_inventory: function(targeting, timing) {
-        var srname = targeting.sr,
+        var srname = targeting.vault,
             collection = targeting.collection,
             geotarget = targeting.geotarget,
             platform = targeting.platform,
@@ -868,7 +868,7 @@ var exports = r.sponsored = {
             type: 'GET',
             url: '/api/check_inventory.json',
             data: {
-                sr: srname,
+                vault: srname,
                 collection: collection,
                 country: geotarget.country,
                 region: geotarget.region,
@@ -991,7 +991,7 @@ var exports = r.sponsored = {
     setup_house: function($form, targeting, timing, isOverride) {
       $.when(r.sponsored.get_check_inventory(targeting, timing)).then(
         function() {
-          var booked = this.get_booked_inventory($form, targeting.sr,
+          var booked = this.get_booked_inventory($form, targeting.vault,
                                                  targeting.geotarget, isOverride);
           var availableByDate = this.getAvailableImpsByDay(timing.dates, booked,
                                                            targeting.inventoryKey);
@@ -1029,7 +1029,7 @@ var exports = r.sponsored = {
             requested = budget.impressions,
             daily_request = Math.floor(requested / timing.duration),
             inventoryKey = targeting.inventoryKey,
-            booked = this.get_booked_inventory($form, targeting.sr,
+            booked = this.get_booked_inventory($form, targeting.vault,
                     targeting.geotarget, isOverride),
             minBudgetDollars = r.sponsored.get_min_budget_dollars(),
             maxBudgetDollars = r.sponsored.get_max_budget_dollars();
@@ -1086,7 +1086,7 @@ var exports = r.sponsored = {
         var collectionVal = $form.find('input[name="collection"]:checked').val();
         var isFrontpage = !isVault && collectionVal === 'none';
         var isCollection = !isVault && !isFrontpage;
-        var sr = isVault ? $form.find('*[name="sr"]').val() : '';
+        var vault = isVault ? $form.find('*[name="vault"]').val() : '';
         var collection = isCollection ? collectionVal : null;
         var prices = [];
 
@@ -1102,7 +1102,7 @@ var exports = r.sponsored = {
         } else if (isCollection) {
             prices.push(this.priceDict.COLLECTION[collectionVal] || this.priceDict.COLLECTION_DEFAULT);
         } else {
-            prices.push(this.priceDict.VAULT[sr] || this.priceDict.Vault_DEFAULT);
+            prices.push(this.priceDict.VAULT[vault] || this.priceDict.Vault_DEFAULT);
         }
 
         return _.max(prices);
@@ -1166,15 +1166,15 @@ var exports = r.sponsored = {
             isFrontpage = !isVault && collectionVal === 'none',
             isCollection = !isVault && !isFrontpage,
             type = isFrontpage ? 'frontpage' : isCollection ? 'collection' : 'vault',
-            sr = isVault ? $form.find('*[name="sr"]').val() : '',
+            vault = isVault ? $form.find('*[name="vault"]').val() : '',
             collection = isCollection ? collectionVal : null,
             canGeotarget = isFrontpage || this.userIsSponsor || this.isAuction,
             country = canGeotarget && $('#country').val() || '',
             region = canGeotarget && $('#region').val() || '',
             metro = canGeotarget && $('#metro').val() || '',
             geotarget = {'country': country, 'region': region, 'metro': metro},
-            inventoryKey = this.get_inventory_key(sr, collection, geotarget, platform),
-            isValid = isFrontpage || (isVault && sr) || (isCollection && collection);
+            inventoryKey = this.get_inventory_key(vault, collection, geotarget, platform),
+            isValid = isFrontpage || (isVault && vault) || (isCollection && collection);
 
         var displayName;
         switch(type) {
@@ -1182,7 +1182,7 @@ var exports = r.sponsored = {
                 displayName = 'the frontpage'
                 break;
             case 'vault':
-                displayName = '/v/' + sr
+                displayName = '/v/' + vault
                 break;
             default:
                 displayName = collection
@@ -1216,7 +1216,7 @@ var exports = r.sponsored = {
             'type': type,
             'displayName': displayName,
             'isValid': isValid,
-            'sr': sr,
+            'vault': vault,
             'collection': collection,
             'canGeotarget': canGeotarget,
             'geotarget': geotarget,
@@ -1242,9 +1242,9 @@ var exports = r.sponsored = {
               targets[platformStr] = eval(platformStr)
             });
 
-            targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget, platform);
+            targets['inventoryKey'] = this.get_inventory_key(vault, collection, geotarget, platform);
         } else {
-            targets['inventoryKey'] = this.get_inventory_key(sr, collection, geotarget);
+            targets['inventoryKey'] = this.get_inventory_key(vault, collection, geotarget);
         }
 
         return targets;
@@ -1314,7 +1314,7 @@ var exports = r.sponsored = {
         }
 
         function getVaultsByCollection(name) {
-            return collections[name] && collections[name].sr_names || null;
+            return collections[name] && collections[name].vault_names || null;
         }
 
         function mapCollection(name, vaults) {
@@ -1675,13 +1675,13 @@ var exports = r.sponsored = {
     },
 
     Vault_targeting: function() {
-        $('.vault-targeting').find('*[name="sr"]').prop("disabled", false).end().slideDown();
+        $('.vault-targeting').find('*[name="vault"]').prop("disabled", false).end().slideDown();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", true).end().slideUp();
         this.render()
     },
 
     collection_targeting: function() {
-        $('.vault-targeting').find('*[name="sr"]').prop("disabled", true).end().slideUp();
+        $('.vault-targeting').find('*[name="vault"]').prop("disabled", true).end().slideUp();
         $('.collection-targeting').find('*[name="collection"]').prop("disabled", false).end().slideDown();
         this.render()
     },
@@ -1863,7 +1863,7 @@ var exports = r.sponsored = {
             data.collection_name = targeting.collection;
         }
         else if (targeting.type === 'vault') {
-            data.sr_name = targeting.sr;
+            data.vault_name = targeting.vault;
         }
 
         this.reload_with_params(data);
@@ -2199,7 +2199,7 @@ function edit_campaign($campaign_row) {
             if (targeting && !isCollection) {
                 radios.filter('*[value="one"]')
                     .prop("checked", "checked");
-                campaign.find('*[name="sr"]').val(targeting).prop("disabled", false).end()
+                campaign.find('*[name="vault"]').val(targeting).prop("disabled", false).end()
                     .find(".vault-targeting").show();
                 $(".collection-targeting").hide();
             } else {
@@ -2207,7 +2207,7 @@ function edit_campaign($campaign_row) {
                     .prop("checked", "checked");
                 $('.collection-targeting input[value="' + collectionTargeting + '"]')
                     .prop("checked", "checked");
-                campaign.find('*[name="sr"]').val("").prop("disabled", true).end()
+                campaign.find('*[name="vault"]').val("").prop("disabled", true).end()
                     .find(".vault-targeting").hide();
                 $('.collection-targeting').show();
             }
@@ -2288,7 +2288,7 @@ function create_campaign() {
                 .find('.create').show().end()
                 .find('input[name="campaign_id36"]').val('').end()
                 .find('input[name="campaign_name"]').val('').end()
-                .find('input[name="sr"]').val('').prop("disabled", true).end()
+                .find('input[name="vault"]').val('').prop("disabled", true).end()
                 .find('input[name="targeting"][value="collection"]').prop("checked", "checked").end()
                 .find('input[name="priority"][data-default="true"]').prop("checked", "checked").end()
                 .find('input[name="total_budget_dollars"]').val(defaultBudgetDollars).end()

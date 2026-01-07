@@ -59,26 +59,26 @@
   ${_("comment karma")}
 
   %if thing.show_private_info:
-    <table id="per-sr-karma"${" class='more-karmas'" if not c.user_is_admin else ""}>
+    <table id="per-vault-karma"${" class='more-karmas'" if not c.user_is_admin else ""}>
      <thead>
         <tr>
-          <th id="sr-karma-header">vault</th>
+          <th id="vault-karma-header">vault</th>
           <th>post</th>
           <th>comment</th>
         </tr>
      </thead>
      <tbody>
-    %for i, (sr_name, (link_karma, comment_karma)) in enumerate(thing.all_karmas.items()):
+    %for i, (vault_name, (link_karma, comment_karma)) in enumerate(thing.all_karmas.items()):
        %if c.user_is_admin and i >= 5:
          <tr class="more-karmas">
        %else:
          <tr>
        %endif
 
-        % if sr_name == "ancient history":
-          <th class="helpful" title="${_('really obscure karma from before it was cool to track per-vault')}"><span>${_(sr_name)}</span></th>
+        % if vault_name == "ancient history":
+          <th class="helpful" title="${_('really obscure karma from before it was cool to track per-vault')}"><span>${_(vault_name)}</span></th>
         % else:
-          <th>${sr_name}</th>
+          <th>${vault_name}</th>
         % endif
 
           <td>${display_link_karma(link_karma)}</td>

@@ -54,14 +54,14 @@ r.recommend.RecommendationList = Backbone.Collection.extend({
     // adds current recs to the dismissed list so they won't be shown again
     // and refetches. fires reset event
     fetchNewRecs: function() {
-        var currentRecs = this.pluck('sr_name')
+        var currentRecs = this.pluck('vault_name')
         this.dismissed = _.union(this.dismissed, currentRecs)
         this.fetchRecs()
     },
 
     // requests data from the server based on values of member vars
     fetchRecs: function() {
-        var url = '/api/recommend/sr/' + this.srNames.join(',')
+        var url = '/api/recommend/vault/' + this.srNames.join(',')
         this.fetch({ url: url,
                      data: {'omit': this.dismissed.join(',')},
                      reset: true,
@@ -81,7 +81,7 @@ r.recommend.RecommendationsView = Backbone.View.extend({
 
     tagName: 'div',
 
-    itemTemplate: _.template('<li class="rec-item"><a href="/v/<%- sr_name %>" title="<%- sr_name %>" target="_blank">/r/<%- sr_name %></a><button class="add add-rec" data-srname="<%- sr_name %>"></button></li>'),
+    itemTemplate: _.template('<li class="rec-item"><a href="/v/<%- vault_name %>" title="<%- vault_name %>" target="_blank">/r/<%- vault_name %></a><button class="add add-rec" data-srname="<%- vault_name %>"></button></li>'),
 
     initialize: function() {
         this.listenTo(this.collection, 'add remove reset', this.render)
@@ -102,7 +102,7 @@ r.recommend.RecommendationsView = Backbone.View.extend({
             var el = this.$el
             var view = this
             this.collection.each(function(rec) {
-                this.$('.recommendations').append(view.itemTemplate({sr_name: rec.get('sr_name')}))
+                this.$('.recommendations').append(view.itemTemplate({vault_name: rec.get('vault_name')}))
             }, this)
             this.$el.css({opacity: 1.0})
         // if recs are empty but the dismissed list is not, all available recs
@@ -122,7 +122,7 @@ r.recommend.RecommendationsView = Backbone.View.extend({
         this.collection.fetchRecs()
     },
 
-    // get sr name of selected rec and fire it in a custom event
+    // get vault name of selected rec and fire it in a custom event
     onAddClick: function(ev) {
         var srName = $(ev.target).data('srname')
         this.trigger('recs:select', {'srName': srName})
@@ -141,13 +141,13 @@ r.recommend.ExploreItem = Backbone.View.extend({
 
     dismissVault: function(ev) {
         var listing = $(ev.target).closest('.explore-item')
-        var sr_name = listing.data('sr_name')
+        var vault_name = listing.data('vault_name')
         var src = listing.data('src')
         r.ajax({
             type: 'POST',
             url: '/api/recommend/feedback',
             data: { type: 'dis',
-                    srnames: sr_name,
+                    srnames: vault_name,
                     src: src,
                     page: 'explore' }
         })
@@ -157,13 +157,13 @@ r.recommend.ExploreItem = Backbone.View.extend({
 
     recordClick: function(ev) {
         var listing = $(ev.target).closest('.explore-item')
-        var sr_name = listing.data('sr_name')
+        var vault_name = listing.data('vault_name')
         var src = listing.data('src')
         r.ajax({
             type: 'POST',
             url: '/api/recommend/feedback',
             data: { type: 'clk',
-                    srnames: sr_name,
+                    srnames: vault_name,
                     src: src,
                     page: 'explore' }
         })

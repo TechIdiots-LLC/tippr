@@ -61,8 +61,8 @@ ${captcha_field()}
         %else:
           <select name="from_sr">
             <option value="">${"/u/%s" % c.user.name}</option>
-            %for sr in thing.mod_srs:
-              <option value="${sr.name}">${"/v/%s" % sr.name}</option>
+            %for vault in thing.mod_srs:
+              <option value="${vault.name}">${"/v/%s" % vault.name}</option>
             %endfor
           </select>
         %endif

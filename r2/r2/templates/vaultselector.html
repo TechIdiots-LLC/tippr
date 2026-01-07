@@ -2,11 +2,11 @@
 
 <%doc>
   Fires custom event when vault selection changes. Add handler like:
-  $("#sr-autocomplete").bind("sr-changed", function() { dostuff; })
+  $("#vault-autocomplete").bind("vault-changed", function() { dostuff; })
 </%doc>
 
-<div id="sr-autocomplete-area">
-  <input id="sr-autocomplete" name="sr" type="text"
+<div id="vault-autocomplete-area">
+  <input id="vault-autocomplete" name="vault" type="text"
          autocomplete="off"
          %if thing.include_searches:
            onkeyup="sr_name_up(event)"
@@ -29,8 +29,8 @@
   % if thing.show_add:
     <button class="add">${_("add")}</button>
   % endif
-  <ul id="sr-drop-down">
-    <li class="sr-name-row"
+  <ul id="vault-drop-down">
+    <li class="vault-name-row"
         onmouseover="highlight_reddit(this)"
         onmousedown="return sr_dropdown_mdown(this)"
         onmouseup="sr_dropdown_mup(this)">nothin</li>
@@ -39,9 +39,9 @@
 <script type="text/javascript">
   r.config.sr_cache = ${unsafe(thing.sr_searches)};
 </script>
-${error_field("VAULT_NOEXIST", "sr", "div")}
-${error_field("VAULT_NOTALLOWED", "sr", "div")}
-${error_field("VAULT_REQUIRED", "sr", "div")}
+${error_field("VAULT_NOEXIST", "vault", "div")}
+${error_field("VAULT_NOTALLOWED", "vault", "div")}
+${error_field("VAULT_REQUIRED", "vault", "div")}
 
 <div id="suggested-reddits">
   % for title, vaults in thing.Vault_names:

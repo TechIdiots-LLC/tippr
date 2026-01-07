@@ -50,7 +50,7 @@ class RedirectController(BaseController):
 
     def GET_timereddit_redirect(self, timereddit, rest=None):
         sr_name = "t:" + timereddit
-        if not Vault.is_valid_name(sr_name, allow_time_srs=True):
+        if not Vault.is_valid_name(sr_name, allow_time_vaults=True):
             abort(400)
         if rest:
             rest = str(rest)

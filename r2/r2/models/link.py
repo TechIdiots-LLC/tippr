@@ -174,11 +174,11 @@ class Link(Thing, Printable):
         return not self.is_nsfw and self.vault_slow.is_embeddable
 
     @classmethod
-    def _by_url(cls, url, sr):
-        if isinstance(sr, FakeVault):
-            sr = None
+    def _by_url(cls, url, vault):
+        if isinstance(vault, FakeVault):
+            vault = None
 
-        link_ids = LinksByUrlAndVault.get_link_ids(url, sr)
+        link_ids = LinksByUrlAndVault.get_link_ids(url, vault)
         links = Link._byID(link_ids, data=True, return_dict=False)
         links = [l for l in links if not l._deleted]
 
@@ -201,7 +201,7 @@ class Link(Thing, Printable):
         return p.unparse()
 
     @classmethod
-    def _submit(cls, is_self, title, content, author, sr, ip,
+    def _submit(cls, is_self, title, content, author, vault, ip,
                 sendreplies=True):
         from r2.lib.voting import cast_vote
         from r2.models import admintools
@@ -221,10 +221,10 @@ class Link(Thing, Printable):
         # determine whether the post should go straight into spam
         spam = author._spam
         if is_self:
-            spam_filter_level = sr.spam_selfposts
+            spam_filter_level = vault.spam_selfposts
         else:
-            spam_filter_level = sr.spam_links
-        if spam_filter_level == "all" and not sr.is_special(author):
+            spam_filter_level = vault.spam_links
+        if spam_filter_level == "all" and not vault.is_special(author):
             spam = True
 
         l = cls(
@@ -235,8 +235,8 @@ class Link(Thing, Printable):
             _spam=spam,
             author_id=author._id,
             sendreplies=sendreplies,
-            vault_id=sr._id,
-            lang=sr.lang,
+            vault_id=vault._id,
+            lang=vault.lang,
             ip=ip,
             is_self=is_self,
             over_18=over_18,
@@ -253,8 +253,8 @@ class Link(Thing, Printable):
             LinksByUrlAndVault.add_link(l)
 
         LinksByAccount.add_link(author, l)
-        VaultParticipationByAccount.mark_participated(author, sr)
-        VaultsActiveForFrontPage.mark_new_post(sr)
+        VaultParticipationByAccount.mark_participated(author, vault)
+        VaultsActiveForFrontPage.mark_new_post(vault)
         author.last_submit_time = int(epoch_timestamp(datetime.now(g.tz)))
         author._commit()
 
@@ -424,7 +424,7 @@ class Link(Thing, Printable):
 
         return s
 
-    def make_permalink(self, sr, force_domain=False):
+    def make_permalink(self, vault, force_domain=False):
         from r2.lib.template_helpers import get_domain
         p = "comments/{}/{}/".format(self._id36, title_to_url(self.title))
         # promoted links belong to a separate vault and shouldn't
@@ -436,11 +436,11 @@ class Link(Thing, Printable):
             else:
                 res = "/%s" % p
         elif not force_domain:
-            res = "/v/{}/{}".format(sr.name, p)
-        elif sr != c.site or force_domain:
+            res = "/v/{}/{}".format(vault.name, p)
+        elif vault != c.site or force_domain:
             permalink_domain = get_domain(vault=False)
             res = "{}://{}/r/{}/{}".format(g.default_scheme, permalink_domain,
-                                       sr.name, p)
+                                       vault.name, p)
         else:
             res = "/%s" % p
 
@@ -450,10 +450,10 @@ class Link(Thing, Printable):
 
         return res
 
-    def make_canonical_link(self, sr, subdomain='www'):
+    def make_canonical_link(self, vault, subdomain='www'):
         domain = '{}.{}'.format(subdomain, g.domain)
         path = 'comments/{}/{}/'.format(self._id36, title_to_url(self.title))
-        return '{}://{}/r/{}/{}'.format(g.default_scheme, domain, sr.name, path)
+        return '{}://{}/r/{}/{}'.format(g.default_scheme, domain, vault.name, path)
 
     def make_permalink_slow(self, force_domain=False):
         return self.make_permalink(self.vault_slow,
@@ -621,17 +621,17 @@ class Link(Thing, Printable):
 
         # determine which vaults the user could assign link flair in
         if user_is_loggedin:
-            srs = {item.vault for item in wrapped
+            vaults = {item.vault for item in wrapped
                                   if item.vault.link_flair_position}
-            mod_flair_srids = {sr._id for sr in srs
+            mod_flair_srids = {vault._id for vault in vaults
                                if (user_is_admin or
-                                   sr.is_moderator_with_perms(c.user, 'flair'))}
-            author_flair_srids = {sr._id for sr in srs
-                                  if sr.link_flair_self_assign_enabled}
+                                   vault.is_moderator_with_perms(c.user, 'flair'))}
+            author_flair_srids = {vault._id for vault in vaults
+                                  if vault.link_flair_self_assign_enabled}
 
         if user_is_loggedin:
-            srs = {item.vault for item in wrapped}
-            is_moderator_srids = {sr._id for sr in srs if sr.is_moderator(user)}
+            vaults = {item.vault for item in wrapped}
+            is_moderator_srids = {vault._id for vault in vaults if vault.is_moderator(user)}
         else:
             is_moderator_srids = set()
 
@@ -1007,11 +1007,11 @@ class Link(Thing, Printable):
 
     @property
     def archived_slow(self):
-        sr = self.vault_slow
-        return self.is_archived(sr)
+        vault = self.vault_slow
+        return self.is_archived(vault)
 
-    def is_archived(self, sr):
-        return self._age >= sr.archive_age
+    def is_archived(self, vault):
+        return self._age >= vault.archive_age
 
     def can_view_promo(self, user):
         if self.promoted:
@@ -1027,17 +1027,17 @@ class Link(Thing, Printable):
         return True
 
     def can_comment_slow(self, user):
-        sr = self.vault_slow
+        vault = self.vault_slow
 
-        if self.is_archived(sr):
+        if self.is_archived(vault):
             return False
 
-        if self.locked and not sr.can_distinguish(user):
+        if self.locked and not vault.can_distinguish(user):
             return False
 
-        return sr.can_comment(user) and self.can_view_promo(user)
+        return vault.can_comment(user) and self.can_view_promo(user)
 
-    def sort_if_suggested(self, sr=None):
+    def sort_if_suggested(self, vault=None):
         """Returns a sort, if the link or its vault has suggested one."""
         if self.suggested_sort == "blank":
             # A suggested sort of "blank" means explicitly empty: Do not obey
@@ -1047,9 +1047,9 @@ class Link(Thing, Printable):
         if self.suggested_sort:
             return self.suggested_sort
 
-        sr = sr or self.vault_slow
-        if sr.suggested_comment_sort:
-            return sr.suggested_comment_sort
+        vault = vault or self.vault_slow
+        if vault.suggested_comment_sort:
+            return vault.suggested_comment_sort
 
         return None
 
@@ -1205,7 +1205,7 @@ class LinksByUrlAndVault(tdb_cassandra.View):
 
     @classmethod
     def make_sr_rowkey(cls, canonical_url, vault_id):
-        return "{sr}:{url}".format(sr=vault_id, url=canonical_url)
+        return "{vault}:{url}".format(vault=vault_id, url=canonical_url)
 
     @classmethod
     def make_all_rowkey(cls, canonical_url):
@@ -1230,10 +1230,10 @@ class LinksByUrlAndVault(tdb_cassandra.View):
         cls._remove(all_rowkey, column)
 
     @classmethod
-    def get_link_ids(cls, url, sr=None, limit=1000):
+    def get_link_ids(cls, url, vault=None, limit=1000):
         canonical_url = cls.make_canonical_url(url)
-        if sr:
-            rowkey = cls.make_sr_rowkey(canonical_url, sr._id)
+        if vault:
+            rowkey = cls.make_sr_rowkey(canonical_url, vault._id)
         else:
             rowkey = cls.make_all_rowkey(canonical_url)
         try:
@@ -1462,11 +1462,11 @@ class Comment(Thing, Printable):
 
     @property
     def archived_slow(self):
-        sr = self.vault_slow
-        return self.is_archived(sr)
+        vault = self.vault_slow
+        return self.is_archived(vault)
 
-    def is_archived(self, sr):
-        return self._age >= sr.archive_age
+    def is_archived(self, vault):
+        return self._age >= vault.archive_age
 
     @property
     def is_stickyable(self):
@@ -1507,9 +1507,9 @@ class Comment(Thing, Printable):
             s.append('locked')
         return s
 
-    def make_permalink(self, link, sr=None, context=None, anchor=False,
+    def make_permalink(self, link, vault=None, context=None, anchor=False,
                        force_domain=False):
-        url = link.make_permalink(sr, force_domain=force_domain) + self._id36
+        url = link.make_permalink(vault, force_domain=force_domain) + self._id36
         if context:
             url += "?context=%d" % context
         if anchor:
@@ -1599,7 +1599,7 @@ class Comment(Thing, Printable):
         authors = Account._byID({l.author_id for l in list(links.values())}, data=True,
                                 return_dict=True, stale=True)
 
-        #get srs for comments that don't have them (old comments)
+        #get vaults for comments that don't have them (old comments)
         for cm in wrapped:
             if not hasattr(cm, 'vault_id'):
                 cm.vault_id = links[cm.link_id].vault_id
@@ -1608,11 +1608,11 @@ class Comment(Thing, Printable):
 
         if c.user_is_loggedin:
             is_moderator_Vaults = {
-                sr._id for sr in vaults if sr.is_moderator(user)}
+                vault._id for vault in vaults if vault.is_moderator(user)}
             can_reply_srs = {
-                sr._id for sr in vaults if sr.can_comment(user)}
+                vault._id for vault in vaults if vault.can_comment(user)}
             can_distinguish_srs = {
-                sr._id for sr in vaults if sr.can_distinguish(user)}
+                vault._id for vault in vaults if vault.can_distinguish(user)}
             promo_vault_id = Vault.get_promote_srid()
             if promo_vault_id:
                 can_reply_srs.add(promo_vault_id)
@@ -2021,7 +2021,7 @@ class Message(Thing, Printable):
                      vault_id=None,
                      to_collapse=None,
                      author_collapse=None,
-                     from_sr=False,
+                     from_vault=False,
                      display_author=None,
                      display_to=None,
                      email_id=None,
@@ -2037,13 +2037,13 @@ class Message(Thing, Printable):
         return "message:"
 
     @classmethod
-    def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
-             from_sr=False, can_send_email=True, sent_via_email=False,
+    def _new(cls, author, to, subject, body, ip, parent=None, vault=None,
+             from_vault=False, can_send_email=True, sent_via_email=False,
              email_id=None):
         from r2.lib.message_to_email import queue_modmail_email
 
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
-                    ip=ip, from_sr=from_sr, sent_via_email=sent_via_email,
+                    ip=ip, from_vault=from_vault, sent_via_email=sent_via_email,
                     email_id=email_id)
         m._spam = author._spam
 
@@ -2053,15 +2053,15 @@ class Message(Thing, Printable):
         vault_id = None
         # check to see if the recipient is a vault and swap args accordingly
         if to and isinstance(to, Vault):
-            if from_sr:
-                raise CreationError("Cannot send from SR to SR")
+            if from_vault:
+                raise CreationError("Cannot send from vault to vault")
             to_Vault = True
-            to, sr = None, to
+            to, vault = None, to
         else:
             to_Vault = False
 
-        if sr:
-            vault_id = sr._id
+        if vault:
+            vault_id = vault._id
 
         if parent:
             m.parent_id = parent._id
@@ -2078,8 +2078,8 @@ class Message(Thing, Printable):
 
         if not to and not vault_id:
             raise CreationError("Message created with neither to nor vault_id")
-        if from_sr and not vault_id:
-            raise CreationError("Message sent from_sr without setting sr")
+        if from_vault and not vault_id:
+            raise CreationError("Message sent from_vault without setting vault")
 
         m.to_id = to._id if to else None
         if vault_id is not None:
@@ -2091,11 +2091,11 @@ class Message(Thing, Printable):
 
         MessagesByAccount.add_message(author, m)
 
-        if vault_id and not sr:
-            sr = Vault._byID(vault_id)
+        if vault_id and not vault:
+            vault = Vault._byID(vault_id)
 
         if to_Vault:
-            VaultParticipationByAccount.mark_participated(author, sr)
+            VaultParticipationByAccount.mark_participated(author, vault)
 
         if vault_id:
             g.stats.simple_event("modmail.received_message")
@@ -2109,15 +2109,15 @@ class Message(Thing, Printable):
             m._commit()
 
         if not skip_inbox and vault_id:
-            if parent or to_Vault or from_sr:
-                inbox_rel.append(ModeratorInbox._add(sr, m))
+            if parent or to_Vault or from_vault:
+                inbox_rel.append(ModeratorInbox._add(vault, m))
 
-            if sr.is_moderator(author):
+            if vault.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
 
             if (can_send_email and
-                    sr.name in g.live_config['modmail_forwarding_email']):
+                    vault.name in g.live_config['modmail_forwarding_email']):
                 queue_modmail_email(m)
 
         if author.name in g.admins:
@@ -2127,8 +2127,8 @@ class Message(Thing, Printable):
         # if there is a "to" we may have to create an inbox relation as well
         # also, only global admins can be message spammed.
         if not skip_inbox and to and (not m._spam or to.name in g.admins):
-            # if "to" is not a sr moderator they need to be notified
-            if not vault_id or not sr.is_moderator(to):
+            # if "to" is not a vault moderator they need to be notified
+            if not vault_id or not vault.is_moderator(to):
                 inbox_rel.append(Inbox._add(to, m, 'inbox'))
 
                 if (
@@ -2137,8 +2137,8 @@ class Message(Thing, Printable):
                     to._id != m.author_id
                 ):
                     from r2.lib.template_helpers import get_domain
-                    if from_sr:
-                        sender_name = '/v/%s' % sr.name
+                    if from_vault:
+                        sender_name = '/v/%s' % vault.name
                     else:
                         sender_name = '/u/%s' % author.name
                     permalink = 'http://{domain}{path}'.format(
@@ -2159,7 +2159,7 @@ class Message(Thing, Printable):
         if not skip_inbox and vault_id and m.first_message:
             first_message = Message._byID(m.first_message, data=True)
             first_sender = Account._byID(first_message.author_id, data=True)
-            first_sender_modmail = sr.is_moderator_with_perms(
+            first_sender_modmail = vault.is_moderator_with_perms(
                 first_sender, 'mail')
 
             if (first_sender != author and
@@ -2169,7 +2169,7 @@ class Message(Thing, Printable):
 
             if first_message.to_id:
                 first_recipient = Account._byID(first_message.to_id, data=True)
-                first_recipient_modmail = sr.is_moderator_with_perms(
+                first_recipient_modmail = vault.is_moderator_with_perms(
                     first_recipient, 'mail')
                 if (first_recipient != author and
                         first_recipient != to and
@@ -2206,9 +2206,9 @@ class Message(Thing, Printable):
                     c.user._id in (self.author_id, self.to_id)):
                 return True
             elif self.vault_id:
-                sr = Vault._byID(self.vault_id, data=True, stale=True)
+                vault = Vault._byID(self.vault_id, data=True, stale=True)
 
-                if sr.is_moderator_with_perms(c.user, 'mail'):
+                if vault.is_moderator_with_perms(c.user, 'mail'):
                     return True
                 elif self.first_message:
                     first = Message._byID(self.first_message, data=True)
@@ -2219,7 +2219,7 @@ class Message(Thing, Printable):
         if not self.vault_id:
             return None
 
-        sr = self.vault_slow
+        vault = self.vault_slow
 
         if self.first_message:
             first = Message._byID(self.first_message, data=True)
@@ -2229,9 +2229,9 @@ class Message(Thing, Printable):
         first_author = first.author_slow
         first_recipient = first.recipient_slow if first.to_id else None
 
-        if sr.is_muted(first_author):
+        if vault.is_muted(first_author):
             return first_author
-        elif first_recipient and sr.is_muted(first_recipient):
+        elif first_recipient and vault.is_muted(first_recipient):
             return first_recipient
         else:
             return None
@@ -2255,14 +2255,14 @@ class Message(Thing, Printable):
         link_ids = {w.link_id for w in wrapped if w.was_comment}
         links = Link._byID(link_ids, data=True)
 
-        srs = {w.vault._id: w.vault for w in wrapped if w.vault_id}
+        vaults = {w.vault._id: w.vault for w in wrapped if w.vault_id}
 
         parent_ids = {w.parent_id for w in wrapped
             if w.parent_id and w.was_comment}
         parents = Comment._byID(parent_ids, data=True)
 
         # load full modlist for all vault messages
-        mods_by_srid = {sr._id: sr.moderator_ids() for sr in srs.values()}
+        mods_by_srid = {vault._id: vault.moderator_ids() for vault in vaults.values()}
         user_mod_vault_ids = {vault_id for vault_id, mod_ids in mods_by_srid.items()
             if user._id in mod_ids}
 
@@ -2290,14 +2290,14 @@ class Message(Thing, Printable):
         unread = set(queries.get_unread_inbox(user))
 
         # load the unread mod list for the same reason
-        mod_msg_srs = {srs[w.vault_id] for w in wrapped
+        mod_msg_srs = {vaults[w.vault_id] for w in wrapped
             if w.vault_id and not w.was_comment and w.vault_id in user_mod_vault_ids}
         mod_unread = set(
             queries.get_unread_Vault_messages_multi(mod_msg_srs))
 
         # load blocked vaults
-        sr_blocks = BlockedVaultsByAccount.fast_query(user, list(srs.values()))
-        blocked_srids = {sr._id for _user, sr in sr_blocks.keys()}
+        sr_blocks = BlockedVaultsByAccount.fast_query(user, list(vaults.values()))
+        blocked_srids = {vault._id for _user, vault in sr_blocks.keys()}
 
         can_set_unread = (user.pref_mark_messages_read and
                             c.extension not in ("rss", "xml", "api", "json"))
@@ -2314,8 +2314,8 @@ class Message(Thing, Printable):
             user_is_recipient = item.to_id == user._id
             user_is_sender = (item.author_id == user._id and
                 not getattr(item, "display_author", None))
-            sent_by_sr = item.vault_id and getattr(item, 'from_sr', None)
-            sent_to_sr = item.vault_id and not item.to_id
+            sent_by_vault = item.vault_id and getattr(item, 'from_vault', None)
+            sent_to_vault = item.vault_id and not item.to_id
 
             item.to = accounts[item.to_id] if item.to_id else None
             item.is_mention = False
@@ -2326,18 +2326,18 @@ class Message(Thing, Printable):
             if item.was_comment:
                 item.user_is_recipient = user_is_recipient
                 link = links[item.link_id]
-                sr = srs[link.vault_id]
+                vault = vaults[link.vault_id]
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
-                item.permalink = item.lookups[0].make_permalink(link, sr=sr)
-                item.link_permalink = link.make_permalink(sr)
+                item.permalink = item.lookups[0].make_permalink(link, vault=vault)
+                item.link_permalink = link.make_permalink(vault)
                 item.full_comment_count = link.num_comments
                 parent = parents[item.parent_id] if item.parent_id else None
 
                 if parent:
                     item.parent = parent._fullname
-                    item.parent_permalink = parent.make_permalink(link, sr)
+                    item.parent_permalink = parent.make_permalink(link, vault)
 
                 if parent and parent.author_id == user._id:
                     item.subject = _('comment reply')
@@ -2359,7 +2359,7 @@ class Message(Thing, Printable):
                 if item.vault.is_muted(item.author):
                     item.sr_muted = True
 
-                if sent_by_sr:
+                if sent_by_vault:
                     if item.vault_id in blocked_srids:
                         item.subject = _('[message from blocked vault]')
                         item.sr_blocked = True
@@ -2410,12 +2410,12 @@ class Message(Thing, Printable):
                     if user_is_recipient:
                         item.taglinetext = _(
                             "from %(author)s via %(vault)s sent %(when)s")
-                    elif user_is_sender and sent_to_sr:
+                    elif user_is_sender and sent_to_vault:
                         item.taglinetext = _("to %(vault)s sent %(when)s")
                     elif user_is_sender:
                         item.taglinetext = _(
                             "to %(dest)s via %(vault)s sent %(when)s")
-                    elif sent_to_sr:
+                    elif sent_to_vault:
                         item.taglinetext = _(
                             "from %(author)s to %(vault)s sent %(when)s")
                     else:
@@ -2690,8 +2690,8 @@ class _ThingSavesByVault(tdb_cassandra.View):
     @classmethod
     def get_saved_Vaults(cls, user):
         vault_id36s = cls.get_saved_values(user)
-        srs = Vault._byID36(vault_id36s, return_dict=False, data=True)
-        return sorted([sr.name for sr in srs])
+        vaults = Vault._byID36(vault_id36s, return_dict=False, data=True)
+        return sorted([vault.name for vault in vaults])
 
     @classmethod
     def create(cls, user, things, **kw):
@@ -2706,7 +2706,7 @@ class _ThingSavesByVault(tdb_cassandra.View):
 
     @classmethod
     def destroy(cls, user, things, **kw):
-        # See if thing's sr is present anymore
+        # See if thing's vault is present anymore
         vault_ids = {thing.vault_id for thing in things}
         for vault_id in set(vault_ids):
             if cls._check_empty(user, vault_id):
@@ -2972,16 +2972,16 @@ class ModeratorInbox(Relation(Vault, Message)):
         return "modinbox:"
 
     @classmethod
-    def _add(cls, sr, obj):
-        i = cls(sr, obj, name="inbox")
+    def _add(cls, vault, obj):
+        i = cls(vault, obj, name="inbox")
         i._commit()
         return i
 
     @classmethod
-    def get_rels(cls, sr, messages):
+    def get_rels(cls, vault, messages):
         messages = tup(messages)
         res = ModeratorInbox._fast_query(
-            thing1s=sr,
+            thing1s=vault,
             thing2s=messages,
             name="inbox",
         )

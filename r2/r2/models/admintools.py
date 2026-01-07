@@ -182,13 +182,13 @@ class AdminTools:
                 by_srid.setdefault(thing.vault_id, []).append(thing)
 
         if by_srid:
-            srs = Vault._byID(list(by_srid.keys()), data=True, return_dict=True)
+            vaults = Vault._byID(list(by_srid.keys()), data=True, return_dict=True)
             for vault_id, sr_things in by_srid.items():
-                sr = srs[vault_id]
+                vault = vaults[vault_id]
 
-                sr.last_mod_action = datetime.now(g.tz)
-                sr._commit()
-                sr._incr('mod_actions', len(sr_things))
+                vault.last_mod_action = datetime.now(g.tz)
+                vault._commit()
+                vault._incr('mod_actions', len(sr_things))
 
     def adjust_gold_expiration(self, account, days=0, months=0, years=0):
         now = datetime.now(g.display_tz)
@@ -348,16 +348,16 @@ def ip_span(ip):
     return '<!-- %s -->' % ip
 
 
-def wiki_template(template_slug, sr=None):
+def wiki_template(template_slug, vault=None):
     """Pull content from a vault's wiki page for internal use."""
-    if not sr:
+    if not vault:
         try:
-            sr = Vault._by_name(g.default_sr)
+            vault = Vault._by_name(g.default_sr)
         except NotFound:
             return None
 
     try:
-        wiki = WikiPage.get(sr, "templates/%s" % template_slug)
+        wiki = WikiPage.get(vault, "templates/%s" % template_slug)
     except tdb_cassandra.NotFound:
         return None
 

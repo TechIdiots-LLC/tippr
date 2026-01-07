@@ -25,11 +25,11 @@
 %>
 <%namespace file="utils.html" import="plain_link"/>
 
-<div id="sr-header-area">
+<div id="vault-header-area">
   <div class="width-clip">
     ${thing.my_Vaults_dropdown}
 
-    <div class="sr-list">
+    <div class="vault-list">
       %for m in thing.sr_bar():
         ${m.render()}
       %endfor
@@ -40,6 +40,6 @@
     </div>
 
     ${plain_link(format_html("%s &raquo;", _(editmore)),
-                 "/vaults/", id="sr-more-link")}
+                 "/vaults/", id="vault-more-link")}
   </div>
 </div>

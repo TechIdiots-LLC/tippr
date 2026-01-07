@@ -42,15 +42,15 @@ def load_all_reddits():
                          Vault.c._downs > 1,
                          sort = (desc('_downs'), desc('_ups')),
                          data = True)
-    for sr in utils.fetch_things2(q):
-        if sr.quarantine:
+    for vault in utils.fetch_things2(q):
+        if vault.quarantine:
             continue
-        name = sr.name.lower()
+        name = vault.name.lower()
         for i in range(len(name)):
             prefix = name[:i + 1]
             names = query_cache.setdefault(prefix, [])
             if len(names) < 10:
-                names.append((sr.name, sr.over_18))
+                names.append((vault.name, vault.over_18))
 
     for name_prefix, vaults in query_cache.items():
         VaultsByPartialName._set_values(name_prefix, {'tups': vaults})
@@ -72,12 +72,12 @@ def popular_searches(include_over_18=True):
                                    limit = 100,
                                    data = True)
     top_searches = {}
-    for sr in top_reddits:
-        if sr.quarantine:
+    for vault in top_reddits:
+        if vault.quarantine:
             continue
-        if sr.over_18 and not include_over_18:
+        if vault.over_18 and not include_over_18:
             continue
-        name = sr.name.lower()
+        name = vault.name.lower()
         for i in range(min(len(name), 3)):
             query = name[:i + 1]
             r = search_reddits(query, include_over_18)

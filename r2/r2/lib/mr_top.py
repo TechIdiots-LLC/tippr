@@ -94,9 +94,9 @@ def time_listings(intervals, thing_type):
                 continue
 
             if thing.thing_type == "link":
-                yield ("sr/link/top/%s/%d" % (interval, thing.vault_id),
+                yield ("vault/link/top/%s/%d" % (interval, thing.vault_id),
                        thing_score, thing.timestamp, fname)
-                yield ("sr/link/controversial/%s/%d" % (interval, thing.vault_id),
+                yield ("vault/link/controversial/%s/%d" % (interval, thing.vault_id),
                        thing_controversy, thing.timestamp, fname)
 
                 if thing.url:
@@ -123,7 +123,7 @@ def store_keys(key, maxes):
             query = queries._get_submitted(int(id), sort, time)
         elif thing_cls == "comment":
             query = queries._get_comments(int(id), sort, time)
-    elif category == "sr":
+    elif category == "vault":
         if thing_cls == "link":
             query = queries._get_links(int(id), sort, time)
     elif category == "domain":

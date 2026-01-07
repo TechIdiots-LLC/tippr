@@ -287,7 +287,7 @@ class BaseController(WSGIController):
         if c.extension == "widget" and request.GET.get("callback"):
             params['callback'] = request.GET.get("callback")
 
-        path = add_sr(cls.format_output_url(form_path) +
+        path = add_vault(cls.format_output_url(form_path) +
                       query_string(params), sr_path=sr_path)
         abort(302, location=path)
 

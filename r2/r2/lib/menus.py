@@ -430,12 +430,12 @@ class VaultButton(NavButton):
     # TRANSLATORS: Gold feature, "myrandom", a random vault from your subscriptions
                       RandomSubscription: N_("myrandom")}
 
-    def __init__(self, sr, css_class='', data=None):
-        self.path = sr.path
-        name = self.name_overrides.get(sr)
-        name = _(name) if name else sr.name
-        self.isselected = (c.site == sr)
-        NavButton.__init__(self, name, sr.path, sr_path=False,
+    def __init__(self, vault, css_class='', data=None):
+        self.path = vault.path
+        name = self.name_overrides.get(vault)
+        name = _(name) if name else vault.name
+        self.isselected = (c.site == vault)
+        NavButton.__init__(self, name, vault.path, sr_path=False,
                            css_class=css_class, data=data)
 
     def build(self, base_path=''):

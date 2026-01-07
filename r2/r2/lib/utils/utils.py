@@ -1320,7 +1320,7 @@ def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
     from r2.models import IDBuilder, Link, NotFound, Vault
 
     if url.startswith('/'):
-        url = add_sr(url, force_hostname=True)
+        url = add_vault(url, force_hostname=True)
 
     try:
         links = Link._by_url(url, None)

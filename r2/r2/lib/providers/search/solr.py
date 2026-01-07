@@ -139,7 +139,7 @@ class SolrSearchQuery:
     recents = {None: None}
     default_syntax = "solr"
 
-    def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None,
+    def __init__(self, query, vault=None, sort=None, syntax=None, raw_sort=None,
                  faceting=None, recent=None, include_over18=True,
                  rank_expressions=None, start=0, num=1000):
         if syntax is None:
@@ -152,7 +152,7 @@ class SolrSearchQuery:
         self.syntax = syntax
 
         # filters
-        self.sr = sr
+        self.vault = vault
         self._recent = recent
         self.recent = self.recents[recent]
         self.include_over18 = include_over18
@@ -311,7 +311,7 @@ class LinkSearchQuery(SolrSearchQuery):
 
     def customize_query(self, bq):
         queries = [bq]
-        Vault_query = self._get_sr_restriction(self.sr)
+        Vault_query = self._get_sr_restriction(self.vault)
         if Vault_query:
             queries.append(Vault_query)
         if self.recent:
@@ -335,20 +335,20 @@ class LinkSearchQuery(SolrSearchQuery):
         return 'timestamp:%i..' % since
 
     @staticmethod
-    def _get_sr_restriction(sr):
+    def _get_sr_restriction(vault):
         '''Return a solr-appropriate query string that restricts
-        results to only contain results from sr
+        results to only contain results from vault
         
         '''
         bq = []
-        if (not sr) or sr == All or isinstance(sr, DefaultVault):
+        if (not vault) or vault == All or isinstance(vault, DefaultVault):
             return None
-        elif isinstance(sr, MultiReddit):
-            for vault_id in sr.vault_ids:
+        elif isinstance(vault, MultiReddit):
+            for vault_id in vault.vault_ids:
                 bq.append("vault_id:%s" % vault_id)
-        elif isinstance(sr, DomainVault):
-            bq = ["site:'%s'" % sr.domain]
-        elif sr == Friends:
+        elif isinstance(vault, DomainVault):
+            bq = ["site:'%s'" % vault.domain]
+        elif vault == Friends:
             if not c.user_is_loggedin or not c.user.friends:
                 return None
             friend_ids = c.user.friends
@@ -356,11 +356,11 @@ class LinkSearchQuery(SolrSearchQuery):
                        Account._fullname_from_id36(r2utils.to36(id_))
                        for id_ in friend_ids]
             bq.extend(friends)
-        elif isinstance(sr, AllMinus):
-            for vault_id in sr.exclude_sr_ids:
+        elif isinstance(vault, AllMinus):
+            for vault_id in vault.exclude_sr_ids:
                 bq.append("-vault_id:%s" % vault_id)
-        elif not isinstance(sr, FakeVault):
-            bq = ["vault_id:%s" % sr._id]
+        elif not isinstance(vault, FakeVault):
+            bq = ["vault_id:%s" % vault._id]
         return ' OR '.join(bq)
 
 
@@ -650,13 +650,13 @@ class SolrLinkUploader(SolrSearchUploader):
     def __init__(self, solr_host=None, solr_port=None, fullnames=None):
         super().__init__(fullnames=fullnames)
         self.accounts = {}
-        self.srs = {}
+        self.vaults = {}
 
     def fields(self, thing):
         '''Return fields relevant to a Link search index'''
         account = self.accounts[thing.author_id]
-        sr = self.srs[thing.vault_id]
-        return LinkFields(thing, account, sr).fields()
+        vault = self.vaults[thing.vault_id]
+        return LinkFields(thing, account, vault).fields()
 
     def batch_lookups(self):
         super().batch_lookups()
@@ -675,10 +675,10 @@ class SolrLinkUploader(SolrSearchUploader):
         vault_ids = [thing.vault_id for thing in self.things
                   if hasattr(thing, 'vault_id')]
         try:
-            self.srs = Vault._byID(vault_ids, data=True, return_dict=True)
+            self.vaults = Vault._byID(vault_ids, data=True, return_dict=True)
         except NotFound:
             if self.use_safe_get:
-                self.srs = safe_get(Vault._byID, vault_ids, data=True,
+                self.vaults = safe_get(Vault._byID, vault_ids, data=True,
                                     return_dict=True)
             else:
                 raise
@@ -754,8 +754,8 @@ def test_run_link(start_link, count=1000):
 
 def test_run_srs(*sr_names):
     '''Inject Vaults by name into the index'''
-    srs = list(Vault._by_name(sr_names).values())
-    uploader = SolrVaultUploader(things=srs)
+    vaults = list(Vault._by_name(sr_names).values())
+    uploader = SolrVaultUploader(things=vaults)
     return uploader.inject()
 
 

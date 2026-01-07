@@ -88,7 +88,7 @@ class ToolbarController(TipprController):
         """Support old /goto?id= urls. deprecated"""
         link = link2 if link2 else link1
         if link:
-            return self.redirect(add_sr("/tb/" + link._id36))
+            return self.redirect(add_vault("/tb/" + link._id36))
         return self.abort404()
 
     @validate(urloid=nop('urloid'))
@@ -106,17 +106,17 @@ class ToolbarController(TipprController):
         if is_shamed_domain(path)[0]:
             self.abort404()
 
-        listing = hot_links_by_url_listing(path, sr=c.site, num=1)
+        listing = hot_links_by_url_listing(path, vault=c.site, num=1)
         link = listing.things[0] if listing.things else None
 
         if link:
             # we were able to find it, let's send them to the
             # toolbar (if enabled) or comments (if not)
-            return self.redirect(add_sr("/tb/" + link._id36))
+            return self.redirect(add_vault("/tb/" + link._id36))
         else:
             # It hasn't been submitted yet. Give them a chance to
             qs = utils.query_string({"url": path})
-            return self.redirect(add_sr("/submit" + qs))
+            return self.redirect(add_vault("/submit" + qs))
 
     def GET_redirect(self):
         return self.redirect('/', code=301)

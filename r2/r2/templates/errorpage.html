@@ -37,7 +37,7 @@ from r2.lib.filters import unsafe, safemarkdown
   </div>
 
   % if thing.sr_description:
-  <div class="errorpage-message sr-description">
+  <div class="errorpage-message vault-description">
       <h2>${_("a message from the moderators of /r/%s") % c.site.name}</h2>
       ${unsafe(safemarkdown(thing.sr_description, wrap=False))}
   </div>

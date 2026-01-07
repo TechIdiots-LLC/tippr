@@ -34,7 +34,7 @@
 
 <div class="titlebox">
   <h1 class="hover redditname">
-    ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
+    ${plain_link(thing.vault.name, thing.vault.path, _sr_path=False, _class="hover")}
   </h1>
 
   %if thing.quarantine:
@@ -45,7 +45,7 @@
       </div>
       <form method='post' action='/api/quarantine_optout'>
         <input type="hidden" name="uh" value="${c.modhash}"/>
-        <input type="hidden" name="sr_name" value="${thing.sr.name}"/>
+        <input type="hidden" name="vault_name" value="${thing.vault.name}"/>
         <button class="c-btn btn-quarantine" name="submit" value="submit" type="submit">
           ${_("Leave this community")}
         </button>
@@ -53,8 +53,8 @@
     </div>
   %endif
 
-  ${SubscribeButton(thing.sr)}
-  %if not thing.sr.hide_num_users_info:
+  ${SubscribeButton(thing.vault)}
+  %if not thing.vault.hide_num_users_info:
   <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
 
     %if thing.active_visitors and thing.active_visitors.logged_in:
@@ -64,7 +64,7 @@
     %endif
   %endif
 
-  %if thing.sr.moderator:
+  %if thing.vault.moderator:
     <div class="leavemoderator">
       ${text_with_links(ModListing.remove_self_title % dict(action='(%(action)s)'),
           _sr_path=True,
@@ -75,7 +75,7 @@
     </div>
   %endif
 
-  %if thing.sr.contributor:
+  %if thing.vault.contributor:
     ${ynbutton(op='leavecontributor',
                title=_('leave'),
                executed=_('you are no longer an approved submitter'),
@@ -83,7 +83,7 @@
                format=_('you are an approved submitter on this vault. (%(leave)s)'),
                format_arg='leave',
                hidden_data=dict(
-                 id=thing.sr._fullname),
+                 id=thing.vault._fullname),
                access_required=False,
               )}
   %endif
@@ -109,50 +109,50 @@
   %endif
 
   <div class="bottom">
-    %if thing.sr.author:
+    %if thing.vault.author:
       ${_wsf("created by %(user)s", user=unsafe(thing.creator_text))}
     %endif
     
     <span class="age">
-      ${_("a community for")}&#32;${thing_timestamp(thing.sr)}
+      ${_("a community for")}&#32;${thing_timestamp(thing.vault)}
     </span>  
   </div>
 
   %if c.user_is_admin:
     <div class="raisedbox spacer">
-      %if thing.sr.ban_count:
+      %if thing.vault.ban_count:
         <p>
-          ${strings.times_banned % thing.sr.ban_count}
+          ${strings.times_banned % thing.vault.ban_count}
         </p>
       %endif
       
-      %if thing.sr._spam:
+      %if thing.vault._spam:
         ${ynbutton(op='approve',
                    title=_('approve this vault'), 
                    executed=_('approved'),
-                   hidden_data = dict(id = thing.sr._fullname),
+                   hidden_data = dict(id = thing.vault._fullname),
         )}
         
         <form id="banmessage-form" method="post" onsubmit="return post_form(this, 'admin/add_ban_message')">
-          <input type="hidden" name="thing" value="${thing.sr._fullname}">
+          <input type="hidden" name="thing" value="${thing.vault._fullname}">
           <input type="hidden" name="system" value="vault">
           <textarea name="message" rows=4>
-            %if getattr(thing.sr, 'ban_info', {}) and 'message' in thing.sr.ban_info:
-              ${thing.sr.ban_info['message'] or ''}
+            %if getattr(thing.vault, 'ban_info', {}) and 'message' in thing.vault.ban_info:
+              ${thing.vault.ban_info['message'] or ''}
             %endif
           </textarea>
           <input type="submit" class="notes-button" 
             value="Set public ban message (blank for default)">
         </form>
         
-        %if hasattr(thing.sr, "banner"):
+        %if hasattr(thing.vault, "banner"):
           <p>
-           ${strings.banned_by % thing.sr.banner}
+           ${strings.banned_by % thing.vault.banner}
           </p>
         %endif
-        %if getattr(thing.sr, 'ban_info', {}):
+        %if getattr(thing.vault, 'ban_info', {}):
           <p>
-            ${strings.time_banned % thing.sr.ban_info.get('banned_at') or 'N/A'}
+            ${strings.time_banned % thing.vault.ban_info.get('banned_at') or 'N/A'}
           </p>
         %endif
 
@@ -160,11 +160,11 @@
         ${ynbutton(op='remove',
                    title=_('ban this vault'), 
                    executed=_('banned'),
-                   hidden_data = dict(id = thing.sr._fullname),
+                   hidden_data = dict(id = thing.vault._fullname),
         )}
-        %if getattr(thing.sr, 'ban_info', {}):
+        %if getattr(thing.vault, 'ban_info', {}):
           <p>
-            ${strings.time_approved % thing.sr.ban_info.get('unbanned_at') or 'N/A'}
+            ${strings.time_approved % thing.vault.ban_info.get('unbanned_at') or 'N/A'}
           </p>
         %endif
       %endif
@@ -176,10 +176,10 @@
         <a href="javascript:void(0)" class="expand" onclick="return toggleSrQuarantine(this)">
           ${"[%s]" % "+"}
         </a>
-        ${"Show unquarantine tool" if thing.sr.quarantine else "Show quarantine tool"}
+        ${"Show unquarantine tool" if thing.vault.quarantine else "Show quarantine tool"}
       </div>
       <div class="quarantine-info">
-        %if not thing.sr.quarantine:
+        %if not thing.vault.quarantine:
           <%
             subject = "ATTN: Your vault has been quarantined"
             body = "Your vault has been [quarantined](https://reddit.zendesk.com/hc/en-us/articles/205701245) due to offensive content."
@@ -193,8 +193,8 @@
           %>
         %endif
         <form id="quarantinemessage-form" method="post" onsubmit="return post_form(this, 'quarantine')">
-          <input type="hidden" name="vault" value="${thing.sr._fullname}">
-          <input type="hidden" name="quarantine" value="${not thing.sr.quarantine}">
+          <input type="hidden" name="vault" value="${thing.vault._fullname}">
+          <input type="hidden" name="quarantine" value="${not thing.vault.quarantine}">
           <label for="subject">Subject:</label>
           <br>
           <textarea name="subject">${subject}</textarea>

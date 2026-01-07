@@ -793,16 +793,16 @@ class VSavedCategory(Validator):
 
 
 class VVaultName(VRequired):
-    def __init__(self, item, allow_language_srs=False, *a, **kw):
+    def __init__(self, item, allow_language_vaults=False, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_VAULT_NAME, *a, **kw)
-        self.allow_language_srs = allow_language_srs
+        self.allow_language_vaults = allow_language_vaults
 
     def run(self, name):
         if name:
-            name = sr_path_rx.sub(r'\g<name>', name.strip())
+            name = vault_path_rx.sub(r'\g<name>', name.strip())
 
         valid_name = Vault.is_valid_name(
-            name, allow_language_srs=self.allow_language_srs)
+            name, allow_language_vaults=self.allow_language_vaults)
 
         if not valid_name:
             self.set_error(self._error, code=400)
@@ -828,23 +828,23 @@ class VAvailableVaultName(VVaultName):
 
 
 class VVaultByName(Validator):
-    def __init__(self, sr_name, required=True, return_srname=False):
+    def __init__(self, vault_name, required=True, return_vaultname=False):
         self.required = required
-        self.return_srname = return_srname
-        Validator.__init__(self, sr_name)
+        self.return_vaultname = return_vaultname
+        Validator.__init__(self, vault_name)
 
-    def run(self, sr_name):
-        if not sr_name:
+    def run(self, vault_name):
+        if not vault_name:
             if self.required:
                 self.set_error(errors.BAD_VAULT_NAME, code=400)
         else:
-            sr_name = sr_path_rx.sub(r'\g<name>', sr_name.strip())
+            vault_name = vault_path_rx.sub(r'\g<name>', vault_name.strip())
             try:
-                sr = Vault._by_name(sr_name)
-                if self.return_srname:
-                    return sr.name
+                vault = Vault._by_name(vault_name)
+                if self.return_vaultname:
+                    return vault.name
                 else:
-                    return sr
+                    return vault
             except NotFound:
                 self.set_error(errors.VAULT_NOEXIST, code=400)
 
@@ -857,19 +857,19 @@ class VVaultByName(Validator):
 class VVaultByNames(Validator):
     """Returns a dict mapping vault names to vault objects.
 
-    sr_names_csv - a comma delimited string of vault names
+    vault_names_csv - a comma delimited string of vault names
     required - if true (default) an empty vault name list is an error
 
     """
-    def __init__(self, sr_names_csv, required=True):
+    def __init__(self, vault_names_csv, required=True):
         self.required = required
-        Validator.__init__(self, sr_names_csv)
+        Validator.__init__(self, vault_names_csv)
 
-    def run(self, sr_names_csv):
-        if sr_names_csv:
-            sr_names = [sr_path_rx.sub(r'\g<name>', s.strip())
-                        for s in sr_names_csv.split(',')]
-            return Vault._by_name(sr_names)
+    def run(self, vault_names_csv):
+        if vault_names_csv:
+            vault_names = [vault_path_rx.sub(r'\g<name>', s.strip())
+                        for s in vault_names_csv.split(',')]
+            return Vault._by_name(vault_names)
         elif self.required:
             self.set_error(errors.BAD_VAULT_NAME, code=400)
         return {}
@@ -911,11 +911,11 @@ class VAvailableVaultRuleName(Validator):
             return None
 
         if VaultRules.get_rule(c.site, short_name):
-            self.set_error(errors.SR_RULE_EXISTS)
+            self.set_error(errors.VAULT_RULE_EXISTS)
         elif not self.updating:
             number_rules = len(VaultRules.get_rules(c.site))
             if number_rules >= MAX_RULES_PER_VAULT:
-                self.set_error(errors.SR_RULE_TOO_MANY)
+                self.set_error(errors.VAULT_RULE_TOO_MANY)
                 return None
         return short_name
 
@@ -1284,7 +1284,7 @@ class VEmployee(VVerifiedUser):
         VVerifiedUser.run(self)
 
 
-class VSrModerator(Validator):
+class VVaultModerator(Validator):
     def __init__(self, fatal=True, perms=(), *a, **kw):
         # If True, abort rather than setting an error
         self.fatal = fatal
@@ -1334,7 +1334,7 @@ class VCanDistinguish(VByName):
     def param_docs(self):
         return {}
 
-class VSrCanAlter(VByName):
+class VVaultCanAlter(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
@@ -1362,7 +1362,7 @@ class VSrCanAlter(VByName):
 
         abort(403,'forbidden')
 
-class VSrCanBan(VByName):
+class VVaultCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
@@ -1370,16 +1370,16 @@ class VSrCanBan(VByName):
             item = VByName.run(self, thing_name)
 
             if isinstance(item, (Link, Comment)):
-                sr = item.vault_slow
-                if sr.is_moderator_with_perms(c.user, 'posts'):
+                vault = item.vault_slow
+                if vault.is_moderator_with_perms(c.user, 'posts'):
                     return True
             elif isinstance(item, Message):
-                sr = item.vault_slow
-                if sr and sr.is_moderator_with_perms(c.user, 'mail'):
+                vault = item.vault_slow
+                if vault and vault.is_moderator_with_perms(c.user, 'mail'):
                     return True
         abort(403,'forbidden')
 
-class VSrSpecial(VByName):
+class VVaultSpecial(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
@@ -1419,18 +1419,18 @@ class VSubmitParent(VByName):
             return parent
 
         elif isinstance(parent, Link):
-            sr = parent.vault_slow
+            vault = parent.vault_slow
 
-            if parent.is_archived(sr):
+            if parent.is_archived(vault):
                 self.set_error(errors.TOO_OLD)
-            elif parent.locked and not sr.can_distinguish(c.user):
+            elif parent.locked and not vault.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
 
             if self.has_errors or parent.can_comment_slow(c.user):
                 return parent
 
         elif isinstance(parent, Comment):
-            sr = parent.vault_slow
+            vault = parent.vault_slow
 
             if parent._deleted:
                 self.set_error(errors.DELETED_COMMENT)
@@ -1440,15 +1440,15 @@ class VSubmitParent(VByName):
                 can_reply = (c.user_is_loggedin and
                              (parent.author_id == c.user._id or
                               c.user_is_admin or
-                              sr.is_moderator(c.user)))
+                              vault.is_moderator(c.user)))
                 if not can_reply:
                     self.set_error(errors.DELETED_COMMENT)
 
             link = Link._byID(parent.link_id, data=True)
 
-            if link.is_archived(sr):
+            if link.is_archived(vault):
                 self.set_error(errors.TOO_OLD)
-            elif link.locked and not sr.can_distinguish(c.user):
+            elif link.locked and not vault.can_distinguish(c.user):
                 self.set_error(errors.THREAD_LOCKED)
 
             if self.has_errors or link.can_comment_slow(c.user):
@@ -1461,7 +1461,7 @@ class VSubmitParent(VByName):
             self.param[0]: "[fullname](#fullnames) of parent thing",
         }
 
-class VSubmitSR(Validator):
+class VSubmitVault(Validator):
     def __init__(self, srname_param, linktype_param=None, promotion=False):
         self.require_linktype = False
         self.promotion = promotion
@@ -1472,23 +1472,23 @@ class VSubmitSR(Validator):
         else:
             Validator.__init__(self, srname_param)
 
-    def run(self, sr_name, link_type = None):
-        if not sr_name:
+    def run(self, vault_name, link_type = None):
+        if not vault_name:
             self.set_error(errors.VAULT_REQUIRED)
             return None
 
         try:
-            sr_name = sr_path_rx.sub(r'\g<name>', str(sr_name).strip())
-            sr = Vault._by_name(sr_name)
+            vault_name = vault_path_rx.sub(r'\g<name>', str(vault_name).strip())
+            vault = Vault._by_name(vault_name)
         except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.VAULT_NOEXIST)
             return
 
-        if not c.user_is_loggedin or not sr.can_submit(c.user, self.promotion):
+        if not c.user_is_loggedin or not vault.can_submit(c.user, self.promotion):
             self.set_error(errors.VAULT_NOTALLOWED)
             return
 
-        if not sr.allow_ads and self.promotion:
+        if not vault.allow_ads and self.promotion:
             self.set_error(errors.Vault_DISABLED_ADS)
             return
 
@@ -1496,37 +1496,37 @@ class VSubmitSR(Validator):
             if link_type not in ('link', 'self'):
                 self.set_error(errors.INVALID_OPTION)
                 return
-            elif link_type == "link" and not sr.can_submit_link(c.user):
+            elif link_type == "link" and not vault.can_submit_link(c.user):
                 self.set_error(errors.NO_LINKS)
                 return
-            elif link_type == "self" and not sr.can_submit_text(c.user):
+            elif link_type == "self" and not vault.can_submit_text(c.user):
                 self.set_error(errors.NO_SELFS)
                 return
 
-        return sr
+        return vault
 
     def param_docs(self):
         return {
             self.param[0]: "name of a vault",
         }
 
-class VSubscribeSR(VByName):
+class VSubscribeVault(VByName):
     def __init__(self, srid_param, srname_param):
         VByName.__init__(self, (srid_param, srname_param))
 
-    def run(self, vault_id, sr_name):
+    def run(self, vault_id, vault_name):
         if vault_id:
             return VByName.run(self, vault_id)
-        elif not sr_name:
+        elif not vault_name:
             return
 
         try:
-            sr = Vault._by_name(str(sr_name).strip())
+            vault = Vault._by_name(str(vault_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.VAULT_NOEXIST)
             return
 
-        return sr
+        return vault
 
     def param_docs(self):
         return {
@@ -1556,9 +1556,9 @@ class VCollection(Validator):
 
 
 class VPromoTarget(Validator):
-    default_param = ("targeting", "sr", "collection")
+    default_param = ("targeting", "vault", "collection")
 
-    def run(self, targeting, sr_name, collection_name):
+    def run(self, targeting, vault_name, collection_name):
         if targeting == "collection" and collection_name == "none":
             return Target(Frontpage.name)
         elif targeting == "none":
@@ -1571,11 +1571,11 @@ class VPromoTarget(Validator):
                 # VCollection added errors so no need to do anything
                 return
         elif targeting == "one":
-            sr = VSubmitSR("sr", promotion=True).run(sr_name)
-            if sr:
-                return Target(sr.name)
+            vault = VSubmitVault("vault", promotion=True).run(vault_name)
+            if vault:
+                return Target(vault.name)
             else:
-                # VSubmitSR added errors so no need to do anything
+                # VSubmitVault added errors so no need to do anything
                 return
         else:
             self.set_error(errors.INVALID_TARGET, field="targeting")
@@ -2720,7 +2720,7 @@ class VDestination(Validator):
 
     def run(self, dest):
         if not dest:
-            dest = self.default or add_sr("/")
+            dest = self.default or add_vault("/")
 
         ld = dest.lower()
         if ld.startswith(('/', 'http://', 'https://')):
@@ -3272,25 +3272,25 @@ class VMultiByPath(Validator):
         }
 
 
-sr_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
+vault_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
 class VVaultList(Validator):
 
-    def __init__(self, param, limit=20, allow_language_srs=True):
+    def __init__(self, param, limit=20, allow_language_vaults=True):
         Validator.__init__(self, param)
         self.limit = limit
-        self.allow_language_srs = allow_language_srs
+        self.allow_language_vaults = allow_language_vaults
 
     def run(self, vaults):
         if not vaults:
             return []
 
         # extract vault name if path provided
-        vaults = [sr_path_rx.sub(r'\g<name>', sr.strip())
-                      for sr in vaults.lower().strip().splitlines() if sr]
+        vaults = [vault_path_rx.sub(r'\g<name>', vault.strip())
+                      for vault in vaults.lower().strip().splitlines() if vault]
 
         for name in vaults:
             valid_name = Vault.is_valid_name(
-                name, allow_language_srs=self.allow_language_srs)
+                name, allow_language_vaults=self.allow_language_vaults)
             if not valid_name:
                 return self.set_error(errors.BAD_VAULT_NAME, code=400)
 
@@ -3322,7 +3322,7 @@ class VResultTypes(Validator):
     def __init__(self, param):
         Validator.__init__(self, param, get_multiple=True)
         self.default = []
-        self.options = {'link', 'sr'}
+        self.options = {'link', 'vault'}
 
     def run(self, result_types):
         if result_types and ',' in result_types[0]:
@@ -3337,7 +3337,7 @@ class VResultTypes(Validator):
         elif feature.is_enabled('legacy_search') or c.user.pref_legacy_search:
             result_types = {'link'}
         else:
-            result_types = result_types or {'link', 'sr'}
+            result_types = result_types or {'link', 'vault'}
 
         return result_types
 

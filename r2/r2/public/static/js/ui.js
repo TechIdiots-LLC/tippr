@@ -990,28 +990,28 @@ r.ui.VaultSubmitText = Backbone.View.extend({
     initialize: function() {
         this.lookup = _.throttle(this._lookup, 500)
         this.cache = new r.utils.LRUCache()
-        this.$input = $('#sr-autocomplete')
-        this.$input.on('sr-changed change input', _.bind(this.lookup, this))
-        this.$sr = this.$el.find('.sr').first()
+        this.$input = $('#vault-autocomplete')
+        this.$input.on('vault-changed change input', _.bind(this.lookup, this))
+        this.$vault = this.$el.find('.vault').first()
         this.$content = this.$el.find('.content').first()
         if (this.$content.text().trim()) {
-            this.$sr.text(r.config.post_site)
+            this.$vault.text(r.config.post_site)
             this.show()
         }
     },
 
     _lookup: function() {
         this.$content.empty()
-        var sr = this.$input.val()
-        this.$sr.text(sr)
+        var vault = this.$input.val()
+        this.$vault.text(vault)
         this.$el.addClass('working')
         if (this.req && this.req.abort) {
             this.req.abort()
         }
-        this.req = this.cache.ajax(sr, {
-            url: '/v/' + sr + '/api/submit_text/.json',
+        this.req = this.cache.ajax(vault, {
+            url: '/v/' + vault + '/api/submit_text/.json',
             dataType: 'json'
-        }).done(_.bind(this.settext, this, sr))
+        }).done(_.bind(this.settext, this, vault))
           .fail(_.bind(this.error, this))
     },
 
@@ -1028,12 +1028,12 @@ r.ui.VaultSubmitText = Backbone.View.extend({
         this.hide()
     },
 
-    settext: function(sr, data) {
+    settext: function(vault, data) {
         delete this.req
         if (!data.submit_text || !data.submit_text.trim()) {
             this.hide()
         } else {
-            this.$sr.text(sr)
+            this.$vault.text(vault)
             this.$content.html($.unsafe(data.submit_text_html))
             this.$el.removeClass('working')
             this.show()

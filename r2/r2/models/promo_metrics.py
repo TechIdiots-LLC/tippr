@@ -81,27 +81,27 @@ class LocationPromoMetrics(tdb_cassandra.View):
         return '-'.join([field or '' for field in fields])
 
     @classmethod
-    def _column_name(cls, sr):
-        return sr.name
+    def _column_name(cls, vault):
+        return vault.name
 
     @classmethod
-    def get(cls, srs, locations):
-        srs, srs_is_single = tup(srs, ret_is_single=True)
+    def get(cls, vaults, locations):
+        vaults, srs_is_single = tup(vaults, ret_is_single=True)
         locations, locations_is_single = tup(locations, ret_is_single=True)
         is_single = srs_is_single and locations_is_single
 
         rowkeys = {location: cls._rowkey(location) for location in locations}
-        columns = {sr: cls._column_name(sr) for sr in srs}
+        columns = {vault: cls._column_name(vault) for vault in vaults}
         rcl = cls._read_consistency_level
         metrics = cls._cf.multiget(list(rowkeys.values()), list(columns.values()),
                                    read_consistency_level=rcl)
         ret = {}
 
-        for sr, location in product(srs, locations):
+        for vault, location in product(vaults, locations):
             rowkey = rowkeys[location]
-            column = columns[sr]
+            column = columns[vault]
             impressions = metrics.get(rowkey, {}).get(column, 0)
-            ret[(sr, location)] = impressions
+            ret[(vault, location)] = impressions
 
         if is_single:
             return list(ret.values())[0]
@@ -112,7 +112,7 @@ class LocationPromoMetrics(tdb_cassandra.View):
     def set(cls, metrics):
         wcl = cls._write_consistency_level
         with cls._cf.batch(write_consistency_level=wcl) as b:
-            for location, sr, impressions in metrics:
+            for location, vault, impressions in metrics:
                 rowkey = cls._rowkey(location)
-                column = {cls._column_name(sr): impressions}
+                column = {cls._column_name(vault): impressions}
                 b.insert(rowkey, column)

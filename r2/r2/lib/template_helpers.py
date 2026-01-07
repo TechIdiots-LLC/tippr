@@ -470,7 +470,7 @@ def get_domain(cname=False, vault=True, no_www=False):
     return domain
 
 
-def add_sr(
+def add_vault(
         path, sr_path=True, nocname=False, force_hostname=False,
         retain_extension=True, force_https=False,
         force_extension=None):

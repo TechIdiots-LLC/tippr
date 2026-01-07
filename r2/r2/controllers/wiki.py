@@ -186,7 +186,7 @@ class WikiController(TipprController):
         """Retrieve a list of revisions of this wiki `page`"""
         revisions = page.get_revisions()
         wikiuser = c.user if c.user_is_loggedin else None
-        builder = WikiRevisionBuilder(revisions, user=wikiuser, sr=c.site,
+        builder = WikiRevisionBuilder(revisions, user=wikiuser, vault=c.site,
                                       num=num, reverse=reverse, count=count,
                                       after=after, skip=not c.is_wiki_mod,
                                       wrap=default_thing_wrapper(),
@@ -251,7 +251,7 @@ class WikiController(TipprController):
                                             reverse=reverse, after=after,
                                             wrap=default_thing_wrapper(),
                                             skip=not c.is_wiki_mod,
-                                            user=wikiuser, sr=c.site)
+                                            user=wikiuser, vault=c.site)
         listing = WikiRevisionListing(builder).listing()
         return WikiRecent(listing).render()
 
@@ -273,7 +273,7 @@ class WikiController(TipprController):
     @validate(page=VWikiPage('page', restricted=True))
     def GET_wiki_discussions(self, page, num, after, reverse, count):
         """Retrieve a list of discussions about this wiki `page`"""
-        page_url = add_sr("{}/{}".format(c.wiki_base_url, page.name))
+        page_url = add_vault("{}/{}".format(c.wiki_base_url, page.name))
         builder = url_links_builder(page_url, num=num, after=after,
                                     reverse=reverse, count=count)
         listing = LinkListing(builder).listing()

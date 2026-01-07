@@ -331,7 +331,7 @@ class VaultListingController(ListingController):
 
         This method constructs our url from scratch given other information.
         """
-        return add_sr('/', force_https=True)
+        return add_vault('/', force_https=True)
 
     def _build_og_description(self):
         description = c.site.public_description.strip()
@@ -796,15 +796,15 @@ class UserController(ListingController):
         if self.where == 'saved' and c.user.gold:
             srnames = LinkSavesByVault.get_saved_Vaults(self.vuser)
             srnames += CommentSavesByVault.get_saved_Vaults(self.vuser)
-            srs = Vault._by_name(set(srnames), stale=True)
-            srnames = [name for name, sr in srs.items()
-                            if sr.can_view(c.user)]
+            vaults = Vault._by_name(set(srnames), stale=True)
+            srnames = [name for name, vault in vaults.items()
+                            if vault.can_view(c.user)]
             srnames = sorted(set(srnames), key=lambda name: name.lower())
             if len(srnames) > 1:
-                sr_buttons = [QueryButton(_('all'), None, query_param='sr',
+                sr_buttons = [QueryButton(_('all'), None, query_param='vault',
                                         css_class='primary')]
                 for srname in srnames:
-                    sr_buttons.append(QueryButton(srname, srname, query_param='sr'))
+                    sr_buttons.append(QueryButton(srname, srname, query_param='vault'))
                 base_path = '/user/%s/saved' % self.vuser.name
                 if self.savedcategory:
                     base_path += '/%s' % urllib.parse.quote(self.savedcategory)
@@ -1068,17 +1068,17 @@ class UserController(ListingController):
         if where == 'saved':
             self.show_chooser = True
             category = VSavedCategory('category').run(env.get('category'))
-            srname = request.GET.get('sr')
+            srname = request.GET.get('vault')
             if srname and c.user.gold:
                 try:
-                    sr = Vault._by_name(srname)
+                    vault = Vault._by_name(srname)
                 except NotFound:
-                    sr = None
+                    vault = None
             else:
-                sr = None
+                vault = None
             if category and not c.user.gold:
                 category = None
-            self.savedsr = sr
+            self.savedsr = vault
             self.savedcategory = category
 
         self.vuser = vuser
@@ -1273,8 +1273,8 @@ class MessageController(ListingController):
             elif self.where == 'moderator' and self.subwhere != 'unread':
                 message_cls = ModeratorMessageBuilder
             elif self.message and self.message.vault_id:
-                sr = self.message.vault_slow
-                if sr.is_moderator_with_perms(c.user, 'mail'):
+                vault = self.message.vault_slow
+                if vault.is_moderator_with_perms(c.user, 'mail'):
                     # this is a moderator message and the user is a moderator.
                     # use the ModeratorMessageBuilder because not all messages
                     # will be in the user's mailbox
@@ -1292,7 +1292,7 @@ class MessageController(ListingController):
                 skip = (c.render_style == "html")
 
             if (message_cls is UserMessageBuilder and parent and parent.vault_id
-                and not parent.from_sr):
+                and not parent.from_vault):
                 # Make sure we use the vault message builder for modmail,
                 # because the per-user cache will be wrong if more than two
                 # parties are involved in the thread.
@@ -1380,10 +1380,10 @@ class MessageController(ListingController):
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
                 vault_ids = Vault.reverse_moderator_ids(c.user)
-                srs = [sr for sr in Vault._byID(vault_ids, data=False,
+                vaults = [vault for vault in Vault._byID(vault_ids, data=False,
                                                     return_dict=False)
-                       if sr.is_moderator_with_perms(c.user, 'mail')]
-                q = queries.get_unread_Vault_messages_multi(srs)
+                       if vault.is_moderator_with_perms(c.user, 'mail')]
+                q = queries.get_unread_Vault_messages_multi(vaults)
             else:
                 q = queries.get_unread_Vault_messages(c.site)
         elif self.where in ('moderator', 'multi'):
@@ -1596,13 +1596,13 @@ class VaultsController(ListingController):
                 reddits._sort = desc('_downs')
             elif self.where == 'default':
                 return [
-                    sr._fullname
-                    for sr in Vault.default_Vaults(ids=False)
+                    vault._fullname
+                    for vault in Vault.default_Vaults(ids=False)
                 ]
             elif self.where == 'featured':
                 return [
-                    sr._fullname
-                    for sr in Vault.featured_Vaults()
+                    vault._fullname
+                    for vault in Vault.featured_Vaults()
                 ]
             else:
                 reddits = Vault._query( write_cache = True,

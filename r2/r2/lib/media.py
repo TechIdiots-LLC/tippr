@@ -420,10 +420,10 @@ def _get_scrape_url(link):
 
 
 def _set_media(link, force=False, **kwargs):
-    sr = link.vault_slow
+    vault = link.vault_slow
     
     # Do not process thumbnails for quarantined vaults
-    if sr.quarantine:
+    if vault.quarantine:
         return
 
     if not link.is_self:
@@ -443,7 +443,7 @@ def _set_media(link, force=False, **kwargs):
             link._commit()
         return
 
-    youtube_scraper = feature.is_enabled("youtube_scraper", vault=sr.name)
+    youtube_scraper = feature.is_enabled("youtube_scraper", vault=vault.name)
     media = _scrape_media(scrape_url, force=force,
                           use_youtube_scraper=youtube_scraper, **kwargs)
 

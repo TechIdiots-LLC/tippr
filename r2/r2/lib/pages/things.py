@@ -294,15 +294,15 @@ class MessageButtons(PrintableButtons):
                 first_message = Message._byID(thing.first_message, data=True)
 
             if thing.vault_id:
-                sr = thing.vault_slow
-                is_admin_message = '/v/%s' % sr.name == g.admin_message_acct
+                vault = thing.vault_slow
+                is_admin_message = '/v/%s' % vault.name == g.admin_message_acct
 
-                if (sr.is_muted(first_message.author_slow) or
+                if (vault.is_muted(first_message.author_slow) or
                         (first_message.to_id and
-                            sr.is_muted(first_message.recipient_slow))):
+                            vault.is_muted(first_message.recipient_slow))):
                     can_reply = False
 
-                can_mute = sr.can_mute(c.user, thing.author_slow)
+                can_mute = vault.can_mute(c.user, thing.author_slow)
 
         if not was_comment and thing.display_author:
             can_block = False
@@ -372,9 +372,9 @@ def wrap_links(links, wrapper = default_thing_wrapper(),
     return l.listing()
 
 
-def hot_links_by_url_listing(url, sr=None, num=None, **kw):
+def hot_links_by_url_listing(url, vault=None, num=None, **kw):
     try:
-        links_for_url = Link._by_url(url, sr)
+        links_for_url = Link._by_url(url, vault)
     except NotFound:
         links_for_url = []
 

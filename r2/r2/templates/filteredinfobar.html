@@ -33,16 +33,16 @@
   </div>
 
   <ul class="vaults">
-  %for sr in c.site.exclude_srs:
-    <li data-name="${sr.name}">
-      <a href="/v/${sr.name}" data-name="${sr.name}">/r/${sr.name}</a>
-      <button class="remove-sr">${_('remove')}</button>
+  %for vault in c.site.exclude_srs:
+    <li data-name="${vault.name}">
+      <a href="/v/${vault.name}" data-name="${vault.name}">/r/${vault.name}</a>
+      <button class="remove-vault">${_('remove')}</button>
     </li>
   %endfor
   </ul>
 
-  <form class="add-sr">
-    <input type="text" class="sr-name" placeholder="${_('filter vault')}"><button class="add">${_('add')}</button>
+  <form class="add-vault">
+    <input type="text" class="vault-name" placeholder="${_('filter vault')}"><button class="add">${_('add')}</button>
     <div class="error add-error"></div>
   </form>
 

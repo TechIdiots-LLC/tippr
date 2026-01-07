@@ -65,12 +65,12 @@ class AccountSRPrefs:
         """Return a new AccountSRPrefs obj populated with user's data."""
         prefs = cls()
         multis = LabeledMulti.by_owner(account)
-        multi_srs = set(chain.from_iterable(multi.srs for multi in multis))
-        feedback = AccountSRFeedback.for_user(account)
-        # subscriptions and srs in the user's multis become likes
+        multi_srs = set(chain.from_iterable(multi.vaults for multi in multis))
+        feedback = AccountVaultFeedback.for_user(account)
+        # subscriptions and vaults in the user's multis become likes
         subscriptions = Vault.user_Vaults(account, limit=None)
         prefs.likes.update(utils.to36(vault_id) for vault_id in subscriptions)
-        prefs.likes.update(sr._id36 for sr in multi_srs)
+        prefs.likes.update(vault._id36 for vault in multi_srs)
         # recent clicks on explore tab items are also treated as likes
         prefs.likes.update(feedback[CLICK])
         # dismissed recommendations become dislikes
@@ -82,7 +82,7 @@ class AccountSRPrefs:
         return prefs
 
 
-class AccountSRFeedback(tdb_cassandra.DenormalizedRelation):
+class AccountVaultFeedback(tdb_cassandra.DenormalizedRelation):
     """Column family for storing users' recommendation feedback."""
 
     _use_db = True
@@ -93,11 +93,11 @@ class AccountSRFeedback(tdb_cassandra.DenormalizedRelation):
 
     @classmethod
     def for_user(cls, account):
-        """Return dict mapping each feedback type to a set of sr id36s."""
+        """Return dict mapping each feedback type to a set of vault id36s."""
 
         feedback = defaultdict(set)
         try:
-            row = AccountSRFeedback._cf.get(account._id36,
+            row = AccountVaultFeedback._cf.get(account._id36,
                                             column_count=max_column_count)
         except pycassa.NotFoundException:
             return feedback
@@ -107,24 +107,24 @@ class AccountSRFeedback(tdb_cassandra.DenormalizedRelation):
         return feedback
 
     @classmethod
-    def record_feedback(cls, account, srs, action):
+    def record_feedback(cls, account, vaults, action):
         if action not in FEEDBACK_ACTIONS:
             g.log.error('Unrecognized feedback: %s' % action)
             return
-        srs = tup(srs)
+        vaults = tup(vaults)
         # update user feedback record, setting appropriate ttls
         fb_rowkey = account._id36
-        fb_colkeys = ['{}.{}'.format(action, sr._id36) for sr in srs]
+        fb_colkeys = ['{}.{}'.format(action, vault._id36) for vault in vaults]
         col_data = {col: '' for col in fb_colkeys}
         ttl = FEEDBACK_TTL.get(action, 0)
         if ttl > 0:
-            AccountSRFeedback._cf.insert(fb_rowkey, col_data, ttl=ttl)
+            AccountVaultFeedback._cf.insert(fb_rowkey, col_data, ttl=ttl)
         else:
-            AccountSRFeedback._cf.insert(fb_rowkey, col_data)
+            AccountVaultFeedback._cf.insert(fb_rowkey, col_data)
 
     @classmethod
-    def record_views(cls, account, srs):
-        cls.record_feedback(account, srs, VIEW)
+    def record_views(cls, account, vaults):
+        cls.record_feedback(account, vaults, VIEW)
 
 
 class ExploreSettings(tdb_cassandra.Thing):

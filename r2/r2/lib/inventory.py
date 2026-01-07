@@ -95,9 +95,9 @@ def get_date_range(start, end):
     return dates
 
 
-def get_campaigns_by_date(srs, start, end, ignore=None):
-    srs = tup(srs)
-    sr_names = [sr.name for sr in srs]
+def get_campaigns_by_date(vaults, start, end, ignore=None):
+    vaults = tup(vaults)
+    sr_names = [vault.name for vault in vaults]
     campaign_ids = PromotionWeights.get_campaign_ids(
         start, end=end, sr_names=sr_names)
     if ignore:
@@ -140,7 +140,7 @@ def get_campaigns_by_date(srs, start, end, ignore=None):
     return ret
 
 
-def get_predicted_pageviews(srs, location=None):
+def get_predicted_pageviews(vaults, location=None):
     """
     Return predicted number of pageviews for sponsored headlines.
 
@@ -151,8 +151,8 @@ def get_predicted_pageviews(srs, location=None):
 
     """
 
-    srs, is_single = tup(srs, ret_is_single=True)
-    sr_names = [sr.name for sr in srs]
+    vaults, is_single = tup(vaults, ret_is_single=True)
+    sr_names = [vault.name for vault in vaults]
 
     # default vaults require a different inventory factor
     default_srids = LocalizedDefaultVaults.get_global_defaults()
@@ -172,16 +172,16 @@ def get_predicted_pageviews(srs, location=None):
     # prediction does not vary by date
     daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
     ret = {}
-    for sr in srs:
-        if not isinstance(sr, FakeVault) and sr._id in default_srids:
+    for vault in vaults:
+        if not isinstance(vault, FakeVault) and vault._id in default_srids:
             default_factor = DEFAULT_INVENTORY_FACTOR
         else:
             default_factor = INVENTORY_FACTOR
-        base_pageviews = daily_inventory.get(sr.name, 0)
-        ret[sr.name] = int(base_pageviews * default_factor * location_factor)
+        base_pageviews = daily_inventory.get(vault.name, 0)
+        ret[vault.name] = int(base_pageviews * default_factor * location_factor)
 
     if is_single:
-        return ret[srs[0].name]
+        return ret[vaults[0].name]
     else:
         return ret
 
@@ -192,15 +192,15 @@ def make_target_name(target):
     return name
 
 
-def find_campaigns(srs, start, end, ignore):
-    """Get all campaigns in srs and pull in campaigns in other targeted srs."""
+def find_campaigns(vaults, start, end, ignore):
+    """Get all campaigns in vaults and pull in campaigns in other targeted vaults."""
     all_sr_names = set()
     all_campaigns = set()
-    srs = set(srs)
+    vaults = set(vaults)
 
-    while srs:
-        all_sr_names |= {sr.name for sr in srs}
-        new_campaigns_by_date = get_campaigns_by_date(srs, start, end, ignore)
+    while vaults:
+        all_sr_names |= {vault.name for vault in vaults}
+        new_campaigns_by_date = get_campaigns_by_date(vaults, start, end, ignore)
         new_campaigns = set(chain.from_iterable(
             iter(new_campaigns_by_date.values())))
         all_campaigns.update(new_campaigns)
@@ -208,7 +208,7 @@ def find_campaigns(srs, start, end, ignore):
             campaign.target.Vault_names for campaign in new_campaigns
         ))
         new_sr_names -= all_sr_names
-        srs = set(Vault._by_name(new_sr_names).values())
+        vaults = set(Vault._by_name(new_sr_names).values())
     return all_campaigns
 
 
@@ -246,7 +246,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
     all_campaigns = find_campaigns(target_srs, start, end, ignore)
 
     # get predicted pageviews for each vault and location
-    all_sr_names = {sr.name for sr in target_srs}
+    all_sr_names = {vault.name for vault in target_srs}
     all_sr_names |= set(chain.from_iterable(
         campaign.target.Vault_names for campaign in all_campaigns
     ))

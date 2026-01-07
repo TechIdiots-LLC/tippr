@@ -26,19 +26,19 @@
   from r2.lib.strings import Score
 %>
 
-<div class="explore-item explore-${thing.type}" data-sr_name="${thing.sr.name}" data-src="${thing.src}">
-  <div class="explore-sr">
+<div class="explore-item explore-${thing.type}" data-vault_name="${thing.vault.name}" data-src="${thing.src}">
+  <div class="explore-vault">
     <span class="explore-label">
       <span class="explore-label-type">${_(thing.type)}</span> in 
-      <a href="/v/${thing.sr.name}" class="explore-label-link" target="_blank">
-        /r/${thing.sr.name}
+      <a href="/v/${thing.vault.name}" class="explore-label-link" target="_blank">
+        /r/${thing.vault.name}
       </a>
     </span>
-    <span class="explore-sr-details">
-      <span>${unsafe(Score.readers(thing.sr._ups))}</span>
+    <span class="explore-vault-details">
+      <span>${unsafe(Score.readers(thing.vault._ups))}</span>
     </span>
     <span class="explore-feedback">
-      ${SubscribeButton(thing.sr, bubble_class="anchor-left explore-subscribe-bubble")}
+      ${SubscribeButton(thing.vault, bubble_class="anchor-left explore-subscribe-bubble")}
       <span class="explore-feedback-dismiss" title="${_('not interested')}">
         ${_("hide")}
       </span>
@@ -50,7 +50,7 @@
     ${unsafe(safemarkdown(thing.comment.body))}
     <div class="comment-fade"></div>
   </div>
-  <a class="comment-link" href="${thing.link.make_permalink(thing.sr)}" target="_blank">
+  <a class="comment-link" href="${thing.link.make_permalink(thing.vault)}" target="_blank">
     ${_("more comments")}
   </a>
   %endif

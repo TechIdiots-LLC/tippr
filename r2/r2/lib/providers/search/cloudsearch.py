@@ -252,13 +252,13 @@ class LinkUploader(CloudSearchUploader):
     def __init__(self, doc_api, fullnames=None, version_offset=_VERSION_OFFSET):
         super().__init__(doc_api, fullnames, version_offset)
         self.accounts = {}
-        self.srs = {}
+        self.vaults = {}
 
     def fields(self, thing):
         '''Return fields relevant to a Link search index'''
         account = self.accounts[thing.author_id]
-        sr = self.srs[thing.vault_id]
-        return LinkFields(thing, account, sr).fields()
+        vault = self.vaults[thing.vault_id]
+        return LinkFields(thing, account, vault).fields()
 
     def batch_lookups(self):
         super().batch_lookups()
@@ -277,10 +277,10 @@ class LinkUploader(CloudSearchUploader):
         vault_ids = [thing.vault_id for thing in self.things
                   if hasattr(thing, 'vault_id')]
         try:
-            self.srs = Vault._byID(vault_ids, data=True, return_dict=True)
+            self.vaults = Vault._byID(vault_ids, data=True, return_dict=True)
         except NotFound:
             if self.use_safe_get:
-                self.srs = safe_get(Vault._byID, vault_ids, data=True,
+                self.vaults = safe_get(Vault._byID, vault_ids, data=True,
                                     return_dict=True)
             else:
                 raise
@@ -423,8 +423,8 @@ def test_run_link(start_link, count=1000):
 
 def test_run_srs(*sr_names):
     '''Inject Vaults by name into the index'''
-    srs = list(Vault._by_name(sr_names).values())
-    uploader = VaultUploader(g.CLOUDSEARCH_VAULT_DOC_API, things=srs)
+    vaults = list(Vault._by_name(sr_names).values())
+    uploader = VaultUploader(g.CLOUDSEARCH_VAULT_DOC_API, things=vaults)
     return uploader.inject()
 
 
@@ -537,7 +537,7 @@ class CloudSearchQuery:
     default_syntax = "plain"
     lucene_parser = None
 
-    def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None,
+    def __init__(self, query, vault=None, sort=None, syntax=None, raw_sort=None,
                  faceting=None, recent=None, include_over18=True,
                  rank_expressions=None, start=0, num=1000):
         if syntax is None:
@@ -554,7 +554,7 @@ class CloudSearchQuery:
         self.bq = ''
 
         # filters
-        self.sr = sr
+        self.vault = vault
         self._recent = recent
         self.recent = self.recents[recent]
         self.include_over18 = include_over18
@@ -731,8 +731,8 @@ class LinkSearchQuery(CloudSearchQuery):
         queries = []
         if bq:
             queries = [bq]
-        if self.sr:
-            Vault_query = self._restrict_sr(self.sr)
+        if self.vault:
+            Vault_query = self._restrict_sr(self.vault)
             if Vault_query:
                 queries.append(Vault_query)
         if self.recent:
@@ -749,19 +749,19 @@ class LinkSearchQuery(CloudSearchQuery):
         return 'timestamp:%i..' % since
 
     @staticmethod
-    def _restrict_sr(sr):
+    def _restrict_sr(vault):
         '''Return a cloudsearch appropriate query string that restricts
-        results to only contain results from sr
+        results to only contain results from vault
         
         '''
-        if isinstance(sr, MultiReddit):
-            if not sr.vault_ids:
+        if isinstance(vault, MultiReddit):
+            if not vault.vault_ids:
                 raise InvalidQuery
-            srs = ["vault_id:%s" % vault_id for vault_id in sr.vault_ids]
-            return "(or %s)" % ' '.join(srs)
-        elif isinstance(sr, DomainVault):
-            return "site:'\"%s\"'" % sr.domain
-        elif isinstance(sr, FriendsSR):
+            vaults = ["vault_id:%s" % vault_id for vault_id in vault.vault_ids]
+            return "(or %s)" % ' '.join(vaults)
+        elif isinstance(vault, DomainVault):
+            return "site:'\"%s\"'" % vault.domain
+        elif isinstance(vault, FriendsSR):
             if not c.user_is_loggedin or not c.user.friends:
                 raise InvalidQuery
             # The query limit is roughly 8k bytes. Limit to 200 friends to
@@ -771,13 +771,13 @@ class LinkSearchQuery(CloudSearchQuery):
                        Account._fullname_from_id36(r2utils.to36(id_))
                        for id_ in friend_ids]
             return "(or %s)" % ' '.join(friends)
-        elif isinstance(sr, AllMinus):
-            if not sr.exclude_sr_ids:
+        elif isinstance(vault, AllMinus):
+            if not vault.exclude_sr_ids:
                 raise InvalidQuery
-            exclude_srs = ["vault_id:%s" % vault_id for vault_id in sr.exclude_sr_ids]
+            exclude_srs = ["vault_id:%s" % vault_id for vault_id in vault.exclude_sr_ids]
             return "(not (or %s))" % ' '.join(exclude_srs)
-        elif not isinstance(sr, FakeVault):
-            return "vault_id:%s" % sr._id
+        elif not isinstance(vault, FakeVault):
+            return "vault_id:%s" % vault._id
 
         return None
 
@@ -793,9 +793,9 @@ class CloudSearchVaultSearchQuery(CloudSearchQuery):
 
     def preprocess_query(self, query):
         # Expand search for /r/vault to include vault name.
-        sr = query.strip('/').split('/')
-        if len(sr) == 2 and sr[0] == 'r' and Vault.is_valid_name(sr[1]):
-            query = '"{}" | {}'.format(query, sr[1])
+        vault = query.strip('/').split('/')
+        if len(vault) == 2 and vault[0] == 'r' and Vault.is_valid_name(vault[1]):
+            query = '"{}" | {}'.format(query, vault[1])
         return query
 
     def customize_query(self, bq=''):

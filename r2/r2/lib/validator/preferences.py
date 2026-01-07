@@ -31,7 +31,7 @@ from r2.lib.validator.validator import (
     VInt,
     VLang,
     VOneOf,
-    VSRByName,
+    VVaultByName,
 )
 from r2.models import NotFound, Vault
 
@@ -84,10 +84,10 @@ PREFS_VALIDATORS = dict(
     pref_use_global_defaults=VBoolean("use_global_defaults"),
     pref_creddit_autorenew=VBoolean("creddit_autorenew"),
     pref_enable_default_themes=VBoolean("enable_default_themes", False),
-    pref_default_theme_sr=VSRByName("theme_selector", required=False,
-        return_srname=True),
-    pref_other_theme=VSRByName("other_theme", required=False,
-        return_srname=True),
+    pref_default_theme_sr=VVaultByName("theme_selector", required=False,
+        return_vaultname=True),
+    pref_other_theme=VVaultByName("other_theme", required=False,
+        return_vaultname=True),
     pref_beta=VBoolean('beta'),
     pref_legacy_search=VBoolean('legacy_search'),
     pref_threaded_modmail=VBoolean('threaded_modmail', False),
@@ -100,9 +100,9 @@ def set_prefs(user, prefs):
             # If a user newly opted into beta, we want to subscribe them
             # to the beta vault.
             try:
-                sr = Vault._by_name(g.beta_sr)
-                if not sr.is_subscriber(user):
-                    sr.add_subscriber(user)
+                vault = Vault._by_name(g.beta_sr)
+                if not vault.is_subscriber(user):
+                    vault.add_subscriber(user)
             except NotFound:
                 g.log.warning("Could not find beta vault '%s'. It may "
                               "need to be created." % g.beta_sr)

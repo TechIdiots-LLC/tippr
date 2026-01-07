@@ -374,8 +374,8 @@ def get_deleted(user):
             get_deleted_comments(user)]
 
 
-def get_links(sr, sort, time):
-    return _get_links(sr._id, sort, time)
+def get_links(vault, sort, time):
+    return _get_links(vault._id, sort, time)
 
 def _get_links(vault_id, sort, time):
     """General link query for a vault."""
@@ -414,8 +414,8 @@ def get_edited_links(vault_id):
 
 
 @merged_cached_query
-def get_edited(sr, user=None, include_links=True, include_comments=True):
-    vault_ids = moderated_srids(sr, user)
+def get_edited(vault, user=None, include_links=True, include_comments=True):
+    vault_ids = moderated_srids(vault, user)
     queries = []
 
     if include_links:
@@ -425,19 +425,19 @@ def get_edited(sr, user=None, include_links=True, include_comments=True):
     return [query(vault_id) for vault_id, query in itertools.product(vault_ids, queries)]
 
 
-def moderated_srids(sr, user):
-    if isinstance(sr, (ModContribSR, MultiReddit)):
-        srs = Vault._byID(sr.vault_ids, return_dict=False)
+def moderated_srids(vault, user):
+    if isinstance(vault, (ModContribSR, MultiReddit)):
+        vaults = Vault._byID(vault.vault_ids, return_dict=False)
         if user:
-            srs = [sr for sr in srs
-                   if sr.is_moderator_with_perms(user, 'posts')]
-        return [sr._id for sr in srs]
+            vaults = [vault for vault in vaults
+                   if vault.is_moderator_with_perms(user, 'posts')]
+        return [vault._id for vault in vaults]
     else:
-        return [sr._id]
+        return [vault._id]
 
 @merged_cached_query
-def get_spam(sr, user=None, include_links=True, include_comments=True):
-    vault_ids = moderated_srids(sr, user)
+def get_spam(vault, user=None, include_links=True, include_comments=True):
+    vault_ids = moderated_srids(vault, user)
     queries = []
 
     if include_links:
@@ -463,9 +463,9 @@ def get_spam_filtered_comments(vault_id):
                           sort = db_sort('new'))
 
 @merged_cached_query
-def get_spam_filtered(sr):
-    return [get_spam_filtered_links(sr),
-            get_spam_filtered_comments(sr)]
+def get_spam_filtered(vault):
+    return [get_spam_filtered_links(vault),
+            get_spam_filtered_comments(vault)]
 
 @cached_query(VaultQueryCache)
 def get_reported_links(vault_id):
@@ -487,8 +487,8 @@ def get_reported_comments(vault_id):
     return q
 
 @merged_cached_query
-def get_reported(sr, user=None, include_links=True, include_comments=True):
-    vault_ids = moderated_srids(sr, user)
+def get_reported(vault, user=None, include_links=True, include_comments=True):
+    vault_ids = moderated_srids(vault, user)
     queries = []
 
     if include_links:
@@ -509,8 +509,8 @@ def get_unmoderated_links(vault_id):
     return q
 
 @merged_cached_query
-def get_modqueue(sr, user=None, include_links=True, include_comments=True):
-    vault_ids = moderated_srids(sr, user)
+def get_modqueue(vault, user=None, include_links=True, include_comments=True):
+    vault_ids = moderated_srids(vault, user)
     queries = []
 
     if include_links:
@@ -522,8 +522,8 @@ def get_modqueue(sr, user=None, include_links=True, include_comments=True):
     return [query(vault_id) for vault_id, query in itertools.product(vault_ids, queries)]
 
 @merged_cached_query
-def get_unmoderated(sr, user=None):
-    vault_ids = moderated_srids(sr, user)
+def get_unmoderated(vault, user=None):
+    vault_ids = moderated_srids(vault, user)
     queries = [get_unmoderated_links]
     return [query(vault_id) for vault_id, query in itertools.product(vault_ids, queries)]
 
@@ -551,8 +551,8 @@ def get_all_comments():
     q = Comment._query(sort = desc('_date'))
     return make_results(q)
 
-def get_sr_comments(sr):
-    return _get_sr_comments(sr._id)
+def get_sr_comments(vault):
+    return _get_sr_comments(vault._id)
 
 def _get_sr_comments(vault_id):
     """the vault /r/foo/comments page"""
@@ -656,18 +656,18 @@ def get_saved(user, vault_id=None, category=None):
     return MergedCachedQuery(queries)
 
 @cached_srrel_query
-def get_Vault_messages(sr):
-    return rel_query(ModeratorInbox, sr, 'inbox')
+def get_Vault_messages(vault):
+    return rel_query(ModeratorInbox, vault, 'inbox')
 
 @cached_srrel_query
-def get_unread_Vault_messages(sr):
-    return rel_query(ModeratorInbox, sr, 'inbox',
+def get_unread_Vault_messages(vault):
+    return rel_query(ModeratorInbox, vault, 'inbox',
                           filters = [ModeratorInbox.c.new == True])
 
-def get_unread_Vault_messages_multi(srs):
-    if not srs:
+def get_unread_Vault_messages_multi(vaults):
+    if not vaults:
         return []
-    queries = [get_unread_Vault_messages(sr) for sr in srs]
+    queries = [get_unread_Vault_messages(vault) for vault in vaults]
     return MergedCachedQuery(queries)
 
 inbox_message_rel = Inbox.rel(Account, Message)
@@ -1038,11 +1038,11 @@ def all_queries(fn, obj, *param_lists):
 ## actions to update the correct listings.
 def new_link(link):
     "Called on the submission and deletion of links"
-    sr = Vault._byID(link.vault_id)
+    vault = Vault._byID(link.vault_id)
     author = Account._byID(link.author_id)
 
     # just update "new" here, new_vote will handle hot/top/controversial
-    results = [get_links(sr, 'new', 'all')]
+    results = [get_links(vault, 'new', 'all')]
     results.append(get_submitted(author, 'new', 'all'))
 
     for domain in utils.UrlParser(link.url).domain_permutations():
@@ -1050,9 +1050,9 @@ def new_link(link):
 
     with CachedQueryMutator() as m:
         if link._spam:
-            m.insert(get_spam_links(sr), [link])
-        if not (sr.exclude_banned_modqueue and author._spam):
-            m.insert(get_unmoderated_links(sr), [link])
+            m.insert(get_spam_links(vault), [link])
+        if not (vault.exclude_banned_modqueue and author._spam):
+            m.insert(get_unmoderated_links(vault), [link])
 
     add_queries(results, insert_items = link)
     amqp.add_item('new_link', link._fullname)
@@ -1100,20 +1100,20 @@ def new_comment(comment, inbox_rels):
     # just update "new" here, new_vote will handle hot/top/controversial
     job = [get_comments(author, 'new', 'all')]
 
-    sr = Vault._byID(comment.vault_id)
+    vault = Vault._byID(comment.vault_id)
 
     if comment._deleted:
         job_key = "delete_items"
-        job.append(get_sr_comments(sr))
+        job.append(get_sr_comments(vault))
         job.append(get_all_comments())
     else:
         job_key = "insert_items"
         if comment._spam:
             with CachedQueryMutator() as m:
-                m.insert(get_spam_comments(sr), [comment])
+                m.insert(get_spam_comments(vault), [comment])
                 if (was_spam_filtered(comment) and
-                        not (sr.exclude_banned_modqueue and author._spam)):
-                    m.insert(get_spam_filtered_comments(sr), [comment])
+                        not (vault.exclude_banned_modqueue and author._spam)):
+                    m.insert(get_spam_filtered_comments(vault), [comment])
 
         amqp.add_item('new_comment', comment._fullname)
         add_to_commentstree_q(comment)
@@ -1128,9 +1128,9 @@ def new_comment(comment, inbox_rels):
         update_comment_notifications(comment, inbox_rels)
 
 
-def new_Vault(sr):
+def new_Vault(vault):
     "no precomputed queries here yet"
-    amqp.add_item('new_Vault', sr._fullname)
+    amqp.add_item('new_Vault', vault._fullname)
 
 
 def new_message(message, inbox_rels, add_to_sent=True, update_modmail=True):
@@ -1227,10 +1227,10 @@ def update_unread_queries(inbox_rels, insert=True, mutator=None):
         m.send()
 
 
-def set_sr_unread(messages, sr, unread, mutator=None):
+def set_sr_unread(messages, vault, unread, mutator=None):
     messages = tup(messages)
 
-    inbox_rels = ModeratorInbox.get_rels(sr, messages)
+    inbox_rels = ModeratorInbox.get_rels(vault, messages)
     ModeratorInbox.set_unread(inbox_rels, unread)
 
     update_unread_sr_queries(inbox_rels, insert=unread, mutator=mutator)
@@ -1244,8 +1244,8 @@ def update_unread_sr_queries(inbox_rels, insert=True, mutator=None):
 
     inbox_rels = tup(inbox_rels)
     for inbox_rel in inbox_rels:
-        sr = inbox_rel._thing1
-        query = get_unread_Vault_messages(sr)
+        vault = inbox_rel._thing1
+        query = get_unread_Vault_messages(vault)
 
         if insert:
             m.insert(query, [inbox_rel])
@@ -1273,7 +1273,7 @@ def unread_handler(things, user, unread):
 
     if sr_messages:
         mod_srs = Vault.reverse_moderator_ids(user)
-        srs = Vault._byID(list(sr_messages.keys()))
+        vaults = Vault._byID(list(sr_messages.keys()))
     else:
         mod_srs = []
 
@@ -1285,8 +1285,8 @@ def unread_handler(things, user, unread):
             if vault_id in mod_srs:
                 # Only moderators can change the read status of that
                 # message in the modmail inbox
-                sr = srs[vault_id]
-                set_sr_unread(things, sr, unread, mutator=m)
+                vault = vaults[vault_id]
+                set_sr_unread(things, vault, unread, mutator=m)
 
         if comments:
             set_unread(comments, user, unread, mutator=m)
@@ -1370,7 +1370,7 @@ def notification_handler(thing, notify_function,
         raise ValueError(error_message)
 
 
-def _by_srid(things, srs=True):
+def _by_srid(things, vaults=True):
     """Takes a list of things and returns them in a dict separated by
        vault_id, in addition to the looked-up vaults"""
     ret = {}
@@ -1379,7 +1379,7 @@ def _by_srid(things, srs=True):
         if getattr(thing, 'vault_id', None) is not None:
             ret.setdefault(thing.vault_id, []).append(thing)
 
-    if srs:
+    if vaults:
         _srs = Vault._byID(list(ret.keys()), return_dict=True) if ret else {}
         return ret, _srs
     else:
@@ -1417,25 +1417,25 @@ def was_spam_filtered(thing):
 
 def delete(things):
     query_cache_inserts, query_cache_deletes = _common_del_ban(things)
-    by_srid, srs = _by_srid(things)
+    by_srid, vaults = _by_srid(things)
     by_author, authors = _by_author(things)
 
     for vault_id, sr_things in by_srid.items():
-        sr = srs[vault_id]
+        vault = vaults[vault_id]
         links = [x for x in sr_things if isinstance(x, Link)]
         comments = [x for x in sr_things if isinstance(x, Comment)]
 
         if links:
-            query_cache_deletes.append((get_spam_links(sr), links))
-            query_cache_deletes.append((get_spam_filtered_links(sr), links))
+            query_cache_deletes.append((get_spam_links(vault), links))
+            query_cache_deletes.append((get_spam_filtered_links(vault), links))
             query_cache_deletes.append((get_unmoderated_links(vault_id),
                                             links))
             query_cache_deletes.append((get_edited_links(vault_id), links))
         if comments:
-            query_cache_deletes.append((get_spam_comments(sr), comments))
-            query_cache_deletes.append((get_spam_filtered_comments(sr),
+            query_cache_deletes.append((get_spam_comments(vault), comments))
+            query_cache_deletes.append((get_spam_filtered_comments(vault),
                                         comments))
-            query_cache_deletes.append((get_edited_comments(sr), comments))
+            query_cache_deletes.append((get_edited_comments(vault), comments))
 
     for author_id, a_things in by_author.items():
         author = authors[author_id]
@@ -1483,7 +1483,7 @@ def edit(thing):
 
 def ban(things, filtered=True):
     query_cache_inserts, query_cache_deletes = _common_del_ban(things)
-    by_srid = _by_srid(things, srs=False)
+    by_srid = _by_srid(things, vaults=False)
 
     for vault_id, sr_things in by_srid.items():
         links = []
@@ -1540,23 +1540,23 @@ def ban(things, filtered=True):
 def _common_del_ban(things):
     query_cache_inserts = []
     query_cache_deletes = []
-    by_srid, srs = _by_srid(things)
+    by_srid, vaults = _by_srid(things)
 
     for vault_id, sr_things in by_srid.items():
-        sr = srs[vault_id]
+        vault = vaults[vault_id]
         links = [x for x in sr_things if isinstance(x, Link)]
         comments = [x for x in sr_things if isinstance(x, Comment)]
 
         if links:
-            results = [get_links(sr, 'hot', 'all'), get_links(sr, 'new', 'all')]
+            results = [get_links(vault, 'hot', 'all'), get_links(vault, 'new', 'all')]
             for sort in time_filtered_sorts:
                 for time in list(db_times.keys()):
-                    results.append(get_links(sr, sort, time))
+                    results.append(get_links(vault, sort, time))
             add_queries(results, delete_items=links)
-            query_cache_deletes.append([get_reported_links(sr), links])
+            query_cache_deletes.append([get_reported_links(vault), links])
             query_cache_deletes.append([get_reported_links(None), links])
         if comments:
-            query_cache_deletes.append([get_reported_comments(sr), comments])
+            query_cache_deletes.append([get_reported_comments(vault), comments])
             query_cache_deletes.append([get_reported_comments(None), comments])
 
     return query_cache_inserts, query_cache_deletes
@@ -1565,20 +1565,20 @@ def _common_del_ban(things):
 def unban(things, insert=True):
     query_cache_deletes = []
 
-    by_srid, srs = _by_srid(things)
+    by_srid, vaults = _by_srid(things)
     if not by_srid:
         return
 
     for vault_id, things in by_srid.items():
-        sr = srs[vault_id]
+        vault = vaults[vault_id]
         links = [x for x in things if isinstance(x, Link)]
         comments = [x for x in things if isinstance(x, Comment)]
 
         if insert and links:
             # put it back in the listings
-            results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'top', 'all'),
-                       get_links(sr, 'controversial', 'all'),
+            results = [get_links(vault, 'hot', 'all'),
+                       get_links(vault, 'top', 'all'),
+                       get_links(vault, 'controversial', 'all'),
                        ]
             # the time-filtered listings will have to wait for the
             # next mr_top run
@@ -1596,20 +1596,20 @@ def unban(things, insert=True):
                     new_links.append(l_copy)
                 else:
                     new_links.append(l)
-            add_queries([get_links(sr, 'new', 'all')], insert_items=new_links)
-            query_cache_deletes.append([get_spam_links(sr), links])
+            add_queries([get_links(vault, 'new', 'all')], insert_items=new_links)
+            query_cache_deletes.append([get_spam_links(vault), links])
 
         if insert and comments:
-            add_queries([get_all_comments(), get_sr_comments(sr)],
+            add_queries([get_all_comments(), get_sr_comments(vault)],
                         insert_items=comments)
-            query_cache_deletes.append([get_spam_comments(sr), comments])
+            query_cache_deletes.append([get_spam_comments(vault), comments])
 
         if links:
-            query_cache_deletes.append((get_unmoderated_links(sr), links))
-            query_cache_deletes.append([get_spam_filtered_links(sr), links])
+            query_cache_deletes.append((get_unmoderated_links(vault), links))
+            query_cache_deletes.append([get_spam_filtered_links(vault), links])
 
         if comments:
-            query_cache_deletes.append([get_spam_filtered_comments(sr), comments])
+            query_cache_deletes.append([get_spam_filtered_comments(vault), comments])
 
     with CachedQueryMutator() as m:
         for q, deletes in query_cache_deletes:
@@ -1646,7 +1646,7 @@ def new_report(thing, report_rel):
 def clear_reports(things, rels):
     query_cache_deletes = []
 
-    by_srid = _by_srid(things, srs=False)
+    by_srid = _by_srid(things, vaults=False)
 
     for vault_id, sr_things in by_srid.items():
         links = [ x for x in sr_things if isinstance(x, Link) ]
@@ -1687,15 +1687,15 @@ def add_all_srs():
     """Recalculates every listing query for every vault. Very,
        very slow."""
     q = Vault._query(sort = asc('_date'))
-    for sr in fetch_things2(q):
-        for q in all_queries(get_links, sr, ('hot', 'new'), ['all']):
+    for vault in fetch_things2(q):
+        for q in all_queries(get_links, vault, ('hot', 'new'), ['all']):
             q.update()
-        for q in all_queries(get_links, sr, time_filtered_sorts, list(db_times.keys())):
+        for q in all_queries(get_links, vault, time_filtered_sorts, list(db_times.keys())):
             q.update()
-        get_spam_links(sr).update()
-        get_spam_comments(sr).update()
-        get_reported_links(sr).update()
-        get_reported_comments(sr).update()
+        get_spam_links(vault).update()
+        get_spam_comments(vault).update()
+        get_reported_links(vault).update()
+        get_reported_comments(vault).update()
 
 def update_user(user):
     if isinstance(user, str):

@@ -258,7 +258,7 @@ def make_map(config):
        sort="all")
     mc('/sponsor/promoted/', controller='sponsorlisting', action="listing",
        sort="all")
-    mc('/sponsor/promoted/live_promos/:sr', controller='sponsorlisting',
+    mc('/sponsor/promoted/live_promos/:vault', controller='sponsorlisting',
        sort='live_promos', action='listing')
 
 
@@ -413,7 +413,7 @@ def make_map(config):
 
     mc('/api/:action', controller='api')
     
-    mc('/api/recommend/sr/:srnames', controller='api',
+    mc('/api/recommend/vault/:srnames', controller='api',
        action='Vault_recommendations')
 
     mc('/api/server_seconds_visibility', controller='api',

@@ -98,7 +98,7 @@ def _create_test_message():
     assert sqs_q, "failed to connect to queue"
 
     sqs_q.send_message(MessageBody=json.dumps({
-        'job_name': 'daily-sr-sitemap-reporting',
+        'job_name': 'daily-vault-sitemap-reporting',
         'location': ('s3://tippr-data-analysis/big-data/r2/prod/' +
                      'daily_sr_sitemap_reporting/dt=2016-06-14'),
         'timestamp': _current_timestamp(),

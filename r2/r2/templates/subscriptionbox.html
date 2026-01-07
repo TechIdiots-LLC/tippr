@@ -55,24 +55,24 @@
       ${plain_link(thing.multi_text, thing.multi_path, _class="title")}
       <div class="box-separator"></div>
     %endif
-    %for sr in thing.reddits:
-      <% is_spam = hasattr(sr, "_spam") and sr._spam %>
+    %for vault in thing.reddits:
+      <% is_spam = hasattr(vault, "_spam") and vault._spam %>
       <li>
         %if is_multi and is_spam:
           <span class="fancy-toggle-button">
             <span class="active banned">${_("banned")}</span>
           </span>
         %else:
-          ${SubscribeButton(sr)}
+          ${SubscribeButton(vault)}
         %endif
 
         %if is_spam:
-          <span class="title banned">${sr.name}</span>
+          <span class="title banned">${vault.name}</span>
         %else:
-          ${plain_link(sr.name, sr.path, _class="title")}
+          ${plain_link(vault.name, vault.path, _class="title")}
         %endif
 
-        ${permission_icons(sr)}
+        ${permission_icons(vault)}
       </li>
     %endfor
     </ul>

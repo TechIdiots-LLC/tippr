@@ -76,7 +76,7 @@ def prepare_embed_request():
     return is_embed
 
 
-def set_up_comment_embed(sr, thing, showedits):
+def set_up_comment_embed(vault, thing, showedits):
     try:
         author = Account._byID(thing.author_id) if thing.author_id else None
     except NotFound:
@@ -92,8 +92,8 @@ def set_up_comment_embed(sr, thing, showedits):
         "showedits": showedits,
         "thing": {
             "id": thing._id,
-            "vault_id": sr._id,
-            "sr_name": sr.name,
+            "vault_id": vault._id,
+            "sr_name": vault.name,
             "edited": edited_after(thing, iso_timestamp, showedits),
             "deleted": thing.deleted or author._deleted,
         },

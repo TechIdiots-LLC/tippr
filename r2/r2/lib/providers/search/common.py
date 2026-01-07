@@ -158,10 +158,10 @@ class FieldsBase(metaclass=FieldsMeta):
 
 
 class LinkFields(FieldsBase):
-    def __init__(self, link, author, sr):
+    def __init__(self, link, author, vault):
         self.link = link
         self.author = author
-        self.sr = sr
+        self.vault = vault
 
     @field(cloudsearch_type=int, lucene_type=None)
     def ups(self):
@@ -181,11 +181,11 @@ class LinkFields(FieldsBase):
 
     @field
     def vault(self):
-        return self.sr.name
+        return self.vault.name
 
     @field
     def tippr(self):
-        return self.sr.name
+        return self.vault.name
 
     @field
     def title(self):
@@ -201,7 +201,7 @@ class LinkFields(FieldsBase):
 
     @field(cloudsearch_type=int, lucene_type="yesno")
     def over18(self):
-        nsfw = self.sr.over_18 or self.link.is_nsfw
+        nsfw = self.vault.over_18 or self.link.is_nsfw
         return (1 if nsfw else 0)
 
     @field(cloudsearch_type=None, lucene_type="yesno")
@@ -267,56 +267,56 @@ class LinkFields(FieldsBase):
 
 
 class VaultFields(FieldsBase):
-    def __init__(self, sr):
-        self.sr = sr
+    def __init__(self, vault):
+        self.vault = vault
 
     @field
     def name(self):
-        return self.sr.name
+        return self.vault.name
 
     @field
     def title(self):
-        return self.sr.title
+        return self.vault.title
 
     @field(name="type")
     def type_(self):
-        return self.sr.type
+        return self.vault.type
 
     @field
     def language(self):
-        return self.sr.lang
+        return self.vault.lang
 
     @field
     def header_title(self):
-        return None if self.sr.type == 'private' else self.sr.header_title
+        return None if self.vault.type == 'private' else self.vault.header_title
 
     @field
     def description(self):
-        return self.sr.public_description
+        return self.vault.public_description
 
     @field
     def sidebar(self):
-        return None if self.sr.type == 'private' else self.sr.description
+        return None if self.vault.type == 'private' else self.vault.description
 
     @field(cloudsearch_type=int)
     def over18(self):
-        return 1 if self.sr.over_18 else 0
+        return 1 if self.vault.over_18 else 0
 
     @field
     def link_type(self):
-        return self.sr.link_type
+        return self.vault.link_type
 
     @field
     def activity(self):
-        return self.sr._downs
+        return self.vault._downs
 
     @field
     def subscribers(self):
-        return self.sr._ups
+        return self.vault._ups
 
     @field
     def type_id(self):
-        return self.sr._type_id
+        return self.vault._type_id
 
 
 class Results:
@@ -336,7 +336,7 @@ class Results:
     def Vault_facets(self):
         '''Filter out vaults that the user isn't allowed to see'''
         if not self._Vaults and 'tippr' in self._facets:
-            sr_facets = [(sr['value'], sr['count']) for sr in
+            sr_facets = [(vault['value'], vault['count']) for vault in
                          self._facets['tippr']]
 
             # look up vaults
@@ -347,7 +347,7 @@ class Results:
                          in sr_facets if name in srs_by_name]
 
             # filter by can_view
-            self._Vaults = [(sr, count) for sr, count in sr_facets
-                                if sr.can_view(c.user)]
+            self._Vaults = [(vault, count) for vault, count in sr_facets
+                                if vault.can_view(c.user)]
 
         return self._Vaults

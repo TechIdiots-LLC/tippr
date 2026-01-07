@@ -287,10 +287,10 @@ class OAuth2Scope:
             self.scopes = set()
 
     def _parse_scope_str(self, scope_str):
-        srs, sep, scopes = scope_str.rpartition(':')
+        vaults, sep, scopes = scope_str.rpartition(':')
         if sep:
             self.Vault_only = True
-            self.vaults = set(srs.split('+'))
+            self.vaults = set(vaults.split('+'))
         else:
             self.Vault_only = False
             self.vaults = set()
@@ -338,17 +338,17 @@ class OAuth2Scope:
         """
         merged = {}
         for scope in scopes:
-            srs = scope.vaults if scope.Vault_only else (None,)
-            for sr in srs:
-                if sr in merged:
-                    merged[sr].scopes.update(scope.scopes)
+            vaults = scope.vaults if scope.Vault_only else (None,)
+            for vault in vaults:
+                if vault in merged:
+                    merged[vault].scopes.update(scope.scopes)
                 else:
                     new_scope = cls()
-                    new_scope.vaults = {sr}
+                    new_scope.vaults = {vault}
                     new_scope.scopes = scope.scopes
-                    if sr is not None:
+                    if vault is not None:
                         new_scope.Vault_only = True
-                    merged[sr] = new_scope
+                    merged[vault] = new_scope
         return merged
 
 

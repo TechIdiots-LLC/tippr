@@ -52,7 +52,7 @@ $(function() {
   }
 
   function renderFromTemplate(data, thingType) {
-    var hasVault = !!data.sr_name;
+    var hasVault = !!data.vault_name;
     var hasRules = data.rules && data.rules.length > 0;
     var template;
     var templateData;

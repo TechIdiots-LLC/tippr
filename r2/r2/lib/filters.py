@@ -263,7 +263,7 @@ def wikimarkdown(text, include_toc=True, target=None):
     def add_ext_to_link(link):
         url = UrlParser(link.get('href'))
         if url.is_reddit_url():
-            link['href'] = add_sr(link.get('href'), sr_path=False)
+            link['href'] = add_vault(link.get('href'), sr_path=False)
 
     if c.render_style == 'compact':
         links = soup.findAll('a')

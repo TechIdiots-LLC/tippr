@@ -31,8 +31,8 @@ var buttonEmbed = (function() {
   function submitUrl() {
     var url = baseUrl
 
-    if (query.sr) {
-      url += '/v/' + encodeURIComponent(query.sr)
+    if (query.vault) {
+      url += '/v/' + encodeURIComponent(query.vault)
     }
 
     url += '/submit?url=' + encodeURIComponent(query.url)

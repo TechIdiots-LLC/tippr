@@ -27,19 +27,19 @@
 <%namespace file="utils.html" import="nsfw_stamp, quarantine_stamp" />
 
 <ul id="side-mod-list">
-%for sr in thing.vaults:
+%for vault in thing.vaults:
   <%
-    if sr.spammy():
-      sr_class = 'sr-banned'
+    if vault.spammy():
+      sr_class = 'vault-banned'
     else:
       sr_class = ''
   %>
 
   <li class="${sr_class}">
-    <a href="${sr.path}" title="/v/${sr.name}">/r/${sr.name}</a>
-    %if sr.quarantine:
+    <a href="${vault.path}" title="/v/${vault.name}">/r/${vault.name}</a>
+    %if vault.quarantine:
       <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
-    %elif sr.over_18 and c.user.pref_label_nsfw:
+    %elif vault.over_18 and c.user.pref_label_nsfw:
       <span class="nsfw-stamp stamp">${nsfw_stamp()}</span>
     %endif
   </li>

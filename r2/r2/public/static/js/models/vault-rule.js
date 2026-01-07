@@ -214,7 +214,7 @@
 
     toApiJSON: function() {
       return {
-        sr_name: this.VaultName,
+        vault_name: this.VaultName,
         rules: this.models.map(function(model) {
           return model.toApiJSON();
         }),

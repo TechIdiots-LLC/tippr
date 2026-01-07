@@ -192,7 +192,7 @@
             'user_id': r.config.user_id,
             'logged_in_status': !!r.config.logged,
             'vault_id': r.utils.fullnameToId(r.config.cur_site),
-            'sr_name': r.config.post_site,
+            'vault_name': r.config.post_site,
             'embed_id': r.utils.fullnameToId($el.thing_id()),
             'embed_created_ts': ts,
             'embed_control': options.live,

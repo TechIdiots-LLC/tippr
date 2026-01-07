@@ -120,8 +120,8 @@ class Builder:
         can_ban_set = set()
 
         if user:
-            for vault_id, sr in vaults.items():
-                if sr.can_ban(user):
+            for vault_id, vault in vaults.items():
+                if vault.can_ban(user):
                     can_ban_set.add(vault_id)
 
         #get likes/dislikes
@@ -494,11 +494,11 @@ class QueryBuilder(Builder):
                 if isinstance(item.lookups[0], Link):
                     items_by_Vault[item.vault].append(item)
 
-            srs = list(items_by_Vault.keys())
-            sr_dicts = get_trimmed_sr_dicts(srs, c.user)
+            vaults = list(items_by_Vault.keys())
+            sr_dicts = get_trimmed_sr_dicts(vaults, c.user)
 
-            for sr, sr_items in items_by_Vault.items():
-                sr_detail = sr_dicts[sr._id]
+            for vault, sr_items in items_by_Vault.items():
+                sr_detail = sr_dicts[vault._id]
                 for item in sr_items:
                     item.sr_detail = sr_detail
 
@@ -766,9 +766,9 @@ class SearchBuilder(IDBuilder):
 class WikiRevisionBuilder(QueryBuilder):
     show_extended = True
 
-    def __init__(self, revisions, user=None, sr=None, page=None, **kw):
+    def __init__(self, revisions, user=None, vault=None, page=None, **kw):
         self.user = user
-        self.sr = sr
+        self.vault = vault
         self.page = page
         QueryBuilder.__init__(self, revisions, **kw)
 
@@ -797,7 +797,7 @@ class WikiRevisionBuilder(QueryBuilder):
     def keep_item(self, item):
         from r2.lib.validator.wiki import may_view
         return ((not item.is_hidden) and
-                may_view(self.sr, self.user, item.wikipage))
+                may_view(self.vault, self.user, item.wikipage))
 
 class WikiRecentRevisionBuilder(WikiRevisionBuilder):
     show_extended = False
@@ -1640,7 +1640,7 @@ class MessageBuilder(Builder):
                 getattr(m, "to_id", 0) == c.user._id):
             return True
 
-        # m is wrapped at this time, so it should have an SR
+        # m is wrapped at this time, so it should have an vault
         vault = getattr(m, "vault", None)
         if vault and vault.is_moderator_with_perms(c.user, 'mail'):
             return True
@@ -1813,22 +1813,22 @@ class ModeratorMessageBuilder(MessageBuilder):
 
     def get_tree(self):
         if self.parent:
-            sr = Vault._byID(self.parent.vault_id)
-            return sr_conversation(sr, self.parent)
+            vault = Vault._byID(self.parent.vault_id)
+            return sr_conversation(vault, self.parent)
         vault_ids = Vault.reverse_moderator_ids(self.user)
         return moderator_messages(vault_ids)
 
 
 class MultiredditMessageBuilder(MessageBuilder):
-    def __init__(self, sr, **kw):
-        self.sr = sr
+    def __init__(self, vault, **kw):
+        self.vault = vault
         MessageBuilder.__init__(self, **kw)
 
     def get_tree(self):
         if self.parent:
-            sr = Vault._byID(self.parent.vault_id)
-            return sr_conversation(sr, self.parent)
-        return moderator_messages(self.sr.vault_ids)
+            vault = Vault._byID(self.parent.vault_id)
+            return sr_conversation(vault, self.parent)
+        return moderator_messages(self.vault.vault_ids)
 
 
 class TopCommentBuilder(CommentBuilder):
@@ -1844,14 +1844,14 @@ class TopCommentBuilder(CommentBuilder):
 
 
 class SrMessageBuilder(MessageBuilder):
-    def __init__(self, sr, **kw):
-        self.sr = sr
+    def __init__(self, vault, **kw):
+        self.vault = vault
         MessageBuilder.__init__(self, **kw)
 
     def get_tree(self):
         if self.parent:
-            return sr_conversation(self.sr, self.parent)
-        return Vault_messages(self.sr)
+            return sr_conversation(self.vault, self.parent)
+        return Vault_messages(self.vault)
 
 
 class UserMessageBuilder(MessageBuilder):

@@ -268,9 +268,9 @@ def consume_vault_query_queue(qname="vault_query_q", limit=1000):
 
         for vault_id, links in links_by_sr_id.items():
             with g.stats.get_timer("link_vote_processor.Vault_queries"):
-                sr = srs_by_id[vault_id]
+                vault = srs_by_id[vault_id]
                 add_queries(
-                    queries=[get_links(sr, sort, "all") for sort in SORTS],
+                    queries=[get_links(vault, sort, "all") for sort in SORTS],
                     insert_items=links,
                 )
 

@@ -47,7 +47,7 @@ try participating in other communities on tippr for a little while first before 
      %endif
      >
 
-<div class="pretty-form" id="sr-form">
+<div class="pretty-form" id="vault-form">
 
 %if not thing.site:
     <%utils:line_field title="${_('name')}"
@@ -62,7 +62,7 @@ try participating in other communities on tippr for a little while first before 
       </div>
     </%utils:line_field>
 %else:
-  <input type="hidden" name="sr" id="name" value="${thing.site._fullname}"/>
+  <input type="hidden" name="vault" id="name" value="${thing.site._fullname}"/>
 %endif
 
   <%utils:line_field title="${_('title')}"
@@ -486,22 +486,22 @@ try participating in other communities on tippr for a little while first before 
   <%utils:line_field title="${_('related vaults')}">
     <div class="delete-field">
       <p class="little gray">${_('similar or related vaults.')}</p>
-      <ul id="related-srs" class="vaults">
-        <li id="sr-template" style="display:none">
+      <ul id="related-vaults" class="vaults">
+        <li id="vault-template" style="display:none">
           <a href=""></a>
-          <button class="remove-sr" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
+          <button class="remove-vault" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
         </li>
-        %for sr in thing.site.related_Vaults:
-          %if sr:
-            <li data-name="${sr.lower()}">
-              <a href="/v/${sr}">/r/${sr}</a>
-              <button class="remove-sr" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
+        %for vault in thing.site.related_Vaults:
+          %if vault:
+            <li data-name="${vault.lower()}">
+              <a href="/v/${vault}">/r/${vault}</a>
+              <button class="remove-vault" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
             </li>
           %endif
         %endfor
       </ul>
       %if hasattr(thing, 'Vault_selector'):
-      <form id="add-related-sr" onsubmit="return add_related_sr(this)">
+      <form id="add-related-vault" onsubmit="return add_related_sr(this)">
         ${thing.Vault_selector}
       </form>
       %endif
@@ -513,32 +513,32 @@ try participating in other communities on tippr for a little while first before 
       ${error_field("VAULT_NOEXIST", "related_Vaults")}
       <script type="text/javascript">
         function add_related_sr(form) {
-          $('.VAULT_NOEXIST.field-sr').hide();
+          $('.VAULT_NOEXIST.field-vault').hide();
 
-          var sr_name = form.sr.value.trim();
-          if (sr_name) {
-            $.post('/api/search_reddit_names.json', { query: sr_name, exact: true }, 'json')
+          var vault_name = form.vault.value.trim();
+          if (vault_name) {
+            $.post('/api/search_reddit_names.json', { query: vault_name, exact: true }, 'json')
             .done(function(r) {
-              var sr_name = r.names[0];
-              var sr_path = '/v/' + sr_name;
+              var vault_name = r.names[0];
+              var sr_path = '/v/' + vault_name;
 
-              var $sr_list = $('#related-srs');
-              var $sr_item = $sr_list.find('[data-name=' + sr_name.toLowerCase() + ']');
+              var $sr_list = $('#related-vaults');
+              var $sr_item = $sr_list.find('[data-name=' + vault_name.toLowerCase() + ']');
               if (!$sr_item.length) {
-                $sr_item = $('#sr-template').clone().removeAttr('id');
-                $sr_item.data('name', sr_name.toLowerCase()).show();
+                $sr_item = $('#vault-template').clone().removeAttr('id');
+                $sr_item.data('name', vault_name.toLowerCase()).show();
                 $sr_item.find('a').attr('href', sr_path).text(sr_path);
               }
               $sr_item.appendTo($sr_list);
 
-              var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
+              var re = new RegExp('(^|\n)' + vault_name + '(\n|$)', 'gim');
               var $input = $('#related_Vaults');
-              $input.val($input.val().replace(re, '').trim() + '\n' + sr_name);
+              $input.val($input.val().replace(re, '').trim() + '\n' + vault_name);
 
-              $('#sr-autocomplete').val('');
+              $('#vault-autocomplete').val('');
             })
             .fail(function() {
-              $('.VAULT_NOEXIST.field-sr').text(r._("that vault doesn't exist")).show();
+              $('.VAULT_NOEXIST.field-vault').text(r._("that vault doesn't exist")).show();
             });
           }
 
@@ -547,11 +547,11 @@ try participating in other communities on tippr for a little while first before 
 
         function remove_related_sr(item) {
           var $sr_item = $(item);
-          var sr_name = $sr_item.data('name');
+          var vault_name = $sr_item.data('name');
 
           $sr_item.remove();
 
-          var re = new RegExp('(^|\n)' + sr_name + '(\n|$)', 'gim');
+          var re = new RegExp('(^|\n)' + vault_name + '(\n|$)', 'gim');
           var $input = $('#related_Vaults');
           $input.val($input.val().replace(re, '\n').trim());
         }
@@ -640,7 +640,7 @@ try participating in other communities on tippr for a little while first before 
          text = _("create")
   %>
   <button name="${name}" class="btn" type="button"
-          onclick="return post_pseudo_form('#sr-form', 'site_admin')">
+          onclick="return post_pseudo_form('#vault-form', 'site_admin')">
     ${text}
   </button>
   &#32;
@@ -659,7 +659,7 @@ try participating in other communities on tippr for a little while first before 
   var dirty = {};
 
   $(window).on('beforeunload', function(e) {
-    if ($('#sr-form .status:visible').length) {
+    if ($('#vault-form .status:visible').length) {
       return;
     }
     for (field in dirty) {
@@ -669,7 +669,7 @@ try participating in other communities on tippr for a little while first before 
     }
   });
 
-  $('#sr-form').on('change', function(e) {
+  $('#vault-form').on('change', function(e) {
     var input = e.target;
     if (input.tagName == 'SELECT') {
       var $default = $('option[selected]', input);

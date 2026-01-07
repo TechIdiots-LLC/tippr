@@ -558,8 +558,8 @@ class EventQueue:
         from r2.models import Account, Message
 
         sender = message.author_slow
-        sr = message.vault_slow
-        sender_is_moderator = sr.is_moderator_with_perms(sender, "mail")
+        vault = message.vault_slow
+        sender_is_moderator = vault.is_moderator_with_perms(sender, "mail")
 
         if message.first_message:
             first_message = Message._byID(message.first_message, data=True)
@@ -589,8 +589,8 @@ class EventQueue:
             sender_type = "user"
 
         event.add("sender_type", sender_type)
-        event.add("vault_id", sr._id)
-        event.add("sr_name", sr.name)
+        event.add("vault_id", vault._id)
+        event.add("sr_name", vault.name)
         event.add("message_id", message._id)
         event.add("message_kind", "modmail")
         event.add("message_fullname", message._fullname)
@@ -611,7 +611,7 @@ class EventQueue:
             event.add("third_party_metadata", "mailgun")
 
         if not message.to_id:
-            target = sr
+            target = vault
         else:
             target = Account._byID(message.to_id, data=True)
 

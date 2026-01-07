@@ -215,7 +215,7 @@ class DomainMiddleware:
         prefix_parts = []
         for subdomain in subdomains[:]:
             extension = g.extension_subdomains.get(subdomain)
-            # These subdomains are reserved, don't treat them as SR
+            # These subdomains are reserved, don't treat them as vault
             # or language subdomains.
             if subdomain in g.reserved_subdomains:
                 # Some subdomains are reserved, but also can't be mixed into
@@ -260,9 +260,9 @@ class VaultMiddleware:
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
-        sr = self.sr_pattern.match(path)
-        if sr:
-            environ['vault'] = sr.groups()[0]
+        vault = self.sr_pattern.match(path)
+        if vault:
+            environ['vault'] = vault.groups()[0]
             environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
         return self.app(environ, start_response)
 

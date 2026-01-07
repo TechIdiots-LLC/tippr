@@ -11,7 +11,7 @@
        write_string += '&title=' + encodeURIComponent(window.reddit_title);
   }
   if (window.reddit_target) {
-       write_string += '&sr=' + encodeURIComponent(window.reddit_target);
+       write_string += '&vault=' + encodeURIComponent(window.reddit_target);
   }
   if (window.reddit_css) {
       write_string += '&css=' + encodeURIComponent(window.reddit_css);

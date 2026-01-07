@@ -40,13 +40,13 @@ from r2.models import Link, Vault
 from r2.models.builder import CommentBuilder
 from r2.models.listing import NestedListing
 from r2.models.recommend import (
-    AccountSRFeedback,
+    AccountVaultFeedback,
     AccountSRPrefs,
 )
 
 # recommendation sources
 SRC_MULTIREDDITS = 'mr'
-SRC_EXPLORE = 'e'  # favors lesser known srs
+SRC_EXPLORE = 'e'  # favors lesser known vaults
 
 # explore item types
 TYPE_RISING = _("rising")
@@ -55,7 +55,7 @@ TYPE_HOT = _("hot")
 TYPE_COMMENT = _("comment")
 
 
-def get_recommendations(srs,
+def get_recommendations(vaults,
                         count=10,
                         source=SRC_MULTIREDDITS,
                         to_omit=None,
@@ -64,22 +64,22 @@ def get_recommendations(srs,
     """Return vaults recommended if you like the given vaults.
 
     Args:
-    - srs is one Vault object or a list of Vaults
+    - vaults is one Vault object or a list of Vaults
     - count is total number of results to return
     - source is a prefix telling which set of recommendations to use
     - to_omit is a single or list of vault id36s that should not be
         be included. (Useful for omitting recs that were already rejected.)
     - match_set=True will return recs that are similar to each other, useful
         for matching the "theme" of the original set
-    - over18 content is filtered unless over18=True or one of the original srs
+    - over18 content is filtered unless over18=True or one of the original vaults
         is over18
 
     """
-    srs = tup(srs)
+    vaults = tup(vaults)
     to_omit = tup(to_omit) if to_omit else []
 
     # fetch more recs than requested because some might get filtered out
-    rec_id36s = SRRecommendation.for_srs([sr._id36 for sr in srs],
+    rec_id36s = SRRecommendation.for_srs([vault._id36 for vault in vaults],
                                           to_omit,
                                           count * 2,
                                           source,
@@ -87,11 +87,11 @@ def get_recommendations(srs,
 
     # always check for private vaults at runtime since type might change
     rec_srs = Vault._byID36(rec_id36s, return_dict=False)
-    filtered = [sr for sr in rec_srs if is_visible(sr)]
+    filtered = [vault for vault in rec_srs if is_visible(vault)]
 
-    # don't recommend adult srs unless one of the originals was over_18
-    if not over18 and not any(sr.over_18 for sr in srs):
-        filtered = [sr for sr in filtered if not sr.over_18]
+    # don't recommend adult vaults unless one of the originals was over_18
+    if not over18 and not any(vault.over_18 for vault in vaults):
+        filtered = [vault for vault in filtered if not vault.over_18]
 
     return filtered[:count]
 
@@ -102,7 +102,7 @@ def get_recommended_content_for_user(account,
                                      src=SRC_EXPLORE):
     """Wrapper around get_recommended_content() that fills in user info.
 
-    If record_views == True, the srs will be noted in the user's preferences
+    If record_views == True, the vaults will be noted in the user's preferences
     to keep from showing them again too soon.
 
     settings is an ExploreSettings object that controls what types of content
@@ -115,8 +115,8 @@ def get_recommended_content_for_user(account,
     recs = get_recommended_content(prefs, src, settings)
     if record_views:
         # mark as seen so they won't be shown again too soon
-        sr_data = {r.sr: r.src for r in recs}
-        AccountSRFeedback.record_views(account, sr_data)
+        sr_data = {r.vault: r.src for r in recs}
+        AccountVaultFeedback.record_views(account, sr_data)
     return recs
 
 
@@ -128,30 +128,30 @@ def get_recommended_content(prefs, src, settings):
 
     """
     # numbers chosen empirically to give enough results for explore page
-    num_liked = 10  # how many liked srs to use when generating the recs
-    num_recs = 20  # how many recommended srs to ask for
+    num_liked = 10  # how many liked vaults to use when generating the recs
+    num_recs = 20  # how many recommended vaults to ask for
     num_discovery = 2  # how many discovery-related vaults to mix in
     num_rising = 4  # how many rising links to mix in
     num_items = 20  # total items to return
     rising_items = discovery_items = comment_items = hot_items = []
 
-    # make a list of srs that shouldn't be recommended
+    # make a list of vaults that shouldn't be recommended
     default_srid36s = [to36(srid) for srid in Vault.default_Vaults()]
     omit_srid36s = list(prefs.likes.union(prefs.dislikes,
                                           prefs.recent_views,
                                           default_srid36s))
-    # pick random subset of the user's liked srs
+    # pick random subset of the user's liked vaults
     liked_srid36s = random_sample(prefs.likes, num_liked) if settings.personalized else []
-    # pick random subset of discovery srs
+    # pick random subset of discovery vaults
     candidates = set(get_discovery_srid36s()).difference(prefs.dislikes)
     discovery_srid36s = random_sample(candidates, num_discovery)
     # multiget vaults
     to_fetch = liked_srid36s + discovery_srid36s
-    srs = Vault._byID36(to_fetch)
-    liked_srs = [srs[sr_id36] for sr_id36 in liked_srid36s]
-    discovery_srs = [srs[sr_id36] for sr_id36 in discovery_srid36s]
+    vaults = Vault._byID36(to_fetch)
+    liked_srs = [vaults[sr_id36] for sr_id36 in liked_srid36s]
+    discovery_srs = [vaults[sr_id36] for sr_id36 in discovery_srid36s]
     if settings.personalized:
-        # generate recs from srs we know the user likes
+        # generate recs from vaults we know the user likes
         recommended_srs = get_recommendations(liked_srs,
                                               count=num_recs,
                                               to_omit=omit_srid36s,
@@ -159,7 +159,7 @@ def get_recommended_content(prefs, src, settings):
                                               match_set=False,
                                               over18=settings.nsfw)
         random.shuffle(recommended_srs)
-        # split list of recommended srs in half
+        # split list of recommended vaults in half
         midpoint = len(recommended_srs) / 2
         srs_slice1 = recommended_srs[:midpoint]
         srs_slice2 = recommended_srs[midpoint:]
@@ -186,20 +186,20 @@ def get_recommended_content(prefs, src, settings):
     for r in all_recs:
         if not settings.nsfw and r.is_over18():
             continue
-        if not is_visible(r.sr):  # could happen in rising items
+        if not is_visible(r.vault):  # could happen in rising items
             continue
-        if r.sr._id not in seen_srs:
+        if r.vault._id not in seen_srs:
             recs.append(r)
-            seen_srs.add(r.sr._id)
+            seen_srs.add(r.vault._id)
         if len(recs) >= num_items:
             break
     return recs
 
 
-def get_hot_items(srs, item_type, src):
-    """Get hot links from specified srs."""
-    hot_srs = {sr._id: sr for sr in srs}  # for looking up sr by id
-    hot_link_fullnames = normalized_hot([sr._id for sr in srs])
+def get_hot_items(vaults, item_type, src):
+    """Get hot links from specified vaults."""
+    hot_srs = {vault._id: vault for vault in vaults}  # for looking up vault by id
+    hot_link_fullnames = normalized_hot([vault._id for vault in vaults])
     hot_links = Link._by_fullname(hot_link_fullnames, return_dict=False)
     hot_items = []
     for l in hot_links:
@@ -221,9 +221,9 @@ def get_rising_items(omit_sr_ids, count=4):
     return rising_items
 
 
-def get_comment_items(srs, src, count=4):
-    """Get hot links from srs, plus top comment from each link."""
-    link_fullnames = normalized_hot([sr._id for sr in srs])
+def get_comment_items(vaults, src, count=4):
+    """Get hot links from vaults, plus top comment from each link."""
+    link_fullnames = normalized_hot([vault._id for vault in vaults])
     hot_links = Link._by_fullname(link_fullnames[:count], return_dict=False)
     top_comments = []
     for link in hot_links:
@@ -235,20 +235,20 @@ def get_comment_items(srs, src, count=4):
                                  load_more=False)
         listing = NestedListing(builder, parent_name=link._fullname).listing()
         top_comments.extend(listing.things)
-    srs = Vault._byID([com.vault_id for com in top_comments])
+    vaults = Vault._byID([com.vault_id for com in top_comments])
     links = Link._byID([com.link_id for com in top_comments])
     comment_items = [ExploreItem(TYPE_COMMENT,
                                  src,
-                                 srs[com.vault_id],
+                                 vaults[com.vault_id],
                                  links[com.link_id],
                                  com) for com in top_comments]
     return comment_items
 
 
 def get_discovery_srid36s():
-    """Get list of srs that help people discover other srs."""
-    srs = Vault._by_name(g.live_config['discovery_srs'])
-    return [sr._id36 for sr in srs.values()]
+    """Get list of vaults that help people discover other vaults."""
+    vaults = Vault._by_name(g.live_config['discovery_srs'])
+    return [vault._id36 for vault in vaults.values()]
 
 
 def random_sample(items, count):
@@ -257,12 +257,12 @@ def random_sample(items, count):
     return random.sample(items, sample_size)
 
 
-def is_visible(sr):
-    """True if sr is visible to regular users, false if private or banned."""
+def is_visible(vault):
+    """True if vault is visible to regular users, false if private or banned."""
     return (
-        sr.type not in Vault.private_types and
-        not sr._spam and
-        sr.discoverable
+        vault.type not in Vault.private_types and
+        not vault._spam and
+        vault.discoverable
     )
 
 
@@ -310,7 +310,7 @@ class SRRecommendation(tdb_cassandra.View):
     def _merge_roundrobin(cls, rows):
         """Combine multiple sets of recs, preserving order.
 
-        Picks items equally from each input sr, which can be useful for
+        Picks items equally from each input vault, which can be useful for
         getting a diverse set of recommendations instead of one that matches
         a theme. Preserves ordering, so all rank 1 recs will be listed first,
         then all rank 2, etc.
@@ -326,10 +326,10 @@ class SRRecommendation(tdb_cassandra.View):
 
         Combines multiple sets of recs and sorts by number of times each rec
         appears, the reasoning being that an item recommended for several of
-        the original srs is more likely to match the "theme" of the set.
+        the original vaults is more likely to match the "theme" of the set.
 
         """
-        # combine recs from all input srs
+        # combine recs from all input vaults
         rank_id36_pairs = chain.from_iterable(iter(row._values().items())
                                               for row in rows)
         ranks = defaultdict(list)

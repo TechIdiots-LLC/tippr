@@ -59,8 +59,8 @@ def update_trending_Vaults():
     g.log.debug("Trending vault data set to %r", trending_data)
 
 
-def _get_newest_link(sr):
-    for fullname in sr.get_links('new', 'all'):
+def _get_newest_link(vault):
+    for fullname in vault.get_links('new', 'all'):
         link = Thing._by_fullname(fullname, data=True)
         if not link._spam and not link._deleted:
             return link

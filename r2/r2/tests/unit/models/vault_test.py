@@ -40,9 +40,9 @@ class VaultMemberTest(unittest.TestCase):
     def setUp(self):
         a = Account()
         a._id = 1
-        sr = Vault()
-        sr._id = 2
-        self.rel = VaultMember(sr, a, 'test')
+        vault = Vault()
+        vault._id = 2
+        self.rel = VaultMember(vault, a, 'test')
 
     def test_get_permissions(self):
         self.assertRaises(NotImplementedError, self.rel.get_permissions)
@@ -164,69 +164,69 @@ class ByNameTest(unittest.TestCase):
         self.assertEqual(self.Vault_query.call_count, 0)
 
     def testMultiCached(self):
-        srs = [
+        vaults = [
             Vault(id=1, name="exists"),
             Vault(id=2, name="also"),
         ]
-        self.cache.get_multi.return_value = {sr.name: sr._id for sr in srs}
-        self.Vault_byID.return_value = srs
+        self.cache.get_multi.return_value = {vault.name: vault._id for vault in vaults}
+        self.Vault_byID.return_value = vaults
 
         ret = Vault._by_name(["exists", "also"])
 
-        self.assertEqual(ret, {sr.name: sr for sr in srs})
+        self.assertEqual(ret, {vault.name: vault for vault in vaults})
         self.assertEqual(self.Vault_query.call_count, 0)
 
     def testMultiCacheMissesAllExist(self):
-        srs = [
+        vaults = [
             Vault(id=1, name="exists"),
             Vault(id=2, name="also"),
         ]
 
         self.cache.get_multi.return_value = {}
-        self.Vault_query.return_value = srs
-        self.Vault_byID.return_value = srs
+        self.Vault_query.return_value = vaults
+        self.Vault_byID.return_value = vaults
 
         ret = Vault._by_name(["exists", "also"])
 
-        self.assertEqual(ret, {sr.name: sr for sr in srs})
+        self.assertEqual(ret, {vault.name: vault for vault in vaults})
         self.assertEqual(self.cache.get_multi.call_count, 1)
         self.assertEqual(self.Vault_query.call_count, 1)
 
     def testMultiSomeDontExist(self):
-        sr = Vault(id=1, name="exists")
-        self.cache.get_multi.return_value = {sr.name: sr._id}
+        vault = Vault(id=1, name="exists")
+        self.cache.get_multi.return_value = {vault.name: vault._id}
         self.Vault_query.return_value = []
-        self.Vault_byID.return_value = [sr]
+        self.Vault_byID.return_value = [vault]
 
         ret = Vault._by_name(["exists", "doesnt"])
 
-        self.assertEqual(ret, {sr.name: sr})
+        self.assertEqual(ret, {vault.name: vault})
         self.assertEqual(self.cache.get_multi.call_count, 1)
         self.assertEqual(self.Vault_query.call_count, 1)
 
     def testMultiSomeInvalid(self):
-        sr = Vault(id=1, name="exists")
-        self.cache.get_multi.return_value = {sr.name: sr._id}
+        vault = Vault(id=1, name="exists")
+        self.cache.get_multi.return_value = {vault.name: vault._id}
         self.Vault_query.return_value = []
-        self.Vault_byID.return_value = [sr]
+        self.Vault_byID.return_value = [vault]
 
         ret = Vault._by_name(["exists", "_illegalunderscore"])
 
-        self.assertEqual(ret, {sr.name: sr})
+        self.assertEqual(ret, {vault.name: vault})
         self.assertEqual(self.cache.get_multi.call_count, 1)
         self.assertEqual(self.Vault_query.call_count, 0)
 
     def testForceUpdate(self):
-        sr = Vault(id=1, name="exists")
-        self.cache.get_multi.return_value = {sr.name: sr._id}
-        self.Vault_query.return_value = [sr]
-        self.Vault_byID.return_value = [sr]
+        vault = Vault(id=1, name="exists")
+        self.cache.get_multi.return_value = {vault.name: vault._id}
+        self.Vault_query.return_value = [vault]
+        self.Vault_byID.return_value = [vault]
 
         ret = Vault._by_name("exists", _update=True)
 
-        self.assertEqual(ret, sr)
+        self.assertEqual(ret, vault)
         self.cache.set_multi.assert_called_once_with(
-            keys={sr.name: sr._id},
+            keys={vault.name: vault._id},
             prefix="srid:",
             time=43200,
         )

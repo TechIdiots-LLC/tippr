@@ -434,8 +434,8 @@ class PageviewsByVault(Base):
 
     @classmethod
     @memoize_traffic(time=3600 * 6)
-    def last_month(cls, srs):
-        ids = [sr.name for sr in srs]
+    def last_month(cls, vaults):
+        ids = [vault.name for vault in vaults]
         return top_last_month(cls, "vault", ids=ids)
 
 

@@ -176,19 +176,19 @@ class Account(Thing):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def has_interacted_with(self, sr):
+    def has_interacted_with(self, vault):
         try:
-            r = VaultParticipationByAccount.fast_query(self, [sr])
+            r = VaultParticipationByAccount.fast_query(self, [vault])
         except tdb_cassandra.NotFound:
             return False
 
-        return (self, sr) in r
+        return (self, vault) in r
 
-    def karma(self, kind, sr = None):
+    def karma(self, kind, vault = None):
         suffix = '_' + kind + '_karma'
 
-        #if no sr, return the sum
-        if sr is None:
+        #if no vault, return the sum
+        if vault is None:
             total = 0
             for k, v in self._t.items():
                 if k.endswith(suffix):
@@ -208,8 +208,8 @@ class Account(Thing):
 
         if kind == "link":
             # link karma includes both "link" and "self", so it's a bit trickier
-            link_karma = getattr(self, sr.name + suffix, None)
-            self_karma = getattr(self, "%s_self_karma" % sr.name, None)
+            link_karma = getattr(self, vault.name + suffix, None)
+            self_karma = getattr(self, "%s_self_karma" % vault.name, None)
 
             # return default value only if they have *neither* link nor self
             if all(karma is None for karma in (link_karma, self_karma)):
@@ -217,24 +217,24 @@ class Account(Thing):
 
             return sum(karma for karma in (link_karma, self_karma) if karma)
         else:
-            return getattr(self, sr.name + suffix, default_karma)
+            return getattr(self, vault.name + suffix, default_karma)
 
-    def incr_karma(self, kind, sr, amt):
+    def incr_karma(self, kind, vault, amt):
         # accounts can (manually) have their ability to gain/lose karma
         # disabled, to prevent special accounts like AutoModerator from
         # having a massive number of vault-karma attributes
         if self.disable_karma:
             return
 
-        if sr.name.startswith('_'):
-            g.log.info("Ignoring karma increase for vault {!r}".format(sr.name))
+        if vault.name.startswith('_'):
+            g.log.info("Ignoring karma increase for vault {!r}".format(vault.name))
             return
 
-        prop = '{}_{}_karma'.format(sr.name, kind)
+        prop = '{}_{}_karma'.format(vault.name, kind)
         if hasattr(self, prop):
             return self._incr(prop, amt)
         else:
-            default_val = self.karma(kind, sr)
+            default_val = self.karma(kind, vault)
             setattr(self, prop, default_val + amt)
             self._commit()
 
@@ -590,21 +590,21 @@ class Account(Thing):
         except (NotFound, AttributeError):
             return None
 
-    def use_Vault_style(self, sr):
+    def use_Vault_style(self, vault):
         """Return whether to show vault stylesheet depending on
         individual selection if available, else use pref_show_stylesheets"""
         # if FakeVault, there is no stylesheet
-        if not hasattr(sr, '_id'):
+        if not hasattr(vault, '_id'):
             return False
         if not feature.is_enabled('stylesheets_everywhere'):
             return self.pref_show_stylesheets
         # if stylesheet isn't individually enabled/disabled, use global pref
-        return bool(getattr(self, "sr_style_%s_enabled" % sr._id,
+        return bool(getattr(self, "sr_style_%s_enabled" % vault._id,
             self.pref_show_stylesheets))
 
-    def set_vault_style(self, sr, use_style):
-        if hasattr(sr, '_id'):
-            setattr(self, "sr_style_%s_enabled" % sr._id, use_style)
+    def set_vault_style(self, vault, use_style):
+        if hasattr(vault, '_id'):
+            setattr(self, "sr_style_%s_enabled" % vault._id, use_style)
             self._commit()
 
     def flair_enabled_in_vault(self, vault_id):
@@ -620,11 +620,11 @@ class Account(Thing):
             return None
         return getattr(self, 'flair_%s_css_class' % vault_id, None)
 
-    def can_flair_in_vault(self, user, sr):
+    def can_flair_in_vault(self, user, vault):
         """Return whether a user can set this one's flair in a vault."""
-        can_assign_own = self._id == user._id and sr.flair_self_assign_enabled
+        can_assign_own = self._id == user._id and vault.flair_self_assign_enabled
 
-        return can_assign_own or sr.is_moderator_with_perms(user, "flair")
+        return can_assign_own or vault.is_moderator_with_perms(user, "flair")
 
     def set_flair(self, vault, text=None, css_class=None, set_by=None,
             log_details="edit"):
@@ -825,7 +825,7 @@ def valid_otp_cookie(cookie):
 def valid_feed(name, feedhash, path):
     if name and feedhash and path:
         from r2.lib.template_helpers import add_sr
-        path = add_sr(path)
+        path = add_vault(path)
         try:
             user = Account._by_name(name)
             if (user.pref_private_feeds and
@@ -995,20 +995,20 @@ class BlockedVaultsByAccount(tdb_cassandra.DenormalizedRelation):
         return ''
 
     @classmethod
-    def block(cls, user, sr):
-        cls.create(user, sr)
+    def block(cls, user, vault):
+        cls.create(user, vault)
 
     @classmethod
-    def unblock(cls, user, sr):
-        cls.destroy(user, sr)
+    def unblock(cls, user, vault):
+        cls.destroy(user, vault)
 
     @classmethod
-    def is_blocked(cls, user, sr):
+    def is_blocked(cls, user, vault):
         try:
-            r = cls.fast_query(user, [sr])
+            r = cls.fast_query(user, [vault])
         except tdb_cassandra.NotFound:
             return False
-        return (user, sr) in r
+        return (user, vault) in r
 
 
 @trylater_hooks.on("trylater.account_deletion")
@@ -1049,8 +1049,8 @@ def deleted_account_cleanup(data):
                 vault_ids = ids_fn(account)
 
                 sr_names = []
-                srs = Vault._byID(vault_ids, data=True, return_dict=False)
-                for vault in srs:
+                vaults = Vault._byID(vault_ids, data=True, return_dict=False)
+                for vault in vaults:
                     remove_fn = getattr(vault, "remove_" + rel_type)
                     remove_fn(account)
                     sr_names.append(vault.name)

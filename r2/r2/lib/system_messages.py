@@ -87,7 +87,7 @@ def notify_user_added(rel_type, author, user, target):
         if rel_type in ("moderator_invite", "contributor"):
             # send the message from the vault
             item, inbox_rel = Message._new(
-                author, user, subject, msg, request.ip, sr=target, from_sr=True,
+                author, user, subject, msg, request.ip, vault=target, from_vault=True,
                 can_send_email=False)
         else:
             item, inbox_rel = Message._new(
@@ -105,7 +105,7 @@ def notify_user_added(rel_type, author, user, target):
             modmail_author = author
 
         item, inbox_rel = Message._new(modmail_author, target, subject, msg,
-                                       request.ip, sr=target)
+                                       request.ip, vault=target)
         queries.new_message(item, inbox_rel)
 
 
@@ -124,8 +124,8 @@ def send_mod_removal_message(vault, mod, user):
 
     item, inbox_rel = Message._new(
         mod, user, subject, message, request.ip,
-        sr=vault,
-        from_sr=True,
+        vault=vault,
+        from_vault=True,
         can_send_email=False,
     )
     queries.new_message(item, inbox_rel, update_modmail=True)
@@ -165,6 +165,6 @@ def send_ban_message(vault, mod, user, note=None, days=None, new=True):
         "from the site as a whole.")
 
     item, inbox_rel = Message._new(
-        mod, user, subject, message, request.ip, sr=vault, from_sr=True,
+        mod, user, subject, message, request.ip, vault=vault, from_vault=True,
         can_send_email=False)
     queries.new_message(item, inbox_rel, update_modmail=False)

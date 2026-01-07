@@ -1,6 +1,6 @@
 r.interestbar = {
     init: function() {
-        new r.ui.InterestBar($('.sr-interest-bar'))
+        new r.ui.InterestBar($('.vault-interest-bar'))
     }
 }
 

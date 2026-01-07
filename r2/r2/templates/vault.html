@@ -63,35 +63,35 @@
 </%def>
 
 <%def name="sr_type_icon(name, title)">
-  <span class="sr-type-icon sr-type-icon-${name}"
+  <span class="vault-type-icon vault-type-icon-${name}"
        title="${title}"
        alt="${title}"></span>
 </%def>
 
 ##this function is used by subscriptionbox.html
-<%def name="permission_icons(sr)">
-  %if sr.spammy():
+<%def name="permission_icons(vault)">
+  %if vault.spammy():
     ${self.sr_type_icon("banned", _("banned"))}
   %else:
-    %if sr.moderator:
+    %if vault.moderator:
       ${self.sr_type_icon("moderator", _("moderator"))}
-    %elif sr.type in ("restricted", "private"):
-      %if sr.contributor:
+    %elif vault.type in ("restricted", "private"):
+      %if vault.contributor:
         ${self.sr_type_icon("approved", _("approved submitter"))}
       %else:
         ${self.sr_type_icon("restricted", _("not approved"))}
       %endif
     %endif 
 
-    %if sr.type in sr.private_types:
+    %if vault.type in vault.private_types:
       ${self.sr_type_icon("private", _("private"))}
     %endif
 
-    %if sr.quarantine:
+    %if vault.quarantine:
       ${self.sr_type_icon("quarantined", _("quarantined"))}
     %endif
 
-    %if sr.over_18:
+    %if vault.over_18:
       ${self.sr_type_icon("nsfw", _("NSFW"))}
     %endif
   %endif

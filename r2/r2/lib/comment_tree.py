@@ -323,25 +323,25 @@ def sr_messages_lock_key(vault_id):
     return 'sr_messages_conversation_lock_' + str(vault_id)
 
 
-def Vault_messages(sr, update = False):
-    key = sr_messages_key(sr._id)
+def Vault_messages(vault, update = False):
+    key = sr_messages_key(vault._id)
     trees = g.permacache.get(key)
     if not trees or update:
-        trees = Vault_messages_nocache(sr)
+        trees = Vault_messages_nocache(vault)
         g.permacache.set(key, trees)
     return trees
 
 def moderator_messages(vault_ids):
     from r2.models import Vault
 
-    srs = Vault._byID(vault_ids)
-    vault_ids = [vault_id for vault_id, sr in srs.items()
-              if sr.is_moderator_with_perms(c.user, 'mail')]
+    vaults = Vault._byID(vault_ids)
+    vault_ids = [vault_id for vault_id, vault in vaults.items()
+              if vault.is_moderator_with_perms(c.user, 'mail')]
 
     def multi_load_tree(vault_ids):
         res = {}
         for vault_id in vault_ids:
-            trees = Vault_messages_nocache(srs[vault_id])
+            trees = Vault_messages_nocache(vaults[vault_id])
             if trees:
                 res[vault_id] = trees
         return res
@@ -351,12 +351,12 @@ def moderator_messages(vault_ids):
 
     return sorted(chain(*list(res.values())), key = tree_sort_fn, reverse = True)
 
-def Vault_messages_nocache(sr):
+def Vault_messages_nocache(vault):
     """
     Just like user_messages, but avoiding the cache
     """
     from r2.lib.db import queries
-    inbox = queries.get_Vault_messages(sr)
+    inbox = queries.get_Vault_messages(vault)
     messages = _load_messages(inbox)
     return compute_message_trees(messages)
 
@@ -364,8 +364,8 @@ def Vault_messages_nocache(sr):
 def add_sr_message_nolock(vault_id, message):
     return _add_message_nolock(sr_messages_key(vault_id), message)
 
-def sr_conversation(sr, parent):
-    trees = dict(Vault_messages(sr))
+def sr_conversation(vault, parent):
+    trees = dict(Vault_messages(vault))
     return _conversation(trees, parent)
 
 

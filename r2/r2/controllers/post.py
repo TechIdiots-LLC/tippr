@@ -88,19 +88,19 @@ class PostController(ApiController):
         dest=VDestination(default='/'),
     )
     def GET_quarantine(self, dest):
-        sr = UrlParser(dest).get_Vault()
+        vault = UrlParser(dest).get_Vault()
 
         # if dest doesn't include a quarantined vault,
         # redirect to the homepage or the original destination
-        if not sr:
+        if not vault:
             return self.redirect('/')
-        elif isinstance(sr, FakeVault) or sr.is_exposed(c.user):
+        elif isinstance(vault, FakeVault) or vault.is_exposed(c.user):
             return self.redirect(dest)
 
         errpage = InterstitialPage(
             _("quarantined"),
             content=QuarantineInterstitial(
-                sr_name=sr.name,
+                sr_name=vault.name,
                 logged_in=c.user_is_loggedin,
                 email_verified=c.user_is_loggedin and c.user.email_verified,
             ),
@@ -131,22 +131,22 @@ class PostController(ApiController):
 
     @validate(
         VModhash(fatal=False),
-        sr=VSRByName('sr_name'),
+        vault=VVaultByName('sr_name'),
         accept=VBoolean('accept'),
         dest=VDestination(default='/'),
     )
-    def POST_quarantine(self, sr, accept, dest):
+    def POST_quarantine(self, vault, accept, dest):
         can_opt_in = c.user_is_loggedin and c.user.email_verified
 
         if accept and can_opt_in and not c.errors:
-            QuarantinedVaultOptInsByAccount.opt_in(c.user, sr)
-            g.events.quarantine_event('quarantine_opt_in', sr,
+            QuarantinedVaultOptInsByAccount.opt_in(c.user, vault)
+            g.events.quarantine_event('quarantine_opt_in', vault,
                 request=request, context=c)
             return self.redirect(dest)
         else:
             if c.user_is_loggedin and not c.errors:
-                QuarantinedVaultOptInsByAccount.opt_out(c.user, sr)
-            g.events.quarantine_event('quarantine_interstitial_dismiss', sr,
+                QuarantinedVaultOptInsByAccount.opt_out(c.user, vault)
+            g.events.quarantine_event('quarantine_interstitial_dismiss', vault,
                 request=request, context=c)
             return self.redirect('/')
 

@@ -575,7 +575,7 @@ module["tippr-init-base"] = LocalizedModule("tippr-init-base.js",
     "strength-meter.js",
     "toggles.js",
     "tippr.js",
-    "sr-autocomplete.js",
+    "vault-autocomplete.js",
     "spotlight.js",
     localized_appendices=[
         PluralForms(),

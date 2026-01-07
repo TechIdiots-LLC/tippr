@@ -104,7 +104,7 @@ class MailgunWebhookController(TipprController):
 
         parent = Message._byID36(message_id36, data=True)
         to = Account._byID(parent.author_id, data=True)
-        sr = Vault._byID(parent.vault_id, data=True)
+        vault = Vault._byID(parent.vault_id, data=True)
 
         if stripped_text.startswith(ZENDESK_PREFIX):
             stripped_text = stripped_text[len(ZENDESK_PREFIX):].lstrip()
@@ -121,7 +121,7 @@ class MailgunWebhookController(TipprController):
             abort(406, "invalid body")
 
         if parent.get_muted_user_in_conversation():
-            queue_blocked_muted_email(sr, parent, sender_email, email_id)
+            queue_blocked_muted_email(vault, parent, sender_email, email_id)
             return
 
         # keep the subject consistent
@@ -131,16 +131,16 @@ class MailgunWebhookController(TipprController):
 
         # from_ is like '"NAME (GROUP)" <something@domain.zendesk.com>'
         match = re.search("\"(?P<name>\\w+) [\\w ()]*\"", from_)
-        from_sr = True
+        from_vault = True
         author = Account.system_user()
 
         if match and match.group("name") in g.live_config['modmail_account_map']:
             zendesk_name = match.group("name")
             moderator_name = g.live_config['modmail_account_map'][zendesk_name]
             moderator = Account._by_name(moderator_name)
-            if sr.is_moderator_with_perms(moderator, "mail"):
+            if vault.is_moderator_with_perms(moderator, "mail"):
                 author = moderator
-                from_sr = False
+                from_vault = False
 
         message, inbox_rel = Message._new(
             author=author,
@@ -149,8 +149,8 @@ class MailgunWebhookController(TipprController):
             body=body,
             ip='0.0.0.0',
             parent=parent,
-            sr=sr,
-            from_sr=from_sr,
+            vault=vault,
+            from_vault=from_vault,
             can_send_email=False,
             sent_via_email=True,
             email_id=email_id,

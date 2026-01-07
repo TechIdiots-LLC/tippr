@@ -121,18 +121,18 @@ def link_listings():
             vault_id = link.vault_id
             ups, downs = link.ups, link.downs
 
-            yield ('sr-hot-all-%d' % vault_id, _hot(ups, downs, timestamp),
+            yield ('vault-hot-all-%d' % vault_id, _hot(ups, downs, timestamp),
                    timestamp, fname)
-            yield 'sr-new-all-%d' % vault_id, timestamp, fname
-            yield 'sr-top-all-%d' % vault_id, score(ups, downs), timestamp, fname
-            yield ('sr-controversial-all-%d' % vault_id,
+            yield 'vault-new-all-%d' % vault_id, timestamp, fname
+            yield 'vault-top-all-%d' % vault_id, score(ups, downs), timestamp, fname
+            yield ('vault-controversial-all-%d' % vault_id,
                    controversy(ups, downs), timestamp, fname)
             for time in '1 year', '1 month', '1 week', '1 day', '1 hour':
                 if timestamp > epoch_seconds(timeago(time)):
                     tkey = time.split(' ')[1]
-                    yield ('sr-top-%s-%d' % (tkey, vault_id),
+                    yield ('vault-top-%s-%d' % (tkey, vault_id),
                            score(ups, downs), timestamp, fname)
-                    yield ('sr-controversial-%s-%d' % (tkey, vault_id),
+                    yield ('vault-controversial-%s-%d' % (tkey, vault_id),
                            controversy(ups, downs),
                            timestamp, fname)
 
@@ -188,7 +188,7 @@ def store_keys(key, maxes):
         insert_to_query(q, [(fname, float(timestamp))
                             for (timestamp, fname)
                             in maxes ])
-    elif key.startswith('sr-'):
+    elif key.startswith('vault-'):
         sr_str, sort, time, vault_id = key.split('-')
         vault_id = int(vault_id)
 

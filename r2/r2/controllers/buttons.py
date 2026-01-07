@@ -39,9 +39,9 @@ class ButtonsController(TipprController):
             if link:
                 links = [link]
             else:
-                sr = None if isinstance(c.site, FakeVault) else c.site
+                vault = None if isinstance(c.site, FakeVault) else c.site
                 try:
-                    links = Link._by_url(url, sr)
+                    links = Link._by_url(url, vault)
                 except NotFound:
                     pass
 

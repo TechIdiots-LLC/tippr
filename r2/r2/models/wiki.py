@@ -98,8 +98,8 @@ modactions = {
 
 # Page "index" in the vault "tippr.net" and a seperator of "\t" becomes:
 #   "tippr.net\tindex"
-def wiki_id(sr, page):
-    return ('{}{}{}'.format(sr, PAGE_ID_SEP, page)).lower()
+def wiki_id(vault, page):
+    return ('{}{}{}'.format(vault, PAGE_ID_SEP, page)).lower()
 
 class ContentLengthError(Exception):
     def __init__(self, max_length):
@@ -189,8 +189,8 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
         WikiRevisionsRecentBySR.add_object(self)
 
     @classmethod
-    def get_recent(cls, sr, count=100):
-        return WikiRevisionsRecentBySR.query([sr._id36], count=count)
+    def get_recent(cls, vault, count=100):
+        return WikiRevisionsRecentBySR.query([vault._id36], count=count)
     
     @property
     def is_hidden(self):
@@ -200,18 +200,18 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     def info(self, sep=PAGE_ID_SEP):
         info = self.pageid.split(sep, 1)
         try:
-            return {'sr': info[0], 'page': info[1]}
+            return {'vault': info[0], 'page': info[1]}
         except IndexError:
             g.log.error('Broken wiki page ID "%s" did PAGE_ID_SEP change?', self.pageid)
-            return {'sr': 'broken', 'page': 'broken'}
+            return {'vault': 'broken', 'page': 'broken'}
     
     @property
     def page(self):
         return self.info['page']
     
     @property
-    def sr(self):
-        return self.info['sr']
+    def vault(self):
+        return self.info['vault']
 
 
 class WikiPage(tdb_cassandra.Thing):
@@ -225,7 +225,7 @@ class WikiPage(tdb_cassandra.Thing):
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     
     _date_props = ('last_edit_date')
-    _str_props = ('revision', 'name', 'last_edit_by', 'content', 'sr')
+    _str_props = ('revision', 'name', 'last_edit_by', 'content', 'vault')
     _int_props = ('permlevel')
     _bool_props = ('listed')
     _defaults = {'listed': True}
@@ -236,14 +236,14 @@ class WikiPage(tdb_cassandra.Thing):
         return None
     
     @classmethod
-    def id_for(cls, sr, name):
+    def id_for(cls, vault, name):
         # Prefer the canonical _id36 for real vaults. Some special site
         # objects (e.g. `Frontpage` / `DefaultVault`) are not real vaults and
         # won't have `_id36` set — fall back to using their `name` so global
         # wiki pages (site-level policies, etc.) can be resolved.
-        id_val = getattr(sr, '_id36', None)
+        id_val = getattr(vault, '_id36', None)
         if not id_val:
-            name_val = getattr(sr, 'name', None)
+            name_val = getattr(vault, 'name', None)
             if not name_val:
                 raise tdb_cassandra.NotFound
             id_val = name_val.strip()
@@ -255,22 +255,22 @@ class WikiPage(tdb_cassandra.Thing):
         """Get multiple wiki pages.
         
         Arguments:
-        pages -- list of tuples in the form of [(sr, names),..]
+        pages -- list of tuples in the form of [(vault, names),..]
         """
-        return cls._byID([cls.id_for(sr, name) for sr, name in pages])
+        return cls._byID([cls.id_for(vault, name) for vault, name in pages])
     
     @classmethod
-    def get(cls, sr, name):
-        return cls._byID(cls.id_for(sr, name))
+    def get(cls, vault, name):
+        return cls._byID(cls.id_for(vault, name))
 
     @classmethod
-    def create(cls, sr, name):
-        if not name or not sr:
+    def create(cls, vault, name):
+        if not name or not vault:
             raise ValueError
 
         name = name.lower()
-        _id = wiki_id(sr._id36, name)
-        lock_key = "wiki_create_{}:{}".format(sr._id36, name)
+        _id = wiki_id(vault._id36, name)
+        lock_key = "wiki_create_{}:{}".format(vault._id36, name)
         with g.make_lock("wiki", lock_key):
             try:
                 cls._byID(_id)
@@ -279,7 +279,7 @@ class WikiPage(tdb_cassandra.Thing):
             else:
                 raise WikiPageExists
 
-            page = cls(_id=_id, sr=sr._id36, name=name, permlevel=0, content='')
+            page = cls(_id=_id, vault=vault._id36, name=name, permlevel=0, content='')
             page._commit()
             return page
 
@@ -327,11 +327,11 @@ class WikiPage(tdb_cassandra.Thing):
         WikiPageEditors._set_values(self._id, {user: ''})
     
     @classmethod
-    def get_pages(cls, sr, after=None, filter_check=None):
+    def get_pages(cls, vault, after=None, filter_check=None):
         NUM_AT_A_TIME = num = 1000
         pages = []
         while num >= NUM_AT_A_TIME:
-            wikipages = WikiPagesBySR.query([sr._id36],
+            wikipages = WikiPagesBySR.query([vault._id36],
                                             after=after,
                                             count=NUM_AT_A_TIME)
             wikipages = list(wikipages)
@@ -341,12 +341,12 @@ class WikiPage(tdb_cassandra.Thing):
         return list(filter(filter_check, pages))
     
     @classmethod
-    def get_listing(cls, sr, filter_check=None):
+    def get_listing(cls, vault, filter_check=None):
         """
             Create a tree of pages from their path.
         """
         page_tree = OrderedDict()
-        pages = cls.get_pages(sr, filter_check=filter_check)
+        pages = cls.get_pages(vault, filter_check=filter_check)
         pages = sorted(pages, key=lambda page: page.name)
         for page in pages:
             p = page.name.split('/')
@@ -462,7 +462,7 @@ class WikiPagesBySR(tdb_cassandra.DenormalizedView):
     
     @classmethod
     def _rowkey(cls, wp):
-        return wp.sr
+        return wp.vault
 
 class WikiRevisionsRecentBySR(tdb_cassandra.DenormalizedView):
     """ Associate revisions with vaults, store only recent """
@@ -474,7 +474,7 @@ class WikiRevisionsRecentBySR(tdb_cassandra.DenormalizedView):
     
     @classmethod
     def _rowkey(cls, wr):
-        return wr.sr
+        return wr.vault
 
 
 class ImagesByWikiPage(tdb_cassandra.View):
@@ -488,27 +488,27 @@ class ImagesByWikiPage(tdb_cassandra.View):
     }
 
     @classmethod
-    def add_image(cls, sr, page_name, image_name, url):
-        rowkey = WikiPage.id_for(sr, page_name)
+    def add_image(cls, vault, page_name, image_name, url):
+        rowkey = WikiPage.id_for(vault, page_name)
         cls._set_values(rowkey, {image_name: url})
 
     @classmethod
-    def get_images(cls, sr, page_name):
+    def get_images(cls, vault, page_name):
         try:
-            rowkey = WikiPage.id_for(sr, page_name)
+            rowkey = WikiPage.id_for(vault, page_name)
             return cls._byID(rowkey)._values()
         except tdb_cassandra.NotFound:
             return {}
 
     @classmethod
-    def get_image_count(cls, sr, page_name):
-        rowkey = WikiPage.id_for(sr, page_name)
+    def get_image_count(cls, vault, page_name):
+        rowkey = WikiPage.id_for(vault, page_name)
         return cls._cf.get_count(rowkey,
             read_consistency_level=cls._read_consistency_level)
 
     @classmethod
-    def delete_image(cls, sr, page_name, image_name):
-        rowkey = WikiPage.id_for(sr, page_name)
+    def delete_image(cls, vault, page_name, image_name):
+        rowkey = WikiPage.id_for(vault, page_name)
         cls._remove(rowkey, [image_name])
 
 
