@@ -136,12 +136,12 @@ class Report(MultiRelation('report', *REPORT_RELS)):
         if (wrapped.reported > 0 and
                 (wrapped.can_ban or
                  getattr(wrapped, "promoted", None) and c.user_is_sponsor)):
-            from r2.models import SRMember
+            from r2.models import VaultMember
 
             reports = cls.for_thing(wrapped.lookups[0])
 
-            query = SRMember._query(SRMember.c._thing1_id == wrapped.vault_id,
-                                    SRMember.c._name == "moderator")
+            query = VaultMember._query(VaultMember.c._thing1_id == wrapped.vault_id,
+                                    VaultMember.c._name == "moderator")
             mod_dates = {rel._thing2_id: rel._date for rel in query}
 
             if g.automoderator_account:

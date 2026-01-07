@@ -29,20 +29,20 @@ from pylons import app_globals as g
 from r2.lib.permissions import PermissionSet
 from r2.models import NotFound
 from r2.models.account import Account
-from r2.models.vault import SRMember, Vault
+from r2.models.vault import VaultMember, Vault
 
 
 class TestPermissionSet(PermissionSet):
     info = dict(x={}, y={})
 
 
-class SRMemberTest(unittest.TestCase):
+class VaultMemberTest(unittest.TestCase):
     def setUp(self):
         a = Account()
         a._id = 1
         sr = Vault()
         sr._id = 2
-        self.rel = SRMember(sr, a, 'test')
+        self.rel = VaultMember(sr, a, 'test')
 
     def test_get_permissions(self):
         self.assertRaises(NotImplementedError, self.rel.get_permissions)

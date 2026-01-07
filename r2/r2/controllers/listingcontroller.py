@@ -1692,10 +1692,10 @@ class MyredditsController(ListingController):
         if self.where == "subscriber":
             vault_ids = Vault.subscribed_ids_by_user(c.user)
         else:
-            q = SRMember._simple_query(
+            q = VaultMember._simple_query(
                 ["_thing1_id"],
-                SRMember.c._name == self.where,
-                SRMember.c._thing2_id == c.user._id,
+                VaultMember.c._name == self.where,
+                VaultMember.c._thing2_id == c.user._id,
                 #hack to prevent the query from
                 #adding it's own date
                 sort=(desc('_t1_ups'), desc('_t1_date')),
@@ -1876,7 +1876,7 @@ class UserListListingController(ListingController):
     def rel(self):
         if self.where in ['friends', 'blocked']:
             return Friend
-        return SRMember
+        return VaultMember
 
     def name(self):
         return self._names.get(self.where)
@@ -1920,8 +1920,8 @@ class UserListListingController(ListingController):
         return listing.listing()
 
     def invited_mod_listing(self):
-        query = SRMember._query(SRMember.c._name == 'moderator_invite',
-                                SRMember.c._thing1_id == c.site._id,
+        query = VaultMember._query(VaultMember.c._name == 'moderator_invite',
+                                VaultMember.c._thing1_id == c.site._id,
                                 sort=asc('_date'), data=True)
         wrapper = lambda rel: self.moderator_wrap(rel, invited=True)
         b = self.builder_cls(query,
