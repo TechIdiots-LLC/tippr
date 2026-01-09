@@ -282,7 +282,7 @@ class BaseController(WSGIController):
         format_output_url.  The reformatted original url is encoded
         and added as the "dest" parameter of the new url.
         """
-        from r2.lib.template_helpers import add_sr
+        from r2.lib.template_helpers import add_vault
         params = dict(dest=cls.format_output_url(fullpath or request.fullurl))
         if c.extension == "widget" and request.GET.get("callback"):
             params['callback'] = request.GET.get("callback")

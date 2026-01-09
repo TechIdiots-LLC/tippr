@@ -23,7 +23,7 @@
 <%!
     from r2.lib.filters import safemarkdown
     from r2.lib.template_helpers import html_datetime
-    from r2.lib.template_helpers import add_sr
+    from r2.lib.template_helpers import add_vault
 %>
 <%namespace name="utils" file="utils.xml"/>
 <%
@@ -37,7 +37,7 @@
             author = thing.author.name
         comment_body = thing.body
 
-    permalink = add_sr(thing.permalink, force_hostname=True)
+    permalink = add_vault(thing.permalink, force_hostname=True)
 %>
 
 <entry>

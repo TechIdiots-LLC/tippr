@@ -24,12 +24,12 @@
 
 <div class="titlebox rounded">
   <h1 class="hover redditname">
-    ${plain_link(c.site.name, c.site.user_path, _sr_path=False, _class="hover")}
+    ${plain_link(c.site.name, c.site.user_path, _vault_path=False, _class="hover")}
   </h1>
 
   <div class="usertext">
     ${_md("/v/mod shows only vaults you moderate.")}
   </div>
 
-  ${plain_link(_("filter out vaults"), "/me/f/mod", _class="modsr-link", _sr_path=False)}
+  ${plain_link(_("filter out vaults"), "/me/f/mod", _class="modsr-link", _vault_path=False)}
 </div>

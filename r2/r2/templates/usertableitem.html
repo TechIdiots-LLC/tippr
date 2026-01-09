@@ -38,7 +38,7 @@
   %if cell_type == "user":
       <span class="user">
          ${plain_link(thing.user.name, "/user/%s/" % thing.user.name,
-                      _sr_path=False)}
+                      _vault_path=False)}
          &nbsp;(<b>${display_link_karma(thing.user.link_karma)}</b>)
       </span>
       &nbsp;

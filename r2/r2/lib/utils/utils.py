@@ -1316,7 +1316,7 @@ def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
                       count=None, public_srs_only=False):
     from operator import attrgetter
 
-    from r2.lib.template_helpers import add_sr
+    from r2.lib.template_helpers import add_vault
     from r2.models import IDBuilder, Link, NotFound, Vault
 
     if url.startswith('/'):

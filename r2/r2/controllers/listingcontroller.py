@@ -51,7 +51,7 @@ from r2.lib.normalized_hot import normalized_hot
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.rising import get_rising, normalized_rising
-from r2.lib.template_helpers import add_sr
+from r2.lib.template_helpers import add_vault
 from r2.lib.utils import (
     extract_user_mentions,
     iters,

@@ -212,7 +212,7 @@ def add_message(message, update_recipient=True, update_modmail=True,
 
     if update_modmail and message.vault_id:
         with g.make_lock("modmail_tree", sr_messages_lock_key(message.vault_id)):
-            add_sr_message_nolock(message.vault_id, message)
+            add_vault_message_nolock(message.vault_id, message)
 
     if add_to_user and add_to_user._id != message.to_id:
         with g.make_lock("message_tree", messages_lock_key(add_to_user._id)):
@@ -361,7 +361,7 @@ def Vault_messages_nocache(vault):
     return compute_message_trees(messages)
 
 
-def add_sr_message_nolock(vault_id, message):
+def add_vault_message_nolock(vault_id, message):
     return _add_message_nolock(sr_messages_key(vault_id), message)
 
 def sr_conversation(vault, parent):

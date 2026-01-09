@@ -22,7 +22,7 @@
 <%!
     from pylons import app_globals as g
     from datetime import datetime
-    from r2.lib.template_helpers import add_sr, header_url
+    from r2.lib.template_helpers import add_vault, header_url
     from r2.lib.template_helpers import static
     from r2.lib.template_helpers import html_datetime
     from r2.lib.utils import UrlParser
@@ -73,11 +73,11 @@
 </%def>
 
 <%def name="Link()">
-    <link rel="self" href="${add_sr(request.fullpath,
+    <link rel="self" href="${add_vault(request.fullpath,
                                     sr_path=False,
                                     force_hostname=True)}"
      type="application/atom+xml" />
-    <link rel="alternate" href="${add_sr(request.fullpath,
+    <link rel="alternate" href="${add_vault(request.fullpath,
                                          sr_path=False,
                                          force_hostname=True,
                                          force_extension='')}"

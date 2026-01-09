@@ -23,7 +23,7 @@
 <%!
    from r2.lib.strings import strings
    from r2.lib.pages import VaultSelector, UserText
-   from r2.lib.template_helpers import add_sr, _wsf, format_html
+   from r2.lib.template_helpers import add_vault, _wsf, format_html
    from r2.lib.filters import safemarkdown
 %>
 
@@ -40,7 +40,7 @@
 <h1>${_wsf("submit to %(vault)s", vault=vault)}</h1>
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)"
-                    action="${add_sr('/submit')}"
+                    action="${add_vault('/submit')}"
                     _class="submit content warn-on-unload"
                     _id="newlink">
 

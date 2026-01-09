@@ -22,7 +22,7 @@
 
 <%! 
    from r2.config import feature
-   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
+   from r2.lib.template_helpers import add_vault, static, join_urls, class_dict, get_domain
    from r2.lib.filters import unsafe, scriptsafe_dumps
    from r2.lib.pages import (
       SearchForm,
@@ -97,7 +97,7 @@
   <link rel='apple-touch-icon-precomposed' href="${static('icon-touch.png')}" />
   %if thing.extension_handling:
     <%
-       rss = add_sr(join_urls(request.path,'.rss'))
+       rss = add_vault(join_urls(request.path,'.rss'))
        if thing.extension_handling == "private":
           rss = make_feedurl(c.user, rss)
      %>

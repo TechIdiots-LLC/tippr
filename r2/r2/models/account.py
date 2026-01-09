@@ -824,7 +824,7 @@ def valid_otp_cookie(cookie):
 
 def valid_feed(name, feedhash, path):
     if name and feedhash and path:
-        from r2.lib.template_helpers import add_sr
+        from r2.lib.template_helpers import add_vault
         path = add_vault(path)
         try:
             user = Account._by_name(name)

@@ -367,7 +367,7 @@
   %if thing.promoted is not None:
     %if thing.user_is_sponsor or thing.is_author:
        <li>
-         ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
+         ${plain_link(_("edit"), thing.promo_url, _vault_path = False)}
        </li>
     %endif
     %if c.user_is_sponsor:
@@ -413,7 +413,7 @@
     %endif
     %if thing.user_is_sponsor or thing.is_author:
       <li>
-        ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+        ${plain_link(_("traffic"), thing.traffic_url, _vault_path = False)}
       </li>
     %endif
   %endif
@@ -777,7 +777,7 @@
       link,
       _class=a_class,
       rel="nofollow",
-      _sr_path=sr_path,
+      _vault_path=sr_path,
       data=data_attrs,
   )}
 </%def>

@@ -653,7 +653,7 @@ class Vault(Thing, Printable, BaseSite):
                 raise NotFound('Vault %s' % e.args[0])
 
             multi.clear_srs()
-            multi.add_srs(sr_props)
+            multi.add_vaults(sr_props)
             multi._commit()
         else:
             multi.delete()
@@ -2495,7 +2495,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
         self.is_symlink = False
 
-    def add_srs(self, sr_props):
+    def add_vaults(self, sr_props):
         """Add/overwrite vault(s)."""
         if self.is_symlink:
             self.unlink()

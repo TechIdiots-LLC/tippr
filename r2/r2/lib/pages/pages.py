@@ -84,7 +84,7 @@ from r2.lib.strings import (
 )
 from r2.lib.vault_search import popular_searches
 from r2.lib.template_helpers import (
-    add_sr,
+    add_vault,
     comment_label,
     format_number,
     get_domain,

@@ -28,7 +28,7 @@ from pylons import tmpl_context as c
 from r2.lib import utils
 from r2.lib.pages import *
 from r2.lib.pages.things import hot_links_by_url_listing
-from r2.lib.template_helpers import add_sr
+from r2.lib.template_helpers import add_vault
 from r2.lib.validator import *
 from r2.models import *
 from r2.models.admintools import is_shamed_domain

@@ -23,12 +23,12 @@
 <%!
     from r2.lib.template_helpers import html_datetime, simplified_timesince
     from r2.lib.filters import safemarkdown, websafe, conditional_websafe
-    from r2.lib.template_helpers import add_sr, format_html
+    from r2.lib.template_helpers import add_vault, format_html
     from r2.models.account import DeletedUser, Account
 %>
 <%namespace name="utils" file="utils.xml"/>
 <%
-    permalink = add_sr(thing.permalink, force_hostname = True)
+    permalink = add_vault(thing.permalink, force_hostname = True)
 
     # we get thing.taglinetext set by add_props, but it requires some %(foo)s
     # formatting substitutions

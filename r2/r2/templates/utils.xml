@@ -1,6 +1,6 @@
 <%!
     from r2.lib.filters import websafe, keep_space
-    from r2.lib.template_helpers import add_sr
+    from r2.lib.template_helpers import add_vault
 %>
 <%def name="atom_content(type='html', tag_name='content')">
     ## Atom supports 3 types of <content> tags: xhtml, html, and text. here we
@@ -35,7 +35,7 @@
     %if not author._deleted:
         <author>
             <name>/u/${author.name}</name>
-            <uri>${add_sr('/user/'+author.name,
+            <uri>${add_vault('/user/'+author.name,
                           sr_path=False,
                           force_hostname=True,
                           retain_extension=False)}</uri>

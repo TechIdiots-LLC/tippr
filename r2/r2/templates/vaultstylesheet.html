@@ -22,7 +22,7 @@
 
 <%!
   from r2.lib.filters import keep_space
-  from r2.lib.template_helpers import add_sr, static
+  from r2.lib.template_helpers import add_vault, static
   import os
 
 %>
@@ -55,7 +55,7 @@
             <label for="reason">${_('reason for revision')}</label>
             <input type="text" name="reason" maxlength="256">
             % if thing.site.prev_stylesheet:
-                <span class="btn right"><a target="_blank" href="${add_sr("/wiki/revisions/config/stylesheet/")}">${_("see previous versions")}</a></span>
+                <span class="btn right"><a target="_blank" href="${add_vault("/wiki/revisions/config/stylesheet/")}">${_("see previous versions")}</a></span>
             % endif
         </div>
       </div>

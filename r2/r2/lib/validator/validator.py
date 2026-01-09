@@ -61,7 +61,7 @@ from r2.lib.souptest import (
     SoupError,
     SoupUnsupportedEntityError,
 )
-from r2.lib.template_helpers import add_sr
+from r2.lib.template_helpers import add_vault
 from r2.lib.utils import constant_time_compare
 from r2.models import *
 from r2.models.promo import Location

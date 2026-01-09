@@ -24,7 +24,7 @@
    from pylons import request
    from r2.config import feature
    from r2.lib.template_helpers import (
-       add_sr,
+       add_vault,
        display_link_karma,
        format_number,
        header_url,
@@ -74,7 +74,7 @@
       <span class="user">
         <%
           base = g.https_endpoint
-          login_url = add_sr(base + "/login", sr_path=False)
+          login_url = add_vault(base + "/login", sr_path=False)
         %>
         ${text_with_links(_("Want to join? %(login_or_register)s in seconds."),
             login_or_register = dict(link_text=_("Log in or sign up"), path=login_url, _class="login-required"))}
@@ -99,7 +99,7 @@
         </div>
       %endif
       <span class="user">
-         ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
+         ${plain_link(c.user.name, "/user/%s/" % c.user.name, _vault_path=False)}
          &nbsp;(<span class="userkarma" title="${_("post karma")}">${format_number(display_link_karma(c.user.link_karma))}</span>)
       </span>
 
@@ -107,12 +107,12 @@
 
 
       %if c.have_messages:
-        ${plain_link(_("messages"), path="/message/unread/", title=_("new mail!"), _class="havemail", _sr_path=False, _id="mail")}
+        ${plain_link(_("messages"), path="/message/unread/", title=_("new mail!"), _class="havemail", _vault_path=False, _id="mail")}
         %if c.user.inbox_count > 0:
-          ${plain_link(c.user.inbox_count, path="/message/unread/", _class="message-count", _sr_path=False)}
+          ${plain_link(c.user.inbox_count, path="/message/unread/", _class="message-count", _vault_path=False)}
         %endif
       %else:
-        ${plain_link(_("messages"), path="/message/inbox/", title=_("no new mail"), _class="nohavemail", _sr_path=False, _id="mail")}
+        ${plain_link(_("messages"), path="/message/inbox/", title=_("no new mail"), _class="nohavemail", _vault_path=False, _id="mail")}
       %endif
       ${separator("|")}
       %if c.user_is_loggedin and c.user.is_moderator_somewhere:
@@ -130,7 +130,7 @@
             data_attrs = {'event-action': 'pageview', 'event-detail': 'modmail'}
           %>
          ${plain_link(_("mod messages"), path=mail_path,
-                    title = mail_img_title, _sr_path = False,
+                    title = mail_img_title, _vault_path = False,
                     _id = "modmail", _class=css_class, data=data_attrs)}
          ${separator("|")}
       %endif

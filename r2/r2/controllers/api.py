@@ -104,7 +104,7 @@ from r2.lib.system_messages import (
     send_mod_removal_message,
 )
 from r2.lib.template_helpers import (
-    add_sr,
+    add_vault,
     format_html,
     header_url,
     make_url_protocol_relative,

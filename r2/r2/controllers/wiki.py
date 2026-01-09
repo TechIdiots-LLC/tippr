@@ -48,7 +48,7 @@ from r2.lib.pages.wiki import (
     WikiRevisions,
     WikiSettings,
 )
-from r2.lib.template_helpers import add_sr, join_urls
+from r2.lib.template_helpers import add_vault, join_urls
 from r2.lib.utils import timesince, url_links_builder
 from r2.lib.validator import (
     VAdmin,

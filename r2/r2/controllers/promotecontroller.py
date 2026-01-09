@@ -77,7 +77,7 @@ from r2.lib.pages import (
 )
 from r2.lib.pages.things import default_thing_wrapper, wrap_links
 from r2.lib.template_helpers import (
-    add_sr,
+    add_vault,
     format_html,
 )
 from r2.lib.utils import (

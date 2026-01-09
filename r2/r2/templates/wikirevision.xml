@@ -20,12 +20,12 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 <%!
-    from r2.lib.template_helpers import add_sr
+    from r2.lib.template_helpers import add_vault
     from r2.lib.template_helpers import html_datetime
 %>
 <%namespace name="utils" file="utils.xml"/>
 <%
-    link = add_sr(('/%(wiki_base_url)s/%(page)s?v=%(thing_id)s'
+    link = add_vault(('/%(wiki_base_url)s/%(page)s?v=%(thing_id)s'
                    % dict(wiki_base_url=c.wiki_base_url,
                           page=thing.page,
                           thing_id=thing._id)),

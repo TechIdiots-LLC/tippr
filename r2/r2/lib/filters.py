@@ -226,7 +226,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         return SC_OFF + text + SC_ON
 
 def wikimarkdown(text, include_toc=True, target=None):
-    from r2.lib.template_helpers import add_sr, make_url_protocol_relative
+    from r2.lib.template_helpers import add_vault, make_url_protocol_relative
     from r2.lib.utils import UrlParser
 
     # this hard codes the stylesheet page for now, but should be parameterized

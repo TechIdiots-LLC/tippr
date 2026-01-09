@@ -34,7 +34,7 @@
 
 <div class="titlebox">
   <h1 class="hover redditname">
-    ${plain_link(thing.vault.name, thing.vault.path, _sr_path=False, _class="hover")}
+    ${plain_link(thing.vault.name, thing.vault.path, _vault_path=False, _class="hover")}
   </h1>
 
   %if thing.quarantine:
@@ -67,7 +67,7 @@
   %if thing.vault.moderator:
     <div class="leavemoderator">
       ${text_with_links(ModListing.remove_self_title % dict(action='(%(action)s)'),
-          _sr_path=True,
+          _vault_path=True,
           action=dict(
             ## TRANSLATORS: this label links to the edit moderators page.
             link_text=_('change'),

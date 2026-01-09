@@ -21,7 +21,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import add_sr, get_domain
+   from r2.lib.template_helpers import add_vault, get_domain
    from r2.lib.filters import unsafe, safemarkdown, keep_space
    from r2.lib.template_helpers import html_datetime
    from r2.lib.template_helpers import make_url_https
@@ -29,7 +29,7 @@
 <%namespace name="utils" file="utils.xml"/>
 <%
     domain = get_domain(vault=False)
-    permalink = add_sr(thing.permalink, force_hostname=True, retain_extension=False)
+    permalink = add_vault(thing.permalink, force_hostname=True, retain_extension=False)
     use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
     use_thumbs = use_thumbs and not thing.thumbnail_sprited
     thumbnail = thing.thumbnail
@@ -67,7 +67,7 @@
 
         %if not thing.author._deleted:
             ${keep_space(' ')} submitted by ${keep_space(' ')}
-            <a href="${add_sr('/user/'+thing.author.name,
+            <a href="${add_vault('/user/'+thing.author.name,
                               sr_path=False,
                               retain_extension=False,
                               force_hostname=True)}">
@@ -77,7 +77,7 @@
 
         %if thing.different_sr:
             ${keep_space(' ')} to ${keep_space(' ')}
-            <a href="${add_sr(thing.vault.path,
+            <a href="${add_vault(thing.vault.path,
                               sr_path=False,
                               retain_extension=False,
                               force_hostname=True)}">

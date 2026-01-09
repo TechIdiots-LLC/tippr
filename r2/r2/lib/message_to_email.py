@@ -28,7 +28,7 @@ from pylons import app_globals as g
 
 from r2.lib import amqp
 from r2.lib.filters import _force_unicode
-from r2.lib.template_helpers import add_sr
+from r2.lib.template_helpers import add_vault
 from r2.lib.utils import constant_time_compare
 from r2.models import (
     Account,

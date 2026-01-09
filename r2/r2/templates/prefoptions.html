@@ -24,7 +24,7 @@
    from r2.config import feature
    from r2.lib.errors import error_list
    from r2.lib.menus import CommentSortMenu
-   from r2.lib.template_helpers import add_sr, _wsf, format_html, make_url_protocol_relative
+   from r2.lib.template_helpers import add_vault, _wsf, format_html, make_url_protocol_relative
    from r2.lib.utils import UrlParser
    import random
 %>
@@ -110,7 +110,7 @@
        action = "/post/options" 
    else:
        action = "/post/unlogged_options" 
-   action = add_sr(action, sr_path=False)
+   action = add_vault(action, sr_path=False)
  %>
 <form action="${action}" method="post" class="pretty-form short-text">
   <input type="hidden" name="uh" value="${c.modhash}" />

@@ -25,7 +25,7 @@
 <div ${classes("titlebox", "rounded", "filtered-details", thing.css_class)}
      data-path="${c.site.multi_path}">
   <h1 class="hover redditname">
-    ${plain_link(c.site.name, c.site.user_path, _sr_path=False, _class="hover")}
+    ${plain_link(c.site.name, c.site.user_path, _vault_path=False, _class="hover")}
   </h1>
 
   <div class="usertext">
@@ -46,5 +46,5 @@
     <div class="error add-error"></div>
   </form>
 
-  ${plain_link(_('View unfiltered %s') % c.site.unfiltered_path, c.site.unfiltered_path, _sr_path=False, _class="unfilter")}
+  ${plain_link(_('View unfiltered %s') % c.site.unfiltered_path, c.site.unfiltered_path, _vault_path=False, _class="unfilter")}
 </div>
