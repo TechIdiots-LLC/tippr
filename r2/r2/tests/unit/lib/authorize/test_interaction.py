@@ -332,3 +332,4 @@ class InteractionTest(RedditTestCase):
             return_value = refund_transaction(self.user, transaction_id,
                                               campaign_id, amount)
             self.assertEqual(return_value[0], False)
+

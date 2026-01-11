@@ -220,12 +220,12 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
     Available pageviews depends on all equal and higher level locations:
     A location is: vault > country > metro
 
-    e.g. if a campaign is targeting /r/funny in USA/Boston we need to check that
+    e.g. if a campaign is targeting /v/funny in USA/Boston we need to check that
     there's enough inventory in:
-    * /r/funny (all campaigns targeting /r/funny regardless of location)
-    * /r/funny + USA (all campaigns targeting /r/funny and USA with or without
+    * /v/funny (all campaigns targeting /v/funny regardless of location)
+    * /v/funny + USA (all campaigns targeting /v/funny and USA with or without
       metro level targeting)
-    * /r/funny + USA + Boston (all campaigns targeting /r/funny and USA and
+    * /v/funny + USA + Boston (all campaigns targeting /v/funny and USA and
       Boston)
     The available inventory is the smallest of these values.
 
@@ -316,3 +316,4 @@ def get_oversold(target, start, end, daily_request, ignore=None, location=None):
         if available < daily_request:
             oversold[datestr] = available
     return oversold
+

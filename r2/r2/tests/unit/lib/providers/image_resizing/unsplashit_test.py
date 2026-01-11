@@ -45,3 +45,4 @@ class TestLocalResizer(unittest.TestCase):
             url = self.provider.resize_image(image, width)
             self.assertEqual(url, 'https://unsplash.it/%d/%d' % (width,
                 width*2))
+

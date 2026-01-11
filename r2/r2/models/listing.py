@@ -197,7 +197,7 @@ class BannedListing(UserListing):
     @property
     def title(self):
         return _("users banned from"
-                 " /r/%(vault)s") % dict(vault=c.site.name)
+                 " /v/%(vault)s") % dict(vault=c.site.name)
 
     def get_items(self, *a, **kw):
         items = UserListing.get_items(self, *a, **kw)
@@ -228,7 +228,7 @@ class MutedListing(UserListing):
     @property
     def title(self):
         return _("users muted from"
-                 " /r/%(vault)s") % dict(vault=c.site.name)
+                 " /v/%(vault)s") % dict(vault=c.site.name)
 
     def get_items(self, *a, **kw):
         items = UserListing.get_items(self, *a, **kw)
@@ -250,7 +250,7 @@ class WikiBannedListing(BannedListing):
     @property
     def title(self):
         return _("wiki contibutors banned from"
-                 " /r/%(vault)s") % dict(vault=c.site.name)
+                 " /v/%(vault)s") % dict(vault=c.site.name)
 
 class ContributorListing(UserListing):
     type = 'contributor'
@@ -258,7 +258,7 @@ class ContributorListing(UserListing):
     @property
     def title(self):
         return _("approved submitters for"
-                 " /r/%(vault)s") % dict(vault=c.site.name)
+                 " /v/%(vault)s") % dict(vault=c.site.name)
 
     @property
     def form_title(self):
@@ -270,7 +270,7 @@ class WikiMayContributeListing(ContributorListing):
     @property
     def title(self):
         return _("approved wiki contributors"
-                 " for /r/%(vault)s") % dict(vault=c.site.name)
+                 " for /v/%(vault)s") % dict(vault=c.site.name)
 
     @property
     def form_title(self):
@@ -316,7 +316,7 @@ class ModListing(InvitedModListing):
 
     @property
     def title(self):
-        return _("moderators of /r/%(vault)s") % dict(vault=c.site.name)
+        return _("moderators of /v/%(vault)s") % dict(vault=c.site.name)
 
 class LinkListing(Listing):
     def __init__(self, *a, **kw):
@@ -408,3 +408,4 @@ class SpotlightListing(Listing):
         for t in res.things:
             t.num_text = ""
         return Wrapped(self)
+

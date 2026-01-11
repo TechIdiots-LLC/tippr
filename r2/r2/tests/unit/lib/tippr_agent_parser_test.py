@@ -214,3 +214,4 @@ class HAPIntegrationTests(RedditTestCase):
         user_agent = 'BaconReader/3.0 (iPhone; iOS 9.3.2; Scale/2.00)'
         outs = detect(user_agent)
         self.assertEqual(outs['browser']['name'], BaconReaderDetector.name)
+

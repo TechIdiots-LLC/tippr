@@ -86,3 +86,4 @@ class LoidTests(RedditTestCase):
         self.assertTrue(loid.serializable)
         loid.save()
         self.assertFalse(bool(context.cookies.add.called))
+

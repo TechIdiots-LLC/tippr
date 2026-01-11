@@ -746,7 +746,7 @@ class ApiController(TipprController):
         or by [fullname](#fullnames) (iuser).  If type is friend or enemy,
         'container' MUST be the current user's fullname;
         for other types, the vault must be set
-        via URL (e.g., /r/funny/api/unfriend)
+        via URL (e.g., /v/funny/api/unfriend)
 
         OAuth2 use requires appropriate scope based
         on the 'type' of the relationship:
@@ -5233,3 +5233,4 @@ class ApiController(TipprController):
         c.user.pref_use_global_defaults = True
         c.user._commit()
         jquery.refresh()
+

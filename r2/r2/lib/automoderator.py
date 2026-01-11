@@ -85,7 +85,7 @@ if g.automoderator_account:
 else:
     ACCOUNT = None
 
-DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this vault](/message/compose/?to=/r/{{vault}}) if you have any questions or concerns.*"
+DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this vault](/message/compose/?to=/v/{{vault}}) if you have any questions or concerns.*"
 
 rules_by_Vault = {}
 
@@ -1538,7 +1538,7 @@ def run():
                 try:
                     rules = Ruleset(wp.content, timer)
                 except (AutoModeratorSyntaxError, AutoModeratorRuleTypeError):
-                    print("ERROR: Invalid config in /r/%s" % vault.name)
+                    print("ERROR: Invalid config in /v/%s" % vault.name)
                     return
 
                 rules_by_Vault[vault._id] = rules
@@ -1550,13 +1550,14 @@ def run():
 
             try:
                 TimeoutFunction(rules.apply_to_item, 2)(item)
-                print("Checked %s from /r/%s" % (item, vault.name))
+                print("Checked %s from /v/%s" % (item, vault.name))
             except TimeoutFunctionException:
-                print("Timed out on %s from /r/%s" % (item, vault.name))
+                print("Timed out on %s from /v/%s" % (item, vault.name))
             except KeyboardInterrupt:
                 raise
             except:
-                print("Error on %s from /r/%s" % (item, vault.name))
+                print("Error on %s from /v/%s" % (item, vault.name))
                 print(traceback.format_exc())
 
     amqp.consume_items('automoderator_q', process_message, verbose=False)
+

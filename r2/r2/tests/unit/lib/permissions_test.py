@@ -98,3 +98,4 @@ class ModeratorPermissionSetTest(unittest.TestCase):
         self.assertTrue(ModeratorPermissionSet.loads(None).is_superuser())
         self.assertFalse(ModeratorPermissionSet.loads('').is_superuser())
 
+

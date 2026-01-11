@@ -178,3 +178,4 @@ class LoginRegBase:
             stack.enter_context(self.disabled_captcha())
             res = self.do_register()
             self.assert_success(res)
+

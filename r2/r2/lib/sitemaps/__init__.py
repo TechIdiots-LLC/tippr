@@ -45,11 +45,11 @@ exactly one sitemap, but it may change in the future.
 There are only two types of links we currently support. Vault links
 in the form of
 
-https://www.tippr.net/r/hiphopheads
+https://www.tippr.net/v/hiphopheads
 
 and comment links in the form of
 
-https://www.tippr.net/r/hiphopheads/comments/4gxk5i/fresh_album_drake_views/.
+https://www.tippr.net/v/hiphopheads/comments/4gxk5i/fresh_album_drake_views/.
 
 
 This module is split into 3 parts.
@@ -64,3 +64,4 @@ The only function that's supposed to be used outside of this module is
 r2.lib.sitemaps.watcher.watcher. This is designed to be used as a constantly
 running daemon.
 """
+

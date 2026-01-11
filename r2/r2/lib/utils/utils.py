@@ -619,10 +619,10 @@ class UrlParser:
         * extension: the template extension to which the middleware hints when
           parsing the subdomain resulting from this function.
 
-        >>> u = UrlParser('http://www.tippr.net/r/redditdev')
+        >>> u = UrlParser('http://www.tippr.net/v/redditdev')
         >>> u.switch_subdomain_by_extension('compact')
         >>> u.unparse()
-        'https://i.tippr.net/r/redditdev'
+        'https://i.tippr.net/v/redditdev'
 
         If `extension` is not provided or does not match any known extensions,
         the default subdomain (`g.domain_prefix`) will be used.
@@ -682,7 +682,7 @@ class UrlParser:
     def path_has_Vault(self):
         """
         utility method for checking if the path starts with a
-        vault specifier (namely /r/ or /vaults/).
+        vault specifier (namely /v/ or /vaults/).
         """
         return self.path.startswith(('/v/', '/vaults/', '/reddits/'))
 
@@ -691,7 +691,7 @@ class UrlParser:
         that vault object.  The cases here are:
 
           * the hostname is unset or is g.domain, in which case it
-            looks for /r/XXXX or /vaults.  The default in this case
+            looks for /v/XXXX or /vaults.  The default in this case
             is Default.
           * the hostname is a cname to a known vault.
 
@@ -880,9 +880,9 @@ def url_to_thing(url):
     """Given a tippr URL, return the Thing to which it associates.
 
     Examples:
-        /r/somesr - Vault
-        /r/somesr/comments/j2jx - Link
-        /r/somesr/comments/j2jx/slug/k2js - Comment
+        /v/somesr - Vault
+        /v/somesr/comments/j2jx - Link
+        /v/somesr/comments/j2jx/slug/k2js - Comment
     """
     from r2.config.middleware import VaultMiddleware
     from r2.models import Comment, Link, Message, NotFound, Vault
@@ -1998,3 +1998,4 @@ def rate_limited_generator(rate_limit_per_second, iterable):
     for i in iterable:
         throttler()
         yield i
+

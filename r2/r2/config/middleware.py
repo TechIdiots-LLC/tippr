@@ -237,7 +237,7 @@ class DomainMiddleware:
             if not subdomains and g.domain_prefix:
                 subdomains.append(g.domain_prefix)
             subdomains.append(g.domain)
-            redir = "{}/r/{}/{}".format('.'.join(subdomains),
+            redir = "{}/v/{}/{}".format('.'.join(subdomains),
                                     sr_redirect, environ['FULLPATH'])
             redir = g.default_scheme + "://" + redir.replace('//', '/')
 
@@ -248,6 +248,7 @@ class DomainMiddleware:
 
 
 class VaultMiddleware:
+    # Use /v/ for vault URLs
     sr_pattern = re.compile(r'^/v/([^/]{2,})')
 
     def __init__(self, app):

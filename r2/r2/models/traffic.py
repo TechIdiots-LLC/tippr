@@ -410,7 +410,7 @@ class SitewidePageviews(Base):
 
 
 class PageviewsByVault(Base):
-    """Pageviews within a vault (i.e. /r/something/...)."""
+    """Pageviews within a vault (i.e. /v/something/...)."""
 
     __tablename__ = "traffic_Vaults"
 
@@ -651,3 +651,4 @@ class SubscriptionsByVault(Base):
 # create the tables if they don't exist
 if g.db_create_tables:
     Base.metadata.create_all(bind=engine)
+

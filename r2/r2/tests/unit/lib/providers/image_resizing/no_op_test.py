@@ -44,3 +44,4 @@ class TestLocalResizer(unittest.TestCase):
         for width in (108, 216, 320, 640, 960, 1080):
             url = self.provider.resize_image(image, width)
             self.assertEqual(url, 'http://s3.amazonaws.com/a.jpg')
+

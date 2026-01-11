@@ -280,3 +280,4 @@ class TestEquality(unittest.TestCase):
         u2 = UrlParser('http://example.com/')
         u2.update_query(page='ｕｎｉｃｏｄｅ：（')
         self.assertEqual(u, u2)
+

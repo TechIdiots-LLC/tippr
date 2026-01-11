@@ -35,8 +35,8 @@ from r2.models.admintools import is_shamed_domain
 
 from .tippr_base import TipprController
 
-# strips /r/foo/, /s/, or both
-strip_sr          = re.compile(r'\A/r/[a-zA-Z0-9_-]+')
+# strips /v/foo/, /s/, or both
+strip_sr          = re.compile(r'\A/v/[a-zA-Z0-9_-]+')
 strip_s_path      = re.compile(r'\A/s/')
 leading_slash     = re.compile(r'\A/+')
 has_protocol      = re.compile(r'\A[a-zA-Z_-]+:')

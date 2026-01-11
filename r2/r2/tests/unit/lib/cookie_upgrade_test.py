@@ -129,3 +129,4 @@ class TestCookieUpgrade(RedditTestCase):
         upgrade_cookie_security()
         self.assertTrue(c.cookies[g.login_cookie].dirty)
         self.assertNotEqual(c.cookies[g.login_cookie].expires, NEVER)
+

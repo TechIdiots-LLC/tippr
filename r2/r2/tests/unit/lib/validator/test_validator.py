@@ -283,10 +283,10 @@ class TestVVaultName(ValidatorTests):
         self.assertEqual(result, 'foo')
 
     def test_two_prefixes(self):
-        self._test_failure('/v/r/foo')
+        self._test_failure('/v/v/foo')
 
     def test_slash_not_prefix(self):
-        self._test_failure('foo/r/')
+        self._test_failure('foo/v/')
 
 
 class TestValidEmail(ValidatorTests):
@@ -333,3 +333,4 @@ class TestValidEmail(ValidatorTests):
 
     def test_two_hostnames(self):
         self._test_failure('test@example.com@example.com')
+

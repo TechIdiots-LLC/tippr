@@ -421,7 +421,7 @@ class OffsiteButton(NavButton):
 
 class VaultButton(NavButton):
     from r2.models.vault import All, Frontpage, Mod, Random, RandomSubscription
-    # TRANSLATORS: This refers to /r/mod
+    # TRANSLATORS: This refers to /v/mod
     name_overrides = {Mod: N_("mod"),
     # TRANSLATORS: This refers to the user's front page
                       Frontpage: N_("front"),
@@ -696,3 +696,4 @@ class AdminTimeMenu(TimeMenu):
     get_param = 't'
     _default = 'day'
     _options = ('hour', 'day', 'week')
+

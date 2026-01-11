@@ -79,3 +79,4 @@ class TestModuleGetFlattenedSources(unittest.TestCase):
         filter_module = TestModule("filter_module", *filtered_files)
         test_module = TestModule("test_module", filter_module=filter_module, *all_files)
         self.assertEqual(test_module.build(), concat_sources(test_files))
+

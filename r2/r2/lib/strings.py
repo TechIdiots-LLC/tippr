@@ -78,7 +78,7 @@ string_dict = dict(
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
-    friends = _('to view tippr with only submissions from your friends, use [tippr.net/r/friends](%s)'),
+    friends = _('to view tippr with only submissions from your friends, use [tippr.net/v/friends](%s)'),
 
     sr_created = _('your vault has been created'),
 
@@ -118,8 +118,8 @@ string_dict = dict(
     heavy_load_msg = _("this page is temporarily in read-only mode due to heavy traffic."),
     in_perma_timeout_msg = _("Your account has been permanently [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) from Tippr."),
     in_temp_timeout_msg = _("Your account has been [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) from Tippr for %(days)s."),
-    gold_benefits_msg = "tippr gold is our premium membership program. It grants you access to [extra features](https://www.tippr.net/gold/about) to improve your tippr experience. It also makes you really quite dapper. If you have questions about your gold, please visit /r/goldbenefits.",
-    lounge_msg = "Grab a drink and join us in /r/lounge, the super-secret members-only community that may or may not exist.",
+    gold_benefits_msg = "tippr gold is our premium membership program. It grants you access to [extra features](https://www.tippr.net/gold/about) to improve your tippr experience. It also makes you really quite dapper. If you have questions about your gold, please visit /v/goldbenefits.",
+    lounge_msg = "Grab a drink and join us in /v/lounge, the super-secret members-only community that may or may not exist.",
     postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
     over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to tippr gold, it goes up to %(goldmax)d.)"),
     over_comment_limit_gold = _("Sorry, the maximum number of comments is %d."),
@@ -171,9 +171,9 @@ Note: there are a couple of places outside of your vault where someone can click
     subscribed_multi = _("multivault of your subscriptions"),
     mod_multi = _("multivault of vaults you moderate"),
 
-    r_all_description = _("/v/all displays content from all of tippr, including vaults you aren't subscribed to. Some vaults have chosen to exclude themselves from /r/all."),
-    r_all_minus_description = _("Displaying content from /r/all of tippr, except the following vaults:"),
-    all_minus_gold_only = _('Filtering /r/all is a feature only available to [tippr gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
+    r_all_description = _("/v/all displays content from all of tippr, including vaults you aren't subscribed to. Some vaults have chosen to exclude themselves from /v/all."),
+    r_all_minus_description = _("Displaying content from /v/all of tippr, except the following vaults:"),
+    all_minus_gold_only = _('Filtering /v/all is a feature only available to [tippr gold](/gold/about) subscribers. Displaying unfiltered results from /v/all.'),
 )
 
 class StringHandler:
@@ -351,3 +351,4 @@ def get_funny_translated_string(category, num=1):
         return ret[0]
     else:
         return ret
+

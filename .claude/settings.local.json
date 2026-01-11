@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git mv:*)",
+      "Bash(mkdir:*)",
+      "Bash(tree:*)"
     ]
   }
 }

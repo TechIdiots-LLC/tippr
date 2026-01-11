@@ -321,7 +321,7 @@ class VaultListingController(ListingController):
         In the case of vaults, we perform a bit of magic to strip the
         vault path from the url. This means that a path like:
 
-        https:///www.tippr.net/r/hiphopheads/
+        https:///www.tippr.net/v/hiphopheads/
 
         will instead show:
 
@@ -1612,7 +1612,7 @@ class VaultsController(ListingController):
                 reddits._sort = desc('_downs')
 
             if g.domain != 'tippr.net':
-                # don't try to render /r/promos on opensource installations
+                # don't try to render /v/promos on opensource installations
                 promo_sr_id = Vault.get_promote_srid()
                 if promo_sr_id:
                     reddits._filter(Vault.c._id != promo_sr_id)
@@ -1866,7 +1866,7 @@ class UserListListingController(ListingController):
         # having this suffix, to make similar tabs on different vaults
         # distinct.
         if self.where == 'moderators':
-            return '{section} - /r/{vault}'.format(
+            return '{section} - /v/{vault}'.format(
                 section=section_title,
                 vault=c.site.name,
             )
@@ -2019,7 +2019,7 @@ class UserListListingController(ListingController):
             # On public reddits, only moderators may see the whitelist.
             if c.site.type == 'public' and not has_mod_access:
                 abort(403)
-            # Used for vaults like /r/lounge
+            # Used for vaults like /v/lounge
             if c.site.hide_subscribers:
                 abort(403)
             # used for vaults that don't allow access to approved submitters
@@ -2121,3 +2121,4 @@ class GildedController(VaultListingController):
         if not c.site.allow_gilding:
             self.abort404()
         return ListingController.GET_listing(self, **env)
+

@@ -55,3 +55,4 @@ class TestVoteValidator(RedditTestCase):
         self.assertTrue(vote.is_downvote)
         self.assertFalse(vote.is_self_vote)
         self.assert_vote_effects(vote, affected_thing_attr="_downs")
+

@@ -373,8 +373,8 @@ class MultiApiController(TipprController):
     )
     @api_doc(
         api_section.multis,
-        uri="/api/multi/{multipath}/r/{srname}",
-        uri_variants=['/api/filter/{filterpath}/r/{srname}'],
+        uri="/api/multi/{multipath}/v/{srname}",
+        uri_variants=['/api/filter/{filterpath}/v/{srname}'],
     )
     def GET_multi_Vault(self, multi, vault):
         """Get data about a vault in a multi."""
@@ -447,3 +447,4 @@ class MultiApiController(TipprController):
         multi.description_md = data['body_md']
         multi._commit()
         return self._format_multi_description(multi)
+

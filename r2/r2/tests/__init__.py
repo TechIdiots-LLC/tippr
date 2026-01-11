@@ -397,3 +397,4 @@ class RedditControllerTestCase(RedditTestCase):
     def additional_headers(self, headers, body):
         """Additional generated headers to be added to the request."""
         return {}
+

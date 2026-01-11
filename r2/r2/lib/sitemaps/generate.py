@@ -34,16 +34,16 @@ The sitemap index which takes the form of:
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://www.tippr.net/r/Vault_sitemap?index=0</loc>
+    <loc>https://www.tippr.net/v/Vault_sitemap?index=0</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.tippr.net/r/Vault_sitemap?index=1</loc>
+    <loc>https://www.tippr.net/v/Vault_sitemap?index=1</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.tippr.net/r/permalink_sitemap?index=0</loc>
+    <loc>https://www.tippr.net/v/permalink_sitemap?index=0</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.tippr.net/r/permalink_sitemap?index=1</loc>
+    <loc>https://www.tippr.net/v/permalink_sitemap?index=1</loc>
   </sitemap>
 </sitemapindex>
 ------------------------------------------------------------------------
@@ -54,7 +54,7 @@ Next are vault sitemaps which take the form of:
  <?xml version="1.0" encoding="UTF-8"?>
  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
    <url>
-     <loc>https://www.tippr.net/r/{some_postfix}</loc>
+     <loc>https://www.tippr.net/v/{some_postfix}</loc>
    </url>
  </urlset>
 ------------------------------------------------------------------------
@@ -120,3 +120,4 @@ def sitemap_index(count):
             g.sitemap_s3_static_host, i)
         loc_elem.text = url
     return _stringify_xml(sm_elem)
+

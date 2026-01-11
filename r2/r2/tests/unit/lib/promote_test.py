@@ -227,3 +227,4 @@ class TestPromoteRefunds(unittest.TestCase):
         self.campaign.refund_amount = 0.01999999
         refund_amount = get_refund_amount(self.campaign, self.billable_amount)
         self.assertEqual(refund_amount, self.billable_amount - 0.01)
+

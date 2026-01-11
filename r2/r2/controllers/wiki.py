@@ -347,7 +347,7 @@ class WikiController(TipprController):
         if g.disable_wiki and not c.user_is_admin:
             self.handle_error(403, 'WIKI_DOWN')
         if not c.site._should_wiki:
-            self.handle_error(404, 'NOT_WIKIABLE')  # /r/mod for an example
+            self.handle_error(404, 'NOT_WIKIABLE')  # /v/mod for an example
         frontpage = isinstance(c.site, DefaultVault)
         c.wiki_base_url = join_urls(c.site.path, 'wiki')
         c.wiki_api_url = join_urls(c.site.path, '/api/wiki')
@@ -546,4 +546,5 @@ class WikiApiController(WikiController):
         WikiController.pre(self)
         c.render_style = 'api'
         set_extension(request.environ, 'json')
+
 

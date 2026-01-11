@@ -792,7 +792,7 @@ class CloudSearchVaultSearchQuery(CloudSearchQuery):
     default_syntax = "plain"
 
     def preprocess_query(self, query):
-        # Expand search for /r/vault to include vault name.
+        # Expand search for /v/vault to include vault name.
         vault = query.strip('/').split('/')
         if len(vault) == 2 and vault[0] == 'r' and Vault.is_valid_name(vault[1]):
             query = '"{}" | {}'.format(query, vault[1])
@@ -825,3 +825,4 @@ class CloudSearchProvider(SearchProvider):
         amqp.handle_items('cloudsearch_changes', _run_changed, min_size=min_size,
                           limit=limit, drain=drain, sleep_time=sleep_time,
                           verbose=verbose)
+

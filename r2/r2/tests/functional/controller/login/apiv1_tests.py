@@ -127,3 +127,4 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             stack.enter_context(self.failed_captcha())
             res = self.do_register()
             self.assert_success(res)
+

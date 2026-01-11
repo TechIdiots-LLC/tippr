@@ -77,3 +77,4 @@ class TestEncryption(unittest.TestCase):
         from r2.lib.tracking import _decrypt
         decrypted = _decrypt(ENCRYPTED, SECRET)
         self.assertEqual(MESSAGE, decrypted)
+

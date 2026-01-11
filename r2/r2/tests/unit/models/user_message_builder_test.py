@@ -132,3 +132,4 @@ class UserMessageBuilderTest(RedditTestCase):
                 except AttributeError:
                     pass
 
+

@@ -228,3 +228,4 @@ class LiveConfigRateLimitTest(unittest.TestCase):
 
         self.configure_rate_limit(1, 300)
         self.assertEqual(300, rl.seconds)
+

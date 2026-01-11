@@ -439,7 +439,7 @@ class Link(Thing, Printable):
             res = "/v/{}/{}".format(vault.name, p)
         elif vault != c.site or force_domain:
             permalink_domain = get_domain(vault=False)
-            res = "{}://{}/r/{}/{}".format(g.default_scheme, permalink_domain,
+            res = "{}://{}/v/{}/{}".format(g.default_scheme, permalink_domain,
                                        vault.name, p)
         else:
             res = "/%s" % p
@@ -453,7 +453,7 @@ class Link(Thing, Printable):
     def make_canonical_link(self, vault, subdomain='www'):
         domain = '{}.{}'.format(subdomain, g.domain)
         path = 'comments/{}/{}/'.format(self._id36, title_to_url(self.title))
-        return '{}://{}/r/{}/{}'.format(g.default_scheme, domain, vault.name, path)
+        return '{}://{}/v/{}/{}'.format(g.default_scheme, domain, vault.name, path)
 
     def make_permalink_slow(self, force_domain=False):
         return self.make_permalink(self.vault_slow,
@@ -774,7 +774,7 @@ class Link(Thing, Printable):
                     url_Vault = urlparser.get_Vault()
                     if (url_Vault and
                             not isinstance(url_Vault, DefaultVault)):
-                        item.domain_str = ('{}/r/{}'
+                        item.domain_str = ('{}/v/{}'
                                            .format(item.domain,
                                                    url_Vault.name))
                 elif isinstance(item.media_object, dict):
@@ -1001,7 +1001,7 @@ class Link(Thing, Printable):
         """Returns an iterable of the OP and other official responders in a
         thread.
 
-        Designed for Q&A-type threads (eg /r/iama).
+        Designed for Q&A-type threads (eg /v/iama).
         """
         return (self.author_id,)
 
@@ -2368,7 +2368,7 @@ class Message(Thing, Printable):
                     # use special handling of admin distinguish because ALL
                     # messages from admin accounts are marked for admin
                     # distinguish, but we only want to use the admin distinguish
-                    # on messages sent from /r/tippr.net
+                    # on messages sent from /v/tippr.net
                     if (item.distinguished == "admin" and
                             "/v/%s" % item.vault.name == g.admin_message_acct):
                         Vault_distinguish = "admin"

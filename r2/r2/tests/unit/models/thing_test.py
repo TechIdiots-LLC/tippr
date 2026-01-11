@@ -482,3 +482,4 @@ class TestThingWriteConflict(RedditTestCase):
             thing._commit()
 
         tdb.transactions.rollback.assert_called_once_with()
+

@@ -107,3 +107,4 @@ class TestCSSFilter(unittest.TestCase):
     def test_attr_url(self):
         testcase = "*{background-image:attr(foobar url);}"
         self.assertInvalid(testcase)
+

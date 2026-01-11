@@ -628,7 +628,7 @@ def add_admin_distinguish(distinguish_attribs_list):
 
 def add_moderator_distinguish(distinguish_attribs_list, vault):
     link = '/v/%s/about/moderators' % vault.name
-    label = _('moderator of /r/%(tippr)s, speaking officially')
+    label = _('moderator of /v/%(tippr)s, speaking officially')
     label %= {'tippr': vault.name}
     add_attr(distinguish_attribs_list, 'M', label=label, link=link)
 
@@ -788,3 +788,4 @@ def update_query(base_url, **kw):
     parsed = UrlParser(base_url)
     parsed.update_query(**kw)
     return parsed.unparse()
+

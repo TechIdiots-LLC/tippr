@@ -35,3 +35,4 @@ class LoginRegTests(LoginRegBase, RedditControllerTestCase):
         self.assertEqual(res.status, 200)
         self.assertTrue("error" in res)
         self.assertTrue(code in res)
+

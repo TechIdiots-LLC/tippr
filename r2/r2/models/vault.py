@@ -1165,7 +1165,7 @@ class Vault(Thing, Printable, BaseSite):
         vault_ids = []
         over_18_vault_ids = []
 
-        # /r/promos is public but has special handling to make it unviewable
+        # /v/promos is public but has special handling to make it unviewable
         promo_vault_id = cls.get_promote_vaultid()
 
         for vault in vaults:
@@ -3052,3 +3052,4 @@ class VaultsActiveForFrontPage(tdb_cassandra.View):
         g.stats.simple_event("frontpage.filter_inactive", delta=num_filtered)
 
         return [int(vault_id36, 36) for vault_id36 in list(results.keys())]
+

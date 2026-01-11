@@ -555,7 +555,7 @@ def get_vault_comments(vault):
     return _get_vault_comments(vault._id)
 
 def _get_vault_comments(vault_id):
-    """the vault /r/foo/comments page"""
+    """the vault /v/foo/comments page"""
     q = Comment._query(Comment.c.vault_id == vault_id,
                        sort = desc('_date'))
     return make_results(q)
@@ -1877,3 +1877,4 @@ def consume_deleted_accounts():
                 delivery_mode=amqp.DELIVERY_TRANSIENT)
 
     amqp.consume_items('del_account_q', process_deleted_accounts)
+

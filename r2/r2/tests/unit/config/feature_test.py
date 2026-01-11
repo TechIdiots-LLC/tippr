@@ -348,3 +348,4 @@ class TestFeature(TestFeatureBase):
         self.world.is_admin = mock.Mock(return_value=True)
         featurestate = self.world._make_state(cfg)
         self.assertTrue(featurestate.is_enabled(user=gary))
+

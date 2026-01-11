@@ -188,3 +188,4 @@ class CollectionOrderTest(RedditTestCase):
             self.nsfw_non_spotlight,
         ]
         self._assert_scenario(unordered_collections)
+

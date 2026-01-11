@@ -199,13 +199,13 @@ class WikiRevisions(WikiBasePage):
 class WikiRecent(WikiBasePage):
     def __init__(self, revisions, **context):
         content = WikiPageRevisions(revisions)
-        context['wikiaction'] = ('revisions', _("Viewing recent revisions for /r/%s") % c.wiki_id)
+        context['wikiaction'] = ('revisions', _("Viewing recent revisions for /v/%s") % c.wiki_id)
         WikiBasePage.__init__(self, content, showtitle=True, **context)
 
 class WikiListing(WikiBasePage):
     def __init__(self, pages, linear_pages, **context):
         content = WikiPageListing(pages, linear_pages)
-        context['wikiaction'] = ('pages', _("Viewing pages for /r/%s") % c.wiki_id)
+        context['wikiaction'] = ('pages', _("Viewing pages for /v/%s") % c.wiki_id)
         description = [_("Below is a list of pages in this wiki visible to you in this vault.")]
         WikiBasePage.__init__(self, content, description=description, showtitle=True, **context)
 
@@ -216,4 +216,5 @@ class WikiDiscussions(WikiBasePage):
         description = [_("Discussions are site-wide links to this wiki page."),
                        _("Submit a link to this wiki page or see other discussions about this wiki page.")]
         WikiBasePage.__init__(self, content, page=page, description=description, **context)
+
 

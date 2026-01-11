@@ -132,3 +132,4 @@ class TestSoupTest(unittest.TestCase):
         # Chrome crashes on extremely long hostnames
         self.assertFragmentRaises('<a href="http://%s.com">foo</a>' % ("x" * 300),
                                   SoupDetectedCrasherError)
+

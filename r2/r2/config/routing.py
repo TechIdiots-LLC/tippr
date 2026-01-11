@@ -102,6 +102,8 @@ def make_map(config):
        requirements=dict(where="popular|new|banned|employee|gold|default|"
                                "quarantine|featured"))
     # If no vault is specified, might as well show a list of 'em.
+    mc('/v', controller='redirect', action='redirect', dest='/vaults')
+    # Backwards compatibility: redirect old /r to /vaults
     mc('/r', controller='redirect', action='redirect', dest='/vaults')
 
     mc('/vaults/mine/:where', controller='myreddits', action='listing',
@@ -136,7 +138,7 @@ def make_map(config):
     mc('/awards/received', controller='front', action='received_award')
 
     mc('/i18n', controller='redirect', action='redirect',
-       dest='https://www.tippr.net/r/i18n')
+       dest='https://www.tippr.net/v/i18n')
     mc('/feedback', controller='redirect', action='redirect',
        dest='/contact')
     mc('/contact', controller='frontunstyled', action='contact_us')
@@ -423,10 +425,10 @@ def make_map(config):
     mc("/api/multi/user/:username", controller="multiapi", action="list_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")
     mc("/api/multi/rename", controller="multiapi", action="multi_rename")
-    mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_Vault")
+    mc("/api/multi/*multipath/v/:srname", controller="multiapi", action="multi_Vault")
     mc("/api/multi/*multipath/description", controller="multiapi", action="multi_description")
     mc("/api/multi/*multipath", controller="multiapi", action="multi")
-    mc("/api/filter/*multipath/r/:srname", controller="multiapi", action="multi_Vault")
+    mc("/api/filter/*multipath/v/:srname", controller="multiapi", action="multi_Vault")
     mc("/api/filter/*multipath", controller="multiapi", action="multi")
 
     mc("/api/v1/:action", controller="oauth2frontend",

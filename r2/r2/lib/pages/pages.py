@@ -1849,7 +1849,7 @@ class LinkInfoPage(Tippr):
         # at the end, we'd like to always show the whole vault name, so
         # let's truncate the title while still ensuring the entire thing is
         # under the limit.
-        sr_fragment = " • /r/" + c.site.name if not c.default_sr else get_domain()
+        sr_fragment = " • /v/" + c.site.name if not c.default_sr else get_domain()
         max_link_title_length = 70 - len(sr_fragment)
 
         return {
@@ -4558,10 +4558,10 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.inventory = {}
         message = _("Create your ad on this page. Have questions? "
                     "Check out the [Help Center](%(help_center)s) "
-                    "or [/r/selfserve](%(selfserve)s).")
+                    "or [/v/selfserve](%(selfserve)s).")
         message %= {
             'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
-            'selfserve': 'https://www.tippr.net/r/selfserve'
+            'selfserve': 'https://www.tippr.net/v/selfserve'
         }
         self.infobar = TipprInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)
@@ -5816,3 +5816,4 @@ class GeotargetNotice(Templated):
 
 class ShareClose(Templated):
     pass
+
