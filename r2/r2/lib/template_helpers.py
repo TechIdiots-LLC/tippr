@@ -523,22 +523,6 @@ def add_vault(
     return u.unparse()
 
 
-def add_vault(path, sr_path=True, nocname=False, force_hostname=False,
-           retain_extension=True, force_https=False, force_extension=None):
-    """
-    Backwards-compatible alias for `add_vault` (historically `add_vault`).
-    Keeps old callers working after 'subreddit' -> 'vault' renames.
-    """
-    return add_vault(
-        path,
-        sr_path=sr_path,
-        nocname=nocname,
-        force_hostname=force_hostname,
-        retain_extension=retain_extension,
-        force_https=force_https,
-        force_extension=force_extension,
-    )
-
 def join_urls(*urls):
     """joins a series of urls together without doubles slashes"""
     if not urls:
