@@ -2930,7 +2930,7 @@ class ApiController(TipprController):
         elif form.has_errors('comment_score_hide_mins', errors.BAD_NUMBER):
             pass
         elif form.has_errors('related_Vaults', errors.VAULT_NOEXIST,
-                             errors.BAD_VAULT_NAME, errors.TOO_MANY_VaultS):
+                             errors.BAD_VAULT_NAME, errors.TOO_MANY_VAULTS):
             pass
         elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
             pass

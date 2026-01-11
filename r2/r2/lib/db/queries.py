@@ -551,10 +551,10 @@ def get_all_comments():
     q = Comment._query(sort = desc('_date'))
     return make_results(q)
 
-def get_sr_comments(vault):
-    return _get_sr_comments(vault._id)
+def get_vault_comments(vault):
+    return _get_vault_comments(vault._id)
 
-def _get_sr_comments(vault_id):
+def _get_vault_comments(vault_id):
     """the vault /r/foo/comments page"""
     q = Comment._query(Comment.c.vault_id == vault_id,
                        sort = desc('_date'))
@@ -1736,7 +1736,7 @@ def run_new_comments(limit=1000):
 
         bysrid = _by_srid(comments, False)
         for srid, sr_comments in bysrid.items():
-            add_queries([_get_sr_comments(srid)],
+            add_queries([_get_vault_comments(srid)],
                         insert_items=sr_comments)
 
     amqp.handle_items('newcomments_q', _run_new_comments, limit=limit)

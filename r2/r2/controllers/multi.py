@@ -165,7 +165,7 @@ class MultiApiController(TipprController):
         try:
             multi.add_vaults(sr_props)
         except TooManyVaultsError:
-            raise TipprError('MULTI_TOO_MANY_VaultS', code=409)
+            raise TipprError('MULTI_TOO_MANY_VAULTS', code=409)
 
         return sr_props
 

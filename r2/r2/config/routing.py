@@ -97,7 +97,7 @@ def make_map(config):
     mc('/vaults/create', controller='front', action='newreddit')
     mc('/vaults/search', controller='front', action='search_reddits')
     mc('/vaults/login', controller='forms', action='login')
-    mc('/vaults/:where', controller='reddits', action='listing',
+    mc('/vaults/:where', controller='vaults', action='listing',
        where='popular', conditions={'function':not_in_sr},
        requirements=dict(where="popular|new|banned|employee|gold|default|"
                                "quarantine|featured"))
@@ -113,7 +113,7 @@ def make_map(config):
     mc('/reddits/create', controller='front', action='newreddit')
     mc('/reddits/search', controller='front', action='search_reddits')
     mc('/reddits/login', controller='forms', action='login')
-    mc('/reddits/:where', controller='reddits', action='listing',
+    mc('/reddits/:where', controller='vaults', action='listing',
        where='popular', conditions={'function':not_in_sr},
        requirements=dict(where="popular|new|banned"))
 

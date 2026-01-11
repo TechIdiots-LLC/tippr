@@ -3303,7 +3303,7 @@ class VVaultList(Validator):
 
         if len(unique_srs) > self.limit:
             return self.set_error(
-                errors.TOO_MANY_VaultS, {'max': self.limit}, code=400)
+                errors.TOO_MANY_VAULTS, {'max': self.limit}, code=400)
 
         # return list of vault names as entered
         return vaults
