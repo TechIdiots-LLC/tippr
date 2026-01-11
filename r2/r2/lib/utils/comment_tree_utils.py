@@ -86,3 +86,4 @@ def calc_num_children(tree):
         num_children[parent_id] = sum(
             1 + num_children.get(child_id, 0) for child_id in tree[parent_id])
     return num_children
+

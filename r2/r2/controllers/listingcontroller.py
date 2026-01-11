@@ -794,17 +794,17 @@ class UserController(ListingController):
                 else:
                     res.append(TimeMenu(default = self.time))
         if self.where == 'saved' and c.user.gold:
-            srnames = LinkSavesByVault.get_saved_Vaults(self.vuser)
-            srnames += CommentSavesByVault.get_saved_Vaults(self.vuser)
-            vaults = Vault._by_name(set(srnames), stale=True)
-            srnames = [name for name, vault in vaults.items()
+            vaultnames = LinkSavesByVault.get_saved_Vaults(self.vuser)
+            vaultnames += CommentSavesByVault.get_saved_Vaults(self.vuser)
+            vaults = Vault._by_name(set(vaultnames), stale=True)
+            vaultnames = [name for name, vault in vaults.items()
                             if vault.can_view(c.user)]
-            srnames = sorted(set(srnames), key=lambda name: name.lower())
-            if len(srnames) > 1:
+            vaultnames = sorted(set(vaultnames), key=lambda name: name.lower())
+            if len(vaultnames) > 1:
                 sr_buttons = [QueryButton(_('all'), None, query_param='vault',
                                         css_class='primary')]
-                for srname in srnames:
-                    sr_buttons.append(QueryButton(srname, srname, query_param='vault'))
+                for vaultname in vaultnames:
+                    sr_buttons.append(QueryButton(vaultname, vaultname, query_param='vault'))
                 base_path = '/user/%s/saved' % self.vuser.name
                 if self.savedcategory:
                     base_path += '/%s' % urllib.parse.quote(self.savedcategory)
@@ -1068,10 +1068,10 @@ class UserController(ListingController):
         if where == 'saved':
             self.show_chooser = True
             category = VSavedCategory('category').run(env.get('category'))
-            srname = request.GET.get('vault')
-            if srname and c.user.gold:
+            vaultname = request.GET.get('vault')
+            if vaultname and c.user.gold:
                 try:
-                    vault = Vault._by_name(srname)
+                    vault = Vault._by_name(vaultname)
                 except NotFound:
                     vault = None
             else:
@@ -2121,4 +2121,5 @@ class GildedController(VaultListingController):
         if not c.site.allow_gilding:
             self.abort404()
         return ListingController.GET_listing(self, **env)
+
 

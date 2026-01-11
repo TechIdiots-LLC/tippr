@@ -1930,3 +1930,4 @@ class FlairListBuilder(UserListBuilder):
                 q._filter(Flair.c._thing2_id < self.after._id)
             else:
                 q._filter(Flair.c._thing2_id > self.after._id)
+

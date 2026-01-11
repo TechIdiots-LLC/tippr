@@ -58,3 +58,4 @@ class AwardsController(TipprController):
         res = AdminPage(content = AdminAwardWinners(award),
                         title='award winners').render()
         return res
+

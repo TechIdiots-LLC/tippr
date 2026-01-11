@@ -424,3 +424,4 @@ def _populate(after_id = None, estimate=54301242):
     for chunk in utils.in_chunks(q, chunk_size):
         chunk = [x for x in chunk if hasattr(x, 'link_id')]
         add_comments(chunk)
+

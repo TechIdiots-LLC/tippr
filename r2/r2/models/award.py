@@ -213,3 +213,4 @@ class Trophy(Relation(Account, Award)):
     @property
     def trophy_url(self):
         return getattr(self, "url", getattr(self._thing2, "url", None))
+

@@ -547,3 +547,4 @@ class WikiPageIniItem:
                 items[section] = item
         
         return items if return_dict else list(items.values())
+

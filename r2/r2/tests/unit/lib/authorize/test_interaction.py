@@ -333,3 +333,4 @@ class InteractionTest(RedditTestCase):
                                               campaign_id, amount)
             self.assertEqual(return_value[0], False)
 
+

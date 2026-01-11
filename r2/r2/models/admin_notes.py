@@ -67,3 +67,4 @@ class AdminNotesBySystem(tdb_cassandra.View):
     @classmethod
     def _rowkey(cls, system_name, subject):
         return "{}:{}".format(system_name, subject)
+

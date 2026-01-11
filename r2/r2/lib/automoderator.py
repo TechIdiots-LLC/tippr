@@ -1561,3 +1561,4 @@ def run():
 
     amqp.consume_items('automoderator_q', process_message, verbose=False)
 
+

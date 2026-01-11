@@ -1210,3 +1210,4 @@ def process_events(g, timeout=5.0, **kw):
                     response.raise_for_status()
 
     amqp.handle_items("event_collector", processor, **kw)
+

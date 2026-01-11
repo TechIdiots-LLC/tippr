@@ -102,3 +102,4 @@ class DelMsgTest(RedditControllerTestCase):
     def do_del_msg(self, name, **kw):
         return self.do_post("del_msg", {"id": name}, **kw)
 
+

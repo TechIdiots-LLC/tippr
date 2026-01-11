@@ -238,3 +238,4 @@ class FlairTemplateByVaultIndex(tdb_cassandra.Thing):
                 self._commit()
                 return True
         return False
+

@@ -3,10 +3,10 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from r2.lib.promote import (
-    get_nsfw_collections_srnames,
+    get_nsfw_collections_vaultnames,
     get_refund_amount,
     refund_campaign,
-    srnames_from_site,
+    vaultnames_from_site,
 )
 from r2.models import (
     Account,
@@ -19,27 +19,27 @@ from r2.models import (
 )
 from r2.tests import NonCache, RedditTestCase
 
-subscriptions_srnames = ["foo", "bar"]
-subscriptions = [Vault(name=srname) for srname in subscriptions_srnames]
-multi_srnames = ["bing", "bat"]
-multi_Vaults = [Vault(name=srname) for srname in multi_srnames]
-nice_srname = "mylittlepony"
-nsfw_srname = "pr0n"
+subscriptions_vaultnames = ["foo", "bar"]
+subscriptions = [Vault(name=vaultname) for vaultname in subscriptions_vaultnames]
+multi_vaultnames = ["bing", "bat"]
+multi_Vaults = [Vault(name=vaultname) for vaultname in multi_vaultnames]
+nice_vaultname = "mylittlepony"
+nsfw_vaultname = "pr0n"
 questionably_nsfw = "sexstories"
-quarantined_srname = "croontown"
+quarantined_vaultname = "croontown"
 naughty_subscriptions = [
-    Vault(name=nice_srname),
-    Vault(name=nsfw_srname, over_18=True),
-    Vault(name=quarantined_srname, quarantine=True),
+    Vault(name=nice_vaultname),
+    Vault(name=nsfw_vaultname, over_18=True),
+    Vault(name=quarantined_vaultname, quarantine=True),
 ]
-nsfw_collection_srnames = [questionably_nsfw, nsfw_srname]
+nsfw_collection_vaultnames = [questionably_nsfw, nsfw_vaultname]
 nsfw_collection = Collection(
     name="after dark",
-    sr_names=nsfw_collection_srnames,
+    sr_names=nsfw_collection_vaultnames,
     over_18=True
 )
 
-class TestSRNamesFromSite(RedditTestCase):
+class TestVaultNamesFromSite(RedditTestCase):
     def setUp(self):
         self.logged_in = Account(name="test")
         self.logged_out = FakeAccount()
@@ -47,86 +47,86 @@ class TestSRNamesFromSite(RedditTestCase):
         self.patch_g(memoizecache=NonCache())
 
     def test_frontpage_logged_out(self):
-        srnames = srnames_from_site(self.logged_out, Frontpage)
+        vaultnames = vaultnames_from_site(self.logged_out, Frontpage)
 
-        self.assertEqual(srnames, {Frontpage.name})
+        self.assertEqual(vaultnames, {Frontpage.name})
 
     @patch("r2.models.Vault.user_Vaults")
     def test_frontpage_logged_in(self, user_Vaults):
         user_Vaults.return_value = subscriptions
-        srnames = srnames_from_site(self.logged_in, Frontpage)
+        vaultnames = vaultnames_from_site(self.logged_in, Frontpage)
 
-        self.assertEqual(srnames, set(subscriptions_srnames) | {Frontpage.name})
+        self.assertEqual(vaultnames, set(subscriptions_vaultnames) | {Frontpage.name})
 
     def test_multi_logged_out(self):
         multi = MultiReddit(path="/user/test/m/multi_test", vaults=multi_Vaults)
-        srnames = srnames_from_site(self.logged_out, multi)
+        vaultnames = vaultnames_from_site(self.logged_out, multi)
 
-        self.assertEqual(srnames, set(multi_srnames))
+        self.assertEqual(vaultnames, set(multi_vaultnames))
 
     @patch("r2.models.Vault.user_Vaults")
     def test_multi_logged_in(self, user_Vaults):
         user_Vaults.return_value = subscriptions
         multi = MultiReddit(path="/user/test/m/multi_test", vaults=multi_Vaults)
-        srnames = srnames_from_site(self.logged_in, multi)
+        vaultnames = vaultnames_from_site(self.logged_in, multi)
 
-        self.assertEqual(srnames, set(multi_srnames))
+        self.assertEqual(vaultnames, set(multi_vaultnames))
 
     def test_Vault_logged_out(self):
-        srname = "test1"
-        vault = Vault(name=srname)
-        srnames = srnames_from_site(self.logged_out, vault)
+        vaultname = "test1"
+        vault = Vault(name=vaultname)
+        vaultnames = vaultnames_from_site(self.logged_out, vault)
 
-        self.assertEqual(srnames, {srname})
+        self.assertEqual(vaultnames, {vaultname})
 
     @patch("r2.models.Vault.user_Vaults")
     def test_Vault_logged_in(self, user_Vaults):
         user_Vaults.return_value = subscriptions
-        srname = "test1"
-        vault = Vault(name=srname)
-        srnames = srnames_from_site(self.logged_in, vault)
+        vaultname = "test1"
+        vault = Vault(name=vaultname)
+        vaultnames = vaultnames_from_site(self.logged_in, vault)
 
-        self.assertEqual(srnames, {srname})
+        self.assertEqual(vaultnames, {vaultname})
 
     @patch("r2.models.Vault.user_Vaults")
     def test_quarantined_subscriptions_are_never_included(self, user_Vaults):
         user_Vaults.return_value = naughty_subscriptions
         vault = Frontpage
-        srnames = srnames_from_site(self.logged_in, vault)
+        vaultnames = vaultnames_from_site(self.logged_in, vault)
 
-        self.assertEqual(srnames, {vault.name} | {nice_srname})
-        self.assertTrue(len(srnames & {quarantined_srname}) == 0)
+        self.assertEqual(vaultnames, {vault.name} | {nice_vaultname})
+        self.assertTrue(len(vaultnames & {quarantined_vaultname}) == 0)
 
     @patch("r2.models.Vault.user_Vaults")
     def test_nsfw_subscriptions_arent_included_when_viewing_frontpage(self, user_Vaults):
         user_Vaults.return_value = naughty_subscriptions
-        srnames = srnames_from_site(self.logged_in, Frontpage)
+        vaultnames = vaultnames_from_site(self.logged_in, Frontpage)
 
-        self.assertEqual(srnames, {Frontpage.name} | {nice_srname})
-        self.assertTrue(len(srnames & {nsfw_srname}) == 0)
+        self.assertEqual(vaultnames, {Frontpage.name} | {nice_vaultname})
+        self.assertTrue(len(vaultnames & {nsfw_vaultname}) == 0)
 
     @patch("r2.models.Collection.get_all")
-    def test_get_nsfw_collections_srnames(self, get_all):
+    def test_get_nsfw_collections_vaultnames(self, get_all):
         get_all.return_value = [nsfw_collection]
-        srnames = get_nsfw_collections_srnames()
+        vaultnames = get_nsfw_collections_vaultnames()
 
-        self.assertEqual(srnames, set(nsfw_collection_srnames))
+        self.assertEqual(vaultnames, set(nsfw_collection_vaultnames))
 
-    @patch("r2.lib.promote.get_nsfw_collections_srnames")
-    def test_remove_nsfw_collection_srnames_on_frontpage(self, get_nsfw_collections_srnames):
-        get_nsfw_collections_srnames.return_value = set(nsfw_collection.sr_names)
-        srname = "test1"
-        vault = Vault(name=srname)
+    @patch("r2.lib.promote.get_nsfw_collections_vaultnames")
+    def test_remove_nsfw_collection_vaultnames_on_frontpage(self, get_nsfw_collections_vaultnames):
+        get_nsfw_collections_vaultnames.return_value = set(nsfw_collection.sr_names)
+        vaultname = "test1"
+        vault = Vault(name=vaultname)
         Vault.user_Vaults = MagicMock(return_value=[
-            Vault(name=nice_srname),
+            Vault(name=nice_vaultname),
             Vault(name=questionably_nsfw),
         ])
 
-        frontpage_srnames = srnames_from_site(self.logged_in, Frontpage)
-        swf_srnames = srnames_from_site(self.logged_in, vault)
+        frontpage_vaultnames = vaultnames_from_site(self.logged_in, Frontpage)
+        swf_vaultnames = vaultnames_from_site(self.logged_in, vault)
 
-        self.assertEqual(frontpage_srnames, {Frontpage.name, nice_srname})
-        self.assertTrue(len(frontpage_srnames & {questionably_nsfw}) == 0)
+        self.assertEqual(frontpage_vaultnames, {Frontpage.name, nice_vaultname})
+        self.assertTrue(len(frontpage_vaultnames & {questionably_nsfw}) == 0)
 
 
 class TestPromoteRefunds(unittest.TestCase):
@@ -227,4 +227,6 @@ class TestPromoteRefunds(unittest.TestCase):
         self.campaign.refund_amount = 0.01999999
         refund_amount = get_refund_amount(self.campaign, self.billable_amount)
         self.assertEqual(refund_amount, self.billable_amount - 0.01)
+
+
 

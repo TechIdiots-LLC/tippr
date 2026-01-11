@@ -128,3 +128,4 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             res = self.do_register()
             self.assert_success(res)
 
+

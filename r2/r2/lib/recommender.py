@@ -342,3 +342,4 @@ class SRRecommendation(tdb_cassandra.View):
         # next, sort descending by number of times the rec appeared. since
         # python sort is stable, tied items will still be ordered by rank
         return sorted(recs, key=itemgetter(1), reverse=True)
+

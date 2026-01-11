@@ -69,3 +69,4 @@ def make_url(namespace, max_age):
 
     return urllib.parse.urlunparse(("wss", g.websocket_host, namespace,
                                None, query_string, None))
+

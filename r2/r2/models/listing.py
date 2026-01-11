@@ -409,3 +409,4 @@ class SpotlightListing(Listing):
             t.num_text = ""
         return Wrapped(self)
 
+

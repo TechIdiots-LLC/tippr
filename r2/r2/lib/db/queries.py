@@ -1878,3 +1878,4 @@ def consume_deleted_accounts():
 
     amqp.consume_items('del_account_q', process_deleted_accounts)
 
+

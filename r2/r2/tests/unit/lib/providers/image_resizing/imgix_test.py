@@ -90,3 +90,4 @@ class TestImgixResizer(RedditTestCase):
         url = self.provider.resize_image(image, censor_nsfw=True)
         self.assertEqual(url, 'https://example.com/a.jpg?blur=600&px=32')
 
+

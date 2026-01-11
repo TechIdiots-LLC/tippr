@@ -185,3 +185,4 @@ class PluginLoader:
     def get_documented_controllers(self):
         for plugin in self:
             yield from plugin.get_documented_controllers()
+

@@ -335,3 +335,4 @@ class TestSubmit(unittest.TestCase):
 
         self.assertEqual(self.links_by_url_remove_link.call_count, 1)
 
+

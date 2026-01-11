@@ -351,3 +351,4 @@ class Results:
                                 if vault.can_view(c.user)]
 
         return self._Vaults
+

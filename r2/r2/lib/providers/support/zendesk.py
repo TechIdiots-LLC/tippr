@@ -171,3 +171,4 @@ class ZenDeskProvider(TicketProvider):
             return None
             
         return json.loads(response.content)['ticket']
+

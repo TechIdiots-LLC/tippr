@@ -127,3 +127,4 @@ class UpperMapper(Mapper):
 
 def test_parallel():
     return mr_map_parallel(UpperMapper())
+

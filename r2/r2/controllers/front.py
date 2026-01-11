@@ -2015,3 +2015,4 @@ class FormsController(TipprController):
 
 class FrontUnstyledController(FrontController):
     allow_stylesheets = False
+

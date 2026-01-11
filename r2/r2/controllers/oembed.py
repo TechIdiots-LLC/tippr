@@ -198,3 +198,4 @@ class OEmbedController(MinimalController):
             abort(403)
         except NotImplementedError:
             abort(404)
+

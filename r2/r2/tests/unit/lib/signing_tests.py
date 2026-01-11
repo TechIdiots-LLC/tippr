@@ -170,3 +170,4 @@ class SigningTests(RedditTestCase):
             has_mac=True,
         )
 
+

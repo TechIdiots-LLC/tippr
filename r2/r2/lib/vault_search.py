@@ -84,3 +84,4 @@ def popular_searches(include_over_18=True):
             top_searches[query] = r
     return top_searches
 
+

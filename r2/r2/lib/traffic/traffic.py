@@ -438,3 +438,4 @@ def process_hour(hour_date):
         files_missing = [f for f in files_missing
                            if not s3_key_exists(s3_connection, f)]
     process_pixel_log(os.path.join(log_dir, '*'))
+

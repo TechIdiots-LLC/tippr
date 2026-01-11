@@ -68,3 +68,4 @@ def organic_links(user):
     vault_ids.sort()
     return cached_organic_links(*vault_ids)[:organic_max_length]
 
+

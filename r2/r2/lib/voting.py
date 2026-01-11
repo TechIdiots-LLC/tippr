@@ -416,3 +416,4 @@ def consume_comment_vote_queue(qname="vote_comment_q"):
         timer.flush()
 
     amqp.consume_items(qname, process_message, verbose=False)
+

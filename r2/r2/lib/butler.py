@@ -130,3 +130,4 @@ def run():
     amqp.consume_items("butler_q",
                        process_message,
                        verbose=True)
+

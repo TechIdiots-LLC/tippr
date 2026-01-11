@@ -65,3 +65,4 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
         kw['dest'] = self.dest
         return super().make_qs(**kw)
 
+

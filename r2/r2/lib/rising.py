@@ -95,3 +95,4 @@ def normalized_rising(vault_ids):
     merged = heapq.merge(*list(tuples_by_srid.values()))
 
     return [link_name for norm_score, score, link_name in merged]
+

@@ -121,3 +121,4 @@ def sitemap_index(count):
         loc_elem.text = url
     return _stringify_xml(sm_elem)
 
+

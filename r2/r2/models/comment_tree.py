@@ -207,3 +207,4 @@ class CommentTree:
 
         link.num_comments = sum(1 for c in comments if not c._deleted)
         link._commit()
+

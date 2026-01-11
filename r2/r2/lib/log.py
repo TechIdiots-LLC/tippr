@@ -261,3 +261,4 @@ class LoggingErrorReporter(Reporter):
         # configuration on the syslog side and potentially in apptail as well
         for line in text.splitlines():
             g.log.warning(line)
+

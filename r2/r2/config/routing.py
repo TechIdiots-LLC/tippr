@@ -415,7 +415,7 @@ def make_map(config):
 
     mc('/api/:action', controller='api')
     
-    mc('/api/recommend/vault/:srnames', controller='api',
+    mc('/api/recommend/vault/:vaultnames', controller='api',
        action='Vault_recommendations')
 
     mc('/api/server_seconds_visibility', controller='api',
@@ -425,10 +425,10 @@ def make_map(config):
     mc("/api/multi/user/:username", controller="multiapi", action="list_multis")
     mc("/api/multi/copy", controller="multiapi", action="multi_copy")
     mc("/api/multi/rename", controller="multiapi", action="multi_rename")
-    mc("/api/multi/*multipath/v/:srname", controller="multiapi", action="multi_Vault")
+    mc("/api/multi/*multipath/v/:vaultname", controller="multiapi", action="multi_Vault")
     mc("/api/multi/*multipath/description", controller="multiapi", action="multi_description")
     mc("/api/multi/*multipath", controller="multiapi", action="multi")
-    mc("/api/filter/*multipath/v/:srname", controller="multiapi", action="multi_Vault")
+    mc("/api/filter/*multipath/v/:vaultname", controller="multiapi", action="multi_Vault")
     mc("/api/filter/*multipath", controller="multiapi", action="multi")
 
     mc("/api/v1/:action", controller="oauth2frontend",
@@ -499,3 +499,4 @@ def make_map(config):
     mc("/*url", controller='front', action='catchall')
 
     return map
+

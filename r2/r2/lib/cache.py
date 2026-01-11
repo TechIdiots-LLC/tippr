@@ -1137,3 +1137,4 @@ def test_stale():
     assert len(ca.localcache) == 0
     assert ca.get_multi(['foo'], stale=False) == {'foo': 'baz'}
     ca.localcache.clear()
+

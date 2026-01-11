@@ -690,3 +690,4 @@ def refund_transaction(customer_id, payment_profile_id, amount, transaction_id):
 
     if not success:
         raise TransactionError(res.response_reason_text)
+

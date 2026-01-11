@@ -256,3 +256,4 @@ class JQueryResponse(JsonResponse):
     def refresh(self):
         return self.top_node.transform(self, "refresh", [])
 
+

@@ -334,3 +334,4 @@ class TestValidEmail(ValidatorTests):
     def test_two_hostnames(self):
         self._test_failure('test@example.com@example.com')
 
+

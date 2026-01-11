@@ -440,3 +440,4 @@ class Mutator:
         # execute the batch
         self.session.execute(batch)
         self._ops = []
+

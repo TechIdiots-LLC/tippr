@@ -658,3 +658,4 @@ def require_oauth2_scope(*scopes):
 def allow_oauth2_access(fn):
     fn.oauth2_perms = {"required_scopes": [], "oauth2_allowed": True}
     return fn
+

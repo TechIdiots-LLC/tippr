@@ -338,3 +338,4 @@ class CommentOrderTest(RedditTestCase):
         self.assertEqual(builder.missing_root_comments, set())
         self.assertEqual(builder.missing_root_count, 0)
 
+

@@ -115,3 +115,4 @@ class ButtonsController(TipprController):
         return BoringPage(_("tippr widget"),
                           show_sidebar = False, 
                           content=WidgetDemoPanel()).render()
+

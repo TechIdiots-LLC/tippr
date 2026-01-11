@@ -75,3 +75,4 @@ https://www.tippr.net/a.jpg/b''')
         url = _get_scrape_url(post)
         self.assertEqual(url, 'https://example.com')
 
+

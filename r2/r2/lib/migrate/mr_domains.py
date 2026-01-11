@@ -156,3 +156,4 @@ def write_permacache(fd = sys.stdin):
     mr_tools.mr_reduce_max_per_key(lambda x: list(map(float, x[:-1])), num=1000,
                                    post=store_keys,
                                    fd = fd)
+

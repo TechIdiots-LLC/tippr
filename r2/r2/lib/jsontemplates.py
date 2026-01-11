@@ -1637,3 +1637,4 @@ class RulesJsonTemplate(JsonTemplate):
                 rule["kind"] = "all"
 
         return ObjectTemplate(rules)
+

@@ -125,11 +125,11 @@ def promotraffic_url(l): # new traffic url
 def promo_edit_url(l):
     return "{}/promoted/edit_promo/{}".format(_base_host(), l._id36)
 
-def view_live_url(link, campaign, srname):
+def view_live_url(link, campaign, vaultname):
     is_mobile_web = campaign.platform == "mobile_web"
     host = _base_host(is_mobile_web=is_mobile_web)
-    if srname:
-        host += '/v/%s' % srname
+    if vaultname:
+        host += '/v/%s' % vaultname
     return '{}/?ad={}'.format(host, link._fullname)
 
 def payment_url(action, link_id36, campaign_id36):
@@ -470,7 +470,7 @@ def terminate_campaign(link, campaign):
                                             if camp._id != campaign._id)
     if not is_live:
         update_promote_status(link, PROMOTE_STATUS.finished)
-        all_live_promo_srnames(_update=True)
+        all_live_promo_vaultnames(_update=True)
 
     msg = 'terminated campaign {} (original end {})'.format(campaign._id,
                                                         original_end.date())
@@ -669,7 +669,7 @@ def accept_promotion(link):
                 is_live = True
 
     if is_live:
-        all_live_promo_srnames(_update=True)
+        all_live_promo_vaultnames(_update=True)
 
 
 def flag_payment(link, reason):
@@ -712,7 +712,7 @@ def reject_promotion(link, reason=None, notify_why=True):
         emailer.reject_promo(link, reason=(reason if notify_why else None))
 
     if was_live:
-        all_live_promo_srnames(_update=True)
+        all_live_promo_vaultnames(_update=True)
 
 
 def unapprove_promotion(link):
@@ -899,7 +899,7 @@ def make_daily_promotions():
         emailer.finished_promo(link)
 
     # update vaults with promos
-    all_live_promo_srnames(_update=True)
+    all_live_promo_vaultnames(_update=True)
 
     _mark_promos_updated()
     finalize_completed_campaigns(daysago=1)
@@ -1003,44 +1003,44 @@ def refund_campaign(link, camp, refund_amount, billable_amount,
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
-@memoize('all_live_promo_srnames', stale=True)
-def all_live_promo_srnames():
+@memoize('all_live_promo_vaultnames', stale=True)
+def all_live_promo_vaultnames():
     now = promo_datetime_now()
-    srnames = itertools.chain.from_iterable(
+    vaultnames = itertools.chain.from_iterable(
         camp.target.Vault_names for camp, link in get_promos(now)
                                     if is_live_promo(link, camp)
     )
-    return set(srnames)
+    return set(vaultnames)
 
-@memoize('get_nsfw_collections_srnames', time=(60*60), stale=True)
-def get_nsfw_collections_srnames():
+@memoize('get_nsfw_collections_vaultnames', time=(60*60), stale=True)
+def get_nsfw_collections_vaultnames():
     all_collections = Collection.get_all()
     nsfw_collections = [col for col in all_collections if col.over_18]
-    srnames = itertools.chain.from_iterable(
+    vaultnames = itertools.chain.from_iterable(
         col.sr_names for col in nsfw_collections
     )
 
-    return set(srnames)
+    return set(vaultnames)
 
 
 def is_site_over18(site):
     # a site should be considered nsfw if it's included in a
     # nsfw collection because nsfw ads can target nsfw collections.
-    nsfw_collection_srnames = get_nsfw_collections_srnames()
-    return site.over_18 or site.name in nsfw_collection_srnames
+    nsfw_collection_vaultnames = get_nsfw_collections_vaultnames()
+    return site.over_18 or site.name in nsfw_collection_vaultnames
 
 
-def srnames_from_site(user, site, include_subscriptions=True):
+def vaultnames_from_site(user, site, include_subscriptions=True):
     is_logged_in = user and not isinstance(user, FakeAccount)
     over_18 = is_site_over18(site)
-    srnames = set()
+    vaultnames = set()
 
     if not isinstance(site, FakeVault):
-        srnames.add(site.name)
+        vaultnames.add(site.name)
     elif isinstance(site, MultiReddit):
-        srnames = srnames | {vault.name for vault in site.vaults}
+        vaultnames = vaultnames | {vault.name for vault in site.vaults}
     else:
-        srnames.add(Frontpage.name)
+        vaultnames.add(Frontpage.name)
 
         if is_logged_in and include_subscriptions:
             subscriptions = Vault.user_Vaults(
@@ -1055,19 +1055,19 @@ def srnames_from_site(user, site, include_subscriptions=True):
                 subscriptions,
             ))
 
-            subscription_srnames = {vault.name for vault in subscriptions}
+            subscription_vaultnames = {vault.name for vault in subscriptions}
 
             # remove any subscriptions that may have nsfw ads targeting
             # them because they're apart of a nsfw collection.
-            nsfw_collection_srnames = get_nsfw_collections_srnames()
+            nsfw_collection_vaultnames = get_nsfw_collections_vaultnames()
 
             if not over_18:
-                subscription_srnames = (subscription_srnames -
-                    nsfw_collection_srnames)
+                subscription_vaultnames = (subscription_vaultnames -
+                    nsfw_collection_vaultnames)
 
-            srnames = srnames | subscription_srnames
+            vaultnames = vaultnames | subscription_vaultnames
 
-    return srnames
+    return vaultnames
 
 
 def keywords_from_context(
@@ -1076,7 +1076,7 @@ def keywords_from_context(
         live_promos_only=True,
     ):
 
-    keywords = srnames_from_site(
+    keywords = vaultnames_from_site(
         user, site,
         include_subscriptions,
     )
@@ -1085,8 +1085,8 @@ def keywords_from_context(
     # whether or not there exists an ad for that keyword
     # and can remove un-targeted keywords accordingly.
     if live_promos_only:
-        live_srnames = all_live_promo_srnames()
-        keywords = live_srnames.intersection(keywords)
+        live_vaultnames = all_live_promo_vaultnames()
+        keywords = live_vaultnames.intersection(keywords)
 
     if (not isinstance(site,FakeVault) and
             site._downs > g.live_config["ads_popularity_threshold"]):
@@ -1136,11 +1136,11 @@ def get_live_promotions(sr_names):
         time=60,
         stale=True,
     )
-    promos_by_srname = {
+    promos_by_vaultname = {
         REVERSED_NAMES.get(name, name): val
         for name, val in promos_by_sanitized_name.items()
     }
-    return itertools.chain.from_iterable(iter(promos_by_srname.values()))
+    return itertools.chain.from_iterable(iter(promos_by_vaultname.values()))
 
 
 def lottery_promoted_links(sr_names, n=10):
@@ -1286,3 +1286,6 @@ def Run(verbose=True):
 
     if verbose:
         print("%s promote.py:Run() - finished" % datetime.datetime.now(g.tz))
+
+
+

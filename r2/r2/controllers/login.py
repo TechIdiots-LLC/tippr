@@ -180,3 +180,4 @@ def handle_register(
 
         controller._login(responder, user, rem)
         _event(error=None)
+

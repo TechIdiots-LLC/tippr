@@ -32,3 +32,4 @@ class NoOpImageResizingProvider(ImageResizingProvider):
     def resize_image(self, image, width=None, censor_nsfw=False, max_ratio=None):
         # The simplest solution: just pass it on through.
         return image['url']
+

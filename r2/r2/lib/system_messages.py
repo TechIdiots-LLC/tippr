@@ -72,10 +72,10 @@ def notify_user_added(rel_type, author, user, target):
     if not msgs:
         return
 
-    srname = target.path.rstrip("/")
+    vaultname = target.path.rstrip("/")
     d = {
-        "url": srname,
-        "title": "{}: {}".format(srname, target.title),
+        "url": vaultname,
+        "title": "{}: {}".format(vaultname, target.title),
         "author": "/u/" + author.name,
         "user": "/u/" + user.name,
     }
@@ -168,3 +168,4 @@ def send_ban_message(vault, mod, user, note=None, days=None, new=True):
         mod, user, subject, message, request.ip, vault=vault, from_vault=True,
         can_send_email=False)
     queries.new_message(item, inbox_rel, update_modmail=False)
+

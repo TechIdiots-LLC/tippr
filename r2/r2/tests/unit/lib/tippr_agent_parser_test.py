@@ -215,3 +215,4 @@ class HAPIntegrationTests(RedditTestCase):
         outs = detect(user_agent)
         self.assertEqual(outs['browser']['name'], BaconReaderDetector.name)
 
+

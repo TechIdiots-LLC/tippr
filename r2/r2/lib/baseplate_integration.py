@@ -172,3 +172,4 @@ class R2SpanObserver(SpanObserver):
             error = exc_info[1]
             g.log.warning("%s: error: %s", self.metric_name, error)
             g.stats.simple_event("{}.error".format(self.metric_name))
+

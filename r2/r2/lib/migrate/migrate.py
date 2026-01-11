@@ -269,3 +269,4 @@ def populate_spam_filtered():
         with CachedQueryMutator() as m:
             m.insert(get_spam_filtered_links(vault), insert_links)
             m.insert(get_spam_filtered_comments(vault), insert_comments)
+

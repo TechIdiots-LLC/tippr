@@ -290,3 +290,4 @@ def write_permacache_from_dir(dirname):
 def write_permacache_from_file(fname):
     with open(fname) as fd:
         top1k_writepermacache(fd = fd)
+

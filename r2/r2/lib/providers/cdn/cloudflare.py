@@ -93,3 +93,4 @@ class CloudFlareCdnProvider(CdnProvider):
         self._do_content_purge(url_altered)
 
         return True
+

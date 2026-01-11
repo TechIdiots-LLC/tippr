@@ -98,3 +98,4 @@ def store_sitemaps_in_s3(vaults):
         sitemap_count += 1
 
     store_sitemap_index(s3_client, bucket_name, sitemap_count)
+

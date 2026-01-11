@@ -173,3 +173,4 @@ class DefaultExploreSettings:
         self.discovery = True
         self.rising = True
         self.nsfw = False
+

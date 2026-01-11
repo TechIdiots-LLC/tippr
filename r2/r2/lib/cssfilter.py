@@ -581,3 +581,4 @@ def validate_css(stylesheet, images):
     assert isinstance(stylesheet, str)
     validator = StylesheetValidator(images)
     return validator.parse_and_validate(stylesheet)
+

@@ -483,3 +483,4 @@ class TestThingWriteConflict(RedditTestCase):
 
         tdb.transactions.rollback.assert_called_once_with()
 
+

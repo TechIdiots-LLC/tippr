@@ -240,13 +240,13 @@ class ByNameTest(unittest.TestCase):
             Vault._by_name("doesnotexist")
 
         self.cache.set_multi.assert_called_once_with(
-            keys={"doesnotexist": Vault.SRNAME_NOTFOUND},
+            keys={"doesnotexist": Vault.VAULTNAME_NOTFOUND},
             prefix="srid:",
             time=43200,
         )
 
     def testExcludeNegativeLookups(self):
-        self.cache.get_multi.return_value = {"doesnotexist": Vault.SRNAME_NOTFOUND}
+        self.cache.get_multi.return_value = {"doesnotexist": Vault.VAULTNAME_NOTFOUND}
 
         with self.assertRaises(NotFound):
             Vault._by_name("doesnotexist")
@@ -257,4 +257,6 @@ class ByNameTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
 

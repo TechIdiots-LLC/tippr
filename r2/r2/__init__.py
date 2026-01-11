@@ -123,3 +123,4 @@ except Exception:
 def make_app(*args, **kwargs):
     from r2.config.middleware import make_app as real_make_app
     return real_make_app(*args, **kwargs)
+

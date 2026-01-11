@@ -87,3 +87,4 @@ class LoidTests(RedditTestCase):
         loid.save()
         self.assertFalse(bool(context.cookies.add.called))
 
+

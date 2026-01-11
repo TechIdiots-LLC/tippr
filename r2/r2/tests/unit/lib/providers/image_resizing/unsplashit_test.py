@@ -46,3 +46,4 @@ class TestLocalResizer(unittest.TestCase):
             self.assertEqual(url, 'https://unsplash.it/%d/%d' % (width,
                 width*2))
 
+

@@ -281,3 +281,4 @@ class TestEquality(unittest.TestCase):
         u2.update_query(page='ｕｎｉｃｏｄｅ：（')
         self.assertEqual(u, u2)
 
+

@@ -179,3 +179,4 @@ class LoginRegBase:
             res = self.do_register()
             self.assert_success(res)
 
+

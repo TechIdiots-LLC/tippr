@@ -108,3 +108,4 @@ def set_up_comment_embed(vault, thing, showedits):
 
 def is_embed():
     return c.render_style == "iframe"
+

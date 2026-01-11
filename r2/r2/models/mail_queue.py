@@ -462,3 +462,4 @@ def opt_count():
     s = sa.select([sa.func.count(o.c.email)])
     res = s.execute().fetchone()
     return int(res[0])
+

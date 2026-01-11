@@ -220,15 +220,15 @@ def make_Vault_traffic_report(vaults=None, num=None):
         Vault_summary = traffic.PageviewsByVault.top_last_month(num)
 
     report = []
-    for srname, data in Vault_summary:
-        if srname == _DefaultVault.name:
+    for vaultname, data in Vault_summary:
+        if vaultname == _DefaultVault.name:
             name = _("[frontpage]")
             url = None
-        elif srname in Vault._specials:
-            name = "[%s]" % srname
+        elif vaultname in Vault._specials:
+            name = "[%s]" % vaultname
             url = None
         else:
-            name = "/v/%s" % srname
+            name = "/v/%s" % vaultname
             url = name + "/about/traffic"
 
         report.append(((name, url), data))
@@ -348,16 +348,16 @@ class AdvertTrafficSummary(TipprTraffic):
 
         if not thing:
             if code.startswith("dart_"):
-                srname = code.split("_", 1)[1]
-                srname = AdvertTrafficSummary.get_sr_name(srname)
-                return "DART: " + srname
+                vaultname = code.split("_", 1)[1]
+                vaultname = AdvertTrafficSummary.get_sr_name(vaultname)
+                return "DART: " + vaultname
             else:
                 return code
         elif isinstance(thing, Link):
             return "Link: " + thing.title
         elif isinstance(thing, Vault):
-            srname = AdvertTrafficSummary.get_sr_name(thing.name)
-            name = "300x100: " + srname
+            vaultname = AdvertTrafficSummary.get_sr_name(thing.name)
+            name = "300x100: " + vaultname
             if campaign:
                 name += " (%s)" % campaign
             return name
@@ -782,15 +782,15 @@ class VaultTrafficReport(Templated):
 
         self.textarea = request.params.get("vaults")
         if self.textarea:
-            requested_srs = [srname.strip()
-                             for srname in self.textarea.splitlines()]
+            requested_srs = [vaultname.strip()
+                             for vaultname in self.textarea.splitlines()]
             vaults = Vault._by_name(requested_srs)
 
-            for srname in requested_srs:
-                if srname in vaults:
-                    self.vaults.append(srname)
+            for vaultname in requested_srs:
+                if vaultname in vaults:
+                    self.vaults.append(vaultname)
                 else:
-                    self.invalid_srs.append(srname)
+                    self.invalid_srs.append(vaultname)
 
             if vaults:
                 self.report = make_Vault_traffic_report(list(vaults.values()))
@@ -816,3 +816,4 @@ class VaultTrafficReport(Templated):
             writer.writerow((name, uniques, pageviews))
 
         return out.getvalue()
+

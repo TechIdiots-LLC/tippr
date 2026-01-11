@@ -189,3 +189,4 @@ class CollectionOrderTest(RedditTestCase):
         ]
         self._assert_scenario(unordered_collections)
 
+

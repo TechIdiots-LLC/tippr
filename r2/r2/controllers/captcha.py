@@ -57,3 +57,4 @@ class CaptchaController(TipprController):
         response.content_type = "image/png"
         return f.getvalue()
     
+

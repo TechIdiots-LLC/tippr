@@ -78,3 +78,4 @@ class TestEncryption(unittest.TestCase):
         decrypted = _decrypt(ENCRYPTED, SECRET)
         self.assertEqual(MESSAGE, decrypted)
 
+

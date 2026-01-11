@@ -1505,3 +1505,4 @@ class DenormalizedView(View):
             return objs[0]
         else:
             return objs
+

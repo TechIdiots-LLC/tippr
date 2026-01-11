@@ -239,3 +239,4 @@ class SoupUnsupportedEntityError(SoupReprError):
     def __init__(self, obj, entity=None):
         self.entity = entity
         SoupReprError.__init__(self, obj)
+

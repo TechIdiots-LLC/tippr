@@ -4998,21 +4998,21 @@ class ApiController(TipprController):
                 self.COMMON_REDDIT_HEADERS
 
     @csrf_exempt
-    @validate(srnames=VPrintable("srnames", max_length=2100))
-    def POST_request_promo(self, srnames):
+    @validate(vaultnames=VPrintable("vaultnames", max_length=2100))
+    def POST_request_promo(self, vaultnames):
         self.OPTIONS_request_promo()
 
-        if not srnames:
+        if not vaultnames:
             return
 
-        srnames = srnames.split('+')
+        vaultnames = vaultnames.split('+')
         try:
-            srnames.remove(Frontpage.name)
-            srnames.append('')
+            vaultnames.remove(Frontpage.name)
+            vaultnames.append('')
         except ValueError:
             pass
 
-        promo_tuples = promote.lottery_promoted_links(srnames, n=10)
+        promo_tuples = promote.lottery_promoted_links(vaultnames, n=10)
         builder = CampaignBuilder(promo_tuples,
                                   wrap=default_thing_wrapper(),
                                   keep_fn=promote.promo_keep_fn,
@@ -5036,13 +5036,13 @@ class ApiController(TipprController):
         c.user._commit()
 
     @require_oauth2_scope("read")
-    @validate(vaults=VVaultByNames("srnames"),
+    @validate(vaults=VVaultByNames("vaultnames"),
               to_omit=VVaultByNames("omit", required=False))
-    @api_doc(api_section.vaults, uri='/api/recommend/vault/{srnames}')
+    @api_doc(api_section.vaults, uri='/api/recommend/vault/{vaultnames}')
     def GET_Vault_recommendations(self, vaults, to_omit):
         """Return vaults recommended for the given vault(s).
 
-        Gets a list of vaults recommended for `srnames`, filtering out any
+        Gets a list of vaults recommended for `vaultnames`, filtering out any
         that appear in the optional `omit` param.
 
         """
@@ -5059,7 +5059,7 @@ class ApiController(TipprController):
     @validatedForm(VUser(),
                    VModhash(),
                    action=VOneOf("type", FEEDBACK_ACTIONS),
-                   vaults=VVaultByNames("srnames"))
+                   vaults=VVaultByNames("vaultnames"))
     def POST_rec_feedback(self, form, jquery, action, vaults):
         if form.has_errors("type", errors.INVALID_OPTION):
             return self.abort404()
@@ -5233,4 +5233,5 @@ class ApiController(TipprController):
         c.user.pref_use_global_defaults = True
         c.user._commit()
         jquery.refresh()
+
 

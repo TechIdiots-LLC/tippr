@@ -221,3 +221,4 @@ class VaultRules(tdb_cassandra.View):
                 result.append(payload)
 
         return sorted(result, key=lambda t: t["priority"])
+

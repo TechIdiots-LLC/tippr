@@ -401,8 +401,8 @@ class Vault(Thing, Printable, BaseSite):
 
     _specials = {}
 
-    SRNAME_NOTFOUND = "n"
-    SRNAME_TTL = int(datetime.timedelta(hours=12).total_seconds())
+    VAULTNAME_NOTFOUND = "n"
+    VAULTNAME_TTL = int(datetime.timedelta(hours=12).total_seconds())
 
     @classmethod
     def _by_name(cls, names, stale=False, _update = False):
@@ -412,7 +412,7 @@ class Vault(Thing, Printable, BaseSite):
         Searches for a single vault. Returns a single Vault object or
         raises NotFound if the vault doesn't exist.
         2. Vault._by_name(['aww','iama']) # list of vault names
-        Searches for a list of vaults. Returns a dict mapping srnames to
+        Searches for a list of vaults. Returns a dict mapping vaultnames to
         Vault objects. Items that were not found are ommitted from the dict.
         If no items are found, an empty dict is returned.
         '''
@@ -441,7 +441,7 @@ class Vault(Thing, Printable, BaseSite):
                 if valid_name:
                     to_fetch[lname] = name
                 else:
-                    g.log.debug("Vault._by_name() ignoring invalid srname: %s", lname)
+                    g.log.debug("Vault._by_name() ignoring invalid vaultname: %s", lname)
 
         if to_fetch:
             if not _update:
@@ -450,17 +450,17 @@ class Vault(Thing, Printable, BaseSite):
             else:
                 vaultids_by_name = {}
 
-            missing_srnames = set(to_fetch.keys()) - set(vaultids_by_name.keys())
-            if missing_srnames:
-                for srnames in in_chunks(missing_srnames, size=10):
+            missing_vaultnames = set(to_fetch.keys()) - set(vaultids_by_name.keys())
+            if missing_vaultnames:
+                for vaultnames in in_chunks(missing_vaultnames, size=10):
                     q = cls._query(
-                        lower(cls.c.name) == srnames,
+                        lower(cls.c.name) == vaultnames,
                         cls.c._spam == (True, False),
                         # vaults can't actually be deleted, but the combo
                         # of allowing for deletion and turning on optimize_rules
                         # gets rid of an unnecessary join on the thing table
                         cls.c._deleted == (True, False),
-                        limit=len(srnames),
+                        limit=len(vaultnames),
                         optimize_rules=True,
                         data=True,
                     )
@@ -468,19 +468,19 @@ class Vault(Thing, Printable, BaseSite):
                         fetched = {vault.name.lower(): vault._id for vault in q}
                     vaultids_by_name.update(fetched)
 
-                    still_missing = set(srnames) - set(fetched)
-                    fetched.update((name, cls.SRNAME_NOTFOUND) for name in still_missing)
+                    still_missing = set(vaultnames) - set(fetched)
+                    fetched.update((name, cls.VAULTNAME_NOTFOUND) for name in still_missing)
                     try:
                         g.gencache.set_multi(
                             keys=fetched,
                             prefix='vaultid:',
-                            time=cls.SRNAME_TTL,
+                            time=cls.VAULTNAME_TTL,
                         )
                     except MemcachedError:
                         pass
 
             vaults = {}
-            vault_ids = [v for v in vaultids_by_name.values() if v != cls.SRNAME_NOTFOUND]
+            vault_ids = [v for v in vaultids_by_name.values() if v != cls.VAULTNAME_NOTFOUND]
             if vault_ids:
                 vaults = cls._byID(vault_ids, data=True, return_dict=False, stale=stale)
 
@@ -2305,8 +2305,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
                 multiname=self.name,
             )
         if isinstance(self.owner, Vault):
-            return '/v/{srname}/{kind}/{multiname}'.format(
-                srname=self.owner.name,
+            return '/v/{vaultname}/{kind}/{multiname}'.format(
+                vaultname=self.owner.name,
                 kind=self.kind,
                 multiname=self.name,
             )
@@ -2833,7 +2833,7 @@ def remove_legacy_subscriber(vault, user):
 class VaultTempBan:
     def __init__(self, vault, kind, victim, banner, duration):
         self.vault = vault._id36
-        self._srname = vault.name
+        self._vaultname = vault.name
         self.who = victim._id36
         self._whoname = victim.name
         self.type = kind
@@ -2870,8 +2870,8 @@ class VaultTempBan:
         return "vunban"
 
     @classmethod
-    def search(cls, srname, bantype, subjects):
-        results = TryLaterBySubject.search(cls.cancel_rowkey(srname, bantype),
+    def search(cls, vaultname, bantype, subjects):
+        results = TryLaterBySubject.search(cls.cancel_rowkey(vaultname, bantype),
                                            subjects)
 
         def convert_uuid_to_datetime(uu):
@@ -2883,9 +2883,9 @@ class VaultTempBan:
         }
 
     @classmethod
-    def unschedule(cls, srname, victim_name, bantype):
+    def unschedule(cls, vaultname, victim_name, bantype):
         TryLaterBySubject.unschedule(
-            cls.cancel_rowkey(srname, bantype),
+            cls.cancel_rowkey(vaultname, bantype),
             cls.cancel_colkey(victim_name),
             cls.schedule_rowkey(),
         )
@@ -3052,4 +3052,6 @@ class VaultsActiveForFrontPage(tdb_cassandra.View):
         g.stats.simple_event("frontpage.filter_inactive", delta=num_filtered)
 
         return [int(vault_id36, 36) for vault_id36 in list(results.keys())]
+
+
 

@@ -117,7 +117,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
                 environ['extra_error_data'] = error_data
 
         if environ.get('TIPPR_NAME'):
-            d['srname'] = environ.get('TIPPR_NAME')
+            d['vaultname'] = environ.get('TIPPR_NAME')
         if environ.get('TIPPR_TAKEDOWN'):
             d['takedown'] = environ.get('TIPPR_TAKEDOWN')
         if environ.get('TIPPR_ERROR_NAME'):
@@ -632,3 +632,4 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app.config = config
 
     return app
+

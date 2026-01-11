@@ -501,3 +501,4 @@ class VoteNote(tdb_cassandra.View):
             return None
 
         return ", ".join(list(all_notes._values().values()))
+

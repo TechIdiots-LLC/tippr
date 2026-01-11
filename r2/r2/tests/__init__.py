@@ -398,3 +398,4 @@ class RedditControllerTestCase(RedditTestCase):
         """Additional generated headers to be added to the request."""
         return {}
 
+

@@ -369,12 +369,12 @@ class MultiApiController(TipprController):
     @validate(
         VUser(),
         multi=VMultiByPath("multipath", require_view=True),
-        vault=VVaultByName('srname'),
+        vault=VVaultByName('vaultname'),
     )
     @api_doc(
         api_section.multis,
-        uri="/api/multi/{multipath}/v/{srname}",
-        uri_variants=['/api/filter/{filterpath}/v/{srname}'],
+        uri="/api/multi/{multipath}/v/{vaultname}",
+        uri_variants=['/api/filter/{filterpath}/v/{vaultname}'],
     )
     def GET_multi_Vault(self, multi, vault):
         """Get data about a vault in a multi."""
@@ -385,7 +385,7 @@ class MultiApiController(TipprController):
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr_name=VVaultName('srname', allow_language_vaults=True),
+        sr_name=VVaultName('vaultname', allow_language_vaults=True),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
     @api_doc(api_section.multis, extends=GET_multi_Vault)
@@ -409,7 +409,7 @@ class MultiApiController(TipprController):
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        vault=VVaultByName('srname'),
+        vault=VVaultByName('vaultname'),
     )
     @api_doc(api_section.multis, extends=GET_multi_Vault)
     def DELETE_multi_Vault(self, multi, vault):
@@ -447,4 +447,5 @@ class MultiApiController(TipprController):
         multi.description_md = data['body_md']
         multi._commit()
         return self._format_multi_description(multi)
+
 

@@ -309,3 +309,4 @@ class IPNetworkLiveList(ReducedLiveList):
             to_json_fn=ipnetwork_to_json,
             from_json_fn=json_to_ipnetwork,
         )
+

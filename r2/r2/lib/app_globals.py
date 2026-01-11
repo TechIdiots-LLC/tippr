@@ -1168,3 +1168,4 @@ class Globals:
     @property
     def search_syntaxes(self):
         return SEARCH_SYNTAXES[self.config.get('search_provider')]
+

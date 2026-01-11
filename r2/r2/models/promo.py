@@ -881,3 +881,4 @@ class PromotionPrices(tdb_cassandra.View):
                 r["METRO"][name] = cpm
 
         return r
+

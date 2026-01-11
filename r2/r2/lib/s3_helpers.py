@@ -427,3 +427,4 @@ def get_post_args(
         "action": "//{}.{}".format(bucket, g.s3_media_domain),
         "fields": fields,
     }
+

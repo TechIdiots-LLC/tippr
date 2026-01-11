@@ -202,3 +202,4 @@ class WebLogController(TipprController):
         VRatelimit.ratelimit(rate_ip=True, prefix="rate_poison_", seconds=10)
 
         return self.api_wrapper({})
+

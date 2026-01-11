@@ -188,3 +188,4 @@ class Report(MultiRelation('report', *REPORT_RELS)):
                      "and user_reports instead.")]
         else:
             return []
+

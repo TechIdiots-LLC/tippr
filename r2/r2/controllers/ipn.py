@@ -1422,3 +1422,4 @@ def subscr_pm(pennies, months, new_subscr=True):
         "gold_email": g.goldsupport_email,
     }
     return subject, message
+

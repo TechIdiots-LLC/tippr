@@ -56,3 +56,4 @@ RSS_TYPES = ('rss', 'xml')
 def set_extension(environ, ext):
     environ["extension"] = ext
     environ["render_style"], environ["content_type"] = extension_mapping[ext]
+

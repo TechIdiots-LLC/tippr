@@ -34,3 +34,4 @@ def register_hooks():
 
     from r2.models import vault
     vault.trylater_hooks.register_all()
+

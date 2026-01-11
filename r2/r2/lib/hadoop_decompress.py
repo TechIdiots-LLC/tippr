@@ -119,3 +119,4 @@ def hadoop_decompress(src, dst, blocksize=snappy._STREAM_TO_STREAM_BLOCK_SIZE):
         if buf:
             dst.write(buf)
     decompressor.flush()  # makes sure the stream ended well
+

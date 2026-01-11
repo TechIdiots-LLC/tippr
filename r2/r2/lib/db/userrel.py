@@ -213,3 +213,4 @@ def MigratingUserRel(name, relation, disable_ids_fn=False,
         setattr(URM, mgr.reverse_ids_fn_name, staticmethod(mgr.reverse_ids))
 
     return URM
+

@@ -74,3 +74,4 @@ class HealthController(MinimalController):
                 g.log.warning("Health check for %s FAILED: %s", server, e)
                 results[server] = "FAILED %s" % e
         return json.dumps(results)
+

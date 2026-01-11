@@ -40,3 +40,4 @@ class AdminToolController(TipprController):
     )
     def GET_gold(self, recipient):
         return AdminPage(content=AdminGold(recipient)).render()
+

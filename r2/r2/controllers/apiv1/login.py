@@ -89,3 +89,4 @@ class APIv1LoginController(TipprController):
 
         responder._send_data(modhash=generate_modhash())
         responder._send_data(cookie=user.make_cookie())
+

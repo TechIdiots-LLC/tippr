@@ -39,3 +39,4 @@ def require_split(s, length, sep=None):
     res = s.split(sep)
     require(len(res) == length)
     return res
+

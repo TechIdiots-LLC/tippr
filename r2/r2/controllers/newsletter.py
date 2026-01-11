@@ -27,3 +27,4 @@ from r2.lib.pages import Newsletter
 class NewsletterController(TipprController):
     def GET_newsletter(self):
         return Newsletter().render()
+

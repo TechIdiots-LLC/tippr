@@ -697,3 +697,4 @@ class AdminTimeMenu(TimeMenu):
     _default = 'day'
     _options = ('hour', 'day', 'week')
 
+

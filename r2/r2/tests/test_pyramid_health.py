@@ -36,3 +36,4 @@ def test_health_endpoint_quiesce_returns_503(tmp_path, monkeypatch):
 
     # restore monkeypatch is automatic
 
+

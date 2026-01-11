@@ -375,3 +375,4 @@ class TestEventCollector(RedditTestCase):
             }
         )
 
+

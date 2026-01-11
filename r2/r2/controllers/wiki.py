@@ -548,3 +548,4 @@ class WikiApiController(WikiController):
         set_extension(request.environ, 'json')
 
 
+

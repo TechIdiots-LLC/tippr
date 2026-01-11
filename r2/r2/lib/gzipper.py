@@ -187,3 +187,4 @@ class GzipMiddleware:
 def make_gzip_middleware(app, global_conf=None, compress_level=9, min_size=0):
     """Return a gzip-compressing middleware."""
     return GzipMiddleware(app, int(compress_level), int(min_size))
+

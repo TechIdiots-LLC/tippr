@@ -574,10 +574,10 @@ class SponsorListingController(PromoteListingController):
             menus.append(managed_menu)
 
         if self.sort == 'live_promos':
-            srnames = promote.all_live_promo_srnames()
+            vaultnames = promote.all_live_promo_vaultnames()
             buttons = [NavButton('all', '', use_params=True)]
             try:
-                srnames.remove(Frontpage.name)
+                vaultnames.remove(Frontpage.name)
                 frontbutton = NavButton('FRONTPAGE', Frontpage.name,
                                         use_params=True,
                                         aliases=['/promoted/live_promos/%s' %
@@ -586,9 +586,9 @@ class SponsorListingController(PromoteListingController):
             except KeyError:
                 pass
 
-            srnames = sorted(srnames, key=lambda name: name.lower())
+            vaultnames = sorted(vaultnames, key=lambda name: name.lower())
             buttons.extend(
-                NavButton(name, name, use_params=True) for name in srnames)
+                NavButton(name, name, use_params=True) for name in vaultnames)
             base_path = self.base_path + '/live_promos'
             menus.append(NavMenu(buttons, base_path=base_path,
                                  title='vault', type='lightdrop'))
@@ -684,11 +684,11 @@ class SponsorListingController(PromoteListingController):
 
     @validate(
         VSponsorAdmin(),
-        srname=nop('vault'),
+        vaultname=nop('vault'),
         include_managed=VBoolean("include_managed"),
         exclude_unpaid=VBoolean("exclude_unpaid"),
     )
-    def GET_listing(self, srname=None, include_managed=False,
+    def GET_listing(self, vaultname=None, include_managed=False,
                     exclude_unpaid=None, sort="all", **kw):
         self.sort = sort
         self.vault = None
@@ -699,9 +699,9 @@ class SponsorListingController(PromoteListingController):
         else:
             self.exclude_unpaid = exclude_unpaid
 
-        if srname:
+        if vaultname:
             try:
-                self.vault = Vault._by_name(srname)
+                self.vault = Vault._by_name(vaultname)
             except NotFound:
                 pass
         return ListingController.GET_listing(self, **kw)
@@ -1687,3 +1687,5 @@ class PromoteApiController(ApiController):
         }
 
         return format_html(template, response)
+
+

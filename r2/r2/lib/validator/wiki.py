@@ -358,3 +358,4 @@ class VWikiPageRevise(VWikiPage):
         if 'previous' in self.param:
             docs['previous'] = _('the starting point revision for this edit')
         return docs
+

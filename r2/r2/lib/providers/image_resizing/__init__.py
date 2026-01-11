@@ -63,3 +63,4 @@ class ImageResizingProvider:
 
 
 class NotLargeEnough(Exception): pass
+

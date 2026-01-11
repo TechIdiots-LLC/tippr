@@ -116,3 +116,4 @@ class LocationPromoMetrics(tdb_cassandra.View):
                 rowkey = cls._rowkey(location)
                 column = {cls._column_name(vault): impressions}
                 b.insert(rowkey, column)
+

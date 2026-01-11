@@ -349,3 +349,4 @@ class TestFeature(TestFeatureBase):
         featurestate = self.world._make_state(cfg)
         self.assertTrue(featurestate.is_enabled(user=gary))
 
+

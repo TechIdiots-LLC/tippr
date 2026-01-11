@@ -351,3 +351,4 @@ def sign_v1_message(body, platform, version, epoch=None):
         epoch=epoch,
         signature=signature,
     )
+

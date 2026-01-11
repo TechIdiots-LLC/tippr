@@ -382,3 +382,4 @@ def run_tests():
     system = System(campaigns, targets, priority_target_names)
     impressions = system.get_free_impressions()
     assert impressions == 0
+

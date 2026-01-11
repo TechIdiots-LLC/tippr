@@ -35,3 +35,4 @@ class UnsplashitImageResizingProvider(ImageResizingProvider):
         height = width * 2
 
         return 'https://unsplash.it/%d/%d' % (width, height)
+

@@ -133,3 +133,4 @@ class TestSoupTest(unittest.TestCase):
         self.assertFragmentRaises('<a href="http://%s.com">foo</a>' % ("x" * 300),
                                   SoupDetectedCrasherError)
 
+

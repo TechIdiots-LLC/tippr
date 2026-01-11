@@ -430,3 +430,4 @@ class ModActionBySRAction(tdb_cassandra.View):
     @classmethod
     def _rowkey(cls, ma):
         return '{}_{}'.format(ma.sr_id36, ma.action)
+

@@ -476,3 +476,4 @@ class FeatureState:
         bucket = self._calculate_bucket(content_id, experiment_seed)
         variant = self._choose_variant(bucket, experiment.get('variants', {}))
         return variant
+

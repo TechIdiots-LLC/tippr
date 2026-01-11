@@ -163,3 +163,4 @@ def upgrade_cookie_security():
     sess_start_time = datetime.strptime(sess_split[1], COOKIE_TIMESTAMP_FORMAT)
     rem = (datetime.now() - sess_start_time > timedelta(days=30))
     change_user_cookie_security(secure=True, remember=rem)
+

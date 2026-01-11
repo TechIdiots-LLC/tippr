@@ -152,3 +152,4 @@ def reduce_listings(fd=sys.stdin):
     # the final result before it's written out
     mr_tools.mr_reduce_max_per_key(lambda x: list(map(float, x[:-1])), num=1000,
                                    fd = fd)
+

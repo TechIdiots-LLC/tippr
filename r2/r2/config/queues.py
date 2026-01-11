@@ -137,3 +137,4 @@ def declare_queues(g):
     queues.event_collector << "event_collector_test"
 
     return queues
+

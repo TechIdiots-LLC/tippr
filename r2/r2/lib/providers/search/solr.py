@@ -835,3 +835,4 @@ class SolrSearchProvider(SearchProvider):
                            chunk_size=1000):
          _rebuild_link_index(start_at, sleeptime, cls, uploader, estimate,  
                             chunk_size)
+

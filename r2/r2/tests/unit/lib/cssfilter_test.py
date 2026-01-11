@@ -108,3 +108,4 @@ class TestCSSFilter(unittest.TestCase):
         testcase = "*{background-image:attr(foobar url);}"
         self.assertInvalid(testcase)
 
+

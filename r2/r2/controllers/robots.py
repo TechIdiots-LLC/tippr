@@ -67,3 +67,4 @@ class RobotsController(MinimalController):
             abort(404)
         response.content_type = "text/x-cross-domain-policy"
         return CrossDomain().render(style='xml')
+

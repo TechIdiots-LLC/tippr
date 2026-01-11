@@ -69,3 +69,4 @@ class CookieAuthenticationProvider(AuthenticationProvider):
         if not constant_time_compare(session_cookie, expected_cookie):
             return None
         return account
+

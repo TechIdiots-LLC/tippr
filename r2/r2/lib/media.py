@@ -1007,3 +1007,4 @@ def run():
             print(traceback.format_exc())
 
     amqp.consume_items('scraper_q', process_link)
+

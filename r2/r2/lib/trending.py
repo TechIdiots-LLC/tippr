@@ -66,3 +66,4 @@ def _get_newest_link(vault):
             return link
 
     return None
+

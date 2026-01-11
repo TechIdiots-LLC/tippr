@@ -36,3 +36,4 @@ class LoginRegTests(LoginRegBase, RedditControllerTestCase):
         self.assertTrue("error" in res)
         self.assertTrue(code in res)
 
+

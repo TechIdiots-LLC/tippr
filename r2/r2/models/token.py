@@ -826,3 +826,4 @@ class AwardClaimToken(ConsumableToken):
         # Full URL; for emailing, PM'ing, etc.
         base = g.https_endpoint or g.origin
         return "{}/awards/confirm/{}".format(base, self._id)
+

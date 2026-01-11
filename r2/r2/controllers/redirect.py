@@ -57,3 +57,4 @@ class RedirectController(BaseController):
         else:
             rest = ''
         return self.redirect("/v/{}/{}".format(sr_name, rest), code=301)
+

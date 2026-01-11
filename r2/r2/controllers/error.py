@@ -194,7 +194,7 @@ class ErrorController(TipprController):
                 code = int(code)
             except ValueError:
                 code = 404
-            srname = request.GET.get('srname', '')
+            vaultname = request.GET.get('vaultname', '')
             takedown = request.GET.get('takedown', '')
             error_name = request.GET.get('error_name', '')
 
@@ -203,8 +203,8 @@ class ErrorController(TipprController):
                 c.user_is_loggedin = False
                 c.user = UnloggedUser(browser_langs=None)
 
-            if srname:
-                c.site = Vault._by_name(srname)
+            if vaultname:
+                c.site = Vault._by_name(vaultname)
 
             if 'allow_framing' in request.GET:
                 c.allow_framing = bool(request.GET['allow_framing'] == '1')
@@ -285,3 +285,4 @@ def handle_awful_failure(fail_text):
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."
+

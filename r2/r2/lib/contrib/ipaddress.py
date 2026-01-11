@@ -2195,3 +2195,4 @@ class IPv6Network(_BaseV6, _BaseNetwork):
     @property
     def with_hostmask(self):
         return '{}/{}'.format(str(self.network_address), str(self.hostmask))
+

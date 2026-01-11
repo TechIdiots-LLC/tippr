@@ -21,3 +21,4 @@
 ###############################################################################
 
 from r2.config.feature.feature import all_enabled, is_enabled, variant
+

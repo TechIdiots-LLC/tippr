@@ -644,3 +644,4 @@ class StylesheetsEverywhere(WikiPageIniItem):
         self.preview_url = preview_url
         self.is_enabled = is_enabled
         self.checked = False
+

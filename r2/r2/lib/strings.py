@@ -352,3 +352,4 @@ def get_funny_translated_string(category, num=1):
     else:
         return ret
 
+

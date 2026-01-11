@@ -652,3 +652,4 @@ class SubscriptionsByVault(Base):
 if g.db_create_tables:
     Base.metadata.create_all(bind=engine)
 
+

@@ -103,3 +103,4 @@ def _create_test_message():
                      'daily_sr_sitemap_reporting/dt=2016-06-14'),
         'timestamp': _current_timestamp(),
     }))
+

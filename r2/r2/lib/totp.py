@@ -73,3 +73,4 @@ if __name__ == "__main__":
     assert make_totp(secret, timestamp=1234567890) == "005924"
     assert make_totp(secret, timestamp=2000000000) == "279037"
     assert make_totp(secret, timestamp=20000000000) == "353130"
+

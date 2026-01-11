@@ -332,3 +332,4 @@ class VerifiedUserRequiredException(TipprError):
 
 
 class MessageError(Exception): pass
+

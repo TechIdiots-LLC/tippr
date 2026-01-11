@@ -1175,3 +1175,4 @@ class QuarantinedVaultOptInsByAccount(tdb_cassandra.DenormalizedRelation):
         except tdb_cassandra.NotFound:
             return False
         return (user, vault) in r
+

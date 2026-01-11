@@ -320,3 +320,4 @@ class SimpleRateLimit(RateLimit):
     def record_and_check(self):
         self.record_usage()
         return self.check()
+

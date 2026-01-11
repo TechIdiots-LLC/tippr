@@ -262,3 +262,4 @@ def process_modmail_email():
             send_blocked_muted_email(vault, parent, sender_email, incoming_email_id)
 
     amqp.consume_items("modmail_email_q", process_message)
+

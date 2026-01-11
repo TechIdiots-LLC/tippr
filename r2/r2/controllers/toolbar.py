@@ -120,3 +120,4 @@ class ToolbarController(TipprController):
 
     def GET_redirect(self):
         return self.redirect('/', code=301)
+

@@ -102,3 +102,4 @@ def normalized_hot(vault_ids, obey_age_limit=True, ageweight=None):
     ret = list(itertools.islice(generator, MAX_LINKS))
     timer.stop()
     return ret
+

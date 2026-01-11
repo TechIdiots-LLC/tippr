@@ -209,3 +209,4 @@ def spritify(css_filename, sprite_path):
 if __name__ == '__main__':
     import sys
     print(spritify(sys.argv[1], sys.argv[2]))
+

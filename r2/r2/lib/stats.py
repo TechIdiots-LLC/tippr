@@ -625,3 +625,4 @@ class StatsCollectingConnectionPool(pool.ConnectionPool):
             f = getattr(wrapper, method_name)
             setattr(wrapper, method_name, instrument(f, get_cf_name))
         return wrapper
+

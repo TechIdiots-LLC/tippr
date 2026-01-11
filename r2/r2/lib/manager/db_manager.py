@@ -138,3 +138,4 @@ class db_manager:
         if len(tables) == 1:
             return tables[0]
         return  random.choice(list(tables))
+

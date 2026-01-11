@@ -3088,3 +3088,4 @@ class CommentVisitsByUser(tdb_cassandra.View):
 
         cls.add_visit(user, link, visit_time)
         return visits
+

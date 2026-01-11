@@ -100,3 +100,4 @@ class RunCommand(command.Command):
                 exc_info = sys.exc_info()
                 RavenErrorReporter.capture_exception(exc_info=exc_info)
             raise
+

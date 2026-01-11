@@ -225,3 +225,4 @@ class PostController(ApiController):
             nsfw=nsfw,
         )
         return redirect(url(controller='front', action='explore'))
+

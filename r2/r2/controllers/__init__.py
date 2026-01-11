@@ -99,3 +99,4 @@ def load_controllers():
     from .wiki import WikiApiController, WikiController
 
     _tippr_controllers.update((name.lower(), obj) for name, obj in locals().items())
+

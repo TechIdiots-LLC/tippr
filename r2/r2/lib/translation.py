@@ -172,3 +172,4 @@ def extract_javascript_msgids(source):
     )
 
     return [msg_id for line, func, msg_id, comments in extracted]
+
