@@ -21,6 +21,23 @@
 ###############################################################################
 
 """Pylons middleware initialization"""
+
+# Compatibility shim: MUST be applied before any paste.registry imports
+# Some versions of Paste have LocalStack._pop_object that only accepts `self`,
+# but Paste's registry.cleanup may call it with an additional `obj` argument.
+try:
+    from paste import registry as _paste_registry
+    _LocalStack = getattr(_paste_registry, 'LocalStack', None)
+    if _LocalStack is not None:
+        _orig_pop = _LocalStack._pop_object
+        def _patched_pop_object(self, obj=None):
+            # Just pop from the stack, ignore the obj argument
+            if self._stack:
+                self._stack.pop()
+        _LocalStack._pop_object = _patched_pop_object
+except Exception:
+    pass
+
 import importlib
 import itertools
 import re
@@ -44,28 +61,6 @@ from paste.request import path_info_split
 from paste.urlparser import StaticURLParser
 import types
 
-# Compatibility shim: some versions of Paste have LocalStack._pop_object
-# that only accepts `self`, but Paste's registry.cleanup may call it with
-# an additional `obj` argument. Wrap the original method so it accepts
-# arbitrary extra args and forwards only `self` to the original.
-try:
-    from paste.registry import LocalStack
-
-    _orig_pop = getattr(LocalStack, '_pop_object', None)
-    if _orig_pop is not None:
-        def _wrapped_pop(self, *args, **kwargs):
-            return _orig_pop(self)
-
-        # Preserve function attributes
-        try:
-            _wrapped_pop.__name__ = getattr(_orig_pop, '__name__', '_pop_object')
-            _wrapped_pop.__doc__ = getattr(_orig_pop, '__doc__', None)
-        except Exception:
-            pass
-
-        LocalStack._pop_object = _wrapped_pop
-except Exception:
-    pass
 from pylons.middleware import ErrorHandler
 from pylons.wsgiapp import PylonsApp
 from routes.middleware import RoutesMiddleware
