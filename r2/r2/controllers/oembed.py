@@ -43,7 +43,7 @@ _OEMBED_BASE = {
     "provider_url": make_url_https('/'),
 }
 
-EMBEDLY_SCRIPT = 'https://embed.redditmedia.com/widgets/platform.js'
+EMBEDLY_SCRIPT = 'https://embed.tipprmedia.com/widgets/platform.js'
 SCRIPT_TEMPLATE = '<script async src="%(embedly_script)s" charset="UTF-8"></script>'
 POST_EMBED_TEMPLATE = """
     <blockquote class="tippr-card" %(live_data_attr)s>
@@ -198,4 +198,3 @@ class OEmbedController(MinimalController):
             abort(403)
         except NotImplementedError:
             abort(404)
-

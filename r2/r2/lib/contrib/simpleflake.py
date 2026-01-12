@@ -87,4 +87,3 @@ def parse_simpleflake(flake):
                           SIMPLEFLAKE_RANDOM_SHIFT,
                           SIMPLEFLAKE_RANDOM_LENGTH)
     return simpleflake_struct(timestamp, random)
-

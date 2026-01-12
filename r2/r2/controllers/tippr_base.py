@@ -64,7 +64,7 @@ from r2.lib.errors import (
     ErrorSet,
     ForbiddenError,
     errors,
-    reddit_http_error,
+    tippr_http_error,
 )
 from r2.lib.filters import _force_unicode, _force_utf8, scriptsafe_dumps
 from r2.lib.loid import LoId
@@ -111,7 +111,7 @@ from r2.models import (
     Mod,
     ModFiltered,
     ModMinus,
-    MultiReddit,
+    MultiVault,
     NotFound,
     OAuth2AccessToken,
     OAuth2Client,
@@ -278,13 +278,13 @@ valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
 def set_vault():
     # the r parameter gets added by javascript for API requests so we
     # can reference c.site in api.py
-    sr_name = request.environ.get("vault", request.params.get('r'))
+    vault_name = request.environ.get("vault", request.params.get('r'))
     domain = request.environ.get("domain")
 
     can_stale = request.method.upper() in ('GET', 'HEAD')
 
     c.site = Frontpage
-    if not sr_name:
+    if not vault_name:
         #check for cnames
         cname = request.environ.get('legacy-cname')
         if cname:
@@ -294,11 +294,11 @@ def set_vault():
                 domain = ".".join((g.domain_prefix, domain))
             path = '{}://{}{}'.format(g.default_scheme, domain, vault.path)
             abort(301, location=BaseController.format_output_url(path))
-    elif '+' in sr_name:
+    elif '+' in vault_name:
         name_filter = lambda name: Vault.is_valid_name(name,
             allow_language_vaults=True)
-        sr_names = list(filter(name_filter, sr_name.split('+')))
-        vaults = list(Vault._by_name(sr_names, stale=can_stale).values())
+        vault_names = list(filter(name_filter, vault_name.split('+')))
+        vaults = list(Vault._by_name(vault_names, stale=can_stale).values())
         if All in vaults:
             c.site = All
         elif Friends in vaults:
@@ -309,45 +309,45 @@ def set_vault():
                 c.site = vaults[0]
             elif vaults:
                 found = {vault.name.lower() for vault in vaults}
-                sr_names = [name for name in sr_names if name.lower() in found]
-                sr_name = '+'.join(sr_names)
-                multi_path = '/v/' + sr_name
-                c.site = MultiReddit(multi_path, vaults)
+                vault_names = [name for name in vault_names if name.lower() in found]
+                vault_name = '+'.join(vault_names)
+                multi_path = '/v/' + vault_name
+                c.site = MultiVault(multi_path, vaults)
             elif not c.error_page:
                 abort(404)
-    elif '-' in sr_name:
-        sr_names = sr_name.split('-')
-        base_sr_name, exclude_sr_names = sr_names[0], sr_names[1:]
-        vaults = Vault._by_name(sr_names, stale=can_stale)
+    elif '-' in vault_name:
+        vault_names = vault_name.split('-')
+        base_sr_name, exclude_sr_names = vault_names[0], vault_names[1:]
+        vaults = Vault._by_name(vault_names, stale=can_stale)
         base_sr = vaults.pop(base_sr_name, None)
-        exclude_srs = [vault for vault in vaults.values()
+        exclude_vaults = [vault for vault in vaults.values()
                           if not isinstance(vault, FakeVault)]
 
         if base_sr == All:
-            if exclude_srs:
-                c.site = AllMinus(exclude_srs)
+            if exclude_vaults:
+                c.site = AllMinus(exclude_vaults)
             else:
                 c.site = All
         elif base_sr == Mod:
-            if exclude_srs:
-                c.site = ModMinus(exclude_srs)
+            if exclude_vaults:
+                c.site = ModMinus(exclude_vaults)
             else:
                 c.site = Mod
         else:
-            path = "/vaults/search?q=%s" % sr_name
+            path = "/vaults/search?q=%s" % vault_name
             abort(302, location=BaseController.format_output_url(path))
     else:
         try:
-            c.site = Vault._by_name(sr_name, stale=can_stale)
+            c.site = Vault._by_name(vault_name, stale=can_stale)
         except NotFound:
-            if Vault.is_valid_name(sr_name):
-                path = "/vaults/search?q=%s" % sr_name
+            if Vault.is_valid_name(vault_name):
+                path = "/vaults/search?q=%s" % vault_name
                 abort(302, location=BaseController.format_output_url(path))
             elif not c.error_page and not request.path.startswith("/api/login/") :
                 abort(404)
 
     #if we didn't find a vault, check for a domain listing
-    if not sr_name and isinstance(c.site, DefaultVault) and domain:
+    if not vault_name and isinstance(c.site, DefaultVault) and domain:
         # Redirect IDN to their IDNA name if necessary
         try:
             idna = _force_unicode(domain).encode("idna")
@@ -364,8 +364,8 @@ def set_vault():
     if isinstance(c.site, FakeVault):
         c.default_sr = True
 
-_FILTER_SRS = {"mod": ModFiltered, "all": AllFiltered}
-def set_multireddit():
+_FILTER_VAULTS = {"mod": ModFiltered, "all": AllFiltered}
+def set_multivault():
     routes_dict = request.environ["pylons.routes_dict"]
     if "multipath" in routes_dict or ("m" in request.GET and is_api()):
         fullpath = routes_dict.get("multipath", "").lower()
@@ -408,7 +408,7 @@ def set_multireddit():
             elif len(multis) == 1:
                 c.site = multis[0]
             else:
-                vault_ids = Vault.random_reddits(
+                vault_ids = Vault.random_vaults(
                     logged_in_username,
                     list(set(itertools.chain.from_iterable(
                         multi.vault_ids for multi in multis
@@ -416,7 +416,7 @@ def set_multireddit():
                     LabeledMulti.MAX_SR_COUNT,
                 )
                 vaults = Vault._byID(vault_ids, data=True, return_dict=False)
-                c.site = MultiReddit(multiurl, vaults)
+                c.site = MultiVault(multiurl, vaults)
                 if any(m.weighting_scheme == "fresh" for m in multis):
                     c.site.weighting_scheme = "fresh"
 
@@ -424,7 +424,7 @@ def set_multireddit():
         if not c.user_is_loggedin:
             abort(404)
         filtername = routes_dict["filtername"].lower()
-        filtersr = _FILTER_SRS.get(filtername)
+        filtersr = _FILTER_VAULTS.get(filtername)
         if not filtersr:
             abort(404)
         c.site = filtersr()
@@ -590,8 +590,8 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
                   before=VByName('before', backend=backend),
                   count=VCount('count'),
                   target=VTarget("target"),
-                  sr_detail=VBoolean(
-                      "sr_detail", docs={"sr_detail": "(optional) expand vaults"}),
+                  vault_detail=VBoolean(
+                      "vault_detail", docs={"vault_detail": "(optional) expand vaults"}),
                   show=VLength('show', 3, empty_error=None,
                                docs={"show": "(optional) the string `all`"}),
         )
@@ -778,7 +778,7 @@ def abort_with_error(error, code=None):
     if not code and not error.code:
         raise ValueError('Error %r missing status code' % error)
 
-    abort(reddit_http_error(
+    abort(tippr_http_error(
         code=code or error.code,
         error_name=error.name,
         explanation=error.message,
@@ -1047,7 +1047,7 @@ class MinimalController(BaseController):
     def abort403(self):
         abort(403, "forbidden")
 
-    COMMON_REDDIT_HEADERS = ", ".join((
+    COMMON_TIPPR_HEADERS = ", ".join((
         "X-Ratelimit-Used",
         "X-Ratelimit-Remaining",
         "X-Ratelimit-Reset",
@@ -1075,7 +1075,7 @@ class MinimalController(BaseController):
                 "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
             response.headers['Access-Control-Expose-Headers'] = \
-                self.COMMON_REDDIT_HEADERS
+                self.COMMON_TIPPR_HEADERS
         else:
             action = request.environ["pylons.routes_dict"]["action_name"]
 
@@ -1329,7 +1329,7 @@ class TipprController(OAuth2ResourceController):
         set_obey_over18()
 
         # looking up the multivault requires c.user.
-        set_multireddit()
+        set_multivault()
 
         #set_browser_langs()
         set_iface_lang()
@@ -1343,7 +1343,7 @@ class TipprController(OAuth2ResourceController):
 
         # random tippr trickery
         if c.site == Random:
-            c.site = Vault.random_reddit(user=c.user)
+            c.site = Vault.random_vault(user=c.user)
             site_path = c.site.path.strip('/')
             path = "/" + site_path + request.path_qs
             abort(302, location=self.format_output_url(path))
@@ -1355,7 +1355,7 @@ class TipprController(OAuth2ResourceController):
             path = '/' + site_path + request.path_qs
             abort(302, location=self.format_output_url(path))
         elif c.site == RandomNSFW:
-            c.site = Vault.random_reddit(over18=True, user=c.user)
+            c.site = Vault.random_vault(over18=True, user=c.user)
             site_path = c.site.path.strip('/')
             path = '/' + site_path + request.path_qs
             abort(302, location=self.format_output_url(path))
@@ -1394,8 +1394,8 @@ class TipprController(OAuth2ResourceController):
                     errpage = pages.InterstitialPage(
                         _("gold members only"),
                         content=pages.GoldOnlyInterstitial(
-                            sr_name=c.site.name,
-                            sr_description=c.site.public_description,
+                            vault_name=c.site.name,
+                            vault_description=c.site.public_description,
                         ),
                     )
                     request.environ['usable_error_content'] = errpage.render()
@@ -1404,8 +1404,8 @@ class TipprController(OAuth2ResourceController):
                     errpage = pages.InterstitialPage(
                         _("private"),
                         content=pages.PrivateInterstitial(
-                            sr_name=c.site.name,
-                            sr_description=c.site.public_description,
+                            vault_name=c.site.name,
+                            vault_description=c.site.public_description,
                         ),
                     )
                     request.environ['usable_error_content'] = errpage.render()
@@ -1415,7 +1415,7 @@ class TipprController(OAuth2ResourceController):
                         self.abort403()
                     g.events.quarantine_event('quarantine_interstitial_view', c.site,
                         request=request, context=c)
-                    return self.intermediate_redirect("/quarantine", sr_path=False)
+                    return self.intermediate_redirect("/quarantine", vault_path=False)
 
             # check over 18
             if (
@@ -1424,7 +1424,7 @@ class TipprController(OAuth2ResourceController):
                 c.render_style == 'html' and
                 not request.parsed_agent.bot
             ):
-                return self.intermediate_redirect("/over18", sr_path=False)
+                return self.intermediate_redirect("/over18", vault_path=False)
 
         #check whether to allow custom styles
         c.allow_styles = True
@@ -1436,9 +1436,9 @@ class TipprController(OAuth2ResourceController):
         has_style_override = (c.user.pref_default_theme_sr and
                 feature.is_enabled('stylesheets_everywhere') and
                 Vault._by_name(c.user.pref_default_theme_sr).can_view(c.user))
-        sr_stylesheet_enabled = c.user.use_Vault_style(c.site)
+        vault_stylesheet_enabled = c.user.use_Vault_style(c.site)
 
-        if (not sr_stylesheet_enabled and
+        if (not vault_stylesheet_enabled and
                 not has_style_override):
             c.can_apply_styles = False
 
@@ -1501,4 +1501,3 @@ class TipprController(OAuth2ResourceController):
         request.environ['usable_error_content'] = errpage.render()
         request.environ['retry_after'] = 60
         abort(503)
-

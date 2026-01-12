@@ -55,4 +55,3 @@ class APIv1ScopesController(TipprController):
             http_err.error_data = error
             abort(http_err)
         return self.api_wrapper({k: v for k, v in scopes.details() if k})
-

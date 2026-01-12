@@ -70,4 +70,3 @@ def find_all_Vaults(s3path):
     for line in _read_Vault_etl_from_s3(s3path):
         _, vault, __ = line.split('\x01')
         yield vault
-

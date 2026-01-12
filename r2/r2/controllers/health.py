@@ -40,7 +40,7 @@ class HealthController(MinimalController):
         pass
 
     def GET_health(self):
-        if os.path.exists("/var/opt/reddit/quiesce"):
+        if os.path.exists("/var/opt/tippr/quiesce"):
             request.environ["usable_error_content"] = "No thanks, I'm full."
             abort(503)
 
@@ -74,4 +74,3 @@ class HealthController(MinimalController):
                 g.log.warning("Health check for %s FAILED: %s", server, e)
                 results[server] = "FAILED %s" % e
         return json.dumps(results)
-

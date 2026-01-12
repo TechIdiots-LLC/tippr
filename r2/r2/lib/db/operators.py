@@ -138,4 +138,3 @@ class sort:
 class asc(sort): pass
 class desc(sort):pass
 class shuffled(desc): pass
-

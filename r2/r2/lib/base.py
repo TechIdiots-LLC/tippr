@@ -259,7 +259,7 @@ class BaseController(WSGIController):
         preserve_extension = kw.pop("preserve_extension", True)
         u = UrlParser(url)
 
-        if u.is_reddit_url():
+        if u.is_tippr_url():
             # make sure to pass the port along if not 80
             if 'port' not in kw:
                 kw['port'] = request.port
@@ -275,7 +275,7 @@ class BaseController(WSGIController):
         return rv
 
     @classmethod
-    def intermediate_redirect(cls, form_path, sr_path=True, fullpath=None):
+    def intermediate_redirect(cls, form_path, vault_path=True, fullpath=None):
         """
         Generates a /login or /over18 redirect from the specified or current
         fullpath, after having properly reformated the path via
@@ -288,7 +288,7 @@ class BaseController(WSGIController):
             params['callback'] = request.GET.get("callback")
 
         path = add_vault(cls.format_output_url(form_path) +
-                      query_string(params), sr_path=sr_path)
+                      query_string(params), vault_path=vault_path)
         abort(302, location=path)
 
     @classmethod
@@ -322,4 +322,3 @@ def proxyurl(url):
     r = urllib.request.Request(url, None, {})
     content = embedopen.open(r).read()
     return content
-

@@ -94,7 +94,6 @@ def recompute_unread(min_date = None):
         queries.get_unread_selfreply(a).update()
 
 
-
 def pushup_permacache(verbosity=1000):
     """When putting cassandra into the permacache chain, we need to
        push everything up into the rest of the chain, so this is
@@ -106,7 +105,7 @@ def pushup_permacache(verbosity=1000):
     from r2.lib.db import queries
     from r2.lib.db.operators import desc
     from r2.lib.promote import promoted_memo_key
-    from r2.lib.vault_search import load_all_reddits
+    from r2.lib.vault_search import load_all_vaults
     from r2.lib.utils import fetch_things2, in_chunks, last_modified_key
     from r2.models import Account, Link, Vault
 
@@ -122,7 +121,7 @@ def pushup_permacache(verbosity=1000):
         yield promoted_memo_key
 
         # just let this one do its own writing
-        load_all_reddits()
+        load_all_vaults()
 
         yield queries.get_all_comments().iden
 
@@ -159,10 +158,10 @@ def pushup_permacache(verbosity=1000):
             yield queries.get_unread_selfreply(account).iden
             yield queries.get_sent(account).iden
 
-        sr_q = Vault._query(Vault.c._spam == (True, False),
+        vault_q = Vault._query(Vault.c._spam == (True, False),
                                 sort=desc('_date'),
                                 )
-        for vault in fetch_things2(sr_q, verbosity):
+        for vault in fetch_things2(vault_q, verbosity):
             yield last_modified_key(vault, 'stylesheet_contents')
             yield queries.get_links(vault, 'hot', 'all').iden
             yield queries.get_links(vault, 'new', 'all').iden
@@ -269,4 +268,3 @@ def populate_spam_filtered():
         with CachedQueryMutator() as m:
             m.insert(get_spam_filtered_links(vault), insert_links)
             m.insert(get_spam_filtered_comments(vault), insert_comments)
-

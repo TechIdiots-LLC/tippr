@@ -372,10 +372,10 @@ class LocalizedModule(Module):
         Module.build(self, minifier)
 
         with open(self.destination_path) as f:
-            reddit_source = f.read()
+            tippr_source = f.read()
 
         localized_appendices = self.localized_appendices
-        msgids = extract_javascript_msgids(reddit_source)
+        msgids = extract_javascript_msgids(tippr_source)
         if msgids:
             localized_appendices = localized_appendices + [StringsSource(msgids)]
 
@@ -391,7 +391,7 @@ class LocalizedModule(Module):
 
             with open(lang_path, "w") as out:
                 print("  " + lang_path, file=sys.stderr)
-                out.write(reddit_source)
+                out.write(tippr_source)
                 for appendix in localized_appendices:
                     out.write(appendix.get_localized_source(lang) + ";")
 
@@ -807,4 +807,3 @@ def build_module(name):
 
 if __name__ == "__main__":
     commands[sys.argv[1]](*sys.argv[2:])
-

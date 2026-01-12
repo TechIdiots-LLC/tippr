@@ -3,10 +3,10 @@ from urllib.parse import quote
 
 from r2.lib.loid import LOID_COOKIE, LOID_CREATED_COOKIE, LoId, isodate
 from r2.lib.utils import to_epoch_milliseconds
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class LoidTests(RedditTestCase):
+class LoidTests(TipprTestCase):
 
     def setUp(self):
         super().setUp()
@@ -86,5 +86,3 @@ class LoidTests(RedditTestCase):
         self.assertTrue(loid.serializable)
         loid.save()
         self.assertFalse(bool(context.cookies.add.called))
-
-

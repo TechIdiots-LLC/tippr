@@ -30,10 +30,10 @@ from pylons import tmpl_context as c
 
 from r2.lib.cookies import NEVER, Cookie, Cookies, upgrade_cookie_security
 from r2.models import COOKIE_TIMESTAMP_FORMAT, Account, bcrypt_password
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class TestCookieUpgrade(RedditTestCase):
+class TestCookieUpgrade(TipprTestCase):
 
     def setUp(self):
         name = "unit_tester_%s" % uuid.uuid4().hex
@@ -129,5 +129,3 @@ class TestCookieUpgrade(RedditTestCase):
         upgrade_cookie_security()
         self.assertTrue(c.cookies[g.login_cookie].dirty)
         self.assertNotEqual(c.cookies[g.login_cookie].expires, NEVER)
-
-

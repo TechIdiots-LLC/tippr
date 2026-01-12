@@ -41,4 +41,3 @@ def get_raw_statics_path():
     """Return the path for the raw (under version control) statics"""
     r2_path = get_r2_path()
     return os.path.join(r2_path, 'r2', 'public')
-

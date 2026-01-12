@@ -69,7 +69,7 @@ def load_controllers():
         HotController,
         ListingController,
         MessageController,
-        MyredditsController,
+        MyvaultsController,
         NewController,
         RandomrisingController,
         VaultsController,
@@ -99,4 +99,3 @@ def load_controllers():
     from .wiki import WikiApiController, WikiController
 
     _tippr_controllers.update((name.lower(), obj) for name, obj in locals().items())
-

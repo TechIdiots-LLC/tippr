@@ -86,4 +86,3 @@ if __name__ == "__main__":
     g.diff3_temp_location = '/dev/shm'
     
     print(threewaymerge(original, a, b))
-

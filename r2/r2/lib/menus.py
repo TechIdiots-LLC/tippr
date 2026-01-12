@@ -90,7 +90,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      mobile       = _("mobile"),
                      advertising  = _("advertise"),
                      gold         = _('tippr gold'),
-                     reddits      = _('vaults'),
+                     vaults      = _('vaults'),
                      rules        = _('site rules'),
                      jobs         = _('jobs'),
                      transparency = _("transparency"),
@@ -202,7 +202,7 @@ def menu_style(type):
     default = ('dropdown', '')
     d = dict(lightdrop = ('dropdown', 'lightdrop'),
              tabdrop = ('dropdown', 'tabdrop'),
-             srdrop = ('dropdown', 'srdrop'),
+             vaultdrop = ('dropdown', 'vaultdrop'),
              flatlist =  ('flatlist', 'flat-list'),
              tabmenu = ('tabmenu', ''),
              formtab = ('tabmenu', 'formtab'),
@@ -277,7 +277,7 @@ class NavButton(Styled):
 
     _style = "plain"
 
-    def __init__(self, title, dest, sr_path=True, aliases=None,
+    def __init__(self, title, dest, vault_path=True, aliases=None,
                  target="", use_params=False, css_class='', data=None):
         aliases = aliases or []
         aliases = {_force_unicode(a.rstrip('/')) for a in aliases}
@@ -288,7 +288,7 @@ class NavButton(Styled):
         self.dest = dest
         self.selected = False
 
-        self.sr_path = sr_path
+        self.vault_path = vault_path
         self.aliases = aliases
         self.target = target
         self.use_params = use_params
@@ -312,12 +312,12 @@ class NavButton(Styled):
     def is_selected(self):
         stripped_path = _force_unicode(request.path.rstrip('/').lower())
 
-        if not (self.sr_path or c.default_sr):
+        if not (self.vault_path or c.default_sr):
             return False
         if stripped_path == self.bare_path:
             return True
         site_path = c.site.user_path.lower() + self.bare_path
-        if self.sr_path and stripped_path == site_path:
+        if self.vault_path and stripped_path == site_path:
             return True
         if self.bare_path and stripped_path.startswith(self.bare_path):
             return True
@@ -334,7 +334,7 @@ class NavButton(Styled):
             ('selected', self.selected),
             ('title', self.title),
             ('path', self.path),
-            ('sr_path', self.sr_path),
+            ('vault_path', self.vault_path),
             ('target', self.target),
             ('css_class', self.css_class),
             ('_id', self._id),
@@ -343,10 +343,10 @@ class NavButton(Styled):
 
 
 class QueryButton(NavButton):
-    def __init__(self, title, dest, query_param, sr_path=True, aliases=None,
+    def __init__(self, title, dest, query_param, vault_path=True, aliases=None,
                  target="", css_class='', data=None):
         self.query_param = query_param
-        NavButton.__init__(self, title, dest, sr_path=sr_path,
+        NavButton.__init__(self, title, dest, vault_path=vault_path,
                            aliases=aliases, target=target, use_params=False,
                            css_class=css_class, data=data)
 
@@ -370,10 +370,10 @@ class QueryButton(NavButton):
 class PostButton(NavButton):
     _style = "post"
 
-    def __init__(self, title, dest, input_name, sr_path=True, aliases=None,
+    def __init__(self, title, dest, input_name, vault_path=True, aliases=None,
                  target="", css_class='', data=None):
         self.input_name = input_name
-        NavButton.__init__(self, title, dest, sr_path=sr_path,
+        NavButton.__init__(self, title, dest, vault_path=vault_path,
                            aliases=aliases, target=target, use_params=False,
                            css_class=css_class, data=data)
 
@@ -387,7 +387,7 @@ class PostButton(NavButton):
             ('title', self.title),
             ('base_path', self.base_path),
             ('action_params', self.action_params),
-            ('sr_path', self.sr_path),
+            ('vault_path', self.vault_path),
             ('target', self.target),
             ('css_class', self.css_class),
             ('_id', self._id),
@@ -400,15 +400,15 @@ class PostButton(NavButton):
 
 class ModeratorMailButton(NavButton):
     def is_selected(self):
-        if c.default_sr and not self.sr_path:
+        if c.default_sr and not self.vault_path:
             return NavButton.is_selected(self)
-        elif not c.default_sr and self.sr_path:
+        elif not c.default_sr and self.vault_path:
             return NavButton.is_selected(self)
 
 
 class OffsiteButton(NavButton):
     def build(self, base_path=''):
-        self.sr_path = False
+        self.vault_path = False
         self.path = self.bare_path = self.dest
 
     def cachable_attrs(self):
@@ -435,7 +435,7 @@ class VaultButton(NavButton):
         name = self.name_overrides.get(vault)
         name = _(name) if name else vault.name
         self.isselected = (c.site == vault)
-        NavButton.__init__(self, name, vault.path, sr_path=False,
+        NavButton.__init__(self, name, vault.path, vault_path=False,
                            css_class=css_class, data=data)
 
     def build(self, base_path=''):
@@ -460,13 +460,13 @@ class NamedButton(NavButton):
     'dest' defaults to the 'name' as well (unless specified
     separately)."""
 
-    def __init__(self, name, sr_path=True, aliases=None,
+    def __init__(self, name, vault_path=True, aliases=None,
                  dest=None, fmt_args={}, use_params=False, css_class='',
                  data=None):
         self.name = name.strip('/')
         menutext = menu[self.name] % fmt_args
         dest = dest if dest is not None else name
-        NavButton.__init__(self, menutext, dest, sr_path=sr_path,
+        NavButton.__init__(self, menutext, dest, vault_path=vault_path,
                            aliases=aliases,
                            use_params=use_params, css_class=css_class,
                            data=data)
@@ -483,7 +483,7 @@ class JsButton(NavButton):
         self.tab_name = tab_name
         self.onclick = onclick
         dest = '#'
-        NavButton.__init__(self, title, dest, sr_path=False,
+        NavButton.__init__(self, title, dest, vault_path=False,
                            css_class=css_class, data=data)
 
     def build(self, base_path=''):
@@ -696,5 +696,3 @@ class AdminTimeMenu(TimeMenu):
     get_param = 't'
     _default = 'day'
     _options = ('hour', 'day', 'week')
-
-

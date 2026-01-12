@@ -25,17 +25,17 @@ import unittest
 from pylons import app_globals as g
 
 from r2.lib.utils import UrlParser
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class TestIsRedditURL(RedditTestCase):
+class TestIsRedditURL(TipprTestCase):
 
     def setUp(self):
         self.patch_g(offsite_subdomains=['blog'])
 
     def _is_safe_reddit_url(self, url, vault=None):
         web_safe = UrlParser(url).is_web_safe_url()
-        return web_safe and UrlParser(url).is_reddit_url(vault)
+        return web_safe and UrlParser(url).is_tippr_url(vault)
 
     def assertIsSafeRedditUrl(self, url, vault=None):
         self.assertTrue(self._is_safe_reddit_url(url, vault))
@@ -119,11 +119,11 @@ class TestIsRedditURL(RedditTestCase):
     def test_url_mutation(self):
         u = UrlParser("http://example.com/")
         u.hostname = g.domain
-        self.assertTrue(u.is_reddit_url())
+        self.assertTrue(u.is_tippr_url())
 
         u = UrlParser("http://%s/" % g.domain)
         u.hostname = "example.com"
-        self.assertFalse(u.is_reddit_url())
+        self.assertFalse(u.is_tippr_url())
 
     def test_nbsp_allowances(self):
         # We have to allow nbsps in URLs, let's just allow them where they can't
@@ -139,7 +139,7 @@ class TestIsRedditURL(RedditTestCase):
         self.assertIsSafeRedditUrl("/foo/bar/\xa0baz")
 
 
-class TestSwitchSubdomainByExtension(RedditTestCase):
+class TestSwitchSubdomainByExtension(TipprTestCase):
     def setUp(self):
         self.patch_g(
             domain='tippr.net',
@@ -276,9 +276,7 @@ class TestEquality(unittest.TestCase):
         self.assertEqual(u, u2)
 
     def test_unicode_query_params(self):
-        u = UrlParser('http://example.com/?page=ｕｎｉｃｏｄｅ：（')
+        u = UrlParser('http://example.com/?page=ï½•ï½Žï½‰ï½ƒï½ï½„ï½…ï¼šï¼ˆ')
         u2 = UrlParser('http://example.com/')
-        u2.update_query(page='ｕｎｉｃｏｄｅ：（')
+        u2.update_query(page='ï½•ï½Žï½‰ï½ƒï½ï½„ï½…ï¼šï¼ˆ')
         self.assertEqual(u, u2)
-
-

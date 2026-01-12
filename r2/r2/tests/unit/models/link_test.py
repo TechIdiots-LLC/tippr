@@ -334,5 +334,3 @@ class TestSubmit(unittest.TestCase):
         l.set_content(True, "change to self post")
 
         self.assertEqual(self.links_by_url_remove_link.call_count, 1)
-
-

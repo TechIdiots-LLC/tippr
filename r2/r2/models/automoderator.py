@@ -59,4 +59,3 @@ class PerformedRulesByThing(tdb_cassandra.View):
             return []
 
         return list(columns.keys())
-

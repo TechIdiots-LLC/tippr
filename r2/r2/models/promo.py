@@ -172,11 +172,11 @@ NO_TRANSACTION = 0
 
 
 class Collection:
-    def __init__(self, name, sr_names, over_18=False, description=None,
+    def __init__(self, name, vault_names, over_18=False, description=None,
             is_spotlight=False):
         self.name = name
         self.over_18 = over_18
-        self.sr_names = sr_names
+        self.vault_names = vault_names
         self.description = description
         self.is_spotlight = is_spotlight
 
@@ -213,22 +213,22 @@ class CollectionStorage(tdb_cassandra.View):
     _compare_with = UTF8_TYPE
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.QUORUM
-    SR_NAMES_DELIM = '|'
+    vault_NAMES_DELIM = '|'
 
     @classmethod
     def _from_columns(cls, name, columns):
         description = columns['description']
-        sr_names = columns['sr_names'].split(cls.SR_NAMES_DELIM)
+        vault_names = columns['vault_names'].split(cls.vault_NAMES_DELIM)
         over_18 = columns.get("over_18") == "True"
         is_spotlight = columns.get("is_spotlight") == "True"
-        return Collection(name, sr_names, over_18=over_18,
+        return Collection(name, vault_names, over_18=over_18,
             description=description, is_spotlight=is_spotlight)
 
     @classmethod
     def _to_columns(cls, description, vaults, over_18, is_spotlight):
         columns = {
             'description': description,
-            'sr_names': cls.SR_NAMES_DELIM.join(vault.name for vault in vaults),
+            'vault_names': cls.vault_NAMES_DELIM.join(vault.name for vault in vaults),
             'over_18': str(over_18),
             'is_spotlight': str(is_spotlight),
         }
@@ -311,7 +311,7 @@ class Target:
     @property
     def Vault_names(self):
         if self.is_collection:
-            return self.collection.sr_names
+            return self.collection.vault_names
         else:
             return [self.Vault_name]
 
@@ -320,8 +320,8 @@ class Target:
         if self._Vaults is not None:
             return self._Vaults
 
-        sr_names = self.Vault_names
-        vaults = list(Vault._by_name(sr_names).values())
+        vault_names = self.Vault_names
+        vaults = list(Vault._by_name(vault_names).values())
         self._Vaults = vaults
         return vaults
 
@@ -386,7 +386,7 @@ class PromoCampaign(Thing):
         "is_auction",
     )
 
-    SR_NAMES_DELIM = '|'
+    vault_NAMES_DELIM = '|'
     Vault_TARGET = "vault"
     MOBILE_TARGET_DELIM = ','
 
@@ -458,8 +458,8 @@ class PromoCampaign(Thing):
     @classmethod
     def unpack_target(cls, target):
         """Convert a Target into attributes suitable for storage."""
-        sr_names = target.Vault_names
-        target_sr_names = cls.SR_NAMES_DELIM.join(sr_names)
+        vault_names = target.Vault_names
+        target_sr_names = cls.vault_NAMES_DELIM.join(vault_names)
         target_name = (target.collection.name if target.is_collection
                                               else cls.Vault_TARGET)
         return target_sr_names, target_name
@@ -544,12 +544,12 @@ class PromoCampaign(Thing):
         if hasattr(self, "_target"):
             return self._target
 
-        sr_names = self.target_sr_names.split(self.SR_NAMES_DELIM)
+        vault_names = self.target_sr_names.split(self.vault_NAMES_DELIM)
         if self.target_name == self.Vault_TARGET:
-            sr_name = sr_names[0]
-            target = Target(sr_name)
+            vault_name = vault_names[0]
+            target = Target(vault_name)
         else:
-            collection = Collection(self.target_name, sr_names)
+            collection = Collection(self.target_name, vault_names)
             target = Target(collection)
 
         self._target = target
@@ -665,8 +665,8 @@ def backfill_campaign_targets():
 
     q = PromoCampaign._query(sort=desc("_date"), data=True)
     for campaign in fetch_things2(q):
-        sr_name = campaign.sr_name or Frontpage.name
-        campaign.target = Target(sr_name)
+        vault_name = campaign.vault_name or Frontpage.name
+        campaign.target = Target(vault_name)
         campaign._commit()
 
 class PromotionLog(tdb_cassandra.View):
@@ -881,4 +881,3 @@ class PromotionPrices(tdb_cassandra.View):
                 r["METRO"][name] = cpm
 
         return r
-

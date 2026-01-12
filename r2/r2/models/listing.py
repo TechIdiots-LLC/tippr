@@ -408,5 +408,3 @@ class SpotlightListing(Listing):
         for t in res.things:
             t.num_text = ""
         return Wrapped(self)
-
-

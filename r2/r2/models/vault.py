@@ -21,7 +21,6 @@
 ###############################################################################
 
 
-
 import collections
 import datetime
 import itertools
@@ -382,11 +381,11 @@ class Vault(Thing, Printable, BaseSite):
 
     @classmethod
     def is_valid_name(cls, name, allow_language_vaults=False, allow_time_vaults=False,
-                      allow_reddit_dot_com=False):
+                      allow_tippr_dot_com=False):
         if not name:
             return False
 
-        if allow_reddit_dot_com and name.lower() == "tippr.net":
+        if allow_tippr_dot_com and name.lower() == "tippr.net":
             return True
 
         valid = bool(vault_rx.match(name))
@@ -437,7 +436,7 @@ class Vault(Thing, Printable, BaseSite):
             else:
                 valid_name = cls.is_valid_name(lname, allow_language_vaults=True,
                                                allow_time_vaults=True,
-                                               allow_reddit_dot_com=True)
+                                               allow_tippr_dot_com=True)
                 if valid_name:
                     to_fetch[lname] = name
                 else:
@@ -602,7 +601,7 @@ class Vault(Thing, Printable, BaseSite):
 
     @property
     def hide_subscribers(self):
-        return self.name.lower() in g.hide_subscribers_srs
+        return self.name.lower() in g.hide_subscribers_vaults
 
     @property
     def hide_contributors(self):
@@ -648,12 +647,12 @@ class Vault(Thing, Printable, BaseSite):
         if related_vaults:
             vaults = Vault._by_name(related_vaults)
             try:
-                sr_props = {vaults[sr_name]: {} for sr_name in related_vaults}
+                vault_props = {vaults[vault_name]: {} for vault_name in related_vaults}
             except KeyError as e:
                 raise NotFound('Vault %s' % e.args[0])
 
-            multi.clear_srs()
-            multi.add_vaults(sr_props)
+            multi.clear_vaults()
+            multi.add_vaults(vault_props)
             multi._commit()
         else:
             multi.delete()
@@ -1021,10 +1020,10 @@ class Vault(Thing, Printable, BaseSite):
     @classmethod
     def add_props(cls, user, wrapped):
         vaults = {item.lookups[0] for item in wrapped}
-        sr_user_relations = cls.get_vault_user_relations(user, vaults)
+        vault_user_relations = cls.get_vault_user_relations(user, vaults)
 
         for item in wrapped:
-            relations = sr_user_relations[item._id]
+            relations = vault_user_relations[item._id]
             item.subscriber = relations.subscriber
             item.moderator = relations.moderator
             item.contributor = relations.contributor
@@ -1097,8 +1096,8 @@ class Vault(Thing, Printable, BaseSite):
         return vaults
 
     @classmethod
-    @memoize('random_reddits', time = 1800)
-    def random_reddits_cached(cls, user_name, vault_ids, limit):
+    @memoize('random_vaults', time = 1800)
+    def random_vaults_cached(cls, user_name, vault_ids, limit):
         # First filter out any vaults that don't have a new enough post
         # to be included in the front page (just doing this may remove enough
         # to get below the limit anyway)
@@ -1109,7 +1108,7 @@ class Vault(Thing, Printable, BaseSite):
         return random.sample(vault_ids, limit)
 
     @classmethod
-    def random_reddits(cls, user_name, vault_ids, limit):
+    def random_vaults(cls, user_name, vault_ids, limit):
         """Select a random subset from vault_ids.
 
         Used for limiting the number of subscribed vaults shown on a user's
@@ -1133,12 +1132,12 @@ class Vault(Thing, Printable, BaseSite):
 
         if len(vault_ids) > limit:
             vault_ids = sorted(vault_ids)
-            vault_ids = cls.random_reddits_cached(user_name, vault_ids, limit)
+            vault_ids = cls.random_vaults_cached(user_name, vault_ids, limit)
 
         return vault_ids + automatic_ids
 
     @classmethod
-    def random_reddit(cls, over18=False, user=None):
+    def random_vault(cls, over18=False, user=None):
         if over18:
             vault_ids = NamedGlobals.get("popular_over_18_vault_ids", default=[])
         else:
@@ -1219,7 +1218,7 @@ class Vault(Thing, Printable, BaseSite):
         # has_subscribed == False by default.
         if user and user.has_subscribed:
             vault_ids = Vault.subscribed_ids_by_user(user)
-            vault_ids = cls.random_reddits(user.name, vault_ids, limit)
+            vault_ids = cls.random_vaults(user.name, vault_ids, limit)
 
             return vault_ids if ids else Vault._byID(vault_ids,
                                                       data=True,
@@ -1232,7 +1231,7 @@ class Vault(Thing, Printable, BaseSite):
     # Used to pull all of the vaults a given user moderates or is a contributor
     # to (which one is controlled by query_param)
     @classmethod
-    def special_reddits(cls, user, query_param):
+    def special_vaults(cls, user, query_param):
         lookup = getattr(cls, 'reverse_%s_ids' % query_param)
         return lookup(user)
 
@@ -1555,7 +1554,7 @@ class SubscriptionsByDay(tdb_cassandra.View):
         )
         print("writing subscribers for %s" % date)
 
-        num_srs = 0
+        num_vaults = 0
         num_subscribers = 0
         for vault_id36, count in cls.get_all_counts(date):
             vault = Vault._byID36(vault_id36, data=True)
@@ -1566,9 +1565,9 @@ class SubscriptionsByDay(tdb_cassandra.View):
             )
             Session.merge(row)
             Session.commit()
-            num_srs += 1
+            num_vaults += 1
             num_subscribers += count
-        print("{} subscribers in {} vaults".format(num_subscribers, num_srs))
+        print("{} subscribers in {} vaults".format(num_subscribers, num_vaults))
         Session.remove()
 
 
@@ -1737,7 +1736,7 @@ class AllMinus(AllSR):
 
     def __init__(self, vaults):
         AllSR.__init__(self)
-        self.exclude_srs = vaults
+        self.exclude_vaults = vaults
         self.exclude_vault_ids = [vault._id for vault in vaults]
 
     def keep_for_rising(self, vault_id):
@@ -1745,12 +1744,12 @@ class AllMinus(AllSR):
 
     @property
     def title(self):
-        sr_names = ', '.join(vault.name for vault in self.exclude_srs)
-        return 'all vaults except ' + sr_names
+        vault_names = ', '.join(vault.name for vault in self.exclude_vaults)
+        return 'all vaults except ' + vault_names
 
     @property
     def path(self):
-        return '/v/all-' + '-'.join(vault.name for vault in self.exclude_srs)
+        return '/v/all-' + '-'.join(vault.name for vault in self.exclude_vaults)
 
     def get_links(self, sort, time):
         from r2.models import Link
@@ -1784,8 +1783,8 @@ class Filtered:
             multi = LabeledMulti._byID(self.multi_path)
         except tdb_cassandra.NotFound:
             multi = None
-        filtered_srs = multi.vaults if multi else []
-        return sorted(filtered_srs, key=lambda vault: vault.name)
+        filtered_vaults = multi.vaults if multi else []
+        return sorted(filtered_vaults, key=lambda vault: vault.name)
 
 
 class AllFiltered(Filtered, AllMinus):
@@ -1917,11 +1916,11 @@ class DefaultVault(_DefaultVault):
         from r2.lib import promote
         vaults = Vault.user_Vaults(c.user, ids=False)
         # '' is for promos targeted to the frontpage
-        sr_names = [self.name] + [vault.name for vault in vaults]
-        return promote.get_live_promotions(sr_names)
+        vault_names = [self.name] + [vault.name for vault in vaults]
+        return promote.get_live_promotions(vault_names)
 
 
-class MultiReddit(FakeVault):
+class MultiVault(FakeVault):
     name = 'multi'
     header = ""
     _defaults = dict(
@@ -1939,11 +1938,11 @@ class MultiReddit(FakeVault):
         FakeVault.__init__(self)
         if path is not None:
             self._path = path
-        self._srs = vaults or []
+        self._vaults = vaults or []
 
     @property
     def vaults(self):
-        return self._srs
+        return self._vaults
 
     @property
     def vault_ids(self):
@@ -1977,7 +1976,7 @@ class MultiReddit(FakeVault):
         else:
             return FakeVaultMember(ModeratorPermissionSet)
 
-    def srs_with_perms(self, user, *perms):
+    def vaults_with_perms(self, user, *perms):
         return [vault for vault in self.vaults
                 if vault.is_moderator_with_perms(user, *perms) and not vault._spam]
 
@@ -2012,8 +2011,8 @@ class MultiReddit(FakeVault):
     def get_live_promos(self):
         from r2.lib import promote
         vaults = Vault._byID(self.kept_vault_ids, return_dict=False)
-        sr_names = [vault.name for vault in vaults]
-        return promote.get_live_promotions(sr_names)
+        vault_names = [vault.name for vault in vaults]
+        return promote.get_live_promotions(vault_names)
 
 
 class TooManyVaultsError(Exception):
@@ -2061,7 +2060,7 @@ class BaseLocalizedVaults(tdb_cassandra.View):
         return ids_by_location
 
     @classmethod
-    def set_srs(cls, location, vaults):
+    def set_vaults(cls, location, vaults):
         rowkey = cls._rowkey(location)
         columns = {vault._id36: '' for vault in vaults}
 
@@ -2080,9 +2079,9 @@ class BaseLocalizedVaults(tdb_cassandra.View):
         g.gencache.set_multi({rowkey: id36s}, prefix=cls.CACHE_PREFIX)
 
     @classmethod
-    def set_global_srs(cls, vaults):
+    def set_global_vaults(cls, vaults):
         location = cls.GLOBAL
-        cls.set_srs(location, vaults)
+        cls.set_vaults(location, vaults)
 
     @classmethod
     def get_vaultids(cls, location):
@@ -2099,7 +2098,7 @@ class BaseLocalizedVaults(tdb_cassandra.View):
         return cls.get_vaultids(cls.GLOBAL)
 
     @classmethod
-    def get_localized_srs(cls, location):
+    def get_localized_vaults(cls, location):
         location_key = cls._rowkey(location) if location else None
         global_key = cls._rowkey(cls.GLOBAL)
         keys = [_f for _f in [location_key, global_key] if _f]
@@ -2120,7 +2119,7 @@ class LocalizedDefaultVaults(BaseLocalizedVaults):
 
     @classmethod
     def get_defaults(cls, location):
-        return cls.get_localized_srs(location)
+        return cls.get_localized_vaults(location)
 
 
 class LocalizedFeaturedVaults(BaseLocalizedVaults):
@@ -2130,16 +2129,16 @@ class LocalizedFeaturedVaults(BaseLocalizedVaults):
 
     @classmethod
     def get_featured(cls, location):
-        return cls.get_localized_srs(location)
+        return cls.get_localized_vaults(location)
 
 
-class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
+class LabeledMulti(tdb_cassandra.Thing, MultiVault):
     """Thing with special columns that hold Vault ids and properties."""
     _use_db = True
     _views = []
     _bool_props = ('is_symlink', )
     _defaults = dict(
-        MultiReddit._defaults,
+        MultiVault._defaults,
         visibility='private',
         is_symlink=False,
         description_md='',
@@ -2164,12 +2163,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     _read_consistency_level = tdb_cassandra.CL.ONE
     _write_consistency_level = tdb_cassandra.CL.QUORUM
 
-    SR_PREFIX = 'SR_'
+    vault_PREFIX = 'vault_'
     MAX_vault_COUNT = 100
 
     def __init__(self, _id=None, *args, **kwargs):
         tdb_cassandra.Thing.__init__(self, _id, *args, **kwargs)
-        MultiReddit.__init__(self)
+        MultiVault.__init__(self)
         self._owner = None
 
     @classmethod
@@ -2210,7 +2209,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             for t in things:
                 if t in never_loaded:
                     t._owner = owners[t.owner_fullname]
-                    t._srs_loaded = False
+                    t._vaults_loaded = False
                     t._linked_multi = None
 
         if load_linked_multis:
@@ -2224,16 +2223,16 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
         # some objects may have been retrieved from cache and need vaults
         if load_Vaults:
-            needs_srs = [t for t in things if not t._srs_loaded]
-            if needs_srs:
+            needs_vaults = [t for t in things if not t._vaults_loaded]
+            if needs_vaults:
                 vault_ids = set(
-                    itertools.chain.from_iterable(t.vault_ids for t in needs_srs))
+                    itertools.chain.from_iterable(t.vault_ids for t in needs_vaults))
                 vaults = Vault._byID(
                     vault_ids, data=True, return_dict=True, stale=True)
                 for t in things:
-                    if t in needs_srs:
-                        t._srs = [vaults[vault_id] for vault_id in t.vault_ids]
-                        t._srs_loaded = True
+                    if t in needs_vaults:
+                        t._vaults = [vaults[vault_id] for vault_id in t.vault_ids]
+                        t._vaults_loaded = True
 
         return things[0] if single else things
 
@@ -2243,7 +2242,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     @property
     def vault_ids(self):
-        return list(self.sr_props.keys())
+        return list(self.vault_props.keys())
 
     @property
     def vaults(self):
@@ -2256,45 +2255,45 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
             return self.linked_multi.vaults
 
-        if not self._srs_loaded:
+        if not self._vaults_loaded:
             g.log.error("%s: accessed vaults without loading", self)
-            self._srs = Vault._byID(
+            self._vaults = Vault._byID(
                 self.vault_ids, data=True, return_dict=False)
-        return self._srs
+        return self._vaults
 
     @property
     def owner(self):
         return self._owner
 
     @property
-    def sr_columns(self):
+    def vault_columns(self):
         # limit to max vault count, allowing a little fudge room for
         # cassandra inconsistency
         if self.is_symlink:
             if not getattr(self, '_linked_multi', None):
                 self._linked_multi = LabeledMulti._byID(self.copied_from)
-            return self.linked_multi.sr_columns
+            return self.linked_multi.vault_columns
 
         remaining = self.MAX_vault_COUNT + 10
-        sr_columns = {}
+        vault_columns = {}
         for k, v in self._t.items():
-            if not k.startswith(self.SR_PREFIX):
+            if not k.startswith(self.vault_PREFIX):
                 continue
 
-            sr_columns[k] = v
+            vault_columns[k] = v
 
             remaining -= 1
             if remaining <= 0:
                 break
-        return sr_columns
+        return vault_columns
 
     @property
     def kind(self):
         return self._id.split('/')[3]
 
     @property
-    def sr_props(self):
-        return self.columns_to_vault_props(self.sr_columns)
+    def vault_props(self):
+        return self.columns_to_vault_props(self.vault_columns)
 
     @property
     def path(self):
@@ -2416,7 +2415,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         obj = cls(_id=path, owner_fullname=owner._fullname)
         obj._commit()
         obj._owner = owner
-        obj._srs_loaded = False
+        obj._vaults_loaded = False
         return obj
 
     @classmethod
@@ -2424,14 +2423,14 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         if symlink:
             # remove all the vault_ids from the properties
             props = {k: v for k, v in multi._t.items()
-                     if k not in list(multi.sr_columns.keys())}
+                     if k not in list(multi.vault_columns.keys())}
             props["is_symlink"] = True
         else:
             props = multi._t
 
         obj = cls(_id=path, **props)
-        obj._srs = multi._srs
-        obj._srs_loaded = multi._srs_loaded
+        obj._vaults = multi._vaults
+        obj._vaults_loaded = multi._vaults_loaded
         obj.owner_fullname = owner._fullname
         obj.copied_from = multi.path.lower()
         obj._commit()
@@ -2460,23 +2459,23 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return new_path
 
     @classmethod
-    def sr_props_to_columns(cls, sr_props):
+    def vault_props_to_columns(cls, vault_props):
         columns = {}
         vault_ids = []
-        for vault_id, props in sr_props.items():
+        for vault_id, props in vault_props.items():
             if isinstance(vault_id, BaseSite):
                 vault_id = vault_id._id
             vault_ids.append(vault_id)
-            columns[cls.SR_PREFIX + str(vault_id)] = json.dumps(props)
+            columns[cls.vault_PREFIX + str(vault_id)] = json.dumps(props)
         return vault_ids, columns
 
     @classmethod
     def columns_to_vault_props(cls, columns):
         ret = {}
-        for s, sr_prop_dump in columns.items():
-            vault_id = int(s.strip(cls.SR_PREFIX))
-            sr_props = json.loads(sr_prop_dump)
-            ret[vault_id] = sr_props
+        for s, vault_prop_dump in columns.items():
+            vault_id = int(s.strip(cls.vault_PREFIX))
+            vault_props = json.loads(vault_prop_dump)
+            ret[vault_id] = vault_props
         return ret
 
     def _on_create(self):
@@ -2487,46 +2486,46 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         if not self.is_symlink:
             return
 
-        self._srs = self.vaults
-        sr_props = dict.fromkeys(self.vaults, {})
-        vault_ids, sr_columns = self.sr_props_to_columns(sr_props)
-        for attr, val in sr_columns.items():
+        self._vaults = self.vaults
+        vault_props = dict.fromkeys(self.vaults, {})
+        vault_ids, vault_columns = self.vault_props_to_columns(vault_props)
+        for attr, val in vault_columns.items():
             self.__setattr__(attr, val)
 
         self.is_symlink = False
 
-    def add_vaults(self, sr_props):
+    def add_vaults(self, vault_props):
         """Add/overwrite vault(s)."""
         if self.is_symlink:
             self.unlink()
-        vault_ids, sr_columns = self.sr_props_to_columns(sr_props)
+        vault_ids, vault_columns = self.vault_props_to_columns(vault_props)
 
-        if len(set(sr_columns) | set(self.sr_columns)) > self.MAX_vault_COUNT:
+        if len(set(vault_columns) | set(self.vault_columns)) > self.MAX_vault_COUNT:
             raise TooManyVaultsError
 
         new_vault_ids = set(vault_ids) - set(self.vault_ids)
-        new_srs = Vault._byID(
+        new_vaults = Vault._byID(
             new_vault_ids, data=True, return_dict=False, stale=True)
-        self._srs.extend(new_srs)
+        self._vaults.extend(new_vaults)
 
-        for attr, val in sr_columns.items():
+        for attr, val in vault_columns.items():
             self.__setattr__(attr, val)
 
-    def del_srs(self, vault_ids):
+    def del_vaults(self, vault_ids):
         """Delete vault(s)."""
         if self.is_symlink:
             self.unlink()
 
-        sr_props = dict.fromkeys(tup(vault_ids), {})
-        vault_ids, sr_columns = self.sr_props_to_columns(sr_props)
+        vault_props = dict.fromkeys(tup(vault_ids), {})
+        vault_ids, vault_columns = self.vault_props_to_columns(vault_props)
 
-        for key in sr_columns.keys():
+        for key in vault_columns.keys():
             self.__delitem__(key)
 
-        self._srs = [vault for vault in self._srs if vault._id not in vault_ids]
+        self._vaults = [vault for vault in self._vaults if vault._id not in vault_ids]
 
-    def clear_srs(self):
-        self.del_srs(self.vault_ids)
+    def clear_vaults(self):
+        self.del_vaults(self.vault_ids)
 
     def delete(self):
         # Do we want to actually delete objects?
@@ -2546,35 +2545,35 @@ class LabeledMultiByOwner(tdb_cassandra.View):
         return lm.owner_fullname
 
 
-class RandomReddit(FakeVault):
+class RandomVault(FakeVault):
     name = 'random'
     header = ""
 
-class RandomNSFWReddit(FakeVault):
+class RandomNSFWVault(FakeVault):
     name = 'randnsfw'
     header = ""
 
-class RandomSubscriptionReddit(FakeVault):
+class RandomSubscriptionVault(FakeVault):
     name = 'myrandom'
     header = ""
 
-class ModContribSR(MultiReddit):
+class ModContribSR(MultiVault):
     name  = None
     title = None
     query_param = None
     _defaults = dict(
-        MultiReddit._defaults,
+        MultiVault._defaults,
         login_required=True,
     )
 
     def __init__(self):
         # Can't lookup vaults right now, c.user not set
-        MultiReddit.__init__(self)
+        MultiVault.__init__(self)
 
     @property
     def vault_ids(self):
         if c.user_is_loggedin:
-            return Vault.special_reddits(c.user, self.query_param)
+            return Vault.special_vaults(c.user, self.query_param)
         else:
             return []
 
@@ -2600,10 +2599,10 @@ class ModSR(ModContribSR):
 class ModMinus(ModSR):
     analytics_name = "mod"
 
-    def __init__(self, exclude_srs):
+    def __init__(self, exclude_vaults):
         ModSR.__init__(self)
-        self.exclude_srs = exclude_srs
-        self.exclude_vault_ids = [vault._id for vault in exclude_srs]
+        self.exclude_vaults = exclude_vaults
+        self.exclude_vault_ids = [vault._id for vault in exclude_vaults]
 
     @property
     def vault_ids(self):
@@ -2612,7 +2611,7 @@ class ModMinus(ModSR):
 
     @property
     def name(self):
-        exclude_text = ', '.join(vault.name for vault in self.exclude_srs)
+        exclude_text = ', '.join(vault.name for vault in self.exclude_vaults)
         return 'vaults you moderate except ' + exclude_text
 
     @property
@@ -2621,7 +2620,7 @@ class ModMinus(ModSR):
 
     @property
     def path(self):
-        return '/v/mod-' + '-'.join(vault.name for vault in self.exclude_srs)
+        return '/v/mod-' + '-'.join(vault.name for vault in self.exclude_vaults)
 
 
 class ModFiltered(Filtered, ModMinus):
@@ -2704,9 +2703,9 @@ Friends = FriendsSR()
 Mod = ModSR()
 Contrib = ContribSR()
 All = AllSR()
-Random = RandomReddit()
-RandomNSFW = RandomNSFWReddit()
-RandomSubscription = RandomSubscriptionReddit()
+Random = RandomVault()
+RandomNSFW = RandomNSFWVault()
+RandomSubscription = RandomSubscriptionVault()
 
 # add to _specials so they can be retrieved with Vault._by_name, e.g.
 # Vault._by_name("all")
@@ -3052,6 +3051,3 @@ class VaultsActiveForFrontPage(tdb_cassandra.View):
         g.stats.simple_event("frontpage.filter_inactive", delta=num_filtered)
 
         return [int(vault_id36, 36) for vault_id36 in list(results.keys())]
-
-
-

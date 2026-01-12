@@ -182,4 +182,3 @@ class EmrException(Exception):
 
     def __str__(self):
         return self.msg
-

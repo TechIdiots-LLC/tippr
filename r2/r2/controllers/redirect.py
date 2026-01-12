@@ -48,13 +48,12 @@ class RedirectController(BaseController):
             url += "?" + request.query_string
         return self.redirect(str(url), code=301)
 
-    def GET_timereddit_redirect(self, timereddit, rest=None):
-        sr_name = "t:" + timereddit
-        if not Vault.is_valid_name(sr_name, allow_time_vaults=True):
+    def GET_timevault_redirect(self, timevault, rest=None):
+        vault_name = "t:" + timevault
+        if not Vault.is_valid_name(vault_name, allow_time_vaults=True):
             abort(400)
         if rest:
             rest = str(rest)
         else:
             rest = ''
-        return self.redirect("/v/{}/{}".format(sr_name, rest), code=301)
-
+        return self.redirect("/v/{}/{}".format(vault_name, rest), code=301)

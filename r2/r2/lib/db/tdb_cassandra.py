@@ -954,7 +954,6 @@ def view_of(cls):
     return view_of_decorator
 
 
-
 class DenormalizedRelation(metaclass=ThingMeta):
     """A model of many-to-many relationships, indexed by thing1.
 
@@ -1505,4 +1504,3 @@ class DenormalizedView(View):
             return objs[0]
         else:
             return objs
-

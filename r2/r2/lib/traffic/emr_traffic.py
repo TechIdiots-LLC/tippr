@@ -275,4 +275,3 @@ def coalesce_interval(emr_connection, jobflow_name, input_path, output_path,
                       **jobflow_kw):
     step = PigCoalesce(input_path, output_path)
     run_traffic_step(emr_connection, step, jobflow_name, **jobflow_kw)
-

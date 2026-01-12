@@ -129,4 +129,3 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
         g.setup_complete()
 
     return config
-

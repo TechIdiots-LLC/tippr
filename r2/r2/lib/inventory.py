@@ -60,13 +60,13 @@ def update_prediction_data():
         min_daily_by_sr[fp] = min_daily_by_sr.get(fp, 0) + min_daily_by_sr['']
         del min_daily_by_sr['']
 
-    filtered = {sr_name: num for sr_name, num in min_daily_by_sr.items()
+    filtered = {vault_name: num for vault_name, num in min_daily_by_sr.items()
                 if num > 100}
     PromoMetrics.set(MIN_DAILY_CASS_KEY, filtered)
 
 
 def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
-    """Return dict mapping sr_name to min_pageviews over the last ndays."""
+    """Return dict mapping vault_name to min_pageviews over the last ndays."""
     if not end_date:
         last_modified = traffic.get_traffic_last_modified()
         end_date = last_modified - timedelta(days=1)
@@ -97,9 +97,9 @@ def get_date_range(start, end):
 
 def get_campaigns_by_date(vaults, start, end, ignore=None):
     vaults = tup(vaults)
-    sr_names = [vault.name for vault in vaults]
+    vault_names = [vault.name for vault in vaults]
     campaign_ids = PromotionWeights.get_campaign_ids(
-        start, end=end, sr_names=sr_names)
+        start, end=end, vault_names=vault_names)
     if ignore:
         campaign_ids.discard(ignore._id)
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
@@ -152,10 +152,10 @@ def get_predicted_pageviews(vaults, location=None):
     """
 
     vaults, is_single = tup(vaults, ret_is_single=True)
-    sr_names = [vault.name for vault in vaults]
+    vault_names = [vault.name for vault in vaults]
 
     # default vaults require a different inventory factor
-    default_srids = LocalizedDefaultVaults.get_global_defaults()
+    default_vault_ids = LocalizedDefaultVaults.get_global_defaults()
 
     if location:
         no_location = Location(None)
@@ -170,10 +170,10 @@ def get_predicted_pageviews(vaults, location=None):
         location_factor = 1.0
 
     # prediction does not vary by date
-    daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_names=sr_names)
+    daily_inventory = PromoMetrics.get(MIN_DAILY_CASS_KEY, vault_names=vault_names)
     ret = {}
     for vault in vaults:
-        if not isinstance(vault, FakeVault) and vault._id in default_srids:
+        if not isinstance(vault, FakeVault) and vault._id in default_vault_ids:
             default_factor = DEFAULT_INVENTORY_FACTOR
         else:
             default_factor = INVENTORY_FACTOR
@@ -241,17 +241,17 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
 
     # get all the campaigns directly and indirectly involved in our target
     targets, is_single = tup(targets, ret_is_single=True)
-    target_srs = list(chain.from_iterable(
+    target_vaults = list(chain.from_iterable(
         target.Vaults_slow for target in targets))
-    all_campaigns = find_campaigns(target_srs, start, end, ignore)
+    all_campaigns = find_campaigns(target_vaults, start, end, ignore)
 
     # get predicted pageviews for each vault and location
-    all_sr_names = {vault.name for vault in target_srs}
+    all_sr_names = {vault.name for vault in target_vaults}
     all_sr_names |= set(chain.from_iterable(
         campaign.target.Vault_names for campaign in all_campaigns
     ))
-    all_srs = list(Vault._by_name(all_sr_names).values())
-    pageviews_dict = {location: get_predicted_pageviews(all_srs, location)
+    all_vaults = list(Vault._by_name(all_sr_names).values())
+    pageviews_dict = {location: get_predicted_pageviews(all_vaults, location)
                           for location in locations}
 
     # determine booked impressions by target and location for each day
@@ -264,7 +264,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
 
     for campaign in all_campaigns:
         camp_dates = set(get_date_range(campaign.start_date, campaign.end_date))
-        sr_names = tuple(sorted(campaign.target.Vault_names))
+        vault_names = tuple(sorted(campaign.target.Vault_names))
         daily_impressions = campaign.impressions / campaign.ndays
 
         for location in locations:
@@ -273,7 +273,7 @@ def get_available_pageviews(targets, start, end, location=None, datestr=False,
                 continue
 
             for date in camp_dates.intersection(dates):
-                booked_dict[date][location][sr_names] += daily_impressions
+                booked_dict[date][location][vault_names] += daily_impressions
 
     # calculate inventory for each target and location on each date
     datekey = lambda dt: dt.strftime('%m/%d/%Y') if datestr else dt
@@ -316,5 +316,3 @@ def get_oversold(target, start, end, daily_request, ignore=None, location=None):
         if available < daily_request:
             oversold[datestr] = available
     return oversold
-
-

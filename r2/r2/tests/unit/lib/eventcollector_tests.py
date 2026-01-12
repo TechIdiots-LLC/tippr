@@ -30,12 +30,12 @@ from pylons import app_globals as g
 from r2 import models
 from r2.lib import hooks
 from r2.models import Link
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 FAKE_DATE = datetime.datetime(2005, 6, 23, 3, 14, 0, tzinfo=pytz.UTC)
 
 
-class TestEventCollector(RedditTestCase):
+class TestEventCollector(TipprTestCase):
 
     def setUp(self):
         super().setUp()
@@ -67,7 +67,7 @@ class TestEventCollector(RedditTestCase):
                     'target_age_seconds': initial_vote.thing._age.total_seconds(),
                     'target_rank': initial_vote.data['rank'],
                     'vault_id': initial_vote.thing.vault_slow._id,
-                    'sr_name': initial_vote.thing.vault_slow.name,
+                    'vault_name': initial_vote.thing.vault_slow.name,
                     'target_fullname': initial_vote.thing._fullname,
                     'target_name': initial_vote.thing.name,
                     'target_id': initial_vote.thing._id,
@@ -97,7 +97,7 @@ class TestEventCollector(RedditTestCase):
                     'target_age_seconds': upvote.thing._age.total_seconds(),
                     'target_rank': upvote.data['rank'],
                     'vault_id': upvote.thing.vault_slow._id,
-                    'sr_name': upvote.thing.vault_slow.name,
+                    'vault_name': upvote.thing.vault_slow.name,
                     'target_fullname': upvote.thing._fullname,
                     'target_name': upvote.thing.name,
                     'target_id': upvote.thing._id,
@@ -130,7 +130,7 @@ class TestEventCollector(RedditTestCase):
                     'post_type': "self",
                     'post_body': new_link.selftext,
                     'vault_id': new_link.vault_slow._id,
-                    'sr_name': new_link.vault_slow.name,
+                    'vault_name': new_link.vault_slow.name,
                     'geoip_country': context.location,
                     'oauth2_client_id': context.oauth2_client._id,
                     'oauth2_client_app_type': context.oauth2_client.app_type,
@@ -216,7 +216,7 @@ class TestEventCollector(RedditTestCase):
                 'event_topic': 'mod_events',
                 'payload': {
                     'vault_id': vault._id,
-                    'sr_name': vault.name,
+                    'vault_name': vault.name,
                     'domain': request.host,
                     'user_agent': request.user_agent,
                     'user_agent_parsed': request.parsed_agent.to_dict(),
@@ -258,7 +258,7 @@ class TestEventCollector(RedditTestCase):
                     'referrer_domain': self.domain_mock(),
                     'verified_email': context.user.email_verified,
                     'user_id': context.user._id,
-                    'sr_name': vault.name,
+                    'vault_name': vault.name,
                     'referrer_url': request.headers.get(),
                     'user_agent': request.user_agent,
                     'user_agent_parsed': request.parsed_agent.to_dict(),
@@ -313,7 +313,7 @@ class TestEventCollector(RedditTestCase):
                     'user_agent': request.user_agent,
                     'user_agent_parsed': request.parsed_agent.to_dict(),
                     'vault_id': message.vault_slow._id,
-                    'sr_name': message.vault_slow.name,
+                    'vault_name': message.vault_slow.name,
                     'oauth2_client_id': context.oauth2_client._id,
                     'oauth2_client_app_type': context.oauth2_client.app_type,
                     'oauth2_client_name': context.oauth2_client.name,
@@ -374,5 +374,3 @@ class TestEventCollector(RedditTestCase):
                 },
             }
         )
-
-

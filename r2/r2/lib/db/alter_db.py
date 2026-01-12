@@ -68,4 +68,3 @@ def exec_all(command, data=False, rel = False, print_only = False):
 "drop index idx_thing_id_%(type)s"
 
 "create index concurrently idx_thing1_name_date_%(type)s on %(type)s (thing1_id, name, date);"
-

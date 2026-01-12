@@ -83,4 +83,3 @@ def update_support_ticket(ticket=None, ticket_id=None,
             comment_is_public=comment_is_public,
             tag_list=tag_list,
         )
-

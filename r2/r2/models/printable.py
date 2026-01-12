@@ -105,4 +105,3 @@ class Printable:
                       request.GET.get("expanded"),
                       getattr(wrapped, 'embed_voting_style', None)])
         return s
-

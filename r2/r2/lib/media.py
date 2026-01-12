@@ -391,8 +391,8 @@ def _scrape_media(url, autoplay=False, maxwidth=600, force=False,
 
 def _get_scrape_url(link):
     if not link.is_self:
-        sr_name = link.vault_slow.name
-        if not feature.is_enabled("imgur_gif_conversion", vault=sr_name):
+        vault_name = link.vault_slow.name
+        if not feature.is_enabled("imgur_gif_conversion", vault=vault_name):
             return link.url
         p = UrlParser(link.url)
         # If it's a gif link on imgur, replacing it with gifv should
@@ -407,7 +407,7 @@ def _get_scrape_url(link):
     second_choice = None
     for url in urls:
         p = UrlParser(url)
-        if p.is_reddit_url():
+        if p.is_tippr_url():
             continue
         # If we don't find anything we like better, use the first image.
         if not second_choice:
@@ -1007,4 +1007,3 @@ def run():
             print(traceback.format_exc())
 
     amqp.consume_items('scraper_q', process_link)
-

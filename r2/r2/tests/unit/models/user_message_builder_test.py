@@ -27,10 +27,10 @@ from pylons import tmpl_context as c
 
 from r2.models import Message
 from r2.models.builder import MessageBuilder, UserMessageBuilder
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class UserMessageBuilderTest(RedditTestCase):
+class UserMessageBuilderTest(TipprTestCase):
     def setUp(self):
         super().setUp()
         self.user = MagicMock(name="user")
@@ -131,6 +131,3 @@ class UserMessageBuilderTest(RedditTestCase):
                     delattr(obj, attr)
                 except AttributeError:
                     pass
-
-
-

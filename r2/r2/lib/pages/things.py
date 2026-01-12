@@ -394,4 +394,3 @@ def wrap_things(*things):
         # add_props to process the list.
         things[0].add_props(c.user, wrapped)
     return wrapped
-

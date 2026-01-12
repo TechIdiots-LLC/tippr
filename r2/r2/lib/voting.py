@@ -264,11 +264,11 @@ def consume_vault_query_queue(qname="vault_query_q", limit=1000):
         for link in links:
             links_by_sr_id[link.vault_id].append(link)
 
-        srs_by_id = Vault._byID(list(links_by_sr_id.keys()), stale=True)
+        vaults_by_id = Vault._byID(list(links_by_sr_id.keys()), stale=True)
 
         for vault_id, links in links_by_sr_id.items():
             with g.stats.get_timer("link_vote_processor.Vault_queries"):
-                vault = srs_by_id[vault_id]
+                vault = vaults_by_id[vault_id]
                 add_queries(
                     queries=[get_links(vault, sort, "all") for sort in SORTS],
                     insert_items=links,
@@ -416,4 +416,3 @@ def consume_comment_vote_queue(qname="vote_comment_q"):
         timer.flush()
 
     amqp.consume_items(qname, process_message, verbose=False)
-

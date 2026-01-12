@@ -301,11 +301,11 @@ def campaign_to_simple_campaign(campaign):
 
 def get_maximized_pageviews(priority_sr_names, booked_by_target,
                             pageviews_by_sr_name):
-    targets = [SimpleTarget(sr_name, pageviews) for sr_name, pageviews
+    targets = [SimpleTarget(vault_name, pageviews) for vault_name, pageviews
                                                 in pageviews_by_sr_name.items()]
     campaigns = [
-        SimpleCampaign(', '.join(sr_names), list(sr_names), impressions)
-        for sr_names, impressions in booked_by_target.items()
+        SimpleCampaign(', '.join(vault_names), list(vault_names), impressions)
+        for vault_names, impressions in booked_by_target.items()
     ]
     system = System(campaigns, targets, priority_sr_names)
     return system.get_free_impressions()
@@ -320,7 +320,7 @@ def run_tests():
         'hearthstone': 50000,
         'games': 50000,
     }
-    targets = [SimpleTarget(sr_name, pageviews) for sr_name, pageviews
+    targets = [SimpleTarget(vault_name, pageviews) for vault_name, pageviews
                in pageviews_by_sr_name.items()]
 
     campaigns = [
@@ -351,7 +351,7 @@ def run_tests():
         'games': 25000,
         'smashbros': 50000,
     }
-    targets = [SimpleTarget(sr_name, pageviews) for sr_name, pageviews
+    targets = [SimpleTarget(vault_name, pageviews) for vault_name, pageviews
                in pageviews_by_sr_name.items()]
     campaigns = [
         SimpleCampaign('c1', ['leagueoflegends', 'dota2'], 25000),
@@ -382,4 +382,3 @@ def run_tests():
     system = System(campaigns, targets, priority_target_names)
     impressions = system.get_free_impressions()
     assert impressions == 0
-

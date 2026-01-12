@@ -101,4 +101,3 @@ class MailgunEmailProvider(EmailProvider):
         g.stats.simple_event("mailgun.outgoing.success")
         email_id = body["id"]
         return email_id
-

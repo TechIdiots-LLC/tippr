@@ -457,9 +457,9 @@ class VaultTraffic(TipprTraffic):
                                 title=_("subscriptions by day"),
                                 shortname=_("subscriptions")))
 
-            sr_name = c.site.name
+            vault_name = c.site.name
             subscriptions = traffic.SubscriptionsByVault.history(interval,
-                                                                     sr_name)
+                                                                     vault_name)
 
             return traffic.zip_timeseries(pageviews, subscriptions)
         else:
@@ -816,4 +816,3 @@ class VaultTrafficReport(Templated):
             writer.writerow((name, uniques, pageviews))
 
         return out.getvalue()
-

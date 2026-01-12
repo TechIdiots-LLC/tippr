@@ -168,7 +168,7 @@ error_list = dict((
         ('BANNED_FROM_Vault', _('that user is banned from the vault')),
         ('IN_TIMEOUT', _("You can't do that while suspended.")),
         ('GOLD_REQUIRED', _('you must have an active tippr gold subscription to do that')),
-        ('INSUFFICIENT_CREDDITS', _("insufficient creddits")),
+        ('INSUFFICIENT_CTIPS', _("insufficient ctips")),
         ('GILDING_NOT_ALLOWED', _("gilding is not allowed in this vault")),
         ('SCRAPER_ERROR', _("unable to scrape provided url")),
         ('NO_VAULT_TO_VAULT_MESSAGE', _("can't send a message from a vault to another vault")),
@@ -306,7 +306,7 @@ class BadRequestError(HTTPBadRequest):
         self.explanation = error_list[error_name]
 
 
-def reddit_http_error(code=400, error_name='UNKNOWN_ERROR', **data):
+def tippr_http_error(code=400, error_name='UNKNOWN_ERROR', **data):
     exc = status_map[code]()
 
     data['reason'] = exc.explanation = error_name
@@ -332,4 +332,3 @@ class VerifiedUserRequiredException(TipprError):
 
 
 class MessageError(Exception): pass
-

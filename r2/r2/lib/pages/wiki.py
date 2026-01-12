@@ -216,6 +216,3 @@ class WikiDiscussions(WikiBasePage):
         description = [_("Discussions are site-wide links to this wiki page."),
                        _("Submit a link to this wiki page or see other discussions about this wiki page.")]
         WikiBasePage.__init__(self, content, page=page, description=description, **context)
-
-
-

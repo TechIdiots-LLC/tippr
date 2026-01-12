@@ -13,4 +13,3 @@ class ActivityService:
 
 
 __all__ = ['ActivityService', 'Client', 'Iface', 'ActivityInfo']
-

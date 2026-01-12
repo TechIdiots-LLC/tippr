@@ -54,10 +54,10 @@ class PromoMetrics(tdb_cassandra.View):
     _fetch_all_columns = True
 
     @classmethod
-    def get(cls, metric_name, sr_names=None):
-        sr_names = tup(sr_names)
+    def get(cls, metric_name, vault_names=None):
+        vault_names = tup(vault_names)
         try:
-            metric = cls._byID(metric_name, properties=sr_names)
+            metric = cls._byID(metric_name, properties=vault_names)
             return metric._values()  # might have additional values
         except tdb_cassandra.NotFound:
             return {}
@@ -86,9 +86,9 @@ class LocationPromoMetrics(tdb_cassandra.View):
 
     @classmethod
     def get(cls, vaults, locations):
-        vaults, srs_is_single = tup(vaults, ret_is_single=True)
+        vaults, vaults_is_single = tup(vaults, ret_is_single=True)
         locations, locations_is_single = tup(locations, ret_is_single=True)
-        is_single = srs_is_single and locations_is_single
+        is_single = vaults_is_single and locations_is_single
 
         rowkeys = {location: cls._rowkey(location) for location in locations}
         columns = {vault: cls._column_name(vault) for vault in vaults}
@@ -116,4 +116,3 @@ class LocationPromoMetrics(tdb_cassandra.View):
                 rowkey = cls._rowkey(location)
                 column = {cls._column_name(vault): impressions}
                 b.insert(rowkey, column)
-

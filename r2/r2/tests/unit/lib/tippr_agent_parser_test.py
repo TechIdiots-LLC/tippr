@@ -35,10 +35,10 @@ from r2.lib.utils.tippr_agent_parser import (
     RelayForRedditDetector,
     detect,
 )
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class AgentDetectorTest(RedditTestCase):
+class AgentDetectorTest(TipprTestCase):
     def test_reddit_is_fun_detector(self):
         user_agent = 'tippr is fun (Android) 4.1.15'
         agent_parsed = {}
@@ -154,7 +154,7 @@ class AgentDetectorTest(RedditTestCase):
                          agent_parsed['browser']['name'])
 
 
-class HAPIntegrationTests(RedditTestCase):
+class HAPIntegrationTests(TipprTestCase):
     """Tests to ensure that parsers don't confilct with existing onex."""
     # TODO (katie.atkinson): Add tests to ensure tippr parsers don't conflict
     # with httpagentparser detectors.
@@ -214,5 +214,3 @@ class HAPIntegrationTests(RedditTestCase):
         user_agent = 'BaconReader/3.0 (iPhone; iOS 9.3.2; Scale/2.00)'
         outs = detect(user_agent)
         self.assertEqual(outs['browser']['name'], BaconReaderDetector.name)
-
-

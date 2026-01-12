@@ -73,4 +73,3 @@ class MediaembedController(MinimalController):
 class AdController(MinimalController):
     def GET_ad(self):
         return "This is a placeholder ad."
-

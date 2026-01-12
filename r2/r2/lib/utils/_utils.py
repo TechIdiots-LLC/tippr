@@ -332,4 +332,3 @@ __all__ = [
     'timesince', 'timeuntil', 'keymap', 'map_keys', 'unmap_keys',
     'prefix_keys', 'flatten', 'get_after',
 ]
-

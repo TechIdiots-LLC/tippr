@@ -210,4 +210,3 @@ class APIv1UserController(OAuth2OnlyController):
         if c.user.gold:
             c.user.friend_rels_cache(_update=True)
         response.status = 204
-

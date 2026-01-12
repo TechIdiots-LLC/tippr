@@ -38,15 +38,15 @@ from r2.lib.validator import (
     validate,
 )
 from r2.models import Account, Comment, Link, NotFound
-from r2.models.gold import creddits_lock
+from r2.models.gold import ctips_lock
 
 
 class APIv1GoldController(OAuth2OnlyController):
     def _gift_using_creddits(self, recipient, months=1, thing_fullname=None,
             proxying_for=None):
-        with creddits_lock(c.user):
-            if not c.user.employee and c.user.gold_creddits < months:
-                err = TipprError("INSUFFICIENT_CREDDITS")
+        with ctips_lock(c.user):
+            if not c.user.employee and c.user.gold_ctips < months:
+                err = TipprError("INSUFFICIENT_CTIPS")
                 self.on_validation_error(err)
 
             note = None
@@ -71,10 +71,10 @@ class APIv1GoldController(OAuth2OnlyController):
             )
 
             if not c.user.employee:
-                c.user.gold_creddits -= months
+                c.user.gold_ctips -= months
                 c.user._commit()
 
-    @require_oauth2_scope("creddits")
+    @require_oauth2_scope("ctips")
     @validate(
         VUser(),
         target=VByName("fullname"),
@@ -99,7 +99,7 @@ class APIv1GoldController(OAuth2OnlyController):
             proxying_for=request.POST.get("proxying_for"),
         )
 
-    @require_oauth2_scope("creddits")
+    @require_oauth2_scope("ctips")
     @validate(
         VUser(),
         user=VAccountByName("username"),
@@ -116,4 +116,3 @@ class APIv1GoldController(OAuth2OnlyController):
             months=months,
             proxying_for=request.POST.get("proxying_for"),
         )
-

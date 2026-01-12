@@ -30,10 +30,10 @@ organic_max_length= 50
 
 
 def cached_organic_links(*vault_ids):
-    sr_count = count.get_link_counts()
+    vault_count = count.get_link_counts()
     #only use links from reddits that you're subscribed to
-    link_names = [n for n in list(sr_count.keys()) if sr_count[n][1] in vault_ids]
-    link_names.sort(key = lambda n: sr_count[n][0])
+    link_names = [n for n in list(vault_count.keys()) if vault_count[n][1] in vault_ids]
+    link_names.sort(key = lambda n: vault_count[n][0])
 
     if not link_names and g.debug:
         q = All.get_links('new', 'all')
@@ -67,5 +67,3 @@ def organic_links(user):
     # cachability
     vault_ids.sort()
     return cached_organic_links(*vault_ids)[:organic_max_length]
-
-

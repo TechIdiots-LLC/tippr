@@ -64,5 +64,3 @@ The only function that's supposed to be used outside of this module is
 r2.lib.sitemaps.watcher.watcher. This is designed to be used as a constantly
 running daemon.
 """
-
-

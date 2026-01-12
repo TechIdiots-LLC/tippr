@@ -159,4 +159,3 @@ class MailgunWebhookController(TipprController):
         queries.new_message(message, inbox_rel)
         g.stats.simple_event("mailgun.incoming.success")
         g.stats.simple_event("modmail_email.incoming_email")
-

@@ -100,7 +100,7 @@ class PostController(ApiController):
         errpage = InterstitialPage(
             _("quarantined"),
             content=QuarantineInterstitial(
-                sr_name=vault.name,
+                vault_name=vault.name,
                 logged_in=c.user_is_loggedin,
                 email_verified=c.user_is_loggedin and c.user.email_verified,
             ),
@@ -131,7 +131,7 @@ class PostController(ApiController):
 
     @validate(
         VModhash(fatal=False),
-        vault=VVaultByName('sr_name'),
+        vault=VVaultByName('vault_name'),
         accept=VBoolean('accept'),
         dest=VDestination(default='/'),
     )
@@ -225,4 +225,3 @@ class PostController(ApiController):
             nsfw=nsfw,
         )
         return redirect(url(controller='front', action='explore'))
-

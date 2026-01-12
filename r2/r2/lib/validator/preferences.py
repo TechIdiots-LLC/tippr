@@ -82,7 +82,7 @@ PREFS_VALIDATORS = dict(
     pref_monitor_mentions=VBoolean("monitor_mentions"),
     pref_hide_locationbar=VBoolean("hide_locationbar"),
     pref_use_global_defaults=VBoolean("use_global_defaults"),
-    pref_creddit_autorenew=VBoolean("creddit_autorenew"),
+    pref_ctip_autorenew=VBoolean("ctip_autorenew"),
     pref_enable_default_themes=VBoolean("enable_default_themes", False),
     pref_default_theme_sr=VVaultByName("theme_selector", required=False,
         return_vaultname=True),
@@ -157,4 +157,3 @@ def filter_prefs(prefs, user):
                 # don't update if they can't view the chosen vault
                 c.errors.add(errors.Vault_NO_ACCESS, field='stylesheet_override')
                 del prefs['pref_default_theme_sr']
-

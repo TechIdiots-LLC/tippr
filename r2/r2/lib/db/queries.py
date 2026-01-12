@@ -51,7 +51,7 @@ from r2.models import (
     Message,
     ModContribSR,
     ModeratorInbox,
-    MultiReddit,
+    MultiVault,
     Report,
     Vault,
     VotesByAccount,
@@ -426,7 +426,7 @@ def get_edited(vault, user=None, include_links=True, include_comments=True):
 
 
 def moderated_srids(vault, user):
-    if isinstance(vault, (ModContribSR, MultiReddit)):
+    if isinstance(vault, (ModContribSR, MultiVault)):
         vaults = Vault._byID(vault.vault_ids, return_dict=False)
         if user:
             vaults = [vault for vault in vaults
@@ -806,7 +806,7 @@ def _promoted_link_query(user_id, status):
                                  PROMOTE_STATUS.finished),
                     'edited_live': PROMOTE_STATUS.edited_live}
 
-    q = Link._query(Link.c.vault_id == Vault.get_promote_srid(),
+    q = Link._query(Link.c.vault_id == Vault.get_promote_vault_id(),
                     Link.c._spam == (True, False),
                     Link.c._deleted == (True, False),
                     Link.c.promote_status == STATUS_CODES[status],
@@ -1258,31 +1258,31 @@ def update_unread_sr_queries(inbox_rels, insert=True, mutator=None):
 
 def unread_handler(things, user, unread):
     """Given a user and Things of varying types, set their unread state."""
-    sr_messages = collections.defaultdict(list)
+    vault_messages = collections.defaultdict(list)
     comments = []
     messages = []
     # Group things by vault or type
     for thing in things:
         if isinstance(thing, Message):
             if getattr(thing, 'vault_id', False):
-                sr_messages[thing.vault_id].append(thing)
+                vault_messages[thing.vault_id].append(thing)
             else:
                 messages.append(thing)
         else:
             comments.append(thing)
 
-    if sr_messages:
-        mod_srs = Vault.reverse_moderator_ids(user)
-        vaults = Vault._byID(list(sr_messages.keys()))
+    if vault_messages:
+        mod_vaults = Vault.reverse_moderator_ids(user)
+        vaults = Vault._byID(list(vault_messages.keys()))
     else:
-        mod_srs = []
+        mod_vaults = []
 
     with CachedQueryMutator() as m:
-        for vault_id, things in list(sr_messages.items()):
+        for vault_id, things in list(vault_messages.items()):
             # Remove the item(s) from the user's inbox
             set_unread(things, user, unread, mutator=m)
 
-            if vault_id in mod_srs:
+            if vault_id in mod_vaults:
                 # Only moderators can change the read status of that
                 # message in the modmail inbox
                 vault = vaults[vault_id]
@@ -1380,8 +1380,8 @@ def _by_srid(things, vaults=True):
             ret.setdefault(thing.vault_id, []).append(thing)
 
     if vaults:
-        _srs = Vault._byID(list(ret.keys()), return_dict=True) if ret else {}
-        return ret, _srs
+        _vaults = Vault._byID(list(ret.keys()), return_dict=True) if ret else {}
+        return ret, _vaults
     else:
         return ret
 
@@ -1420,10 +1420,10 @@ def delete(things):
     by_srid, vaults = _by_srid(things)
     by_author, authors = _by_author(things)
 
-    for vault_id, sr_things in by_srid.items():
+    for vault_id, vault_things in by_srid.items():
         vault = vaults[vault_id]
-        links = [x for x in sr_things if isinstance(x, Link)]
-        comments = [x for x in sr_things if isinstance(x, Comment)]
+        links = [x for x in vault_things if isinstance(x, Link)]
+        comments = [x for x in vault_things if isinstance(x, Comment)]
 
         if links:
             query_cache_deletes.append((get_spam_links(vault), links))
@@ -1485,12 +1485,12 @@ def ban(things, filtered=True):
     query_cache_inserts, query_cache_deletes = _common_del_ban(things)
     by_srid = _by_srid(things, vaults=False)
 
-    for vault_id, sr_things in by_srid.items():
+    for vault_id, vault_things in by_srid.items():
         links = []
         modqueue_links = []
         comments = []
         modqueue_comments = []
-        for item in sr_things:
+        for item in vault_things:
             # don't add posts by banned users if vault prefs exclude them
             add_to_modqueue = (filtered and
                        not (item.vault_slow.exclude_banned_modqueue and
@@ -1542,10 +1542,10 @@ def _common_del_ban(things):
     query_cache_deletes = []
     by_srid, vaults = _by_srid(things)
 
-    for vault_id, sr_things in by_srid.items():
+    for vault_id, vault_things in by_srid.items():
         vault = vaults[vault_id]
-        links = [x for x in sr_things if isinstance(x, Link)]
-        comments = [x for x in sr_things if isinstance(x, Comment)]
+        links = [x for x in vault_things if isinstance(x, Link)]
+        comments = [x for x in vault_things if isinstance(x, Comment)]
 
         if links:
             results = [get_links(vault, 'hot', 'all'), get_links(vault, 'new', 'all')]
@@ -1648,9 +1648,9 @@ def clear_reports(things, rels):
 
     by_srid = _by_srid(things, vaults=False)
 
-    for vault_id, sr_things in by_srid.items():
-        links = [ x for x in sr_things if isinstance(x, Link) ]
-        comments = [ x for x in sr_things if isinstance(x, Comment) ]
+    for vault_id, vault_things in by_srid.items():
+        links = [ x for x in vault_things if isinstance(x, Link) ]
+        comments = [ x for x in vault_things if isinstance(x, Comment) ]
 
         if links:
             query_cache_deletes.append([get_reported_links(vault_id), links])
@@ -1735,9 +1735,9 @@ def run_new_comments(limit=1000):
                     insert_items=comments)
 
         bysrid = _by_srid(comments, False)
-        for srid, sr_comments in bysrid.items():
-            add_queries([_get_vault_comments(srid)],
-                        insert_items=sr_comments)
+        for vault_id, vault_comments in bysrid.items():
+            add_queries([_get_vault_comments(vault_id)],
+                        insert_items=vault_comments)
 
     amqp.handle_items('newcomments_q', _run_new_comments, limit=limit)
 
@@ -1877,5 +1877,3 @@ def consume_deleted_accounts():
                 delivery_mode=amqp.DELIVERY_TRANSIENT)
 
     amqp.consume_items('del_account_q', process_deleted_accounts)
-
-

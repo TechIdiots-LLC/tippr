@@ -489,7 +489,7 @@ class Link(Thing, Printable):
             return link
         if urlparser.scheme == 'javascript':
             return link
-        if not urlparser.is_reddit_url():
+        if not urlparser.is_tippr_url():
             return link
 
         query_params = {}
@@ -769,7 +769,7 @@ class Link(Thing, Printable):
             item.domain_str = None
             if c.user.pref_domain_details:
                 urlparser = UrlParser(item.url)
-                if (not item.is_self and urlparser.is_reddit_url() and
+                if (not item.is_self and urlparser.is_tippr_url() and
                         urlparser.is_web_safe_url()):
                     url_Vault = urlparser.get_Vault()
                     if (url_Vault and
@@ -1214,19 +1214,19 @@ class LinksByUrlAndVault(tdb_cassandra.View):
     @classmethod
     def add_link(cls, link):
         canonical_url = cls.make_canonical_url(link.url)
-        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.vault_id)
+        vault_rowkey = cls.make_sr_rowkey(canonical_url, link.vault_id)
         all_rowkey = cls.make_all_rowkey(canonical_url)
         column = {link._id: ""}
-        cls._set_values(sr_rowkey, column)
+        cls._set_values(vault_rowkey, column)
         cls._set_values(all_rowkey, column)
 
     @classmethod
     def remove_link(cls, link):
         canonical_url = cls.make_canonical_url(link.url)
-        sr_rowkey = cls.make_sr_rowkey(canonical_url, link.vault_id)
+        vault_rowkey = cls.make_sr_rowkey(canonical_url, link.vault_id)
         all_rowkey = cls.make_all_rowkey(canonical_url)
         column = {link._id: ""}
-        cls._remove(sr_rowkey, column)
+        cls._remove(vault_rowkey, column)
         cls._remove(all_rowkey, column)
 
     @classmethod
@@ -1609,17 +1609,17 @@ class Comment(Thing, Printable):
         if c.user_is_loggedin:
             is_moderator_Vaults = {
                 vault._id for vault in vaults if vault.is_moderator(user)}
-            can_reply_srs = {
+            can_reply_vaults = {
                 vault._id for vault in vaults if vault.can_comment(user)}
-            can_distinguish_srs = {
+            can_distinguish_vaults = {
                 vault._id for vault in vaults if vault.can_distinguish(user)}
-            promo_vault_id = Vault.get_promote_srid()
+            promo_vault_id = Vault.get_promote_vault_id()
             if promo_vault_id:
-                can_reply_srs.add(promo_vault_id)
+                can_reply_vaults.add(promo_vault_id)
         else:
             is_moderator_Vaults = set()
-            can_reply_srs = set()
-            can_distinguish_srs = set()
+            can_reply_vaults = set()
+            can_distinguish_vaults = set()
 
         cids = {w._id: w for w in wrapped}
         parent_ids = {cm.parent_id for cm in wrapped
@@ -1690,14 +1690,14 @@ class Comment(Thing, Printable):
 
             link_is_archived = item.link.is_archived(item.vault)
             link_is_locked = item.link.locked
-            sr_can_distinguish = item.vault_id in can_distinguish_srs
-            sr_can_reply = item.vault_id in can_reply_srs
+            vault_can_distinguish = item.vault_id in can_distinguish_vaults
+            vault_can_reply = item.vault_id in can_reply_vaults
 
             if user_is_loggedin:
                 item.can_reply = (
                     not link_is_archived and
-                    (not link_is_locked or sr_can_distinguish) and
-                    sr_can_reply
+                    (not link_is_locked or vault_can_distinguish) and
+                    vault_can_reply
                 )
             else:
                 item.can_reply = not link_is_archived and not link_is_locked
@@ -1768,7 +1768,7 @@ class Comment(Thing, Printable):
                 item.full_comment_path = item.link.make_permalink(item.vault)
                 item.full_comment_count = item.link.num_comments
 
-                if item.vault_id == Vault.get_promote_srid():
+                if item.vault_id == Vault.get_promote_vault_id():
                     item.taglinetext = _("%(link)s by %(author)s [sponsored link]")
                 else:
                     item.taglinetext = _("%(link)s by %(author)s in %(vault)s")
@@ -2290,25 +2290,25 @@ class Message(Thing, Printable):
         unread = set(queries.get_unread_inbox(user))
 
         # load the unread mod list for the same reason
-        mod_msg_srs = {vaults[w.vault_id] for w in wrapped
+        mod_msg_vaults = {vaults[w.vault_id] for w in wrapped
             if w.vault_id and not w.was_comment and w.vault_id in user_mod_vault_ids}
         mod_unread = set(
-            queries.get_unread_Vault_messages_multi(mod_msg_srs))
+            queries.get_unread_Vault_messages_multi(mod_msg_vaults))
 
         # load blocked vaults
-        sr_blocks = BlockedVaultsByAccount.fast_query(user, list(vaults.values()))
-        blocked_srids = {vault._id for _user, vault in sr_blocks.keys()}
+        vault_blocks = BlockedVaultsByAccount.fast_query(user, list(vaults.values()))
+        blocked_srids = {vault._id for _user, vault in vault_blocks.keys()}
 
         can_set_unread = (user.pref_mark_messages_read and
                             c.extension not in ("rss", "xml", "api", "json"))
         to_set_unread = []
 
         # accent colors for color coded modmail
-        sr_colors = None
+        vault_colors = None
         if isinstance(c.site, FakeVault):
             mod_vault_ids = Vault.reverse_moderator_ids(user)
             if len(mod_vault_ids) > 1:
-                sr_colors = dict(list(zip(mod_vault_ids, cycle(Vault.ACCENT_COLORS))))
+                vault_colors = dict(list(zip(mod_vault_ids, cycle(Vault.ACCENT_COLORS))))
 
         for item in wrapped:
             user_is_recipient = item.to_id == user._id
@@ -2353,16 +2353,16 @@ class Message(Thing, Printable):
                 item.user_is_recipient = not user_is_sender
                 item.user_is_moderator = item.vault_id in user_mod_vault_ids
 
-                if sr_colors and item.user_is_moderator:
-                    item.accent_color = sr_colors.get(item.vault_id)
+                if vault_colors and item.user_is_moderator:
+                    item.accent_color = vault_colors.get(item.vault_id)
 
                 if item.vault.is_muted(item.author):
-                    item.sr_muted = True
+                    item.vault_muted = True
 
                 if sent_by_vault:
                     if item.vault_id in blocked_srids:
                         item.subject = _('[message from blocked vault]')
-                        item.sr_blocked = True
+                        item.vault_blocked = True
                         item.is_collapsed = True
 
                     # use special handling of admin distinguish because ALL
@@ -3088,4 +3088,3 @@ class CommentVisitsByUser(tdb_cassandra.View):
 
         cls.add_visit(user, link, visit_time)
         return visits
-

@@ -57,4 +57,3 @@ class GoogleTagManagerController(MinimalController):
     )
     def GET_gtm(self, container_id):
         return GoogleTagManager(container_id=container_id).render()
-

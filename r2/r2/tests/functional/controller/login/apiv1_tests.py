@@ -24,12 +24,12 @@ import json
 import unittest
 
 from r2.lib import signing
-from r2.tests import RedditControllerTestCase
+from r2.tests import TipprControllerTestCase
 
 from .common import LoginRegBase
 
 
-class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
+class APIV1LoginTests(LoginRegBase, TipprControllerTestCase):
     CONTROLLER = "apiv1login"
 
     def setUp(self):
@@ -127,5 +127,3 @@ class APIV1LoginTests(LoginRegBase, RedditControllerTestCase):
             stack.enter_context(self.failed_captcha())
             res = self.do_register()
             self.assert_success(res)
-
-

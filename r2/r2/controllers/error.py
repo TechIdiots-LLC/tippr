@@ -61,7 +61,7 @@ except Exception as e:
         os._exit(1)
 
 
-redditbroke =  \
+tipprbroke =  \
 '''<html>
   <head>
     <title>tippr broke!</title>
@@ -249,7 +249,7 @@ class ErrorController(TipprController):
                 sad_message = get_funny_translated_string("500_page")
                 sad_message %= {'admin': random.choice(self.admins)}
                 sad_message = safemarkdown(sad_message)
-                return redditbroke % (failien_url, sad_message)
+                return tipprbroke % (failien_url, sad_message)
             elif code == 503:
                 return self.send503()
             elif c.site:
@@ -281,8 +281,7 @@ def handle_awful_failure(fail_text):
         log.write_error_summary(fail_text)
         for line in traceback.format_exc().splitlines():
             g.log.error(line)
-        return redditbroke % (make_failien_url(), websafe(fail_text))
+        return tipprbroke % (make_failien_url(), websafe(fail_text))
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."
-

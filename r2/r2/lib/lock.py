@@ -140,4 +140,3 @@ def make_lock_factory(cache, stats):
     def factory(group, key, **kw):
         return MemcacheLock(stats, group, key, cache, **kw)
     return factory
-

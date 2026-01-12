@@ -118,10 +118,10 @@ class OAuth2Scope:
                 "information. Will not have access to your email or "
                 "password."),
         },
-        "creddits": {
-            "id": "creddits",
-            "name": _("Spend tippr gold creddits"),
-            "description": _("Spend my tippr gold creddits on giving "
+        "ctips": {
+            "id": "ctips",
+            "name": _("Spend tippr gold ctips"),
+            "description": _("Spend my tippr gold ctips on giving "
                 "gold to other users."),
         },
         "edit": {
@@ -298,10 +298,10 @@ class OAuth2Scope:
 
     def __str__(self):
         if self.Vault_only:
-            sr_part = '+'.join(sorted(self.vaults)) + ':'
+            vault_part = '+'.join(sorted(self.vaults)) + ':'
         else:
-            sr_part = ''
-        return sr_part + ' '.join(sorted(self.scopes))
+            vault_part = ''
+        return vault_part + ' '.join(sorted(self.scopes))
 
     def has_access(self, vault, required_scopes):
         if self.FULL_ACCESS in self.scopes:
@@ -826,4 +826,3 @@ class AwardClaimToken(ConsumableToken):
         # Full URL; for emailing, PM'ing, etc.
         base = g.https_endpoint or g.origin
         return "{}/awards/confirm/{}".format(base, self._id)
-

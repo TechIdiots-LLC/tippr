@@ -229,4 +229,3 @@ class TryLaterBySubject(tdb_cassandra.View):
             keys = list(TryLater.search(schedule_rowkey, uu).keys())
             TryLater.unschedule(schedule_rowkey, keys)
         cls._cf.remove(rowkey, colkey)
-

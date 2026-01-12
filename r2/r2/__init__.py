@@ -108,7 +108,7 @@ try:
                 obj = getattr(obj, p)
             sys.modules.setdefault(f'boto.vendored.six.moves.{sub}', obj)
         except Exception:
-            # ignore any missing attributes — they'll error later if actually used
+            # ignore any missing attributes â€” they'll error later if actually used
             pass
 except Exception:
     # If anything goes wrong, don't break import-time; errors will surface
@@ -123,4 +123,3 @@ except Exception:
 def make_app(*args, **kwargs):
     from r2.config.middleware import make_app as real_make_app
     return real_make_app(*args, **kwargs)
-

@@ -28,7 +28,7 @@ from unittest import mock
 
 from r2.config.feature.state import FeatureState
 from r2.config.feature.world import World
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
 class MockAccount:
@@ -50,13 +50,13 @@ class MockWorld(World):
                 return config
         return MockState('test_state', self)
 
-class TestFeatureBase(RedditTestCase):
+class TestFeatureBase(TipprTestCase):
     _world = None
     # Append user-supplied error messages to the default output, rather than
     # overwriting it.
     longMessage = True
 
-class TestFeatureBase(RedditTestCase):
+class TestFeatureBase(TipprTestCase):
     # Append user-supplied error messages to the default output, rather than
     # overwriting it.
     longMessage = True
@@ -68,7 +68,7 @@ class TestFeatureBase(RedditTestCase):
         self.world.current_loid = mock.Mock(return_value='')
 
 
-class TestFeatureBase(RedditTestCase):
+class TestFeatureBase(TipprTestCase):
     # Append user-supplied error messages to the default output, rather than
     # overwriting it.
     longMessage = True
@@ -348,5 +348,3 @@ class TestFeature(TestFeatureBase):
         self.world.is_admin = mock.Mock(return_value=True)
         featurestate = self.world._make_state(cfg)
         self.assertTrue(featurestate.is_enabled(user=gary))
-
-

@@ -54,4 +54,3 @@ def select_provider(config_parser, working_set, type, name):
         config_parser.add_spec(provider_cls.config)
 
     return provider_cls()
-

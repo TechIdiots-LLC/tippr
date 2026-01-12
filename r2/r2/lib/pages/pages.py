@@ -130,7 +130,7 @@ from r2.models import (
     Link,
     Mod,
     ModSR,
-    MultiReddit,
+    MultiVault,
     NotFound,
     PromoCampaign,
     PromotionPrices,
@@ -504,9 +504,9 @@ class Tippr(Templated):
                       _id="wikiactions",
                       collapsible=True)
 
-    def sr_admin_menu(self):
+    def vault_admin_menu(self):
         buttons = []
-        is_single_Vault = not isinstance(c.site, (ModSR, MultiReddit))
+        is_single_Vault = not isinstance(c.site, (ModSR, MultiVault))
         is_admin = c.user_is_loggedin and c.user_is_admin
         is_moderator_with_perms = lambda *perms: (
             is_admin or c.site.is_moderator_with_perms(c.user, *perms))
@@ -607,7 +607,7 @@ class Tippr(Templated):
             except tdb_cassandra.NotFound:
                 buttons.append(NamedButton(
                     "new_automod",
-                    sr_path=False,
+                    vault_path=False,
                     dest="../wiki/automoderator",
                     css_class="tippr-automod access-required",
                 ))
@@ -673,13 +673,13 @@ class Tippr(Templated):
         elif isinstance(c.site, ModSR):
             ps.append(ModSRInfoBar())
 
-        if isinstance(c.site, (MultiReddit, ModSR)):
+        if isinstance(c.site, (MultiVault, ModSR)):
             vaults = Vault._byID(c.site.vault_ids, data=True,
                                   return_dict=False, stale=True)
 
             if (vaults and c.user_is_loggedin and
                     (c.user_is_admin or c.site.is_moderator(c.user))):
-                ps.append(self.sr_admin_menu())
+                ps.append(self.vault_admin_menu())
 
             if isinstance(c.site, LabeledMulti):
                 ps.append(MultiInfoBar(c.site, vaults, c.user))
@@ -726,7 +726,7 @@ class Tippr(Templated):
                                       show_icon=False))
             else:
                 fake_sub = isinstance(c.site, FakeVault)
-                is_multi = isinstance(c.site, MultiReddit)
+                is_multi = isinstance(c.site, MultiVault)
                 mod_link_override = mod_self_override = False
 
                 if isinstance(c.site, FakeVault):
@@ -759,7 +759,7 @@ class Tippr(Templated):
                                             strings.submit_link_label,
                                       css_class=css_class,
                                       link="/submit",
-                                      sr_path=not fake_sub or is_multi,
+                                      vault_path=not fake_sub or is_multi,
                                       data_attrs=data_attrs,
                                       show_cover=True))
                 if "self" in submit_buttons:
@@ -775,7 +775,7 @@ class Tippr(Templated):
                                             strings.submit_text_label,
                                       css_class=css_class,
                                       link="/submit?selftext=true",
-                                      sr_path=not fake_sub or is_multi,
+                                      vault_path=not fake_sub or is_multi,
                                       data_attrs=data_attrs,
                                       show_cover=True))
 
@@ -795,7 +795,7 @@ class Tippr(Templated):
                 menu = self.wiki_actions_menu(moderator=wiki_moderator)
                 ps.append(menu)
             if moderator:
-                ps.append(self.sr_admin_menu())
+                ps.append(self.vault_admin_menu())
             if show_adbox:
                 ps.append(Ads())
             no_ads_yet = False
@@ -949,7 +949,7 @@ class Tippr(Templated):
                 if not g.disable_wiki:
                     main_buttons.append(NavButton('wiki', 'wiki'))
 
-            if (isinstance(c.site, (Vault, DefaultVault, MultiReddit)) and
+            if (isinstance(c.site, (Vault, DefaultVault, MultiVault)) and
                     c.site.allow_ads):
                 main_buttons.append(NavButton(menu.promoted, 'ads'))
 
@@ -958,7 +958,7 @@ class Tippr(Templated):
         if c.user_is_loggedin and c.site.allow_ads:
             if c.user_is_sponsor:
                 sponsor_button = NavButton(
-                    menu.sponsor, dest='/sponsor', sr_path=False)
+                    menu.sponsor, dest='/sponsor', vault_path=False)
                 more_buttons.append(sponsor_button)
             elif c.user.pref_show_promote:
                 more_buttons.append(NavButton(menu.promote, 'promoted', False))
@@ -1041,7 +1041,7 @@ class Tippr(Templated):
             if not isinstance(c.site, FakeVault) and c.site._spam:
                 classes.add("banned")
 
-        if isinstance(c.site, MultiReddit):
+        if isinstance(c.site, MultiVault):
             classes.add('multi-page')
 
         if self.show_chooser:
@@ -1124,7 +1124,7 @@ class TipprFooter(CachedTemplate):
 
             NavMenu([
                     NamedButton("gold", False, dest="/gold/about", css_class="buygold"),
-                    OffsiteButton(_("redditgifts"), "//redditgifts.com"),
+                    OffsiteButton(_("tipprgifts"), "//tipprgifts.com"),
                 ],
                 title = _("<3"),
                 type = "flat_vert",
@@ -1155,7 +1155,6 @@ class LoginFormWide(CachedTemplate):
     pass
 
 
-
 class VaultInfoBar(CachedTemplate):
     """When not on Default, renders a sidebox which gives info about
     the current tippr, including links to the moderator and
@@ -1182,7 +1181,7 @@ class VaultInfoBar(CachedTemplate):
         else:
             self.flair_prefs = None
 
-        self.sr_style_toggle = False
+        self.vault_style_toggle = False
         self.use_Vault_style = True
 
         self.quarantine = self.vault.quarantine
@@ -1193,11 +1192,11 @@ class VaultInfoBar(CachedTemplate):
                 (has_custom_stylesheet or self.vault.header) and
                 feature.is_enabled('stylesheets_everywhere')):
             # defaults to c.user.pref_show_stylesheets if a match doesn't exist
-            self.sr_style_toggle = True
+            self.vault_style_toggle = True
             self.use_Vault_style = c.user.use_Vault_style(c.site)
 
         if c.user_is_admin and hasattr(self.vault, 'ban_info'):
-            self.sr_ban_info = self.vault.ban_info
+            self.vault_ban_info = self.vault.ban_info
 
         CachedTemplate.__init__(self)
 
@@ -1235,11 +1234,11 @@ class SideBox(CachedTemplate):
     Generic sidebox used to generate the 'submit' and 'create a tippr' boxes.
     """
     def __init__(self, title, link=None, css_class='', subtitles = [],
-                 show_cover = False, sr_path = False,
+                 show_cover = False, vault_path = False,
                  disabled=False, show_icon=True, target='_top', data_attrs={}):
         CachedTemplate.__init__(self, link = link, target = target,
                                 title = title, css_class = css_class,
-                                sr_path = sr_path, subtitles = subtitles,
+                                vault_path = vault_path, subtitles = subtitles,
                                 show_cover = show_cover,
                                 disabled=disabled, show_icon=show_icon,
                                 data_attrs=data_attrs)
@@ -1378,26 +1377,26 @@ class MessagePage(Tippr):
                                    self._content))
 
     def build_toolbars(self):
-        if isinstance(c.site, MultiReddit):
-            mod_srs = c.site.srs_with_perms(c.user, "mail")
-            sr_path = bool(mod_srs)
+        if isinstance(c.site, MultiVault):
+            mod_vaults = c.site.vaults_with_perms(c.user, "mail")
+            vault_path = bool(mod_vaults)
         elif (not isinstance(c.site, FakeVault) and
                 c.site.is_moderator_with_perms(c.user, "mail")):
-            sr_path = True
+            vault_path = True
         else:
-            sr_path = False
+            vault_path = False
 
-        buttons =  [NamedButton('compose', sr_path=sr_path),
+        buttons =  [NamedButton('compose', vault_path=vault_path),
                     NamedButton('inbox', aliases = ["/message/comments",
                                                     "/message/unread",
                                                     "/message/messages",
                                                     "/message/mentions",
                                                     "/message/selfreply"],
-                                sr_path = False),
-                    NamedButton('sent', sr_path = False)]
+                                vault_path = False),
+                    NamedButton('sent', vault_path = False)]
         if c.user_is_loggedin and c.user.is_moderator_somewhere:
             buttons.append(ModeratorMailButton(menu.modmail, "moderator",
-                                               sr_path = False))
+                                               vault_path = False))
         if not c.default_sr:
             buttons.append(ModeratorMailButton(
                 _("%(site)s mail") % {'site': c.site.name}, "moderator",
@@ -1421,8 +1420,8 @@ class MessageCompose(Templated):
 
 
 class ModeratorMessageCompose(MessageCompose):
-    def __init__(self, mod_srs, only_as_Vault=False, **kw):
-        self.mod_srs = sorted(mod_srs, key=lambda vault: vault.name.lower())
+    def __init__(self, mod_vaults, only_as_Vault=False, **kw):
+        self.mod_vaults = sorted(mod_vaults, key=lambda vault: vault.name.lower())
         self.only_as_Vault = only_as_Vault
         MessageCompose.__init__(self, admin_check=False, **kw)
 
@@ -1598,18 +1597,18 @@ class SearchPage(BoringPage):
             kw['nav_menus'].append(MenuLink(title=_('enable NSFW results'),
                                             url=over18_url))
 
-        self.sr_facets = VaultFacets(prev_search=prev_search, facets=facets,
+        self.vault_facets = VaultFacets(prev_search=prev_search, facets=facets,
                                          sort=sort, recent=recent)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
         if feature.is_enabled('legacy_search') or c.user.pref_legacy_search:
-            return self.content_stack((self.searchbar, self.sr_facets, self.infobar,
+            return self.content_stack((self.searchbar, self.vault_facets, self.infobar,
                                    self.nav_menu, self.vaults, self._content))
 
         return self.content_stack((self.searchbar, self.infobar,
                                    self.vaults, self._content,
-                                   self.sr_facets))
+                                   self.vault_facets))
 
 
 class MenuLink(Templated):
@@ -1656,7 +1655,7 @@ class LinkInfoPage(Tippr):
 
     def __init__(self, link = None, comment = None, disable_comments=False,
                  link_title = '', subtitle = None, num_duplicates = None,
-                 show_promote_button=False, sr_detail=False,
+                 show_promote_button=False, vault_detail=False,
                  campaign_fullname=promote.NO_CAMPAIGN, click_url=None,
                  *a, **kw):
 
@@ -1667,7 +1666,7 @@ class LinkInfoPage(Tippr):
 
 
         # link_listing will be the one-element listing at the top
-        self.link_listing = wrap_links(link, wrapper=wrapper, sr_detail=sr_detail)
+        self.link_listing = wrap_links(link, wrapper=wrapper, vault_detail=vault_detail)
         things = self.link_listing.things
         self.link = things[0]
 
@@ -1720,7 +1719,7 @@ class LinkInfoPage(Tippr):
             short_description,
         )
         hook = hooks.get_hook('comments_page.twitter_card')
-        hook.call(tags=self.twitter_card, sr_name=c.site.name,
+        hook.call(tags=self.twitter_card, vault_name=c.site.name,
                   id36=self.link._id36)
 
         if hasattr(self.link, "dart_keyword"):
@@ -1761,10 +1760,10 @@ class LinkInfoPage(Tippr):
         Tippr.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
 
     def _build_og_data(self, link_title, meta_description):
-        sr_fragment = "/v/" + c.site.name if not c.default_sr else get_domain()
+        vault_fragment = "/v/" + c.site.name if not c.default_sr else get_domain()
         data = {
             "site_name": "tippr",
-            "title": "{} • {}".format(link_title, sr_fragment),
+            "title": "{} â€¢ {}".format(link_title, vault_fragment),
             "description": self._build_og_description(meta_description),
             "ttl": "600",  # re-fetch frequently to update vote/comment count
         }
@@ -1849,13 +1848,13 @@ class LinkInfoPage(Tippr):
         # at the end, we'd like to always show the whole vault name, so
         # let's truncate the title while still ensuring the entire thing is
         # under the limit.
-        sr_fragment = " • /v/" + c.site.name if not c.default_sr else get_domain()
-        max_link_title_length = 70 - len(sr_fragment)
+        vault_fragment = " â€¢ /v/" + c.site.name if not c.default_sr else get_domain()
+        max_link_title_length = 70 - len(vault_fragment)
 
         return {
             "site": "tippr", # The twitter account of the site.
             "card": "summary",
-            "title": _truncate(link_title, max_link_title_length) + sr_fragment
+            "title": _truncate(link_title, max_link_title_length) + vault_fragment
             # Twitter will fall back to any defined OpenGraph attributes, so we
             # don't need to define 'twitter:image' or 'twitter:description'.
         }
@@ -1877,7 +1876,7 @@ class LinkInfoPage(Tippr):
                 buttons.append(info_button('duplicates', num=self.num_duplicates))
 
         if self.show_promote_button:
-            buttons.append(NavButton(menu.promote, 'promoted', sr_path=False))
+            buttons.append(NavButton(menu.promote, 'promoted', vault_path=False))
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
@@ -2197,7 +2196,7 @@ class LinkInfoBar(Templated):
             a = Wrapped(a)
         Templated.__init__(self, a = a, datefmt = datefmt)
 
-class EditReddit(Tippr):
+class editvault(Tippr):
     """Container for the about page for a tippr"""
     extension_handling= False
 
@@ -2241,7 +2240,7 @@ class VaultsPage(Tippr):
             Vault_search=True,
             search_path="/vaults/search",
         )
-        self.sr_infobar = InfoBar(message = strings.sr_subscribe)
+        self.vault_infobar = InfoBar(message = strings.vault_subscribe)
         self.interestbar = InterestBar(True) if show_interestbar else None
 
     def build_toolbars(self):
@@ -2269,7 +2268,7 @@ class VaultsPage(Tippr):
 
     def content(self):
         return self.content_stack((self.interestbar, self.searchbar,
-                                   self.nav_menu, self.sr_infobar,
+                                   self.nav_menu, self.vault_infobar,
                                    self._content))
 
     def rightbox(self):
@@ -2378,14 +2377,14 @@ class ProfilePage(Tippr):
 
         public_multis = [m for m in multis if m.is_public()]
         if public_multis:
-            scb = SideContentBox(title=_("public multireddits"), content=[
+            scb = SideContentBox(title=_("public multivaults"), content=[
                 SidebarMultiList(public_multis)
             ])
             rb.push(scb)
 
         hidden_multis = [m for m in multis if m.is_hidden()]
         if c.user == self.user and hidden_multis:
-            scb = SideContentBox(title=_("hidden multireddits"), content=[
+            scb = SideContentBox(title=_("hidden multivaults"), content=[
                 SidebarMultiList(hidden_multis)
             ])
             rb.push(scb)
@@ -2404,10 +2403,10 @@ class ProfilePage(Tippr):
         mod_sr_ids = Vault.reverse_moderator_ids(self.user)
         all_mod_srs = Vault._byID(mod_sr_ids, data=True,
                                       return_dict=False, stale=True)
-        mod_srs = [vault for vault in all_mod_srs if vault.can_view_in_modlist(c.user)]
-        if mod_srs:
+        mod_vaults = [vault for vault in all_mod_srs if vault.can_view_in_modlist(c.user)]
+        if mod_vaults:
             rb.push(SideContentBox(title=_("moderator of"),
-                                   content=[SidebarModList(mod_srs)]))
+                                   content=[SidebarModList(mod_vaults)]))
 
         if (c.user == self.user or c.user.employee or
             self.user.pref_public_server_seconds):
@@ -2463,7 +2462,7 @@ class ProfileBar(Templated):
         self.show_users_gold_expiration = (self.show_private_info or
             user.pref_show_gold_expiration) and user.gold
         self.show_private_gold_info = (self.show_private_info and
-            (user.gold or user.gold_creddits > 0 or user.num_gildings > 0))
+            (user.gold or user.gold_ctips > 0 or user.num_gildings > 0))
 
         if self.show_users_gold_expiration:
             gold_days_left = (user.gold_expiration -
@@ -2485,11 +2484,11 @@ class ProfileBar(Templated):
                 if user.has_stripe_subscription:
                     self.stripe_customer_id = user.gold_subscr_id
 
-            if user.gold_creddits > 0 and self.show_private_info:
-                msg = ungettext("%(creddits)s gold creddit to give",
-                                "%(creddits)s gold creddits to give",
-                                user.gold_creddits)
-                msg = msg % dict(creddits=user.gold_creddits)
+            if user.gold_ctips > 0 and self.show_private_info:
+                msg = ungettext("%(ctips)s gold ctip to give",
+                                "%(ctips)s gold ctips to give",
+                                user.gold_ctips)
+                msg = msg % dict(ctips=user.gold_ctips)
                 self.gold_creddit_message = msg
 
             if user.num_gildings > 0 and self.show_private_info:
@@ -2635,13 +2634,13 @@ class TipprError(BoringPage):
     show_infobar = False
     site_tracking = False
 
-    def __init__(self, title, message, image=None, sr_description=None,
+    def __init__(self, title, message, image=None, vault_description=None,
             include_message_mods_link=False, explanation=None):
         content = ErrorPage(
             title=title,
             message=message,
             image=image,
-            sr_description=sr_description,
+            vault_description=vault_description,
             include_message_mods_link=include_message_mods_link,
             explanation=explanation,
         )
@@ -2690,15 +2689,15 @@ class InterstitialPage(BoringPage):
 class Interstitial(Templated):
     """Generic template for rendering an interstitial page's content."""
 
-    def __init__(self, image=None, title=None, message=None, sr_name=None,
-                 sr_description=None, **kwargs):
+    def __init__(self, image=None, title=None, message=None, vault_name=None,
+                 vault_description=None, **kwargs):
         Templated.__init__(
             self,
             image=image,
             title=title,
             message=message,
-            sr_name=sr_name,
-            sr_description=sr_description,
+            vault_name=vault_name,
+            vault_description=vault_description,
             **kwargs
         )
 
@@ -2744,11 +2743,11 @@ class GoldOnlyInterstitial(Interstitial):
 class QuarantineInterstitial(Interstitial):
     """The opt in page for viewing quarantined content."""
 
-    def __init__(self, sr_name, logged_in, email_verified):
+    def __init__(self, vault_name, logged_in, email_verified):
         can_opt_in = logged_in and email_verified
         Interstitial.__init__(
             self,
-            sr_name=sr_name,
+            vault_name=vault_name,
             logged_in=logged_in,
             can_opt_in=can_opt_in,
         )
@@ -2831,12 +2830,12 @@ class VaultTopBar(CachedTemplate):
         for vault in sorted(self.my_reddits, key = lambda vault: vault.name.lower()):
             drop_down_buttons.append(VaultButton(vault))
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
-                                           sr_path = False,
+                                           vault_path = False,
                                            css_class = 'bottom-option',
                                            dest = '/vaults/'))
         return VaultMenu(drop_down_buttons,
                              title = _('my vaults'),
-                             type = 'srdrop')
+                             type = 'vaultdrop')
 
     def subscribed_reddits(self):
         vaults = [VaultButton(vault) for vault in
@@ -2857,7 +2856,7 @@ class VaultTopBar(CachedTemplate):
                        type='flatlist', separator = '-',
                        css_class = 'vault-bar', _id = 'vault-bar')
 
-    def special_reddits(self):
+    def special_vaults(self):
         css_classes = {Random: "random",
                        RandomSubscription: "gold"}
         reddits = [Frontpage, All, Random]
@@ -2875,10 +2874,10 @@ class VaultTopBar(CachedTemplate):
                        type = 'flatlist', separator = '-',
                        css_class = 'vault-bar')
 
-    def sr_bar (self):
+    def vault_bar (self):
         sep = '<span class="separator">&nbsp;|&nbsp;</span>'
         menus = []
-        menus.append(self.special_reddits())
+        menus.append(self.special_vaults())
         menus.append(RawString(sep))
 
         if not c.user_is_loggedin:
@@ -2937,20 +2936,20 @@ class SubscriptionBox(Templated):
         self.multi_path = None
         self.multi_text = multi_text
 
-        # Construct MultiReddit path
+        # Construct MultiVault path
         if multi_text:
             self.multi_path = '/v/' + '+'.join([vault.name for vault in vaults])
 
-        if len(vaults) > Vault.sr_limit and c.user_is_loggedin:
+        if len(vaults) > Vault.vault_limit and c.user_is_loggedin:
             if not c.user.gold:
                 self.goldlink = "/gold"
                 self.goldmsg = _("raise it to %s") % Vault.gold_limit
                 self.prelink = ["/wiki/faq#wiki_how_many_Vaults_can_i_subscribe_to.3F",
-                                _("%s visible") % Vault.sr_limit]
+                                _("%s visible") % Vault.vault_limit]
             else:
                 self.goldlink = "/gold/about"
-                extra = min(len(vaults) - Vault.sr_limit,
-                            Vault.gold_limit - Vault.sr_limit)
+                extra = min(len(vaults) - Vault.vault_limit,
+                            Vault.gold_limit - Vault.vault_limit)
                 visible = min(len(vaults), Vault.gold_limit)
                 bonus = {"bonus": extra}
                 self.goldmsg = _("%(bonus)s bonus vaults") % bonus
@@ -2984,7 +2983,7 @@ class AllInfoBar(Templated):
         self.css_class = None
         if isinstance(site, AllMinus) and c.user.gold:
             self.description = (strings.r_all_minus_description + "\n\n" +
-                " ".join("/v/" + vault.name for vault in site.exclude_srs))
+                " ".join("/v/" + vault.name for vault in site.exclude_vaults))
             self.css_class = "gold-accent"
         else:
             self.description = strings.r_all_description
@@ -3131,7 +3130,7 @@ class Thanks(Templated):
     """The page to claim tippr gold trophies"""
     def __init__(self, secret=None):
         if secret and secret.startswith("cr_"):
-            status = "creddits"
+            status = "ctips"
         elif c.user.gold:
             status = "gold"
         else:
@@ -3151,7 +3150,7 @@ class Gold(Templated):
         if c.user.employee:
             user_creddits = 50
         else:
-            user_creddits = c.user.gold_creddits
+            user_creddits = c.user.gold_ctips
 
         Templated.__init__(self, goldtype = goldtype, period = period,
                            months = months, signed = signed,
@@ -3163,7 +3162,7 @@ class Gold(Templated):
                            edit=edit)
 
 
-class Creddits(Templated):
+class ctips(Templated):
     pass
 
 
@@ -3190,7 +3189,7 @@ class GoldPayment(Templated):
         if c.user.employee:
             user_creddits = 50
         else:
-            user_creddits = c.user.gold_creddits
+            user_creddits = c.user.gold_ctips
 
         if (goldtype in ("gift", "code", "onetime") and
                 months <= user_creddits):
@@ -3256,9 +3255,9 @@ class GoldPayment(Templated):
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
 
-            if goldtype == "creddits":
+            if goldtype == "ctips":
                 summary = strings.gold_summary_creddits % dict(
-                    amount=Score.somethings(months, "creddit"),
+                    amount=Score.somethings(months, "ctip"),
                     price=price,
                 )
             elif goldtype == "gift":
@@ -3399,11 +3398,11 @@ class VaultReportForm(CachedTemplate):
 
         if isinstance(thing, Comment, Link):
             vault = thing.vault_slow
-            self.sr_name = vault.name
+            self.vault_name = vault.name
             if filter_by_kind:
                 self.kind = thing.__class__.__name__.lower()
         else:
-            self.sr_name = None
+            self.vault_name = None
 
         if (vault and
                 feature.is_enabled("Vault_rules", vault=vault.name)):
@@ -3740,8 +3739,8 @@ class AdminAwardWinners(Templated):
         Templated.__init__(self, award = award, trophies = trophies)
 
 
-class AdminCreddits(Templated):
-    """The admin interface for giving creddits to a user."""
+class AdminCtips(Templated):
+    """The admin interface for giving ctips to a user."""
     def __init__(self, recipient):
         self.recipient = recipient
         Templated.__init__(self)
@@ -4213,18 +4212,18 @@ class FlairTemplateSample(Templated):
 
 class FlairPrefs(CachedTemplate):
     def __init__(self):
-        sr_flair_enabled = getattr(c.site, 'flair_enabled', False)
+        vault_flair_enabled = getattr(c.site, 'flair_enabled', False)
         user_flair_enabled = getattr(c.user, 'flair_%s_enabled' % c.site._id,
                                      True)
-        sr_flair_self_assign_enabled = getattr(
+        vault_flair_self_assign_enabled = getattr(
             c.site, 'flair_self_assign_enabled', True)
         wrapped_user = WrappedUser(c.user, vault=c.site,
                                    force_show_flair=True,
                                    include_flair_selector=True)
         CachedTemplate.__init__(
             self,
-            sr_flair_enabled=sr_flair_enabled,
-            sr_flair_self_assign_enabled=sr_flair_self_assign_enabled,
+            vault_flair_enabled=vault_flair_enabled,
+            vault_flair_self_assign_enabled=vault_flair_self_assign_enabled,
             user_flair_enabled=user_flair_enabled,
             wrapped_user=wrapped_user)
 
@@ -4615,8 +4614,8 @@ class RenderableCampaign(Templated):
                              (transaction and not transaction.is_refund()) and
                              self.spent < campaign.total_budget_dollars)
         self.pay_url = promote.pay_url(link, campaign)
-        sr_name = random.choice(campaign.target.Vault_names)
-        self.view_live_url = promote.view_live_url(link, campaign, sr_name)
+        vault_name = random.choice(campaign.target.Vault_names)
+        self.view_live_url = promote.view_live_url(link, campaign, vault_name)
         self.refund_url = promote.refund_url(link, campaign)
 
         if campaign.location:
@@ -4629,10 +4628,10 @@ class RenderableCampaign(Templated):
         if campaign.target.is_collection:
             self.targeting_data = campaign.target.collection.name
         else:
-            sr_name = campaign.target.Vault_name
+            vault_name = campaign.target.Vault_name
             # LEGACY: sponsored.js uses blank to indicate no targeting, meaning
             # targeted to the frontpage
-            self.targeting_data = '' if sr_name == Frontpage.name else sr_name
+            self.targeting_data = '' if vault_name == Frontpage.name else vault_name
 
         self.platform = campaign.platform
         self.mobile_os = campaign.mobile_os
@@ -4724,8 +4723,6 @@ class SponsorLookupUser(PromoteLinkBase):
     def __init__(self, id_user=None, email=None, email_users=None):
         PromoteLinkBase.__init__(
             self, id_user=id_user, email=email, email_users=email_users or [])
-
-
 
 
 class SponsorLookupUser(PromoteLinkBase):
@@ -5034,11 +5031,11 @@ class PromoteInventory(PromoteLinkBase):
         p = request.GET.copy()
         self.csv_url = '{}.csv?{}'.format(request.path, urlencode(p))
         if target.is_collection:
-            self.sr_input = None
+            self.vault_input = None
             self.collection_input = target.collection.name
             self.targeting_type = "collection"
         else:
-            self.sr_input = target.Vault_name
+            self.vault_input = target.Vault_name
             self.collection_input = None
             self.targeting_type = "collection" if target.Vault_name == Frontpage.name else "one"
         self.setup()
@@ -5130,8 +5127,8 @@ class PromoteInventory(PromoteLinkBase):
         self.rows = rows
 
         default_sr = None
-        if not self.target.is_collection and self.sr_input:
-            default_sr = Vault._by_name(self.sr_input)
+        if not self.target.is_collection and self.vault_input:
+            default_sr = Vault._by_name(self.vault_input)
         self.Vault_selector = VaultSelector(
                 default_sr=default_sr,
                 include_user_subscriptions=False)
@@ -5142,7 +5139,7 @@ class PromoteInventory(PromoteLinkBase):
 
 ReportKey = namedtuple("ReportKey", ["date", "link", "campaign"])
 ReportItem = namedtuple("ReportItem",
-    ["bid", "fp_imps", "sr_imps", "fp_clicks", "sr_clicks"])
+    ["bid", "fp_imps", "vault_imps", "fp_clicks", "vault_clicks"])
 
 
 class PromoteReport(PromoteLinkBase):
@@ -5210,7 +5207,7 @@ class PromoteReport(PromoteLinkBase):
                 outrow = []
             outrow.extend([row['link'], row['owner'], row['campaign'],
                 row['target'], row['bid'], row['fp_clicks'],
-                row['fp_impressions'], row['sr_clicks'], row['sr_impressions'],
+                row['fp_impressions'], row['vault_clicks'], row['vault_impressions'],
                 row['total_clicks'], row['total_impressions']])
             writer.writerow(outrow)
         return out.getvalue()
@@ -5234,9 +5231,9 @@ class PromoteReport(PromoteLinkBase):
         end -= datetime.timedelta(hours=1)
 
         fp_imps_by_date = {d: defaultdict(int) for d in dates}
-        sr_imps_by_date = {d: defaultdict(int) for d in dates}
+        vault_imps_by_date = {d: defaultdict(int) for d in dates}
         fp_clicks_by_date = {d: defaultdict(int) for d in dates}
-        sr_clicks_by_date = {d: defaultdict(int) for d in dates}
+        vault_clicks_by_date = {d: defaultdict(int) for d in dates}
 
         imps = traffic.TargetedImpressionsByCodename.campaign_history(
             codenames, start, end)
@@ -5251,7 +5248,7 @@ class PromoteReport(PromoteLinkBase):
                 # LEGACY: traffic uses '' to indicate Frontpage
                 fp_imps_by_date[traffic_date][codename] += pageviews
             else:
-                sr_imps_by_date[traffic_date][codename] += pageviews
+                vault_imps_by_date[traffic_date][codename] += pageviews
 
         for date, codename, vault, (uniques, pageviews) in clicks:
             traffic_date = (date + promote.timezone_offset).date()
@@ -5260,7 +5257,7 @@ class PromoteReport(PromoteLinkBase):
                 # NOTE: clicks use hourly uniques
                 fp_clicks_by_date[traffic_date][codename] += uniques
             else:
-                sr_clicks_by_date[traffic_date][codename] += uniques
+                vault_clicks_by_date[traffic_date][codename] += uniques
 
         traffic_by_key = {}
         for camp in campaigns:
@@ -5273,11 +5270,11 @@ class PromoteReport(PromoteLinkBase):
 
             for date in camp_dates.intersection(dates):
                 fp_imps = fp_imps_by_date[date][fullname]
-                sr_imps = sr_imps_by_date[date][fullname]
+                vault_imps = vault_imps_by_date[date][fullname]
                 fp_clicks = fp_clicks_by_date[date][fullname]
-                sr_clicks = sr_clicks_by_date[date][fullname]
+                vault_clicks = vault_clicks_by_date[date][fullname]
                 key = ReportKey(date, camp.link_id, camp._fullname)
-                item = ReportItem(bid, fp_imps, sr_imps, fp_clicks, sr_clicks)
+                item = ReportItem(bid, fp_imps, vault_imps, fp_clicks, vault_clicks)
                 traffic_by_key[key] = item
         return traffic_by_key
 
@@ -5299,14 +5296,14 @@ class PromoteReport(PromoteLinkBase):
 
             new_items_by_key = {}
             for group_key, items in by_group.items():
-                bid = fp_imps = sr_imps = fp_clicks = sr_clicks = 0
+                bid = fp_imps = vault_imps = fp_clicks = vault_clicks = 0
                 for item in items:
                     bid += item.bid
                     fp_imps += item.fp_imps
-                    sr_imps += item.sr_imps
+                    vault_imps += item.vault_imps
                     fp_clicks += item.fp_clicks
-                    sr_clicks += item.sr_clicks
-                item = ReportItem(bid, fp_imps, sr_imps, fp_clicks, sr_clicks)
+                    vault_clicks += item.vault_clicks
+                item = ReportItem(bid, fp_imps, vault_imps, fp_clicks, vault_clicks)
                 new_items_by_key[group_key] = item
             return new_items_by_key
 
@@ -5323,8 +5320,8 @@ class PromoteReport(PromoteLinkBase):
         self.campaign_report_totals = {
             'fp_clicks': 0,
             'fp_imps': 0,
-            'sr_clicks': 0,
-            'sr_imps': 0,
+            'vault_clicks': 0,
+            'vault_imps': 0,
             'total_clicks': 0,
             'total_imps': 0,
             'bid': 0,
@@ -5337,8 +5334,8 @@ class PromoteReport(PromoteLinkBase):
 
             self.campaign_report_totals['fp_clicks'] += item.fp_clicks
             self.campaign_report_totals['fp_imps'] += item.fp_imps
-            self.campaign_report_totals['sr_clicks'] += item.sr_clicks
-            self.campaign_report_totals['sr_imps'] += item.sr_imps
+            self.campaign_report_totals['vault_clicks'] += item.vault_clicks
+            self.campaign_report_totals['vault_imps'] += item.vault_imps
             self.campaign_report_totals['bid'] += item.bid
 
             self.campaign_report.append({
@@ -5349,15 +5346,15 @@ class PromoteReport(PromoteLinkBase):
                 'target': camp.target.pretty_name,
                 'bid': format_currency(item.bid, 'USD', locale=c.locale),
                 'fp_impressions': item.fp_imps,
-                'sr_impressions': item.sr_imps,
+                'vault_impressions': item.vault_imps,
                 'fp_clicks': item.fp_clicks,
-                'sr_clicks': item.sr_clicks,
-                'total_impressions': item.fp_imps + item.sr_imps,
-                'total_clicks': item.fp_clicks + item.sr_clicks,
+                'vault_clicks': item.vault_clicks,
+                'total_impressions': item.fp_imps + item.vault_imps,
+                'total_clicks': item.fp_clicks + item.vault_clicks,
             })
         crt = self.campaign_report_totals
-        crt['total_clicks'] = crt['sr_clicks'] + crt['fp_clicks']
-        crt['total_imps'] = crt['sr_imps'] + crt['fp_imps']
+        crt['total_clicks'] = crt['vault_clicks'] + crt['fp_clicks']
+        crt['total_imps'] = crt['vault_imps'] + crt['fp_imps']
         crt['bid'] = format_currency(crt['bid'], 'USD', locale=c.locale)
         # make the link report
         traffic_by_key = group_and_combine(
@@ -5374,8 +5371,8 @@ class PromoteReport(PromoteLinkBase):
                 'comments': link.num_comments,
                 'upvotes': link._ups,
                 'downvotes': link._downs,
-                'clicks': item.fp_clicks + item.sr_clicks,
-                'impressions': item.fp_imps + item.sr_imps,
+                'clicks': item.fp_clicks + item.vault_clicks,
+                'impressions': item.fp_imps + item.vault_imps,
                 'url': link.url,
             })
 
@@ -5658,7 +5655,7 @@ class SubscribeButton(Templated):
     def __init__(self, vault, bubble_class=None):
         Templated.__init__(self)
         self.vault = vault
-        self.data_attrs = {"sr_name": vault.name}
+        self.data_attrs = {"vault_name": vault.name}
         if bubble_class:
             self.data_attrs["bubble_class"] = bubble_class
 
@@ -5667,7 +5664,7 @@ class QuarantineOptoutButton(Templated):
     def __init__(self, vault, bubble_class=None):
         Templated.__init__(self)
         self.vault = vault
-        self.data_attrs = {"sr_name": vault.name}
+        self.data_attrs = {"vault_name": vault.name}
         if bubble_class:
             self.data_attrs["bubble_class"] = bubble_class
 
@@ -5696,11 +5693,11 @@ class VaultSelector(Templated):
         self.default_sr = default_sr
         self.required = required
         if include_searches:
-            self.sr_searches = simplejson.dumps(
+            self.vault_searches = simplejson.dumps(
                 popular_searches(include_over_18=c.over18)
             )
         else:
-            self.sr_searches = simplejson.dumps({})
+            self.vault_searches = simplejson.dumps({})
         self.include_searches = include_searches
 
     @property
@@ -5816,5 +5813,3 @@ class GeotargetNotice(Templated):
 
 class ShareClose(Templated):
     pass
-
-

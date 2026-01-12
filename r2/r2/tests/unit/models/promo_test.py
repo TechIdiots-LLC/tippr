@@ -24,10 +24,10 @@
 from unittest.mock import MagicMock, Mock
 
 from r2.models import Collection, CollectionStorage
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class CollectionStorageTest(RedditTestCase):
+class CollectionStorageTest(TipprTestCase):
 
     def setUp(self):
         self.name = 'fake name'
@@ -38,7 +38,7 @@ class CollectionStorageTest(RedditTestCase):
         invalid_attribute = {'invalid_attribute': None}
         valid_attribute = {'is_spotlight': None}
 
-        collection = Collection(name=self.name, sr_names=[])
+        collection = Collection(name=self.name, vault_names=[])
 
         Collection.by_name = Mock()
         Collection.by_name.return_value = collection
@@ -81,18 +81,18 @@ class CollectionStorageTest(RedditTestCase):
             {'is_spotlight': 'True'})
 
 
-class CollectionTest(RedditTestCase):
+class CollectionTest(TipprTestCase):
 
     def test_is_spotlight_default(self):
         """Assert that is_spotlight defaults to False"""
-        collection = Collection(name='fake name', sr_names=[])
+        collection = Collection(name='fake name', vault_names=[])
         self.assertFalse(collection.is_spotlight)
 
         setattr(collection, 'is_spotlight', True)
         self.assertTrue(collection.is_spotlight)
 
 
-class CollectionOrderTest(RedditTestCase):
+class CollectionOrderTest(TipprTestCase):
     """
     Assert that Collection.get_all() sorts in the following sequence:
     1. SFW/NSFW
@@ -102,17 +102,17 @@ class CollectionOrderTest(RedditTestCase):
 
     def setUp(self):
         # Setup all collections
-        self.spotlight_a = Collection(name='spotlight_a', sr_names=[],
+        self.spotlight_a = Collection(name='spotlight_a', vault_names=[],
             is_spotlight=True)
-        self.spotlight_z = Collection(name='spotlight_z', sr_names=[],
+        self.spotlight_z = Collection(name='spotlight_z', vault_names=[],
             is_spotlight=True)
-        self.sfw_a = Collection(name='sfw_a', sr_names=[])
-        self.sfw_b = Collection(name='sfw_B', sr_names=[])
-        self.sfw_z = Collection(name='sfw_z', sr_names=[])
-        self.nsfw_spotlight = Collection(name='nsfw_spotlight', sr_names=[],
+        self.sfw_a = Collection(name='sfw_a', vault_names=[])
+        self.sfw_b = Collection(name='sfw_B', vault_names=[])
+        self.sfw_z = Collection(name='sfw_z', vault_names=[])
+        self.nsfw_spotlight = Collection(name='nsfw_spotlight', vault_names=[],
             over_18=True, is_spotlight=True)
         self.nsfw_non_spotlight = Collection(name='nsfw_non_spotlight',
-            sr_names=[], over_18=True)
+            vault_names=[], over_18=True)
 
         self.correct_order = [
             'spotlight_a',
@@ -188,5 +188,3 @@ class CollectionOrderTest(RedditTestCase):
             self.nsfw_non_spotlight,
         ]
         self._assert_scenario(unordered_collections)
-
-

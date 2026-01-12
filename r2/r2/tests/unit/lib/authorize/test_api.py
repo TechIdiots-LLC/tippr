@@ -42,10 +42,10 @@ from r2.lib.authorize.api import (
     update_payment_profile,
     void_authorization_hold,
 )
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class AuthorizeNetExceptionTest(RedditTestCase):
+class AuthorizeNetExceptionTest(TipprTestCase):
 
     def test_exception_message(self):
         from r2.lib.authorize.api import AuthorizeNetException
@@ -58,7 +58,7 @@ class AuthorizeNetExceptionTest(RedditTestCase):
         self.assertNotEqual(str(exp), (full_msg % card_number))
         self.assertEqual(str(exp), (full_msg % expected))
 
-class SimpleXMLObjectTest(RedditTestCase):
+class SimpleXMLObjectTest(TipprTestCase):
 
     def setUp(self):
         from r2.lib.authorize.api import SimpleXMLObject
@@ -400,6 +400,3 @@ class ApiFunctionTest(TestCase):
         self.assertRaises(TransactionError, refund_transaction,
                           self.customer_id, self.payment_profile_id,
                           self.amount, self.transaction_id)
-
-
-

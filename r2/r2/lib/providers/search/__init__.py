@@ -42,4 +42,3 @@ class SearchProvider:
 
     def run_changed(self):
         raise NotImplementedError
-

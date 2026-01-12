@@ -147,4 +147,3 @@ class ConfigValueParser(dict):
                 parser = self.config_keys[key]
                 value = parser(value, key)
             self[key] = value
-

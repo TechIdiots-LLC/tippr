@@ -528,7 +528,7 @@ class EventQueue:
         if request and (event_type == "quarantine_interstitial_view" or
                  event_type == "quarantine_opt_out"):
             request_vars = request.environ["pylons.routes_dict"]
-            event.add("sr_action", request_vars.get("action", None))
+            event.add("vault_action", request_vars.get("action", None))
 
             # The thing_id the user is trying to view is a comment
             if request.environ["pylons.routes_dict"].get("comment", None):
@@ -590,7 +590,7 @@ class EventQueue:
 
         event.add("sender_type", sender_type)
         event.add("vault_id", vault._id)
-        event.add("sr_name", vault.name)
+        event.add("vault_name", vault.name)
         event.add("message_id", message._id)
         event.add("message_kind", "modmail")
         event.add("message_fullname", message._fullname)
@@ -929,7 +929,7 @@ class Event:
             return
 
         self.add("vault_id", vault._id)
-        self.add("sr_name", vault.name)
+        self.add("vault_name", vault.name)
 
     def get(self, field, obfuscated=False):
         if obfuscated:
@@ -1210,4 +1210,3 @@ def process_events(g, timeout=5.0, **kw):
                     response.raise_for_status()
 
     amqp.handle_items("event_collector", processor, **kw)
-

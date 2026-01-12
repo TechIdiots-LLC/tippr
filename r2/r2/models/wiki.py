@@ -57,7 +57,7 @@ impossible_namespaces = ('edit/', 'revisions/', 'settings/', 'discussions/',
                          'revisions/', 'pages/', 'create/')
 
 # Namespaces in which access is denied to do anything but view
-restricted_namespaces = ('reddit/', 'config/', 'special/')
+restricted_namespaces = ('tippr/', 'config/', 'special/')
 
 # Pages which may only be edited by mods, must be within restricted namespaces
 special_pages = {
@@ -239,7 +239,7 @@ class WikiPage(tdb_cassandra.Thing):
     def id_for(cls, vault, name):
         # Prefer the canonical _id36 for real vaults. Some special site
         # objects (e.g. `Frontpage` / `DefaultVault`) are not real vaults and
-        # won't have `_id36` set — fall back to using their `name` so global
+        # won't have `_id36` set â€” fall back to using their `name` so global
         # wiki pages (site-level policies, etc.) can be resolved.
         id_val = getattr(vault, '_id36', None)
         if not id_val:
@@ -547,4 +547,3 @@ class WikiPageIniItem:
                 items[section] = item
         
         return items if return_dict else list(items.values())
-

@@ -95,4 +95,3 @@ class EmbedController(TipprController):
             return self.redirect('/help/faq')
         else:
             return self.renderurl('/help/faqs/' + c.site.name)
-

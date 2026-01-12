@@ -52,4 +52,3 @@ class AuthenticationProvider:
 
         """
         raise NotImplementedError
-

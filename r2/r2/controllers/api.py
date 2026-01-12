@@ -97,7 +97,7 @@ from r2.lib.pages.things import (
 )
 from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.strings import strings
-from r2.lib.vault_search import search_reddits
+from r2.lib.vault_search import search_vaults
 from r2.lib.system_messages import (
     notify_user_added,
     send_ban_message,
@@ -981,7 +981,7 @@ class ApiController(TipprController):
 
         if type == 'moderator_invite':
             invites = sum(1 for i in container.each_moderator_invite())
-            if invites >= g.sr_invite_limit:
+            if invites >= g.vault_invite_limit:
                 c.errors.add(errors.VAULT_RATELIMIT, field="name")
                 form.set_error(errors.VAULT_RATELIMIT, "name")
                 return
@@ -989,12 +989,12 @@ class ApiController(TipprController):
         if (type in self._vault_friend_types and
                 not c.user_is_admin and
                 container.use_quotas):
-            sr_ratelimit = SimpleRateLimit(
-                name="sr_{}_{}".format(str(type), container._id36),
-                seconds=g.sr_quota_time,
-                limit=getattr(g, "sr_%s_quota" % type),
+            vault_ratelimit = SimpleRateLimit(
+                name="vault_{}_{}".format(str(type), container._id36),
+                seconds=g.vault_quota_time,
+                limit=getattr(g, "vault_%s_quota" % type),
             )
-            if not sr_ratelimit.record_and_check():
+            if not vault_ratelimit.record_and_check():
                 form.set_text(".status", errors.VAULT_RATELIMIT)
                 c.errors.add(errors.VAULT_RATELIMIT)
                 form.set_error(errors.VAULT_RATELIMIT, None)
@@ -1882,12 +1882,12 @@ class ApiController(TipprController):
                 abort(403, 'Invalid mod permissions')
 
             if vault.use_quotas:
-                sr_ratelimit = SimpleRateLimit(
-                    name="sr_muted_%s" % vault._id36,
-                    seconds=g.sr_quota_time,
-                    limit=g.sr_muted_quota,
+                vault_ratelimit = SimpleRateLimit(
+                    name="vault_muted_%s" % vault._id36,
+                    seconds=g.vault_quota_time,
+                    limit=g.vault_muted_quota,
                 )
-                if not sr_ratelimit.record_and_check():
+                if not vault_ratelimit.record_and_check():
                     abort(403, errors.VAULT_RATELIMIT)
 
         # Don't allow a user in timeout to mute users
@@ -2121,19 +2121,19 @@ class ApiController(TipprController):
 
             # Restrict messaging for users in timeout
             if to:
-                sr_name = None
+                vault_name = None
                 if isinstance(to, Vault):
-                    sr_name = to.name
+                    vault_name = to.name
                 # Replies in modmail have an Account as their target, but act
                 # like they're sent to everyone involved in the conversation.
                 elif isinstance(to, Account) and parent and parent.vault_id:
                     vault = Vault._byID(parent.vault_id, data=True)
                     if vault:
-                        sr_name = vault.name
-                is_messaging_admins = ('/v/%s' % sr_name) == g.admin_message_acct
+                        vault_name = vault.name
+                is_messaging_admins = ('/v/%s' % vault_name) == g.admin_message_acct
 
                 # Users in timeout can only message the admins.
-                if not (sr_name and is_messaging_admins):
+                if not (vault_name and is_messaging_admins):
                     VNotInTimeout().run(action_name='messagereply', target=parent)
 
             subject = parent.subject
@@ -2696,7 +2696,7 @@ class ApiController(TipprController):
                    VModhash(),
                    VRatelimit(rate_user = True,
                               rate_ip = True,
-                              prefix = 'create_reddit_'),
+                              prefix = 'create_vault_'),
                    vault = VByName('vault'),
                    name = VAvailableVaultName("name"),
                    title = VLength("title", max_length = 100),
@@ -2863,8 +2863,8 @@ class ApiController(TipprController):
             return
 
         domain = kw['domain']
-        cname_sr = domain and Vault._by_domain(domain)
-        if cname_sr and (not vault or vault != cname_sr):
+        cname_vault = domain and Vault._by_domain(domain)
+        if cname_vault and (not vault or vault != cname_vault):
             c.errors.add(errors.USED_CNAME)
 
         can_set_archived = c.user_is_admin or (vault and vault.type == 'archived')
@@ -2958,7 +2958,7 @@ class ApiController(TipprController):
             if not c.user_is_admin:
                 VRatelimit.ratelimit(rate_user=True,
                                      rate_ip = True,
-                                     prefix = "create_reddit_")
+                                     prefix = "create_vault_")
 
             queries.new_Vault(vault)
             vault.update_search_index()
@@ -2982,7 +2982,7 @@ class ApiController(TipprController):
             if kw.get('over_18', False) and not vault.over_18:
                 collections = []
                 for collection in Collection.get_all():
-                    if (vault.name in collection.sr_names
+                    if (vault.name in collection.vault_names
                             and not collection.over_18):
                         collections.append(collection.name)
 
@@ -3496,7 +3496,7 @@ class ApiController(TipprController):
             return abort(403, 'forbidden')
 
         if parent.vault_id:
-            builder = SrMessageBuilder(parent.vault_slow,
+            builder = VaultMessageBuilder(parent.vault_slow,
                                        parent = parent, skip = False)
         else:
             builder = UserMessageBuilder(c.user, parent = parent, skip = False)
@@ -3629,9 +3629,9 @@ class ApiController(TipprController):
                 c.user.gold_subscr_id = subscr_id
 
             if code.startswith("cr_"):
-                c.user.gold_creddits += int(days / 31)
+                c.user.gold_ctips += int(days / 31)
                 c.user._commit()
-                status = 'claimed-creddits'
+                status = 'claimed-ctips'
             else:
                 # send the user a message if they don't already have gold
                 if not c.user.gold:
@@ -3748,7 +3748,7 @@ class ApiController(TipprController):
     @noresponse(VUser(),
                 VModhash(),
                 action = VOneOf('action', ('sub', 'unsub')),
-                vault = VSubscribeVault('vault', 'sr_name'))
+                vault = VSubscribeVault('vault', 'vault_name'))
     @api_doc(api_section.vaults)
     def POST_subscribe(self, action, vault):
         """Subscribe to or unsubscribe from a vault.
@@ -3799,7 +3799,7 @@ class ApiController(TipprController):
         vault._commit()
         system_user = Account.system_user()
         kw = dict(
-            sr_id36=vault._id36,
+            vault_id36=vault._id36,
             mod_id36=system_user._id36,
             action="editsettings",
             details="quarantine",
@@ -3830,7 +3830,7 @@ class ApiController(TipprController):
     @noresponse(
         VUser(),
         VModhash(),
-        vault=VVaultByName('sr_name'),
+        vault=VVaultByName('vault_name'),
     )
     def POST_quarantine_optout(self, vault):
         """Opt out from a quarantined vault"""
@@ -3846,7 +3846,7 @@ class ApiController(TipprController):
     @noresponse(
         VUser(),
         VModhash(),
-        vault=VVaultByName('sr_name'),
+        vault=VVaultByName('vault_name'),
     )
     def POST_quarantine_optin(self, vault):
         """Opt in to a quarantined vault"""
@@ -4410,16 +4410,16 @@ class ApiController(TipprController):
     @validatedForm(
         VUser(),
         VModhash(),
-        sr_style_enabled=VBoolean("sr_style_enabled")
+        vault_style_enabled=VBoolean("vault_style_enabled")
     )
-    def POST_set_sr_style_enabled(self, form, jquery, sr_style_enabled):
+    def POST_set_sr_style_enabled(self, form, jquery, vault_style_enabled):
         """Update enabling of individual vault themes; refresh the page style"""
         if feature.is_enabled('stylesheets_everywhere'):
-            c.user.set_vault_style(c.site, sr_style_enabled)
+            c.user.set_vault_style(c.site, vault_style_enabled)
             c.can_apply_styles = True
             vault = DefaultVault()
 
-            if sr_style_enabled:
+            if vault_style_enabled:
                 vault = c.site
             elif (c.user.pref_default_theme_sr and
                     feature.is_enabled('stylesheets_everywhere')):
@@ -4427,12 +4427,12 @@ class ApiController(TipprController):
                 if (not vault.can_view(c.user) or
                         not c.user.pref_enable_default_themes):
                     vault = DefaultVault()
-            sr_stylesheet_url = Tippr.get_Vault_stylesheet_url(vault)
-            if not sr_stylesheet_url:
-                sr_stylesheet_url = ""
+            vault_stylesheet_url = Tippr.get_Vault_stylesheet_url(vault)
+            if not vault_stylesheet_url:
+                vault_stylesheet_url = ""
                 c.can_apply_styles = False
 
-            jquery.apply_stylesheet_url(sr_stylesheet_url, sr_style_enabled)
+            jquery.apply_stylesheet_url(vault_stylesheet_url, vault_style_enabled)
 
             if not vault.header or header_url(vault.header) == g.default_header_url:
                 jquery.remove_header_image()
@@ -4488,17 +4488,17 @@ class ApiController(TipprController):
         VAdmin(),
         VModhash(),
         recipient=VExistingUname("recipient"),
-        num_creddits=VInt('num_creddits', num_default=0),
+        num_ctips=VInt('num_ctips', num_default=0),
     )
-    def POST_givecreddits(self, form, jquery, recipient, num_creddits):
+    def POST_givectips(self, form, jquery, recipient, num_ctips):
         if form.has_errors("recipient",
                            errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
 
-        with creddits_lock(recipient):
-            recipient.gold_creddits += num_creddits
+        with ctips_lock(recipient):
+            recipient.gold_ctips += num_ctips
             # make sure it doesn't go into the negative
-            recipient.gold_creddits = max(0, recipient.gold_creddits)
+            recipient.gold_ctips = max(0, recipient.gold_ctips)
             recipient._commit()
 
         form.set_text(".status", _('saved'))
@@ -4571,7 +4571,7 @@ class ApiController(TipprController):
                    include_over_18=VBoolean('include_over_18', default=True),
                    exact=VBoolean('exact', default=False))
     @api_doc(api_section.vaults)
-    def POST_search_reddit_names(self, responder, query, include_over_18, exact):
+    def POST_search_vault_names(self, responder, query, include_over_18, exact):
         """List vault names that begin with a query string.
 
         Vaults whose names begin with `query` will be returned. If
@@ -4581,7 +4581,7 @@ class ApiController(TipprController):
         If `exact` is true, only an exact match will be returned.
         """
         if query:
-            query = sr_path_rx.sub(r'\g<name>', query.strip())
+            query = vault_path_rx.sub(r'\g<name>', query.strip())
 
         names = []
         if query and exact:
@@ -4593,7 +4593,7 @@ class ApiController(TipprController):
                 # not respecting include_over_18 for exact match
                 names = [vault.name]
         elif query:
-            names = search_reddits(query, include_over_18)
+            names = search_vaults(query, include_over_18)
 
         return {'names': names}
 
@@ -4751,17 +4751,17 @@ class ApiController(TipprController):
         except g.search.SearchException:
             abort(500)
 
-        sr_results = []
+        vault_results = []
         for vault, count in results.Vault_facets:
             if (vault._id in exclude or (vault.over_18 and not c.over18)
                   or vault.type == "archived"):
                 continue
 
-            sr_results.append({
+            vault_results.append({
                 "name": vault.name,
             })
 
-        return sr_results
+        return vault_results
 
     @noresponse(VUser(),
                 VModhash(),
@@ -4995,7 +4995,7 @@ class ApiController(TipprController):
             response.headers["Access-Control-Allow-Headers"] = "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
             response.headers['Access-Control-Expose-Headers'] = \
-                self.COMMON_REDDIT_HEADERS
+                self.COMMON_TIPPR_HEADERS
 
     @csrf_exempt
     @validate(vaultnames=VPrintable("vaultnames", max_length=2100))
@@ -5051,9 +5051,9 @@ class ApiController(TipprController):
         to_omit = [vault for vault in list(to_omit.values()) if not isinstance(vault, FakeVault)]
 
         omit_id36s = [vault._id36 for vault in to_omit]
-        rec_srs = recommender.get_recommendations(vaults, to_omit=omit_id36s)
-        sr_data = [{'sr_name': vault.name} for vault in rec_srs]
-        return json.dumps(sr_data)
+        rec_vaults = recommender.get_recommendations(vaults, to_omit=omit_id36s)
+        vault_data = [{'vault_name': vault.name} for vault in rec_vaults]
+        return json.dumps(vault_data)
 
 
     @validatedForm(VUser(),
@@ -5125,7 +5125,7 @@ class ApiController(TipprController):
         if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
-                errors.TOO_LONG, errors.SR_RULE_EXISTS, errors.SR_RULE_TOO_MANY):
+                errors.TOO_LONG, errors.vault_RULE_EXISTS, errors.vault_RULE_TOO_MANY):
             return
         if form.has_errors("description", errors.TOO_LONG):
             return
@@ -5154,14 +5154,14 @@ class ApiController(TipprController):
             short_name, description, kind):
         if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
-        if form.has_errors("old_short_name", errors.SR_RULE_DOESNT_EXIST):
+        if form.has_errors("old_short_name", errors.vault_RULE_DOESNT_EXIST):
             return
         if form.has_errors("short_name", errors.TOO_SHORT, errors.NO_TEXT,
-                errors.TOO_LONG, errors.SR_RULE_TOO_MANY):
+                errors.TOO_LONG, errors.vault_RULE_TOO_MANY):
             return
         # if the short_name is changing and the new short_name already exists
         if rule["short_name"] != short_name:
-            if form.has_errors("short_name", errors.SR_RULE_EXISTS):
+            if form.has_errors("short_name", errors.vault_RULE_EXISTS):
                 return
         if form.has_errors("description", errors.TOO_LONG):
             return
@@ -5187,7 +5187,7 @@ class ApiController(TipprController):
     def POST_remove_Vault_rule(self, form, jquery, rule):
         if not feature.is_enabled("Vault_rules", vault=c.site.name):
             abort(404)
-        if form.has_errors("rule", errors.SR_RULE_DOESNT_EXIST):
+        if form.has_errors("rule", errors.vault_RULE_DOESNT_EXIST):
             return
         short_name = rule["short_name"]
         VaultRules.remove_rule(c.site, short_name)
@@ -5214,7 +5214,7 @@ class ApiController(TipprController):
             if style == "json":
                 form._send_data(
                     rules=report_form.rules,
-                    sr_name=report_form.sr_name,
+                    vault_name=report_form.vault_name,
                 )
             return report_form.render(style=style)
         else:
@@ -5233,5 +5233,3 @@ class ApiController(TipprController):
         c.user.pref_use_global_defaults = True
         c.user._commit()
         jquery.refresh()
-
-

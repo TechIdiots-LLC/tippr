@@ -33,14 +33,14 @@ export LINKDBHOST=prec01
 export USER=ri
 export INI=production.ini
 cd ~/reddit/r2
-time psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST \
+time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'link',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
                    from reddit_thing_link t
                   where not t.spam and not t.deleted
                   )
                   to 'reddit_thing_link.dump'"
-time psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST \
+time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
                    from reddit_data_link d
@@ -125,7 +125,7 @@ def store_keys(key, maxes):
                     in maxes])
 
     elif key.startswith('vault-'):
-        sr_str, sort, time, vault_id = key.split('-')
+        vault_str, sort, time, vault_id = key.split('-')
         vault_id = int(vault_id)
 
         if sort == 'controversy':
@@ -156,4 +156,3 @@ def write_permacache(fd = sys.stdin):
     mr_tools.mr_reduce_max_per_key(lambda x: list(map(float, x[:-1])), num=1000,
                                    post=store_keys,
                                    fd = fd)
-

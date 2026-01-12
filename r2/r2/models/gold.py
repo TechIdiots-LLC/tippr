@@ -64,7 +64,7 @@ TIMEZONE = pytz.timezone("America/Los_Angeles")
 Session = scoped_session(sessionmaker(bind=ENGINE))
 Base = declarative_base()
 
-gold_table = sa.Table('reddit_gold', METADATA,
+gold_table = sa.Table('tippr_gold', METADATA,
                       sa.Column('trans_id', sa.String, nullable = False,
                                 primary_key = True),
                       # status can be: invalid, unclaimed, claimed
@@ -550,7 +550,7 @@ def make_gold_message(thing, user_gilded):
             gilded_message = ungettext(
                 "a redditor gifted you a month of tippr gold for this "
                 "comment.",
-                "redditors have gifted you %(months)d months of tippr gold "
+                "tippr users have gifted you %(months)d months of tippr gold "
                 "for this comment.",
                 thing.gildings
             )
@@ -558,7 +558,7 @@ def make_gold_message(thing, user_gilded):
             gilded_message = ungettext(
                 "a redditor gifted you a month of tippr gold for this "
                 "submission.",
-                "redditors have gifted you %(months)d months of tippr gold "
+                "tippr users have gifted you %(months)d months of tippr gold "
                 "for this submission.",
                 thing.gildings
             )
@@ -567,7 +567,7 @@ def make_gold_message(thing, user_gilded):
             gilded_message = ungettext(
                 "you have gifted tippr gold to %(recipient)s for this "
                 "comment.",
-                "you and other redditors have gifted %(months)d months of "
+                "you and other tippr users have gifted %(months)d months of "
                 "tippr gold to %(recipient)s for this comment.",
                 thing.gildings
             )
@@ -575,7 +575,7 @@ def make_gold_message(thing, user_gilded):
             gilded_message = ungettext(
                 "you have gifted tippr gold to %(recipient)s for this "
                 "submission.",
-                "you and other redditors have gifted %(months)d months of "
+                "you and other tippr users have gifted %(months)d months of "
                 "tippr gold to %(recipient)s for this submission.",
                 thing.gildings
             )
@@ -584,7 +584,7 @@ def make_gold_message(thing, user_gilded):
             gilded_message = ungettext(
                 "a redditor has gifted tippr gold to %(recipient)s for this "
                 "comment.",
-                "redditors have gifted %(months)d months of tippr gold to "
+                "tippr users have gifted %(months)d months of tippr gold to "
                 "%(recipient)s for this comment.",
                 thing.gildings
             )
@@ -592,7 +592,7 @@ def make_gold_message(thing, user_gilded):
             gilded_message = ungettext(
                 "a redditor has gifted tippr gold to %(recipient)s for this "
                 "submission.",
-                "redditors have gifted %(months)d months of tippr gold to "
+                "tippr users have gifted %(months)d months of tippr gold to "
                 "%(recipient)s for this submission.",
                 thing.gildings
             )
@@ -603,8 +603,8 @@ def make_gold_message(thing, user_gilded):
     )
 
 
-def creddits_lock(user):
-    return g.make_lock("gold_creddits", "creddits_%s" % user._id)
+def ctips_lock(user):
+    return g.make_lock("gold_ctips", "creddits_%s" % user._id)
 
 
 PENNIES_PER_SERVER_SECOND = {
@@ -644,4 +644,3 @@ class StylesheetsEverywhere(WikiPageIniItem):
         self.preview_url = preview_url
         self.is_enabled = is_enabled
         self.checked = False
-

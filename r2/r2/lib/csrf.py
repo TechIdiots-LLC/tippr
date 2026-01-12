@@ -53,4 +53,3 @@ def check_controller_csrf_prevention(controller):
             msg = ("Handlers that might mutate data must be "
                    "explicit about CSRF prevention: %s" % endpoint_name)
             raise CSRFPreventionException(msg)
-

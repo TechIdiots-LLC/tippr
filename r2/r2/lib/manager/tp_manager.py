@@ -121,5 +121,3 @@ class tp_manager:
         self.cache_template(thing, style, template)
 
         return template
-
-

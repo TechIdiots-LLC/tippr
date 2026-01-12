@@ -114,4 +114,3 @@ class ImgixImageResizingProvider(ImageResizingProvider):
             auth=(g.secrets["imgix_api_key"], ""),
             data={"url": url},
         )
-

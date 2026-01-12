@@ -148,4 +148,3 @@ def set_account_ip(account_id, ip, date=None):
     m.insert(IPsByAccount._cf, str(account_id), {date: ip}, ttl=CF_TTL)
     m.insert(AccountsByIP._cf, ip, {date: str(account_id)}, ttl=CF_TTL)
     m.send()
-

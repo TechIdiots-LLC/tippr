@@ -33,7 +33,7 @@ class LoginRegBase:
     """Mixin for login-centered controller tests.
 
     This class is (purposely) not a test case that'll be picked up by nose
-    but rather should be added as a mixin on a RedditControllerTestCase
+    but rather should be added as a mixin on a TipprControllerTestCase
     subclass. The subclass needs to implement
 
      * assert_success - passed a result of do_post, and invoked in places
@@ -178,5 +178,3 @@ class LoginRegBase:
             stack.enter_context(self.disabled_captcha())
             res = self.do_register()
             self.assert_success(res)
-
-

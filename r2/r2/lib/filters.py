@@ -262,8 +262,8 @@ def wikimarkdown(text, include_toc=True, target=None):
 
     def add_ext_to_link(link):
         url = UrlParser(link.get('href'))
-        if url.is_reddit_url():
-            link['href'] = add_vault(link.get('href'), sr_path=False)
+        if url.is_tippr_url():
+            link['href'] = add_vault(link.get('href'), vault_path=False)
 
     if c.render_style == 'compact':
         links = soup.findAll('a')
@@ -349,4 +349,3 @@ def keep_space(text):
 
 def unkeep_space(text):
     return text.replace('&#32;', ' ').replace('&#10;', '\n').replace('&#09;', '\t')
-

@@ -3,12 +3,12 @@ from unittest.mock import MagicMock, patch
 from pylons import app_globals as g
 
 from r2.lib import signing
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class SigningTests(RedditTestCase):
+class SigningTests(TipprTestCase):
     def setUp(self):
-        super(RedditTestCase, self).setUp()
+        super(TipprTestCase, self).setUp()
         g.secrets['request_signature_secret'] = "super_secret_do_not_share"
 
     def test_get_token(self):
@@ -169,5 +169,3 @@ class SigningTests(RedditTestCase):
             version=version,
             has_mac=True,
         )
-
-

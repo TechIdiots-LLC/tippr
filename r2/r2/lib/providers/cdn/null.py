@@ -33,4 +33,3 @@ class NullCdnProvider(CdnProvider):
 
     def get_client_location(self, environ):
         return None
-

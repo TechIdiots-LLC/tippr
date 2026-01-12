@@ -96,4 +96,3 @@ api('rules', RulesJsonTemplate)
 register_api_templates('comment', CommentJsonTemplate)
 register_api_templates('morerecursion', MoreCommentJsonTemplate)
 register_api_templates('morechildren', MoreCommentJsonTemplate)
-

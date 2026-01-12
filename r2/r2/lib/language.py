@@ -192,4 +192,3 @@ def charset_summary(s, prefix=""):
         res["charset"] = charsets.most_common(1)[0][0]
         res["all_charsets"] = dict(charsets.most_common())
     return res
-

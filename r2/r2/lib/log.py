@@ -139,16 +139,16 @@ class RavenErrorReporter(Reporter):
             client.tags_context({"app": request.GET["app"]})
 
     @classmethod
-    def add_reddit_context(cls, client):
-        reddit_context = {
+    def add_tippr_context(cls, client):
+        tippr_context = {
             "language": c.lang,
             "render_style": c.render_style,
         }
 
         if c.site:
-            reddit_context["vault"] = c.site.name
+            tippr_context["vault"] = c.site.name
 
-        client.extra_context(reddit_context)
+        client.extra_context(tippr_context)
 
     @classmethod
     def add_user_context(cls, client):
@@ -214,7 +214,7 @@ class RavenErrorReporter(Reporter):
             culprit = 'script: "%s"' % sys.argv[-1]
         else:
             cls.add_http_context(client)
-            cls.add_reddit_context(client)
+            cls.add_tippr_context(client)
             cls.add_user_context(client)
 
             routes_dict = request.environ["pylons.routes_dict"]
@@ -261,4 +261,3 @@ class LoggingErrorReporter(Reporter):
         # configuration on the syslog side and potentially in apptail as well
         for line in text.splitlines():
             g.log.warning(line)
-

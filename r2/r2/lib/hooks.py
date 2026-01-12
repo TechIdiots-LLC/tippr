@@ -123,4 +123,3 @@ class HookRegistrar:
         for hook, handler in self.connections:
             hook.register_handler(handler)
         self.registered = True
-

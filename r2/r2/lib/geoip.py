@@ -152,4 +152,3 @@ def get_request_location(request, context):
         timer.stop()
 
     return context.location
-

@@ -70,4 +70,3 @@ class TempTimeout(UserTempBan):
     @classmethod
     def schedule_rowkey(cls):
         return "untimeout"
-

@@ -217,4 +217,3 @@ def refund_transaction(user, transaction_id, campaign_id, amount):
 
     bid.refund(amount)
     return True, None
-

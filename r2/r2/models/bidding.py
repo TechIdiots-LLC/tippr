@@ -368,7 +368,7 @@ class PromotionWeights(Sessionized, Base):
     promo_idx    = Column(BigInteger, index = True, autoincrement = False,
                           primary_key = True)
 
-    sr_name    = Column(String, primary_key = True,
+    vault_name    = Column(String, primary_key = True,
                         nullable = True,  index = True)
     date       = Column(Date(), primary_key = True,
                         nullable = False, index = True)
@@ -383,9 +383,9 @@ class PromotionWeights(Sessionized, Base):
     # NOTE: bid, weight, finished columns are not used
 
     @classmethod
-    def filter_sr_name(cls, sr_name):
+    def filter_sr_name(cls, vault_name):
         # LEGACY: use empty string to indicate Frontpage
-        return '' if sr_name == Frontpage.name else sr_name
+        return '' if vault_name == Frontpage.name else vault_name
 
     @classmethod
     def reschedule(cls, link, campaign):
@@ -400,16 +400,16 @@ class PromotionWeights(Sessionized, Base):
         # note that end_date is not included
         dates = [start_date + datetime.timedelta(days=i) for i in range(ndays)]
 
-        sr_names = campaign.target.Vault_names
-        sr_names = {cls.filter_sr_name(sr_name) for sr_name in sr_names}
+        vault_names = campaign.target.Vault_names
+        vault_names = {cls.filter_sr_name(vault_name) for vault_name in vault_names}
 
         with cls.session.begin():
-            for sr_name in sr_names:
+            for vault_name in vault_names:
                 for date in dates:
                     obj = cls(
                         thing_name=link._fullname,
                         promo_idx=campaign._id,
-                        sr_name=sr_name,
+                        vault_name=vault_name,
                         date=date,
                         account_id=link.author_id,
                         bid=0.,
@@ -427,7 +427,7 @@ class PromotionWeights(Sessionized, Base):
 
     @classmethod
     def _filter_query(cls, query, start, end=None, link=None,
-                      author_id=None, sr_names=None):
+                      author_id=None, vault_names=None):
         start = to_date(start)
 
         if end:
@@ -442,29 +442,27 @@ class PromotionWeights(Sessionized, Base):
         if author_id:
             query = query.filter(cls.account_id == author_id)
 
-        if sr_names:
-            sr_names = [cls.filter_sr_name(sr_name) for sr_name in sr_names]
-            query = query.filter(cls.sr_name.in_(sr_names))
+        if vault_names:
+            vault_names = [cls.filter_sr_name(vault_name) for vault_name in vault_names]
+            query = query.filter(cls.vault_name.in_(vault_names))
 
         return query
 
     @classmethod
     def get_campaign_ids(cls, start, end=None, link=None, author_id=None,
-                         sr_names=None):
+                         vault_names=None):
         query = cls.session.query(distinct(cls.promo_idx))
-        query = cls._filter_query(query, start, end, link, author_id, sr_names)
+        query = cls._filter_query(query, start, end, link, author_id, vault_names)
         return {i[0] for i in query}
 
     @classmethod
     def get_link_names(cls, start, end=None, link=None, author_id=None,
-                       sr_names=None):
+                       vault_names=None):
         query = cls.session.query(distinct(cls.thing_name))
-        query = cls._filter_query(query, start, end, link, author_id, sr_names)
+        query = cls._filter_query(query, start, end, link, author_id, vault_names)
         return {i[0] for i in query}
 
 
 # do all the leg work of creating/connecting to tables
 if g.db_create_tables:
     Base.metadata.create_all(bind=engine)
-
-

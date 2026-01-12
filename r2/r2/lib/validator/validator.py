@@ -928,12 +928,12 @@ class VVaultRule(Validator):
             min_length=1,
         ).run(short_name.strip())
         if not short_name:
-            self.set_error(errors.SR_RULE_DOESNT_EXIST)
+            self.set_error(errors.vault_RULE_DOESNT_EXIST)
             return None
 
         rule = VaultRules.get_rule(c.site, short_name)
         if not rule:
-            self.set_error(errors.SR_RULE_DOESNT_EXIST)
+            self.set_error(errors.vault_RULE_DOESNT_EXIST)
         else:
             return rule
 
@@ -2726,7 +2726,7 @@ class VDestination(Validator):
         if ld.startswith(('/', 'http://', 'https://')):
             u = UrlParser(dest)
 
-            if u.is_reddit_url(c.site) and u.is_web_safe_url():
+            if u.is_tippr_url(c.site) and u.is_web_safe_url():
                 return dest
 
         return "/"
@@ -3386,4 +3386,3 @@ class VSigned(Validator):
 
 def need_provider_captcha():
     return False
-

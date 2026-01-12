@@ -103,7 +103,7 @@ class WebLogController(TipprController):
             "Authorization, X-Loggit, "
         response.headers["Access-Control-Allow-Credentials"] = "false"
         response.headers['Access-Control-Expose-Headers'] = \
-            self.COMMON_REDDIT_HEADERS
+            self.COMMON_TIPPR_HEADERS
 
     @csrf_exempt
     @validate(
@@ -202,4 +202,3 @@ class WebLogController(TipprController):
         VRatelimit.ratelimit(rate_ip=True, prefix="rate_poison_", seconds=10)
 
         return self.api_wrapper({})
-

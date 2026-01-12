@@ -514,5 +514,3 @@ class TestUrlToThing(unittest.TestCase):
             utils.url_to_thing('http://reddit.local/'),
             None,
         )
-
-

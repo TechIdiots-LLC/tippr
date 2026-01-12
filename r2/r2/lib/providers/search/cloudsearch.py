@@ -57,7 +57,7 @@ from r2.models import (
     FakeVault,
     FriendsSR,
     Link,
-    MultiReddit,
+    MultiVault,
     NotFound,
     Vault,
     Thing,
@@ -297,7 +297,7 @@ class VaultUploader(CloudSearchUploader):
         return VaultFields(thing).fields()
 
     def should_index(self, thing):
-        return thing._id != Vault.get_promote_srid()
+        return thing._id != Vault.get_promote_vault_id()
 
 
 def chunk_xml(xml, depth=0):
@@ -333,11 +333,11 @@ def _run_changed(msgs, chan):
     changed = [pickle.loads(msg.body) for msg in msgs]
 
     link_fns = LinkUploader.desired_fullnames(changed)
-    sr_fns = VaultUploader.desired_fullnames(changed)
+    vault_fns = VaultUploader.desired_fullnames(changed)
 
     link_uploader = LinkUploader(g.CLOUDSEARCH_DOC_API, fullnames=link_fns)
     Vault_uploader = VaultUploader(g.CLOUDSEARCH_VAULT_DOC_API,
-                                           fullnames=sr_fns)
+                                           fullnames=vault_fns)
 
     link_time = link_uploader.inject()
     Vault_time = Vault_uploader.inject()
@@ -348,7 +348,7 @@ def _run_changed(msgs, chan):
     print("%s: %d messages in %.2fs seconds (%.2fs secs waiting on "
            "cloudsearch); %d duplicates, %s remaining)" %
            (start, len(changed), totaltime, cloudsearch_time,
-            len(changed) - len(link_fns | sr_fns),
+            len(changed) - len(link_fns | vault_fns),
             msgs[-1].delivery_info.get('message_count', 'unknown')))
 
 
@@ -421,9 +421,9 @@ def test_run_link(start_link, count=1000):
     return uploader.inject()
 
 
-def test_run_srs(*sr_names):
+def test_run_srs(*vault_names):
     '''Inject Vaults by name into the index'''
-    vaults = list(Vault._by_name(sr_names).values())
+    vaults = list(Vault._by_name(vault_names).values())
     uploader = VaultUploader(g.CLOUDSEARCH_VAULT_DOC_API, things=vaults)
     return uploader.inject()
 
@@ -754,7 +754,7 @@ class LinkSearchQuery(CloudSearchQuery):
         results to only contain results from vault
         
         '''
-        if isinstance(vault, MultiReddit):
+        if isinstance(vault, MultiVault):
             if not vault.vault_ids:
                 raise InvalidQuery
             vaults = ["vault_id:%s" % vault_id for vault_id in vault.vault_ids]
@@ -774,8 +774,8 @@ class LinkSearchQuery(CloudSearchQuery):
         elif isinstance(vault, AllMinus):
             if not vault.exclude_sr_ids:
                 raise InvalidQuery
-            exclude_srs = ["vault_id:%s" % vault_id for vault_id in vault.exclude_sr_ids]
-            return "(not (or %s))" % ' '.join(exclude_srs)
+            exclude_vaults = ["vault_id:%s" % vault_id for vault_id in vault.exclude_sr_ids]
+            return "(not (or %s))" % ' '.join(exclude_vaults)
         elif not isinstance(vault, FakeVault):
             return "vault_id:%s" % vault._id
 
@@ -825,5 +825,3 @@ class CloudSearchProvider(SearchProvider):
         amqp.handle_items('cloudsearch_changes', _run_changed, min_size=min_size,
                           limit=limit, drain=drain, sleep_time=sleep_time,
                           verbose=verbose)
-
-

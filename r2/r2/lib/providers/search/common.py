@@ -78,7 +78,6 @@ def safe_get(get_fn, ids, return_dict=True, **kw):
         return list(items.values())
 
 
-
 SAME_AS_CLOUDSEARCH = object()
 FIELD_TYPES = (int, str, datetime, SAME_AS_CLOUDSEARCH, "yesno")
 
@@ -336,19 +335,18 @@ class Results:
     def Vault_facets(self):
         '''Filter out vaults that the user isn't allowed to see'''
         if not self._Vaults and 'tippr' in self._facets:
-            sr_facets = [(vault['value'], vault['count']) for vault in
+            vault_facets = [(vault['value'], vault['count']) for vault in
                          self._facets['tippr']]
 
             # look up vaults
             srs_by_name = Vault._by_name([name for name, count
-                                              in sr_facets])
+                                              in vault_facets])
 
-            sr_facets = [(srs_by_name[name], count) for name, count
-                         in sr_facets if name in srs_by_name]
+            vault_facets = [(srs_by_name[name], count) for name, count
+                         in vault_facets if name in srs_by_name]
 
             # filter by can_view
-            self._Vaults = [(vault, count) for vault, count in sr_facets
+            self._Vaults = [(vault, count) for vault, count in vault_facets
                                 if vault.can_view(c.user)]
 
         return self._Vaults
-

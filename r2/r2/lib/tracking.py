@@ -193,4 +193,3 @@ def get_impression_pixel_url(codename):
     hash_and_id_params = urllib.parse.urlencode({"hash": mac,
                                            "id": codename,})
     return g.adframetracker_url + v_param + hash_and_id_params
-

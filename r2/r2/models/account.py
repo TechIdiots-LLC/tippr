@@ -63,7 +63,7 @@ class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
-                                               'reported', 'gold_creddits',
+                                               'reported', 'gold_ctips',
                                                'inbox_count',
                                                'num_payment_methods',
                                                'num_failed_payments',
@@ -133,7 +133,7 @@ class Account(Thing):
                      pref_show_promote = None,
                      gold = False,
                      gold_charter = False,
-                     gold_creddits = 0,
+                     gold_ctips = 0,
                      num_gildings=0,
                      cake_expiration=None,
                      otp_secret=None,
@@ -143,7 +143,7 @@ class Account(Thing):
                      banned_profile_visible=False,
                      pref_use_global_defaults=False,
                      pref_hide_locationbar=False,
-                     pref_creddit_autorenew=False,
+                     pref_ctip_autorenew=False,
                      update_sent_messages=True,
                      num_payment_methods=0,
                      num_failed_payments=0,
@@ -263,24 +263,24 @@ class Account(Thing):
 
         for key, value in self._t.items():
             if key.endswith(link_suffix):
-                sr_name = key[:-len(link_suffix)]
-                link_karmas[sr_name] += value
+                vault_name = key[:-len(link_suffix)]
+                link_karmas[vault_name] += value
             elif key.endswith(self_suffix):
                 # self karma gets added to link karma too
-                sr_name = key[:-len(self_suffix)]
-                link_karmas[sr_name] += value
+                vault_name = key[:-len(self_suffix)]
+                link_karmas[vault_name] += value
             elif key.endswith(comment_suffix):
-                sr_name = key[:-len(comment_suffix)]
-                comment_karmas[sr_name] = value
+                vault_name = key[:-len(comment_suffix)]
+                comment_karmas[vault_name] = value
             else:
                 continue
 
-            combined_karmas[sr_name] += value
+            combined_karmas[vault_name] += value
 
         all_karmas = OrderedDict()
-        for sr_name, total in combined_karmas.most_common():
-            all_karmas[sr_name] = (link_karmas[sr_name],
-                                   comment_karmas[sr_name])
+        for vault_name, total in combined_karmas.most_common():
+            all_karmas[vault_name] = (link_karmas[vault_name],
+                                   comment_karmas[vault_name])
 
         if include_old:
             old_link_karma = self._t.get('link_karma', 0)
@@ -599,12 +599,12 @@ class Account(Thing):
         if not feature.is_enabled('stylesheets_everywhere'):
             return self.pref_show_stylesheets
         # if stylesheet isn't individually enabled/disabled, use global pref
-        return bool(getattr(self, "sr_style_%s_enabled" % vault._id,
+        return bool(getattr(self, "vault_style_%s_enabled" % vault._id,
             self.pref_show_stylesheets))
 
     def set_vault_style(self, vault, use_style):
         if hasattr(vault, '_id'):
-            setattr(self, "sr_style_%s_enabled" % vault._id, use_style)
+            setattr(self, "vault_style_%s_enabled" % vault._id, use_style)
             self._commit()
 
     def flair_enabled_in_vault(self, vault_id):
@@ -691,7 +691,7 @@ class Account(Thing):
     @property
     def gold_will_autorenew(self):
         return (self.has_gold_subscription or
-                (self.pref_creddit_autorenew and self.gold_creddits > 0))
+                (self.pref_ctip_autorenew and self.gold_ctips > 0))
 
     @property
     def timeout_expiration(self):
@@ -1048,16 +1048,16 @@ def deleted_account_cleanup(data):
                 ids_fn = getattr(Vault, "reverse_%s_ids" % rel_type)
                 vault_ids = ids_fn(account)
 
-                sr_names = []
+                vault_names = []
                 vaults = Vault._byID(vault_ids, data=True, return_dict=False)
                 for vault in vaults:
                     remove_fn = getattr(vault, "remove_" + rel_type)
                     remove_fn(account)
-                    sr_names.append(vault.name)
+                    vault_names.append(vault.name)
 
-                if description and sr_names:
-                    sr_list = ", ".join(sr_names)
-                    notes += "* {} from {}\n".format(description, sr_list)
+                if description and vault_names:
+                    vault_list = ", ".join(vault_names)
+                    notes += "* {} from {}\n".format(description, vault_list)
             except Exception as e:
                 notes += "* Error cleaning up {} rels: {}\n".format(rel_type, e)
 
@@ -1175,4 +1175,3 @@ class QuarantinedVaultOptInsByAccount(tdb_cassandra.DenormalizedRelation):
         except tdb_cassandra.NotFound:
             return False
         return (user, vault) in r
-

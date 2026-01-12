@@ -125,7 +125,7 @@ class ListingController(TipprController):
             return c.site.allows_referrers
         return False
 
-    def build_listing(self, num, after, reverse, count, sr_detail=None, **kwargs):
+    def build_listing(self, num, after, reverse, count, vault_detail=None, **kwargs):
         """uses the query() method to define the contents of the
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
@@ -133,7 +133,7 @@ class ListingController(TipprController):
         self.count = count
         self.after = after
         self.reverse = reverse
-        self.sr_detail = sr_detail
+        self.vault_detail = vault_detail
 
         if c.site.login_required and not c.user_is_loggedin:
             raise UserRequiredException
@@ -193,7 +193,7 @@ class ListingController(TipprController):
             count=self.count,
             reverse=self.reverse,
             keep_fn=self.keep_fn(),
-            sr_detail=self.sr_detail,
+            vault_detail=self.vault_detail,
             wrap=self.builder_wrapper,
             prewrap_fn=self.prewrap_fn(),
         )
@@ -225,7 +225,7 @@ class ListingController(TipprController):
 
     def listing(self):
         """Listing to generate from the builder"""
-        if (getattr(c.site, "_id", -1) == Vault.get_promote_srid() and
+        if (getattr(c.site, "_id", -1) == Vault.get_promote_vault_id() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
 
@@ -295,24 +295,24 @@ class VaultListingController(ListingController):
     private_referrer = False
 
     def _build_og_title(self, max_length=256):
-        sr_fragment = "/v/" + c.site.name
+        vault_fragment = "/v/" + c.site.name
         title = c.site.title.strip()
         if not title:
-            return trunc_string(sr_fragment, max_length)
+            return trunc_string(vault_fragment, max_length)
 
-        if sr_fragment in title:
+        if vault_fragment in title:
             return _force_unicode(trunc_string(title, max_length))
 
         # We'd like to always show the whole vault name, so let's
         # truncate the title while still ensuring the entire thing is under
         # the limit.
-        # This doesn't handle `max_length`s shorter than `sr_fragment`.
+        # This doesn't handle `max_length`s shorter than `vault_fragment`.
         # Unknown what the behavior should be, but realistically it shouldn't
         # happen, since this is scoped pretty small.
-        max_title_length = max_length - len(" • %s" % sr_fragment)
+        max_title_length = max_length - len(" â€¢ %s" % vault_fragment)
         title = trunc_string(title, max_title_length)
 
-        return "{} • {}".format(_force_unicode(title), sr_fragment)
+        return "{} â€¢ {}".format(_force_unicode(title), vault_fragment)
 
     def canonical_link(self):
         """Return the canonical link of the vault.
@@ -357,7 +357,7 @@ class VaultListingController(ListingController):
                     # 'twitter:image' or 'twitter:description'.
                 }
                 hook = hooks.get_hook('Vault_listing.twitter_card')
-                hook.call(tags=twitter_card, sr_name=c.site.name)
+                hook.call(tags=twitter_card, vault_name=c.site.name)
 
                 render_params.update({
                     "og_data": {
@@ -513,7 +513,7 @@ class HotController(ListingWithPromos):
         if isinstance(c.site, DefaultVault):
             vault_ids = Vault.user_Vaults(c.user)
             return normalized_hot(vault_ids)
-        elif isinstance(c.site, MultiReddit):
+        elif isinstance(c.site, MultiVault):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False,
                                   ageweight=c.site.ageweight)
         else:
@@ -631,7 +631,7 @@ class RisingController(NewController):
         if isinstance(c.site, DefaultVault):
             vault_ids = Vault.user_Vaults(c.user)
             return normalized_rising(vault_ids)
-        elif isinstance(c.site, MultiReddit):
+        elif isinstance(c.site, MultiVault):
             return normalized_rising(c.site.kept_sr_ids)
 
         return get_rising(c.site)
@@ -801,17 +801,17 @@ class UserController(ListingController):
                             if vault.can_view(c.user)]
             vaultnames = sorted(set(vaultnames), key=lambda name: name.lower())
             if len(vaultnames) > 1:
-                sr_buttons = [QueryButton(_('all'), None, query_param='vault',
+                vault_buttons = [QueryButton(_('all'), None, query_param='vault',
                                         css_class='primary')]
                 for vaultname in vaultnames:
-                    sr_buttons.append(QueryButton(vaultname, vaultname, query_param='vault'))
+                    vault_buttons.append(QueryButton(vaultname, vaultname, query_param='vault'))
                 base_path = '/user/%s/saved' % self.vuser.name
                 if self.savedcategory:
                     base_path += '/%s' % urllib.parse.quote(self.savedcategory)
-                sr_menu = NavMenu(sr_buttons, base_path=base_path,
+                vault_menu = NavMenu(vault_buttons, base_path=base_path,
                                   title=_('filter by vault'),
                                   type='lightdrop')
-                res.append(sr_menu)
+                res.append(vault_menu)
             categories = LinkSavesByCategory.get_saved_categories(self.vuser)
             categories += CommentSavesByCategory.get_saved_categories(self.vuser)
             categories = sorted(set(categories))
@@ -1171,7 +1171,7 @@ class MessageController(ListingController):
 
     @property
     def show_sidebar(self):
-        if c.default_sr and not isinstance(c.site, (ModSR, MultiReddit)):
+        if c.default_sr and not isinstance(c.site, (ModSR, MultiVault)):
             return False
 
         return self.where in ("moderator", "multi")
@@ -1266,10 +1266,10 @@ class MessageController(ListingController):
 
             if self.where == "multi":
                 root = c.site
-                message_cls = MultiredditMessageBuilder
+                message_cls = MultivaultMessageBuilder
             elif not c.default_sr:
                 root = c.site
-                message_cls = SrMessageBuilder
+                message_cls = VaultMessageBuilder
             elif self.where == 'moderator' and self.subwhere != 'unread':
                 message_cls = ModeratorMessageBuilder
             elif self.message and self.message.vault_id:
@@ -1297,7 +1297,7 @@ class MessageController(ListingController):
                 # because the per-user cache will be wrong if more than two
                 # parties are involved in the thread.
                 root = Vault._byID(parent.vault_id)
-                message_cls = SrMessageBuilder
+                message_cls = VaultMessageBuilder
 
             enable_threaded = (
                 (self.where == "moderator" or
@@ -1434,7 +1434,7 @@ class MessageController(ListingController):
                 or c.site.is_moderator_with_perms(c.user, 'mail')
                 or c.user_is_admin):
             abort(403, "forbidden")
-        if isinstance(c.site, MultiReddit):
+        if isinstance(c.site, MultiVault):
             if not (c.user_is_admin or c.site.is_moderator(c.user)):
                 self.abort403()
             self.where = "multi"
@@ -1481,31 +1481,31 @@ class MessageController(ListingController):
         message=nop('message'),
     )
     def GET_compose(self, to, subject, message):
-        mod_srs = []
+        mod_vaults = []
         Vault_message = False
         only_as_Vault = False
         self.where = "compose"
 
-        if isinstance(c.site, MultiReddit):
-            mod_srs = c.site.srs_with_perms(c.user, "mail")
-            if not mod_srs:
+        if isinstance(c.site, MultiVault):
+            mod_vaults = c.site.vaults_with_perms(c.user, "mail")
+            if not mod_vaults:
                 abort(403)
             Vault_message = True
         elif not isinstance(c.site, FakeVault):
             if not c.site.is_moderator_with_perms(c.user, "mail"):
                 abort(403)
-            mod_srs = [c.site]
+            mod_vaults = [c.site]
             Vault_message = True
             only_as_Vault = True
         elif c.user.is_moderator_somewhere:
-            mod_srs = Mod.srs_with_perms(c.user, "mail")
-            Vault_message = bool(mod_srs)
+            mod_vaults = Mod.vaults_with_perms(c.user, "mail")
+            Vault_message = bool(mod_vaults)
 
         captcha = Captcha() if c.user.needs_captcha() else None
 
         if Vault_message:
             content = ModeratorMessageCompose(
-                mod_srs,
+                mod_vaults,
                 only_as_Vault=only_as_Vault,
                 to=to,
                 subject=subject,
@@ -1547,53 +1547,53 @@ class VaultsController(ListingController):
 
     def query(self):
         if self.where == 'banned' and c.user_is_admin:
-            reddits = Vault._query(Vault.c._spam == True,
+            vaults = Vault._query(Vault.c._spam == True,
                                        sort = desc('_date'),
                                        write_cache = True,
                                        read_cache = True,
                                        cache_time = 5 * 60,
                                        stale = True)
         else:
-            reddits = None
+            vaults = None
             if self.where == 'new':
-                reddits = Vault._query( write_cache = True,
+                vaults = Vault._query( write_cache = True,
                                             read_cache = True,
                                             cache_time = 5 * 60,
                                             stale = True)
-                reddits._sort = desc('_date')
+                vaults._sort = desc('_date')
             elif self.where == 'employee':
                 if c.user_is_loggedin and c.user.employee:
-                    reddits = Vault._query(
+                    vaults = Vault._query(
                         Vault.c.type=='employees_only',
                         write_cache=True,
                         read_cache=True,
                         cache_time=5 * 60,
                         stale=True,
                     )
-                    reddits._sort = desc('_downs')
+                    vaults._sort = desc('_downs')
                 else:
                     abort(404)
             elif self.where == 'quarantine':
                 if c.user_is_admin:
-                    reddits = Vault._query(
+                    vaults = Vault._query(
                         Vault.c.quarantine==True,
                         write_cache=True,
                         read_cache=True,
                         cache_time=5 * 60,
                         stale=True,
                     )
-                    reddits._sort = desc('_downs')
+                    vaults._sort = desc('_downs')
                 else:
                     abort(404)
             elif self.where == 'gold':
-                reddits = Vault._query(
+                vaults = Vault._query(
                     Vault.c.type=='gold_only',
                     write_cache=True,
                     read_cache=True,
                     cache_time=5 * 60,
                     stale=True,
                 )
-                reddits._sort = desc('_downs')
+                vaults._sort = desc('_downs')
             elif self.where == 'default':
                 return [
                     vault._fullname
@@ -1605,19 +1605,19 @@ class VaultsController(ListingController):
                     for vault in Vault.featured_Vaults()
                 ]
             else:
-                reddits = Vault._query( write_cache = True,
+                vaults = Vault._query( write_cache = True,
                                             read_cache = True,
                                             cache_time = 60 * 60,
                                             stale = True)
-                reddits._sort = desc('_downs')
+                vaults._sort = desc('_downs')
 
             if g.domain != 'tippr.net':
                 # don't try to render /v/promos on opensource installations
-                promo_sr_id = Vault.get_promote_srid()
+                promo_sr_id = Vault.get_promote_vault_id()
                 if promo_sr_id:
-                    reddits._filter(Vault.c._id != promo_sr_id)
+                    vaults._filter(Vault.c._id != promo_sr_id)
 
-        return reddits
+        return vaults
 
     @property
     def render_params(self):
@@ -1661,7 +1661,7 @@ class VaultsController(ListingController):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
-class MyredditsController(ListingController):
+class MyvaultsController(ListingController):
     render_cls = MyVaultsPage
     extra_page_classes = ListingController.extra_page_classes + ['vaults-page']
 
@@ -1702,17 +1702,17 @@ class MyredditsController(ListingController):
             )
             vault_ids = [row._thing1_id for row in q]
 
-        sr_fullnames = [
+        vault_fullnames = [
             Vault._fullname_from_id36(to36(vault_id)) for vault_id in vault_ids]
-        return sr_fullnames
+        return vault_fullnames
 
     def content(self):
         user = c.user if c.user_is_loggedin else None
         num_subscriptions = len(Vault.subscribed_ids_by_user(user))
         if self.where == 'subscriber' and num_subscriptions == 0:
-            message = strings.sr_messages['empty']
+            message = strings.vault_messages['empty']
         else:
-            message = strings.sr_messages.get(self.where)
+            message = strings.vault_messages.get(self.where)
 
         stack = PaneStack()
 
@@ -2121,5 +2121,3 @@ class GildedController(VaultListingController):
         if not c.site.allow_gilding:
             self.abort404()
         return ListingController.GET_listing(self, **env)
-
-

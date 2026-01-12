@@ -39,11 +39,11 @@ VOTEDBHOST=db03s1
 SAVEHIDEDBHOST=db01s1
 
 ## links
-time psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
+time psql -F"\t" -A -t -d newvault -U ri -h $LINKDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'link',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
                    from reddit_thing_link t) to 'reddit_thing_link.dump'"
-time psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
+time psql -F"\t" -A -t -d newvault -U ri -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
                    from reddit_data_link d
@@ -52,11 +52,11 @@ pv reddit_data_link.dump reddit_thing_link.dump | sort -T. -S200m | ./mr_permaca
 pv links.joined | ./mr_permacache "link_listings()" | sort -T. -S200m > links.listings
 
 ## comments
-psql -F"\t" -A -t -d newreddit -U ri -h $COMMENTDBHOST \
+psql -F"\t" -A -t -d newvault -U ri -h $COMMENTDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'comment',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
                    from reddit_thing_comment t) to 'reddit_thing_comment.dump'"
-psql -F"\t" -A -t -d newreddit -U ri -h $COMMENTDBHOST \
+psql -F"\t" -A -t -d newvault -U ri -h $COMMENTDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'comment',
                         d.key, d.value
                    from reddit_data_comment d
@@ -65,14 +65,14 @@ cat reddit_data_comment.dump reddit_thing_comment.dump | sort -T. -S200m | ./mr_
 cat links.joined | ./mr_permacache "comment_listings()" | sort -T. -S200m > comments.listings
 
 ## linkvotes
-psql -F"\t" -A -t -d newreddit -U ri -h $VOTEDBHOST \
+psql -F"\t" -A -t -d newvault -U ri -h $VOTEDBHOST \
      -c "\\copy (select r.rel_id, 'vote_account_link',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
                    from reddit_rel_vote_account_link r) to 'reddit_linkvote.dump'"
 pv reddit_linkvote.dump | ./mr_permacache "linkvote_listings()" | sort -T. -S200m > linkvotes.listings
 
 #savehide
-psql -F"\t" -A -t -d newreddit -U ri -h $SAVEHIDEDBHOST \
+psql -F"\t" -A -t -d newvault -U ri -h $SAVEHIDEDBHOST \
      -c "\\copy (select r.rel_id, 'savehide',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
                    from reddit_rel_savehide r) to 'reddit_savehide.dump'"
@@ -189,7 +189,7 @@ def store_keys(key, maxes):
                             for (timestamp, fname)
                             in maxes ])
     elif key.startswith('vault-'):
-        sr_str, sort, time, vault_id = key.split('-')
+        vault_str, sort, time, vault_id = key.split('-')
         vault_id = int(vault_id)
 
         if sort == 'controversy':
@@ -290,4 +290,3 @@ def write_permacache_from_dir(dirname):
 def write_permacache_from_file(fname):
     with open(fname) as fd:
         top1k_writepermacache(fd = fd)
-

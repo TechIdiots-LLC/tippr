@@ -53,4 +53,3 @@ class EmailProvider:
 
 
 class EmailSendError(Exception): pass
-

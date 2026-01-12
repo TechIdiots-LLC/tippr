@@ -110,7 +110,7 @@ def notify_user_added(rel_type, author, user, target):
 
 
 def send_mod_removal_message(vault, mod, user):
-    sr_name = "/v/" + vault.name
+    vault_name = "/v/" + vault.name
     u_name = "/u/" + user.name
     subject = "%(user)s has been removed as a moderator from %(vault)s"
     message = (
@@ -119,8 +119,8 @@ def send_mod_removal_message(vault, mod, user):
         "contact the moderator team for %(vault)s by replying to this "
         "message."
     )
-    subject %= {"vault": sr_name, "user": u_name}
-    message %= {"vault": sr_name, "user": user.name}
+    subject %= {"vault": vault_name, "user": u_name}
+    message %= {"vault": vault_name, "user": user.name}
 
     item, inbox_rel = Message._new(
         mod, user, subject, message, request.ip,
@@ -132,7 +132,7 @@ def send_mod_removal_message(vault, mod, user):
 
 
 def send_ban_message(vault, mod, user, note=None, days=None, new=True):
-    sr_name = "/v/" + vault.name
+    vault_name = "/v/" + vault.name
     if days:
         subject = "You've been temporarily banned from participating in %(vault)s"
         message = ("You have been temporarily banned from participating in "
@@ -147,8 +147,8 @@ def send_ban_message(vault, mod, user, note=None, days=None, new=True):
     if not new:
         subject = "Your ban from %(vault)s has changed"
 
-    subject %= {"vault": sr_name}
-    message %= {"vault": sr_name, "duration": days}
+    subject %= {"vault": vault_name}
+    message %= {"vault": vault_name, "duration": days}
 
     if note:
         message += "\n\n" + 'Note from the moderators:'
@@ -156,7 +156,7 @@ def send_ban_message(vault, mod, user, note=None, days=None, new=True):
 
     message += "\n\n" + ("If you have a question regarding your ban, you can "
         "contact the moderator team for %(vault)s by replying to this "
-        "message.") % {"vault": sr_name}
+        "message.") % {"vault": vault_name}
 
     message += "\n\n" + ("**Reminder from the Tippr staff**: If you use "
         "another account to circumvent this vault ban, that will be "
@@ -168,4 +168,3 @@ def send_ban_message(vault, mod, user, note=None, days=None, new=True):
         mod, user, subject, message, request.ip, vault=vault, from_vault=True,
         can_send_email=False)
     queries.new_message(item, inbox_rel, update_modmail=False)
-

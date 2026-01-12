@@ -220,8 +220,8 @@ class FrontController(TipprController):
                   docs={"depth": "(optional) an integer"}),
               showedits=VBoolean("showedits", default=True),
               showmore=VBoolean("showmore", default=True),
-              sr_detail=VBoolean(
-                  "sr_detail", docs={"sr_detail": "(optional) expand vaults"}),
+              vault_detail=VBoolean(
+                  "vault_detail", docs={"vault_detail": "(optional) expand vaults"}),
               )
     @api_doc(api_section.listings,
              uri='/comments/{article}',
@@ -229,7 +229,7 @@ class FrontController(TipprController):
              supports_rss=True)
     def GET_comments(
         self, article, comment, context, sort, limit, depth,
-            showedits=True, showmore=True, sr_detail=False):
+            showedits=True, showmore=True, vault_detail=False):
         """Get the comment tree for a given Link `article`.
 
         If supplied, `comment` is the ID36 of a comment in the comment tree for
@@ -273,7 +273,7 @@ class FrontController(TipprController):
             c.render_style == 'html' and
             not request.parsed_agent.bot
         ):
-            return self.intermediate_redirect("/over18", sr_path=False)
+            return self.intermediate_redirect("/over18", vault_path=False)
 
         canonical_link = article.make_canonical_link(vault)
 
@@ -525,7 +525,7 @@ class FrontController(TipprController):
             infotext=infotext,
             infotext_class=infotext_class,
             infotext_show_icon=infotext_show_icon,
-            sr_detail=sr_detail,
+            vault_detail=vault_detail,
             campaign_fullname=campaign_fullname,
             click_url=click_url,
             canonical_link=canonical_link,
@@ -554,9 +554,9 @@ class FrontController(TipprController):
 
     @validate(VUser(),
               name=nop('name'))
-    def GET_newreddit(self, name):
+    def GET_newvault(self, name):
         """Create a vault form"""
-        VNotInTimeout().run(action_name="pageview", details_text="newreddit")
+        VNotInTimeout().run(action_name="pageview", details_text="newvault")
         title = _('create a vault')
         captcha = Captcha() if c.user.needs_captcha() else None
         content = CreateVault(name=name or '', captcha=captcha)
@@ -644,7 +644,7 @@ class FrontController(TipprController):
                     continue
             mod = mod or None
 
-        if isinstance(c.site, (MultiReddit, ModSR)):
+        if isinstance(c.site, (MultiVault, ModSR)):
             vaults = Vault._byID(c.site.vault_ids, return_dict=False)
 
             # grab all moderators
@@ -694,7 +694,7 @@ class FrontController(TipprController):
                 NavMenu(mod_buttons, base_path=base_path,
                         title=_('filter by moderator'), type='lightdrop')]
         extension_handling = "private" if c.user.pref_private_feeds else False
-        return EditReddit(content=panes,
+        return editvault(content=panes,
                           nav_menus=menus,
                           location="log",
                           extension_handling=extension_handling).render()
@@ -787,7 +787,7 @@ class FrontController(TipprController):
 
         return pane
 
-    def _edit_normal_reddit(self, location, created):
+    def _edit_normal_vault(self, location, created):
         if (location == 'edit' and
                 c.user_is_loggedin and
                 (c.user_is_admin or
@@ -795,7 +795,7 @@ class FrontController(TipprController):
             pane = PaneStack()
 
             if created == 'true':
-                infobar_message = strings.sr_created
+                infobar_message = strings.vault_created
                 pane.append(InfoBar(message=infobar_message))
 
             c.allow_styles = True
@@ -823,7 +823,7 @@ class FrontController(TipprController):
         else:
             return self.abort404()
 
-        return EditReddit(content=pane,
+        return editvault(content=pane,
                           location=location,
                           extension_handling=False).render()
 
@@ -882,7 +882,7 @@ class FrontController(TipprController):
                              type='lightdrop')]
         else:
             menus = None
-        return EditReddit(content=panes,
+        return editvault(content=panes,
                           location=location,
                           nav_menus=menus,
                           extension_handling=extension_handling).render()
@@ -904,7 +904,7 @@ class FrontController(TipprController):
 
         c.allow_styles = True
         pane = FlairPane(num, after, reverse, name, user)
-        return EditReddit(content=pane, location='flair').render()
+        return editvault(content=pane, location='flair').render()
 
     @require_oauth2_scope("modconfig")
     @disable_Vault_css()
@@ -912,7 +912,7 @@ class FrontController(TipprController):
               created=VOneOf('created', ('true','false'),
                              default='false'))
     @api_doc(api_section.vaults, uri="/v/{vault}/about/edit")
-    def GET_editreddit(self, location, created):
+    def GET_editvault(self, location, created):
         """Get the current settings of a vault.
 
         In the API, this returns the current settings of the vault as used
@@ -925,8 +925,8 @@ class FrontController(TipprController):
             return self.abort404()
         else:
             VNotInTimeout().run(action_name="pageview",
-                details_text="editreddit_%s" % location, target=c.site)
-            return self._edit_normal_reddit(location, created)
+                details_text="editvault_%s" % location, target=c.site)
+            return self._edit_normal_vault(location, created)
 
     @require_oauth2_scope("read")
     @api_doc(api_section.vaults, uri='/v/{vault}/about')
@@ -1055,7 +1055,7 @@ class FrontController(TipprController):
     @validate(query=nop('q', docs={"q": "a search query"}),
               sort=VMenu('sort', VaultSearchSortMenu, remember=False))
     @api_doc(api_section.vaults, uri='/vaults/search', supports_rss=True)
-    def GET_search_reddits(self, query, reverse, after, count, num, sort):
+    def GET_search_vaults(self, query, reverse, after, count, num, sort):
         """Search vaults by title and description."""
 
         # trigger redirect to /over18
@@ -1063,7 +1063,7 @@ class FrontController(TipprController):
             u = UrlParser(request.fullurl)
             del u.query_dict['over18']
             search_url = u.unparse()
-            return self.intermediate_redirect('/over18', sr_path=False,
+            return self.intermediate_redirect('/over18', vault_path=False,
                                               fullpath=search_url)
 
         # show NSFW to API and RSS users unless obey_over18=true
@@ -1119,7 +1119,7 @@ class FrontController(TipprController):
               syntax=VOneOf('syntax', options=g.search_syntaxes))
     @api_doc(api_section.search, supports_rss=True, uses_site=True)
     def GET_search(self, query, num, reverse, after, count, sort, recent,
-                   restrict_sr, include_facets, result_types, syntax, sr_detail):
+                   restrict_sr, include_facets, result_types, syntax, vault_detail):
         """Search links page."""
         if c.site.login_required and not c.user_is_loggedin:
             raise UserRequiredException
@@ -1129,7 +1129,7 @@ class FrontController(TipprController):
             u = UrlParser(request.fullurl)
             del u.query_dict['over18']
             search_url = u.unparse()
-            return self.intermediate_redirect('/over18', sr_path=False,
+            return self.intermediate_redirect('/over18', vault_path=False,
                                               fullpath=search_url)
 
         if query and '.' in query:
@@ -1168,13 +1168,13 @@ class FrontController(TipprController):
         # combined results on first page only
         if not after and not restrict_sr and result_types == {'link', 'vault'}:
             # hardcoded to 3 vaults (or fewer)
-            sr_num = min(3, int(num / 3))
-            num = num - sr_num
+            vault_num = min(3, int(num / 3))
+            num = num - vault_num
         elif result_types == {'vault'}:
-            sr_num = num
+            vault_num = num
             num = 0
         else:
-            sr_num = 0
+            vault_num = 0
 
         content = None
         vaults = None
@@ -1192,7 +1192,7 @@ class FrontController(TipprController):
                                          include_over18=include_over18,
                                          recent=recent, syntax=syntax)
                 content = self._search(q, num=num, after=after, reverse=reverse,
-                                       count=count, sr_detail=sr_detail,
+                                       count=count, vault_detail=vault_detail,
                                        heading=_('posts'), nav_menus=nav_menus,
                                        legacy_render_class=legacy_render_class)
                 converted_data = q.converted_data
@@ -1230,11 +1230,11 @@ class FrontController(TipprController):
                     cleanup_message = strings.completely_invalid_search_query
 
         # extra search request for vault results
-        if sr_num > 0 and has_query:
-            sr_q = g.search.VaultSearchQuery(query, sort='relevance',
+        if vault_num > 0 and has_query:
+            vault_q = g.search.VaultSearchQuery(query, sort='relevance',
                                                  faceting={},
                                                  include_over18=include_over18)
-            vaults = self._search(sr_q, num=sr_num, reverse=reverse,
+            vaults = self._search(vault_q, num=vault_num, reverse=reverse,
                                       after=after, count=count, type='vault',
                                       skip_deleted_authors=False, heading=_('vaults'),
                                       legacy_render_class=legacy_render_class)
@@ -1242,7 +1242,7 @@ class FrontController(TipprController):
             # backfill with facets if no vault search results
             if Vault_facets and not vaults.things:
                 names = [vault._fullname for vault, count in Vault_facets]
-                builder = IDBuilder(names, num=sr_num)
+                builder = IDBuilder(names, num=vault_num)
                 listing = SearchListing(builder, nextprev=False)
                 vaults = listing.listing(
                     legacy_render_class=legacy_render_class)
@@ -1310,7 +1310,7 @@ class FrontController(TipprController):
         return wrapper_fn
 
     def _search(self, query_obj, num, after, reverse, count=0, type=None,
-                skip_deleted_authors=True, sr_detail=False,
+                skip_deleted_authors=True, vault_detail=False,
                 heading=None, nav_menus=None, legacy_render_class=True):
         """Helper function for interfacing with search.  Basically a
            thin wrapper for SearchBuilder."""
@@ -1325,7 +1325,7 @@ class FrontController(TipprController):
                                 count=count,
                                 wrap=builder_wrapper,
                                 skip_deleted_authors=skip_deleted_authors,
-                                sr_detail=sr_detail)
+                                vault_detail=vault_detail)
         if after and not builder.valid_after(after):
             g.stats.event_count("listing.invalid_after", "search")
             self.abort403()
@@ -1380,8 +1380,8 @@ class FrontController(TipprController):
                 # show the user a listing of all the other links with this url
                 # an infotext to resubmit it
                 resubmit_url = Link.resubmit_link(url, title)
-                sr_resubmit_url = add_vault(resubmit_url)
-                infotext = strings.multiple_submitted % sr_resubmit_url
+                vault_resubmit_url = add_vault(resubmit_url)
+                infotext = strings.multiple_submitted % vault_resubmit_url
                 res = BoringPage(
                     _("seen it"), content=listing, infotext=infotext).render()
                 return res
@@ -1399,7 +1399,7 @@ class FrontController(TipprController):
         captcha = Captcha() if c.user.needs_captcha() else None
 
         extra_Vaults = []
-        if isinstance(c.site, MultiReddit):
+        if isinstance(c.site, MultiVault):
             extra_Vaults.append((
                 _('%s vaults') % c.site.name,
                 c.site.vaults
@@ -1476,8 +1476,8 @@ class FrontController(TipprController):
                           content=ContactUs(), page_classes=["contact-us-page"]
                           ).render()
 
-    @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
-                                  "spent-creddits", "paypal", "coinbase",
+    @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-ctips",
+                                  "spent-ctips", "paypal", "coinbase",
                                   "stripe"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
@@ -1488,10 +1488,10 @@ class FrontController(TipprController):
             claim_msg = _("Claimed! Enjoy your tippr gold membership.")
             if g.lounge_vault:
                 lounge_md = strings.lounge_msg
-        elif vendor == "claimed-creddits":
-            claim_msg = _("Your gold creddits have been claimed! Now go to "
+        elif vendor == "claimed-ctips":
+            claim_msg = _("Your gold ctips have been claimed! Now go to "
                           "someone's userpage and give them a present!")
-        elif vendor == "spent-creddits":
+        elif vendor == "spent-ctips":
             claim_msg = _("Thanks for buying tippr gold! Your transaction "
                           "has been completed.")
         elif vendor == "paypal":
@@ -1867,11 +1867,11 @@ class FormsController(TipprController):
 
     @validate(is_payment=VBoolean("is_payment"),
               goldtype=VOneOf("goldtype",
-                              ("autorenew", "onetime", "creddits", "gift",
+                              ("autorenew", "onetime", "ctips", "gift",
                                "code")),
               period=VOneOf("period", ("monthly", "yearly")),
               months=VInt("months"),
-              num_creddits=VInt("num_creddits"),
+              num_ctips=VInt("num_ctips"),
               # variables below are just for gifts
               signed=VBoolean("signed", default=True),
               recipient=VExistingUname("recipient", default=None),
@@ -1880,7 +1880,7 @@ class FormsController(TipprController):
               email=ValidEmail("email"),
               edit=VBoolean("edit", default=False),
     )
-    def GET_gold(self, is_payment, goldtype, period, months, num_creddits,
+    def GET_gold(self, is_payment, goldtype, period, months, num_ctips,
                  signed, recipient, giftmessage, thing, email, edit):
         VNotInTimeout().run(action_name="pageview", details_text="gold",
             target=thing)
@@ -1912,11 +1912,11 @@ class FormsController(TipprController):
         elif goldtype in ("onetime", "code"):
             if months is None or months < 1:
                 start_over = True
-        elif goldtype == "creddits":
-            if num_creddits is None or num_creddits < 1:
+        elif goldtype == "ctips":
+            if num_ctips is None or num_ctips < 1:
                 start_over = True
             else:
-                months = num_creddits
+                months = num_ctips
         elif goldtype == "gift":
             if months is None or months < 1:
                 start_over = True
@@ -1945,7 +1945,7 @@ class FormsController(TipprController):
             can_subscribe = (c.user_is_loggedin and
                              not c.user.has_gold_subscription)
             if not can_subscribe and goldtype == "autorenew":
-                self.redirect("/creddits", code=302)
+                self.redirect("/ctips", code=302)
 
             return BoringPage(_("tippr gold"),
                               show_sidebar=False,
@@ -1983,8 +1983,8 @@ class FormsController(TipprController):
             passthrough = generate_blob(payment_blob)
 
             page_classes = ["gold-page", "gold-payment", "gold-page-ga-tracking"]
-            if goldtype == "creddits":
-                page_classes.append("creddits-payment")
+            if goldtype == "ctips":
+                page_classes.append("ctips-payment")
 
             return BoringPage(_("tippr gold"),
                               show_sidebar=False,
@@ -1995,11 +1995,11 @@ class FormsController(TipprController):
                               page_classes=page_classes,
                               ).render()
 
-    def GET_creddits(self):
-        return BoringPage(_("purchase creddits"),
+    def GET_ctips(self):
+        return BoringPage(_("purchase ctips"),
                           show_sidebar=False,
-                          content=Creddits(),
-                          page_classes=["gold-page", "creddits-purchase", "gold-page-ga-tracking"],
+                          content=ctips(),
+                          page_classes=["gold-page", "ctips-purchase", "gold-page-ga-tracking"],
                           ).render()
 
     @validate(VUser())
@@ -2015,4 +2015,3 @@ class FormsController(TipprController):
 
 class FrontUnstyledController(FrontController):
     allow_stylesheets = False
-

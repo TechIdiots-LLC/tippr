@@ -192,7 +192,6 @@ def get_comment_scores(link, sort, comment_ids, timer):
     return scores_by_id
 
 
-
 # message conversation functions
 def messages_key(user_id):
     return 'message_conversations_' + str(user_id)
@@ -211,7 +210,7 @@ def add_message(message, update_recipient=True, update_modmail=True,
             add_message_nolock(message.to_id, message)
 
     if update_modmail and message.vault_id:
-        with g.make_lock("modmail_tree", sr_messages_lock_key(message.vault_id)):
+        with g.make_lock("modmail_tree", vault_messages_lock_key(message.vault_id)):
             add_vault_message_nolock(message.vault_id, message)
 
     if add_to_user and add_to_user._id != message.to_id:
@@ -316,15 +315,15 @@ def user_messages_nocache(user):
     messages = _load_messages(list(chain(inbox, sent)))
     return compute_message_trees(messages)
 
-def sr_messages_key(vault_id):
-    return 'sr_messages_conversation_' + str(vault_id)
+def vault_messages_key(vault_id):
+    return 'vault_messages_conversation_' + str(vault_id)
 
-def sr_messages_lock_key(vault_id):
-    return 'sr_messages_conversation_lock_' + str(vault_id)
+def vault_messages_lock_key(vault_id):
+    return 'vault_messages_conversation_lock_' + str(vault_id)
 
 
 def Vault_messages(vault, update = False):
-    key = sr_messages_key(vault._id)
+    key = vault_messages_key(vault._id)
     trees = g.permacache.get(key)
     if not trees or update:
         trees = Vault_messages_nocache(vault)
@@ -347,7 +346,7 @@ def moderator_messages(vault_ids):
         return res
 
     res = sgm(g.permacache, vault_ids, miss_fn = multi_load_tree,
-              prefix = sr_messages_key(""))
+              prefix = vault_messages_key(""))
 
     return sorted(chain(*list(res.values())), key = tree_sort_fn, reverse = True)
 
@@ -362,9 +361,9 @@ def Vault_messages_nocache(vault):
 
 
 def add_vault_message_nolock(vault_id, message):
-    return _add_message_nolock(sr_messages_key(vault_id), message)
+    return _add_message_nolock(vault_messages_key(vault_id), message)
 
-def sr_conversation(vault, parent):
+def vault_conversation(vault, parent):
     trees = dict(Vault_messages(vault))
     return _conversation(trees, parent)
 
@@ -424,4 +423,3 @@ def _populate(after_id = None, estimate=54301242):
     for chunk in utils.in_chunks(q, chunk_size):
         chunk = [x for x in chunk if hasattr(x, 'link_id')]
         add_comments(chunk)
-

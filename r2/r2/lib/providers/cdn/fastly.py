@@ -59,4 +59,3 @@ class FastlyCdnProvider(CdnProvider):
 
         with g.stats.get_timer('providers.fastly.content_purge'):
             response = requests.request('PURGE', url)
-

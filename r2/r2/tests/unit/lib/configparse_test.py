@@ -95,5 +95,3 @@ class TestConfigValue(unittest.TestCase):
 # TODO: test ConfigValue.messages
 # TODO: test ConfigValue.baseplate
 # TODO: test ConfigValue.json_dict
-
-

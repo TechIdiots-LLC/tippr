@@ -26,10 +26,10 @@ from pylons import app_globals as g
 
 from r2.lib.validator import VByName, VModhash, VUser
 from r2.models import Account, Link, Message
-from r2.tests import RedditControllerTestCase
+from r2.tests import TipprControllerTestCase
 
 
-class DelMsgTest(RedditControllerTestCase):
+class DelMsgTest(TipprControllerTestCase):
     CONTROLLER = "api"
 
     def setUp(self):
@@ -101,5 +101,3 @@ class DelMsgTest(RedditControllerTestCase):
 
     def do_del_msg(self, name, **kw):
         return self.do_post("del_msg", {"id": name}, **kw)
-
-

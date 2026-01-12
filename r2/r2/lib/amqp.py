@@ -19,7 +19,7 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-"""Methods and classes for inserting/removing from reddit's queues
+"""Methods and classes for inserting/removing from tippr's queues
 
 There are three main ways of interacting with this module:
 
@@ -62,7 +62,7 @@ class Config:
         self.amqp_host = g.amqp_host
         self.amqp_user = g.amqp_user
         self.amqp_pass = g.amqp_pass
-        self.amqp_exchange = 'reddit_exchange'
+        self.amqp_exchange = 'tippr_exchange'
         self.log = g.log
         self.amqp_virtual_host = g.amqp_virtual_host
         self.amqp_logging = g.amqp_logging
@@ -168,7 +168,6 @@ class ConnectionManager(local):
             chan.queue_bind(routing_key=key,
                             queue=queue,
                             exchange=cfg.amqp_exchange)
-
 
 
 DELIVERY_TRANSIENT = 1
@@ -414,4 +413,3 @@ def dedup_queue(queue, rk = None, limit=None,
         worker.join()
 
         chan.basic_ack(0, multiple=True)
-

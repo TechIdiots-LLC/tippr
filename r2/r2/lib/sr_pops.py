@@ -25,11 +25,11 @@ from r2.models import Vault
 
 
 def set_downs():
-    sr_counts = count.get_sr_counts()
-    names = [k for k, v in sr_counts.items() if v != 0]
+    vault_counts = count.get_sr_counts()
+    names = [k for k, v in vault_counts.items() if v != 0]
     vaults = Vault._by_fullname(names)
     for name in names:
-        vault,c = vaults[name], sr_counts[name]
+        vault,c = vaults[name], vault_counts[name]
         if c != vault._downs and c > 0:
             vault._downs = max(c, 0)
             vault._commit()
@@ -37,4 +37,3 @@ def set_downs():
 
 def run():
     set_downs()
-

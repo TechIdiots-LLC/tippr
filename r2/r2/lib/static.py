@@ -95,4 +95,3 @@ def update_static_names(names_file, files):
 
 if __name__ == "__main__":
     update_static_names(sys.argv[1], sys.argv[2:])
-

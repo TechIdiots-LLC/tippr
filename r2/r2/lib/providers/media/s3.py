@@ -199,4 +199,3 @@ class S3MediaProvider(MediaProvider):
         timer.stop()
 
         return True
-

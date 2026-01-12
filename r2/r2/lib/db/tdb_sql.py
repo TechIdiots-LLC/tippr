@@ -853,7 +853,7 @@ def add_sort(sort, t_table, select):
             select_ref[0] = select_ref[0].add_columns(real_col.label(orig_col))
 
         # avoid label overlap when projecting extra columns; older code set
-        # `use_labels` — if the attribute exists, preserve behavior.
+        # `use_labels` â€” if the attribute exists, preserve behavior.
         try:
             select.use_labels = True
         except Exception:
@@ -1183,4 +1183,3 @@ if logging.getLogger('sqlalchemy').handlers:
 #we create thing tables for a relationship's things that aren't on the
 #same database as the relationship, although they're never used in
 #practice. we could remove a healthy chunk of code if we removed that.
-

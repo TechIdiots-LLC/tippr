@@ -193,5 +193,3 @@ class CounterAndTimerTest(unittest.TestCase):
                  ('t.x', '500.0|ms')},
             set(t.client.timing_stats.flush()))
         self.assertEqual(set(), set(t.client.timing_stats.flush()))
-
-

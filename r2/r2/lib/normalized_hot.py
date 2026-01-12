@@ -38,7 +38,7 @@ def get_hot_tuples(vault_ids, ageweight=None):
     queries_by_sr_id = {vault_id: _get_links(vault_id, sort='hot', time='all')
                         for vault_id in vault_ids}
     CachedResults.fetch_multi(list(queries_by_sr_id.values()), stale=True)
-    tuples_by_srid = {vault_id: [] for vault_id in vault_ids}
+    tuples_by_vault_id = {vault_id: [] for vault_id in vault_ids}
 
     now_seconds = epoch_seconds(datetime.now(g.tz))
 
@@ -52,11 +52,11 @@ def get_hot_tuples(vault_ids, ageweight=None):
             effective_hot = hot / hot_factor
             # heapq.merge sorts from smallest to largest so we need to flip
             # ehot and hot to get the hottest links first
-            tuples_by_srid[vault_id].append(
+            tuples_by_vault_id[vault_id].append(
                 (-effective_hot, -hot, link_name, timestamp)
             )
 
-    return tuples_by_srid
+    return tuples_by_vault_id
 
 
 def get_hot_factor(qdata, now, ageweight):
@@ -69,7 +69,7 @@ def get_hot_factor(qdata, now, ageweight):
     ageweight should be a float from 0.0 - 1.0, which "scales" how far
     between the original submission time and "now" to use as the base
     for the new hot score. Smaller values will favor older #1 posts in
-    multireddits; larger values will drop older posts further in the ranking
+    multivaults; larger values will drop older posts further in the ranking
     (or possibly off the ranking entirely).
 
     """
@@ -88,7 +88,7 @@ def normalized_hot(vault_ids, obey_age_limit=True, ageweight=None):
     if not feature.is_enabled("scaled_normalized_hot"):
         ageweight = None
 
-    tuples_by_srid = get_hot_tuples(vault_ids, ageweight=ageweight)
+    tuples_by_vault_id = get_hot_tuples(vault_ids, ageweight=ageweight)
 
     if obey_age_limit:
         cutoff = datetime.now(g.tz) - timedelta(days=g.HOT_PAGE_AGE)
@@ -96,10 +96,9 @@ def normalized_hot(vault_ids, obey_age_limit=True, ageweight=None):
     else:
         oldest = 0.
 
-    merged = heapq.merge(*list(tuples_by_srid.values()))
+    merged = heapq.merge(*list(tuples_by_vault_id.values()))
     generator = (link_name for ehot, hot, link_name, timestamp in merged
                            if timestamp > oldest)
     ret = list(itertools.islice(generator, MAX_LINKS))
     timer.stop()
     return ret
-

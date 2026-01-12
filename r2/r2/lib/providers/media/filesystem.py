@@ -79,4 +79,3 @@ class FileSystemMediaProvider(MediaProvider):
         path = os.path.join(g.media_fs_root, name)
         os.remove(path)
         return True
-

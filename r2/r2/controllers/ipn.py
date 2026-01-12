@@ -67,7 +67,7 @@ from r2.models import (
     create_claimed_gold,
     create_gift_gold,
     create_gold_code,
-    creddits_lock,
+    ctips_lock,
     generate_token,
     get_discounted_price,
     has_prev_subscr_payments,
@@ -262,8 +262,8 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage,
         md_sender = "/u/%s" % sender
         repliable = True
     else:
-        sender = "An anonymous redditor"
-        md_sender = "An anonymous redditor"
+        sender = "an anonymous tippr user"
+        md_sender = "an anonymous tippr user"
 
         if buyer.name in g.live_config["proxy_gilding_accounts"]:
             repliable = False
@@ -357,12 +357,12 @@ def send_gold_code(buyer, months, days,
 
 
 class IpnController(TipprController):
-    # Used when buying gold with creddits
+    # Used when buying gold with ctips
     @validatedForm(VUser(),
                    VModhash(),
                    months = VInt("months"),
                    passthrough = VPrintable("passthrough", max_length=50))
-    def POST_spendcreddits(self, form, jquery, months, passthrough):
+    def POST_spendctips(self, form, jquery, months, passthrough):
         if months is None or months < 1:
             form.set_text(".status", _("nice try."))
             return
@@ -370,15 +370,15 @@ class IpnController(TipprController):
         days = months * 31
 
         if not passthrough:
-            raise ValueError("/spendcreddits got no passthrough?")
+            raise ValueError("/spendctips got no passthrough?")
 
         blob_key, payment_blob = get_blob(passthrough)
         if payment_blob["goldtype"] not in ("gift", "code", "onetime"):
-            raise ValueError("/spendcreddits payment_blob %s has goldtype %s" %
+            raise ValueError("/spendctips payment_blob %s has goldtype %s" %
                              (passthrough, payment_blob["goldtype"]))
 
         if payment_blob["account_id"] != c.user._id:
-            fmt = ("/spendcreddits payment_blob %s has userid %d " +
+            fmt = ("/spendctips payment_blob %s has userid %d " +
                    "but c.user._id is %d")
             raise ValueError(fmt % passthrough,
                              payment_blob["account_id"],
@@ -392,7 +392,7 @@ class IpnController(TipprController):
             try:
                 recipient = Account._by_name(recipient_name)
             except NotFound:
-                raise ValueError("Invalid username %s in spendcreddits, buyer = %s"
+                raise ValueError("Invalid username %s in spendctips, buyer = %s"
                                  % (recipient_name, c.user.name))
 
             if recipient._deleted:
@@ -402,9 +402,9 @@ class IpnController(TipprController):
         redirect_to_spent = False
         thing = None
 
-        with creddits_lock(c.user):
-            if not c.user.employee and c.user.gold_creddits < months:
-                msg = "%s is trying to sneak around the creddit check"
+        with ctips_lock(c.user):
+            if not c.user.employee and c.user.gold_ctips < months:
+                msg = "%s is trying to sneak around the ctip check"
                 msg %= c.user.name
                 raise ValueError(msg)
 
@@ -431,7 +431,7 @@ class IpnController(TipprController):
             redirect_to_spent = True
 
             if not c.user.employee:
-                c.user.gold_creddits -= months
+                c.user.gold_ctips -= months
                 c.user._commit()
 
         form.find("button").hide()
@@ -443,7 +443,7 @@ class IpnController(TipprController):
             gilding_message = make_gold_message(thing, user_gilded=True)
             jquery.gild_thing(thing_fullname, gilding_message, thing.gildings)
         elif redirect_to_spent:
-            form.redirect("/gold/thanks?v=spent-creddits")
+            form.redirect("/gold/thanks?v=spent-ctips")
 
     @csrf_exempt
     @textresponse(paypal_secret = VPrintable('secret', 50),
@@ -570,15 +570,15 @@ class IpnController(TipprController):
         elif payment_blob['goldtype'] == 'autorenew':
             admintools.adjust_gold_expiration(buyer, days=days)
             subject, message = subscr_pm(pennies, months, new_subscr=True)
-        elif payment_blob['goldtype'] == 'creddits':
-            buyer._incr("gold_creddits", months)
+        elif payment_blob['goldtype'] == 'ctips':
+            buyer._incr("gold_ctips", months)
             buyer._commit()
             subject = _("Eureka! Thank you for investing in tippr gold "
-                        "creddits!")
+                        "ctips!")
 
-            message = _("Thank you for buying creddits. Your patronage "
+            message = _("Thank you for buying ctips. Your patronage "
                         "supports the site and makes future development "
-                        "possible. To spend your creddits and spread tippr "
+                        "possible. To spend your ctips and spread tippr "
                         "gold, visit [/gold](/gold) or your favorite "
                         "person's user page.")
             message += "\n\n" + strings.gold_benefits_msg + "\n\n"
@@ -841,9 +841,9 @@ class GoldPaymentController(TipprController):
                     else:
                         subject, message = subscr_pm(pennies, months, new_subscr=True)
 
-            elif goldtype == 'creddits':
-                buyer._incr('gold_creddits', months)
-                subject = "thanks for buying creddits!"
+            elif goldtype == 'ctips':
+                buyer._incr('gold_ctips', months)
+                subject = "thanks for buying ctips!"
                 message = ("To spend them, visit %s://%s/gold or your "
                            "favorite person's userpage." % (g.default_scheme,
                                                             g.domain))
@@ -1229,7 +1229,7 @@ class TipprGiftsController(GoldPaymentController):
 
     """
 
-    name = 'redditgifts'
+    name = 'tipprgifts'
     webhook_secret = g.secrets['tipprgifts_webhook']
     event_type_mappings = {'succeeded': 'succeeded'}
 
@@ -1309,7 +1309,7 @@ def validate_blob(custom):
         giftmessage = payment_blob.get('giftmessage')
         giftmessage = _force_unicode(giftmessage) if giftmessage else None
         ret['giftmessage'] = giftmessage
-    elif goldtype not in ('onetime', 'autorenew', 'creddits', 'code'):
+    elif goldtype not in ('onetime', 'autorenew', 'ctips', 'code'):
         raise GoldException('bad goldtype')
 
     return ret
@@ -1332,8 +1332,8 @@ def subtract_gold_days(user, days):
     user._commit()
 
 
-def subtract_gold_creddits(user, num):
-    user._incr('gold_creddits', -num)
+def subtract_gold_ctips(user, num):
+    user._incr('gold_ctips', -num)
 
 
 def reverse_gold_purchase(transaction_id):
@@ -1365,8 +1365,8 @@ def reverse_gold_purchase(transaction_id):
         if goldtype in ('onetime', 'autorenew'):
             subtract_gold_days(buyer, days)
 
-        elif goldtype == 'creddits':
-            subtract_gold_creddits(buyer, months)
+        elif goldtype == 'ctips':
+            subtract_gold_ctips(buyer, months)
 
         elif goldtype == 'gift':
             subtract_gold_days(recipient, days)
@@ -1422,4 +1422,3 @@ def subscr_pm(pennies, months, new_subscr=True):
         "gold_email": g.goldsupport_email,
     }
     return subject, message
-

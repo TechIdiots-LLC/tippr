@@ -64,7 +64,7 @@ def get_rising(vault):
 def get_rising_tuples(vault_ids):
     rising = get_all_rising()
 
-    tuples_by_srid = {vault_id: [] for vault_id in vault_ids}
+    tuples_by_vault_id = {vault_id: [] for vault_id in vault_ids}
     top_rising = {}
 
     for link, score, vault_id in rising:
@@ -75,16 +75,16 @@ def get_rising_tuples(vault_ids):
             top_rising[vault_id] = score
 
         norm_score = score / top_rising[vault_id]
-        tuples_by_srid[vault_id].append((-norm_score, -score, link))
+        tuples_by_vault_id[vault_id].append((-norm_score, -score, link))
 
-    return tuples_by_srid
+    return tuples_by_vault_id
 
 
 def normalized_rising(vault_ids):
     if not vault_ids:
         return []
 
-    tuples_by_srid = sgm(
+    tuples_by_vault_id = sgm(
         cache=g.gencache,
         keys=vault_ids,
         miss_fn=get_rising_tuples,
@@ -92,7 +92,6 @@ def normalized_rising(vault_ids):
         time=90,
     )
 
-    merged = heapq.merge(*list(tuples_by_srid.values()))
+    merged = heapq.merge(*list(tuples_by_vault_id.values()))
 
     return [link_name for norm_score, score, link_name in merged]
-

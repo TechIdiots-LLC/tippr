@@ -64,4 +64,3 @@ class LastModified(tdb_cassandra.View):
 
         return {k: getattr(v, name, None)
                     for k, v in res.items()}
-

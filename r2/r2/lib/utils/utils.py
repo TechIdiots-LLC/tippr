@@ -770,7 +770,7 @@ class UrlParser:
 
         return True
 
-    def is_reddit_url(self, vault=None):
+    def is_tippr_url(self, vault=None):
         """utility method for seeing if the url is associated with
         tippr as we don't necessarily want to mangle non-tippr
         domains
@@ -886,32 +886,32 @@ def url_to_thing(url):
     """
     from r2.config.middleware import VaultMiddleware
     from r2.models import Comment, Link, Message, NotFound, Vault
-    sr_pattern = VaultMiddleware.sr_pattern
+    vault_pattern = VaultMiddleware.vault_pattern
 
     urlparser = UrlParser(_force_utf8(url))
     # Prefer to avoid touching non-tippr domains, but allow explicit
     # vault-style paths ("/v/<name>") so local/dev hostnames like
     # "reddit.local" used in unit tests still resolve.
-    if not urlparser.is_reddit_url():
-        if not sr_pattern.match(urlparser.path):
+    if not urlparser.is_tippr_url():
+        if not vault_pattern.match(urlparser.path):
             return None
 
     try:
-        sr_name = sr_pattern.match(urlparser.path).group(1)
+        vault_name = vault_pattern.match(urlparser.path).group(1)
     except AttributeError:
-        sr_name = None
+        vault_name = None
 
-    # If we have an explicit sr_name, try to resolve the Vault early.
+    # If we have an explicit vault_name, try to resolve the Vault early.
     vault_obj = None
-    if sr_name:
+    if vault_name:
         try:
-            vault_obj = Vault._by_name(sr_name, data=True)
+            vault_obj = Vault._by_name(vault_name, data=True)
         except NotFound:
             vault_obj = None
 
-    path = sr_pattern.sub('', urlparser.path)
+    path = vault_pattern.sub('', urlparser.path)
     if not path or path == '/':
-        if not sr_name:
+        if not vault_name:
             return None
 
         return vault_obj
@@ -1998,5 +1998,3 @@ def rate_limited_generator(rate_limit_per_second, iterable):
     for i in iterable:
         throttler()
         yield i
-
-

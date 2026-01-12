@@ -1564,5 +1564,3 @@ def MultiRelation(name, *relations):
             return res
 
     return MultiRelationCls
-
-

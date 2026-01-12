@@ -5,17 +5,17 @@ import pytz
 
 from r2.lib.utils import tup
 from r2.models.vote import Vote
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class TestVoteValidator(RedditTestCase):
+class TestVoteValidator(TipprTestCase):
 
     def setUp(self):
         self.user = MagicMock(name="user")
         self.user._id36 = 'userid36'
         self.thing = MagicMock(name="thing")
         self.vote_data = {}
-        super(RedditTestCase, self).setUp()
+        super(TipprTestCase, self).setUp()
 
     def cast_vote(self, **kw):
         kw.setdefault("date", datetime.now(pytz.UTC))
@@ -55,5 +55,3 @@ class TestVoteValidator(RedditTestCase):
         self.assertTrue(vote.is_downvote)
         self.assertFalse(vote.is_self_vote)
         self.assert_vote_effects(vote, affected_thing_attr="_downs")
-
-

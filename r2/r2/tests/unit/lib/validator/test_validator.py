@@ -36,10 +36,10 @@ from r2.lib.validator import (
     VVaultName,
 )
 from r2.models import Account, Comment, Link, Message, Vault
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class ValidatorTests(RedditTestCase):
+class ValidatorTests(TipprTestCase):
     def _test_failure(self, input, error):
         """Helper for testing bad inputs."""
         self.validator.run(input)
@@ -333,5 +333,3 @@ class TestValidEmail(ValidatorTests):
 
     def test_two_hostnames(self):
         self._test_failure('test@example.com@example.com')
-
-

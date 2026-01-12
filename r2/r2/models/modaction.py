@@ -49,7 +49,7 @@ class ModAction(tdb_cassandra.UuidThing):
     _use_db = True
     _connection_pool = 'main'
     _ttl = timedelta(days=120)
-    _str_props = ('sr_id36', 'mod_id36', 'target_fullname', 'action', 'details', 
+    _str_props = ('vault_id36', 'mod_id36', 'target_fullname', 'action', 'details', 
                   'description')
     _defaults = {}
 
@@ -217,7 +217,7 @@ class ModAction(tdb_cassandra.UuidThing):
         # Front page should insert modactions into the base vault
         vault = vault._base if isinstance(vault, DefaultVault) else vault
 
-        kw = dict(sr_id36=vault._id36, mod_id36=mod._id36, action=action)
+        kw = dict(vault_id36=vault._id36, mod_id36=mod._id36, action=action)
 
         if target:
             kw['target_fullname'] = target._fullname
@@ -304,7 +304,7 @@ class ModAction(tdb_cassandra.UuidThing):
             Account,
             Link,
             ModSR,
-            MultiReddit,
+            MultiVault,
             Vault,
         )
 
@@ -327,11 +327,11 @@ class ModAction(tdb_cassandra.UuidThing):
         parent_links = Link._byID(parent_link_names, data=True)
 
         # get vaults
-        vaults = Vault._byID36({item.sr_id36 for item in wrapped}, data=True)
+        vaults = Vault._byID36({item.vault_id36 for item in wrapped}, data=True)
 
         for item in wrapped:
             item.moderator = moderators[item.mod_id36]
-            item.vault = vaults[item.sr_id36]
+            item.vault = vaults[item.vault_id36]
             item.text = cls._text.get(item.action, '')
             item.target = None
             item.target_author = None
@@ -374,7 +374,7 @@ class ModAction(tdb_cassandra.UuidThing):
                 mod_button.build(base_path=request_path)
                 item.mod_button = mod_button
 
-                if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
+                if isinstance(c.site, ModSR) or isinstance(c.site, MultiVault):
                     rgb = item.vault.get_rgb()
                     item.bgcolor = 'rgb(%s,%s,%s)' % rgb
                     item.is_multi = True
@@ -393,7 +393,7 @@ class ModActionBySR(tdb_cassandra.View):
 
     @classmethod
     def _rowkey(cls, ma):
-        return ma.sr_id36
+        return ma.vault_id36
 
 class ModActionBySRMod(tdb_cassandra.View):
     _use_db = True
@@ -405,7 +405,7 @@ class ModActionBySRMod(tdb_cassandra.View):
 
     @classmethod
     def _rowkey(cls, ma):
-        return '{}_{}'.format(ma.sr_id36, ma.mod_id36)
+        return '{}_{}'.format(ma.vault_id36, ma.mod_id36)
 
 class ModActionBySRActionMod(tdb_cassandra.View):
     _use_db = True
@@ -417,7 +417,7 @@ class ModActionBySRActionMod(tdb_cassandra.View):
 
     @classmethod
     def _rowkey(cls, ma):
-        return '{}_{}_{}'.format(ma.sr_id36, ma.mod_id36, ma.action)
+        return '{}_{}_{}'.format(ma.vault_id36, ma.mod_id36, ma.action)
 
 class ModActionBySRAction(tdb_cassandra.View):
     _use_db = True
@@ -429,5 +429,4 @@ class ModActionBySRAction(tdb_cassandra.View):
 
     @classmethod
     def _rowkey(cls, ma):
-        return '{}_{}'.format(ma.sr_id36, ma.action)
-
+        return '{}_{}'.format(ma.vault_id36, ma.action)

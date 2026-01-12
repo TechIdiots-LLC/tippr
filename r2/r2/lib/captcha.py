@@ -84,4 +84,3 @@ def valid_solution(iden, solution):
     else:
         g.gencache.delete(key)
         return True
-

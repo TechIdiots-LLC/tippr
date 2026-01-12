@@ -41,4 +41,3 @@ def _force_utf8(text):
     # Return a Unicode string (UTF-8 decoded). Historically this helper
     # returned bytes; modern code and tests expect text to be `str`.
     return _force_unicode(text)
-

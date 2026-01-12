@@ -74,7 +74,7 @@ LINKS_PER_SITEMAP = 50000
 
 
 def _absolute_url(path):
-    return add_vault(path, force_https=True, sr_path=False)
+    return add_vault(path, force_https=True, vault_path=False)
 
 
 def _stringify_xml(root_element):
@@ -120,5 +120,3 @@ def sitemap_index(count):
             g.sitemap_s3_static_host, i)
         loc_elem.text = url
     return _stringify_xml(sm_elem)
-
-

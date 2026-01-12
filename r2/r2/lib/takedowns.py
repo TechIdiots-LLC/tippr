@@ -101,4 +101,3 @@ def post_takedown_notice_to_external_site(title,
     )
     timer.stop()
     return response.headers['location']
-

@@ -26,7 +26,7 @@ Setup your Routes options here
 from routes import Mapper
 
 
-def not_in_sr(environ, results):
+def not_in_vault(environ, results):
     return ('vault' not in environ and
             'sub_domain' not in environ and
             'domain' not in environ)
@@ -72,7 +72,7 @@ def make_map(config):
     # redirect old urls to the new
     ABOUT_BASE = "https://about.tippr.net/"
     mc('/about', controller='redirect', action='redirect', dest=ABOUT_BASE, 
-       conditions={'function':not_in_sr})
+       conditions={'function':not_in_vault})
     mc('/about/values', controller='redirect', action='redirect', dest=ABOUT_BASE)
     mc('/about/team', controller='redirect', action='redirect',
        dest=ABOUT_BASE)
@@ -94,11 +94,11 @@ def make_map(config):
        action='Vault_traffic_report')
     mc('/account-activity', controller='front', action='account_activity')
 
-    mc('/vaults/create', controller='front', action='newreddit')
-    mc('/vaults/search', controller='front', action='search_reddits')
+    mc('/vaults/create', controller='front', action='newvault')
+    mc('/vaults/search', controller='front', action='search_vaults')
     mc('/vaults/login', controller='forms', action='login')
     mc('/vaults/:where', controller='vaults', action='listing',
-       where='popular', conditions={'function':not_in_sr},
+       where='popular', conditions={'function':not_in_vault},
        requirements=dict(where="popular|new|banned|employee|gold|default|"
                                "quarantine|featured"))
     # If no vault is specified, might as well show a list of 'em.
@@ -106,21 +106,21 @@ def make_map(config):
     # Backwards compatibility: redirect old /r to /vaults
     mc('/r', controller='redirect', action='redirect', dest='/vaults')
 
-    mc('/vaults/mine/:where', controller='myreddits', action='listing',
-       where='subscriber', conditions={'function':not_in_sr},
+    mc('/vaults/mine/:where', controller='myvaults', action='listing',
+       where='subscriber', conditions={'function':not_in_vault},
        requirements=dict(where='subscriber|contributor|moderator'))
 
     # These routes are kept for backwards-compatibility reasons
     # Using the above /vaults/ ones instead is preferable
-    mc('/reddits/create', controller='front', action='newreddit')
-    mc('/reddits/search', controller='front', action='search_reddits')
+    mc('/reddits/create', controller='front', action='newvault')
+    mc('/reddits/search', controller='front', action='search_vaults')
     mc('/reddits/login', controller='forms', action='login')
     mc('/reddits/:where', controller='vaults', action='listing',
-       where='popular', conditions={'function':not_in_sr},
+       where='popular', conditions={'function':not_in_vault},
        requirements=dict(where="popular|new|banned"))
 
-    mc('/reddits/mine/:where', controller='myreddits', action='listing',
-       where='subscriber', conditions={'function':not_in_sr},
+    mc('/reddits/mine/:where', controller='myvaults', action='listing',
+       where='subscriber', conditions={'function':not_in_vault},
        requirements=dict(where='subscriber|contributor|moderator'))
 
     mc('/buttons', controller='buttons', action='button_demo_page')
@@ -147,7 +147,7 @@ def make_map(config):
     mc('/admin/awards/:awardcn/:action', controller='awards',
        requirements=dict(action="give|winners"))
 
-    mc('/admin/creddits', controller='admintool', action='creddits')
+    mc('/admin/ctips', controller='admintool', action='ctips')
     mc('/admin/gold', controller='admintool', action='gold')
 
     mc('/user/:username/about', controller='user', action='about',
@@ -199,7 +199,7 @@ def make_map(config):
        connect('/about/:where', controller='userlistlisting',
           requirements=dict(where='contributors|banned|muted|wikibanned|'
               'wikicontributors|moderators'), action='listing')
-       connect('/about/:location', controller='front', action='editreddit',
+       connect('/about/:location', controller='front', action='editvault',
           requirements=dict(location='edit|stylesheet|traffic|about'))
        connect('/comments', controller='comments', action='listing')
        connect('/comments/gilded', action='listing', controller='gilded')
@@ -209,10 +209,10 @@ def make_map(config):
     mc('/u/:username', controller='redirect', action='user_redirect')
     mc('/u/:username/*rest', controller='redirect', action='user_redirect')
 
-    # preserve timereddit URLs from 4/1/2012
-    mc('/t/:timereddit', controller='redirect', action='timereddit_redirect')
-    mc('/t/:timereddit/*rest', controller='redirect',
-       action='timereddit_redirect')
+    # preserve timevault URLs from 4/1/2012
+    mc('/t/:timevault', controller='redirect', action='timevault_redirect')
+    mc('/t/:timevault/*rest', controller='redirect',
+       action='timevault_redirect')
 
     # /prefs/friends is also aliased to /api/v1/me/friends
     mc('/prefs/:where', controller='userlistlisting',
@@ -309,8 +309,8 @@ def make_map(config):
     mc('/gold/thanks', controller='front', action='goldthanks')
     mc('/gold/subscription', controller='forms', action='subscription')
     mc('/gilding', controller='front', action='gilding')
-    mc('/creddits', controller='redirect', action='redirect', 
-       dest='/gold?goldtype=creddits')
+    mc('/ctips', controller='redirect', action='redirect', 
+       dest='/gold?goldtype=ctips')
 
     mc('/password', controller='forms', action="password")
     mc('/random', controller='front', action="random")
@@ -320,7 +320,7 @@ def make_map(config):
        dest='/gold/about')
 
     mc('/help/:page', controller='policies', action='policy_page',
-       conditions={'function':not_in_sr},
+       conditions={'function':not_in_vault},
        requirements={'page':'contentpolicy|privacypolicy|useragreement'})
     mc('/rules', controller='redirect', action='redirect',
         dest='/help/contentpolicy')
@@ -375,7 +375,7 @@ def make_map(config):
 
     mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")
-    mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
+    mc('/api/spendctips', controller='ipn', action="spendctips")
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
     mc('/api/modify_subscription', controller='stripe',
        action='modify_subscription')
@@ -385,7 +385,7 @@ def make_map(config):
        action='goldwebhook')
     mc('/api/coinbasewebhook/gold/:secret', controller='coinbase',
        action='goldwebhook')
-    mc('/api/rgwebhook/gold/:secret', controller='redditgifts',
+    mc('/api/rgwebhook/gold/:secret', controller='tipprgifts',
        action='goldwebhook')
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
     mc('/ipn/:secret', controller='ipn', action='ipn')
@@ -499,4 +499,3 @@ def make_map(config):
     mc("/*url", controller='front', action='catchall')
 
     return map
-

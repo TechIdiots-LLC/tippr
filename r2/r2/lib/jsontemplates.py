@@ -407,25 +407,25 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
     )
     del _data_attrs_["id"]
 
-    def __init__(self, expand_srs=False):
+    def __init__(self, expand_vaults=False):
         super().__init__()
-        self.expand_srs = expand_srs
+        self.expand_vaults = expand_vaults
 
     def kind(self, wrapped):
         return "LabeledMulti"
 
     @classmethod
-    def sr_props(cls, thing, vaults, expand=False):
-        sr_props = dict(thing.sr_props)
+    def vault_props(cls, thing, vaults, expand=False):
+        vault_props = dict(thing.vault_props)
         if expand:
-            sr_dicts = get_trimmed_sr_dicts(vaults, c.user)
+            vault_dicts = get_trimmed_sr_dicts(vaults, c.user)
             for vault in vaults:
-                sr_props[vault._id]["data"] = sr_dicts[vault._id]
-        return [dict(sr_props[vault._id], name=vault.name) for vault in vaults]
+                vault_props[vault._id]["data"] = vault_dicts[vault._id]
+        return [dict(vault_props[vault._id], name=vault.name) for vault in vaults]
 
     def thing_attr(self, thing, attr):
         if attr == "vaults":
-            return self.sr_props(thing, thing.vaults, expand=self.expand_srs)
+            return self.vault_props(thing, thing.vaults, expand=self.expand_vaults)
         elif attr == "can_edit":
             return c.user_is_loggedin and thing.can_edit(c.user)
         elif attr == "copied_from":
@@ -442,7 +442,7 @@ class LabeledMultiJsonTemplate(LabeledMultiDescriptionJsonTemplate):
 
 def get_trimmed_sr_dicts(vaults, user):
     if c.user_is_loggedin:
-        sr_user_relations = Vault.get_sr_user_relations(user, vaults)
+        vault_user_relations = Vault.get_sr_user_relations(user, vaults)
     else:
         # backwards compatibility: for loggedout users don't return boolean,
         # instead return None for all relations.
@@ -453,11 +453,11 @@ def get_trimmed_sr_dicts(vaults, user):
             banned=None,
             muted=None,
         )
-        sr_user_relations = defaultdict(lambda: NO_SR_USER_RELATIONS)
+        vault_user_relations = defaultdict(lambda: NO_SR_USER_RELATIONS)
 
     ret = {}
     for vault in vaults:
-        relations = sr_user_relations[vault._id]
+        relations = vault_user_relations[vault._id]
         can_view = vault.can_view(user)
         subscribers = vault._ups if not vault.hide_subscribers else 0
 
@@ -500,7 +500,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
     _private_data_attrs = dict(
         inbox_count="inbox_count",
         over_18="pref_over_18",
-        gold_creddits="gold_creddits",
+        gold_ctips="gold_ctips",
         gold_expiration="gold_expiration",
         is_suspended="in_timeout",
         suspension_expiration_utc="timeout_expiration_utc",
@@ -589,7 +589,6 @@ class AccountJsonTemplate(IdentityJsonTemplate):
         elif attr == "modhash":
             return c.modhash
         return IdentityJsonTemplate.thing_attr(self, thing, attr)
-
 
 
 class PrefsJsonTemplate(ThingJsonTemplate):
@@ -840,8 +839,8 @@ class LinkJsonTemplate(ThingTemplate):
         if hasattr(item, "action_type"):
             data["action_type"] = item.action_type
 
-        if hasattr(item, "sr_detail"):
-            data["sr_detail"] = item.sr_detail
+        if hasattr(item, "vault_detail"):
+            data["vault_detail"] = item.vault_detail
 
         if hasattr(item, "show_media"):
             data["show_media"] = item.show_media
@@ -1424,9 +1423,9 @@ class StylesheetTemplate(ThingJsonTemplate):
         return 'stylesheet'
 
     def images(self):
-        sr_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
+        vault_images = ImagesByWikiPage.get_images(c.site, "config/stylesheet")
         images = []
-        for name, url in sr_images.items():
+        for name, url in vault_images.items():
             images.append({'name': name,
                            'link': 'url(%%%%%s%%%%)' % name,
                            'url': url})
@@ -1514,7 +1513,7 @@ class ModActionTemplate(ThingJsonTemplate):
         id='_fullname',
         mod='moderator',
         mod_id36='mod_id36',
-        sr_id36='sr_id36',
+        vault_id36='vault_id36',
         vault='vault',
         target_author='target_author',
         target_fullname='target_fullname',
@@ -1637,4 +1636,3 @@ class RulesJsonTemplate(JsonTemplate):
                 rule["kind"] = "all"
 
         return ObjectTemplate(rules)
-

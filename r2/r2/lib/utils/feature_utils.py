@@ -33,5 +33,3 @@ def is_tracking_link_enabled(link=None, element_name=None):
     if feature.is_enabled('utm_comment_links'):
         return True
     return False
-
-

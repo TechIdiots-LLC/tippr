@@ -92,8 +92,8 @@ class MultiApiController(TipprController):
         set_extension(request.environ, "json")
         TipprController.pre(self)
 
-    def _format_multi_list(self, multis, viewer, expand_srs):
-        templ = LabeledMultiJsonTemplate(expand_srs)
+    def _format_multi_list(self, multis, viewer, expand_vaults):
+        templ = LabeledMultiJsonTemplate(expand_vaults)
         resp = [templ.render(multi).finalize() for multi in multis
                 if multi.can_view(viewer)]
         return self.api_wrapper(resp)
@@ -101,21 +101,21 @@ class MultiApiController(TipprController):
     @require_oauth2_scope("read")
     @validate(
         user=VAccountByName("username"),
-        expand_srs=VBoolean("expand_srs"),
+        expand_vaults=VBoolean("expand_vaults"),
     )
     @api_doc(api_section.multis, uri="/api/multi/user/{username}")
-    def GET_list_multis(self, user, expand_srs):
+    def GET_list_multis(self, user, expand_vaults):
         """Fetch a list of public multis belonging to `username`"""
         multis = LabeledMulti.by_owner(user)
-        return self._format_multi_list(multis, c.user, expand_srs)
+        return self._format_multi_list(multis, c.user, expand_vaults)
 
     @require_oauth2_scope("read")
-    @validate(VUser(), expand_srs=VBoolean("expand_srs"))
+    @validate(VUser(), expand_vaults=VBoolean("expand_vaults"))
     @api_doc(api_section.multis, uri="/api/multi/mine")
-    def GET_my_multis(self, expand_srs):
+    def GET_my_multis(self, expand_vaults):
         """Fetch a list of multis belonging to the current user."""
         multis = LabeledMulti.by_owner(c.user)
-        return self._format_multi_list(multis, c.user, expand_srs)
+        return self._format_multi_list(multis, c.user, expand_vaults)
 
     def _format_multi(self, multi, expand_sr_info=False):
         multi_info = LabeledMultiJsonTemplate(expand_sr_info).render(multi)
@@ -124,16 +124,16 @@ class MultiApiController(TipprController):
     @require_oauth2_scope("read")
     @validate(
         multi=VMultiByPath("multipath", require_view=True),
-        expand_srs=VBoolean("expand_srs"),
+        expand_vaults=VBoolean("expand_vaults"),
     )
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}",
         uri_variants=['/api/filter/{filterpath}'],
     )
-    def GET_multi(self, multi, expand_srs):
+    def GET_multi(self, multi, expand_vaults):
         """Fetch a multi's data and vault list by name."""
-        return self._format_multi(multi, expand_srs)
+        return self._format_multi(multi, expand_vaults)
 
     def _check_new_multi_path(self, path_info):
         if path_info['owner'].lower() != c.user.name.lower():
@@ -141,8 +141,8 @@ class MultiApiController(TipprController):
                               fields='multipath')
         return c.user
 
-    def _add_multi_srs(self, multi, sr_datas):
-        vaults = Vault._by_name(sr_data['name'] for sr_data in sr_datas)
+    def _add_multi_vaults(self, multi, vault_datas):
+        vaults = Vault._by_name(vault_data['name'] for vault_data in vault_datas)
 
         for vault in vaults.values():
             if isinstance(vault, FakeVault):
@@ -150,31 +150,31 @@ class MultiApiController(TipprController):
                                   msg_params={'path': vault.path},
                                   code=400)
 
-        sr_props = {}
-        for sr_data in sr_datas:
+        vault_props = {}
+        for vault_data in vault_datas:
             try:
-                vault = vaults[sr_data['name']]
+                vault = vaults[vault_data['name']]
             except KeyError:
                 raise TipprError('VAULT_NOEXIST', code=400)
             else:
                 # name is passed in via the API data format, but should not be
                 # stored on the model.
-                del sr_data['name']
-                sr_props[vault] = sr_data
+                del vault_data['name']
+                vault_props[vault] = vault_data
 
         try:
-            multi.add_vaults(sr_props)
+            multi.add_vaults(vault_props)
         except TooManyVaultsError:
             raise TipprError('MULTI_TOO_MANY_VAULTS', code=409)
 
-        return sr_props
+        return vault_props
 
     def _write_multi_data(self, multi, data):
         vaults = data.pop('vaults', None)
         if vaults is not None:
-            multi.clear_srs()
+            multi.clear_vaults()
             try:
-                self._add_multi_srs(multi, vaults)
+                self._add_multi_vaults(multi, vaults)
             except:
                 multi._revert()
                 raise
@@ -362,7 +362,7 @@ class MultiApiController(TipprController):
         return self._format_multi(to_multi)
 
     def _get_multi_Vault(self, multi, vault):
-        resp = LabeledMultiJsonTemplate.sr_props(multi, [vault])[0]
+        resp = LabeledMultiJsonTemplate.vault_props(multi, [vault])[0]
         return self.api_wrapper(resp)
 
     @require_oauth2_scope("read")
@@ -385,18 +385,18 @@ class MultiApiController(TipprController):
         VUser(),
         VModhash(),
         multi=VMultiByPath("multipath", require_edit=True),
-        sr_name=VVaultName('vaultname', allow_language_vaults=True),
+        vault_name=VVaultName('vaultname', allow_language_vaults=True),
         data=VValidatedJSON("model", multi_sr_data_json_spec),
     )
     @api_doc(api_section.multis, extends=GET_multi_Vault)
-    def PUT_multi_Vault(self, multi, sr_name, data):
+    def PUT_multi_Vault(self, multi, vault_name, data):
         """Add a vault to a multi."""
 
-        new = not any(vault.name.lower() == sr_name.lower() for vault in multi.vaults)
+        new = not any(vault.name.lower() == vault_name.lower() for vault in multi.vaults)
 
-        data['name'] = sr_name
-        sr_props = self._add_multi_srs(multi, [data])
-        vault = list(sr_props.items())[0][0]
+        data['name'] = vault_name
+        vault_props = self._add_multi_vaults(multi, [data])
+        vault = list(vault_props.items())[0][0]
         multi._commit()
 
         if new:
@@ -414,7 +414,7 @@ class MultiApiController(TipprController):
     @api_doc(api_section.multis, extends=GET_multi_Vault)
     def DELETE_multi_Vault(self, multi, vault):
         """Remove a vault from a multi."""
-        multi.del_srs(vault)
+        multi.del_vaults(vault)
         multi._commit()
 
     def _format_multi_description(self, multi):
@@ -447,5 +447,3 @@ class MultiApiController(TipprController):
         multi.description_md = data['body_md']
         multi._commit()
         return self._format_multi_description(multi)
-
-

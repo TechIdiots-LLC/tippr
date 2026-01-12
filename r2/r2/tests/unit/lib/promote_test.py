@@ -13,11 +13,11 @@ from r2.models import (
     Collection,
     FakeAccount,
     Frontpage,
-    MultiReddit,
+    MultiVault,
     PromoCampaign,
     Vault,
 )
-from r2.tests import NonCache, RedditTestCase
+from r2.tests import NonCache, TipprTestCase
 
 subscriptions_vaultnames = ["foo", "bar"]
 subscriptions = [Vault(name=vaultname) for vaultname in subscriptions_vaultnames]
@@ -35,11 +35,11 @@ naughty_subscriptions = [
 nsfw_collection_vaultnames = [questionably_nsfw, nsfw_vaultname]
 nsfw_collection = Collection(
     name="after dark",
-    sr_names=nsfw_collection_vaultnames,
+    vault_names=nsfw_collection_vaultnames,
     over_18=True
 )
 
-class TestVaultNamesFromSite(RedditTestCase):
+class TestVaultNamesFromSite(TipprTestCase):
     def setUp(self):
         self.logged_in = Account(name="test")
         self.logged_out = FakeAccount()
@@ -59,7 +59,7 @@ class TestVaultNamesFromSite(RedditTestCase):
         self.assertEqual(vaultnames, set(subscriptions_vaultnames) | {Frontpage.name})
 
     def test_multi_logged_out(self):
-        multi = MultiReddit(path="/user/test/m/multi_test", vaults=multi_Vaults)
+        multi = MultiVault(path="/user/test/m/multi_test", vaults=multi_Vaults)
         vaultnames = vaultnames_from_site(self.logged_out, multi)
 
         self.assertEqual(vaultnames, set(multi_vaultnames))
@@ -67,7 +67,7 @@ class TestVaultNamesFromSite(RedditTestCase):
     @patch("r2.models.Vault.user_Vaults")
     def test_multi_logged_in(self, user_Vaults):
         user_Vaults.return_value = subscriptions
-        multi = MultiReddit(path="/user/test/m/multi_test", vaults=multi_Vaults)
+        multi = MultiVault(path="/user/test/m/multi_test", vaults=multi_Vaults)
         vaultnames = vaultnames_from_site(self.logged_in, multi)
 
         self.assertEqual(vaultnames, set(multi_vaultnames))
@@ -114,7 +114,7 @@ class TestVaultNamesFromSite(RedditTestCase):
 
     @patch("r2.lib.promote.get_nsfw_collections_vaultnames")
     def test_remove_nsfw_collection_vaultnames_on_frontpage(self, get_nsfw_collections_vaultnames):
-        get_nsfw_collections_vaultnames.return_value = set(nsfw_collection.sr_names)
+        get_nsfw_collections_vaultnames.return_value = set(nsfw_collection.vault_names)
         vaultname = "test1"
         vault = Vault(name=vaultname)
         Vault.user_Vaults = MagicMock(return_value=[
@@ -227,6 +227,3 @@ class TestPromoteRefunds(unittest.TestCase):
         self.campaign.refund_amount = 0.01999999
         refund_amount = get_refund_amount(self.campaign, self.billable_amount)
         self.assertEqual(refund_amount, self.billable_amount - 0.01)
-
-
-

@@ -121,4 +121,3 @@ class PoliciesController(TipprController):
             heading_a.contents = heading.contents
             heading.contents = []
             heading.append(heading_a)
-

@@ -29,7 +29,7 @@ from r2.lib.utils.comment_tree_utils import calc_num_children, get_tree_details
 from r2.models import Comment, builder
 from r2.models.builder import CommentBuilder
 from r2.models.comment_tree import CommentTree
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 CommentTreeElement = namedtuple(
     "CommentTreeElement", ["id", "score", "children"])
@@ -122,7 +122,7 @@ def comments_by_id():
     return ret
 
 
-class CommentOrderTest(RedditTestCase):
+class CommentOrderTest(TipprTestCase):
     def setUp(self):
         self.link = MagicMock()
         self.link._id = 1000
@@ -337,5 +337,3 @@ class CommentOrderTest(RedditTestCase):
             [100, 102, 104, 105, 106, 103, 107, 108, 109])
         self.assertEqual(builder.missing_root_comments, set())
         self.assertEqual(builder.missing_root_count, 0)
-
-

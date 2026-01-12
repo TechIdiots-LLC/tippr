@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.lib.pages import AdminCreddits, AdminGold, AdminPage
+from r2.lib.pages import AdminCtips, AdminGold, AdminPage
 from r2.lib.validator import VAdmin, nop, validate
 
 from .tippr_base import TipprController
@@ -31,8 +31,8 @@ class AdminToolController(TipprController):
         VAdmin(),
         recipient=nop('recipient'),
     )
-    def GET_creddits(self, recipient):
-        return AdminPage(content=AdminCreddits(recipient)).render()
+    def GET_ctips(self, recipient):
+        return AdminPage(content=AdminCtips(recipient)).render()
 
     @validate(
         VAdmin(),
@@ -40,4 +40,3 @@ class AdminToolController(TipprController):
     )
     def GET_gold(self, recipient):
         return AdminPage(content=AdminGold(recipient)).render()
-

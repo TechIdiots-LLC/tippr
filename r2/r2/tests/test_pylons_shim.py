@@ -33,5 +33,3 @@ def test_translator_push_and_get():
     pylons.translator._push_object(trans)
     assert hasattr(pylons.translator._stack[-1], 'gettext')
     pylons.translator._pop_object()
-
-

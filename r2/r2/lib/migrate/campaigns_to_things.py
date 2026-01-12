@@ -71,7 +71,7 @@ def fix_trans_id():
         thing_campaigns = bad_campaigns_by_link[link._id]
         for campaign in thing_campaigns:
             try:
-                sd, ed, bid, sr_name, trans_id = link_campaigns[campaign._id]
+                sd, ed, bid, vault_name, trans_id = link_campaigns[campaign._id]
                 if trans_id != campaign.trans_id:
                     campaign.trans_id = trans_id
                     campaign._commit()
@@ -87,6 +87,3 @@ def fix_trans_id():
     msg = ("%d of %d campaigns updated successfully. %d updates failed: %s" %
            (num_bad_campaigns, num_bad_campaigns - len(failed), len(failed), failed))
     print(msg)
-
-        
-

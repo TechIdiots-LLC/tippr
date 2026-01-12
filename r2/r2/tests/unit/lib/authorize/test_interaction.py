@@ -43,10 +43,10 @@ from r2.lib.authorize.interaction import (
 )
 from r2.lib.db.thing import NotFound
 from r2.models import Account, Link
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
-class InteractionTest(RedditTestCase):
+class InteractionTest(TipprTestCase):
 
     def setUp(self):
         self.user = Mock(spec=Account)
@@ -332,5 +332,3 @@ class InteractionTest(RedditTestCase):
             return_value = refund_transaction(self.user, transaction_id,
                                               campaign_id, amount)
             self.assertEqual(return_value[0], False)
-
-

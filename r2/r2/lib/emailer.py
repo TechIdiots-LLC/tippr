@@ -320,7 +320,6 @@ def send_queued_mail(test = False):
         Email.handler.clear_queue(now)
 
 
-
 def opt_out(msg_hash):
     """Queues an opt-out email (i.e., a confirmation that the email
     address has been opted out of receiving any future mail)"""
@@ -426,4 +425,3 @@ def send_html_email(to_addr, from_addr, subject, html,
     session.quit()
 
 trylater_hooks.register_all()
-

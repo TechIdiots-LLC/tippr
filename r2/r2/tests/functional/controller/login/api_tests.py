@@ -19,12 +19,12 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from r2.tests import RedditControllerTestCase
+from r2.tests import TipprControllerTestCase
 
 from .common import LoginRegBase
 
 
-class LoginRegTests(LoginRegBase, RedditControllerTestCase):
+class LoginRegTests(LoginRegBase, TipprControllerTestCase):
     CONTROLLER = "api"
 
     def assert_success(self, res):
@@ -35,5 +35,3 @@ class LoginRegTests(LoginRegBase, RedditControllerTestCase):
         self.assertEqual(res.status, 200)
         self.assertTrue("error" in res)
         self.assertTrue(code in res)
-
-

@@ -31,7 +31,7 @@ from r2.lib.db.thing import (
     tdb,
 )
 from r2.lib.lock import TimeoutExpired
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 
 class SimpleThing(Thing):
@@ -45,7 +45,7 @@ class SimpleThing(Thing):
     }
 
 
-class TestThingReadCaching(RedditTestCase):
+class TestThingReadCaching(TipprTestCase):
     def setUp(self):
         self.get_things_from_cache = self.autopatch(Thing, "get_things_from_cache")
         self.get_things_from_db = self.autopatch(Thing, "get_things_from_db")
@@ -216,7 +216,7 @@ class FakeLock:
         return
 
 
-class TestThingWrite(RedditTestCase):
+class TestThingWrite(TipprTestCase):
     def setUp(self):
         self.lock = FakeLock()
         self.thing_id = 333
@@ -274,7 +274,7 @@ class TestThingWrite(RedditTestCase):
         SimpleThing.write_thing_to_cache.assert_called_once_with(self.lock)
 
 
-class TestThingIncr(RedditTestCase):
+class TestThingIncr(TipprTestCase):
     def setUp(self):
         self.lock = FakeLock()
         self.thing_id = 333
@@ -372,7 +372,7 @@ class TestThingIncr(RedditTestCase):
             thing._incr("_ups")
 
 
-class TestThingWriteConflict(RedditTestCase):
+class TestThingWriteConflict(TipprTestCase):
     def setUp(self):
         self.lock = FakeLock()
         self.thing_id = 333
@@ -482,5 +482,3 @@ class TestThingWriteConflict(RedditTestCase):
             thing._commit()
 
         tdb.transactions.rollback.assert_called_once_with()
-
-

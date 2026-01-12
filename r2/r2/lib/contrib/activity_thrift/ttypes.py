@@ -34,4 +34,3 @@ class InvalidContextIDException(Exception):
 
 
 __all__ = ['ActivityInfo', 'InvalidContextIDException']
-

@@ -22,12 +22,12 @@
 from r2.lib.errors import error_list
 from r2.lib.str import _force_unicode
 from r2.models import Vault
-from r2.tests import RedditControllerTestCase
+from r2.tests import TipprControllerTestCase
 
 from .common import LoginRegBase
 
 
-class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
+class PostLoginRegTests(LoginRegBase, TipprControllerTestCase):
     CONTROLLER = "post"
     ACTIONS = {
         "register": "reg",
@@ -64,5 +64,3 @@ class PostLoginRegTests(LoginRegBase, RedditControllerTestCase):
     def make_qs(self, **kw):
         kw['dest'] = self.dest
         return super().make_qs(**kw)
-
-

@@ -63,7 +63,7 @@ from r2.models import (
     FakeVault,
     Frontpage,
     Link,
-    MultiReddit,
+    MultiVault,
     PromoCampaign,
     PromotionLog,
     PromotionWeights,
@@ -293,7 +293,7 @@ def new_promotion(is_self, title, content, author, ip):
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    vault = Vault._byID(Vault.get_promote_srid())
+    vault = Vault._byID(Vault.get_promote_vault_id())
     l = Link._submit(
         is_self=is_self,
         title=title,
@@ -578,7 +578,6 @@ def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
     return bool(trans_id), reason
 
 
-
 # dates are referenced to UTC, while we want promos to change at (roughly)
 # midnight eastern-US.
 # TODO: make this a config parameter
@@ -789,9 +788,9 @@ def is_geotargeted_promo(link):
         return from_cache
 
 
-def get_promos(date, sr_names=None, link=None):
+def get_promos(date, vault_names=None, link=None):
     campaign_ids = PromotionWeights.get_campaign_ids(
-        date, sr_names=sr_names, link=link)
+        date, vault_names=vault_names, link=link)
     campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=False)
     link_ids = {camp.link_id for camp in campaigns}
     links = Link._byID(link_ids, data=True)
@@ -861,9 +860,9 @@ def live_campaigns_by_link(link, vault=None):
     if not is_promoted(link):
         return []
 
-    sr_names = [vault.name] if vault else None
+    vault_names = [vault.name] if vault else None
     now = promo_datetime_now()
-    return [camp for camp, link in get_promos(now, sr_names=sr_names,
+    return [camp for camp, link in get_promos(now, vault_names=vault_names,
                                               link=link)
             if is_live_promo(link, camp)]
 
@@ -1017,7 +1016,7 @@ def get_nsfw_collections_vaultnames():
     all_collections = Collection.get_all()
     nsfw_collections = [col for col in all_collections if col.over_18]
     vaultnames = itertools.chain.from_iterable(
-        col.sr_names for col in nsfw_collections
+        col.vault_names for col in nsfw_collections
     )
 
     return set(vaultnames)
@@ -1037,7 +1036,7 @@ def vaultnames_from_site(user, site, include_subscriptions=True):
 
     if not isinstance(site, FakeVault):
         vaultnames.add(site.name)
-    elif isinstance(site, MultiReddit):
+    elif isinstance(site, MultiVault):
         vaultnames = vaultnames | {vault.name for vault in site.vaults}
     else:
         vaultnames.add(Frontpage.name)
@@ -1112,22 +1111,22 @@ REVERSED_NAMES = {v: k for k, v in SPECIAL_NAMES.items()}
 
 def _get_live_promotions(sanitized_names):
     now = promo_datetime_now()
-    sr_names = [REVERSED_NAMES.get(name, name) for name in sanitized_names]
-    ret = {sr_name: [] for sr_name in sanitized_names}
-    for camp, link in get_promos(now, sr_names=sr_names):
+    vault_names = [REVERSED_NAMES.get(name, name) for name in sanitized_names]
+    ret = {vault_name: [] for vault_name in sanitized_names}
+    for camp, link in get_promos(now, vault_names=vault_names):
         if is_live_promo(link, camp):
             weight = (camp.total_budget_dollars / camp.ndays)
             pt = PromoTuple(link=link._fullname, weight=weight,
                             campaign=camp._fullname)
-            for sr_name in camp.target.Vault_names:
-                if sr_name in sr_names:
-                    sanitized_name = SPECIAL_NAMES.get(sr_name, sr_name)
+            for vault_name in camp.target.Vault_names:
+                if vault_name in vault_names:
+                    sanitized_name = SPECIAL_NAMES.get(vault_name, vault_name)
                     ret[sanitized_name].append(pt)
     return ret
 
 
-def get_live_promotions(sr_names):
-    sanitized_names = [SPECIAL_NAMES.get(name, name) for name in sr_names]
+def get_live_promotions(vault_names):
+    sanitized_names = [SPECIAL_NAMES.get(name, name) for name in vault_names]
     promos_by_sanitized_name = sgm(
         cache=g.gencache,
         keys=sanitized_names,
@@ -1143,9 +1142,9 @@ def get_live_promotions(sr_names):
     return itertools.chain.from_iterable(iter(promos_by_vaultname.values()))
 
 
-def lottery_promoted_links(sr_names, n=10):
+def lottery_promoted_links(vault_names, n=10):
     """Run weighted_lottery to order and choose a subset of promoted links."""
-    promo_tuples = get_live_promotions(sr_names)
+    promo_tuples = get_live_promotions(vault_names)
 
     # house priority campaigns have weight of 0, use some small value
     # so they'll show if there are no other campaigns
@@ -1286,6 +1285,3 @@ def Run(verbose=True):
 
     if verbose:
         print("%s promote.py:Run() - finished" % datetime.datetime.now(g.tz))
-
-
-

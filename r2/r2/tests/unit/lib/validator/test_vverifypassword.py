@@ -88,5 +88,3 @@ class TestVVerifyPassword(unittest.TestCase):
 
         self.assertTrue(self._checkFails("", fatal=False))
         self.assertTrue(self._checkFails("", fatal=True))
-
-

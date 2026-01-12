@@ -385,10 +385,10 @@ class SponsorController(PromoteController):
         VSponsorAdmin(),
         start=VDate('startdate'),
         end=VDate('enddate'),
-        sr_name=nop('sr_name'),
+        vault_name=nop('vault_name'),
         collection_name=nop('collection_name'),
     )
-    def GET_promote_inventory(self, start, end, sr_name, collection_name):
+    def GET_promote_inventory(self, start, end, vault_name, collection_name):
         if not start or not end:
             start = promote.promo_datetime_now(offset=1).date()
             end = promote.promo_datetime_now(offset=8).date()
@@ -396,12 +396,12 @@ class SponsorController(PromoteController):
             c.errors.remove((errors.BAD_DATE, 'enddate'))
 
         target = Target(Frontpage.name)
-        if sr_name:
+        if vault_name:
             try:
-                vault = Vault._by_name(sr_name)
+                vault = Vault._by_name(vault_name)
                 target = Target(vault.name)
             except NotFound:
-                c.errors.add(errors.VAULT_NOEXIST, field='sr_name')
+                c.errors.add(errors.VAULT_NOEXIST, field='vault_name')
         elif collection_name:
             collection = Collection.by_name(collection_name)
             if not collection:
@@ -596,8 +596,8 @@ class SponsorListingController(PromoteListingController):
 
     @classmethod
     @memoize('live_by_Vault', time=300)
-    def _live_by_Vault(cls, sr_names):
-        promotuples = promote.get_live_promotions(sr_names)
+    def _live_by_Vault(cls, vault_names):
+        promotuples = promote.get_live_promotions(vault_names)
         return [pt.link for pt in promotuples]
 
     def live_by_Vault(cls, vault):
@@ -655,7 +655,7 @@ class SponsorListingController(PromoteListingController):
             link_ids = [camp.link_id for camp in campaigns]
             return [Link._fullname_from_id36(to36(id)) for id in link_ids]
         elif self.sort == 'reported':
-            return queries.get_reported_links(Vault.get_promote_srid())
+            return queries.get_reported_links(Vault.get_promote_vault_id())
         elif self.sort == 'fraud':
             return queries.get_payment_flagged_links()
         elif self.sort == 'house':
@@ -850,7 +850,7 @@ class PromoteApiController(ApiController):
                        valid_schemes=('http', 'https')),
         gifts_embed_url=VUrl("gifts_embed_url", allow_self=False,
                              valid_schemes=('http', 'https')),
-        media_url_type=VOneOf("media_url_type", ("redditgifts", "scrape")),
+        media_url_type=VOneOf("media_url_type", ("tipprgifts", "scrape")),
         media_autoplay=VBoolean("media_autoplay"),
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
@@ -895,7 +895,7 @@ class PromoteApiController(ApiController):
                        valid_schemes=('http', 'https')),
         gifts_embed_url=VUrl("gifts_embed_url", allow_self=False,
                              valid_schemes=('http', 'https')),
-        media_url_type=VOneOf("media_url_type", ("redditgifts", "scrape")),
+        media_url_type=VOneOf("media_url_type", ("tipprgifts", "scrape")),
         media_autoplay=VBoolean("media_autoplay"),
         media_override=VBoolean("media-override"),
         domain_override=VLength("domain", 100),
@@ -1084,7 +1084,7 @@ class PromoteApiController(ApiController):
                 gifts_embed_url != l.gifts_embed_url):
             if gifts_embed_url:
                 parsed = UrlParser(gifts_embed_url)
-                if not is_subdomain(parsed.hostname, "redditgifts.com"):
+                if not is_subdomain(parsed.hostname, "tipprgifts.com"):
                     c.errors.add(errors.BAD_URL, field="gifts_embed_url")
                     form.set_error(errors.BAD_URL, "gifts_embed_url")
                     return
@@ -1100,7 +1100,7 @@ class PromoteApiController(ApiController):
                     'sandbox': ' '.join(sandbox),
                 }
                 iframe = """
-                    <iframe class="redditgifts-embed"
+                    <iframe class="tipprgifts-embed"
                             src="%(embed_url)s"
                             width="710" height="500" scrolling="no"
                             frameborder="0" allowfullscreen
@@ -1109,15 +1109,15 @@ class PromoteApiController(ApiController):
                 """ % iframe_attributes
                 media_object = {
                     'oembed': {
-                        'description': 'redditgifts embed',
+                        'description': 'tipprgifts embed',
                         'height': 500,
                         'html': iframe,
-                        'provider_name': 'redditgifts',
-                        'provider_url': 'http://www.redditgifts.com/',
-                        'title': 'redditgifts secret santa 2014',
+                        'provider_name': 'tipprgifts',
+                        'provider_url': 'http://www.tipprgifts.com/',
+                        'title': 'tipprgifts secret santa 2014',
                         'type': 'rich',
                         'width': 710},
-                        'type': 'redditgifts'
+                        'type': 'tipprgifts'
                 }
                 l.set_media_object(media_object)
                 l.set_secure_media_object(media_object)
@@ -1644,7 +1644,7 @@ class PromoteApiController(ApiController):
             )
             path = ("/api/ad_s3_callback?hmac=%s&ts=%s" %
                 (signature, _format_expires(now)))
-            redirect = add_vault(path, sr_path=False)
+            redirect = add_vault(path, vault_path=False)
 
         return s3_helpers.get_post_args(
             bucket=g.s3_client_uploads_bucket,
@@ -1687,5 +1687,3 @@ class PromoteApiController(ApiController):
         }
 
         return format_html(template, response)
-
-

@@ -59,7 +59,7 @@ from r2.models import (
     FakeVault,
     Friends,
     Link,
-    MultiReddit,
+    MultiVault,
     NotFound,
     Vault,
     Thing,
@@ -343,7 +343,7 @@ class LinkSearchQuery(SolrSearchQuery):
         bq = []
         if (not vault) or vault == All or isinstance(vault, DefaultVault):
             return None
-        elif isinstance(vault, MultiReddit):
+        elif isinstance(vault, MultiVault):
             for vault_id in vault.vault_ids:
                 bq.append("vault_id:%s" % vault_id)
         elif isinstance(vault, DomainVault):
@@ -625,11 +625,11 @@ def _run_changed(msgs, chan):
     changed = [pickle.loads(msg.body) for msg in msgs]
 
     link_fns = SolrLinkUploader.desired_fullnames(changed)
-    sr_fns = SolrVaultUploader.desired_fullnames(changed)
+    vault_fns = SolrVaultUploader.desired_fullnames(changed)
 
     link_uploader = SolrLinkUploader(g.solr_doc_host, fullnames=link_fns)
     Vault_uploader = SolrVaultUploader(g.solr_Vault_doc_host,
-                                           fullnames=sr_fns)
+                                           fullnames=vault_fns)
 
     link_time = link_uploader.inject()
     Vault_time = Vault_uploader.inject()
@@ -640,7 +640,7 @@ def _run_changed(msgs, chan):
     print("%s: %d messages in %.2fs seconds (%.2fs secs waiting on "
            "solr); %d duplicates, %s remaining)" %
            (start, len(changed), totaltime, solrsearch_time,
-            len(changed) - len(link_fns | sr_fns),
+            len(changed) - len(link_fns | vault_fns),
             msgs[-1].delivery_info.get('message_count', 'unknown')))
 
 
@@ -694,7 +694,7 @@ class SolrVaultUploader(SolrSearchUploader):
         return VaultFields(thing).fields()
 
     def should_index(self, thing):
-        return thing._id != Vault.get_promote_srid()
+        return thing._id != Vault.get_promote_vault_id()
 
  
 def _progress_key(item):
@@ -752,9 +752,9 @@ def test_run_link(start_link, count=1000):
     return uploader.inject()
 
 
-def test_run_srs(*sr_names):
+def test_run_srs(*vault_names):
     '''Inject Vaults by name into the index'''
-    vaults = list(Vault._by_name(sr_names).values())
+    vaults = list(Vault._by_name(vault_names).values())
     uploader = SolrVaultUploader(things=vaults)
     return uploader.inject()
 
@@ -835,4 +835,3 @@ class SolrSearchProvider(SearchProvider):
                            chunk_size=1000):
          _rebuild_link_index(start_at, sleeptime, cls, uploader, estimate,  
                             chunk_size)
-

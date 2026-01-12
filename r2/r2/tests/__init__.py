@@ -40,7 +40,7 @@ from routes.util import URLGenerator, url_for
 from r2.lib import eventcollector
 from r2.lib.utils import query_string
 
-__all__ = ['RedditTestCase', 'RedditControllerTestCase']
+__all__ = ['TipprTestCase', 'TipprControllerTestCase']
 
 here_dir = os.path.dirname(os.path.abspath(__file__))
 conf_dir = os.path.dirname(os.path.dirname(here_dir))
@@ -210,7 +210,7 @@ class MockAmqp:
             ))
 
 
-class RedditTestCase(TestCase):
+class TipprTestCase(TestCase):
     """Base Test Case for tests that require the app environment to run.
 
     App startup does take time, so try to use unittest.TestCase directly when
@@ -327,7 +327,7 @@ class NonCache:
         return
 
 
-class RedditControllerTestCase(RedditTestCase):
+class TipprControllerTestCase(TipprTestCase):
     CONTROLLER = None
     ACTIONS = {}
 
@@ -397,5 +397,3 @@ class RedditControllerTestCase(RedditTestCase):
     def additional_headers(self, headers, body):
         """Additional generated headers to be added to the request."""
         return {}
-
-

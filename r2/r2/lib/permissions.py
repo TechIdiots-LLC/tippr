@@ -104,4 +104,3 @@ class ModeratorPermissionSet(PermissionSet):
         if encoded is None:
             return cls(all=True)
         return super().loads(encoded, **kwargs)
-

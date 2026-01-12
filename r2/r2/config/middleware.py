@@ -206,7 +206,7 @@ class DomainMiddleware:
         # figure out what subdomain we're on, if any
         subdomains = domain[:-ignored_suffix_len - 1].split('.')
 
-        sr_redirect = None
+        vault_redirect = None
         prefix_parts = []
         for subdomain in subdomains[:]:
             extension = g.extension_subdomains.get(subdomain)
@@ -224,7 +224,7 @@ class DomainMiddleware:
             elif is_language_subdomain(subdomain):
                 environ['tippr-prefer-lang'] = subdomain
             else:
-                sr_redirect = subdomain
+                vault_redirect = subdomain
                 subdomains.remove(subdomain)
 
         if 'tippr-prefer-lang' in environ:
@@ -233,12 +233,12 @@ class DomainMiddleware:
             environ['tippr-domain-prefix'] = '.'.join(prefix_parts)
 
         # if there was a vault subdomain, redirect
-        if sr_redirect and environ.get("FULLPATH"):
+        if vault_redirect and environ.get("FULLPATH"):
             if not subdomains and g.domain_prefix:
                 subdomains.append(g.domain_prefix)
             subdomains.append(g.domain)
             redir = "{}/v/{}/{}".format('.'.join(subdomains),
-                                    sr_redirect, environ['FULLPATH'])
+                                    vault_redirect, environ['FULLPATH'])
             redir = g.default_scheme + "://" + redir.replace('//', '/')
 
             start_response("301 Moved Permanently", [("Location", redir)])
@@ -249,17 +249,17 @@ class DomainMiddleware:
 
 class VaultMiddleware:
     # Use /v/ for vault URLs
-    sr_pattern = re.compile(r'^/v/([^/]{2,})')
+    vault_pattern = re.compile(r'^/v/([^/]{2,})')
 
     def __init__(self, app):
         self.app = app
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
-        vault = self.sr_pattern.match(path)
+        vault = self.vault_pattern.match(path)
         if vault:
             environ['vault'] = vault.groups()[0]
-            environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
+            environ['PATH_INFO'] = self.vault_pattern.sub('', path) or '/'
         return self.app(environ, start_response)
 
 
@@ -632,4 +632,3 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app.config = config
 
     return app
-

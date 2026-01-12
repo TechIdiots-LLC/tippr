@@ -61,4 +61,3 @@ class TicketProvider:
         The return value should be a JSON object of the updated ticket.
         """
         raise NotImplementedError
-

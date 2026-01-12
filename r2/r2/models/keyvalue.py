@@ -57,5 +57,3 @@ class KeyValueStore(metaclass=ThingMeta):
 
 class NamedGlobals(KeyValueStore):
     _use_db = True
-
-

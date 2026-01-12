@@ -86,4 +86,3 @@ class HttpAuthenticationProvider(AuthenticationProvider):
         if not constant_time_compare(expected_hash, account.password):
             return None
         return account
-

@@ -25,7 +25,7 @@ from pylons import tmpl_context as c
 
 from r2.lib import amqp, emailer, hooks, newsletter
 from r2.lib.base import abort
-from r2.lib.errors import errors, reddit_http_error
+from r2.lib.errors import errors, tippr_http_error
 from r2.lib.validator import VRatelimit
 from r2.models.account import AccountExists, register
 
@@ -67,7 +67,7 @@ def handle_login(
             c.errors.remove((errors.LOGGED_IN, None))
         else:
             _event(error='LOGGED_IN')
-            abort(reddit_http_error(409, errors.LOGGED_IN))
+            abort(tippr_http_error(409, errors.LOGGED_IN))
 
     if responder.has_errors("ratelimit", errors.RATELIMIT):
         _event(error='RATELIMIT')
@@ -180,4 +180,3 @@ def handle_register(
 
         controller._login(responder, user, rem)
         _event(error=None)
-

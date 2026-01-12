@@ -357,4 +357,3 @@ if __name__ == '__main__':
             _sys.stdin.read(), keep_bang_comments=keep_bang_comments
         ))
     main()
-

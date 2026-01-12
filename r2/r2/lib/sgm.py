@@ -104,4 +104,3 @@ def sgm(cache, keys, miss_fn, prefix='', time=0, stale=False,
 
 
 __all__ = ['sgm']
-

@@ -308,7 +308,7 @@ class OAuth2AccessController(MinimalController):
                     "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
             response.headers['Access-Control-Expose-Headers'] = \
-                self.COMMON_REDDIT_HEADERS
+                self.COMMON_TIPPR_HEADERS
 
     @validate(
         grant_type=VOneOf("grant_type",
@@ -588,7 +588,7 @@ class OAuth2AccessController(MinimalController):
                     "Authorization, "
             response.headers["Access-Control-Allow-Credentials"] = "false"
             response.headers['Access-Control-Expose-Headers'] = \
-                self.COMMON_REDDIT_HEADERS
+                self.COMMON_TIPPR_HEADERS
 
     @validate(
         VRatelimit(rate_user=False, rate_ip=True, prefix="rate_revoke_token_"),
@@ -658,4 +658,3 @@ def require_oauth2_scope(*scopes):
 def allow_oauth2_access(fn):
     fn.oauth2_perms = {"required_scopes": [], "oauth2_allowed": True}
     return fn
-

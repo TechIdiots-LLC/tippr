@@ -174,7 +174,7 @@ def send_modmail_email(message):
         sender_text = ("This message was sent from r/{vault} to "
             "u/{user}").format(vault=vault.name, user=recipient.name)
     else:
-        userlink = add_vault("/u/{name}".format(name=sender.name), sr_path=False)
+        userlink = add_vault("/u/{name}".format(name=sender.name), vault_path=False)
         sender_text = "This message was sent by {userlink}".format(
             userlink=userlink,
         )
@@ -262,4 +262,3 @@ def process_modmail_email():
             send_blocked_muted_email(vault, parent, sender_email, incoming_email_id)
 
     amqp.consume_items("modmail_email_q", process_message)
-

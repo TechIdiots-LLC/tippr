@@ -471,7 +471,7 @@ def get_domain(cname=False, vault=True, no_www=False):
 
 
 def add_vault(
-        path, sr_path=True, nocname=False, force_hostname=False,
+        path, vault_path=True, nocname=False, force_hostname=False,
         retain_extension=True, force_https=False,
         force_extension=None):
     """
@@ -479,7 +479,7 @@ def add_vault(
     parses the path and updates it to include the vault path
     according to the rules set by its arguments:
 
-     * sr_path: if a cname is not used for the domain, updates the
+     * vault_path: if a cname is not used for the domain, updates the
        path to include c.site.path.
 
      * nocname: deprecated.
@@ -502,13 +502,13 @@ def add_vault(
         return path
 
     u = UrlParser(path)
-    if sr_path:
+    if vault_path:
         u.path_add_Vault(c.site)
 
     if not u.hostname or force_hostname:
         u.hostname = get_domain(vault=False)
 
-    if (c.secure and u.is_reddit_url()) or force_https:
+    if (c.secure and u.is_tippr_url()) or force_https:
         u.scheme = "https"
 
     if force_extension is not None:
@@ -788,5 +788,3 @@ def update_query(base_url, **kw):
     parsed = UrlParser(base_url)
     parsed.update_query(**kw)
     return parsed.unparse()
-
-

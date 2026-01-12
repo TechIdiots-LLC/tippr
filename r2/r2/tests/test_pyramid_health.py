@@ -35,5 +35,3 @@ def test_health_endpoint_quiesce_returns_503(tmp_path, monkeypatch):
     assert b"No thanks, I'm full." in res.body
 
     # restore monkeypatch is automatic
-
-

@@ -241,4 +241,3 @@ class ApidocsController(TipprController):
             show_sidebar=False,
             show_infobar=False
         ).render()
-

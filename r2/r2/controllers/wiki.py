@@ -33,7 +33,7 @@ from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import require_oauth2_scope
 from r2.lib.automoderator import Ruleset
 from r2.lib.base import abort
-from r2.lib.errors import reddit_http_error
+from r2.lib.errors import tippr_http_error
 from r2.lib.merge import ConflictException, make_htmldiff
 from r2.lib.pages import BoringPage, CssError
 from r2.lib.pages.things import default_thing_wrapper
@@ -340,7 +340,7 @@ class WikiController(TipprController):
             self.handle_error(error.code, error.name)
 
     def handle_error(self, code, reason=None, **data):
-        abort(reddit_http_error(code, reason, **data))
+        abort(tippr_http_error(code, reason, **data))
 
     def pre(self):
         TipprController.pre(self)
@@ -546,6 +546,3 @@ class WikiApiController(WikiController):
         WikiController.pre(self)
         c.render_style = 'api'
         set_extension(request.environ, 'json')
-
-
-

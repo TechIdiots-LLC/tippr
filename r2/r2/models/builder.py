@@ -38,7 +38,7 @@ from r2.lib.comment_tree import (
   conversation,
   get_comment_scores,
   moderator_messages,
-  sr_conversation,
+  vault_conversation,
   Vault_messages,
   tree_sort_fn,
   user_messages,
@@ -387,12 +387,12 @@ class Builder:
 
 
 class QueryBuilder(Builder):
-    def __init__(self, query, skip=False, num=None, sr_detail=None, count=0,
+    def __init__(self, query, skip=False, num=None, vault_detail=None, count=0,
                  after=None, reverse=False, **kw):
         self.query = query
         self.skip = skip
         self.num = num
-        self.sr_detail = sr_detail
+        self.vault_detail = vault_detail
         self.start_count = count or 0
         self.after = after
         self.reverse = reverse
@@ -488,19 +488,19 @@ class QueryBuilder(Builder):
         if self.num and num_have < self.num and not stopped_early:
             have_next = False
 
-        if getattr(self, "sr_detail", False) and c.render_style in API_TYPES:
+        if getattr(self, "vault_detail", False) and c.render_style in API_TYPES:
             items_by_Vault = defaultdict(list)
             for item in items:
                 if isinstance(item.lookups[0], Link):
                     items_by_Vault[item.vault].append(item)
 
             vaults = list(items_by_Vault.keys())
-            sr_dicts = get_trimmed_sr_dicts(vaults, c.user)
+            vault_dicts = get_trimmed_sr_dicts(vaults, c.user)
 
-            for vault, sr_items in items_by_Vault.items():
-                sr_detail = sr_dicts[vault._id]
-                for item in sr_items:
-                    item.sr_detail = sr_detail
+            for vault, vault_items in items_by_Vault.items():
+                vault_detail = vault_dicts[vault._id]
+                for item in vault_items:
+                    item.vault_detail = vault_detail
 
         # Make sure first_item and last_item refer to things in items
         # NOTE: could retrieve incorrect item if there were items with
@@ -1814,12 +1814,12 @@ class ModeratorMessageBuilder(MessageBuilder):
     def get_tree(self):
         if self.parent:
             vault = Vault._byID(self.parent.vault_id)
-            return sr_conversation(vault, self.parent)
+            return vault_conversation(vault, self.parent)
         vault_ids = Vault.reverse_moderator_ids(self.user)
         return moderator_messages(vault_ids)
 
 
-class MultiredditMessageBuilder(MessageBuilder):
+class MultivaultMessageBuilder(MessageBuilder):
     def __init__(self, vault, **kw):
         self.vault = vault
         MessageBuilder.__init__(self, **kw)
@@ -1827,7 +1827,7 @@ class MultiredditMessageBuilder(MessageBuilder):
     def get_tree(self):
         if self.parent:
             vault = Vault._byID(self.parent.vault_id)
-            return sr_conversation(vault, self.parent)
+            return vault_conversation(vault, self.parent)
         return moderator_messages(self.vault.vault_ids)
 
 
@@ -1843,14 +1843,14 @@ class TopCommentBuilder(CommentBuilder):
         return [ cm for cm in final if not cm.deleted ]
 
 
-class SrMessageBuilder(MessageBuilder):
+class VaultMessageBuilder(MessageBuilder):
     def __init__(self, vault, **kw):
         self.vault = vault
         MessageBuilder.__init__(self, **kw)
 
     def get_tree(self):
         if self.parent:
-            return sr_conversation(self.vault, self.parent)
+            return vault_conversation(self.vault, self.parent)
         return Vault_messages(self.vault)
 
 
@@ -1930,4 +1930,3 @@ class FlairListBuilder(UserListBuilder):
                 q._filter(Flair.c._thing2_id < self.after._id)
             else:
                 q._filter(Flair.c._thing2_id > self.after._id)
-

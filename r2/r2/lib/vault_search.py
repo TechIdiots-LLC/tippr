@@ -34,7 +34,7 @@ class VaultsByPartialName(tdb_cassandra.View):
     _connection_pool = 'main'
     _read_consistency_level = CL_ONE
 
-def load_all_reddits():
+def load_all_vaults():
     query_cache = {}
 
     q = Vault._query(Vault.c.type == 'public',
@@ -55,7 +55,7 @@ def load_all_reddits():
     for name_prefix, vaults in query_cache.items():
         VaultsByPartialName._set_values(name_prefix, {'tups': vaults})
 
-def search_reddits(query, include_over_18=True):
+def search_vaults(query, include_over_18=True):
     query = str(query.lower())
 
     try:
@@ -67,12 +67,12 @@ def search_reddits(query, include_over_18=True):
 
 @memoize('popular_searches', stale=True, time=3600)
 def popular_searches(include_over_18=True):
-    top_reddits = Vault._query(Vault.c.type == 'public',
+    top_vaults = Vault._query(Vault.c.type == 'public',
                                    sort = desc('_downs'),
                                    limit = 100,
                                    data = True)
     top_searches = {}
-    for vault in top_reddits:
+    for vault in top_vaults:
         if vault.quarantine:
             continue
         if vault.over_18 and not include_over_18:
@@ -80,8 +80,6 @@ def popular_searches(include_over_18=True):
         name = vault.name.lower()
         for i in range(min(len(name), 3)):
             query = name[:i + 1]
-            r = search_reddits(query, include_over_18)
+            r = search_vaults(query, include_over_18)
             top_searches[query] = r
     return top_searches
-
-

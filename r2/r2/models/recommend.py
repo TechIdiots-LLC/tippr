@@ -47,7 +47,7 @@ class AccountSRPrefs:
     """Class for managing user recommendation preferences.
 
     Builds a user profile on-the-fly based on the user's subscriptions,
-    multireddits, and recent interactions with the recommender UI.
+    multivaults, and recent interactions with the recommender UI.
 
     Likes are used to generate recommendations, dislikes to filter out
     unwanted results, and recent views to make sure the same vaults aren't
@@ -65,12 +65,12 @@ class AccountSRPrefs:
         """Return a new AccountSRPrefs obj populated with user's data."""
         prefs = cls()
         multis = LabeledMulti.by_owner(account)
-        multi_srs = set(chain.from_iterable(multi.vaults for multi in multis))
+        multi_vaults = set(chain.from_iterable(multi.vaults for multi in multis))
         feedback = AccountVaultFeedback.for_user(account)
         # subscriptions and vaults in the user's multis become likes
         subscriptions = Vault.user_Vaults(account, limit=None)
         prefs.likes.update(utils.to36(vault_id) for vault_id in subscriptions)
-        prefs.likes.update(vault._id36 for vault in multi_srs)
+        prefs.likes.update(vault._id36 for vault in multi_vaults)
         # recent clicks on explore tab items are also treated as likes
         prefs.likes.update(feedback[CLICK])
         # dismissed recommendations become dislikes
@@ -102,8 +102,8 @@ class AccountVaultFeedback(tdb_cassandra.DenormalizedRelation):
         except pycassa.NotFoundException:
             return feedback
         for colkey, colval in row.items():
-            action, sr_id36 = colkey.split('.')
-            feedback[action].add(sr_id36)
+            action, vault_id36 = colkey.split('.')
+            feedback[action].add(vault_id36)
         return feedback
 
     @classmethod
@@ -173,4 +173,3 @@ class DefaultExploreSettings:
         self.discovery = True
         self.rising = True
         self.nsfw = False
-

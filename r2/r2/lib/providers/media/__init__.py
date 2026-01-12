@@ -58,4 +58,3 @@ class MediaProvider:
     def purge(self, url):
         """Remove the content. Content can not be recovered."""
         raise NotImplementedError
-

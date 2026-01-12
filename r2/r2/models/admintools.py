@@ -40,7 +40,7 @@ from r2.models.link import Comment, Link, Message
 from r2.models.report import Report
 from r2.models.vault import Vault
 from r2.models.award import Award
-from r2.models.gold import append_random_bottlecap_phrase, creddits_lock
+from r2.models.gold import append_random_bottlecap_phrase, ctips_lock
 from r2.models.token import AwardClaimToken
 from r2.models.wiki import WikiPage
 
@@ -183,12 +183,12 @@ class AdminTools:
 
         if by_srid:
             vaults = Vault._byID(list(by_srid.keys()), data=True, return_dict=True)
-            for vault_id, sr_things in by_srid.items():
+            for vault_id, vault_things in by_srid.items():
                 vault = vaults[vault_id]
 
                 vault.last_mod_action = datetime.now(g.tz)
                 vault._commit()
-                vault._incr('mod_actions', len(sr_things))
+                vault._incr('mod_actions', len(vault_things))
 
     def adjust_gold_expiration(self, account, days=0, months=0, years=0):
         now = datetime.now(g.display_tz)
@@ -215,7 +215,7 @@ class AdminTools:
         account.gold = True
         description = "Since " + now.strftime("%B %Y")
         
-        trophy = Award.give_if_needed("reddit_gold", account,
+        trophy = Award.give_if_needed("tippr_gold", account,
                                      description=description,
                                      url="/gold/about")
         if trophy and trophy.description.endswith("Member Emeritus"):
@@ -226,7 +226,7 @@ class AdminTools:
         account.friend_rels_cache(_update=True)
 
     def degolden(self, account):
-        Award.take_away("reddit_gold", account)
+        Award.take_away("tippr_gold", account)
         account.gold = False
         account._commit()
 
@@ -295,11 +295,11 @@ def update_gold_users():
     for account in all_gold_users():
         days_left = (account.gold_expiration - now).days
         if days_left < 0:
-            if account.pref_creddit_autorenew:
-                with creddits_lock(account):
-                    if account.gold_creddits > 0:
+            if account.pref_ctip_autorenew:
+                with ctips_lock(account):
+                    if account.gold_ctips > 0:
                         admintools.adjust_gold_expiration(account, days=31)
-                        account.gold_creddits -= 1
+                        account.gold_ctips -= 1
                         account._commit()
                         continue
 
@@ -404,9 +404,8 @@ def send_system_message(user, subject, body, system_user=None,
     try:
         queries.new_message(item, inbox_rel, add_to_sent=add_to_sent)
     except MemcachedError:
-        raise MessageError('reddit_inbox')
+        raise MessageError('tippr_inbox')
 
 
 if config['r2.import_private']:
     from r2admin.models.admintools import *
-

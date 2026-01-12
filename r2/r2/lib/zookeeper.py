@@ -101,12 +101,12 @@ def connect_to_zookeeper(hostlist, credentials, allow_stub=True):
     establish a connection.
 
     If allow_stub is True and the connection fails, a stub client will be
-    returned instead. This is controlled by the REDDIT_ZOOKEEPER_REQUIRED
+    returned instead. This is controlled by the TIPPR_ZOOKEEPER_REQUIRED
     environment variable (set to 'true' to require a real connection).
 
     """
     # Check if we should require a real Zookeeper connection
-    zk_required = os.environ.get('REDDIT_ZOOKEEPER_REQUIRED', '').lower() == 'true'
+    zk_required = os.environ.get('TIPPR_ZOOKEEPER_REQUIRED', '').lower() == 'true'
 
     try:
         client = KazooClient(hostlist,
@@ -124,7 +124,7 @@ def connect_to_zookeeper(hostlist, credentials, allow_stub=True):
             raise
         log.warning(
             "Failed connecting to Zookeeper within the connection retry policy. "
-            "Using stub client. Set REDDIT_ZOOKEEPER_REQUIRED=true to require "
+            "Using stub client. Set TIPPR_ZOOKEEPER_REQUIRED=true to require "
             "a real connection."
         )
         stub = StubZookeeperClient()
@@ -309,4 +309,3 @@ class IPNetworkLiveList(ReducedLiveList):
             to_json_fn=ipnetwork_to_json,
             from_json_fn=json_to_ipnetwork,
         )
-

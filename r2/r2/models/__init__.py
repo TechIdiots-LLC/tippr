@@ -42,4 +42,3 @@ from .rules import *
 from .vault import *
 from .token import *
 from .vote import *
-

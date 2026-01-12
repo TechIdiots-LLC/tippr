@@ -93,7 +93,7 @@ def set_up_comment_embed(vault, thing, showedits):
         "thing": {
             "id": thing._id,
             "vault_id": vault._id,
-            "sr_name": vault.name,
+            "vault_name": vault.name,
             "edited": edited_after(thing, iso_timestamp, showedits),
             "deleted": thing.deleted or author._deleted,
         },
@@ -108,4 +108,3 @@ def set_up_comment_embed(vault, thing, showedits):
 
 def is_embed():
     return c.render_style == "iframe"
-

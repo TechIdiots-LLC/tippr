@@ -24,12 +24,12 @@
 from r2.lib.providers.image_resizing import NotLargeEnough
 from r2.lib.providers.image_resizing.imgix import ImgixImageResizingProvider
 from r2.lib.utils import UrlParser
-from r2.tests import RedditTestCase
+from r2.tests import TipprTestCase
 
 URLENCODED_COMMA = '%2C'
 
 
-class TestImgixResizer(RedditTestCase):
+class TestImgixResizer(TipprTestCase):
     def setUp(self):
         self.provider = ImgixImageResizingProvider()
         self.patch_g(
@@ -89,5 +89,3 @@ class TestImgixResizer(RedditTestCase):
                       height=800)
         url = self.provider.resize_image(image, censor_nsfw=True)
         self.assertEqual(url, 'https://example.com/a.jpg?blur=600&px=32')
-
-
