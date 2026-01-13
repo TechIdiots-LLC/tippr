@@ -50,7 +50,7 @@ with CachedQueryMutator() as m:
             if fullname in comments and fullname not in already_seen:
                 thing = gilding["thing"] = comments[fullname]
                 gilding_object = Storage(gilding)
-                m.insert(get_gilded_comments(thing.sr_id), [gilding_object])
+                m.insert(get_gilded_comments(thing.vault_id), [gilding_object])
                 m.insert(get_all_gilded_comments(), [gilding_object])
                 already_seen.add(fullname)
         date -= datetime.timedelta(days=1)

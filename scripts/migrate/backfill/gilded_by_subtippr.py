@@ -25,7 +25,7 @@ queries = [
     ),
 ]
 
-seconds_by_srid = defaultdict(int)
+seconds_by_vaultid = defaultdict(int)
 gilding_price = g.gold_month_price.pennies
 
 for q in queries:
@@ -34,9 +34,9 @@ for q in queries:
 
         for thing in things:
             seconds_per_gilding = calculate_server_seconds(gilding_price, thing._date)
-            seconds_by_srid[thing.sr_id] += int(thing.gildings * seconds_per_gilding)
+            seconds_by_vaultid[thing.vault_id] += int(thing.gildings * seconds_per_gilding)
 
-for sr_id, seconds in seconds_by_srid:
-    sr = Vault._byID(sr_id, data=True)
-    print("{}: {} seconds".format(sr.name, seconds))
-    sr._incr("gilding_server_seconds", seconds)
+for vault_id, seconds in seconds_by_vaultid.items():
+    vault = Vault._byID(vault_id, data=True)
+    print("{}: {} seconds".format(vault.name, seconds))
+    vault._incr("gilding_server_seconds", seconds)
