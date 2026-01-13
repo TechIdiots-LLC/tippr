@@ -137,6 +137,14 @@
     }
 }
 
+.button-style(@top-color, @bottom-color, @border-color) {
+    .linear-gradient(@top-color, @bottom-color);
+    border: @border-color;
+    &:hover {
+        .linear-gradient(lighten(@top-color, 5%), @bottom-color);
+    }
+}
+
 .button-size(@padding-vertical; @padding-horizontal; @font-size; @line-height; @border-radius) {
     padding: @padding-vertical @padding-horizontal (@padding-vertical - 1px);
     font-size: @font-size;
