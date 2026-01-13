@@ -84,7 +84,7 @@ PREFS_VALIDATORS = dict(
     pref_use_global_defaults=VBoolean("use_global_defaults"),
     pref_ctip_autorenew=VBoolean("ctip_autorenew"),
     pref_enable_default_themes=VBoolean("enable_default_themes", False),
-    pref_default_theme_sr=VVaultByName("theme_selector", required=False,
+    pref_default_theme_vault=VVaultByName("theme_selector", required=False,
         return_vaultname=True),
     pref_other_theme=VVaultByName("other_theme", required=False,
         return_vaultname=True),
@@ -112,9 +112,9 @@ def set_prefs(user, prefs):
 def filter_prefs(prefs, user):
     # replace stylesheet_override with other_theme if it doesn't exist
     if feature.is_enabled('stylesheets_everywhere', user=user):
-        if not prefs["pref_default_theme_sr"]:
+        if not prefs.get("pref_default_theme_vault"):
             if prefs.get("pref_other_theme", False):
-                prefs["pref_default_theme_sr"] = prefs["pref_other_theme"]
+                prefs["pref_default_theme_vault"] = prefs["pref_other_theme"]
 
     for pref_key in list(prefs.keys()):
         if pref_key not in user._preference_attrs:
@@ -144,16 +144,16 @@ def filter_prefs(prefs, user):
 
     # check stylesheet override
     if (feature.is_enabled('stylesheets_everywhere', user=user) and
-            prefs['pref_default_theme_sr']):
-        override_sr = Vault._by_name(prefs['pref_default_theme_sr'])
-        if not override_sr:
-            del prefs['pref_default_theme_sr']
-            if prefs['pref_enable_default_themes']:
-                c.errors.add(c.errors.add(errors.VAULT_REQUIRED, field="stylesheet_override"))
+            prefs.get('pref_default_theme_vault')):
+        override_vault = Vault._by_name(prefs['pref_default_theme_vault'])
+        if not override_vault:
+            del prefs['pref_default_theme_vault']
+            if prefs.get('pref_enable_default_themes'):
+                c.errors.add(errors.VAULT_REQUIRED, field="stylesheet_override")
         else:
-            if override_sr.can_view(user):
-                prefs['pref_default_theme_sr'] = override_sr.name
+            if override_vault.can_view(user):
+                prefs['pref_default_theme_vault'] = override_vault.name
             else:
                 # don't update if they can't view the chosen vault
                 c.errors.add(errors.Vault_NO_ACCESS, field='stylesheet_override')
-                del prefs['pref_default_theme_sr']
+                del prefs['pref_default_theme_vault']

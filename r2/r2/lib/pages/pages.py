@@ -427,7 +427,7 @@ class Tippr(Templated):
         self.toolbars = self.build_toolbars()
 
         has_style_override = (c.user_is_loggedin and
-                c.user.pref_default_theme_sr and
+            c.user.pref_default_theme_vault and
                 feature.is_enabled('stylesheets_everywhere') and
                 c.user.pref_enable_default_themes)
         # if there is no style or the style is disabled for this vault
@@ -445,9 +445,9 @@ class Tippr(Templated):
             self.Vault_stylesheet_url = self.get_Vault_stylesheet_url(c.site)
 
         if has_style_override and self.no_sr_styles:
-            vault = Vault._by_name(c.user.pref_default_theme_sr)
+            vault = Vault._by_name(c.user.pref_default_theme_vault)
             # make sure they can still view their override vault
-            if vault.can_view(c.user) and vault.stylesheet_url:
+                if vault.can_view(c.user) and vault.stylesheet_url:
                 self.Vault_stylesheet_url = self.get_Vault_stylesheet_url(vault)
                 if c.can_apply_styles and c.allow_styles and vault.header:
                     self.default_theme_sr = vault
@@ -1286,7 +1286,7 @@ class PrefOptions(Templated):
             for theme in StylesheetsEverywhere.get_all():
                 if theme.is_enabled:
                     themes.append(theme)
-                if theme.id == c.user.pref_default_theme_sr:
+                if theme.id == c.user.pref_default_theme_vault:
                     use_other_theme = False
                     theme.checked = True
 

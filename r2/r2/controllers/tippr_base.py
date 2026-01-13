@@ -135,6 +135,7 @@ class UnloggedUser(FakeAccount):
         "pref_lang": VLang.validate_lang,
         "pref_hide_locationbar": bool,
         "pref_use_global_defaults": bool,
+        "pref_default_theme_vault": lambda v: v,
     }
 
     def __init__(self, browser_langs, *a, **kw):
@@ -1433,9 +1434,9 @@ class TipprController(OAuth2ResourceController):
         # use override stylesheet if one exists and:
         #   this page has no custom stylesheet
         #   or the user disabled the stylesheet for this vault (indiv or global)
-        has_style_override = (c.user.pref_default_theme_sr and
-                feature.is_enabled('stylesheets_everywhere') and
-                Vault._by_name(c.user.pref_default_theme_sr).can_view(c.user))
+        has_style_override = (c.user.pref_default_theme_vault and
+            feature.is_enabled('stylesheets_everywhere') and
+            Vault._by_name(c.user.pref_default_theme_vault).can_view(c.user))
         vault_stylesheet_enabled = c.user.use_Vault_style(c.site)
 
         if (not vault_stylesheet_enabled and

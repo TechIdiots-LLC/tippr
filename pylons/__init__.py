@@ -20,8 +20,6 @@ class LocalStack:
 
     def _push_object(self, obj: Any) -> None:
         self._stack.append(obj)
-
-    def _pop_object(self) -> Any:
     # Accept an optional `obj` argument for compatibility with some
     # Paste versions that call `_pop_object(obj)`.
     def _pop_object(self, obj: Any = None) -> Any:
@@ -73,12 +71,9 @@ class UrlPushable:
 
     def _push_object(self, obj: Any) -> None:
         self._stack.append(obj)
-
-    def _pop_object(self) -> Any:
-        # Accept an optional `obj` argument for compatibility with some
-        # Paste versions that call `_pop_object(obj)`.
-        def _pop_object(self, obj: Any = None) -> Any:
-            return self._stack.pop()
+    # Accept an optional `obj` argument for compatibility with some
+    # Paste versions that call `_pop_object(obj)`.
+    def _pop_object(self, obj: Any = None) -> Any:
         return self._stack.pop()
 
     def _get_current(self):

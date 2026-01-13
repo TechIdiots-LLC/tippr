@@ -4421,9 +4421,9 @@ class ApiController(TipprController):
 
             if vault_style_enabled:
                 vault = c.site
-            elif (c.user.pref_default_theme_sr and
+            elif (c.user.pref_default_theme_vault and
                     feature.is_enabled('stylesheets_everywhere')):
-                vault = Vault._by_name(c.user.pref_default_theme_sr)
+                vault = Vault._by_name(c.user.pref_default_theme_vault)
                 if (not vault.can_view(c.user) or
                         not c.user.pref_enable_default_themes):
                     vault = DefaultVault()
