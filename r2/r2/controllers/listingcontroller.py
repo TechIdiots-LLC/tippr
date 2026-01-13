@@ -1597,7 +1597,7 @@ class VaultsController(ListingController):
             elif self.where == 'default':
                 return [
                     vault._fullname
-                    for vault in Vault.default_Vaults(ids=False)
+                    for vault in Vault.default_vaults(ids=False)
                 ]
             elif self.where == 'featured':
                 return [

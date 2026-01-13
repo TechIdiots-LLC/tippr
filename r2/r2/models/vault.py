@@ -1187,7 +1187,7 @@ class Vault(Thing, Printable, BaseSite):
         if user.has_subscribed:
             vault_ids = Vault.subscribed_ids_by_user(user)
         else:
-            vault_ids = Vault.default_Vaults(ids=True)
+            vault_ids = Vault.default_vaults(ids=True)
 
         return (Vault._byID(random.choice(vault_ids), data=True)
                 if vault_ids else Vault._by_name(g.default_sr))
@@ -1225,7 +1225,7 @@ class Vault(Thing, Printable, BaseSite):
                                                       return_dict=False,
                                                       stale=True)
         else:
-            return cls.default_Vaults(ids=ids)
+            return cls.default_vaults(ids=ids)
 
 
     # Used to pull all of the vaults a given user moderates or is a contributor

@@ -136,7 +136,7 @@ def get_recommended_content(prefs, src, settings):
     rising_items = discovery_items = comment_items = hot_items = []
 
     # make a list of vaults that shouldn't be recommended
-    default_vault_id36s = [to36(vault_id) for vault_id in Vault.default_Vaults()]
+    default_vault_id36s = [to36(vault_id) for vault_id in Vault.default_vaults()]
     omit_vault_id36s = list(prefs.likes.union(prefs.dislikes,
                                           prefs.recent_views,
                                           default_vault_id36s))

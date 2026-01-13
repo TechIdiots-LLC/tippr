@@ -2803,7 +2803,7 @@ class VaultTopBar(CachedTemplate):
             t += c.user._id
 
         # HACK: depends on something in the page's content calling
-        # Vault.default_Vaults so that c.location is set prior to this
+        # Vault.default_vaults so that c.location is set prior to this
         # template being added to the header. set c.location as an attribute so
         # it is added to the render cache key.
         self.location = c.location or "no_location"
@@ -2819,7 +2819,7 @@ class VaultTopBar(CachedTemplate):
     @property
     def pop_reddits(self):
         if self._pop_reddits is None:
-            defaults = Vault.default_Vaults(ids=False)
+            defaults = Vault.default_vaults(ids=False)
             # sort the default vaults by "popularity" descending
             defaults = sorted(defaults, key=lambda vault: vault._downs, reverse=True)
             self._pop_reddits = defaults
@@ -3060,7 +3060,7 @@ class VaultStylesheet(VaultStylesheetBase):
         # try to find a link to use, otherwise give up and return
         links = normalized_hot([vault._id])
         if not links:
-            links = normalized_hot(Vault.default_Vaults())
+            links = normalized_hot(Vault.default_vaults())
 
         if links:
             links = links[:25]

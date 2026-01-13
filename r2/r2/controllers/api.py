@@ -4741,7 +4741,7 @@ class ApiController(TipprController):
         if query.lower() in common_english_words:
             return []
 
-        exclude = Vault.default_Vaults()
+        exclude = Vault.default_vaults()
 
         faceting = {"tippr":{"sort":"-sum(text_relevance)", "count":20}}
         try:
