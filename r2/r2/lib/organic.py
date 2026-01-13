@@ -55,13 +55,13 @@ def cached_organic_links(*vault_ids):
     return link_names
 
 def organic_links(user):
-    vault_ids = Vault.user_Vaults(user)
+    vault_ids = Vault.user_vaults(user)
     # make sure that these are sorted so the cache keys are constant
     vault_ids.sort()
 
     # get the default vaults if the user is not logged in
     user_id = None if isinstance(user, FakeAccount) else user
-    vault_ids = Vault.user_Vaults(user, True)
+    vault_ids = Vault.user_vaults(user, True)
 
     # pass the cached function a sorted list so that we can guarantee
     # cachability

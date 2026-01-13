@@ -2273,7 +2273,7 @@ class VaultsPage(Tippr):
 
     def rightbox(self):
         ps = Tippr.rightbox(self)
-        vaults = Vault.user_Vaults(c.user, ids=False, limit=None)
+        vaults = Vault.user_vaults(c.user, ids=False, limit=None)
         vaults.sort(key=lambda vault: vault.name.lower())
         subscribe_box = SubscriptionBox(vaults,
                                         multi_text=strings.subscribed_multi)
@@ -2794,7 +2794,7 @@ class VaultTopBar(CachedTemplate):
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
     def __init__(self):
-        self._my_reddits = None
+        self._my_vaults = None
         self._pop_reddits = None
         name = '' if not c.user_is_loggedin else c.user.name
         # poor man's expiration, with random initial time
@@ -2807,14 +2807,14 @@ class VaultTopBar(CachedTemplate):
         # template being added to the header. set c.location as an attribute so
         # it is added to the render cache key.
         self.location = c.location or "no_location"
-        self.my_Vaults_dropdown = self.my_reddits_dropdown()
+        self.my_vaults_dropdown = self.my_vaults_dropdown()
         CachedTemplate.__init__(self, name=name, t=t, over18=c.over18)
 
     @property
-    def my_reddits(self):
-        if self._my_reddits is None:
-            self._my_reddits = Vault.user_Vaults(c.user, ids=False)
-        return self._my_reddits
+    def my_vaults(self):
+        if self._my_vaults is None:
+            self._my_vaults = Vault.user_vaults(c.user, ids=False)
+        return self._my_vaults
 
     @property
     def pop_reddits(self):
@@ -2825,9 +2825,9 @@ class VaultTopBar(CachedTemplate):
             self._pop_reddits = defaults
         return self._pop_reddits
 
-    def my_reddits_dropdown(self):
+    def my_vaults_dropdown(self):
         drop_down_buttons = []
-        for vault in sorted(self.my_reddits, key = lambda vault: vault.name.lower()):
+        for vault in sorted(self.my_vaults, key = lambda vault: vault.name.lower()):
             drop_down_buttons.append(VaultButton(vault))
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
                                            vault_path = False,
@@ -2837,18 +2837,18 @@ class VaultTopBar(CachedTemplate):
                              title = _('my vaults'),
                              type = 'vaultdrop')
 
-    def subscribed_reddits(self):
-        vaults = [VaultButton(vault) for vault in
-                        sorted(self.my_reddits,
-                               key = lambda vault: vault._downs,
-                               reverse=True)
-                        ]
+        def subscribed_reddits(self):
+         vaults = [VaultButton(vault) for vault in
+                   sorted(self.my_vaults,
+                       key = lambda vault: vault._downs,
+                       reverse=True)
+                   ]
         return NavMenu(vaults,
                        type='flatlist', separator = '-',
                        css_class = 'vault-bar')
 
     def popular_reddits(self, exclude_mine=False):
-        exclude = self.my_reddits if exclude_mine else []
+        exclude = self.my_vaults if exclude_mine else []
         buttons = [VaultButton(vault) for vault in self.pop_reddits
                                        if vault not in exclude]
 
@@ -2887,7 +2887,7 @@ class VaultTopBar(CachedTemplate):
 
             # if the user has more than ~10 subscriptions the top bar will be
             # completely full and anything we add to it won't be seen
-            if len(self.my_reddits) < 10:
+            if len(self.my_vaults) < 10:
                 menus.append(RawString(sep))
                 menus.append(self.popular_reddits(exclude_mine=True))
 
@@ -2987,7 +2987,7 @@ class AllInfoBar(Templated):
             self.css_class = "gold-accent"
         else:
             self.description = strings.r_all_description
-            vault_ids = Vault.user_Vaults(user)
+            vault_ids = Vault.user_vaults(user)
             vaults = Vault._byID(
                 vault_ids, data=True, return_dict=False, stale=True)
             if vaults:
@@ -4548,7 +4548,7 @@ class PromoteLinkEdit(PromoteLinkBase):
         self.get_collections()
         self.get_mobile_versions()
 
-        user_srs = [vault for vault in Vault.user_Vaults(c.user, ids=False)
+        user_srs = [vault for vault in Vault.user_vaults(c.user, ids=False)
                     if vault.can_submit(c.user, promotion=True) and vault.allow_ads]
         top_srs = sorted(user_srs, key=lambda vault: vault._ups, reverse=True)[:20]
         extra_Vaults = [(_("suggestions:"), top_srs)]
@@ -5687,7 +5687,7 @@ class VaultSelector(Templated):
         if include_user_subscriptions:
             self.vaults.append((
                 _('your subscribed vaults'),
-                Vault.user_Vaults(c.user, ids=False)
+                Vault.user_vaults(c.user, ids=False)
             ))
 
         self.default_sr = default_sr

@@ -558,7 +558,7 @@ class Account(Thing):
     @property
     def vaults(self):
         from .vault import Vault
-        return Vault.user_Vaults(self)
+        return Vault.user_vaults(self)
 
     def special_distinguish(self):
         if self._t.get("special_distinguish_name"):

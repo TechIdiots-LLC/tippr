@@ -51,9 +51,9 @@ class TestVaultNamesFromSite(TipprTestCase):
 
         self.assertEqual(vaultnames, {Frontpage.name})
 
-    @patch("r2.models.Vault.user_Vaults")
-    def test_frontpage_logged_in(self, user_Vaults):
-        user_Vaults.return_value = subscriptions
+    @patch("r2.models.Vault.user_vaults")
+    def test_frontpage_logged_in(self, user_vaults):
+        user_vaults.return_value = subscriptions
         vaultnames = vaultnames_from_site(self.logged_in, Frontpage)
 
         self.assertEqual(vaultnames, set(subscriptions_vaultnames) | {Frontpage.name})
@@ -64,9 +64,9 @@ class TestVaultNamesFromSite(TipprTestCase):
 
         self.assertEqual(vaultnames, set(multi_vaultnames))
 
-    @patch("r2.models.Vault.user_Vaults")
-    def test_multi_logged_in(self, user_Vaults):
-        user_Vaults.return_value = subscriptions
+    @patch("r2.models.Vault.user_vaults")
+    def test_multi_logged_in(self, user_vaults):
+        user_vaults.return_value = subscriptions
         multi = MultiVault(path="/user/test/m/multi_test", vaults=multi_Vaults)
         vaultnames = vaultnames_from_site(self.logged_in, multi)
 
@@ -79,27 +79,27 @@ class TestVaultNamesFromSite(TipprTestCase):
 
         self.assertEqual(vaultnames, {vaultname})
 
-    @patch("r2.models.Vault.user_Vaults")
-    def test_Vault_logged_in(self, user_Vaults):
-        user_Vaults.return_value = subscriptions
+    @patch("r2.models.Vault.user_vaults")
+    def test_Vault_logged_in(self, user_vaults):
+        user_vaults.return_value = subscriptions
         vaultname = "test1"
         vault = Vault(name=vaultname)
         vaultnames = vaultnames_from_site(self.logged_in, vault)
 
         self.assertEqual(vaultnames, {vaultname})
 
-    @patch("r2.models.Vault.user_Vaults")
-    def test_quarantined_subscriptions_are_never_included(self, user_Vaults):
-        user_Vaults.return_value = naughty_subscriptions
+    @patch("r2.models.Vault.user_vaults")
+    def test_quarantined_subscriptions_are_never_included(self, user_vaults):
+        user_vaults.return_value = naughty_subscriptions
         vault = Frontpage
         vaultnames = vaultnames_from_site(self.logged_in, vault)
 
         self.assertEqual(vaultnames, {vault.name} | {nice_vaultname})
         self.assertTrue(len(vaultnames & {quarantined_vaultname}) == 0)
 
-    @patch("r2.models.Vault.user_Vaults")
-    def test_nsfw_subscriptions_arent_included_when_viewing_frontpage(self, user_Vaults):
-        user_Vaults.return_value = naughty_subscriptions
+    @patch("r2.models.Vault.user_vaults")
+    def test_nsfw_subscriptions_arent_included_when_viewing_frontpage(self, user_vaults):
+        user_vaults.return_value = naughty_subscriptions
         vaultnames = vaultnames_from_site(self.logged_in, Frontpage)
 
         self.assertEqual(vaultnames, {Frontpage.name} | {nice_vaultname})
@@ -117,7 +117,7 @@ class TestVaultNamesFromSite(TipprTestCase):
         get_nsfw_collections_vaultnames.return_value = set(nsfw_collection.vault_names)
         vaultname = "test1"
         vault = Vault(name=vaultname)
-        Vault.user_Vaults = MagicMock(return_value=[
+        Vault.user_vaults = MagicMock(return_value=[
             Vault(name=nice_vaultname),
             Vault(name=questionably_nsfw),
         ])

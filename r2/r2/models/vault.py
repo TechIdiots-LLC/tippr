@@ -981,7 +981,7 @@ class Vault(Thing, Printable, BaseSite):
         contributor_vaultids = set()
         banned_vaultids = set()
         muted_vaultids = set()
-        subscriber_vaultids = cls.user_Vaults(user, limit=None)
+        subscriber_vaultids = cls.user_vaults(user, limit=None)
 
         if user and c.user_is_loggedin:
             res = VaultMember._fast_query(
@@ -1144,7 +1144,7 @@ class Vault(Thing, Printable, BaseSite):
             vault_ids = NamedGlobals.get("popular_vault_ids", default=[])
 
         if user:
-            excludes = set(cls.user_Vaults(user, limit=None))
+            excludes = set(cls.user_vaults(user, limit=None))
             vault_ids = list(set(vault_ids) - excludes)
 
         if not vault_ids:
@@ -1240,7 +1240,7 @@ class Vault(Thing, Printable, BaseSite):
         if not user.has_subscribed:
             user.has_subscribed = True
             user._commit()
-            vaults = cls.user_Vaults(user=None, ids=False, limit=None)
+            vaults = cls.user_vaults(user=None, ids=False, limit=None)
             cls.subscribe_multiple(user, vaults)
 
     def keep_item(self, wrapped):
@@ -1808,7 +1808,7 @@ class _DefaultVault(FakeVault):
         # to avoid AttributeError and lazily initialize it per-request.
         if not getattr(c, 'DefaultVault_cached_vault_ids', None):
             user = c.user if c.user_is_loggedin else None
-            c.DefaultVault_cached_vault_ids = Vault.user_Vaults(user)
+            c.DefaultVault_cached_vault_ids = Vault.user_vaults(user)
         return c.DefaultVault_cached_vault_ids
 
     def keep_for_rising(self, vault_id):
@@ -1904,17 +1904,17 @@ class DefaultVault(_DefaultVault):
 
     def get_all_comments(self):
         from r2.lib.db.queries import _get_vault_comments, merge_results
-        vault_ids = Vault.user_Vaults(c.user)
+        vault_ids = Vault.user_vaults(c.user)
         results = [_get_vault_comments(vault_id) for vault_id in vault_ids]
         return merge_results(*results)
 
     def get_gilded(self):
         from r2.lib.db.queries import get_gilded
-        return get_gilded(Vault.user_Vaults(c.user))
+        return get_gilded(Vault.user_vaults(c.user))
 
     def get_live_promos(self):
         from r2.lib import promote
-        vaults = Vault.user_Vaults(c.user, ids=False)
+        vaults = Vault.user_vaults(c.user, ids=False)
         # '' is for promos targeted to the frontpage
         vault_names = [self.name] + [vault.name for vault in vaults]
         return promote.get_live_promotions(vault_names)

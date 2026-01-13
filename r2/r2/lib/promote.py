@@ -1042,7 +1042,7 @@ def vaultnames_from_site(user, site, include_subscriptions=True):
         vaultnames.add(Frontpage.name)
 
         if is_logged_in and include_subscriptions:
-            subscriptions = Vault.user_Vaults(
+            subscriptions = Vault.user_vaults(
                 user,
                 ids=False,
             )

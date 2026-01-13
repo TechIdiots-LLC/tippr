@@ -511,7 +511,7 @@ class HotController(ListingWithPromos):
     def query(self):
 
         if isinstance(c.site, DefaultVault):
-            vault_ids = Vault.user_Vaults(c.user)
+            vault_ids = Vault.user_vaults(c.user)
             return normalized_hot(vault_ids)
         elif isinstance(c.site, MultiVault):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False,
@@ -629,7 +629,7 @@ class RisingController(NewController):
 
     def query(self):
         if isinstance(c.site, DefaultVault):
-            vault_ids = Vault.user_Vaults(c.user)
+            vault_ids = Vault.user_vaults(c.user)
             return normalized_rising(vault_ids)
         elif isinstance(c.site, MultiVault):
             return normalized_rising(c.site.kept_sr_ids)
