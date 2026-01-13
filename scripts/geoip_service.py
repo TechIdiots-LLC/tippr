@@ -58,7 +58,7 @@ except:
 
 
 def json_response(result):
-    json_output = json.dumps(result, ensure_ascii=False, encoding='iso-8859-1')
+    json_output = json.dumps(result, ensure_ascii=False)
     response = make_response(json_output.encode('utf-8'), 200)
     response.headers['Content-Type'] = 'application/json; charset=utf-8'
     return response
