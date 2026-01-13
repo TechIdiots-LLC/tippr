@@ -6835,6 +6835,19 @@ div #campaign-field {
         line-height: 30px;
     }
 
+    // Provide a simple button-style mixin used across the stylesheet.
+    // If a more elaborate mixin exists elsewhere in your toolchain, remove this
+    // stub and keep the canonical implementation.
+    .button-style(@top, @bottom, @border) {
+        background: linear-gradient(to bottom, @top, @bottom);
+        border: 1px solid @border;
+        border-radius: 3px;
+        padding: 4px 10px;
+        cursor: pointer;
+        display: inline-block;
+        text-decoration: none;
+    }
+
     .primary-button {
         @color2: lighten(#FF4500, 15%);
         @color1: lighten(@color2, 7%);
