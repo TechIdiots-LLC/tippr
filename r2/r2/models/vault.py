@@ -1165,7 +1165,7 @@ class Vault(Thing, Printable, BaseSite):
         over_18_vault_ids = []
 
         # /v/promos is public but has special handling to make it unviewable
-        promo_vault_id = cls.get_promote_vaultid()
+        promo_vault_id = cls.get_promote_vault_id()
 
         for vault in vaults:
             if not vault.discoverable:
@@ -1328,7 +1328,7 @@ class Vault(Thing, Printable, BaseSite):
         return not self.quarantine
 
     @classmethod
-    def get_promote_vaultid(cls):
+    def get_promote_vault_id(cls):
         try:
             res = cls._by_name(g.promo_vault_name, stale=True)
         except NotFound:
