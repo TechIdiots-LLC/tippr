@@ -24,9 +24,9 @@ from r2.lib.db.thing import NotFound
 from r2.models import Target, Collection, CollectionStorage, Vault
 
 
-def run(collection, sr):
+def run(collection, vault_name):
     try:
-        sr = Vault._by_name(sr)
+        vault = Vault._by_name(vault_name)
     except NotFound:
         raise ValueError("specified vault does not exist")
 
@@ -34,17 +34,17 @@ def run(collection, sr):
     if not collection:
         raise ValueError("specified collection does not exist")
     
-    srs = Target(collection).subreddits_slow
+    vaults = Target(collection).vaults_slow
 
-    if sr not in srs:
-        srs.append(sr)
+    if vault not in vaults:
+        vaults.append(vault)
     else:
         raise ValueError("specified vault is already in that collection")
 
-    srs.sort(key=lambda sr: sr._downs, reverse=True)
-    sr_names = [sr.name for sr in srs]
+    vaults.sort(key=lambda v: v._downs, reverse=True)
+    vault_names = [v.name for v in vaults]
     sr_names_column = {'sr_names': 
-                       CollectionStorage.SR_NAMES_DELIM.join(sr_names)}
+                       CollectionStorage.SR_NAMES_DELIM.join(vault_names)}
 
     CollectionStorage._set_values(collection.name, sr_names_column)
-    print "%s has been added to %s" % (sr.name, collection.name)
+    print "%s has been added to %s" % (vault.name, collection.name)

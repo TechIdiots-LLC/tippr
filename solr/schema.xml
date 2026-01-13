@@ -437,7 +437,7 @@
    <field name="vault" type="string" indexed="true" stored="true"/>
    <field name="tippr" type="string" indexed="true" stored="true"/>
    <field name="title" type="string" indexed="true" stored="true"/>
-   <field name="sr_id" type="int" indexed="true" stored="true"/>
+  <field name="vault_id" type="int" indexed="true" stored="true"/>
    <field name="timestamp" type="int" indexed="true" stored="true"/>
    <field name="over18" type="boolean" indexed="true" stored="true"/>
    <field name="nsfw" type="boolean" indexed="true" stored="true"/>

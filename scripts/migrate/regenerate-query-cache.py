@@ -9,7 +9,7 @@ OUTPUT_ROOT = "output"
 relations = {"savehide": ("UserQueryCache", "link"),
              "inbox_account_comment": ("UserQueryCache", "comment"),
              "inbox_account_message": ("UserQueryCache", "message"),
-             "moderatorinbox": ("SubredditQueryCache", "message"),
+             "moderatorinbox": ("VaultQueryCache", "message"),
              "vote_account_link": ("UserQueryCache", "link"),
             }
 
@@ -207,7 +207,7 @@ if True:
 
     potential_columns =
     FOREACH comments_with_name GENERATE
-        CONCAT(name, CONCAT('.', com.tippr.pig.TO_36(data#'sr_id'))) AS rowkey,
+        CONCAT(name, CONCAT('.', com.tippr.pig.TO_36(data#'vault_id'))) AS rowkey,
         com.tippr.pig.MAKE_FULLNAME('comment', id) AS colkey,
         timestamp AS value;
     """
@@ -216,6 +216,6 @@ if True:
     bound = compiled.bind({
         "THINGS": INPUT_ROOT + "comment.dump",
         "DATA": INPUT_ROOT + "comment-data.dump",
-        "OUTPUT": "/".join((OUTPUT_ROOT, "SubredditQueryCache", "comment")),
+        "OUTPUT": "/".join((OUTPUT_ROOT, "VaultQueryCache", "comment")),
     })
     result = bound.runSingle()

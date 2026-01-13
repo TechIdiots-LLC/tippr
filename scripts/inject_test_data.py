@@ -147,18 +147,18 @@ class Modeler:
     def __init__(self):
         self.usernames = TextGenerator(order=2)
 
-    def model_subreddit(self, subreddit_name):
+    def model_vault(self, subreddit_name):
         """Return a model of links and comments in a given vault."""
 
-        subreddit_path = "/v/{}".format(subreddit_name)
-        print(">>>", subreddit_path)
+        vault_path = "/v/{}".format(subreddit_name)
+        print(">>>", vault_path)
 
         print(">> Links")
         titles = TextGenerator(order=5)
         selfposts = TextGenerator(order=8)
         link_count = self_count = 0
         urls = set()
-        for link in fetch_listing(subreddit_path, limit=500):
+        for link in fetch_listing(vault_path, limit=500):
             self.usernames.add_sample(link["author"])
             titles.add_sample(unescape_htmlentities(link["title"]))
             if link["is_self"]:
@@ -171,11 +171,11 @@ class Modeler:
 
         print(">> Comments")
         comments = TextGenerator(order=8)
-        for comment in fetch_listing(subreddit_path + "/comments"):
+        for comment in fetch_listing(vault_path + "/comments"):
             self.usernames.add_sample(comment["author"])
             comments.add_sample(unescape_htmlentities(comment["body"]))
 
-        return SubredditModel(
+        return VaultModel(
             subreddit_name, titles, selfposts, urls, comments, self_frequency)
 
     def generate_username(self):
@@ -183,7 +183,7 @@ class Modeler:
         return self.usernames.generate()
 
 
-class SubredditModel:
+class VaultModel:
     """A snapshot of a vault's links and comments."""
 
     def __init__(self, name, titles, selfposts, urls, comments, self_frequency):
@@ -234,23 +234,23 @@ def ensure_account(name):
         return register(name, "password", "127.0.0.1")
 
 
-def ensure_subreddit(name, author):
+def ensure_vault(name, author):
     """Look up or create a vault and return it."""
     try:
-        sr = Vault._by_name(name)
-        print(">> found /r/{}".format(name))
-        return sr
+        v = Vault._by_name(name)
+        print(">> found /v/{}".format(name))
+        return v
     except NotFound:
-        print(">> creating /r/{}".format(name))
-        sr = Vault._new(
+        print(">> creating /v/{}".format(name))
+        v = Vault._new(
             name=name,
             title="/v/{}".format(name),
             author_id=author._id,
             lang="en",
             ip="127.0.0.1",
         )
-        sr._commit()
-        return sr
+        v._commit()
+        return v
 
 
 def inject_test_data(num_links=25, num_comments=25, num_votes=5):
@@ -259,10 +259,10 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
     print(">>>> Ensuring configured objects exist")
     system_user = ensure_account(g.system_user)
     ensure_account(g.automoderator_account)
-    ensure_subreddit(g.default_sr, system_user)
-    ensure_subreddit(g.takedown_sr, system_user)
-    ensure_subreddit(g.beta_sr, system_user)
-    ensure_subreddit(g.promo_sr_name, system_user)
+    ensure_vault(g.default_sr, system_user)
+    ensure_vault(g.takedown_sr, system_user)
+    ensure_vault(g.beta_sr, system_user)
+    ensure_vault(g.promo_sr_name, system_user)
 
     print()
     print()
@@ -298,7 +298,7 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
     things = []
     for sr_model in vaults:
         sr_author = random.choice(accounts)
-        sr = ensure_subreddit(sr_model.name, sr_author)
+        sr = ensure_vault(sr_model.name, sr_author)
 
         # make the system user subscribed for easier testing
         if sr.add_subscriber(system_user):
@@ -352,6 +352,6 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
 
     amqp.worker.join()
 
-    srs = [Vault._by_name(n) for n in ("pics", "videos", "askhistorians")]
-    LocalizedDefaultSubreddits.set_global_srs(srs)
+    vaults = [Vault._by_name(n) for n in ("pics", "videos", "askhistorians")]
+    LocalizedDefaultSubreddits.set_global_srs(vaults)
     LocalizedFeaturedSubreddits.set_global_srs([Vault._by_name('pics')])

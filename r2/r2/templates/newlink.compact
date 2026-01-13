@@ -71,7 +71,7 @@ ${thing.formtabs_menu}
     ${error_field("NO_URL", "url", "div")}
     ${error_field("BAD_URL", "url", "div")}
     ${error_field("ALREADY_SUB", "url", "div")}
-    ${error_field("NO_LINKS", "sr")}
+    ${error_field("NO_LINKS", "vault")}
 
     <div>
       <button type="button" tabindex="100" class="button" onclick="fetch_title()">${_("suggest title")}</button>
@@ -91,7 +91,7 @@ ${thing.formtabs_menu}
 
     ${UserText(None, text = thing.text, have_form = False, creating = True)}
 
-    ${error_field("NO_SELFS", "sr")}
+    ${error_field("NO_SELFS", "vault")}
   </%utils:round_field>
 </div>
 %endif
@@ -110,7 +110,7 @@ ${thing.captcha}
 <button class="btn save button" name="submit" value="form" type="submit">${_("submit")}</button>
   <span class="status"></span>
   ${error_field("RATELIMIT", "ratelimit")}
-  ${error_field("IN_TIMEOUT", "sr")}
+  ${error_field("IN_TIMEOUT", "vault")}
 </div>
 <div style="clear: both;"><!--fffuuuuuuuu--></div>
 </%utils:submit_form>

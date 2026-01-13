@@ -129,7 +129,7 @@ run_query "\\copy (SELECT thing_id, 'thing', '$THING_CLS', ups, downs, deleted, 
 run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
                    FROM reddit_data_$THING_CLS
                    WHERE
-                       key IN ('url', 'sr_id', 'author_id') AND
+                       key IN ('url', 'vault_id', 'author_id') AND
                        thing_id >= $MINID
                   ) to $DATA_DUMP"
 

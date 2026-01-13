@@ -38,13 +38,13 @@ public class MAKE_ROWKEY extends EvalFunc<String> {
             } else if (rel.equals("inbox_account_message")) {
                 return "inbox_messages";
             } else if (rel.equals("moderatorinbox")) {
-                return "subreddit_messages";
+                return "vault_messages";
             } else if (rel.equals("inbox_account_comment:unread")) {
                 return "unread_comments";
             } else if (rel.equals("inbox_account_message:unread")) {
                 return "unread_messages";
             } else if (rel.equals("moderatorinbox:unread")) {
-                return "unread_subreddit_messages";
+                return "unread_vault_messages";
             }
         } else if (name.equals("selfreply")) {
             if (rel.equals("inbox_account_comment")) {

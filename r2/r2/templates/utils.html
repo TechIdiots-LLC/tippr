@@ -475,10 +475,10 @@ ${unsafe(txt)}
           ['_setAccount', '${g.googleanalytics}'],
           ['_setDomainName', '${g.domain}'],
           ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
-          ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
+          ['_setCustomVar', 2, 'vault_path', '${tracking.get_vaultpath()}', 3],
           ['_setCustomVar', 3, 'usertype', user_type, 2],
           ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
-          ['_setCustomVar', 5, 'style_override', '${jssafe(c.user.pref_default_theme_sr)}', 2],
+          ['_setCustomVar', 5, 'style_override', '${jssafe(c.user.pref_default_theme_vault)}', 2],
           %if g.googleanalytics_sample_rate:
           ['_setSampleRate', '${g.googleanalytics_sample_rate}'],
           %endif

@@ -8,5 +8,5 @@ enum TypeID {
     ACCOUNT,
     LINK,
     MESSAGE,
-    SUBREDDIT,
+    VAULT,
 }

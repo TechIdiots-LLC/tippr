@@ -454,8 +454,8 @@ action = add_vault(action, vault_path=False)
           % endif
 
           <div class="theme select-custom-theme">
-            <label><input type="radio" name="theme_selector" id="other_theme_selector" value="" ${"checked" if thing.use_other_theme else ""}>use theme from /r/</label>
-              <input type="text" class="text" size="21" maxlength="21" name="other_theme" placeholder="vault" ${"value=" + c.user.pref_default_theme_sr if thing.use_other_theme and c.user.pref_default_theme_sr else ""}>
+            <label><input type="radio" name="theme_selector" id="other_theme_selector" value="" ${"checked" if thing.use_other_theme else ""}>use theme from /v/</label>
+              <input type="text" class="text" size="21" maxlength="21" name="other_theme" placeholder="vault" ${"value=" + c.user.pref_default_theme_vault if thing.use_other_theme and c.user.pref_default_theme_vault else ""}>
               <span class="details">
                   (${_("warning: use non-featured themes at your own risk")})
               </span>

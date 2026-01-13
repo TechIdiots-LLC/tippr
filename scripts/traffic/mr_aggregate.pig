@@ -34,38 +34,38 @@ sitewide_totals = FOREACH sitewide_grouped2
 STORE sitewide_totals INTO '$OUTPUT/sitewide';
 
 -- subreddit --
-subreddit = LOAD '$INPUT/subreddit' AS (subreddit, unique_id, count:long);
+vault = LOAD '$INPUT/vault' AS (vault, unique_id, count:long);
 
-subreddit_grouped = GROUP subreddit BY (subreddit, unique_id);
-subreddit_combined = FOREACH subreddit_grouped
-                        GENERATE group.subreddit AS subreddit,
+vault_grouped = GROUP vault BY (vault, unique_id);
+vault_combined = FOREACH vault_grouped
+                        GENERATE group.vault AS vault,
                                  group.unique_id AS unique_id,
-                                 SUM(subreddit.count) AS count;
+                                 SUM(vault.count) AS count;
 
-subreddit_grouped2 = GROUP subreddit_combined BY subreddit;
-subreddit_totals = FOREACH subreddit_grouped2
+vault_grouped2 = GROUP vault_combined BY vault;
+vault_totals = FOREACH vault_grouped2
                       GENERATE group,
-                      COUNT(subreddit_combined),
-                      SUM(subreddit_combined.count);
+                      COUNT(vault_combined),
+                      SUM(vault_combined.count);
 
-STORE subreddit_totals INTO '$OUTPUT/subreddit';
+STORE vault_totals INTO '$OUTPUT/vault';
 
 -- subreddit path
-srpath = LOAD '$INPUT/srpath' AS (srpath, unique_id, count:long);
+vaultpath = LOAD '$INPUT/vaultpath' AS (vaultpath, unique_id, count:long);
 
-srpath_grouped = GROUP srpath BY (srpath, unique_id);
-srpath_combined = FOREACH srpath_grouped
-                    GENERATE group.srpath AS srpath,
+vaultpath_grouped = GROUP vaultpath BY (vaultpath, unique_id);
+vaultpath_combined = FOREACH vaultpath_grouped
+                    GENERATE group.vaultpath AS vaultpath,
                              group.unique_id AS unique_id,
-                             SUM(srpath.count) AS count;
+                             SUM(vaultpath.count) AS count;
 
-srpath_grouped2 = GROUP srpath_combined BY srpath;
-srpath_totals = FOREACH srpath_grouped2
+vaultpath_grouped2 = GROUP vaultpath_combined BY vaultpath;
+vaultpath_totals = FOREACH vaultpath_grouped2
                   GENERATE group,
-                           COUNT(srpath_combined),
-                           SUM(srpath_combined.count);
+                           COUNT(vaultpath_combined),
+                           SUM(vaultpath_combined.count);
 
-STORE srpath_totals INTO '$OUTPUT/srpath';
+STORE vaultpath_totals INTO '$OUTPUT/vaultpath';
 
 -- language
 lang = LOAD '$INPUT/lang' AS (lang, unique_id, count:long);
@@ -102,19 +102,19 @@ click_totals = FOREACH click_grouped2
 STORE click_totals INTO '$OUTPUT/clicks';
 
 -- targeted clicks
-t_click = LOAD '$INPUT/clicks_targeted' AS (fullname, sr, unique_id, count:long);
+t_click = LOAD '$INPUT/clicks_targeted' AS (fullname, vault, unique_id, count:long);
 
-t_click_grouped = GROUP t_click BY (fullname, sr, unique_id);
+t_click_grouped = GROUP t_click BY (fullname, vault, unique_id);
 t_click_combined = FOREACH t_click_grouped
                       GENERATE group.fullname AS fullname,
-                               group.sr AS sr,
+                               group.vault AS vault,
                                group.unique_id AS unique_id,
                                SUM(t_click.count) AS count;
 
-t_click_grouped2 = GROUP t_click_combined BY (fullname, sr);
+t_click_grouped2 = GROUP t_click_combined BY (fullname, vault);
 t_click_totals = FOREACH t_click_grouped2
                     GENERATE group.fullname,
-                             group.sr,
+                             group.vault,
                              COUNT(t_click_combined),
                              SUM(t_click_combined.count);
 
@@ -138,19 +138,19 @@ thing_totals = FOREACH thing_grouped2
 STORE thing_totals INTO '$OUTPUT/thing';
 
 -- targeted things
-t_thing = LOAD '$INPUT/thingtarget' AS (fullname, sr, unique_id, count:long);
+t_thing = LOAD '$INPUT/thingtarget' AS (fullname, vault, unique_id, count:long);
 
-t_thing_grouped = GROUP t_thing BY (fullname, sr, unique_id);
+t_thing_grouped = GROUP t_thing BY (fullname, vault, unique_id);
 t_thing_combined = FOREACH t_thing_grouped
                       GENERATE group.fullname AS fullname,
-                               group.sr AS sr,
+                               group.vault AS vault,
                                group.unique_id AS unique_id,
                                SUM(t_thing.count) AS count;
 
-t_thing_grouped2 = GROUP t_thing_combined BY (fullname, sr);
+t_thing_grouped2 = GROUP t_thing_combined BY (fullname, vault);
 t_thing_totals = FOREACH t_thing_grouped2
                     GENERATE group.fullname,
-                             group.sr,
+                             group.vault,
                              COUNT(t_thing_combined),
                              SUM(t_thing_combined.count);
 

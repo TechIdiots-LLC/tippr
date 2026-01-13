@@ -1256,7 +1256,7 @@ set_consumer_count vote_comment_q 1
 set_consumer_count automoderator_q 0
 set_consumer_count butler_q 1
 set_consumer_count author_query_q 1
-set_consumer_count subreddit_query_q 1
+set_consumer_count vault_query_q 1
 set_consumer_count domain_query_q 1
 
 chown -R $TIPPR_USER:$TIPPR_GROUP $CONSUMER_CONFIG_ROOT/

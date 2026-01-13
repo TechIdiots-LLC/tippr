@@ -28,27 +28,25 @@ sitewide_coalesced = FOREACH sitewide_grouped
 
 STORE sitewide_coalesced INTO '$OUTPUT/sitewide';
 
--- subreddit
-subreddit_counters = LOAD '$INPUT/subreddit' AS (subreddit, unique_id, count:long);
+vault_counters = LOAD '$INPUT/vault' AS (vault, unique_id, count:long);
 
-subreddits_grouped = GROUP subreddit_counters BY (subreddit, unique_id);
+vaults_grouped = GROUP vault_counters BY (vault, unique_id);
 
-subreddits_coalesced = FOREACH subreddits_grouped
-                       GENERATE group.subreddit, group.unique_id,
-                                SUM(subreddit_counters.count) AS count;
+vaults_coalesced = FOREACH vaults_grouped
+                       GENERATE group.vault, group.unique_id,
+                                SUM(vault_counters.count) AS count;
 
-STORE subreddits_coalesced INTO '$OUTPUT/subreddit';
+STORE vaults_coalesced INTO '$OUTPUT/vault';
 
--- subreddit path
-srpath = LOAD '$INPUT/srpath' AS (srpath, unique_id, count:long);
+vaultpath = LOAD '$INPUT/vaultpath' AS (vaultpath, unique_id, count:long);
 
-srpath_grouped = GROUP srpath BY (srpath, unique_id);
+vaultpath_grouped = GROUP vaultpath BY (vaultpath, unique_id);
 
-srpath_coalesced = FOREACH srpath_grouped
-                   GENERATE group.srpath, group.unique_id,
-                            SUM(srpath.count) AS count;
+vaultpath_coalesced = FOREACH vaultpath_grouped
+                   GENERATE group.vaultpath, group.unique_id,
+                            SUM(vaultpath.count) AS count;
 
-STORE srpath_coalesced INTO '$OUTPUT/srpath';
+STORE vaultpath_coalesced INTO '$OUTPUT/vaultpath';
 
 -- language 
 lang = LOAD '$INPUT/lang' AS (lang, unique_id, count:long);
@@ -73,12 +71,12 @@ click_coalesced = FOREACH click_grouped
 STORE click_coalesced INTO '$OUTPUT/clicks';
 
 -- clicktarget
-clicktarget = LOAD '$INPUT/clicks_targeted' AS (fullname, sr, unique_id, count:long);
+clicktarget = LOAD '$INPUT/clicks_targeted' AS (fullname, vault, unique_id, count:long);
 
-clicktarget_grouped = GROUP clicktarget BY (fullname, sr, unique_id);
+clicktarget_grouped = GROUP clicktarget BY (fullname, vault, unique_id);
 
 clicktarget_coalesced = FOREACH clicktarget_grouped
-                        GENERATE group.fullname, group.sr, group.unique_id,
+                        GENERATE group.fullname, group.vault, group.unique_id,
                                  SUM(clicktarget.count) AS count;
 
 STORE clicktarget_coalesced INTO '$OUTPUT/clicks_targeted';
@@ -95,12 +93,12 @@ thing_coalesced = FOREACH thing_grouped
 STORE thing_coalesced INTO '$OUTPUT/thing';
 
 -- thingtarget
-thingtarget = LOAD '$INPUT/thingtarget' AS (fullname, sr, unique_id, count:long);
+thingtarget = LOAD '$INPUT/thingtarget' AS (fullname, vault, unique_id, count:long);
 
-thingtarget_grouped = GROUP thingtarget BY (fullname, sr, unique_id);
+thingtarget_grouped = GROUP thingtarget BY (fullname, vault, unique_id);
 
 thingtarget_coalesced = FOREACH thingtarget_grouped
-                        GENERATE group.fullname, group.sr, group.unique_id,
+                        GENERATE group.fullname, group.vault, group.unique_id,
                                  SUM(thingtarget.count) AS count;
 
 STORE thingtarget_coalesced INTO '$OUTPUT/thingtarget';

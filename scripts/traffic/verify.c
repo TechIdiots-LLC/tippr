@@ -112,13 +112,13 @@ int main(int argc, char** argv)
                 continue;
         }
 
-        /* split out the fullname and subreddit if necessary */
+        /* split out the fullname and vault if necessary */
         char *fullname = id;
-        char *subreddit = NULL;
+        char *vault = NULL;
 
         for (char *c = id; *c != '\0'; c++) {
             if (*c == '-') {
-                subreddit = c + 1;
+                vault = c + 1;
                 *c = '\0';
                 break;
             }
@@ -134,8 +134,8 @@ int main(int argc, char** argv)
         fputs(fullname, stdout);
         fputc('\t', stdout);
 
-        if (subreddit != NULL) {
-            fputs(subreddit, stdout);
+        if (vault != NULL) {
+            fputs(vault, stdout);
         }
 
         fputc('\n', stdout);

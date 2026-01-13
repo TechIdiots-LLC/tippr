@@ -45,7 +45,7 @@ pageviews_encrypted = FOREACH pageviews_with_path GENERATE unique_id, query;
  * PAGEVIEWS
  ****************************************************/
 
-pageviews = STREAM pageviews_encrypted THROUGH DECRYPT_USERINFO AS (unique_id, srpath, subreddit, lang, cname);
+pageviews = STREAM pageviews_encrypted THROUGH DECRYPT_USERINFO AS (unique_id, srpath, vault, lang, cname);
 
 -- sitewide
 sitewide_pageviews = FOREACH pageviews GENERATE unique_id;  -- (unique_id)
@@ -55,30 +55,28 @@ sitewide_hourly_uniques = FOREACH sitewide_hourly_uniques_grouped
 
 STORE sitewide_hourly_uniques INTO '$OUTPUT/sitewide';
 
--- subreddit
-subreddit_pageviews_filtered = FILTER pageviews 
-                               BY subreddit IS NOT NULL;  -- exclude entries without subreddit
-subreddit_pageviews_raw = FOREACH subreddit_pageviews_filtered 
-                          GENERATE subreddit, unique_id;  -- limit to (subreddit, unique_id)
-subreddit_hourly_uniques_grouped = GROUP subreddit_pageviews_raw
-                                   BY (subreddit, unique_id); -- (subreddit, unique_id, {(subreddit, unique_id), ...})
-subreddit_hourly_uniques = FOREACH subreddit_hourly_uniques_grouped
-                           GENERATE group.subreddit, group.unique_id,
-                                    COUNT(subreddit_pageviews_raw) AS count; -- (subreddit, unique_id, count)
+vault_pageviews_filtered = FILTER pageviews 
+                               BY vault IS NOT NULL;  -- exclude entries without vault
+vault_pageviews_raw = FOREACH vault_pageviews_filtered 
+                          GENERATE vault, unique_id;  -- limit to (vault, unique_id)
+vault_hourly_uniques_grouped = GROUP vault_pageviews_raw
+                                   BY (vault, unique_id); -- (vault, unique_id, {(vault, unique_id), ...})
+vault_hourly_uniques = FOREACH vault_hourly_uniques_grouped
+                           GENERATE group.vault, group.unique_id,
+                                    COUNT(vault_pageviews_raw) AS count; -- (vault, unique_id, count)
 
-STORE subreddit_hourly_uniques INTO '$OUTPUT/subreddit';
+STORE vault_hourly_uniques INTO '$OUTPUT/vault';
 
--- subreddit path
-srpath_filtered = FILTER pageviews BY srpath IS NOT NULL;
-srpath_pageviews = FOREACH srpath_filtered
-                   GENERATE srpath, unique_id;
-srpath_hourly_uniques_grouped = GROUP srpath_pageviews
-                                BY (srpath, unique_id);
-srpath_hourly_uniques = FOREACH srpath_hourly_uniques_grouped
-                        GENERATE group.srpath, group.unique_id,
-                                 COUNT(srpath_pageviews) AS count;
+vaultpath_filtered = FILTER pageviews BY srpath IS NOT NULL;
+vaultpath_pageviews = FOREACH vaultpath_filtered
+                   GENERATE srpath AS vaultpath, unique_id;
+vaultpath_hourly_uniques_grouped = GROUP vaultpath_pageviews
+                                BY (vaultpath, unique_id);
+vaultpath_hourly_uniques = FOREACH vaultpath_hourly_uniques_grouped
+                        GENERATE group.vaultpath, group.unique_id,
+                                 COUNT(vaultpath_pageviews) AS count;
 
-STORE srpath_hourly_uniques INTO '$OUTPUT/srpath';
+STORE vaultpath_hourly_uniques INTO '$OUTPUT/vaultpath';
 
 -- language
 lang_filtered = FILTER pageviews BY lang IS NOT NULL;
@@ -95,7 +93,7 @@ STORE lang_hourly_uniques INTO '$OUTPUT/lang';
  ****************************************************/
 
 -- process unverified hits
-verified = STREAM unverified_hits THROUGH VERIFY AS (unique_id, path:chararray, fullname, sr);
+verified = STREAM unverified_hits THROUGH VERIFY AS (unique_id, path:chararray, fullname, vault);
 
 -- ads and promoted links
 
@@ -114,10 +112,10 @@ clicks_by_hour = FOREACH clicks_grouped
 STORE clicks_by_hour INTO '$OUTPUT/clicks';
 
 -- targeted clicks
-targeted_clicks = FOREACH clicks_raw GENERATE fullname, sr, unique_id;
-targeted_clicks_grouped = GROUP targeted_clicks BY (fullname, sr, unique_id);
+targeted_clicks = FOREACH clicks_raw GENERATE fullname, vault, unique_id;
+targeted_clicks_grouped = GROUP targeted_clicks BY (fullname, vault, unique_id);
 targeted_clicks_by_hour = FOREACH targeted_clicks_grouped
-                          GENERATE group.fullname, group.sr, group.unique_id,
+                          GENERATE group.fullname, group.vault, group.unique_id,
                                    COUNT(targeted_clicks) AS count;
 
 STORE targeted_clicks_by_hour INTO '$OUTPUT/clicks_targeted';
@@ -133,7 +131,7 @@ STORE thing_impressions_hourly INTO '$OUTPUT/thing';
 
 -- targeted things
 targeted_thing_impressions = FOREACH ad_impressions 
-                             GENERATE fullname, sr, unique_id;
+                             GENERATE fullname, vault AS sr, unique_id;
 targeted_thing_impressions_grouped = GROUP targeted_thing_impressions
                                      BY (fullname, sr, unique_id);
 targeted_thing_impressions_hourly = FOREACH targeted_thing_impressions_grouped

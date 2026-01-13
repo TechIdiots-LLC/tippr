@@ -4,120 +4,120 @@
 @import "post-sharing.less";
 @import "search.less";
 @import "interstitial.less";
-
-.no-select {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -o-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-.screenreader-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
+.vault-interest-bar {
+    position: relative;
+    background: #cee3f8 url(../tippr-upside-down.png) 15px top no-repeat;
+    padding: 5px;
     overflow: hidden;
-    clip: rect(0,0,0,0);
-    border: 0;
+    border: 1px solid #336699;
+    margin-bottom: 10px;
 }
 
-.basic-button {
-    border-width: 1px;
-    border-style: solid;
+.organic-listing .vault-interest-bar {
+    border: none;
+    margin: 0;
+}
+
+.vault-interest-bar .bubble {
+    position: relative;
+    margin-left: 85px;
+    margin-right: 68px;
+    max-width: 700px;
+    font-size: 13px;
+    background: white;
+    padding: 6px;
+    border-radius: 8px;
+}
+
+.vault-interest-bar .bubble:after {
+    position: absolute;
+    display: block;
+    content: '';
+    border: 10px solid;
+    border-style: solid solid outset;
+    border-color: transparent;
+    border-right-color: white;
+    left: -20px;
+    top: 15px;
+}
+
+.vault-interest-bar .bubble p {
+    margin: 6px 3px;
+    margin-top: 0;
+}
+
+.vault-interest-bar .subscribe {
+    background-image: url(../bg-button-add.png); /* SPRITE stretch-x */
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0 6px;
+    color: white;
+    font-weight: bold;
+}
+
+.vault-interest-bar .query-box {
+    position: relative;
+    padding: 2px 4px;
+    border: 2px solid #979797;
     border-radius: 5px;
-
-    &:focus {
-        outline: 0;
-        box-shadow: inset 0 0 0 1px fadeout(white, 65%);
-    }
-
-    &:active {
-        box-shadow: inset 0 1px 1px 1px fadeout(black, 90%);
-    }
-
-    &:disabled, &.disabled {
-        .linear-gradient(#e9edf1, #dce3ea) !important;
-        color: #999999 !important;
-        text-shadow: 0 1px 0 lighten(#dce3ea, 15%) !important;
-        border-color: darken(#dce3ea, 5%) !important;
-        box-shadow: none !important;
-    }
 }
 
-.button-style(@top-color, @bottom-color, @border-color) {
-    &:extend(.basic-button all);
-    .linear-gradient(@top-color, @bottom-color);
-    border-color: @border-color;
-    &:hover {
-        .linear-gradient(lighten(@top-color, 5%), @bottom-color);
-    }
+.vault-interest-bar.focus .query-box {
+    border-color: #5f99cf;
 }
 
-@gold-fonts: Palatino, georgia, garamond, FreeSerif, serif;
-@gold-button-bg: #938870;
-@gold-button-hover: #B8AB90;
-@gold-button-active: #C3B598;
-@gold-button-border: 1px solid #5E5137;
-
-html {
-    height: 100%; /* Needed for toolbar's comments panel's pinstripe */
+.vault-interest-bar.error .query-box {
+    border-color: #cf5e5e;
 }
 
-body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,th,td,iframe {
-  margin:0;
-  padding:0;
+.vault-interest-bar .error-caption, .vault-interest-bar.error .caption {
+    display: none;
 }
 
-table { border-collapse:collapse; }
-
-fieldset,img { border:0; }
-
-address,caption,cite,code,dfn,em,strong,th,var { font-style:normal; font-weight:normal; }
-ol,ul { list-style:none; }
-caption,th { text-align:left; }
-h1,h2,h3,h4,h5,h6 { font-size:100%; }
-q:before,q:after { content:''; }
-
-body {
-    font: normal x-small verdana, arial, helvetica, sans-serif;
-    background-color: white;
-    z-index: 1;
-    min-height: 100%;
+.vault-interest-bar.error .error-caption {
+    display: block;
 }
 
-textarea { font:  normal small verdana, arial, helvetica, sans-serif; }
-
-/* [1] fixes a bug in old versions of WebKit, as used in Android 4.0. See
- * https://github.com/necolas/normalize.css/commit/79b3d21b697e ,
- * https://github.com/h5bp/mobile-boilerplate/issues/121 */
-button,
-html input[type="button"], /* [1] */
-input[type="reset"],
-input[type="submit"] {
-    -webkit-appearance: button;
-    cursor: pointer;
-    /* Since we reset the padding on some of these things above, make it
-     * something reasonable (and consistent). */
-    padding: 2px 6px 3px;
+.vault-interest-bar .query {
+    width: 100%;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
 }
 
-button[disabled],
-html input[disabled] {
-    cursor: default;
+.vault-interest-bar .throbber {
+    position: absolute;
+    right: 3px;
+    top: 5px;
 }
 
-/*html,body { height: 100%; }*/
+.vault-interest-bar ul.results {
+    margin: 0;
+    margin-top: 6px;
+    padding-top: 2px;
+    border-top: 1px dotted #bbb;
+    display: none;
+}
 
-/* IE dumbness patch. hidden input in a hidden block that is
- * subsequently shown leads to the input to "show" and generate undesired
- * )padding.  This makes it go away. */ 
-input[type=hidden] { position: absolute; }
+.vault-interest-bar li {
+    display: inline-block;
+    margin: 6px 3px;
+}
 
-/* html element defaults */
+.vault-interest-bar a {
+    padding: 1px 2px;
+}
 
+.vault-interest-bar a:hover {
+    text-decoration: underline;
+}
+
+.vault-interest-bar .results .random {
+    color: gray;
+    font-weight: bold;
+}
 h1 { font-size: 18px; font-weight: normal; margin: 10px 0 }
 
 h2 { color: #369; font-size: 13px; }
@@ -4741,7 +4741,7 @@ ul#image-preview-list .description pre {
     color: black; 
 }
 
-#sr-header-area {
+#vault-header-area {
     background-color: #f0f0f0;
     white-space: nowrap;
     text-transform: uppercase;
@@ -4751,31 +4751,31 @@ ul#image-preview-list .description pre {
     line-height: 18px;
  }
 
-#sr-header-area .width-clip {
+#vault-header-area .width-clip {
     position: absolute;
     left: 0;
     right: 0;
 }
 
-#sr-header-area .selected a {
+#vault-header-area .selected a {
     color: orangered;
 }
 
-#sr-header-area .sr-list {
+#vault-header-area .vault-list {
     overflow: hidden;
 }
 
-#sr-header-area .dropdown.srdrop {
+#vault-header-area .dropdown.vaultdrop {
     float: left;
     padding-left: 5px;
 }
 
-#sr-header-area .drop-choices.srdrop {
+#vault-header-area .drop-choices.vaultdrop {
     margin-top: 0;
     margin-left: 5px;
 }
 
-.dropdown.srdrop .selected {
+.dropdown.vaultdrop .selected {
     background: none no-repeat scroll center right;
     background-image: url(../droparrowgray.gif); 
     display: inline-block;
@@ -4789,25 +4789,23 @@ ul#image-preview-list .description pre {
     cursor: pointer;
  }
 
-.srdrop .choice {padding-top: 3px;}
+.vaultdrop .choice {padding-top: 3px;}
 
-.srdrop .choice.top-option {
+.vaultdrop .choice.top-option {
     font-style: italic;
     border-bottom: 1px dotted #369;
 }
 
-
-
-.srdrop .choice.bottom-option {
+.vaultdrop .choice.bottom-option {
     font-style: italic;
     border-top: 1px dotted #369;
 }
 
-.sr-bar .separator {color: gray; }
-.sr-bar a {color: black;} 
-.sr-bar a.gold { color: #9a7d2e; font-weight: bold; }
+.vault-bar .separator {color: gray; }
+.vault-bar a {color: black;} 
+.vault-bar a.gold { color: #9a7d2e; font-weight: bold; }
 
-#sr-more-link {
+#vault-more-link {
     color: black;
     background-color: #f0f0f0;
     position: absolute;
@@ -4818,7 +4816,7 @@ ul#image-preview-list .description pre {
     margin: 0;
 }
 
-#sr-more-link:hover {text-decoration: underline;}
+#vault-more-link:hover {text-decoration: underline;}
 
 .subscription-box li {
     clear: left;
@@ -4863,9 +4861,9 @@ ul#image-preview-list .description pre {
 
 /****************/
 
-#sr { margin-left: 0px }
+#vault { margin-left: 0px }
 
-#sr-list-wrapper {
+#vault-list-wrapper {
     width: 454px;
     height: 200px;
     border: 1px solid gray;
@@ -4875,7 +4873,7 @@ ul#image-preview-list .description pre {
     position: relative;
 }
 
-#sr-list-cover {
+#vault-list-cover {
     position: absolute;
     background: gray none no-repeat scroll center center;
     background-color: url(../throbber.gif); 
@@ -4887,7 +4885,7 @@ ul#image-preview-list .description pre {
     display: none;
 }
 
-#sr-list {
+#vault-list {
     overflow: auto;
     position: absolute;
     height: 100%;
@@ -4895,9 +4893,9 @@ ul#image-preview-list .description pre {
 }
 
 
-#sr-searchfield { margin: 0 5px; }
+#vault-searchfield { margin: 0 5px; }
 
-#sr-name-box {
+#vault-name-box {
     display: inline-block;
     span {
         display: block;
@@ -4915,30 +4913,30 @@ ul#image-preview-list .description pre {
     padding: 3px 3px 3px 0;
 }
 
-.sr-description {
+.vault-description {
     padding: 3px
  }
 
-.sr-row {
+.vault-row {
     cursor: default;
  }
 
-.sr-row.sr-selected {
+.vault-row.vault-selected {
     background: #EFF7FF none no-repeat scroll 0px 5px;
     background-image: url(../rightarrow.png);    /* SPRITE */
 }
 
-.sr-arrow {
+.vault-arrow {
     width: 10px;
     height: 12px;
  }
 
-#sr-autocomplete-area {
+#vault-autocomplete-area {
     position: relative;
     z-index: 100;
  }
 
-#sr-drop-down {
+#vault-drop-down {
     position: absolute;
     width: 100%;
     margin: 0;
@@ -4952,11 +4950,11 @@ ul#image-preview-list .description pre {
     width: 100%;
 }
 
-.sr-name-row {
+.vault-name-row {
     cursor: default;
  }
 
-.sr-name-row.sr-selected {
+.vault-name-row.vault-selected {
     background-color: #369;
     color: white;
 }
@@ -8240,16 +8238,16 @@ body:not(.gold) .allminus-link {
 }
 
 #per-sr-karma thead th,
-#per-sr-karma td {
+#per-vault-karma {
     text-align: right;
-}
+#per-vault-karma thead th,
 
-#per-sr-karma tbody th {
+#per-vault-karma td {
     text-align: left;
-}
+#per-vault-karma tbody th {
 
-#per-sr-karma #sr-karma-header {
-    width: 150px;
+#per-vault-karma #vault-karma-header {
+}
     text-align: left;
 }
 
@@ -9309,20 +9307,20 @@ form#banned textarea {
     font-size: small;
 }
 
-.errorpage-message.sr-description {
+.errorpage-message.vault-description {
     border-top: 1px solid black;
     margin-top: 2em;
     padding-top: 2em;
 }
 
-.errorpage-message.sr-description h2 {
+.errorpage-message.vault-description h2 {
     color: black;
     font-weight: bold;
     font-size: 125%;
     margin-bottom: .7em;
 }
 
-.sr-description p {
+.vault-description p {
     margin: .75em 0;
 }
 
@@ -11323,23 +11321,23 @@ ul.report-reasons {
   }
 }
 
-#related-srs {
-  margin: 3px;
-  font-size: smaller;
+#related-vaults {
+    margin: 3px;
+    font-size: smaller;
 }
 
-#add-related-sr {
+#add-related-vault {
   margin-left: 3px;
   font-size: smaller;
 
-  #sr-autocomplete-area,
-  div.error {
-    display: inline-block;
-  }
+    #vault-autocomplete-area,
+    div.error {
+        display: inline-block;
+    }
 
-  #sr-autocomplete {
-    width: 200px;
-  }
+    #vault-autocomplete {
+        width: 200px;
+    }
 
   #sr-drop-down {
     width: 206px;

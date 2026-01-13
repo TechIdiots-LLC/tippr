@@ -1401,38 +1401,38 @@ body.post-under-6h-old .gilded-icon {
 }
 
 /* Autocomplete */
-#sr-autocomplete-area {
-	position: relative;
-	z-index: 50;
-	
+#vault-autocomplete-area {
+    	position: relative;
+    	z-index: 50;
+    	
 }
-#sr-drop-down {
-	position: absolute;
-    @include vertical_gradient(hsl(0, 0%, 90%), hsl(0, 0%, 75%));
-	border: 1px solid hsl(0,0%,50%);
-	-webkit-border-bottom-left-radius: 5px;	-webkit-border-bottom-right-radius: 5px;
-    -moz-border-radius-bottomleft: 5px; -moz-border-radius-bottomright: 5px;
-	border-top: 0px;
-	display: none;
-	left: 5px;
-	margin: 0px;
-	padding: 0px;
-	position: absolute;
-	font-weight: bold; color: hsl(0,0%,20%);
+#vault-drop-down {
+    	position: absolute;
+    	@include vertical_gradient(hsl(0, 0%, 90%), hsl(0, 0%, 75%));
+    	border: 1px solid hsl(0,0%,50%);
+    	-webkit-border-bottom-left-radius: 5px;	-webkit-border-bottom-right-radius: 5px;
+    	-moz-border-radius-bottomleft: 5px; -moz-border-radius-bottomright: 5px;
+    	border-top: 0px;
+    	display: none;
+    	left: 5px;
+    	margin: 0px;
+    	padding: 0px;
+    	position: absolute;
+    	font-weight: bold; color: hsl(0,0%,20%);
 }
-#sr-drop-down li {
-	display: block;
-	padding: 2px 5px;
+#vault-drop-down li {
+    	display: block;
+    	padding: 2px 5px;
 }
-#sr-drop-down li:hover, #sr-drop-down li:active {
-    @include vertical_gradient(hsl(209, 35%, 81%), hsl(210, 37%, 64%));
-    color: white;
-    text-shadow: hsla(0, 100%, 100%, 0.0976563) 0px 1px 1px, hsla(0, 0%, 0%, 0.398438) 0px -1px 1px;
-	-webkit-text-stroke: 1px solid hsl(210, 28%, 44%);
+#vault-drop-down li:hover, #vault-drop-down li:active {
+    	@include vertical_gradient(hsl(209, 35%, 81%), hsl(210, 37%, 64%));
+    	color: white;
+    	text-shadow: hsla(0, 100%, 100%, 0.0976563) 0px 1px 1px, hsla(0, 0%, 0%, 0.398438) 0px -1px 1px;
+    	-webkit-text-stroke: 1px solid hsl(210, 28%, 44%);
 }
-#sr-drop-down li:last-child {
-	-webkit-border-bottom-left-radius: 5px;	-webkit-border-bottom-right-radius: 5px;
-    -moz-border-radius-bottomleft: 5px; -moz-border-radius-bottomright: 5px;	
+#vault-drop-down li:last-child {
+    	-webkit-border-bottom-left-radius: 5px;	-webkit-border-bottom-right-radius: 5px;
+    	-moz-border-radius-bottomleft: 5px; -moz-border-radius-bottomright: 5px;
 }
 
 /* markdown */
