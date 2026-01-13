@@ -762,6 +762,8 @@ class Account(Thing):
 class FakeAccount(Account):
     _nodb = True
     pref_no_profanity = True
+    # Default for fake/unlogged users: not subscribed to anything
+    has_subscribed = False
 
     def __eq__(self, other):
         return self is other
