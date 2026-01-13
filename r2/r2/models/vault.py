@@ -1329,8 +1329,12 @@ class Vault(Thing, Printable, BaseSite):
 
     @classmethod
     def get_promote_vault_id(cls):
+        promo_name = getattr(g, 'promo_vault_name', None)
+        if not promo_name:
+            return None
+
         try:
-            res = cls._by_name(g.promo_vault_name, stale=True)
+            res = cls._by_name(promo_name, stale=True)
         except NotFound:
             return None
 

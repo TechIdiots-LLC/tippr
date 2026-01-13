@@ -25,7 +25,7 @@
  %>
 <%inherit file="base.mobile"/>
 
-<%include file="redditheader.mobile"/>
+<%include file="tipprheader.mobile"/>
 
 
 %if c.suggest_compact:

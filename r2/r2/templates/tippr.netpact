@@ -28,7 +28,7 @@
 <%namespace file="utils.html" import="tags"/>
 
 <%def name="bodyContent()">
-  <%include file="redditheader.compact"/>
+  <%include file="tipprheader.compact"/>
   %if thing.content:
     <div class="content">
       ${thing.content()}
