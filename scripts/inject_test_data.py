@@ -270,9 +270,9 @@ def inject_test_data(num_links=25, num_comments=25, num_votes=5):
     print(">>>> Fetching real data from tippr.net")
     modeler = Modeler()
     vaults = [
-        modeler.model_subreddit("pics"),
-        modeler.model_subreddit("videos"),
-        modeler.model_subreddit("askhistorians"),
+        modeler.model_vault("pics"),
+        modeler.model_vault("videos"),
+        modeler.model_vault("askhistorians"),
     ]
     extra_settings = {
         "pics": {

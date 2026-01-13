@@ -33,7 +33,7 @@ sitewide_totals = FOREACH sitewide_grouped2
 
 STORE sitewide_totals INTO '$OUTPUT/sitewide';
 
--- subreddit --
+-- vault --
 vault = LOAD '$INPUT/vault' AS (vault, unique_id, count:long);
 
 vault_grouped = GROUP vault BY (vault, unique_id);
@@ -50,7 +50,7 @@ vault_totals = FOREACH vault_grouped2
 
 STORE vault_totals INTO '$OUTPUT/vault';
 
--- subreddit path
+-- vault path
 vaultpath = LOAD '$INPUT/vaultpath' AS (vaultpath, unique_id, count:long);
 
 vaultpath_grouped = GROUP vaultpath BY (vaultpath, unique_id);

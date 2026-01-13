@@ -131,11 +131,11 @@ STORE thing_impressions_hourly INTO '$OUTPUT/thing';
 
 -- targeted things
 targeted_thing_impressions = FOREACH ad_impressions 
-                             GENERATE fullname, vault AS sr, unique_id;
+                             GENERATE fullname, vault AS vault, unique_id;
 targeted_thing_impressions_grouped = GROUP targeted_thing_impressions
-                                     BY (fullname, sr, unique_id);
+                                     BY (fullname, vault, unique_id);
 targeted_thing_impressions_hourly = FOREACH targeted_thing_impressions_grouped
-                                    GENERATE group.fullname, group.sr,
+                                    GENERATE group.fullname, group.vault,
                                              group.unique_id,
                                              COUNT(targeted_thing_impressions)
                                              AS count;
