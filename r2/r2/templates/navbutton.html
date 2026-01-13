@@ -24,7 +24,7 @@
 
 <%def name="plain()">
   ${plain_link(thing.selected_title() if thing.selected else thing.title, 
-               thing.path, _vault_path = thing.sr_path,
+               thing.path, _vault_path = thing.vault_path,
                target = thing.target, 
                _class = thing.css_class, _id = thing._id,
                data=thing.data)}
@@ -41,7 +41,7 @@
 <%def name="post()">
   ${post_link(thing.selected_title() if thing.selected else thing.title,
               thing.base_path, thing.base_path, thing.action_params,
-              _vault_path=thing.sr_path,
+              _vault_path=thing.vault_path,
               target=thing.target, _class=thing.css_class, _id=thing._id,
               data=thing.data)}
 </%def>

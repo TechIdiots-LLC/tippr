@@ -46,7 +46,7 @@
       username_link = format_html(
         '<a href="%(user_url)s">%(username)s</a>',
         username=c.user.name,
-        user_url=add_vault("/user/%s" % c.user.name, sr_path=False),
+        user_url=add_vault("/user/%s" % c.user.name, vault_path=False),
       )
     %>
     ${_wsf(

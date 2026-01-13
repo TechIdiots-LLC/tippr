@@ -123,7 +123,7 @@ ${first_defined(kw[1:])}
      if target:
          kw['target'] = target
 
-     path = add_vault(path, sr_path = False)
+    path = add_vault(path, vault_path = False)
      kw['target'] = target
      
      if size is None:
@@ -149,7 +149,7 @@ ${first_defined(kw[1:])}
          kw['target'] = target
 
      link = _a_buffered(link_text, 
-                        href=path and add_vault(path, sr_path=_vault_path),
+                        href=path and add_vault(path, vault_path=_vault_path),
                         **kw) 
   %>
 
@@ -159,8 +159,8 @@ ${first_defined(kw[1:])}
 <%def name="post_link(link_text, post_path, redir_path, params, _vault_path=True,
                       nocname=False, fmt='', target='', **kw)">
   <%
-    action = add_vault(post_path, sr_path=_vault_path)
-    href = add_vault(redir_path, sr_path=_vault_path)
+    action = add_vault(post_path, vault_path=_vault_path)
+    href = add_vault(redir_path, vault_path=_vault_path)
     if target:
         kw['target'] = target
     onclick = "$(this).parent().submit(); return false;"
@@ -528,7 +528,7 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="logout(top=False,dest=None,a_class='')">
-  <form method="post" action="${add_vault('/logout', sr_path=False)}" class="logout hover"
+  <form method="post" action="${add_vault('/logout', vault_path=False)}" class="logout hover"
     %if top:
       target="_top"
     %endif

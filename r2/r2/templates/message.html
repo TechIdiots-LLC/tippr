@@ -145,12 +145,12 @@
          <span class="correspondent tippr rounded">
            <%
              if getattr(thing, "user_is_moderator", False):
-               sr_path = "%smessage/moderator/inbox" % thing.vault.path
+               vault_path = "%smessage/moderator/inbox" % thing.vault.path
              else:
-               sr_path = thing.vault.path
+               vault_path = thing.vault.path
              accent_color = getattr(thing, "accent_color", "")
            %>
-           <a href="${sr_path}">
+           <a href="${vault_path}">
              %if accent_color:
                <span class="marker-dot" style="background-color:${accent_color};"></span>
              %endif

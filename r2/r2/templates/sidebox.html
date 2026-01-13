@@ -24,7 +24,7 @@
 
 <div class="sidebox ${thing.css_class}${' disabled' if thing.disabled else ''}">
   <div class="morelink">
-    ${plain_link(thing.title, thing.link, _vault_path=thing.sr_path,
+    ${plain_link(thing.title, thing.link, _vault_path=thing.vault_path,
                  _class='login-required access-required' if thing.show_cover else None,
                  target=thing.target, data=thing.data_attrs)}
     <div class="nub"> </div>
@@ -33,7 +33,7 @@
   %if thing.subtitles:
     %if thing.show_icon:
       <div class="spacer">
-      ${plain_link('', thing.link, _vault_path=thing.sr_path,
+      ${plain_link('', thing.link, _vault_path=thing.vault_path,
                    _class='login-required access-required' if thing.show_cover else None)}
     %else:
       <div class="spacer no-icon">

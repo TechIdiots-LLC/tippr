@@ -68,7 +68,7 @@
         %if not thing.author._deleted:
             ${keep_space(' ')} submitted by ${keep_space(' ')}
             <a href="${add_vault('/user/'+thing.author.name,
-                              sr_path=False,
+                              vault_path=False,
                               retain_extension=False,
                               force_hostname=True)}">
                 /u/${thing.author.name}
@@ -78,7 +78,7 @@
         %if thing.different_sr:
             ${keep_space(' ')} to ${keep_space(' ')}
             <a href="${add_vault(thing.vault.path,
-                              sr_path=False,
+                              vault_path=False,
                               retain_extension=False,
                               force_hostname=True)}">
                 /r/${thing.vault.name}

@@ -518,16 +518,16 @@ try participating in other communities on tippr for a little while first before 
           var vault_name = form.vault.value.trim();
           if (vault_name) {
             $.post('/api/search_reddit_names.json', { query: vault_name, exact: true }, 'json')
-            .done(function(r) {
+              .done(function(r) {
               var vault_name = r.names[0];
-              var sr_path = '/v/' + vault_name;
+              var vault_path = '/v/' + vault_name;
 
               var $sr_list = $('#related-vaults');
               var $sr_item = $sr_list.find('[data-name=' + vault_name.toLowerCase() + ']');
               if (!$sr_item.length) {
                 $sr_item = $('#vault-template').clone().removeAttr('id');
                 $sr_item.data('name', vault_name.toLowerCase()).show();
-                $sr_item.find('a').attr('href', sr_path).text(sr_path);
+                $sr_item.find('a').attr('href', vault_path).text(vault_path);
               }
               $sr_item.appendTo($sr_list);
 

@@ -36,7 +36,7 @@
         <author>
             <name>/u/${author.name}</name>
             <uri>${add_vault('/user/'+author.name,
-                          sr_path=False,
+                          vault_path=False,
                           force_hostname=True,
                           retain_extension=False)}</uri>
         </author>

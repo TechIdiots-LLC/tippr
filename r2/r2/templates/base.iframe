@@ -40,7 +40,7 @@
 <html>
     <head>
         <meta charset=utf-8>
-        <base target="_blank" href="${add_sr("/", sr_path=False, force_hostname=True)}">
+        <base target="_blank" href="${add_sr("/", vault_path=False, force_hostname=True)}">
         <title></title>
         ${less_stylesheet("tippr-embed.less")}
     </head>

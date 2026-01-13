@@ -74,11 +74,11 @@
 
 <%def name="Link()">
     <link rel="self" href="${add_vault(request.fullpath,
-                                    sr_path=False,
+                                    vault_path=False,
                                     force_hostname=True)}"
      type="application/atom+xml" />
     <link rel="alternate" href="${add_vault(request.fullpath,
-                                         sr_path=False,
+                                         vault_path=False,
                                          force_hostname=True,
                                          force_extension='')}"
      type="text/html" />

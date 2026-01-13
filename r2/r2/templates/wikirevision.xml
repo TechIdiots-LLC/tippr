@@ -31,7 +31,7 @@
                           thing_id=thing._id)),
                   force_hostname=True,
                   retain_extension=False,
-                  sr_path=False)
+                  vault_path=False)
     category = ('%(sr)s/%(page)s'
                 % dict(sr=thing.sr,
                        page=thing.page))

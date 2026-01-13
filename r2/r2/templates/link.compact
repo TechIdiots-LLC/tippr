@@ -135,7 +135,7 @@ there's also a discussion going on here:
 """ % dict(user = c.user.name if c.user_is_Loggedin else "A reddit user",
        link = _force_unicode(thing.url),
        title = _force_unicode(thing.title),
-       permalink = add_sr(thing.permalink, sr_path = False, force_hostname = True, retain_extension=False))
+      permalink = add_sr(thing.permalink, vault_path = False, force_hostname = True, retain_extension=False))
        url = "https://reddit.com/%s" % thing._id36
        title = _force_unicode(thing.title)
        tweet = "%s %s" % (title[0:(139-len(url))], url)

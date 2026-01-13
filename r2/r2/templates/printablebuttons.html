@@ -327,7 +327,7 @@
     ${self.bylink_button(
         thing.comment_label,
         thing.permalink,
-        sr_path=(thing.promoted is None),
+        vault_path=(thing.promoted is None),
         a_class=unsafe("bylink %s" % thing.commentcls),
         event_action="comments")}
     </li>
@@ -463,7 +463,7 @@
       ${self.bylink_button(
           _("full comments") + " (%d)" % thing.full_comment_count, 
           thing.full_comment_path,
-          sr_path=True,
+          vault_path=True,
           a_class="bylink may-blank",
           event_action="full_comments")}
       </li>
@@ -541,7 +541,7 @@
     </li>
   %else:
     <li class="first">
-      ${self.bylink_button(_("permalink"), thing.permalink, sr_path=False, event_action="permalink")}
+      ${self.bylink_button(_("permalink"), thing.permalink, vault_path=False, event_action="permalink")}
     </li>
     ${self.distinguish()}
   %endif
@@ -760,7 +760,7 @@
 </span>
 </%def>
 
-<%def name="bylink_button(title, link, sr_path=True, a_class='bylink', event_action=None)">
+<%def name="bylink_button(title, link, vault_path=True, a_class='bylink', event_action=None)">
   <%
     data_attrs = {}
 
@@ -777,7 +777,7 @@
       link,
       _class=a_class,
       rel="nofollow",
-      _vault_path=sr_path,
+      _vault_path=vault_path,
       data=data_attrs,
   )}
 </%def>
