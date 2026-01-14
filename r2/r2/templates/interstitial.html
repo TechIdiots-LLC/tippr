@@ -37,12 +37,12 @@
     <div class="md">
       <h3>${self.interstitial_title()}</h3>
 
-      %if thing.vault_name and thing.sr_description:
+      % if thing.vault_name and getattr(thing, 'vault_description', None):
         <div class="interstitial-vault-description">
           <h5>${_("r/%s") % thing.vault_name}</h5>
-          ${md(thing.sr_description)}
+          ${md(thing.vault_description)}
         </div>
-      %endif
+      % endif
 
       ${self.interstitial_message()}
     </div>

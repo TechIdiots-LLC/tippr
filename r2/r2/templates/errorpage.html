@@ -36,12 +36,12 @@ from r2.lib.filters import unsafe, safemarkdown
   %endif
   </div>
 
-  % if thing.sr_description:
-  <div class="errorpage-message vault-description">
+    % if getattr(thing, 'vault_description', None):
+    <div class="errorpage-message vault-description">
       <h2>${_("a message from the moderators of /r/%s") % c.site.name}</h2>
-      ${unsafe(safemarkdown(thing.sr_description, wrap=False))}
-  </div>
-  % endif
+      ${unsafe(safemarkdown(thing.vault_description, wrap=False))}
+    </div>
+    % endif
 
   % if thing.include_message_mods_link:
   <div id="private-vault-message-link" class="errorpage-message">
