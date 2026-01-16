@@ -45,7 +45,7 @@ r.multi = {
     }
 }
 
-r.multi.MultiRedditList = Backbone.Collection.extend({
+r.multi.MultiVaultList = Backbone.Collection.extend({
     model: Backbone.Model.extend({
         initialize: function() {
             this.id = this.get('name').toLowerCase()
@@ -61,7 +61,7 @@ r.multi.MultiRedditList = Backbone.Collection.extend({
     }
 })
 
-r.multi.MultiReddit = Backbone.Model.extend({
+r.multi.MultiVault = Backbone.Model.extend({
     idAttribute: 'path',
     url: function() {
         return r.utils.joinURLs('/api/multi', this.id)
@@ -73,7 +73,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     initialize: function(attributes, options) {
         this.uncreated = options && !!options.isNew
-        this.vaults = new r.multi.MultiRedditList(this.get('vaults'), {
+        this.vaults = new r.multi.MultiVaultList(this.get('vaults'), {
             url: this.url() + '/v/',
             parse: true
         })
@@ -177,7 +177,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
 r.multi.MyMultiCollection = Backbone.Collection.extend({
     url: '/api/multi/mine',
-    model: r.multi.MultiReddit,
+    model: r.multi.MultiVault,
     comparator: function(model) {
         return model.get('path').toLowerCase()
     },
@@ -194,7 +194,7 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
 })
 
 r.multi.GlobalMultiCache = Backbone.Collection.extend({
-    model: r.multi.MultiReddit,
+    model: r.multi.MultiVault,
 
     touch: function(path) {
         var multi = this.get(path)
@@ -219,7 +219,7 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
 r.multi.MultiVaultItem = Backbone.View.extend({
     tagName: 'li',
 
-    template: _.template('<a href="/v/<%- vault_name %>">/r/<%- vault_name %></a><button class="remove-vault">x</button>'),
+    template: _.template('<a href="/v/<%- vault_name %>">/v/<%- vault_name %></a><button class="remove-vault">x</button>'),
 
     events: {
         'click .remove-vault': 'removeVault'
@@ -623,7 +623,7 @@ r.multi.MultiCreateForm = Backbone.View.extend({
     },
 
     _createMulti: function(name) {
-        var newMulti = new r.multi.MultiReddit({
+        var newMulti = new r.multi.MultiVault({
                 path: r.multi.mine.pathByName(name)
             }, {isNew: true})
 

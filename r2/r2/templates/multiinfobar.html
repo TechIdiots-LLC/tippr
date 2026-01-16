@@ -39,7 +39,7 @@
       <div class="visibility-group">
         <label><input type="radio" name="visibility" value="private" ${'checked' if thing.multi.visibility == 'private' else ''}>${_('private')}</label>
         <label><input type="radio" name="visibility" value="public" ${'checked' if thing.multi.visibility == 'public' else ''}>${_('public')}</label>
-        %if feature.is_enabled('multireddit_customizations') or thing.multi.visibility == 'hidden':
+        %if feature.is_enabled('multivault_customizations') or thing.multi.visibility == 'hidden':
           <label><input type="radio" name="visibility" value="hidden" ${'checked' if thing.multi.visibility == 'hidden' else ''}>${_('hidden')}</label>
         %endif
       </div>
@@ -52,7 +52,7 @@
         %endif
         <button class="delete">${_('delete')}</button>
       </div>
-      %if feature.is_enabled('multireddit_customizations'):
+      %if feature.is_enabled('multivault_customizations'):
       <div>
         <select name="key_color">
           %if thing.multi.key_color not in thing.color_options:
@@ -109,10 +109,10 @@
 
   <% sr_count = format_html('<span class="count">%s</span>&#32;', len(thing.vaults)) %>
   <h3>${_wsf('%(count)s vaults in this multi:', count=sr_count)}</h3>
-  <ul class="vaults">
+      <ul class="vaults">
   %for vault in thing.vaults:
     <li data-name="${vault.name}">
-      <a href="/v/${vault.name}">/r/${vault.name}</a>
+      <a href="/v/${vault.name}">/v/${vault.name}</a>
       <button class="remove-vault">${_('remove')}</button>
     </li>
   %endfor

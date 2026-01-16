@@ -59,6 +59,8 @@ class AccountExists(Exception):
 
 
 class Account(Thing):
+    # Compatibility flag: whether the user has any subscriptions (legacy name)
+    has_subscribed = False
     _cache = g.thingcache
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',

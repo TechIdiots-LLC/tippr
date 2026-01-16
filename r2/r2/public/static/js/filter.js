@@ -21,7 +21,7 @@ r.filter.init = function() {
     }
 }
 
-r.filter.Filter = r.multi.MultiReddit.extend({
+r.filter.Filter = r.multi.MultiVault.extend({
     url: function() {
         return r.utils.joinURLs('/api/filter', this.id)
     }

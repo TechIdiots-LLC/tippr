@@ -24,9 +24,9 @@
 <%namespace file="vault.html" import="permission_icons"/>
 
 <%
-  from r2.models import MultiReddit
+  from r2.models import MultiVault
   from r2.lib.pages import SubscribeButton
-  is_multi = isinstance(c.site, MultiReddit)
+  is_multi = isinstance(c.site, MultiVault)
 %>
 
 <div class="subscription-box">
