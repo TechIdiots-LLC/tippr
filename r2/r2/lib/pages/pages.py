@@ -2653,7 +2653,7 @@ class ErrorPage(Templated):
     def __init__(self, title, message, image=None, explanation=None, **kwargs):
         if not image:
             letter = random.choice(['a', 'b', 'c', 'd', 'e'])
-            image = 'reddit404' + letter + '.png'
+            image = 'tippr404' + letter + '.png'
         # Normalize explanation strings.
         if explanation:
             explanation = explanation.lower().rstrip('.') + '.'
