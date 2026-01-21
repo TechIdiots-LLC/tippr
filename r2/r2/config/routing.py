@@ -102,7 +102,7 @@ def make_map(config):
        requirements=dict(where="popular|new|banned|employee|gold|default|"
                                "quarantine|featured"))
     # If no vault is specified, might as well show a list of 'em.
-   mc('/v', controller='redirect', action='redirect', dest='/vaults')
+      mc('/v', controller='redirect', action='redirect', dest='/vaults')
 
     mc('/vaults/mine/:where', controller='myvaults', action='listing',
        where='subscriber', conditions={'function':not_in_vault},
