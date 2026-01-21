@@ -18,6 +18,11 @@
 #
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
+#
+#  Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026 
+#  TechIdiots LLC. All Rights Reserved.
+# 
+#  Contributor(s): TechIdiots LLC
 ###############################################################################
 from r2.lib.errors import error_list
 from r2.lib.str import _force_unicode
