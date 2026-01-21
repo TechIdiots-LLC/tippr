@@ -1380,16 +1380,16 @@ body.post-under-6h-old .gilded-icon {
 	display: inline-block;
 }
 
-#suggested-reddits ul {
+#suggested-vaults ul {
     background: hsl(0, 0%, 90%);
     border: 1px solid hsl(0, 0%, 50%);
     padding: 8px;
     @include border-radius(8px);
 }
-#suggested-reddits ul li {
+#suggested-vaults ul li {
 	display: inline;
 }
-#suggested-reddits ul li a {
+#suggested-vaults ul li a {
     @include vertical_gradient(hsl(210, 35%, 81%), hsl(210, 37%, 64%));
     @include border-radius(10px);
     display: inline-block;

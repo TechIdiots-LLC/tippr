@@ -23,19 +23,19 @@
 <%namespace file="utils.html" import="plain_link"/>
 
 <%def name="domain()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     ${plain_link(c.site.name, c.site.user_path, _sr_path=False)}
   </span>
 </%def>
 
 <%def name="Vault()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     ${plain_link(c.site.name, c.site.user_path, _sr_path=False)}
   </span>
 </%def>
 
 <%def name="Vaults()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     ${plain_link(_("Vaults"), "/Vaults/", _sr_path=False)}
   </span>
 </%def>
@@ -45,7 +45,7 @@ ${thing.title}
 </%def>
 
 <%def name="help()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     ${plain_link(thing.title, "/help", _sr_path=False)}
   </span>
 </%def>

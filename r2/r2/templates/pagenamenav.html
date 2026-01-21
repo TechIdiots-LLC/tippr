@@ -23,8 +23,8 @@
 <%namespace file="utils.html" import="plain_link, _md"/>
 
 <%def name="vault()">
-  <span class="hover pagename redditname">
-    ${plain_link(c.site.name, c.site.user_path, _vault_path=False)}
+  <span class="hover pagename tipprname">
+      ${plain_link(c.site.name, c.site.user_path, _vault_path=False)}
     % if hasattr(thing, "title"):
       : ${thing.title}
     % endif
@@ -33,8 +33,8 @@
 
 <%def name="domain()">
   <div id="vault-name-box">
-    <span class="hover pagename redditname">
-      ${plain_link(getattr(c.site, "idn", c.site.name), c.site.user_path, _vault_path=False)}
+    <span class="hover pagename tipprname">
+        ${plain_link(getattr(c.site, "idn", c.site.name), c.site.user_path, _vault_path=False)}
       % if hasattr(thing, "title"):
         : ${thing.title}
       % endif
@@ -55,8 +55,8 @@
 </%def>
 
 <%def name="vaults()">
-  <span class="hover pagename redditname">
-    ${plain_link(_("vaults"), "/vaults/", _vault_path=False)}
+  <span class="hover pagename tipprname">
+     ${plain_link(_("vaults"), "/vaults/", _vault_path=False)}
   </span>
 </%def>
 
@@ -65,8 +65,8 @@
 </%def>
 
 <%def name="help()">
-  <span class="hover pagename redditname">
-    ${plain_link(thing.title, "/wiki", _vault_path=False)}
+  <span class="hover pagename tipprname">
+     ${plain_link(thing.title, "/wiki", _vault_path=False)}
   </span>
 </%def>
 

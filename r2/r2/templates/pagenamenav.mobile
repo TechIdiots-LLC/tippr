@@ -21,19 +21,19 @@
 ###############################################################################
 
 <%def name="domain()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     <a href="${c.site.path}">${c.site.name}</a>
   </span>
 </%def>
 
 <%def name="Vault()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     <a href="${c.site.path}">${c.site.name}</a>
   </span>
 </%def>
 
 <%def name="Vaults()">
-  <span class="hover pagename redditname">
+  <span class="hover pagename tipprname">
     <a href="/Vaults/">${_("Vaults")}</a>
   </span>
 </%def>
