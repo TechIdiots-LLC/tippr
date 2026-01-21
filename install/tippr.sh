@@ -843,10 +843,49 @@ fi
 if [ -f development.ini ]; then
     # Create a real file (not a symlink) to avoid broken-link surprises in CI
     sudo -u $TIPPR_USER cp -f development.ini run.ini
+    # Ensure the DB password and DB user in the generated ini match the configured values
+    INI_PATH="$TIPPR_SRC/tippr/r2/run.ini"
+    sudo -u $TIPPR_USER env TIPPR_DB_PASSWORD="$TIPPR_DB_PASSWORD" TIPPR_DB_USER="$TIPPR_DB_USER" \
+        $TIPPR_VENV/bin/python - "$INI_PATH" <<'PY'
+import os, sys
+ini = sys.argv[1]
+pw = os.environ.get('TIPPR_DB_PASSWORD', '')
+user = os.environ.get('TIPPR_DB_USER', '')
+lines = []
+with open(ini, 'r', encoding='utf-8') as f:
+    for line in f:
+        if line.lstrip().startswith('db_pass ='):
+            lines.append('db_pass = ' + pw + '\n')
+        elif line.lstrip().startswith('db_user ='):
+            lines.append('db_user = ' + user + '\n')
+        else:
+            lines.append(line)
+with open(ini, 'w', encoding='utf-8') as f:
+    f.writelines(lines)
+PY
     sudo -u $TIPPR_USER chown $TIPPR_USER run.ini || true
 else
     echo "Falling back to example.ini for run.ini (development.ini missing)"
     sudo -u $TIPPR_USER cp -f example.ini run.ini
+    INI_PATH="$TIPPR_SRC/tippr/r2/run.ini"
+    sudo -u $TIPPR_USER env TIPPR_DB_PASSWORD="$TIPPR_DB_PASSWORD" TIPPR_DB_USER="$TIPPR_DB_USER" \
+        $TIPPR_VENV/bin/python - "$INI_PATH" <<'PY'
+import os, sys
+ini = sys.argv[1]
+pw = os.environ.get('TIPPR_DB_PASSWORD', '')
+user = os.environ.get('TIPPR_DB_USER', '')
+lines = []
+with open(ini, 'r', encoding='utf-8') as f:
+    for line in f:
+        if line.lstrip().startswith('db_pass ='):
+            lines.append('db_pass = ' + pw + '\n')
+        elif line.lstrip().startswith('db_user ='):
+            lines.append('db_user = ' + user + '\n')
+        else:
+            lines.append(line)
+with open(ini, 'w', encoding='utf-8') as f:
+    f.writelines(lines)
+PY
     sudo -u $TIPPR_USER chown $TIPPR_USER run.ini || true
 fi
 
