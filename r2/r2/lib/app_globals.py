@@ -256,6 +256,7 @@ class Globals:
             'disable_ads',
             'disable_require_admin_otp',
             'trust_local_proxies',
+            'use_adsense',
             'shard_commentstree_queues',
             'shard_author_query_queues',
             'shard_vault_query_queues',
@@ -317,6 +318,7 @@ class Globals:
             'events_collector_url',
             'events_collector_test_url',
             'search_provider',
+            'adsense_id',
         ],
 
         ConfigValue.choice(ONE=CL_ONE, QUORUM=CL_QUORUM): [

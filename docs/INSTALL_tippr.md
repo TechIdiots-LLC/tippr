@@ -100,6 +100,30 @@ When running inside a VM or container, replace `192.168.33.10` with the VM/conta
 192.168.33.10 tippr.local
 ```
 
+### Google AdSense Configuration
+
+You can configure tippr to use Google AdSense instead of the built-in local ads system.
+
+1.  Open your configuration file (e.g., `development.ini` or `production.ini`).
+2.  Locate the `[DEFAULT]` section.
+3.  Set `use_adsense = true`.
+4.  Set `adsense_id` to your Google AdSense Publisher ID (e.g., `pub-1234567890123456`).
+
+Example:
+
+```ini
+[DEFAULT]
+...
+#### Ads
+# The Google Adsense Publisher ID
+adsense_id = pub-1234567890123456
+
+#### Feature toggles
+disable_ads = false
+use_adsense = true
+...
+```
+
 After adding the host mapping, you should be able to visit `https://tippr.local` in your browser (or the HTTP/HTTPS endpoint the installer configures).
 
 Systemd / init scripts and service names created by the installer

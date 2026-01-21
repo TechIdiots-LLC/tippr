@@ -22,8 +22,23 @@
 
 <%!
    from r2.lib import tracking
+   from pylons import app_globals as g
  %>
 
+% if g.use_adsense and g.adsense_id:
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${g.adsense_id}"
+     crossorigin="anonymous"></script>
+<!-- Sidebar Ad -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="${g.adsense_id}"
+     data-ad-slot="auto"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+% else:
 <iframe id="${thing.frame_id}" frameborder="0" scrolling="no" name="${thing.frame_id}"
         src="${thing.ad_url}">
 </iframe>
@@ -40,3 +55,4 @@
       }
     });
 </script>
+% endif
