@@ -2220,9 +2220,9 @@ class editvault(Tippr):
 
 
 class VaultsPage(Tippr):
-    """container for rendering a list of reddits.  The corner
+    """container for rendering a list of vaults.  The corner
     searchbox is hidden and its functionality subsumed by an in page
-    SearchBar for searching over reddits.  As a result this class
+    SearchBar for searching over vaults.  As a result this class
     takes the same arguments as SearchBar, which it uses to construct
     self.searchbar"""
     searchbox    = False
@@ -2257,7 +2257,7 @@ class VaultsPage(Tippr):
         if c.user_is_admin:
             buttons.append(NamedButton("featured"))
         if c.user_is_loggedin:
-            #add the aliases to "my reddits" stays highlighted
+            #add the aliases to "my vaults" stays highlighted
             buttons.append(NamedButton("mine",
                                        aliases=['/vaults/mine/subscriber',
                                                 '/vaults/mine/contributor',
@@ -2277,9 +2277,9 @@ class VaultsPage(Tippr):
         vaults.sort(key=lambda vault: vault.name.lower())
         subscribe_box = SubscriptionBox(vaults,
                                         multi_text=strings.subscribed_multi)
-        num_reddits = len(subscribe_box.vaults)
+        num_vaults = len(subscribe_box.vaults)
         ps.append(SideContentBox(_("your front page vaults (%s)") %
-                                 num_reddits, [subscribe_box]))
+                                 num_vaults, [subscribe_box]))
         return ps
 
 class MyVaultsPage(VaultsPage):
@@ -2792,7 +2792,7 @@ class Popup(Templated):
 class VaultTopBar(CachedTemplate):
 
     """The horizontal strip at the top of most pages for navigating
-    user-created reddits."""
+    user-created vaults."""
     def __init__(self):
         self._my_vaults = None
         self._pop_vaults = None
@@ -2859,18 +2859,18 @@ class VaultTopBar(CachedTemplate):
     def special_vaults(self):
         css_classes = {Random: "random",
                        RandomSubscription: "gold"}
-        reddits = [Frontpage, All, Random]
+        vaults = [Frontpage, All, Random]
         if getattr(c.site, "over_18", False):
-            reddits.append(RandomNSFW)
+            vaults.append(RandomNSFW)
         if c.user_is_loggedin:
             if c.user.gold:
-                reddits.append(RandomSubscription)
+                vaults.append(RandomSubscription)
             if c.user.friends:
-                reddits.append(Friends)
+                vaults.append(Friends)
             if c.user.is_moderator_somewhere:
-                reddits.append(Mod)
+                vaults.append(Mod)
         return NavMenu([VaultButton(vault, css_class=css_classes.get(vault))
-                        for vault in reddits],
+                        for vault in vaults],
                        type = 'flatlist', separator = '-',
                        css_class = 'vault-bar')
 
@@ -2926,7 +2926,7 @@ class MultiInfoBar(Templated):
 
 
 class SubscriptionBox(Templated):
-    """The list of reddits a user is currently subscribed to to go in
+    """The list of vaults a user is currently subscribed to to go in
     the right pane."""
     def __init__(self, vaults, multi_text=None):
         self.vaults = vaults
@@ -2960,7 +2960,7 @@ class SubscriptionBox(Templated):
                            goldmsg=self.goldmsg)
 
     @property
-    def reddits(self):
+    def vaults(self):
         return wrap_links(self.vaults)
 
 
