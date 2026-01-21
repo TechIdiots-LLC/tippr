@@ -2956,7 +2956,7 @@ class SubscriptionBox(Templated):
                 self.prelink = ["/wiki/faq#wiki_how_many_Vaults_can_i_subscribe_to.3F",
                                 _("%s visible") % visible]
 
-        Templated.__init__(self, vaults=vaults, goldlink=self.goldlink,
+        Templated.__init__(self, goldlink=self.goldlink,
                            goldmsg=self.goldmsg)
 
     @property
