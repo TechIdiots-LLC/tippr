@@ -206,8 +206,8 @@
         case 'facebook':
           return this.shareToFacebook();
 
-        case 'twitter':
-          return this.shareToTwitter();
+        case 'threads':
+          return this.shareToThreads();
 
         case 'tumblr':
           return this.shareToTumblr();
@@ -241,38 +241,15 @@
       this.openWebIntent(shareUrl, 'facebook');
     },
 
-    shareToTwitter: function() {
-      var redditUrl = this.getShareLink('twitter');
-      var twitterHandle = 'tippr'
-      var title = this.thingData.title;
-
-      // current twitter short url length is 23, +1 for space after, and +1 for
-      // padding if the shortlink length grows.  The proper way to handle this
-      // is to set up a twitter app and fetch the current shortlink length from
-      // twitter on a daily cron
-      var twitterShortLinkLength = 25;
-
-      var tweetText = [title, 'via', '@' + twitterHandle].join(' ');
-      var tweetTextLength = tweetText.length + twitterShortLinkLength;
-      var maxTweetLength = 140;
-      var minTitleLength = 10
-
-      // -1 at the end is to account for the ellipsis that we append
-      var truncatedTitleLength = title.length - (tweetTextLength - maxTweetLength) - 1;
-
-      if (tweetText.length > maxTweetLength) {
-        title = title.slice(0, Math.max(minTitleLength, truncatedTitleLength));
-        title = title.trim() + '…';
-      }
-
+    shareToThreads: function() {
+      var redditUrl = this.getShareLink('threads');
+      var text = this.thingData.title + ' ' + redditUrl;
       var shareParams = {
-        url: redditUrl,
-        text: title,
-        via: twitterHandle,
+        text: text,
       };
-      var shareUrl = r.utils.replaceUrlParams('https://twitter.com/intent/tweet', shareParams);
+      var shareUrl = r.utils.replaceUrlParams('https://www.threads.net/intent/post', shareParams);
 
-      this.openWebIntent(shareUrl, 'twitter');
+      this.openWebIntent(shareUrl, 'threads');
     },
 
     shareToTumblr: function() {
@@ -453,8 +430,8 @@
           tooltip: r._('Share to %(name)s').format({name: 'Facebook'}),
         },
         {
-          name: 'twitter',
-          tooltip: r._('Share to %(name)s').format({name: 'Twitter'}),
+          name: 'threads',
+          tooltip: r._('Share to %(name)s').format({name: 'Threads'}),
         },
         {
           name: 'tumblr',

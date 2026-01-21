@@ -1714,14 +1714,6 @@ class LinkInfoPage(Tippr):
             short_description,
         )
 
-        self.twitter_card = self._build_twitter_card_data(
-            _force_unicode(link_title),
-            short_description,
-        )
-        hook = hooks.get_hook('comments_page.twitter_card')
-        hook.call(tags=self.twitter_card, vault_name=c.site.name,
-                  id36=self.link._id36)
-
         if hasattr(self.link, "dart_keyword"):
             c.custom_dart_keyword = self.link.dart_keyword
 
@@ -1836,27 +1828,6 @@ class LinkInfoPage(Tippr):
         return strings.link_info_og_description % {
             "score": self.link.score,
             "num_comments": self.link.num_comments,
-        }
-
-    def _build_twitter_card_data(self, link_title, meta_description):
-        """Build a set of data for Twitter's Summary Cards:
-        https://dev.twitter.com/cards/types/summary
-        https://dev.twitter.com/cards/markup
-        """
-
-        # Twitter limits us to 70 characters for the title.  Even though it's
-        # at the end, we'd like to always show the whole vault name, so
-        # let's truncate the title while still ensuring the entire thing is
-        # under the limit.
-        vault_fragment = " â€¢ /v/" + c.site.name if not c.default_sr else get_domain()
-        max_link_title_length = 70 - len(vault_fragment)
-
-        return {
-            "site": "tippr", # The twitter account of the site.
-            "card": "summary",
-            "title": _truncate(link_title, max_link_title_length) + vault_fragment
-            # Twitter will fall back to any defined OpenGraph attributes, so we
-            # don't need to define 'twitter:image' or 'twitter:description'.
         }
 
     def build_toolbars(self):

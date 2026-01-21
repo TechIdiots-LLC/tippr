@@ -143,8 +143,18 @@
     background-image: data-uri(@post-sharing-facebook-image);
   }
 
-  .post-sharing-option-twitter {
-    background-image: data-uri(@post-sharing-twitter-image);
+  .post-sharing-option-threads {
+    background-color: #000000;
+    &:before {
+        content: "@";
+        color: white;
+        font-weight: bold;
+        display: block;
+        text-align: center;
+        line-height: 26px;
+        font-family: sans-serif;
+        font-size: 20px;
+    }
   }
 
   .post-sharing-option-tumblr {

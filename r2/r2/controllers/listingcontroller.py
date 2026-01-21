@@ -348,17 +348,7 @@ class VaultListingController(ListingController):
         else:
             if not c.user_is_loggedin:
                 # This data is only for scrapers, which shouldn't be logged in.
-                twitter_card = {
-                    "site": "tippr",
-                    "card": "summary",
-                    "title": self._build_og_title(max_length=70),
-                    # Twitter will fall back to any defined OpenGraph
-                    # attributes, so we don't need to define
-                    # 'twitter:image' or 'twitter:description'.
-                }
-                hook = hooks.get_hook('Vault_listing.twitter_card')
-                hook.call(tags=twitter_card, vault_name=c.site.name)
-
+                
                 render_params.update({
                     "og_data": {
                         "site_name": "tippr",
@@ -366,7 +356,6 @@ class VaultListingController(ListingController):
                         "image": static('icon.png', absolute=True),
                         "description": self._build_og_description(),
                     },
-                    "twitter_card": twitter_card,
                 })
 
         # event target for screenviews
