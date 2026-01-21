@@ -57,7 +57,7 @@ Disallow: /*after=
 Disallow: /*before=
 Disallow: /domain/*t=
 Disallow: /login
-Disallow: /reddits/search
+Disallow: /vaults/search
 Disallow: /search
 Disallow: /r/*/search
 Allow: /

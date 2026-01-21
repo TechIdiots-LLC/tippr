@@ -91,8 +91,8 @@ class ApplicationConfig:
 
 config = ApplicationConfig()
 tracking_secret = config.get('DEFAULT', 'tracking_secret')
-reddit_domain = config.get('DEFAULT', 'domain')
-reddit_domain_prefix = config.get('DEFAULT', 'domain_prefix')
+tippr_domain = config.get('DEFAULT', 'domain')
+tippr_domain_prefix = config.get('DEFAULT', 'domain_prefix')
 
 
 @application.route("/")
@@ -127,7 +127,7 @@ def event_redirect():
     destination = request.args['url'].encode('utf-8')
 
     # Parse and avoid open redirects
-    netloc = "{}.{}".format(reddit_domain_prefix, reddit_domain)
+    netloc = "{}.{}".format(tippr_domain_prefix, tippr_domain)
     u = urlparse(destination)._replace(netloc=netloc, scheme="https")
 
     if u.query:

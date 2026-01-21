@@ -1,5 +1,5 @@
 [Unit]
-Description=update /reddits sort scores
+Description=update /vaults sort scores
 
 After=network.target
 

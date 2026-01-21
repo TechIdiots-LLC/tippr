@@ -102,27 +102,11 @@ def make_map(config):
        requirements=dict(where="popular|new|banned|employee|gold|default|"
                                "quarantine|featured"))
     # If no vault is specified, might as well show a list of 'em.
-    mc('/v', controller='redirect', action='redirect', dest='/vaults')
-    # Backwards compatibility: redirect old /r to /vaults
-    mc('/r', controller='redirect', action='redirect', dest='/vaults')
+   mc('/v', controller='redirect', action='redirect', dest='/vaults')
 
     mc('/vaults/mine/:where', controller='myvaults', action='listing',
        where='subscriber', conditions={'function':not_in_vault},
        requirements=dict(where='subscriber|contributor|moderator'))
-
-    # These routes are kept for backwards-compatibility reasons
-    # Using the above /vaults/ ones instead is preferable
-    mc('/reddits/create', controller='front', action='newvault')
-    mc('/reddits/search', controller='front', action='search_vaults')
-    mc('/reddits/login', controller='forms', action='login')
-    mc('/reddits/:where', controller='vaults', action='listing',
-       where='popular', conditions={'function':not_in_vault},
-       requirements=dict(where="popular|new|banned"))
-
-    mc('/reddits/mine/:where', controller='myvaults', action='listing',
-       where='subscriber', conditions={'function':not_in_vault},
-       requirements=dict(where='subscriber|contributor|moderator'))
-
     mc('/buttons', controller='buttons', action='button_demo_page')
 
     #/button.js and buttonlite.js - the embeds

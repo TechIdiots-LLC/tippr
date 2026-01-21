@@ -684,7 +684,7 @@ class UrlParser:
         utility method for checking if the path starts with a
         vault specifier (namely /v/ or /vaults/).
         """
-        return self.path.startswith(('/v/', '/vaults/', '/reddits/'))
+        return self.path.startswith(('/v/', '/vaults/'))
 
     def get_Vault(self):
         """checks if the current url refers to a vault and returns
