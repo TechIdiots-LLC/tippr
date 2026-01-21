@@ -73,9 +73,17 @@ fi
 # Create role if it doesn't exist
 ROLE_EXISTS=$(sudo -u postgres env LC_ALL=C psql -t -c "SELECT 1 FROM pg_roles WHERE rolname='tippr';" | tr -d '[:space:]')
 if [ "$ROLE_EXISTS" != "1" ]; then
-     sudo -u postgres env LC_ALL=C psql -c "CREATE USER tippr WITH PASSWORD 'password';" || true
+    echo "Creating PostgreSQL role 'tippr'..."
+    sudo -u postgres env LC_ALL=C psql -c "CREATE USER tippr WITH PASSWORD '${TIPPR_DB_PASSWORD}';" 2>/tmp/createuser.err || {
+        echo "ERROR: failed to create role 'tippr' — see /tmp/createuser.err" >&2
+        cat /tmp/createuser.err >&2 || true
+    }
 else
-     sudo -u postgres env LC_ALL=C psql -c "ALTER USER tippr WITH PASSWORD 'password';" || true
+    echo "Updating password for PostgreSQL role 'tippr'..."
+    sudo -u postgres env LC_ALL=C psql -c "ALTER USER tippr WITH PASSWORD '${TIPPR_DB_PASSWORD}';" 2>/tmp/alteruser.err || {
+        echo "ERROR: failed to alter role 'tippr' — see /tmp/alteruser.err" >&2
+        cat /tmp/alteruser.err >&2 || true
+    }
 fi
 
 # Ensure the tippr user owns the tippr database so it can create tables
