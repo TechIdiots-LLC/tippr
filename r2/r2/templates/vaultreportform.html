@@ -89,7 +89,7 @@
     </%self:report_form_base>
 </%def>
 
-<%def name="reddit_report_form(fullname, system_rules, vault_name=None)">
+<%def name="vault_report_form(fullname, system_rules, vault_name=None)">
     <%self:report_form_base
             fullname="${fullname}"
             rules_page_link="/help/contentpolicy"
@@ -149,7 +149,7 @@
         vault_name=thing.vault_name,
     )}
 %else:
-    ${self.reddit_report_form(
+    ${self.vault_report_form(
         fullname=thing.thing_fullname,
         system_rules=thing.system_rules,
     )}
