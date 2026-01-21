@@ -1434,10 +1434,15 @@ class TipprController(OAuth2ResourceController):
         # use override stylesheet if one exists and:
         #   this page has no custom stylesheet
         #   or the user disabled the stylesheet for this vault (indiv or global)
-        has_style_override = (c.user.pref_default_theme_vault and
+        has_style_override = (c.user_is_loggedin and
+            c.user.pref_default_theme_vault and
             feature.is_enabled('stylesheets_everywhere') and
             Vault._by_name(c.user.pref_default_theme_vault).can_view(c.user))
-        vault_stylesheet_enabled = c.user.use_Vault_style(c.site)
+
+        if c.user_is_loggedin:
+            vault_stylesheet_enabled = c.user.use_Vault_style(c.site)
+        else:
+            vault_stylesheet_enabled = True
 
         if (not vault_stylesheet_enabled and
                 not has_style_override):
