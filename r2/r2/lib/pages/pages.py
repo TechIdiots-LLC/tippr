@@ -2929,7 +2929,7 @@ class SubscriptionBox(Templated):
     """The list of vaults a user is currently subscribed to to go in
     the right pane."""
     def __init__(self, vaults, multi_text=None):
-        self.vaults = vaults
+        self._vaults = vaults
         self.goldlink = None
         self.goldmsg = None
         self.prelink = None
@@ -2961,7 +2961,7 @@ class SubscriptionBox(Templated):
 
     @property
     def vaults(self):
-        return wrap_links(self.vaults)
+        return wrap_links(self._vaults)
 
 
 class ModSRInfoBar(Templated):
