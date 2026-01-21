@@ -2248,7 +2248,7 @@ class VaultsPage(Tippr):
         vaults.sort(key=lambda vault: vault.name.lower())
         subscribe_box = SubscriptionBox(vaults,
                                         multi_text=strings.subscribed_multi)
-        num_vaults = len(subscribe_box.vaults)
+        num_vaults = len(vaults)
         ps.append(SideContentBox(_("your front page vaults (%s)") %
                                  num_vaults, [subscribe_box]))
         return ps
