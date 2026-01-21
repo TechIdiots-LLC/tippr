@@ -55,7 +55,7 @@
       ${plain_link(thing.multi_text, thing.multi_path, _class="title")}
       <div class="box-separator"></div>
     %endif
-    %for vault in thing.reddits:
+    %for vault in thing.vaults:
       <% is_spam = hasattr(vault, "_spam") and vault._spam %>
       <li>
         %if is_multi and is_spam:
