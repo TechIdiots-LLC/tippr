@@ -43,6 +43,7 @@ from thrift.transport.TTransport import TTransportException
 from r2.lib import hooks
 from r2.lib.cache import MemcachedError
 from r2.lib.db import tdb_cassandra
+from r2.lib.db.cassandra_compat import NotFoundException
 from r2.lib.db.operators import desc, lower, not_
 from r2.lib.db.tdb_sql import CreationError
 from r2.lib.db.thing import NotFound, Relation, Thing
@@ -1490,8 +1491,11 @@ class SubscribedVaultsByAccount(tdb_cassandra.DenormalizedRelation):
         key = cls.__name__ + user._id36
         vault_ids = g.cassandra_local_cache.get(key)
         if vault_ids is None:
-            r = cls._cf.xget(user._id36)
-            vault_ids = [int(vault_id36, 36) for vault_id36, val in r]
+            try:
+                r = cls._cf.xget(user._id36)
+                vault_ids = [int(vault_id36, 36) for vault_id36, val in r]
+            except NotFoundException:
+                vault_ids = []
             g.cassandra_local_cache.set(key, vault_ids)
 
         return vault_ids
