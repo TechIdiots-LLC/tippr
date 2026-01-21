@@ -34,7 +34,12 @@ class RedirectController(BaseController):
         BaseController.pre(self, *k, **kw)
         c.extension = request.environ.get('extension')
 
-    def GET_redirect(self, dest):
+    def GET_redirect(self, dest=None):
+        if dest is None:
+            # routes may provide the 'dest' value via routing args
+            dest = request.environ.get('wsgiorg.routing_args', (None, {}))[1].get('dest')
+        if not dest:
+            abort(400)
         return self.redirect(str(dest))
 
     def GET_user_redirect(self, username, rest=None):
