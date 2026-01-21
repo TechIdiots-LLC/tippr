@@ -420,7 +420,7 @@ class Tippr(Templated):
             c.user_is_loggedin and
             (
                 isinstance(c.site, (DefaultVault, AllSR, ModSR, LabeledMulti)) or
-                c.site.name == g.live_config["listing_chooser_explore_sr"]
+                c.site.name == g.live_config["listing_chooser_explore_vault"]
             )
         )
 
@@ -2915,10 +2915,10 @@ class MultiInfoBar(Templated):
 
         self.icon_options = g.multi_icons
 
-        explore_sr = g.live_config["listing_chooser_explore_sr"]
-        if explore_sr:
+        explore_vault = g.live_config["listing_chooser_explore_vault"]
+        if explore_vault:
             self.share_url = "/v/{vault}/submit?url={url}".format(
-                vault=explore_sr,
+                vault=explore_vault,
                 url=g.origin + self.multi.path,
             )
         else:
@@ -5563,9 +5563,9 @@ class ListingChooser(Templated):
                 if not multi.is_hidden():
                     self.add_item("multi", multi.name, site=multi)
 
-            explore_sr = g.live_config["listing_chooser_explore_sr"]
-            if explore_sr:
-                vault = Vault._by_name(explore_sr, stale=True)
+            explore_vault = g.live_config["listing_chooser_explore_vault"]
+            if explore_vault:
+                vault = Vault._by_name(explore_vault, stale=True)
                 self.add_item("multi", name=_("explore multis"), site=vault)
 
             self.show_samples = not multis
