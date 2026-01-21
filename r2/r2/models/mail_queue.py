@@ -223,7 +223,7 @@ class EmailHandler:
             tid = thing._fullname if thing else ""
             key = hashlib.sha1(str((email, from_name, uid, tid, ip, kind, body,
                                datetime.datetime.now(g.tz))).encode('utf-8')).hexdigest()
-            s.insert().values({s.c.to_addr : email,
+            stmt = s.insert().values({s.c.to_addr : email,
                                s.c.account_id : uid,
                                s.c.from_name : from_name,
                                s.c.fr_addr : fr_addr,
@@ -233,7 +233,9 @@ class EmailHandler:
                                s.c.kind: kind,
                                s.c.body: body,
                                s.c.date : date,
-                               s.c.msg_hash : key}).execute()
+                               s.c.msg_hash : key})
+            with self.metadata._engine.begin() as conn:
+                conn.execute(stmt)
             hashes.append(key)
         return hashes
 
