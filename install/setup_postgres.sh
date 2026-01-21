@@ -65,30 +65,28 @@ if [ "$IS_DATABASE_CREATED" != "1" ]; then
     fi
 fi
 
-# Use configured DB role (TIPPR_DB_USER) for role creation/password and grants
-DB_ROLE=${TIPPR_DB_USER:-"tippr"}
-
 # Create role if it doesn't exist
-ROLE_EXISTS=$(sudo -u postgres env LC_ALL=C psql -t -c "SELECT 1 FROM pg_roles WHERE rolname='${DB_ROLE}';" | tr -d '[:space:]')
+ROLE_EXISTS=$(sudo -u postgres env LC_ALL=C psql -t -c "SELECT 1 FROM pg_roles WHERE rolname='tippr';" | tr -d '[:space:]')
 if [ "$ROLE_EXISTS" != "1" ]; then
-    echo "Creating PostgreSQL role '${DB_ROLE}'..."
-    sudo -u postgres env LC_ALL=C psql -c "CREATE USER ${DB_ROLE} WITH PASSWORD '${TIPPR_DB_PASSWORD}';" 2>/tmp/createuser.err || {
-        echo "ERROR: failed to create role '${DB_ROLE}' — see /tmp/createuser.err" >&2
+    echo "Creating PostgreSQL role 'tippr'..."
+    sudo -u postgres env LC_ALL=C psql -c "CREATE USER tippr WITH PASSWORD '${TIPPR_DB_PASSWORD}';" 2>/tmp/createuser.err || {
+        echo "ERROR: failed to create role 'tippr' — see /tmp/createuser.err" >&2
         cat /tmp/createuser.err >&2 || true
     }
 else
-    echo "Updating password for PostgreSQL role '${DB_ROLE}'..."
-    sudo -u postgres env LC_ALL=C psql -c "ALTER USER ${DB_ROLE} WITH PASSWORD '${TIPPR_DB_PASSWORD}';" 2>/tmp/alteruser.err || {
-        echo "ERROR: failed to alter role '${DB_ROLE}' — see /tmp/alteruser.err" >&2
+    echo "Updating password for PostgreSQL role 'tippr'..."
+    sudo -u postgres env LC_ALL=C psql -c "ALTER USER tippr WITH PASSWORD '${TIPPR_DB_PASSWORD}';" 2>/tmp/alteruser.err || {
+        echo "ERROR: failed to alter role 'tippr' — see /tmp/alteruser.err" >&2
         cat /tmp/alteruser.err >&2 || true
     }
 fi
 
-# Ensure the configured DB role owns the tippr database so it can create tables
-sudo -u postgres env LC_ALL=C psql -c "ALTER DATABASE tippr OWNER TO ${DB_ROLE};" || true
+# Ensure the tippr user owns the tippr database so it can create tables
+sudo -u postgres env LC_ALL=C psql -c "ALTER DATABASE tippr OWNER TO tippr;" || true
 
-# Grant privileges on the public schema to the configured DB role
-sudo -u postgres env LC_ALL=C psql tippr -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${DB_ROLE};" || true
+# Grant privileges on the public schema to the tippr user (needed when the
+# database owner is different or defaults are restrictive)
+sudo -u postgres env LC_ALL=C psql tippr -c "GRANT ALL PRIVILEGES ON SCHEMA public TO tippr;" || true
 
 sudo -u postgres env LC_ALL=C psql tippr <<FUNCTIONSQL
 create or replace function hot(ups integer, downs integer, date timestamp with time zone) returns numeric as \$\$
