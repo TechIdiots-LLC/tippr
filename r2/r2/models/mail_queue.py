@@ -222,7 +222,7 @@ class EmailHandler:
             uid = user._id if user else 0
             tid = thing._fullname if thing else ""
             key = hashlib.sha1(str((email, from_name, uid, tid, ip, kind, body,
-                               datetime.datetime.now(g.tz)))).hexdigest()
+                               datetime.datetime.now(g.tz))).encode('utf-8')).hexdigest()
             s.insert().values({s.c.to_addr : email,
                                s.c.account_id : uid,
                                s.c.from_name : from_name,
