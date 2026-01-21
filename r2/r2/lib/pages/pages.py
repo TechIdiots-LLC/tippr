@@ -232,14 +232,14 @@ class Tippr(Templated):
 
     settings determined at class-declaration time
 
-      create_reddit_box -- enable/disable display of the "Create a tippr" box
+      create_tippr_box -- enable/disable display of the "Create a tippr" box
       submit_box        -- enable/disable display of the "Submit" box
       searchbox         -- enable/disable the "search" box in the header
       extension_handling -- enable/disable rendering using non-html templates
                             (e.g. js, xml for rss, etc.)
     '''
 
-    create_reddit_box  = True
+    create_tippr_box  = True
     submit_box         = True
     header             = True
     searchbox          = True
@@ -802,7 +802,7 @@ class Tippr(Templated):
         elif self.show_wiki_actions:
             ps.append(self.wiki_actions_menu())
 
-        if self.create_reddit_box and c.user_is_loggedin:
+        if self.create_tippr_box and c.user_is_loggedin:
             if (c.user._age.days >= g.min_membership_create_community and
                     c.user.can_create_Vault):
                 subtitles = get_funny_translated_string("create_Vault", 2)
@@ -1455,7 +1455,7 @@ class HelpPage(BoringPage):
         return [PageNameNav('help', title = self.pagename)]
 
 class FormPage(BoringPage):
-    create_reddit_box  = False
+    create_tippr_box  = False
     submit_box         = False
     """intended for rendering forms with no rightbox needed or wanted"""
     def __init__(self, pagename, show_sidebar = False, *a, **kw):
@@ -1649,7 +1649,7 @@ class LinkInfoPage(Tippr):
     Link.
     """
 
-    create_reddit_box = False
+    create_tippr_box = False
     extra_page_classes = ['single-page']
     metadata_image_widths = (320, 216)
 
@@ -2307,7 +2307,7 @@ class ProfilePage(Tippr):
     on the page)"""
 
     searchbox         = False
-    create_reddit_box = False
+    create_tippr_box = False
     submit_box        = False
     extra_page_classes = ['profile-page']
 
@@ -4356,7 +4356,7 @@ class DetailsPage(LinkInfoPage):
 
 
 class PromotePage(Tippr):
-    create_reddit_box  = False
+    create_tippr_box  = False
     submit_box         = False
     extension_handling = False
     searchbox          = False

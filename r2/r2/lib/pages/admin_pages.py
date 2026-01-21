@@ -65,7 +65,7 @@ class Details(Templated):
 
 
 class AdminPage(Tippr):
-    create_reddit_box  = False
+    create_tippr_box  = False
     submit_box         = False
     extension_handling = False
     show_sidebar = False
