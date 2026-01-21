@@ -2795,7 +2795,7 @@ class VaultTopBar(CachedTemplate):
     user-created reddits."""
     def __init__(self):
         self._my_vaults = None
-        self._pop_reddits = None
+        self._pop_vaults = None
         name = '' if not c.user_is_loggedin else c.user.name
         # poor man's expiration, with random initial time
         t = int(time.time()) / 3600
@@ -2817,13 +2817,13 @@ class VaultTopBar(CachedTemplate):
         return self._my_vaults
 
     @property
-    def pop_reddits(self):
-        if self._pop_reddits is None:
+    def pop_vaults(self):
+        if self._pop_vaults is None:
             defaults = Vault.default_vaults(ids=False)
             # sort the default vaults by "popularity" descending
             defaults = sorted(defaults, key=lambda vault: vault._downs, reverse=True)
-            self._pop_reddits = defaults
-        return self._pop_reddits
+            self._pop_vaults = defaults
+        return self._pop_vaults
 
     def my_vaults_dropdown(self):
         drop_down_buttons = []
@@ -2837,19 +2837,19 @@ class VaultTopBar(CachedTemplate):
                              title = _('my vaults'),
                              type = 'vaultdrop')
 
-        def subscribed_reddits(self):
-         vaults = [VaultButton(vault) for vault in
-                   sorted(self.my_vaults,
-                       key = lambda vault: vault._downs,
-                       reverse=True)
-                   ]
+    def subscribed_vaults(self):
+        vaults = [VaultButton(vault) for vault in
+                  sorted(self.my_vaults,
+                      key = lambda vault: vault._downs,
+                      reverse=True)
+                  ]
         return NavMenu(vaults,
                        type='flatlist', separator = '-',
                        css_class = 'vault-bar')
 
-    def popular_reddits(self, exclude_mine=False):
+    def popular_vaults(self, exclude_mine=False):
         exclude = self.my_vaults if exclude_mine else []
-        buttons = [VaultButton(vault) for vault in self.pop_reddits
+        buttons = [VaultButton(vault) for vault in self.pop_vaults
                                        if vault not in exclude]
 
         return NavMenu(buttons,
@@ -2881,15 +2881,15 @@ class VaultTopBar(CachedTemplate):
         menus.append(RawString(sep))
 
         if not c.user_is_loggedin:
-            menus.append(self.popular_reddits())
+            menus.append(self.popular_vaults())
         else:
-            menus.append(self.subscribed_reddits())
+            menus.append(self.subscribed_vaults())
 
             # if the user has more than ~10 subscriptions the top bar will be
             # completely full and anything we add to it won't be seen
             if len(self.my_vaults) < 10:
                 menus.append(RawString(sep))
-                menus.append(self.popular_reddits(exclude_mine=True))
+                menus.append(self.popular_vaults(exclude_mine=True))
 
         return menus
 
