@@ -363,7 +363,10 @@ class WikiController(TipprController):
 
         mode = c.site.wikimode
         if not mode or mode == 'disabled':
-            if not c.is_wiki_mod:
+            # Allow transparency page even if wiki is disabled
+            if request.path.rstrip('/').endswith('/wiki/transparency'):
+                pass
+            elif not c.is_wiki_mod:
                 self.handle_error(403, 'WIKI_DISABLED')
             else:
                 c.wikidisabled = True
