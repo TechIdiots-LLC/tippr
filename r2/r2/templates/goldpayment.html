@@ -187,8 +187,8 @@
         <td>
           <% 
              import datetime
-             months = ['%02d' % m for m in xrange(1, 13)]
-             years = ['%04d' % y for y in xrange(datetime.datetime.now().year,
+             months = ['%02d' % m for m in range(1, 13)]
+             years = ['%04d' % y for y in range(datetime.datetime.now().year,
                                                  datetime.datetime.now().year + 25)]
            %>
           <select class="card-expiry-month" title=${_('month')}>
