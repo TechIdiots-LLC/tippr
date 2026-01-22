@@ -26,7 +26,7 @@
 <%!
    from pylons import app_globals as g
 
-   from r2.lib.template_helpers import get_domain
+   from r2.lib.template_helpers import get_domain, static
  %>
 
 <% domain = get_domain(vault=False) %>
@@ -154,7 +154,7 @@ $(function() {
 <%def name="drawbadge(image)">
   <a href="//${domain}/submit"
     onclick="window.location = '//${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-   <img src="//${g.static_domain}/sptippr${image}.gif"
+   <img src="${static('sptippr%s.gif' % image)}"
         alt="submit to tippr" border="0" />
    </a>
 </%def>
@@ -184,9 +184,9 @@ $(function() {
 <%def name="draw_interactive(type)">
 %if type:
   <script type="text/javascript" 
-          src="//${g.static_domain}/button/button${type}.js"></script>
+          src="${static('button/button%s.js' % type)}"></script>
 %else:
-  <script type="text/javascript" src="//${g.static_domain}/button/button1.js"></script>
+  <script type="text/javascript" src="${static('button/button1.js')}"></script>
 %endif
 </%def>
 
