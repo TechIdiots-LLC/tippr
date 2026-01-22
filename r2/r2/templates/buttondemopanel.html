@@ -51,7 +51,7 @@
 
     <h2>${_("buttons with points")}</h2>
     <ul class="buttons">
-    %for x in xrange(0,6):
+    %for x in range(0,6):
        ${demo(capture(draw_point_button, x))}
     %endfor
     </ul>
@@ -83,7 +83,7 @@
 
     <h2>${_("more interactive buttons")}</h2>
     <ul class="buttons">
-      %for x in xrange(1,4):
+      %for x in range(1,4):
         ${demo(capture(draw_interactive, x))}
       %endfor
     </ul>
