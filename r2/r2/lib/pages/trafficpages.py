@@ -18,6 +18,9 @@
 #
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
+# 
+# Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
+# TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 """View models for the traffic statistic pages on reddit."""
 
