@@ -34,7 +34,7 @@
     <link rel="apple-touch-icon" 
           href="/static/compact/tippr-apple-mobile-device.png"/>
     <link rel="apple-touch-startup-image" 
-          href="/static/compact/reddit_startimg.png" />
+          href="/static/compact/tippr_startimg.png" />
     <link rel="canonical" href="${thing.canonical_link}" />
     %if hasattr(thing, "shortlink"):
       <link rel="shorturl" href="https://${thing.shortlink}" />

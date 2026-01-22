@@ -48,7 +48,7 @@
 %endif
     write_string += '">';
 %if thing.image > 0:
-    write_string += unstyled_submit + '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="${static('spreddit' + str(thing.image) + '.gif')}">' + "</a>";
+    write_string += unstyled_submit + '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="${static('sptippr' + str(thing.image) + '.gif')}">' + "</a>";
 %endif
 %if thing._fullname:
     write_string += '${jssafe(websafe(Score.safepoints(thing.score)))}';

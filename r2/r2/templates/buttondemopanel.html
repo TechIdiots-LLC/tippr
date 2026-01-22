@@ -154,7 +154,7 @@ $(function() {
 <%def name="drawbadge(image)">
   <a href="//${domain}/submit"
     onclick="window.location = '//${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-   <img src="//${g.static_domain}/spreddit${image}.gif"
+   <img src="//${g.static_domain}/sptippr${image}.gif"
         alt="submit to tippr" border="0" />
    </a>
 </%def>
@@ -191,14 +191,14 @@ $(function() {
 </%def>
 
 <%def name="drawoption(option, val)" buffered="True">
-  <script type="text/javascript">reddit_${option}='${val}'</script>
+  <script type="text/javascript">tippr_${option}='${val}'</script>
 </%def>
 
 <%def name="draw_interactive_example()"><script type="text/javascript">
-  reddit_url = "//${domain}/buttons";
-  reddit_title = "Buttons!";
-  reddit_bgcolor = "FF3";
-  reddit_bordercolor = "00F";
+  tippr_url = "//${domain}/buttons";
+  tippr_title = "Buttons!";
+  tippr_bgcolor = "FF3";
+  tippr_bordercolor = "00F";
 </script>
 <script type="text/javascript" src="//${g.static_domain}/button/button3.js"></script>
 </%def>
