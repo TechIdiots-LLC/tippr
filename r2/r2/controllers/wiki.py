@@ -354,7 +354,7 @@ class WikiController(TipprController):
         frontpage = isinstance(c.site, DefaultVault)
         c.wiki_base_url = join_urls(c.site.path, 'wiki')
         c.wiki_api_url = join_urls(c.site.path, '/api/wiki')
-        c.wiki_id = g.default_sr if frontpage else c.site.name
+        c.wiki_id = g.default_vault if frontpage else c.site.name
         self.editconflict = False
         c.is_wiki_mod = (
             c.user_is_admin or c.site.is_moderator_with_perms(c.user, 'wiki')

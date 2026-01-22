@@ -816,7 +816,7 @@ class Tippr(Templated):
                            data_attrs=data_attrs,
                            show_cover = True))
 
-        if c.default_sr:
+        if c.default_vault:
             hook = hooks.get_hook('home.add_sidebox')
             extra_sidebox = hook.call_until_return()
             if extra_sidebox:
@@ -1400,7 +1400,7 @@ class MessagePage(Tippr):
         if c.user_is_loggedin and c.user.is_moderator_somewhere:
             buttons.append(ModeratorMailButton(menu.modmail, "moderator",
                                                vault_path = False))
-        if not c.default_sr:
+        if not c.default_vault:
             buttons.append(ModeratorMailButton(
                 _("%(site)s mail") % {'site': c.site.name}, "moderator",
                 aliases = ["/about/message/inbox",
@@ -1755,7 +1755,7 @@ class LinkInfoPage(Tippr):
         Tippr.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
 
     def _build_og_data(self, link_title, meta_description):
-        vault_fragment = "/v/" + c.site.name if not c.default_sr else get_domain()
+        vault_fragment = "/v/" + c.site.name if not c.default_vault else get_domain()
         data = {
             "site_name": "tippr",
             "title": "{} â€¢ {}".format(link_title, vault_fragment),
@@ -1897,7 +1897,7 @@ class LinkInfoPage(Tippr):
     def rightbox(self):
         rb = Tippr.rightbox(self)
 
-        if (c.site and not c.default_sr and c.render_style == 'html' and
+        if (c.site and not c.default_vault and c.render_style == 'html' and
                 feature.is_enabled('read_next')):
             link = self.link
 
@@ -3560,7 +3560,7 @@ class VaultFacets(Templated):
 class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha=None, url='', title='', text='', selftext='',
-                 resubmit=False, default_sr=None,
+                 resubmit=False, default_vault=None,
                  extra_Vaults=None, show_link=True, show_self=True):
 
         self.show_link = show_link
@@ -3595,7 +3595,7 @@ class NewLink(Templated):
             self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
 
         self.resubmit = resubmit
-        self.default_sr = default_sr
+        self.default_vault = default_vault
         self.extra_Vaults = extra_Vaults
 
         Templated.__init__(self, captcha = captcha, url = url,
@@ -5100,11 +5100,11 @@ class PromoteInventory(PromoteLinkBase):
 
         self.rows = rows
 
-        default_sr = None
+        default_vault = None
         if not self.target.is_collection and self.vault_input:
-            default_sr = Vault._by_name(self.vault_input)
+            default_vault = Vault._by_name(self.vault_input)
         self.Vault_selector = VaultSelector(
-                default_sr=default_sr,
+                default_vault=default_vault,
                 include_user_subscriptions=False)
 
         self.get_locations()
@@ -5644,7 +5644,7 @@ class QuarantineOptoutButton(Templated):
 
 
 class VaultSelector(Templated):
-    def __init__(self, default_sr=None, extra_Vaults=None, required=False,
+    def __init__(self, default_vault=None, extra_Vaults=None, required=False,
                  include_searches=True, include_user_subscriptions=True, class_name=None,
                  placeholder=None, show_add=False):
         Templated.__init__(self)
@@ -5664,7 +5664,7 @@ class VaultSelector(Templated):
                 Vault.user_vaults(c.user, ids=False)
             ))
 
-        self.default_sr = default_sr
+        self.default_vault = default_vault
         self.required = required
         if include_searches:
             self.vault_searches = simplejson.dumps(
@@ -5689,7 +5689,7 @@ class ListingSuggestions(Templated):
         Templated.__init__(self)
 
         self.suggestion_type = None
-        if c.default_sr:
+        if c.default_vault:
             if c.user_is_loggedin and random.randint(0, 1) == 1:
                 self.suggestion_type = "explore"
                 return

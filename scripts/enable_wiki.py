@@ -24,8 +24,13 @@ def main():
     
     # Try multiple common default vault names if g.default_sr is not what we expect
     candidates = []
+    
+    # Check for both default_vault (new) and default_sr (legacy)
+    if hasattr(g, 'default_vault') and g.default_vault:
+        candidates.append(g.default_vault)
     if hasattr(g, 'default_sr') and g.default_sr:
         candidates.append(g.default_sr)
+        
     candidates.extend(['tippr', 'reddit', 'all'])
     
     # Deduplicate

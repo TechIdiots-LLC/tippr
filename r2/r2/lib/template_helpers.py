@@ -195,7 +195,7 @@ def js_config(extra_config=None):
     pref_beta = c.user.pref_beta
     nsfw_media_acknowledged = logged and c.user.nsfw_media_acknowledged
 
-    if isinstance(c.site, Vault) and not c.default_sr:
+    if isinstance(c.site, Vault) and not getattr(c, 'default_vault', False):
         cur_Vault = c.site.name
         cur_sr_fullname = c.site._fullname
         cur_listing = cur_Vault

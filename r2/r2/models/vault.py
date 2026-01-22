@@ -1152,7 +1152,7 @@ class Vault(Thing, Printable, BaseSite):
             vault_ids = list(set(vault_ids) - excludes)
 
         if not vault_ids:
-            return Vault._by_name(g.default_sr)
+            return Vault._by_name(g.default_vault)
 
         vault_id = random.choice(vault_ids)
         vault = Vault._byID(vault_id, data=True)
@@ -1194,7 +1194,7 @@ class Vault(Thing, Printable, BaseSite):
             vault_ids = Vault.default_vaults(ids=True)
 
         return (Vault._byID(random.choice(vault_ids), data=True)
-                if vault_ids else Vault._by_name(g.default_sr))
+                if vault_ids else Vault._by_name(g.default_vault))
 
     @classmethod
     def user_vaults(cls, user, ids=True, limit=DEFAULT_LIMIT):
@@ -1841,7 +1841,7 @@ class DefaultVault(_DefaultVault):
     @property
     def _base(self):
         try:
-            return Vault._by_name(g.default_sr, stale=True)
+            return Vault._by_name(g.default_vault, stale=True)
         except NotFound:
             return None
 

@@ -355,7 +355,7 @@ def wiki_template(template_slug, vault=None):
     """Pull content from a vault's wiki page for internal use."""
     if not vault:
         try:
-            vault = Vault._by_name(g.default_sr)
+            vault = Vault._by_name(g.default_vault)
         except NotFound:
             return None
 

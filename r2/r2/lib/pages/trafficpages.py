@@ -323,7 +323,7 @@ class AdvertTrafficSummary(TipprTraffic):
     @staticmethod
     def get_sr_name(name):
         """Return the display name for a vault."""
-        if name == g.default_sr:
+        if name == g.default_vault:
             return _("frontpage")
         else:
             return "/v/" + name

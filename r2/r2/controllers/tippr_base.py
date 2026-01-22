@@ -366,7 +366,7 @@ def set_vault():
         c.site = DomainVault(domain)
 
     if isinstance(c.site, FakeVault):
-        c.default_sr = True
+        c.default_vault = True
 
 _FILTER_VAULTS = {"mod": ModFiltered, "all": AllFiltered}
 def set_multivault():
