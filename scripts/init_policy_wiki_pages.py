@@ -33,17 +33,38 @@ import sys
 
 def main(root_dir=None):
     # Setup paths - handle both direct execution and tippr-run
+    # Note: tippr-run changes to $TIPPR_SRC/tippr/r2 before running scripts,
+    # so os.getcwd() will be the r2 directory and parent is tippr root.
     if root_dir is None:
-        # When run via tippr-run, the app is already loaded
-        # Try to find root from current working directory or known paths
-        if os.path.exists('/home/tippr/src/tippr/docs/policies'):
-            root_dir = '/home/tippr/src/tippr'
-        elif os.path.exists('docs/policies'):
-            root_dir = os.getcwd()
-        elif os.path.exists('../docs/policies'):
-            root_dir = os.path.abspath('..')
-        else:
-            root_dir = os.getcwd()
+        cwd = os.getcwd()
+        
+        # Try various paths to find the tippr root (contains docs/policies)
+        possible_paths = [
+            os.path.dirname(cwd),  # Parent of cwd (if cwd is r2/)
+            os.path.dirname(os.path.dirname(cwd)),  # Grandparent (if cwd is r2/r2/)
+            cwd,  # Current directory itself
+            '/home/tippr/src/tippr',  # Common default
+        ]
+        
+        for path in possible_paths:
+            if path and os.path.exists(os.path.join(path, 'docs', 'policies')):
+                root_dir = path
+                break
+        
+        if root_dir is None:
+            # Last resort: walk up from cwd until we find docs/policies
+            check_dir = cwd
+            for _ in range(5):  # Max 5 levels up
+                if os.path.exists(os.path.join(check_dir, 'docs', 'policies')):
+                    root_dir = check_dir
+                    break
+                parent = os.path.dirname(check_dir)
+                if parent == check_dir:  # Reached filesystem root
+                    break
+                check_dir = parent
+        
+        if root_dir is None:
+            root_dir = cwd
     
     r2_dir = os.path.join(root_dir, 'r2')
     
