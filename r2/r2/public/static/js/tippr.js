@@ -980,11 +980,11 @@ $(function() {
             $(this).select();
         });
 
-        $(".sr_style_toggle").change(function() {
-          $('#sr_style_throbber')
+        $(".vault_style_toggle").change(function() {
+          $('#vault_style_throbber')
             .html('<img src="' + r.utils.staticURL('throbber.gif') + '" />')
             .css("display", "inline-block");
-          return post_form($(this), "set_sr_style_enabled");
+          return post_form($(this), "set_vault_style_enabled");
         });
 
         $(".tippr-themes .theme").click(function() {

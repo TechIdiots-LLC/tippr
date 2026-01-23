@@ -91,15 +91,15 @@
               )}
   %endif
 
-  %if thing.sr_style_toggle:
-    <form class="toggle sr_style_toggle">
-      <input id="sr_style_enabled" type="checkbox" name="sr_style_enabled"
+  %if thing.vault_style_toggle:
+    <form class="toggle vault_style_toggle">
+      <input id="vault_style_enabled" type="checkbox" name="vault_style_enabled"
         ${'checked="checked"' if thing.use_Vault_style else ""}
       >
-      <label for="sr_style_enabled">
+      <label for="vault_style_enabled">
         ${_("Show this vault's theme")}
       </label>
-      <div id="sr_style_throbber" class="throbber"></div>
+      <div id="vault_style_throbber" class="throbber"></div>
     </form>
   %endif
 

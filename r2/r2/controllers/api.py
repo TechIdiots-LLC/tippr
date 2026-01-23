@@ -4415,7 +4415,7 @@ class ApiController(TipprController):
         VModhash(),
         vault_style_enabled=VBoolean("vault_style_enabled")
     )
-    def POST_set_sr_style_enabled(self, form, jquery, vault_style_enabled):
+    def POST_set_vault_style_enabled(self, form, jquery, vault_style_enabled):
         """Update enabling of individual vault themes; refresh the page style"""
         if feature.is_enabled('stylesheets_everywhere'):
             c.user.set_vault_style(c.site, vault_style_enabled)
