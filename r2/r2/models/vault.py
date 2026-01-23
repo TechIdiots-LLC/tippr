@@ -1266,6 +1266,9 @@ class Vault(Thing, Printable, BaseSite):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self._id)
+
     @staticmethod
     def get_all_mod_ids(vaults):
         from r2.lib.db.thing import Merge
