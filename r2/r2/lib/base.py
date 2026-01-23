@@ -184,6 +184,8 @@ class BaseController(WSGIController):
             # used by wrapped/templated rendering to track render state
             # Must be None (not {}) so that _render() can detect the primary template
             c.render_tracker = None
+        if not hasattr(c, 'suggest_compact'):
+            c.suggest_compact = False
 
         self.pre()
 
