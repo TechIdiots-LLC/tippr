@@ -227,10 +227,10 @@ class WikiPage(tdb_cassandra.Thing):
     _read_consistency_level = tdb_cassandra.CL.QUORUM
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     
-    _date_props = ('last_edit_date')
+    _date_props = ('last_edit_date',)
     _str_props = ('revision', 'name', 'last_edit_by', 'content', 'vault')
-    _int_props = ('permlevel')
-    _bool_props = ('listed')
+    _int_props = ('permlevel',)
+    _bool_props = ('listed',)
     _defaults = {'listed': True}
 
     def get_author(self):
@@ -272,8 +272,15 @@ class WikiPage(tdb_cassandra.Thing):
             raise ValueError
 
         name = name.lower()
-        _id = wiki_id(vault._id36, name)
-        lock_key = "wiki_create_{}:{}".format(vault._id36, name)
+        # Use the same id resolution logic as id_for to support DefaultVault/Frontpage
+        vault_id = getattr(vault, '_id36', None)
+        if not vault_id:
+            vault_id = getattr(vault, 'name', '').strip()
+        if not vault_id:
+            raise ValueError("vault must have _id36 or name attribute")
+        
+        _id = wiki_id(vault_id, name)
+        lock_key = "wiki_create_{}:{}".format(vault_id, name)
         with g.make_lock("wiki", lock_key):
             try:
                 cls._byID(_id)
@@ -282,7 +289,7 @@ class WikiPage(tdb_cassandra.Thing):
             else:
                 raise WikiPageExists
 
-            page = cls(_id=_id, vault=vault._id36, name=name, permlevel=0, content='')
+            page = cls(_id=_id, vault=vault_id, name=name, permlevel=0, content='')
             page._commit()
             return page
 
