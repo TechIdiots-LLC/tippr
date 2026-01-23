@@ -684,7 +684,7 @@ class Vault(Thing, Printable, BaseSite):
         # we don't actually support other contexts yet
         assert self.activity_contexts == ("logged_in",)
 
-        if not c.activity_service:
+        if not getattr(c, 'activity_service', None):
             return
 
         try:
@@ -701,7 +701,7 @@ class Vault(Thing, Printable, BaseSite):
         # we don't actually support other contexts yet
         assert self.activity_contexts == ("logged_in",)
 
-        if not c.activity_service:
+        if not getattr(c, 'activity_service', None):
             return None
 
         try:
