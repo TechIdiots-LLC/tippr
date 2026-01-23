@@ -26,7 +26,7 @@
 <%!
     from r2.config import feature
     from r2.lib.pages import WrappedUser
-    from r2.lib.template_helpers import add_sr, _wsf
+    from r2.lib.template_helpers import add_vault, _wsf
 %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score, thing_css_rowclass"/>
@@ -42,7 +42,7 @@
     %if thing.link: 
       %if thing.link.title:
            %if thing.link.is_self:
-             <a href="${add_sr(thing.link.url)}" class="title">
+             <a href="${add_vault(thing.link.url)}" class="title">
            %else:
              <a href="${thing.link.url}" class="title">
            %endif

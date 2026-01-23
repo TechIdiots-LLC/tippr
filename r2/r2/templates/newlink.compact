@@ -26,14 +26,14 @@
 <%!
    from r2.lib.strings import strings
    from r2.lib.pages import VaultSelector, UserText
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_vault
 %>
 
 <%namespace file="utils.html" import="error_field, submit_form, plain_link"/>
 <%namespace name="utils" file="utils.html"/>
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
-                    action=${add_sr("/submit")},
+                    action=${add_vault("/submit")},
                     _class="submit content",
                     _id="newlink">
 

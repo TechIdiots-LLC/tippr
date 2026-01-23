@@ -25,7 +25,7 @@
 
 <%!
    from r2.config import feature
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_vault
    from r2.lib.template_helpers import make_url_protocol_relative
    import urllib
    from r2.lib.filters import _force_unicode, _force_utf8
@@ -71,7 +71,7 @@
   <div class="entry ${like_cls}">
   <%
     if thing.is_self:
-        url = add_sr(thing.href_url)
+        url = add_vault(thing.href_url)
     else:
         url = thing.url
   %>
@@ -138,7 +138,7 @@ there's also a discussion going on here:
 """ % dict(user = c.user.name if c.user_is_Loggedin else "A reddit user",
        link = _force_unicode(thing.url),
        title = _force_unicode(thing.title),
-      permalink = add_sr(thing.permalink, vault_path = False, force_hostname = True, retain_extension=False))
+      permalink = add_vault(thing.permalink, vault_path = False, force_hostname = True, retain_extension=False))
        url = "https://reddit.com/%s" % thing._id36
        title = _force_unicode(thing.title)
        tweet = "%s %s" % (title[0:(139-len(url))], url)

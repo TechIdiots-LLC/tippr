@@ -26,7 +26,7 @@
 <%!
    from pylons.i18n import _, ungettext
    from r2.lib.filters import safemarkdown
-   from r2.lib.template_helpers import get_domain, add_sr
+   from r2.lib.template_helpers import get_domain, add_vault
 %>
 <%inherit file="printable.htmllite" />
 
@@ -62,7 +62,7 @@
     %endif
   </span>&#32;
   ${thing.timesince}
-  &#32;<a href="${add_sr(thing.permalink)}">permalink</a>
+  &#32;<a href="${add_vault(thing.permalink)}">permalink</a>
 </small><br/>
 ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
 

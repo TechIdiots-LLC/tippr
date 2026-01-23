@@ -23,7 +23,7 @@
 ## TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-<% from r2.lib.template_helpers import replace_render, add_sr %>
+<% from r2.lib.template_helpers import replace_render, add_vault %>
 <%namespace file="utils.html" import="plain_link" />
 
 <ul>

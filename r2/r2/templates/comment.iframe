@@ -28,7 +28,7 @@
    from pylons.i18n import _, ungettext
    from r2.lib.filters import safemarkdown
    from r2.lib.strings import Score
-   from r2.lib.template_helpers import get_domain, add_sr
+   from r2.lib.template_helpers import get_domain, add_vault
 %>
 <%inherit file="printable.iframe" />
 <%namespace file="utils.html" import="thing_timestamp" />
@@ -72,7 +72,7 @@
         %else:
         <div class="tippr-embed-comment-meta">
           %if not thing.score_hidden:
-            <a href="${add_sr(thing.permalink)}?context=3"
+            <a href="${add_vault(thing.permalink)}?context=3"
                class="tippr-embed-comment-meta-item tippr-embed-score"
                data-redirect-type="score"
                data-redirect-thing="${thing._id}">
@@ -80,14 +80,14 @@
             </a>
           %endif
           %if thing.edits_visible and edited_recently:
-            <a href="${add_sr(thing.permalink)}?context=3"
+            <a href="${add_vault(thing.permalink)}?context=3"
                class="tippr-embed-comment-meta-item tippr-embed-edited"
                data-redirect-type="edited"
                data-redirect-thing="${thing._id}">
               edited
             </a>
           %endif
-          <a href="${add_sr(thing.permalink)}?context=3"
+          <a href="${add_vault(thing.permalink)}?context=3"
              class="tippr-embed-comment-meta-item tippr-embed-permalink"
              data-redirect-type="timestamp"
              data-redirect-thing="${thing._id}">
@@ -97,7 +97,7 @@
         %endif
       </header>
       %if hide_edits:
-        <a href="${add_sr(thing.permalink)}?context=3"
+        <a href="${add_vault(thing.permalink)}?context=3"
            data-redirect-type="hidden_comment"
            data-redirect-thing="${thing._id}">
           ${_("View the current version on reddit.")}

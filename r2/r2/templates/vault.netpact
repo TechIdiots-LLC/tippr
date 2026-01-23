@@ -24,7 +24,7 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_vault
  %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="Vault.html" import="tagline, permission_icons"/>
