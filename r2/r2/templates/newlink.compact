@@ -101,7 +101,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('Vault')}" id="tippr-field">
-    ${VaultSelector(thing.default_sr, extra_Vaults=thing.extra_Vaults)}
+    ${VaultSelector(thing.default_vault, extra_Vaults=thing.extra_Vaults)}
   </%utils:round_field>
 </div>
 

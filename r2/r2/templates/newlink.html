@@ -34,8 +34,8 @@
 <%namespace name="utils" file="utils.html"/>
 
 <%
-  if thing.default_sr:
-    vault = format_html("&#32;%s", unsafe(_a_buffered(thing.default_sr.name, href=thing.default_sr.path)))
+  if thing.default_vault:
+    vault = format_html("&#32;%s", unsafe(_a_buffered(thing.default_vault.name, href=thing.default_vault.path)))
   else:
     vault = _("tippr")
 %>
@@ -104,7 +104,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('choose a vault')}" id="tippr-field">
-    ${VaultSelector(thing.default_sr, extra_Vaults=thing.extra_Vaults, required=True)}
+    ${VaultSelector(thing.default_vault, extra_Vaults=thing.extra_Vaults, required=True)}
   </%utils:round_field>
 </div>
 
@@ -112,8 +112,8 @@ ${thing.formtabs_menu}
     <div class="submit_text roundfield">
         <h1>${_wsf('submitting to %(vault)s', vault=unsafe('/v/<span class="vault"></span>'))}</h1>
         <span class="content md-container">
-            %if thing.default_sr and thing.default_sr.submit_text:
-                ${unsafe(safemarkdown(thing.default_sr.submit_text))}
+            %if thing.default_vault and thing.default_vault.submit_text:
+                ${unsafe(safemarkdown(thing.default_vault.submit_text))}
             %endif
         </span>
     </div>

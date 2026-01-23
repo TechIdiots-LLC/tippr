@@ -31,7 +31,7 @@ from r2.config import feature
 def is_tracking_link_enabled(link=None, element_name=None):
     if c.user_is_admin:
         return False  # Less noise while admin mode enabled, esp. in usernotes
-    if element_name and element_name.startswith('trending_sr'):
+    if element_name and element_name.startswith('trending_vault'):
         return True
     if feature.is_enabled('utm_comment_links'):
         return True

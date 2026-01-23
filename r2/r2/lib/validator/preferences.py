@@ -103,12 +103,12 @@ def set_prefs(user, prefs):
             # If a user newly opted into beta, we want to subscribe them
             # to the beta vault.
             try:
-                vault = Vault._by_name(g.beta_sr)
+                vault = Vault._by_name(g.beta_vault)
                 if not vault.is_subscriber(user):
                     vault.add_subscriber(user)
             except NotFound:
                 g.log.warning("Could not find beta vault '%s'. It may "
-                              "need to be created." % g.beta_sr)
+                              "need to be created." % g.beta_vault)
 
         setattr(user, k, v)
 

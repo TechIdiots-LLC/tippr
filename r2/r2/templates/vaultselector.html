@@ -13,8 +13,8 @@
          %endif
          onkeydown="return sr_name_down(event)"
          onblur="hide_sr_name_list()"
-         % if thing.default_sr:
-           value="${thing.default_sr.name}"
+         % if thing.default_vault:
+           value="${thing.default_vault.name}"
          % endif
          % if thing.required:
          required

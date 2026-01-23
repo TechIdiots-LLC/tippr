@@ -403,9 +403,9 @@ class PostButton(NavButton):
 
 class ModeratorMailButton(NavButton):
     def is_selected(self):
-        if c.default_sr and not self.vault_path:
+        if c.default_vault and not self.vault_path:
             return NavButton.is_selected(self)
-        elif not c.default_sr and self.vault_path:
+        elif not c.default_vault and self.vault_path:
             return NavButton.is_selected(self)
 
 

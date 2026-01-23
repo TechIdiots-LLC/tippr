@@ -34,7 +34,7 @@
     <strong>${_('trending vaults')}</strong>
     <ul>
     %for i, Vault_name in enumerate(thing.Vault_names):
-      <li><a href="${Link.tracking_link('/v/%s'%Vault_name, context='trending_Vaults_bar', element_name='trending_sr_%s'%(i+1))}" target="_blank">/r/${Vault_name}</a></li>
+      <li><a href="${Link.tracking_link('/v/%s'%Vault_name, context='trending_Vaults_bar', element_name='trending_vault_%s'%(i+1))}" target="_blank">/r/${Vault_name}</a></li>
     %endfor
     </ul>
     <a href="${thing.comment_url}" class="${thing.comment_label_cls}">${thing.comment_label}</a>

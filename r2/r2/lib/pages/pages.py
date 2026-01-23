@@ -1439,7 +1439,7 @@ class BoringPage(Tippr):
 
     def __init__(self, pagename, css_class=None, **context):
         self.pagename = pagename
-        name = c.site.name or g.default_sr
+        name = c.site.name or g.default_vault
         if css_class:
             self.css_class = css_class
         if "title" not in context:

@@ -40,22 +40,22 @@ def get_trending_Vaults():
 
 def update_trending_Vaults():
     try:
-        trending_sr = Vault._by_name(g.config['trending_sr'])
+        trending_vault = Vault._by_name(g.config['trending_vault'])
     except NotFound:
-        g.log.info("Unknown trending vault %r or trending_sr config "
-                   "not set. Not updating.", g.config['trending_sr'])
+        g.log.info("Unknown trending vault %r or trending_vault config "
+                   "not set. Not updating.", g.config['trending_vault'])
         return
 
-    link = _get_newest_link(trending_sr)
+    link = _get_newest_link(trending_vault)
     if not link:
         g.log.info("Unable to find active link in vault %r. Not updating.",
-                   g.config['trending_sr'])
+                   g.config['trending_vault'])
         return
 
     Vault_names = _Vault_RE.findall(link.title)
     trending_data = {
         'Vault_names': Vault_names,
-        'permalink': link.make_permalink(trending_sr),
+        'permalink': link.make_permalink(trending_vault),
         'link_id': link._id,
     }
     NamedGlobals.set(TRENDING_VaultS_KEY, trending_data)

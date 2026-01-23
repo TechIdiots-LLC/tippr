@@ -1415,7 +1415,7 @@ class FrontController(TipprController):
             selftext=selftext or '',
             captcha=captcha,
             resubmit=resubmit,
-            default_sr=c.site if not c.default_vault else None,
+            default_vault=c.site if not c.default_vault else None,
             extra_Vaults=extra_Vaults,
             show_link=c.default_vault or c.site.can_submit_link(c.user),
             show_self=((c.default_vault or c.site.can_submit_text(c.user))

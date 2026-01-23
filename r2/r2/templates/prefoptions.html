@@ -379,11 +379,11 @@ action = add_vault(action, vault_path=False)
       &#32;
       <span class="details">
         <%
-          beta_sr_link = format_html('&#32;<a href="/v/%s">/r/%s</a>&#32;', g.beta_sr, g.beta_sr)
+          beta_vault_link = format_html('&#32;<a href="/v/%s">/r/%s</a>&#32;', g.beta_vault, g.beta_vault)
         %>
-        (${_wsf("by enabling you'll be subscribed to %(beta_sr_link)s automatically.", beta_sr_link=beta_sr_link)}
+        (${_wsf("by enabling you'll be subscribed to %(beta_vault_link)s automatically.", beta_vault_link=beta_vault_link)}
           &#32;
-          <a href="/v/${g.beta_sr}/wiki">${_("details on the /r/{beta_sr} wiki").format(beta_sr=g.beta_sr)}</a>)
+          <a href="/v/${g.beta_vault}/wiki">${_("details on the /r/{beta_vault} wiki").format(beta_vault=g.beta_vault)}</a>)
       </span>
     </td>
   </tr>
