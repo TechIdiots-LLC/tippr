@@ -288,6 +288,7 @@ def set_vault():
     can_stale = request.method.upper() in ('GET', 'HEAD')
 
     c.site = Frontpage
+    c.default_vault = False
     if not vault_name:
         #check for cnames
         cname = request.environ.get('legacy-cname')
