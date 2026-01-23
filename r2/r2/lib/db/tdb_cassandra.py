@@ -1063,7 +1063,7 @@ class DenormalizedRelation(metaclass=ThingMeta):
                 return list(results.values())[0]
             else:
                 raise NotFound("<{} {!r}>".format(cls.__name__, (thing1._id36,
-                                                           thing2._id36)))
+                                                           thing2s[0]._id36)))
 
 
 class ColumnQuery:
