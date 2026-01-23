@@ -58,7 +58,10 @@ class PoliciesController(TipprController):
         else:
             abort(404)
 
-        wp = WikiPage.get(Frontpage, wiki_name)
+        try:
+            wp = WikiPage.get(Frontpage, wiki_name)
+        except tdb_cassandra.NotFound:
+            abort(404)
 
         revs = list(wp.get_revisions())
 
