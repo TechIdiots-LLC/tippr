@@ -845,9 +845,16 @@ def valid_feed(name, feedhash, path):
             pass
 
 def make_feedhash(user, path):
-    return hashlib.sha1("".join([user.name, user.password,
-                                 g.secrets["FEEDSECRET"]])
-                   ).hexdigest()
+    parts = [user.name, user.password, g.secrets["FEEDSECRET"]]
+    encoded = []
+    for x in parts:
+        if isinstance(x, str):
+            encoded.append(x.encode('utf-8'))
+        elif isinstance(x, bytes):
+            encoded.append(x)
+        else:
+            encoded.append(str(x).encode('utf-8'))
+    return hashlib.sha1(b"".join(encoded)).hexdigest()
 
 def make_feedurl(user, path, ext = "rss"):
     u = UrlParser(path)
