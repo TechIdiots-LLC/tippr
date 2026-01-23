@@ -25,7 +25,7 @@
 
 <%!
    from r2.lib.template_helpers import display_link_karma, header_url
-   from r2.models.Vault import DefaultVault, FakeVault
+   from r2.models.vault import DefaultVault, FakeVault
    
  %>
 <%namespace file="utils.html" import="plain_link, img_link, separator, logout"/>
