@@ -1462,8 +1462,10 @@ class DenormalizedView(View):
 
         # Encode date props which may be binary
         for attr, val in list(serialized_columns.items()):
-            if cls.is_date_prop(attr):
-                serialized_columns[attr] = base64.b64encode(val)
+            if cls.is_date_prop(attr) and val is not None:
+                if isinstance(val, int):
+                    val = str(val / 1000.0).encode('utf-8')
+                serialized_columns[attr] = base64.b64encode(val).decode('ascii')
 
         dump = json.dumps(serialized_columns)
         return dump
