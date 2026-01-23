@@ -128,6 +128,9 @@
     ${unsafe(js.use("expando-nsfw-flow"))}
   %endif
   ${unsafe(c.js_preload.use())}
+  %if c.user_is_loggedin:
+    <script src="/static/js/infinitescroll.js"></script>
+  %endif
 </%def>
 
 <%def name="bodyContent()">
@@ -137,9 +140,9 @@
   %endif
 
   %if thing.show_sidebar:
-    <div class="side">
+    <aside class="side">
       ${sidebar(content = thing.rightbox())}
-    </div>
+    </aside>
   %endif
 
   %if thing.show_chooser:
@@ -164,9 +167,9 @@
     ##<div class="fixedwidth"></div>
     ##<div class="clearleft"></div>
     <a name="content"></a>
-    <div ${tags(id=thing.content_id)} ${classes("content", thing.css_class)} role="main">
+    <main ${tags(id=thing.content_id)} ${classes("content", thing.css_class)}>
       ${content()}
-    </div>
+    </main>
   %endif
 
   ${thing.footer}

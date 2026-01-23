@@ -1,0 +1,63 @@
+/* Mobile First Grid Layout */
+
+body {
+    display: grid;
+    grid-template-areas:
+        "header"
+        "content"
+        "sidebar"
+        "footer";
+    grid-template-columns: 100%;
+    width: 100%;
+}
+
+#header {
+    grid-area: header;
+    width: 100%;
+}
+
+div.content, main.content {
+    grid-area: content;
+    margin: 0;
+}
+
+.side {
+    grid-area: sidebar;
+    display: none; /* Hidden on mobile by default */
+}
+
+.footer-parent {
+    grid-area: footer;
+}
+
+/* Desktop Grid Override */
+@media (min-width: 960px) {
+    body {
+        grid-template-areas:
+            "header header"
+            "content sidebar"
+            "footer footer";
+        grid-template-columns: 1fr 310px;
+    }
+
+    .side {
+        display: block;
+    }
+    
+    /* Reset margins that might interfere with grid */
+    div.content, main.content {
+        margin-right: 15px;
+    }
+}
+
+/* Article/Thing Styling for Mobile */
+@media (max-width: 959px) {
+    .thing {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .thumbnail {
+        margin-right: 10px;
+    }
+}
