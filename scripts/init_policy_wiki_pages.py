@@ -15,16 +15,19 @@
 ###############################################################################
 
 """
-Initialize Wiki Policy Pages
+Initialize Production Environment
 
-This script initializes the wiki pages for Terms of Use, Privacy Policy,
-Content Policy, and Moderator Guidelines from the markdown files in docs/policies/.
+This script initializes the required system objects for a production Tippr instance:
+1. Creates the system user account (g.system_user)
+2. Creates the automoderator account (if configured)
+3. Creates required vaults (default, takedown, beta, promo)
+4. Creates wiki pages for Terms of Use, Privacy Policy, Content Policy, 
+   and Moderator Guidelines from the markdown files in docs/policies/
 
-Run this script after setting up the database to populate the initial
-policy wiki pages.
+This is the production equivalent of inject_test_data.py but without the test content.
 
 Usage:
-    python scripts/init_policy_wiki_pages.py
+    tippr-run /path/to/scripts/init_policy_wiki_pages.py
 """
 
 import os
@@ -72,9 +75,55 @@ def main(root_dir=None):
     
     # Import from already-loaded app (tippr-run loads the app before running scripts)
     from pylons import app_globals as g
-    from r2.models.vault import Frontpage
+    from r2.models.vault import Frontpage, Vault
     from r2.models.wiki import WikiPage
-    from r2.models import Account
+    from r2.models import Account, NotFound, register
+
+    # Helper functions to ensure required objects exist
+    def ensure_account(name):
+        """Look up or create a user account and return it."""
+        try:
+            return Account._by_name(name)
+        except NotFound:
+            print(f">> Creating system user: {name}")
+            return register(name, None, "127.0.0.1")  # No password = can't login directly
+
+    def ensure_vault(name, author):
+        """Look up or create a vault and return it."""
+        try:
+            v = Vault._by_name(name)
+            print(f">> Found vault: /v/{name}")
+            return v
+        except NotFound:
+            print(f">> Creating vault: /v/{name}")
+            v = Vault._new(
+                name=name,
+                title=f"/v/{name}",
+                author_id=author._id,
+                lang="en",
+                ip="127.0.0.1",
+            )
+            v._commit()
+            return v
+
+    # Ensure system user exists
+    print("Ensuring required system objects exist...")
+    system_user = ensure_account(g.system_user)
+    
+    # Ensure automoderator account exists
+    if hasattr(g, 'automoderator_account') and g.automoderator_account:
+        ensure_account(g.automoderator_account)
+    
+    # Ensure required vaults exist
+    ensure_vault(g.default_vault, system_user)
+    if hasattr(g, 'takedown_vault') and g.takedown_vault:
+        ensure_vault(g.takedown_vault, system_user)
+    if hasattr(g, 'beta_vault') and g.beta_vault:
+        ensure_vault(g.beta_vault, system_user)
+    if hasattr(g, 'promo_vault_name') and g.promo_vault_name:
+        ensure_vault(g.promo_vault_name, system_user)
+    
+    print()
 
     # Define the policy pages to create
     policies = [
@@ -99,19 +148,6 @@ def main(root_dir=None):
             'display_name': 'Moderator Guidelines',
         },
     ]
-
-    # Get or create system user
-    try:
-        system_user = Account.system_user()
-    except Exception:
-        # Fall back to admin user or first user
-        print("Warning: Could not get system user, trying to find admin...")
-        try:
-            system_user = Account._by_name('admin')
-        except Exception:
-            print("Error: Could not find a user to author wiki pages.")
-            print("Please create an admin user first.")
-            return 1
 
     print(f"Using user '{system_user.name}' to create wiki pages.\n")
 
@@ -148,7 +184,10 @@ def main(root_dir=None):
                 wp.revise(content, author=system_user, reason="Initial creation from docs/policies/")
                 print(f"  SUCCESS: Created {display_name}\n")
             except Exception as e:
-                print(f"  ERROR: Failed to create wiki page: {e}\n")
+                import traceback
+                print(f"  ERROR: Failed to create wiki page: {e}")
+                traceback.print_exc()
+                print()
                 continue
 
     print("=" * 60)
