@@ -94,7 +94,7 @@ class EmbedController(TipprController):
                              get_domain(vault=False, no_www=True))
 
     def GET_faq(self):
-        if c.default_sr:
+        if c.default_vault:
             return self.redirect('/help/faq')
         else:
             return self.renderurl('/help/faqs/' + c.site.name)

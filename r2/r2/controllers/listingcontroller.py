@@ -636,7 +636,7 @@ class BrowseController(ListingWithPromos):
     def keep_fn(self):
         """For merged time-listings, don't show items that are too old
            (this can happen when mr_top hasn't run in a while)"""
-        if self.time != 'all' and c.default_sr:
+        if self.time != 'all' and c.default_vault:
             oldest = timeago('1 {}'.format(str(self.time)))
             def keep(item):
                 if isinstance(c.site, AllSR):
@@ -1163,14 +1163,14 @@ class MessageController(ListingController):
 
     @property
     def show_sidebar(self):
-        if c.default_sr and not isinstance(c.site, (ModSR, MultiVault)):
+        if c.default_vault and not isinstance(c.site, (ModSR, MultiVault)):
             return False
 
         return self.where in ("moderator", "multi")
 
     @property
     def menus(self):
-        if c.default_sr and self.where in ('inbox', 'messages', 'comments',
+        if c.default_vault and self.where in ('inbox', 'messages', 'comments',
                           'selfreply', 'unread', 'mentions'):
             buttons = [NavButton(_("all"), "inbox"),
                        NavButton(_("unread"), "unread"),
@@ -1182,7 +1182,7 @@ class MessageController(ListingController):
 
             return [NavMenu(buttons, base_path = '/message/',
                             default = 'inbox', type = "flatlist")]
-        elif not c.default_sr or self.where in ('moderator', 'multi'):
+        elif not c.default_vault or self.where in ('moderator', 'multi'):
             buttons = (NavButton(_("all"), "inbox"),
                        NavButton(_("unread"), "unread"))
             return [NavMenu(buttons, base_path = '/message/moderator/',
@@ -1259,7 +1259,7 @@ class MessageController(ListingController):
             if self.where == "multi":
                 root = c.site
                 message_cls = MultivaultMessageBuilder
-            elif not c.default_sr:
+            elif not c.default_vault:
                 root = c.site
                 message_cls = VaultMessageBuilder
             elif self.where == 'moderator' and self.subwhere != 'unread':
@@ -1333,7 +1333,7 @@ class MessageController(ListingController):
             c.user._incr('inbox_count', -c.user.inbox_count)
 
     def listing(self):
-        if not c.default_sr:
+        if not c.default_vault:
             target = c.site if not isinstance(c.site, FakeVault) else None
             VNotInTimeout().run(action_name="pageview",
                 details_text="modmail", target=target)
@@ -1370,7 +1370,7 @@ class MessageController(ListingController):
         elif self.where == 'multi' and self.subwhere == 'unread':
             q = queries.get_unread_Vault_messages_multi(c.site.kept_sr_ids)
         elif self.where == 'moderator' and self.subwhere == 'unread':
-            if c.default_sr:
+            if c.default_vault:
                 vault_ids = Vault.reverse_moderator_ids(c.user)
                 vaults = [vault for vault in Vault._byID(vault_ids, data=False,
                                                     return_dict=False)
@@ -1422,7 +1422,7 @@ class MessageController(ListingController):
                      uri='/message/{where}',
                      uri_variants=['/message/inbox', '/message/unread', '/message/sent'])
     def GET_listing(self, where, mark, message, subwhere = None, **env):
-        if not (c.default_sr
+        if not (c.default_vault
                 or c.site.is_moderator_with_perms(c.user, 'mail')
                 or c.user_is_admin):
             abort(403, "forbidden")
@@ -1430,7 +1430,7 @@ class MessageController(ListingController):
             if not (c.user_is_admin or c.site.is_moderator(c.user)):
                 self.abort403()
             self.where = "multi"
-        elif isinstance(c.site, ModSR) or not c.default_sr:
+        elif isinstance(c.site, ModSR) or not c.default_vault:
             self.where = "moderator"
         else:
             self.where = where

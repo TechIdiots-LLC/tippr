@@ -112,7 +112,7 @@ class FrontController(TipprController):
             new_url = "/%s/%s/%s" % \
                       (dest, article._id36,
                        quote_plus(title_to_url(article.title).encode('utf-8')))
-            if not c.default_sr:
+            if not c.default_vault:
                 new_url = "/v/{}{}".format(c.site.name, new_url)
             if comment:
                 new_url = new_url + "/%s" % comment._id36
@@ -263,7 +263,7 @@ class FrontController(TipprController):
             request.environ['TIPPR_TAKEDOWN'] = article._fullname
             return self.abort404()
 
-        if not c.default_sr and c.site._id != vault._id:
+        if not c.default_vault and c.site._id != vault._id:
             return self.abort404()
 
         if not can_view_link_comments(article):
@@ -1392,7 +1392,7 @@ class FrontController(TipprController):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        if not (c.default_sr or c.site.can_submit(c.user)):
+        if not (c.default_vault or c.site.can_submit(c.user)):
             abort(403, "forbidden")
 
         target = c.site if not isinstance(c.site, FakeVault) else None
@@ -1415,10 +1415,10 @@ class FrontController(TipprController):
             selftext=selftext or '',
             captcha=captcha,
             resubmit=resubmit,
-            default_sr=c.site if not c.default_sr else None,
+            default_sr=c.site if not c.default_vault else None,
             extra_Vaults=extra_Vaults,
-            show_link=c.default_sr or c.site.can_submit_link(c.user),
-            show_self=((c.default_sr or c.site.can_submit_text(c.user))
+            show_link=c.default_vault or c.site.can_submit_link(c.user),
+            show_self=((c.default_vault or c.site.can_submit_text(c.user))
                       and not request.GET.get('no_self')),
         )
 
