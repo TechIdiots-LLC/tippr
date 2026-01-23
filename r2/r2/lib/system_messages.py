@@ -33,8 +33,27 @@ from r2.models import Account, Message
 user_added_messages = {
     "moderator": {
         "pm": {
-            "subject": N_("you are a moderator"),
-            "msg": N_("you have been added as a moderator to [%(title)s](%(url)s)."),
+            "subject": N_("Welcome! You are now a moderator"),
+            "msg": N_("**Congratulations!** You have been added as a moderator to [%(title)s](%(url)s).\n\n"
+                      "---\n\n"
+                      "## Welcome to the Tippr Moderator Community!\n\n"
+                      "As a moderator, you play a vital role in building and maintaining our community. "
+                      "Here are some important things to know:\n\n"
+                      "### Your Responsibilities\n\n"
+                      "- Enforce vault rules and site-wide policies\n"
+                      "- Foster a welcoming environment for community members\n"
+                      "- Review reports and take appropriate action\n"
+                      "- Collaborate with fellow moderators\n\n"
+                      "### Important Resources\n\n"
+                      "- [Moderator Guidelines](/help/moderatorguidelines) - Learn about best practices and expectations\n"
+                      "- [Content Policy](/help/contentpolicy) - Understand site-wide rules\n"
+                      "- [User Agreement](/help/useragreement) - Know the terms of service\n"
+                      "- [/v/ModSupport](/v/ModSupport) - Connect with other moderators\n\n"
+                      "### Volunteer Status\n\n"
+                      "Please note that moderators are independent volunteers, not employees of Tippr. "
+                      "For more details, please review the [Moderator Guidelines](/help/moderatorguidelines).\n\n"
+                      "---\n\n"
+                      "Thank you for helping make Tippr a great place!"),
         },
     },
     "moderator_invite": {
@@ -42,7 +61,10 @@ user_added_messages = {
             "subject": N_("invitation to moderate %(url)s"),
             "msg": N_("**gadzooks! you are invited to become a moderator of [%(title)s](%(url)s)!**\n\n"
                       "*to accept*, visit the [moderators page for %(url)s](%(url)s/about/moderators) and click \"accept\".\n\n"
-                      "*otherwise,* if you did not expect to receive this, you can simply ignore this invitation or report it."),
+                      "*otherwise,* if you did not expect to receive this, you can simply ignore this invitation or report it.\n\n"
+                      "---\n\n"
+                      "*Before accepting, we encourage you to review our [Moderator Guidelines](/help/moderatorguidelines) "
+                      "to understand the expectations and responsibilities of being a moderator.*"),
         },
         "modmail": {
             "subject": N_("moderator invited"),
@@ -50,6 +72,29 @@ user_added_messages = {
         },
     },
     "accept_moderator_invite": {
+        "pm": {
+            "subject": N_("Welcome! You are now a moderator"),
+            "msg": N_("**Congratulations!** You have accepted the invitation to moderate [%(title)s](%(url)s).\n\n"
+                      "---\n\n"
+                      "## Welcome to the Tippr Moderator Community!\n\n"
+                      "As a moderator, you play a vital role in building and maintaining our community. "
+                      "Here are some important things to know:\n\n"
+                      "### Your Responsibilities\n\n"
+                      "- Enforce vault rules and site-wide policies\n"
+                      "- Foster a welcoming environment for community members\n"
+                      "- Review reports and take appropriate action\n"
+                      "- Collaborate with fellow moderators\n\n"
+                      "### Important Resources\n\n"
+                      "- [Moderator Guidelines](/help/moderatorguidelines) - Learn about best practices and expectations\n"
+                      "- [Content Policy](/help/contentpolicy) - Understand site-wide rules\n"
+                      "- [User Agreement](/help/useragreement) - Know the terms of service\n"
+                      "- [/v/ModSupport](/v/ModSupport) - Connect with other moderators\n\n"
+                      "### Volunteer Status\n\n"
+                      "Please note that moderators are independent volunteers, not employees of Tippr. "
+                      "For more details, please review the [Moderator Guidelines](/help/moderatorguidelines).\n\n"
+                      "---\n\n"
+                      "Thank you for helping make Tippr a great place!"),
+        },
         "modmail": {
             "subject": N_("moderator added"),
             "msg": N_("%(user)s has accepted an invitation to become moderator of %(url)s."),
@@ -83,7 +128,14 @@ def notify_user_added(rel_type, author, user, target):
         "user": "/u/" + user.name,
     }
 
-    if "pm" in msgs and author != user:
+    # Send PM to user
+    # For most rel_types, only send if author != user
+    # For accept_moderator_invite, always send (it's a welcome message)
+    should_send_pm = "pm" in msgs and (
+        author != user or rel_type == "accept_moderator_invite"
+    )
+    
+    if should_send_pm:
         subject = msgs["pm"]["subject"] % d
         msg = msgs["pm"]["msg"] % d
 
@@ -91,6 +143,12 @@ def notify_user_added(rel_type, author, user, target):
             # send the message from the vault
             item, inbox_rel = Message._new(
                 author, user, subject, msg, request.ip, vault=target, from_vault=True,
+                can_send_email=False)
+        elif rel_type == "accept_moderator_invite":
+            # send welcome message from the vault
+            system_user = Account.system_user()
+            item, inbox_rel = Message._new(
+                system_user, user, subject, msg, request.ip, vault=target, from_vault=True,
                 can_send_email=False)
         else:
             item, inbox_rel = Message._new(

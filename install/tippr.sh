@@ -1322,6 +1322,10 @@ fi
 ###############################################################################
 # Finished with install script
 ###############################################################################
+# Initialize policy wiki pages (Terms of Use, Privacy Policy, etc.)
+echo "Initializing policy wiki pages..."
+tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Policy wiki pages initialization skipped (can be run manually later)"
+
 # print this out here. if vagrant's involved, it's gonna do more steps
 # afterwards and then re-run this script but that's ok.
 $RUNDIR/done.sh

@@ -52,6 +52,9 @@ class PoliciesController(TipprController):
         elif page == 'contentpolicy':
             wiki_name = g.wiki_page_content_policy
             pagename = _('content policy')
+        elif page == 'moderatorguidelines':
+            wiki_name = g.wiki_page_moderator_guidelines
+            pagename = _('moderator guidelines')
         else:
             abort(404)
 

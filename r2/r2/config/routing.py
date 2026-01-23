@@ -137,6 +137,12 @@ def make_map(config):
     mc('/admin/ctips', controller='admintool', action='ctips')
     mc('/admin/gold', controller='admintool', action='gold')
 
+    # Privacy Admin Dashboard
+    mc('/admin/privacy', controller='adminprivacy', action='privacy_dashboard')
+    mc('/admin/privacy/user/:username', controller='adminprivacy', action='user_data_view')
+    mc('/admin/privacy/process', controller='adminprivacy', action='process_request')
+    mc('/admin/privacy/trigger_export', controller='adminprivacy', action='trigger_export')
+
     mc('/user/:username/about', controller='user', action='about',
        where='overview')
     mc('/user/:username/trophies', controller='user', action='trophies')
@@ -206,6 +212,10 @@ def make_map(config):
         action='user_prefs', requirements=dict(where='blocked|friends'))
     mc('/prefs/:location', controller='forms', action='prefs',
        location='options')
+
+    # Privacy settings
+    mc('/prefs/privacy', controller='privacy', action='privacy_settings')
+    mc('/prefs/privacy/download', controller='privacy', action='download_export')
 
     mc('/info/0:article/*rest', controller='front',
        action='oldinfo', dest='comments', type='ancient')
@@ -308,7 +318,7 @@ def make_map(config):
 
     mc('/help/:page', controller='policies', action='policy_page',
        conditions={'function':not_in_vault},
-       requirements={'page':'contentpolicy|privacypolicy|useragreement'})
+       requirements={'page':'contentpolicy|privacypolicy|useragreement|moderatorguidelines'})
     mc('/rules', controller='redirect', action='redirect',
         dest='/help/contentpolicy')
     mc('/faq', controller='redirect', action='redirect',
@@ -362,6 +372,15 @@ def make_map(config):
 
     mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")
+    
+    # Privacy API endpoints
+    mc('/api/privacy/request_export', controller='privacy',
+       action='request_data_export')
+    mc('/api/privacy/cancel_request', controller='privacy',
+       action='cancel_privacy_request')
+    mc('/api/privacy/requests', controller='privacy',
+       action='privacy_requests_json')
+    
     mc('/api/spendctips', controller='ipn', action="spendctips")
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
     mc('/api/modify_subscription', controller='stripe',

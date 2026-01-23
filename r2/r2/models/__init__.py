@@ -39,6 +39,7 @@ from .link import *
 from .listing import *
 from .mail_queue import Email, has_opted_out, opt_count
 from .modaction import *
+from .privacy import *
 from .promo import *
 from .report import *
 from .rules import *
