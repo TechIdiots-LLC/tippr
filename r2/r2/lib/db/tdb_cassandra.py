@@ -1466,6 +1466,8 @@ class DenormalizedView(View):
                 if isinstance(val, int):
                     val = str(val / 1000.0).encode('utf-8')
                 serialized_columns[attr] = base64.b64encode(val).decode('ascii')
+            elif isinstance(val, bytes):
+                serialized_columns[attr] = val.decode('utf-8')
 
         dump = json.dumps(serialized_columns)
         return dump
