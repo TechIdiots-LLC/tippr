@@ -119,7 +119,7 @@ class Builder:
                        if a.cake_expiration and a.cake_expiration >= now}
         friend_rels = user.friend_rels() if user and user.gold else {}
 
-        vaults = Vault.load_Vaults(items, stale=self.stale)
+        vaults = Vault.load_vaults(items, stale=self.stale)
         can_ban_set = set()
 
         if user:
