@@ -27,7 +27,7 @@
    from r2.lib.template_helpers import add_vault
  %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
-<%namespace file="Vault.html" import="tagline, permission_icons"/>
+<%namespace file="vault.html" import="tagline, permission_icons"/>
 <%namespace file="utils.html" import="plain_link" />
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
