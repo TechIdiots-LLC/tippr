@@ -35,7 +35,7 @@
   </span>
 </%def>
 
-<%def name="Vaults()">
+<%def name="vaults()">
   <span class="hover pagename tipprname">
     <a href="/Vaults/">${_("Vaults")}</a>
   </span>
