@@ -607,6 +607,7 @@ class Globals:
         self.extension_subdomains = dict(
             simple="mobile",
             i="compact",
+            m="mobile",
             api="api",
             rss="rss",
             xml="xml",
