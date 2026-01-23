@@ -31,26 +31,25 @@ import os
 import sys
 
 
-def main():
-    # Setup paths
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+def main(root_dir=None):
+    # Setup paths - handle both direct execution and tippr-run
+    if root_dir is None:
+        # When run via tippr-run, the app is already loaded
+        # Try to find root from current working directory or known paths
+        if os.path.exists('/home/tippr/src/tippr/docs/policies'):
+            root_dir = '/home/tippr/src/tippr'
+        elif os.path.exists('docs/policies'):
+            root_dir = os.getcwd()
+        elif os.path.exists('../docs/policies'):
+            root_dir = os.path.abspath('..')
+        else:
+            root_dir = os.getcwd()
+    
     r2_dir = os.path.join(root_dir, 'r2')
-    sys.path.insert(0, root_dir)
-    sys.path.insert(0, r2_dir)
-
-    # Load the app
-    from paste.deploy import loadapp
     
-    ini_path = os.path.join(r2_dir, 'example.ini')
-    app_spec = 'config:' + os.path.basename(ini_path)
+    print(f"Using root_dir: {root_dir}")
     
-    print(f"Loading app from {ini_path}...")
-    try:
-        loadapp(app_spec, relative_to=os.path.dirname(ini_path))
-    except Exception as e:
-        print(f"Failed to load app: {e}")
-        return 1
-
+    # Import from already-loaded app (tippr-run loads the app before running scripts)
     from pylons import app_globals as g
     from r2.models.vault import Frontpage
     from r2.models.wiki import WikiPage
@@ -146,3 +145,6 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+else:
+    # When loaded via tippr-run or paster run, execute main automatically
+    main()
