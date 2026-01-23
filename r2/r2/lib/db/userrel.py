@@ -170,7 +170,9 @@ def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False,
     class UR:
         @classmethod
         def _bind(cls, fn):
-            return fn
+            def wrapper(self, *args, **kwargs):
+                return fn(self, *args, **kwargs)
+            return wrapper
 
     setattr(UR, 'is_' + name, UR._bind(mgr.get))
     setattr(UR, 'get_' + name, UR._bind(mgr.get))
