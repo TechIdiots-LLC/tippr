@@ -436,6 +436,7 @@ def set_multivault():
 
 
 def set_content_type():
+    c.allowed_callback = None
     e = request.environ
     c.render_style = e['render_style']
     response.content_type = e['content_type']
