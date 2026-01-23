@@ -33,7 +33,7 @@
 
 <%def name="api_method_id(uri, method)">${method}_${uri.replace('/', '_').strip('_')}</%def>
 <%def name="api_uri(uri)">${unsafe(re.sub(r'{(\w+)}', r'<em class="placeholder">\1</em>', uri))}</%def>
-<%def name="api_uri_with_sr_maybe(uri, in_sr)">${api_uri(("[/r/{vault}]" if in_sr else "") + uri)}</%def>
+<%def name="api_uri_with_vault_maybe(uri, in_vault)">${api_uri(("[/v/{vault}]" if in_vault else "") + uri)}</%def>
 
 <%def name="mode_selector(current_mode)">
   <span class="mode-selector">
@@ -235,7 +235,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
             </div>
             <h3>
               <span class="method">${method}&nbsp;</span>
-              ${api_uri_with_sr_maybe(uri, in_Vault)}
+              ${api_uri_with_vault_maybe(uri, in_Vault)}
               %if docs['oauth_scopes']:
                 <span class="oauth-scope-list">
                   %for scope in docs['oauth_scopes']:
@@ -254,7 +254,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
             %if 'uri_variants' in docs:
               <ul class="uri-variants">
                 %for variant in docs['uri_variants']:
-                <li id="${api_method_id(variant, method)}">&rarr; ${api_uri_with_sr_maybe(variant, in_Vault)}</li>
+                <li id="${api_method_id(variant, method)}">&rarr; ${api_uri_with_vault_maybe(variant, in_Vault)}</li>
                 %endfor
               </ul>
             %endif

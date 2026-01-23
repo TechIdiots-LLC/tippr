@@ -14,5 +14,5 @@ DUMP_REL
 cat <<DUMP_RELDATA | ./run-query.sh
 SET enable_bitmapscan=false;
 
-\\copy (SELECT thing_id, key, value FROM reddit_data_rel_$RELNAME WHERE key = 'new') to 'input/$RELNAME-data.dump';
+\\copy (SELECT thing_id, key, value FROM tippr_data_rel_$RELNAME WHERE key = 'new') to 'input/$RELNAME-data.dump';
 DUMP_RELDATA

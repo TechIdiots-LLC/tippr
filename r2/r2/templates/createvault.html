@@ -40,7 +40,7 @@
 <div class="infobar">${_md("""
 # your account is too new to create a vault
     
-try participating in other communities on tippr for a little while first before creating your own. please post to /r/help if you need more information about this restriction, or if you require a specific exemption you can [contact the admins](/contact) to request one.
+try participating in other communities on tippr for a little while first before creating your own. please post to /v/help if you need more information about this restriction, or if you require a specific exemption you can [contact the admins](/contact) to request one.
 """)}</div>
 %else:
 
@@ -321,7 +321,7 @@ try participating in other communities on tippr for a little while first before 
                  %endif
           >
           <label for="allow_top">
-            ${_("allow this vault to be included /r/all as well as the default and trending lists")}
+            ${_("allow this vault to be included /v/all as well as the default and trending lists")}
           </label>
         </li>
         <li>
@@ -392,7 +392,7 @@ try participating in other communities on tippr for a little while first before 
             </label>
           </li>
         %endif
-        ${error_field("GOLD_ONLY_SR_REQUIRED", "hide_ads")}
+        ${error_field("GOLD_ONLY_VAULT_REQUIRED", "hide_ads")}
       </ul>
       <div class="usertext-edit">
         <label for="suggested_comment_sort">${_('suggested comment sort')}&#32;<span class="gray">${_('(all comment threads will use this sorting method by default)')}</span></label>
@@ -456,7 +456,7 @@ try participating in other communities on tippr for a little while first before 
                    />
           </li>
           <li>
-            <%utils:image_upload post_target="/api/upload_sr_img" 
+            <%utils:image_upload post_target="/api/upload_vault_img" 
                                  current_image="${thing.site.header}"
                                  label="${_('upload header image')}"
                                  ask_type="${True}">
@@ -465,7 +465,7 @@ try participating in other communities on tippr for a little while first before 
                       %if not thing.site.header:
                          style="display: none;"
                       %endif
-                      onclick="return post_form(this.form, 'delete_sr_header');">
+                      onclick="return post_form(this.form, 'delete_vault_header');">
                 ${_('restore default header')}
               </button>
               <div class="clearleft"></div>
@@ -492,19 +492,19 @@ try participating in other communities on tippr for a little while first before 
       <ul id="related-vaults" class="vaults">
         <li id="vault-template" style="display:none">
           <a href=""></a>
-          <button class="remove-vault" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
+          <button class="remove-vault" onclick="remove_related_vault(this.parentNode)">${_('remove')}</button>
         </li>
         %for vault in thing.site.related_Vaults:
           %if vault:
             <li data-name="${vault.lower()}">
-              <a href="/v/${vault}">/r/${vault}</a>
-              <button class="remove-vault" onclick="remove_related_sr(this.parentNode)">${_('remove')}</button>
+              <a href="/v/${vault}">/v/${vault}</a>
+              <button class="remove-vault" onclick="remove_related_vault(this.parentNode)">${_('remove')}</button>
             </li>
           %endif
         %endfor
       </ul>
       %if hasattr(thing, 'Vault_selector'):
-      <form id="add-related-vault" onsubmit="return add_related_sr(this)">
+      <form id="add-related-vault" onsubmit="return add_related_vault(this)">
         ${thing.Vault_selector}
       </form>
       %endif
@@ -515,7 +515,7 @@ try participating in other communities on tippr for a little while first before 
       ${error_field("TOO_MANY_VaultS", "related_Vaults")}
       ${error_field("VAULT_NOEXIST", "related_Vaults")}
       <script type="text/javascript">
-        function add_related_sr(form) {
+        function add_related_vault(form) {
           $('.VAULT_NOEXIST.field-vault').hide();
 
           var vault_name = form.vault.value.trim();
@@ -525,14 +525,14 @@ try participating in other communities on tippr for a little while first before 
               var vault_name = r.names[0];
               var vault_path = '/v/' + vault_name;
 
-              var $sr_list = $('#related-vaults');
-              var $sr_item = $sr_list.find('[data-name=' + vault_name.toLowerCase() + ']');
-              if (!$sr_item.length) {
-                $sr_item = $('#vault-template').clone().removeAttr('id');
-                $sr_item.data('name', vault_name.toLowerCase()).show();
-                $sr_item.find('a').attr('href', vault_path).text(vault_path);
+              var $vault_list = $('#related-vaults');
+              var $vault_item = $vault_list.find('[data-name=' + vault_name.toLowerCase() + ']');
+              if (!$vault_item.length) {
+                $vault_item = $('#vault-template').clone().removeAttr('id');
+                $vault_item.data('name', vault_name.toLowerCase()).show();
+                $vault_item.find('a').attr('href', vault_path).text(vault_path);
               }
-              $sr_item.appendTo($sr_list);
+              $vault_item.appendTo($vault_list);
 
               var re = new RegExp('(^|\n)' + vault_name + '(\n|$)', 'gim');
               var $input = $('#related_Vaults');
@@ -569,14 +569,14 @@ try participating in other communities on tippr for a little while first before 
       %if thing.site:
       <li>
         <p><label>${_('icon image')}</label> <span class="gray">${_('icon must be 256x256 pixels. PNG or JPG only.')}</span></p>
-        <%utils:image_upload post_target="/api/upload_sr_img"
+        <%utils:image_upload post_target="/api/upload_vault_img"
                              current_image="${thing.site.icon_img}"
                              form_id='icon-upload'>
           <button id="delete-icon" class="delete-img"
                   %if not thing.site.icon_img:
                     style="display: none;"
                   %endif
-                  onclick="return post_form(this.form, 'delete_sr_icon');">
+                  onclick="return post_form(this.form, 'delete_vault_icon');">
             ${_('remove custom icon image')}
           </button>
           <div class="clearleft"></div>
@@ -588,14 +588,14 @@ try participating in other communities on tippr for a little while first before 
       <li>
         <p><label>${_('header image')}</label> <span class="gray">${_('header should have 10:3 aspect ratio. PNG or JPG only.')}</span></p>
         <p class="little gray">${_('minimum size: 640x192px')} / ${_('maximum size: 1280x384px')}</span></p>
-        <%utils:image_upload post_target="/api/upload_sr_img"
+        <%utils:image_upload post_target="/api/upload_vault_img"
                              current_image="${thing.site.banner_img}"
                              form_id='banner-upload'>
           <button id="delete-banner" class="delete-img"
                   %if not thing.site.banner_img:
                     style="display: none;"
                   %endif
-                  onclick="return post_form(this.form, 'delete_sr_banner');">
+                  onclick="return post_form(this.form, 'delete_vault_banner');">
             ${_('remove custom header image')}
           </button>
           <div class="clearleft"></div>

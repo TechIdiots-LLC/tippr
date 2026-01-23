@@ -84,7 +84,7 @@
                               vault_path=False,
                               retain_extension=False,
                               force_hostname=True)}">
-                /r/${thing.vault.name}
+                /v/${thing.vault.name}
             </a>
         %endif
 

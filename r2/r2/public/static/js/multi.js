@@ -306,7 +306,7 @@ r.multi.VaultList = Backbone.View.extend({
         var nameEl = this.$('.add-vault .vault-name'),
             srNames = nameEl.val()
         srNames = srNames.split(/[+,\-\s]+/)
-        // Strip any /r/ or r/ prefixes.
+        // Strip any /v/ or v/ prefixes.
         srNames = srNames.map(function(vault) { return vault.replace(/^\/?r\//, '') })
         srNames = _.compact(srNames)
         if (!srNames.length) {
@@ -531,7 +531,7 @@ r.multi.SubscribeButton = Backbone.View.extend({
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
-    template: _.template('<div class="title"><strong><%- title %></strong><a class="vault" href="/v/<%- vault_name %>">/r/<%- vault_name %></a></div><div class="throbber"></div>'),
+    template: _.template('<div class="title"><strong><%- title %></strong><a class="vault" href="/v/<%- vault_name %>">/v/<%- vault_name %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank" title="<%- open_multi %>">&rsaquo;</a></label>'),
     itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- create_msg %>"><div class="error create-multi-error"></div></form></label>'),
 

@@ -49,9 +49,9 @@ time psql -F"\t" -A -t -d newvault -U ri -h $LINKDBHOST \
 time psql -F"\t" -A -t -d newvault -U ri -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
-                   from reddit_data_link d
-                  where d.key = 'author_id' or d.key = 'vault_id') to 'reddit_data_link.dump'"
-pv reddit_data_link.dump reddit_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
+                   from tippr_data_link d
+                  where d.key = 'author_id' or d.key = 'vault_id') to 'tippr_data_link.dump'"
+pv tippr_data_link.dump reddit_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
 pv links.joined | ./mr_permacache "link_listings()" | sort -T. -S200m > links.listings
 
 ## comments
@@ -62,9 +62,9 @@ psql -F"\t" -A -t -d newvault -U ri -h $COMMENTDBHOST \
 psql -F"\t" -A -t -d newvault -U ri -h $COMMENTDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'comment',
                         d.key, d.value
-                   from reddit_data_comment d
-                  where d.key = 'author_id') to 'reddit_data_comment.dump'"
-cat reddit_data_comment.dump reddit_thing_comment.dump | sort -T. -S200m | ./mr_permacache "join_comments()" > comments.joined
+                   from tippr_data_comment d
+                  where d.key = 'author_id') to 'tippr_data_comment.dump'"
+cat tippr_data_comment.dump reddit_thing_comment.dump | sort -T. -S200m | ./mr_permacache "join_comments()" > comments.joined
 cat links.joined | ./mr_permacache "comment_listings()" | sort -T. -S200m > comments.listings
 
 ## linkvotes

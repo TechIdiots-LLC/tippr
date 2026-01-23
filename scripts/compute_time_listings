@@ -130,7 +130,7 @@ run_query "\\copy (SELECT thing_id, 'thing', '$THING_CLS', ups, downs, deleted, 
                   ) to $THING_DUMP"
 
 run_query "\\copy (SELECT thing_id, 'data', '$THING_CLS', key, value
-                   FROM reddit_data_$THING_CLS
+                   FROM tippr_data_$THING_CLS
                    WHERE
                        key IN ('url', 'vault_id', 'author_id') AND
                        thing_id >= $MINID

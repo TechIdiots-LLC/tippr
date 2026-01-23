@@ -40,7 +40,7 @@
        %if thing.vault_id:
          <span class="correspondent reddit rounded">
            <a href="${thing.Vault.path}message/moderator/inbox.compact">
-             /r/${thing.Vault.name}
+             /v/${thing.Vault.name}
            </a>
          </span>
        %else:

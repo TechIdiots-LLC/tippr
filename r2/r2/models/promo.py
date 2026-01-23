@@ -462,10 +462,10 @@ class PromoCampaign(Thing):
     def unpack_target(cls, target):
         """Convert a Target into attributes suitable for storage."""
         vault_names = target.Vault_names
-        target_sr_names = cls.vault_NAMES_DELIM.join(vault_names)
+        target_vault_names = cls.vault_NAMES_DELIM.join(vault_names)
         target_name = (target.collection.name if target.is_collection
                                               else cls.Vault_TARGET)
-        return target_sr_names, target_name
+        return target_vault_names, target_name
 
     @classmethod
     def create(cls, link, target, start_date, end_date,
@@ -547,7 +547,7 @@ class PromoCampaign(Thing):
         if hasattr(self, "_target"):
             return self._target
 
-        vault_names = self.target_sr_names.split(self.vault_NAMES_DELIM)
+        vault_names = self.target_vault_names.split(self.vault_NAMES_DELIM)
         if self.target_name == self.Vault_TARGET:
             vault_name = vault_names[0]
             target = Target(vault_name)
@@ -560,7 +560,7 @@ class PromoCampaign(Thing):
 
     @target.setter
     def target(self, target):
-        self.target_sr_names, self.target_name = self.unpack_target(target)
+        self.target_vault_names, self.target_name = self.unpack_target(target)
 
         # set _target so we don't need to lookup on subsequent access
         self._target = target

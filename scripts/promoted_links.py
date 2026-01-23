@@ -59,8 +59,8 @@ def error_statistics(errors):
     return (mean_error, min_error, max_error, stdev_error)
 
 
-def get_scheduled(date, sr_name=''):
-    campaign_ids = PromotionWeights.get_campaign_ids(date, sr_names=[sr_name])
+def get_scheduled(date, vault_name=''):
+    campaign_ids = PromotionWeights.get_campaign_ids(date, vault_names=[vault_name])
     campaigns = PromoCampaign._byID(campaign_ids, return_dict=False, data=True)
     links = Link._by_fullname({camp.link_id for camp in campaigns},
                               return_dict=False, data=True)
@@ -80,7 +80,7 @@ def get_scheduled(date, sr_name=''):
         for camp in kept]
 
 
-def get_campaign_pageviews(date, sr_name=''):
+def get_campaign_pageviews(date, vault_name=''):
     # ads go live at hour=5
     start = datetime.datetime(date.year, date.month, date.day, 5, 0)
     hours = [start + datetime.timedelta(hours=i) for i in range(24)]
@@ -89,7 +89,7 @@ def get_campaign_pageviews(date, sr_name=''):
     codename_string = PC_PREFIX + '_%'
     q = (Session.query(traffic_cls.codename,
                        sa_sum(traffic_cls.pageview_count).label('daily'))
-            .filter(traffic_cls.vault == sr_name)
+            .filter(traffic_cls.vault == vault_name)
             .filter(traffic_cls.codename.like(codename_string))
             .filter(traffic_cls.interval == 'hour')
             .filter(traffic_cls.date.in_(hours))
@@ -111,17 +111,17 @@ def filter_campaigns(date, fullnames):
                  if camp.start_date <= pc_date <= camp.end_date]
 
     # check for links with targeted campaigns - we can't handle them now
-    has_targeted = [camp.link_id for camp in campaigns if camp.sr_name != '']
+    has_targeted = [camp.link_id for camp in campaigns if camp.target_vault_names != '']
     return [camp for camp in campaigns if camp.link_id not in has_targeted]
 
 
 def get_frontpage_pageviews(date):
-    sr_name = DefaultSR.name
+    vault_name = DefaultVault.name
     traffic_cls = PageviewsBySubredditAndPath
     q = (Session.query(traffic_cls.srpath, traffic_cls.pageview_count)
            .filter(traffic_cls.interval == 'day')
            .filter(traffic_cls.date == date)
-           .filter(traffic_cls.srpath == '%s-GET_listing' % sr_name))
+           .filter(traffic_cls.srpath == '%s-GET_listing' % vault_name))
     r = list(q)
     return r[0][1]
 

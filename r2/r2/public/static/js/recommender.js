@@ -15,7 +15,7 @@ r.recommend.Recommendation = Backbone.Model.extend()
  * recs.fetchForSrs(['books', 'writing'])  // triggers reset event
  * // get a new set of recs
  * recs.fetchNewRecs()  // triggers reset event
- * // the user also likes /r/excerpts so generate recs for it too
+ * // the user also likes /v/excerpts so generate recs for it too
  * recs.fetchForSrs(['books', 'writing', 'excerpts'])
  * // keep fetching until none are left
  * while (recs.models.length > 0) {

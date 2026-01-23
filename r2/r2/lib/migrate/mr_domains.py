@@ -46,9 +46,9 @@ time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
 time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
-                   from reddit_data_link d
-                  where d.key = 'url' ) to 'reddit_data_link.dump'"
-cat reddit_data_link.dump reddit_thing_link.dump | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "join_links()" > links.joined
+                   from tippr_data_link d
+                  where d.key = 'url' ) to 'tippr_data_link.dump'"
+cat tippr_data_link.dump reddit_thing_link.dump | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "join_links()" > links.joined
 cat links.joined | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "write_permacache()"
 """
 

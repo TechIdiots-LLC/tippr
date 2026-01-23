@@ -386,7 +386,7 @@ class PromotionWeights(Sessionized, Base):
     # NOTE: bid, weight, finished columns are not used
 
     @classmethod
-    def filter_sr_name(cls, vault_name):
+    def filter_vault_name(cls, vault_name):
         # LEGACY: use empty string to indicate Frontpage
         return '' if vault_name == Frontpage.name else vault_name
 
@@ -404,7 +404,7 @@ class PromotionWeights(Sessionized, Base):
         dates = [start_date + datetime.timedelta(days=i) for i in range(ndays)]
 
         vault_names = campaign.target.Vault_names
-        vault_names = {cls.filter_sr_name(vault_name) for vault_name in vault_names}
+        vault_names = {cls.filter_vault_name(vault_name) for vault_name in vault_names}
 
         with cls.session.begin():
             for vault_name in vault_names:
@@ -446,7 +446,7 @@ class PromotionWeights(Sessionized, Base):
             query = query.filter(cls.account_id == author_id)
 
         if vault_names:
-            vault_names = [cls.filter_sr_name(vault_name) for vault_name in vault_names]
+            vault_names = {cls.filter_vault_name(vault_name) for vault_name in vault_names}
             query = query.filter(cls.vault_name.in_(vault_names))
 
         return query

@@ -9,10 +9,10 @@
   <input id="vault-autocomplete" name="vault" type="text"
          autocomplete="off"
          %if thing.include_searches:
-           onkeyup="sr_name_up(event)"
+           onkeyup="vault_name_up(event)"
          %endif
-         onkeydown="return sr_name_down(event)"
-         onblur="hide_sr_name_list()"
+         onkeydown="return vault_name_down(event)"
+         onblur="hide_vault_name_list()"
          % if thing.default_vault:
            value="${thing.default_vault.name}"
          % endif
@@ -31,13 +31,13 @@
   % endif
   <ul id="vault-drop-down">
     <li class="vault-name-row"
-        onmouseover="highlight_reddit(this)"
-        onmousedown="return sr_dropdown_mdown(this)"
-        onmouseup="sr_dropdown_mup(this)">nothin</li>
+        onmouseover="highlight_vault(this)"
+        onmousedown="return vault_dropdown_mdown(this)"
+        onmouseup="vault_dropdown_mup(this)">nothin</li>
   </ul>
 </div>
 <script type="text/javascript">
-  r.config.sr_cache = ${unsafe(thing.vault_searches)};
+  r.config.vault_cache = ${unsafe(thing.vault_searches)};
 </script>
 ${error_field("VAULT_NOEXIST", "vault", "div")}
 ${error_field("VAULT_NOTALLOWED", "vault", "div")}
@@ -49,7 +49,7 @@ ${error_field("VAULT_REQUIRED", "vault", "div")}
     <ul>
       %for name in vaults:
       <li>
-        <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
+        <a href="#" tabindex="100" onclick="set_vault_name(this); return false">${name}</a>&#32;
       </li>
       %endfor
     </ul>

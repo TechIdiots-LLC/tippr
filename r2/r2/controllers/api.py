@@ -2502,7 +2502,7 @@ class ApiController(TipprController):
         VNotInTimeout(),
     )
     @api_doc(api_section.vaults, uses_site=True)
-    def POST_delete_sr_icon(self, form, jquery):
+    def POST_delete_vault_icon(self, form, jquery):
         """Remove the vault's custom mobile icon.
 
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
@@ -2529,7 +2529,7 @@ class ApiController(TipprController):
         VNotInTimeout(),
     )
     @api_doc(api_section.vaults, uses_site=True)
-    def POST_delete_sr_banner(self, form, jquery):
+    def POST_delete_vault_banner(self, form, jquery):
         """Remove the vault's custom mobile banner.
 
         See also: [/api/upload_sr_img](#POST_api_upload_sr_img).
@@ -2549,7 +2549,7 @@ class ApiController(TipprController):
         # reset the status boxes
         form.set_text('.img-status', _("deleted"))
 
-    def GET_upload_sr_img(self, *a, **kw):
+    def GET_upload_vault_img(self, *a, **kw):
         """
         Completely unnecessary method which exists because safari can
         be dumb too.  On page reload after an image has been posted in
@@ -2572,7 +2572,7 @@ class ApiController(TipprController):
                                    ('img', 'header', 'icon', 'banner')),
               header = VInt('header', max=1, min=0))
     @api_doc(api_section.vaults, uses_site=True)
-    def POST_upload_sr_img(self, file, header, name, form_id, img_type,
+    def POST_upload_vault_img(self, file, header, name, form_id, img_type,
                            upload_type=None):
         """Add or replace a vault image, custom header logo, custom mobile
         icon, or custom mobile banner.

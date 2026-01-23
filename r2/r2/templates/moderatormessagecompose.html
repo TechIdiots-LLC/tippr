@@ -51,7 +51,7 @@ ${captcha_field()}
 </%utils:submit_form>
 
 <%def name="from_field()">
-  ## If the user is in timeout, they can only message /r/tippr.net - so it
+  ## If the user is in timeout, they can only message /v/tippr.net - so it
   ## only makes sense to let them do that from their user account (the
   ## default), not as a vault moderator.
   %if not thing.restrict_recipient:
@@ -70,7 +70,7 @@ ${captcha_field()}
           </select>
         %endif
       </%utils:round_field>
-      ${error_field("NO_SR_TO_SR_MESSAGE", "from")}
+      ${error_field("NO_VAULT_TO_VAULT_MESSAGE", "from")}
     </div>
   %endif
 </%def>

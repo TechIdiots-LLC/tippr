@@ -216,12 +216,12 @@ ${utils.radio_type('app_type', "script", _("script"),
   </li>
 </%def>
 
-<%def name="sr_list(vaults)">
+<%def name="vault_list(vaults)">
   %for i, name in enumerate(sorted(vaults)):
     %if i:
       ,&#32;
     %endif
-    <a href="/v/${name}">/r/${name}</a>
+    <a href="/v/${name}">/v/${name}</a>
   %endfor
 </%def>
 
@@ -231,12 +231,12 @@ ${utils.radio_type('app_type', "script", _("script"),
       %if scope.Vault_only:
         %if compact:
 	  ${_("Only in:")}&#32;
-	  ${sr_list(scope.vaults)}
+	  ${vault_list(scope.vaults)}
 	  <br>
 	%else:
           <li>
             ${_("Only in the vaults:")}&#32;
-            ${sr_list(scope.vaults)}.
+            ${vault_list(scope.vaults)}.
           </li>
 	%endif
       %endif

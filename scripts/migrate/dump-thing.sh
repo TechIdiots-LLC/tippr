@@ -14,5 +14,5 @@ DUMP_THING
 cat <<DUMP_THINGDATA | ./run-query.sh
 SET enable_bitmapscan=false;
 
-\\copy (SELECT thing_id, key, value FROM reddit_data_$THING WHERE key IN ('author_id', 'reported', 'vault_id', 'url', 'verdict', 'link_id')) to 'input/$THING-data.dump';
+\\copy (SELECT thing_id, key, value FROM tippr_data_$THING WHERE key IN ('author_id', 'reported', 'vault_id', 'url', 'verdict', 'link_id')) to 'input/$THING-data.dump';
 DUMP_THINGDATA

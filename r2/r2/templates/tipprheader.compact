@@ -68,7 +68,7 @@
            mail_img_class = 'nohavemail'
            mail_path = '/message/inbox/'
       %>
-      ${plain_link('', mail_path, _sr_path=False, _class=mail_img_class, _id='mail')}
+      ${plain_link('', mail_path, _vault_path=False, _class=mail_img_class, _id='mail')}
       %if c.user_is_loggedin and c.user.is_moderator_somewhere:
         <%
             mail_path = '/message/moderator/'
@@ -77,7 +77,7 @@
             else:
                 mail_img_class = 'nohavemail'
         %>
-        ${plain_link('', mail_path, _sr_path=False, _class=mail_img_class, _id='modmail')}
+        ${plain_link('', mail_path, _vault_path=False, _class=mail_img_class, _id='modmail')}
       %endif
     %endif
     <a class="topbar-options" href="#" id="topmenu_toggle"></a>
@@ -85,14 +85,14 @@
   <div id="top_menu">
     %if c.user_is_loggedin:
     <div class="menuitem">
-      ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
+      ${plain_link(c.user.name, "/user/%s/" % c.user.name, _vault_path=False)}
       &nbsp;(<b>${display_link_karma(c.user.link_karma)}</b>)
     </div>
     <div class="menuitem">
-      ${plain_link("Vaults", "/Vaults/mine", _sr_path=False)}
+      ${plain_link("Vaults", "/Vaults/mine", _vault_path=False)}
     </div>
     <div class="menuitem">
-      ${plain_link("submit", "/submit", _sr_path=False)}
+      ${plain_link("submit", "/submit", _vault_path=False)}
     </div>
     %if g.auth_provider.is_logout_allowed():
     <div class="menuitem bottm-bar">
@@ -101,13 +101,13 @@
     % endif
    %else:
     <div class="menuitem">
-      ${plain_link("log in", "/login", _sr_path=False)}
+      ${plain_link("log in", "/login", _vault_path=False)}
     </div>
     <div class="menuitem bottm-bar">
-      ${plain_link("sign up", "/register", _sr_path=False)}
+      ${plain_link("sign up", "/register", _vault_path=False)}
     </div>
     <div class="menuitem">
-      ${plain_link("Vaults", "/Vaults/", _sr_path=False)}
+      ${plain_link("Vaults", "/Vaults/", _vault_path=False)}
     </div>
    %endif
     <div class="menuitem">

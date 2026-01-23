@@ -29,6 +29,6 @@
 
 <%namespace file="utils.html" import="plain_link"/>
 
-There is suspicious payment activity by ${plain_link("/u/%s" % thing.user.name, "/user/%s/promoted" % thing.user.name, _sr_path=False)}.
+There is suspicious payment activity by ${plain_link("/u/%s" % thing.user.name, "/user/%s/promoted" % thing.user.name, _vault_path=False)}.
 
-This report was triggered by the promotion ${plain_link(thing.link.title, promo_edit_url(thing.link), _sr_path=False)}.
+This report was triggered by the promotion ${plain_link(thing.link.title, promo_edit_url(thing.link), _vault_path=False)}.

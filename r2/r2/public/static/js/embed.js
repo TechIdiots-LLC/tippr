@@ -31,7 +31,7 @@
               _.escape(r._('When checked, if an embedded comment is later edited, the embedded comment text will be replaced by a link back to the current version of the comment on tippr.')) +
             '</p>' +
             '<p>' +
-              '<a href="https://www.tippr.net/r/tippr.net/wiki/embeds">' +
+              '<a href="https://www.tippr.net/v/tippr.net/wiki/embeds">' +
                 _.escape(r._('This parameter can be changed after embedding.')) +
               '</a>' +
             '</p>' +

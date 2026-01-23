@@ -41,14 +41,14 @@ from r2.lib.filters import unsafe, safemarkdown
 
     % if getattr(thing, 'vault_description', None):
     <div class="errorpage-message vault-description">
-      <h2>${_("a message from the moderators of /r/%s") % c.site.name}</h2>
+      <h2>${_("a message from the moderators of /v/%s") % c.site.name}</h2>
       ${unsafe(safemarkdown(thing.vault_description, wrap=False))}
     </div>
     % endif
 
   % if thing.include_message_mods_link:
   <div id="private-vault-message-link" class="errorpage-message">
-    <a href="/message/compose/?to=/r/${c.site.name}">${_("send a message to the moderators")}</a>
+    <a href="/message/compose/?to=/v/${c.site.name}">${_("send a message to the moderators")}</a>
   </div>
   % endif
 </div>

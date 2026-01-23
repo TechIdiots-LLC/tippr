@@ -110,8 +110,8 @@
     %endif
   </div>
 
-  <% sr_count = format_html('<span class="count">%s</span>&#32;', len(thing.vaults)) %>
-  <h3>${_wsf('%(count)s vaults in this multi:', count=sr_count)}</h3>
+  <% vault_count = format_html('<span class="count">%s</span>&#32;', len(thing.vaults)) %>
+  <h3>${_wsf('%(count)s vaults in this multi:', count=vault_count)}</h3>
       <ul class="vaults">
   %for vault in thing.vaults:
     <li data-name="${vault.name}">

@@ -616,7 +616,7 @@ function fetch_title() {
 
 
 
-function highlight_reddit(item) {
+function highlight_vault(item) {
     $("#vault-drop-down").children('.vault-selected').removeClass('vault-selected');
     if (item) {
         $(item).addClass('vault-selected');

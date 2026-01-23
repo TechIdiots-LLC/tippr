@@ -35,8 +35,8 @@
 
 <%
     link_data = {"redirect-type": "link", "redirect-thing": thing.link._id}
-    sr_data = {"redirect-type": "Vault"}
-    reddit_data = {"redirect-type": "logo"}
+    vault_data = {"redirect-type": "Vault"}
+    tippr_data = {"redirect-type": "logo"}
 %>
 
 <!doctype html>
@@ -57,10 +57,10 @@
                 ${text_with_links(
                     _("from discussion %(link)s on %(Vault)s"),
                     link=dict(link_text=thing.link.title, path=thing.link.permalink, data=link_data),
-                    vault=dict(link_text=("/r/%s" % c.site.name), path=c.site.path, data=sr_data),
+                    vault=dict(link_text=("/v/%s" % c.site.name), path=c.site.path, data=vault_data),
                 )}
             </p>
-            ${plain_link("reddit", "/", _sr_path=False, _class="tippr-embed-footer-img", data=reddit_data)}
+            ${plain_link("tippr", "/", _vault_path=False, _class="tippr-embed-footer-img", data=tippr_data)}
           </footer>
         </div>
         <script>
