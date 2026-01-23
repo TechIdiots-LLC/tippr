@@ -26,7 +26,7 @@
 <%!
    from r2.lib import tracking
  %>
-<%inherit file="reddit.compact" />
+<%inherit file="base.compact" />
 
 <%def name="bodyContent()">
   <%include file="tipprheader.compact"/>
