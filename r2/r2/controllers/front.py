@@ -259,7 +259,7 @@ class FrontController(TipprController):
 
         vault = Vault._byID(article.vault_id, True)
 
-        if vault.name == g.takedown_sr:
+        if hasattr(g, 'takedown_vault') and vault.name == g.takedown_vault:
             request.environ['TIPPR_TAKEDOWN'] = article._fullname
             return self.abort404()
 
