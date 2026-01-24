@@ -1505,6 +1505,27 @@ class SubscribedVaultsByAccount(tdb_cassandra.DenormalizedRelation):
             g.cassandra_local_cache.set(key, vault_ids)
 
         return vault_ids
+    
+    @classmethod
+    def create(cls, user, vaults, **kw):
+        # call through to base implementation then invalidate local cache
+        # so subsequent reads in this process see the update immediately.
+        super(SubscribedVaultsByAccount, cls).create(user, vaults, **kw)
+        try:
+            key = cls.__name__ + user._id36
+            g.cassandra_local_cache.set(key, None)
+        except Exception:
+            # best-effort cache invalidation; don't fail on errors
+            pass
+
+    @classmethod
+    def destroy(cls, user, vaults):
+        super(SubscribedVaultsByAccount, cls).destroy(user, vaults)
+        try:
+            key = cls.__name__ + user._id36
+            g.cassandra_local_cache.set(key, None)
+        except Exception:
+            pass
 
 
 class SubscriptionsByDay(tdb_cassandra.View):
