@@ -32,6 +32,7 @@ from r2.lib.menus import CommentSortMenu
 from r2.lib.validator.validator import (
     VBoolean,
     VInt,
+    VJSON,
     VLang,
     VOneOf,
     VVaultByName,
@@ -84,6 +85,9 @@ PREFS_VALIDATORS = dict(
     pref_show_gold_expiration=VBoolean("show_gold_expiration"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),
     pref_hide_locationbar=VBoolean("hide_locationbar"),
+    pref_nightmode=VBoolean("nightmode"),
+    pref_show_images=VBoolean("show_images"),
+    pref_enhancement_json=VJSON("enhancement_json", max_length=100000),
     pref_use_global_defaults=VBoolean("use_global_defaults"),
     pref_ctip_autorenew=VBoolean("ctip_autorenew"),
     pref_enable_default_themes=VBoolean("enable_default_themes", False),
