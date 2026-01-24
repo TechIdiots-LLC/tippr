@@ -1269,6 +1269,8 @@ class TipprController(OAuth2ResourceController):
             c.profilepage = False
         if not hasattr(c, 'focal_comment'):
             c.focal_comment = None
+        if not hasattr(c, 'ignore_hide_rules'):
+            c.ignore_hide_rules = False
 
         # Set IE to always use latest rendering engine
         response.headers["X-UA-Compatible"] = "IE=edge"
