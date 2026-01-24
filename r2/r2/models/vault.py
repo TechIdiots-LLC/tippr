@@ -2829,11 +2829,27 @@ Vault.__bases__ += (
 def add_legacy_subscriber(vaults, user):
     vaults = tup(vaults)
     for vault in vaults:
+        # Skip if the relation already exists to avoid unique-constraint
+        # violations (possible under races).
+        existing = VaultMember._fast_query([vault], [user], "subscriber")
+        if existing.get((vault, user, "subscriber")):
+            continue
+
         rel = VaultMember(vault, user, "subscriber")
         try:
             rel._commit()
         except CreationError:
-            break
+            # relation already exists according to lower-level DB wrapper
+            continue
+        except Exception as e:
+            # tolerate concurrent inserts that raise IntegrityError
+            try:
+                import sqlalchemy as sa
+                if isinstance(e, sa.exc.IntegrityError):
+                    continue
+            except Exception:
+                pass
+            raise
 
 
 def remove_legacy_subscriber(vault, user):
