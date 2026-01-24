@@ -257,6 +257,11 @@ class FrontController(TipprController):
         if comment and comment.link_id != article._id:
             return self.abort404()
 
+        # Ensure template context has a deterministic focal_comment attribute
+        # to avoid AttributeError in downstream code that expects it.
+        if not hasattr(c, 'focal_comment'):
+            c.focal_comment = None
+
         vault = Vault._byID(article.vault_id, True)
 
         if hasattr(g, 'takedown_vault') and vault.name == g.takedown_vault:

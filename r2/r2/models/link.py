@@ -411,7 +411,7 @@ class Link(Thing, Printable):
         elif style == "xml":
             s.append("nothumbs" in request.GET)
         elif style == "compact":
-            s.append(c.permalink_page)
+            s.append(getattr(c, 'permalink_page', False))
 
         # add link flair to the key if the user and site have enabled it and it
         # exists
@@ -731,7 +731,7 @@ class Link(Thing, Printable):
                 item.user_gilded = False
                 item.saved = item.hidden = item.visited = False
 
-            if c.permalink_page or c.profilepage:
+            if getattr(c, 'permalink_page', False) or getattr(c, 'profilepage', False):
                 item.gilded_message = make_gold_message(item, item.user_gilded)
             else:
                 item.gilded_message = ''
@@ -1631,10 +1631,10 @@ class Comment(Thing, Printable):
         parents = Comment._byID(
             parent_ids, data=True, stale=True, ignore_missing=True)
 
-        profilepage = c.profilepage
-        user_is_admin = c.user_is_admin
-        user_is_loggedin = c.user_is_loggedin
-        focal_comment = c.focal_comment
+        profilepage = getattr(c, 'profilepage', False)
+        user_is_admin = getattr(c, 'user_is_admin', False)
+        user_is_loggedin = getattr(c, 'user_is_loggedin', False)
+        focal_comment = getattr(c, 'focal_comment', None)
         site = c.site
 
         if user_is_loggedin:

@@ -1261,6 +1261,15 @@ class TipprController(OAuth2ResourceController):
 
         MinimalController.pre(self)
 
+        # Default template-context flags. Ensure these exist so template
+        # rendering and builders can safely read them without AttributeError.
+        if not hasattr(c, 'permalink_page'):
+            c.permalink_page = False
+        if not hasattr(c, 'profilepage'):
+            c.profilepage = False
+        if not hasattr(c, 'focal_comment'):
+            c.focal_comment = None
+
         # Set IE to always use latest rendering engine
         response.headers["X-UA-Compatible"] = "IE=edge"
 

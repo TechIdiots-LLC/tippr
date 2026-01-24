@@ -126,7 +126,9 @@ class LinkButtons(PrintableButtons):
                     not (thing.has_thumbnail or thing.media_object)):
                 show_rescrape = True
 
-        show_givegold = thing.can_gild and (c.permalink_page or c.profilepage)
+        show_givegold = thing.can_gild and (
+            getattr(c, 'permalink_page', False) or getattr(c, 'profilepage', False)
+        )
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted

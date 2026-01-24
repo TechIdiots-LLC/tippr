@@ -848,7 +848,7 @@ class LinkJsonTemplate(ThingTemplate):
         if hasattr(item, "show_media"):
             data["show_media"] = item.show_media
 
-        if c.permalink_page:
+        if getattr(c, 'permalink_page', False):
             data["upvote_ratio"] = item.upvote_ratio
 
         preview_object = item.preview_image
