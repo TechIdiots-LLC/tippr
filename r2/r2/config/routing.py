@@ -207,15 +207,17 @@ def make_map(config):
     mc('/t/:timevault/*rest', controller='redirect',
        action='timevault_redirect')
 
-    # /prefs/friends is also aliased to /api/v1/me/friends
-    mc('/prefs/:where', controller='userlistlisting',
-        action='user_prefs', requirements=dict(where='blocked|friends'))
-    mc('/prefs/:location', controller='forms', action='prefs',
-       location='options')
+   # /prefs/friends is also aliased to /api/v1/me/friends
+   mc('/prefs/:where', controller='userlistlisting',
+      action='user_prefs', requirements=dict(where='blocked|friends'))
 
-    # Privacy settings
-    mc('/prefs/privacy', controller='privacy', action='privacy_settings')
-    mc('/prefs/privacy/download', controller='privacy', action='download_export')
+   # Privacy settings (place before the generic /prefs/:location route so
+   # the specific privacy page isn't captured by the wildcard handler)
+   mc('/prefs/privacy', controller='privacy', action='privacy_settings')
+   mc('/prefs/privacy/download', controller='privacy', action='download_export')
+
+   mc('/prefs/:location', controller='forms', action='prefs',
+      location='options')
 
     mc('/info/0:article/*rest', controller='front',
        action='oldinfo', dest='comments', type='ancient')

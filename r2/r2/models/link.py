@@ -922,8 +922,9 @@ class Link(Thing, Printable):
                     urlp = UrlParser(urlf)
                     hostname = urlp.hostname
                     if hostname:
-                        parts = (hostname.encode("utf-8").rstrip(".").
-                            split("."))
+                        # hostname is a str under Python 3; operate on str
+                        # to avoid bytes/str errors and to match banned_domains
+                        parts = hostname.rstrip('.').split('.')
                         subparts = {".".join(parts[y:])
                                     for y in range(len(parts))}
                         if subparts.intersection(banned_domains):
