@@ -256,8 +256,22 @@ def get_discovery_vault_id36s():
 
 def random_sample(items, count):
     """Safe random sample that won't choke if len(items) < count."""
-    sample_size = min(count, len(items))
-    return random.sample(items, sample_size)
+    # Ensure `items` is a sequence; random.sample in some Python
+    # versions requires a sequence (not a set or dict). Convert to
+    # list to be safe and preserve behavior.
+    if isinstance(items, (list, tuple)):
+        seq = items
+    else:
+        try:
+            seq = list(items)
+        except TypeError:
+            # Fallback: wrap single value into a list
+            seq = [items]
+
+    sample_size = min(count, len(seq))
+    if sample_size <= 0:
+        return []
+    return random.sample(seq, sample_size)
 
 
 def is_visible(vault):
