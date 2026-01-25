@@ -1,7 +1,16 @@
 import sys
 
 def main():
-    from pylons import app_globals as g
+    try:
+        from pylons import app_globals as g
+        # Check if environment is actually loaded
+        getattr(g, 'cassandra_local_cache')
+    except (ImportError, AttributeError):
+        print("\nERROR: Application environment not loaded.")
+        print("Please run this script using: tippr-run scripts/check_wiki.py")
+        print("(Do not run with 'python' directly)\n")
+        sys.exit(1)
+
     from r2.models.vault import Frontpage
     from r2.models.wiki import WikiPage
 
@@ -20,4 +29,6 @@ def main():
             print(f"  NOT FOUND or Error: {e}")
 
 if __name__ == '__main__':
+    main()
+else:
     main()
