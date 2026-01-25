@@ -88,6 +88,7 @@ def load_controllers():
     from .oembed import OEmbedController
     from .policies import PoliciesController
     from .post import PostController
+    from .privacy import PrivacyController
     from .promotecontroller import (
         PromoteApiController,
         PromoteController,
