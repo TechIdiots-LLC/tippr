@@ -1,9 +1,10 @@
-from pylons import app_globals as g
-from r2.models.vault import Frontpage
-from r2.models.wiki import WikiPage
 import sys
 
 def main():
+    from pylons import app_globals as g
+    from r2.models.vault import Frontpage
+    from r2.models.wiki import WikiPage
+
     print("Checking wiki pages...")
     for name in ['privacypolicy', 'useragreement']:
         print(f"Looking for '{name}' on Frontpage...")

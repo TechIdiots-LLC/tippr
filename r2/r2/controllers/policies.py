@@ -61,6 +61,13 @@ class PoliciesController(TipprController):
         try:
             wp = WikiPage.get(Frontpage, wiki_name)
         except tdb_cassandra.NotFound:
+            # Debugging 404s
+            import sys
+            try:
+                debug_id = WikiPage.id_for(Frontpage, wiki_name)
+                sys.stderr.write(f"PoliciesController 404: WikiPage '{wiki_name}' not found. ID: '{debug_id}'. Frontpage: {Frontpage}\n")
+            except Exception as e:
+                sys.stderr.write(f"PoliciesController 404: Error generating debug ID: {e}\n")
             abort(404)
 
         revs = list(wp.get_revisions())
