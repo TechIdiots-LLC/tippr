@@ -54,7 +54,6 @@ def main():
         """)
         print("  ✓ Created/verified 'wikipage' table")
         
-        cluster.shutdown()
     except Exception as e:
         print(f"  ERROR: {e}")
         import traceback
