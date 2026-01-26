@@ -18,6 +18,48 @@ def main():
 
     print("=== Cassandra Direct Debug ===\n")
 
+    # First, test raw Cassandra connection
+    print("--- Test 0: Raw Cassandra Connection ---")
+    try:
+        from cassandra.cluster import Cluster
+        cluster = Cluster(['127.0.0.1'])  # Default port 9042
+        session = cluster.connect()
+        print("  ✓ Connected to Cassandra cluster")
+        
+        # Check system keyspaces
+        result = session.execute("SELECT keyspace_name FROM system_schema.keyspaces")
+        keyspaces = [row.keyspace_name for row in result]
+        print(f"  System keyspaces: {keyspaces}")
+        
+        # Create tippr keyspace if needed
+        if 'tippr' not in keyspaces:
+            print("  Creating 'tippr' keyspace...")
+            session.execute("""
+                CREATE KEYSPACE IF NOT EXISTS tippr 
+                WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
+                AND durable_writes = true
+            """)
+            print("  ✓ Created 'tippr' keyspace")
+        
+        # Switch to tippr keyspace
+        session.set_keyspace('tippr')
+        print("  ✓ Switched to 'tippr' keyspace")
+        
+        # Create wikipage table
+        session.execute("""
+            CREATE TABLE IF NOT EXISTS wikipage (
+                key text PRIMARY KEY,
+                columns map<text, blob>
+            )
+        """)
+        print("  ✓ Created/verified 'wikipage' table")
+        
+        cluster.shutdown()
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+
     # Get connection info
     pool = g.cassandra_pools['main']
     print(f"Keyspace: {pool.keyspace}")
