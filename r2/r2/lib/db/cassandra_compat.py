@@ -380,7 +380,9 @@ class Mutator:
     def __exit__(self, exc_type, exc, tb):
         try:
             self.send()
-        except Exception:
+        except Exception as e:
+            import sys
+            sys.stderr.write(f"CASSANDRA ERROR in Mutator.__exit__: {e}\n")
             # don't raise during cleanup
             return False
 
