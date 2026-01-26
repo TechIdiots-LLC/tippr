@@ -20,41 +20,76 @@ def main():
         return
 
     from pylons import app_globals as g
-    from r2.models.vault import Vault
+    from r2.models.vault import Vault, Frontpage
     
-    # Try multiple common default vault names if g.default_sr is not what we expect
-    candidates = []
+    # First, enable wiki on the Frontpage's base vault (g.default_vault)
+    # The Frontpage singleton delegates wikimode to this vault
+    print("\n=== Enabling Wiki for Frontpage ===")
     
-    # Check for both default_vault (new) and default_sr (legacy)
-    if hasattr(g, 'default_vault') and g.default_vault:
-        candidates.append(g.default_vault)
-    if hasattr(g, 'default_sr') and g.default_sr:
-        candidates.append(g.default_sr)
-        
-    candidates.extend(['tippr', 'reddit', 'all'])
+    default_vault_name = getattr(g, 'default_vault', None) or getattr(g, 'default_sr', None)
+    print(f"Frontpage base vault name from config: {default_vault_name}")
     
-    # Deduplicate
-    candidates = list(dict.fromkeys(candidates))
-    
-    print(f"Checking vaults: {candidates}")
-    
-    for name in candidates:
+    if default_vault_name:
         try:
-            print(f"Checking vault: {name}")
-            v = Vault._by_name(name)
-            print(f"  Found '{name}'. Current wikimode: {v.wikimode}")
+            base_vault = Vault._by_name(default_vault_name, stale=False)
+            print(f"  Found base vault '{default_vault_name}' (id: {base_vault._id})")
+            print(f"  Current wikimode: {base_vault.wikimode}")
+            
+            if base_vault.wikimode == 'disabled':
+                base_vault.wikimode = 'modonly'
+                base_vault._commit()
+                print(f"  SUCCESS: Updated wikimode to 'modonly'")
+            else:
+                print(f"  Info: Wiki already enabled (mode: {base_vault.wikimode})")
+                
+            # Verify through Frontpage
+            print(f"  Frontpage.wikimode now reports: {Frontpage.wikimode}")
+            
+        except Exception as e:
+            print(f"  ERROR: Could not access base vault '{default_vault_name}': {e}")
+            print(f"  Attempting to create it...")
+            
+            # If the vault doesn't exist, we need to create it
+            try:
+                from r2.models.account import Account
+                admin = Account._by_name('tippr')
+                
+                base_vault = Vault._new(
+                    name=default_vault_name,
+                    title=f"{default_vault_name} frontpage",
+                    author_id=admin._id,
+                    type='public',
+                    lang='en',
+                    ip='127.0.0.1',
+                    over_18=False,
+                )
+                base_vault.wikimode = 'modonly'
+                base_vault._commit()
+                print(f"  SUCCESS: Created vault '{default_vault_name}' with wikimode='modonly'")
+            except Exception as create_err:
+                print(f"  ERROR creating vault: {create_err}")
+    else:
+        print("  ERROR: No default_vault configured in g!")
+    
+    # Also check some other common vaults that might need wiki enabled
+    print("\n=== Checking Additional Vaults ===")
+    additional_vaults = ['frontpage', 'tippr', 'beta']
+    
+    for name in additional_vaults:
+        try:
+            v = Vault._by_name(name, stale=False)
+            print(f"Vault '{name}': wikimode={v.wikimode}")
             
             if v.wikimode == 'disabled':
-                # Enable it - set to 'modonly' so it's visible but not publicly editable by default
                 v.wikimode = 'modonly'
                 v._commit()
-                print(f"  SUCCESS: Updated '{name}' wikimode to: {v.wikimode}")
-            else:
-                print(f"  Info: '{name}' wiki is already enabled (mode: {v.wikimode})")
+                print(f"  -> Updated to 'modonly'")
                 
         except Exception as e:
-            # NotFound or similar
-            print(f"  Could not access vault '{name}': {e}")
+            print(f"Vault '{name}': not found or error ({e})")
+    
+    print("\n=== Done ===")
+    print("Remember to restart the tippr service after running this script!")
 
 if __name__ == '__main__':
     main()
