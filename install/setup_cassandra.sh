@@ -84,11 +84,6 @@ session.execute("""
     )
 """)
 
-# Verify
-rows = list(session.execute("SELECT table_name FROM system_schema.tables WHERE keyspace_name = 'tippr'"))
-print(f"Tables in tippr keyspace: {[r.table_name for r in rows]}")
-
-cluster.shutdown()
 print("Cassandra schema setup complete!")
 PYSCRIPT
 
