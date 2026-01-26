@@ -180,6 +180,13 @@ def main(root_dir=None):
             # Page doesn't exist, create it
             try:
                 print(f"  Creating new wiki page...")
+                
+                # Log the ID we are about to create
+                expected_id = WikiPage.id_for(Frontpage, wiki_name)
+                print(f"  DEBUG: Creating page with ID: '{expected_id}'")
+                print(f"  DEBUG: Frontpage _id36: '{getattr(Frontpage, '_id36', 'N/A')}'")
+                print(f"  DEBUG: Frontpage name: '{getattr(Frontpage, 'name', 'N/A')}'")
+                
                 wp = WikiPage.create(Frontpage, wiki_name)
                 wp.revise(content, author=system_user, reason="Initial creation from docs/policies/")
                 print(f"  SUCCESS: Created {display_name}\n")
