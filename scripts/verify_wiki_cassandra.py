@@ -66,13 +66,18 @@ print("\n=== Raw Cassandra Query ===")
 try:
     from cassandra.cluster import Cluster
     cluster = Cluster(['127.0.0.1'])
-    session = cluster.connect('tippr')
+    session = cluster.connect()
+    session.set_keyspace('tippr')
     
     # Check what's in the wikipage table
     rows = session.execute("SELECT key FROM wikipage LIMIT 10")
-    print("Keys in wikipage table:")
-    for row in rows:
+    row_list = list(rows)
+    print(f"Keys in wikipage table: {len(row_list)} found")
+    for row in row_list:
         print(f"  {repr(row.key)}")
+    
+    if not row_list:
+        print("  (table is empty)")
     
     # Try to find our specific page
     page_id = WikiPage.id_for(Frontpage, 'useragreement')
@@ -86,6 +91,21 @@ try:
             print(f"  column1={row.column1}, value_len={len(row.value) if row.value else 0}")
     else:
         print("  No rows found for this key")
+    
+    # Now let's try to WRITE directly and see if it persists
+    print("\n=== Testing Direct Write ===")
+    test_key = "test_direct_write"
+    session.execute("INSERT INTO wikipage (key, column1, value) VALUES (%s, %s, %s)", 
+                   [test_key, "test_col", b"test_value"])
+    print(f"Wrote test row with key: {test_key}")
+    
+    # Read it back
+    rows = session.execute("SELECT * FROM wikipage WHERE key = %s", [test_key])
+    row_list = list(rows)
+    if row_list:
+        print(f"SUCCESS: Read back {len(row_list)} rows")
+    else:
+        print("FAILURE: Could not read back test row")
         
 except Exception as e:
     print(f"Error with raw query: {e}")
