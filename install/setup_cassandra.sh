@@ -48,7 +48,7 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
 from cassandra.cluster import Cluster
 
 print("Connecting to Cassandra...")
-cluster = Cluster(['127.0.0.1'], port=9042)
+cluster = Cluster(['127.0.0.1'])
 session = cluster.connect()
 
 print("Creating keyspace 'tippr'...")
