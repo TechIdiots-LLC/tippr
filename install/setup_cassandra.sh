@@ -36,20 +36,61 @@ source /etc/lsb-release
 
 if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     ###########################################################################
-    # Ubuntu 24.04 - Use cqlsh (installed via apt with Cassandra)
+    # Ubuntu 24.04 - Use Python cassandra-driver (cqlsh has dependency issues)
     ###########################################################################
 
-    # Create keyspace using cqlsh
-    # Ensure python3 'six' package is available for cqlsh's Cassandra driver
-    if ! python3 -c "import six" >/dev/null 2>&1; then
-        apt-get update -y
-        apt-get install -y python3-six || true
-    fi
+    # cqlsh on Ubuntu 24.04 has issues with the 'six' module, so we use the
+    # cassandra-driver directly via Python instead.
+    
+    echo "Creating Cassandra keyspace and tables using Python driver..."
+    
+    $TIPPR_VENV/bin/python3 << 'PYSCRIPT'
+from cassandra.cluster import Cluster
 
-    cqlsh -e "CREATE KEYSPACE IF NOT EXISTS tippr WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};" || true
+print("Connecting to Cassandra...")
+cluster = Cluster(['127.0.0.1'], port=9042)
+session = cluster.connect()
 
-    # Create permacache table
-    cqlsh -e "CREATE TABLE IF NOT EXISTS tippr.permacache (key text PRIMARY KEY, value blob);" || true
+print("Creating keyspace 'tippr'...")
+session.execute("""
+    CREATE KEYSPACE IF NOT EXISTS tippr 
+    WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
+    AND durable_writes = true
+""")
+
+session.set_keyspace('tippr')
+
+print("Creating table 'permacache'...")
+session.execute("""
+    CREATE TABLE IF NOT EXISTS permacache (
+        key text PRIMARY KEY,
+        value blob
+    )
+""")
+
+print("Creating table 'wikipage'...")
+session.execute("""
+    CREATE TABLE IF NOT EXISTS wikipage (
+        key text PRIMARY KEY,
+        columns map<text, blob>
+    )
+""")
+
+print("Creating table 'wikirevision'...")
+session.execute("""
+    CREATE TABLE IF NOT EXISTS wikirevision (
+        key text PRIMARY KEY,
+        columns map<text, blob>
+    )
+""")
+
+# Verify
+rows = list(session.execute("SELECT table_name FROM system_schema.tables WHERE keyspace_name = 'tippr'"))
+print(f"Tables in tippr keyspace: {[r.table_name for r in rows]}")
+
+cluster.shutdown()
+print("Cassandra schema setup complete!")
+PYSCRIPT
 
     echo "Cassandra keyspace and tables created."
 
