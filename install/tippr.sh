@@ -64,60 +64,57 @@ ERROR: This host is running the $(dpkg --print-architecture) architecture!
 
 Because of the pre-built dependencies in our PPA, and some extra picky things
 like ID generation in liveupdate, installing tippr is only supported on amd64
-architectures.
-END
-    exit 1
+
+# Create Python virtual environment for tippr
+# Ensure the venv parent exists and is writable by the tippr user
+# Remove any stale venv that is not writable by the runtime user so we can
+# recreate it as the correct owner.
+echo "Creating Python virtual environment at $TIPPR_VENV"
+mkdir -p "$(dirname "$TIPPR_VENV")"
+chown $TIPPR_USER:$TIPPR_GROUP "$(dirname "$TIPPR_VENV")" || true
+if [ -d "$TIPPR_VENV" ] && [ ! -w "$TIPPR_VENV" ]; then
+    echo "Existing venv at $TIPPR_VENV is not writable by $TIPPR_USER; removing"
+    rm -rf "$TIPPR_VENV"
 fi
 
-# Check for supported Ubuntu versions
-source /etc/lsb-release
-if [ "$DISTRIB_ID" != "Ubuntu" ]; then
-    echo "ERROR: Only Ubuntu is supported."
-    exit 1
-fi
-
-# Support Ubuntu 24.04 (noble) with Python 3.12
-if [ "$DISTRIB_RELEASE" != "24.04" ] && [ "$DISTRIB_RELEASE" != "14.04" ]; then
-    echo "ERROR: Only Ubuntu 14.04 and 24.04 are supported."
-    exit 1
-fi
-
-if [[ "2000000" -gt $(awk '/MemTotal/{print $2}' /proc/meminfo) ]]; then
-    LOW_MEM_PROMPT="tippr requires at least 2GB of memory to work properly, continue anyway? [y/n] "
-    read -er -n1 -p "$LOW_MEM_PROMPT" response
-    if [[ "$response" != "y" ]]; then
-      echo "Quitting."
-      exit 1
-    fi
-fi
-
-TIPPR_AVAILABLE_PLUGINS=""
-for plugin in $TIPPR_PLUGINS; do
-    if [ -d $TIPPR_SRC/$plugin ]; then
-        if [[ -z "$TIPPR_PLUGINS" ]]; then
-            TIPPR_AVAILABLE_PLUGINS+="$plugin"
-        else
-            TIPPR_AVAILABLE_PLUGINS+=" $plugin"
-        fi
-        echo "plugin $plugin found"
+# Check if a working venv already exists (e.g., pre-created by CI workflow).
+# A working venv has a python executable that can import basic stdlib modules.
+VENV_OK=0
+if [ -x "$TIPPR_VENV/bin/python" ]; then
+    if sudo -u $TIPPR_USER "$TIPPR_VENV/bin/python" -c "import sys, os, math; print('venv ok')" 2>/dev/null; then
+        echo "Reusing existing working venv at $TIPPR_VENV"
+        VENV_OK=1
     else
-        echo "plugin $plugin not found"
+        echo "Existing venv at $TIPPR_VENV is broken; removing and recreating"
+        rm -rf "$TIPPR_VENV"
     fi
-done
+fi
 
-# Ensure venv-installed baseplate exposes `secrets_store_from_config` by
-# creating a small `secrets.py` shim in the package when missing. This
-# keeps runtime imports working for older services that import
-# `baseplate.secrets` directly.
-for p in "$TIPPR_VENV"/lib/python*/site-packages/baseplate; do
-    if [ -d "$p" ]; then
-        target="$p/secrets.py"
-        if [ ! -f "$target" ]; then
-            cat > "$target" <<'PYSECRETS'
-"""Compatibility shim for baseplate.secrets added by installer.
+# Attempt to create venv; if ensurepip fails (some images lack ensurepip),
+# try to install python3-venv and retry.
+if [ "$VENV_OK" = "1" ]; then
+    echo "venv already exists and is working."
+elif sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV; then
+    echo "venv created successfully."
+else
+    echo "python3 -m venv failed; attempting fallback (installing prerequisites)"
+    PYVER=$(python3 -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))' 2>/dev/null || echo "")
+    PKGS="python3-venv python3-pip python3-distutils"
+    apt-get update && apt-get install -y $PKGS
+    sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV
+fi
 
-Prefer `baseplate.lib.secrets.secrets_store_from_config` when available,
-otherwise provide a noop secrets store for development.
+# Configure Cassandra
+$RUNDIR/setup_cassandra.sh
+
+# Configure PostgreSQL
+$RUNDIR/setup_postgres.sh
+
+# Configure mcrouter
+$RUNDIR/setup_mcrouter.sh
+
+# Configure RabbitMQ
+$RUNDIR/setup_rabbitmq.sh
 """
 try:
     from baseplate.lib.secrets import secrets_store_from_config as _r2_secrets_store_from_config
