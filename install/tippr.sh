@@ -64,6 +64,9 @@ ERROR: This host is running the $(dpkg --print-architecture) architecture!
 
 Because of the pre-built dependencies in our PPA, and some extra picky things
 like ID generation in liveupdate, installing tippr is only supported on amd64
+END
+    exit 1
+fi
 
 # Create Python virtual environment for tippr
 # Ensure the venv parent exists and is writable by the tippr user
@@ -115,7 +118,11 @@ $RUNDIR/setup_mcrouter.sh
 
 # Configure RabbitMQ
 $RUNDIR/setup_rabbitmq.sh
-"""
+for p in "$TIPPR_VENV"/lib/python*/site-packages; do
+    if [ -d "$p" ]; then
+        target="$p/secrets.py"
+        if [ ! -f "$target" ]; then
+            cat > "$target" <<'PYSECRETS'
 try:
     from baseplate.lib.secrets import secrets_store_from_config as _r2_secrets_store_from_config
 except Exception:
