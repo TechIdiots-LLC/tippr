@@ -27,6 +27,18 @@
 #
 ###############################################################################
 
+# Installer options (environment variables)
+# - TIPPR_BRANCH: when set, the installer will clone the specified branch or tag
+#   from GitHub instead of the repository default. Example:
+#     TIPPR_BRANCH=my-feature-branch ./install/tippr.sh
+# - TIPPR_COPY_LOCAL: when set to a local path, the installer will copy that
+#   checked-out tree into the install destination instead of cloning. Useful for
+#   testing local changes. Example:
+#     TIPPR_COPY_LOCAL=/home/user/code/tippr ./install/tippr.sh
+# - TIPPR_GITHUB_TOKEN / GITHUB_TOKEN: optional token used for cloning private
+#   repositories when anonymous clone fails.
+
+
 # load configuration
 RUNDIR=$(dirname $0)
 source $RUNDIR/install.cfg
@@ -403,6 +415,9 @@ function clone_tippr_repo {
     local destination=$TIPPR_SRC/${1}
     local repo_spec=${2}
     local repository_url
+    # Optional env vars:
+    # TIPPR_BRANCH: branch or tag to check out when cloning
+    # TIPPR_COPY_LOCAL: when set to a local path, copy that tree to destination
 
     # Accept either an owner/repo spec or a full URL
     if echo "$repo_spec" | grep -qE '^https?://'; then
@@ -412,16 +427,32 @@ function clone_tippr_repo {
     fi
 
 
-    if [ ! -d $destination ]; then
-        # First try an anonymous clone (preserves previous CI behavior).
-        if sudo -u $TIPPR_USER -H git clone "$repository_url" $destination; then
-            : # success
-        else
-            # Anonymous clone failed; if a token is available, retry with it.
-            if [ -n "$TIPPR_GITHUB_TOKEN" ] || [ -n "$GITHUB_TOKEN" ]; then
-                token=${TIPPR_GITHUB_TOKEN:-$GITHUB_TOKEN}
-                repo_with_token=$(echo "$repository_url" | sed -E "s#https://#https://x-access-token:${token}@#")
-                sudo -u $TIPPR_USER -H git clone "$repo_with_token" $destination || true
+    # If TIPPR_COPY_LOCAL is set and points to an existing directory, copy it
+    if [ -n "$TIPPR_COPY_LOCAL" ] && [ -d "$TIPPR_COPY_LOCAL" ]; then
+        echo "Copying local source from $TIPPR_COPY_LOCAL to $destination"
+        rm -rf "$destination" || true
+        mkdir -p "$(dirname "$destination")"
+        # Copy as the tippr user
+        sudo -u $TIPPR_USER -H bash -c "cp -a \"$TIPPR_COPY_LOCAL\" \"$destination\""
+    else
+        if [ ! -d "$destination" ]; then
+            # First try an anonymous clone (preserves previous CI behavior).
+            # Support optional branch selection
+            if [ -n "$TIPPR_BRANCH" ]; then
+                CLONE_ARGS=("--branch" "${TIPPR_BRANCH}" "--single-branch")
+            else
+                CLONE_ARGS=()
+            fi
+
+            if sudo -u $TIPPR_USER -H git clone "${CLONE_ARGS[@]}" "$repository_url" "$destination"; then
+                : # success
+            else
+                # Anonymous clone failed; if a token is available, retry with it.
+                if [ -n "$TIPPR_GITHUB_TOKEN" ] || [ -n "$GITHUB_TOKEN" ]; then
+                    token=${TIPPR_GITHUB_TOKEN:-$GITHUB_TOKEN}
+                    repo_with_token=$(echo "$repository_url" | sed -E "s#https://#https://x-access-token:${token}@#")
+                    sudo -u $TIPPR_USER -H git clone "${CLONE_ARGS[@]}" "$repo_with_token" "$destination" || true
+                fi
             fi
         fi
     fi

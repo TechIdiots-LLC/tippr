@@ -80,6 +80,28 @@ Example with custom settings:
 TIPPR_USER=myuser TIPPR_DOMAIN=dev.tippr.local TIPPR_PLUGINS="about gold myaddon" ./install-tippr.sh
 ```
 
+### Installer Options
+
+The installer supports additional environment variables to help with testing and CI:
+
+- `TIPPR_BRANCH`: clone a specific branch or tag instead of the default branch.
+	Example:
+
+```bash
+TIPPR_BRANCH=my-feature-branch TIPPR_USER=tippr TIPPR_DOMAIN=tippr.local ./install-tippr.sh
+```
+
+- `TIPPR_COPY_LOCAL`: when set to a path to a local checkout, the installer will copy
+	that tree into the install destination instead of cloning from GitHub. Useful
+	for testing local changes.
+
+```bash
+TIPPR_COPY_LOCAL=/home/andrew/dev/tippr TIPPR_USER=tippr TIPPR_DOMAIN=tippr.local ./install-tippr.sh
+```
+
+The installer will still respect `TIPPR_GITHUB_TOKEN` / `GITHUB_TOKEN` when cloning
+private repos.
+
 ## Troubleshooting
 
 ### Locale Errors

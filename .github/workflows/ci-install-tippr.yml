@@ -87,6 +87,8 @@ jobs:
           TIPPR_BASEPLATE_PIP_URL: "git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@develop#egg=baseplate"
           # Ensure a non-root runtime user exists in the installer
           TIPPR_USER: "runner"
+          # During CI, copy the checked-out workspace into the installer destination
+          TIPPR_COPY_LOCAL: "${{ github.workspace }}"
         run: |
           # The installer expects to run as root; run it under sudo and
           # pipe a single 'Y' to answer the final confirmation prompt.
