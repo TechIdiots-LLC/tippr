@@ -41,6 +41,13 @@ from r2.models.wiki import WikiBadRevision, WikiPage, WikiRevision
 class PoliciesController(TipprController):
     @validate(requested_rev=nop('v'))
     def GET_policy_page(self, page, requested_rev):
+        # runtime debug: log host, page and request info to aid diagnosis
+        try:
+            with open('/tmp/help_page_debug.log', 'a') as _dbg:
+                _dbg.write(f"POLICIES REQUEST host={getattr(c, 'cur_domain', '')} page={page} requested_rev={requested_rev}\n")
+        except Exception:
+            pass
+
         if c.render_style == 'compact':
             self.redirect('/wiki/' + page)
         if page == 'privacypolicy':
@@ -65,12 +72,48 @@ class PoliciesController(TipprController):
             import sys
             try:
                 debug_id = WikiPage.id_for(Frontpage, wiki_name)
+                try:
+                    with open('/tmp/help_page_debug.log', 'a') as _dbg:
+                        _dbg.write(f"PoliciesController 404: WikiPage '{wiki_name}' not found. ID: '{debug_id}'. Frontpage: {Frontpage}\n")
+                except Exception:
+                    pass
                 sys.stderr.write(f"PoliciesController 404: WikiPage '{wiki_name}' not found. ID: '{debug_id}'. Frontpage: {Frontpage}\n")
             except Exception as e:
+                try:
+                    with open('/tmp/help_page_debug.log', 'a') as _dbg:
+                        _dbg.write(f"PoliciesController 404: Error generating debug ID: {e}\n")
+                except Exception:
+                    pass
                 sys.stderr.write(f"PoliciesController 404: Error generating debug ID: {e}\n")
             abort(404)
 
         revs = list(wp.get_revisions())
+
+        if not revs:
+            # No revisions found via the view; fallback to scanning the
+            # `wikirevision` column family directly to find revisions for
+            # this page (works around view indexing mismatches).
+            try:
+                revs = []
+                for t_id, cols in WikiRevision._cf.get_range():
+                    wr = WikiRevision._from_serialized_columns(t_id, cols)
+                    if getattr(wr, 'pageid', None) == wp._id:
+                        revs.append(wr)
+                # sort by timeuuid (newest first) if possible
+                revs.sort(key=lambda r: getattr(r._id, 'time', 0), reverse=True)
+            except Exception:
+                revs = []
+
+        # log revision lookup outcome
+        try:
+            with open('/tmp/help_page_debug.log', 'a') as _dbg:
+                _dbg.write(f"PoliciesController: page={page} wiki_name={wiki_name} wp_id={getattr(wp, '_id', None)} revs_found={len(revs)}\n")
+        except Exception:
+            pass
+
+        if not revs:
+            # No revisions found for this wiki page — treat as not found
+            abort(404)
 
         # collapse minor edits into revisions with reasons
         rev_info = []
@@ -120,14 +163,24 @@ class PoliciesController(TipprController):
     def _number_sections(self, soup):
         count = 1
         for para in soup.find('div', 'md').findAll(['p'], recursive=False):
-            a = Tag(soup, 'a', [
-                ('class', 'p-anchor'),
-                ('id', 'p_%d' % count),
-                ('href', '#p_%d' % count),
-            ])
-            a.append(str(count))
-            para.insert(0, a)
-            para.insert(1, ' ')
+            try:
+                a = soup.new_tag('a')
+                a['class'] = 'p-anchor'
+                a['id'] = 'p_%d' % count
+                a['href'] = '#p_%d' % count
+                a.string = str(count)
+                para.insert(0, a)
+                para.insert(1, ' ')
+            except Exception:
+                # Fallback for older BeautifulSoup versions
+                a = Tag(soup, 'a', [
+                    ('class', 'p-anchor'),
+                    ('id', 'p_%d' % count),
+                    ('href', '#p_%d' % count),
+                ])
+                a.append(str(count))
+                para.insert(0, a)
+                para.insert(1, ' ')
             count += 1
 
     def _linkify_headings(self, soup):
