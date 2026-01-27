@@ -70,6 +70,17 @@ END
     exit 1
 fi
 
+# Ensure runtime OS user exists; if not, create it so installer can chown files
+if ! id -u "$TIPPR_USER" >/dev/null 2>&1; then
+    echo "System user $TIPPR_USER does not exist; creating..."
+    # Ensure group exists
+    if ! getent group "$TIPPR_GROUP" >/dev/null 2>&1; then
+        groupadd -r "$TIPPR_GROUP" || true
+    fi
+    useradd -m -s /bin/bash -g "$TIPPR_GROUP" "$TIPPR_USER" || true
+    echo "Created system user $TIPPR_USER"
+fi
+
 if [[ "amd64" != $(dpkg --print-architecture) ]]; then
     cat <<END
 ERROR: This host is running the $(dpkg --print-architecture) architecture!
@@ -1378,6 +1389,8 @@ fi
 # Finished with install script
 ###############################################################################
 # Initialize policy wiki pages (Terms of Use, Privacy Policy, etc.)
+echo "Ensuring application account exists..."
+tippr-run $TIPPR_SRC/tippr/scripts/create_default_user.py || echo "Note: create_default_user.py skipped"
 echo "Initializing policy wiki pages..."
 tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Policy wiki pages initialization skipped (can be run manually later)"
 
