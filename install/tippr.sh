@@ -608,8 +608,32 @@ fi
 # Upgrade pip and install build tools in venv
 # Install current setuptools/wheel and ensure `packaging` is recent so editable
 # installs / metadata generation behave correctly.
-sudo -u $TIPPR_USER $TIPPR_VENV/bin/python -m pip install --upgrade pip setuptools wheel
-sudo -u $TIPPR_USER $TIPPR_VENV/bin/python -m pip install --upgrade 'packaging>=23.1'
+# Some venvs (copied or created on minimal images) may not include pip. Try
+# importing pip first; if missing, attempt to bootstrap it via ensurepip or
+# get-pip.py as a fallback.
+BOOT_PY="$TIPPR_VENV/bin/python"
+if sudo -u $TIPPR_USER "$BOOT_PY" -c "import pip" >/dev/null 2>&1; then
+    echo "pip present in venv"
+else
+    echo "pip not found in venv; attempting to bootstrap with ensurepip"
+    if sudo -u $TIPPR_USER "$BOOT_PY" -m ensurepip --default-pip >/dev/null 2>&1; then
+        echo "ensurepip succeeded"
+    else
+        echo "ensurepip not available or failed; downloading get-pip.py"
+        rm -f /tmp/get-pip.py || true
+        if curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py; then
+            sudo -u $TIPPR_USER "$BOOT_PY" /tmp/get-pip.py || true
+            rm -f /tmp/get-pip.py || true
+        else
+            echo "Failed to download get-pip.py; attempting system pip to install pip into venv"
+            sudo -u $TIPPR_USER python3 -m pip install --upgrade pip || true
+        fi
+    fi
+fi
+
+# Now upgrade pip/setuptools/wheel and packaging
+sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip setuptools wheel
+sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade 'packaging>=23.1'
 
 # Install `baseplate` early so packages that inspect/import it at build time
 # (e.g., r2) can detect it. Prefer a local checkout at $TIPPR_SRC/tippr-baseplate.py
