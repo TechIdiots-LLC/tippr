@@ -102,9 +102,29 @@ elif sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV; then
 else
     echo "python3 -m venv failed; attempting fallback (installing prerequisites)"
     PYVER=$(python3 -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))' 2>/dev/null || echo "")
-    PKGS="python3-venv python3-pip python3-distutils"
-    apt-get update && apt-get install -y $PKGS
-    sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV
+    PKGS="python3-venv python3-pip"
+
+    # Try installing the generic distutils package first; some distros ship
+    # versioned packages like python3-3.11-distutils instead.
+    DISTPKG="python3-distutils"
+    echo "Attempting to install $PKGS and $DISTPKG"
+    apt-get update && if apt-get install -y $PKGS $DISTPKG; then
+        echo "Installed distutils via $DISTPKG"
+        sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV
+    else
+        # Debian/Ubuntu use names like python3.11-distutils (dot), not python3-3.11-distutils
+        DISTVER="python3.${PYVER}-distutils"
+        echo "Retrying install with $DISTVER"
+        if apt-get install -y $PKGS $DISTVER; then
+            sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV
+        else
+            echo "Could not install distutils via apt; falling back to ensurepip/pip." >&2
+            apt-get install -y $PKGS || true
+            python3 -m ensurepip --default-pip 2>/dev/null || true
+            python3 -m pip install --upgrade pip setuptools wheel || true
+            sudo -u $TIPPR_USER python3 -m venv $TIPPR_VENV || true
+        fi
+    fi
 fi
 
 # Configure Cassandra
