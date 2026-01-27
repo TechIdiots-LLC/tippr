@@ -438,9 +438,13 @@ function clone_tippr_repo {
     fi
 
 
-    # If TIPPR_COPY_LOCAL is set and points to an existing directory, copy it
-    if [ -n "$TIPPR_COPY_LOCAL" ] && [ -d "$TIPPR_COPY_LOCAL" ]; then
-        echo "Copying local source from $TIPPR_COPY_LOCAL to $destination"
+    # If TIPPR_COPY_LOCAL is set and points to an existing directory, copy it.
+    # Only apply this behavior for the main `tippr` repository. Service
+    # repositories (e.g. websockets, activity) should be cloned from their
+    # upstream git locations instead of being populated from the single
+    # checkout directory provided in TIPPR_COPY_LOCAL.
+    if [ -n "$TIPPR_COPY_LOCAL" ] && [ -d "$TIPPR_COPY_LOCAL" ] && [ "$1" = "tippr" ]; then
+        echo "Copying local tippr source from $TIPPR_COPY_LOCAL to $destination"
         rm -rf "$destination" || true
         mkdir -p "$(dirname "$destination")"
         # Copy as the tippr user

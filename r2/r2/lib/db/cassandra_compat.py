@@ -89,11 +89,21 @@ class SystemManager:
 
     def create_column_family(self, keyspace, cf_name, **kwargs):
         # create a simple table with a map<text, blob> to emulate thrift CF
+        # normalize CF name to lowercase to match unquoted CQL identifiers
+        cf_name_l = cf_name.lower()
+        # allow callers to request a specific key type (e.g. timeuuid)
+        key_validation = kwargs.get('key_validation_class') or kwargs.get('key_validation')
+        if key_validation == TIME_UUID_TYPE:
+            key_type = 'timeuuid'
+        else:
+            # default to text for most legacy CFs
+            key_type = 'text'
+
         cql = (
             "CREATE TABLE IF NOT EXISTS %s.%s (\n"
-            "  key text PRIMARY KEY,\n"
+            "  key %s PRIMARY KEY,\n"
             "  columns map<text, blob>\n"
-            ")" % (keyspace, cf_name)
+            ")" % (keyspace, cf_name_l, key_type)
         )
         # ensure keyspace exists
         try:
@@ -114,7 +124,9 @@ class ColumnFamily:
         self.pool = pool
         self.name = name
         self.keyspace = pool.keyspace
-        self.table = name
+        # normalize table name to lowercase to avoid quoted/mixed-case
+        # identifier mismatches with tables created via cqlsh
+        self.table = name.lower()
         self.session = pool.session
         # Compatibility with pycassa - these are used by tdb_cassandra
         self.column_validators = {}
@@ -154,6 +166,7 @@ class ColumnFamily:
             return {}
         placeholders = ','.join(["%s"] * len(keys))
         cql = "SELECT key, columns FROM %s.%s WHERE key IN (%s)" % (self.keyspace, self.table, placeholders)
+        # pass keys through as-is (they may be text or UUID/timeuuid)
         rows = self.session.execute(cql, tuple(keys))
         ret = {}
         for row in rows:
@@ -244,6 +257,7 @@ class ColumnFamily:
         `include_timestamp` behave as expected.
         """
         cql = "SELECT columns FROM %s.%s WHERE key = %%s" % (self.keyspace, self.table)
+        # pass key through as-is (text or UUID)
         row = self.session.execute(cql, (key,)).one()
         if not row:
             raise NotFoundException()
@@ -296,7 +310,8 @@ class ColumnFamily:
     def insert(self, key: str, columns: Dict[str, object], ttl: Optional[int] = None):
         # serialize values and attach a write timestamp (microseconds)
         now_us = int(time.time() * 1e6)
-        ser = {k: pickle.dumps((v, now_us)) for k, v in columns.items()}
+        # Ensure map keys are text (CQL map<text, blob>)
+        ser = {str(k): pickle.dumps((v, now_us)) for k, v in columns.items()}
         if ttl:
             cql = "UPDATE %s.%s USING TTL %d SET columns = columns + %%s WHERE key = %%s" % (self.keyspace, self.table, ttl)
             self.session.execute(cql, (ser, key))
@@ -312,7 +327,8 @@ class ColumnFamily:
             # remove specific entries from the map by setting them to null via delete
             for col in columns:
                 cql = "DELETE columns[%%s] FROM %s.%s WHERE key = %%s" % (self.keyspace, self.table)
-                self.session.execute(cql, (col, key))
+                # column names must be text; coerce column name to str, but keep row key type
+                self.session.execute(cql, (str(col), key))
 
     def xget(self, key: str, column_start: Optional[str] = None, buffer_size: Optional[int] = None):
         # approximate xget by returning columns after column_start
@@ -410,7 +426,8 @@ class Mutator:
         # and attach a write timestamp (microseconds) so include_timestamp
         # consumers can see it.
         now_us = int(time.time() * 1e6)
-        ser = {k: pickle.dumps((v, now_us)) for k, v in columns.items()}
+        # ensure map keys are strings for CQL map<text, blob>
+        ser = {str(k): pickle.dumps((v, now_us)) for k, v in columns.items()}
         if ttl:
             cql = "UPDATE %s.%s USING TTL %d SET columns = columns + %%s WHERE key = %%s" % (cf.keyspace, cf.table, int(ttl))
             params = (ser, key)
@@ -428,7 +445,7 @@ class Mutator:
             # delete each map entry
             for col in columns:
                 cql = "DELETE columns[%%s] FROM %s.%s WHERE key = %%s" % (cf.keyspace, cf.table)
-                params = (col, key)
+                params = (str(col), key)
                 self._ops.append(("delete_col", cql, params))
 
     def send(self):
@@ -440,5 +457,19 @@ class Mutator:
             stmt = SimpleStatement(cql)
             batch.add(stmt, params)
         # execute the batch
-        self.session.execute(batch)
+        try:
+            # debug: log batch contents
+            import sys
+            for kind, cql, params in self._ops:
+                try:
+                    # Also print types of parameters to aid diagnosis
+                    param_types = tuple((type(p).__name__, p) for p in params)
+                    sys.stderr.write(f"cassandra_compat: batch op kind={kind} cql={cql} params={params!r} param_types={param_types!r}\n")
+                except Exception:
+                    pass
+            self.session.execute(batch)
+        except Exception:
+            import sys
+            sys.stderr.write(f"cassandra_compat: batch execute failed: {sys.exc_info()[1]}\n")
+            raise
         self._ops = []

@@ -39,38 +39,47 @@ def main(root_dir=None):
     # Note: tippr-run changes to $TIPPR_SRC/tippr/r2 before running scripts,
     # so os.getcwd() will be the r2 directory and parent is tippr root.
     if root_dir is None:
-        cwd = os.getcwd()
-        
-        # Try various paths to find the tippr root (contains docs/policies)
-        possible_paths = [
-            os.path.dirname(cwd),  # Parent of cwd (if cwd is r2/)
-            os.path.dirname(os.path.dirname(cwd)),  # Grandparent (if cwd is r2/r2/)
-            cwd,  # Current directory itself
-            '/home/tippr/src/tippr',  # Common default
-        ]
-        
-        for path in possible_paths:
-            if path and os.path.exists(os.path.join(path, 'docs', 'policies')):
-                root_dir = path
-                break
-        
-        if root_dir is None:
-            # Last resort: walk up from cwd until we find docs/policies
-            check_dir = cwd
-            for _ in range(5):  # Max 5 levels up
-                if os.path.exists(os.path.join(check_dir, 'docs', 'policies')):
-                    root_dir = check_dir
+        # Prefer explicit environment var if present (set by packaging/installer)
+        env_root = os.environ.get('TIPPR_SRC') or os.environ.get('TIPPR_ROOT')
+        if env_root and os.path.exists(os.path.join(env_root, 'docs', 'policies')):
+            root_dir = env_root
+        else:
+            # Derive repo root relative to this script file location
+            try:
+                this_script = os.path.abspath(__file__)
+            except NameError:
+                # tippr-run executes scripts with exec(), __file__ may not be set
+                this_script = os.path.abspath(sys.argv[0]) if sys.argv and sys.argv[0] else os.path.abspath(__file__)
+            # scripts/ is directly under TIPPR root in this repository layout
+            candidate = os.path.dirname(this_script)
+            possible = [os.path.dirname(candidate), os.path.dirname(os.path.dirname(candidate)), candidate]
+            found = None
+            for p in possible:
+                if os.path.exists(os.path.join(p, 'docs', 'policies')):
+                    found = p
                     break
-                parent = os.path.dirname(check_dir)
-                if parent == check_dir:  # Reached filesystem root
-                    break
-                check_dir = parent
-        
-        if root_dir is None:
-            root_dir = cwd
+            if not found:
+                # walk up a few levels as a last resort
+                check_dir = candidate
+                for _ in range(6):
+                    if os.path.exists(os.path.join(check_dir, 'docs', 'policies')):
+                        found = check_dir
+                        break
+                    parent = os.path.dirname(check_dir)
+                    if parent == check_dir:
+                        break
+                    check_dir = parent
+            root_dir = found or os.getcwd()
     
+    # If we accidentally picked the r2/ subdirectory as the root (common under tippr-run),
+    # prefer the parent directory which should contain docs/policies.
+    if not os.path.exists(os.path.join(root_dir, 'docs', 'policies')):
+        parent = os.path.dirname(root_dir)
+        if os.path.exists(os.path.join(parent, 'docs', 'policies')):
+            root_dir = parent
+
     r2_dir = os.path.join(root_dir, 'r2')
-    
+
     print(f"Using root_dir: {root_dir}")
     
     # Import from already-loaded app (tippr-run loads the app before running scripts)
@@ -152,6 +161,13 @@ def main(root_dir=None):
     print(f"Using user '{system_user.name}' to create wiki pages.\n")
 
     # Create each policy page
+    # Support a --force flag to re-apply content even if page exists
+    force = False
+    # tippr-run wrapper may not accept arbitrary args; support an env var
+    if '--force' in sys.argv:
+        force = True
+    if os.environ.get('FORCE_POLICY_IMPORT') in ('1', 'true', 'True'):
+        force = True
     for policy in policies:
         wiki_name = policy['wiki_name']
         file_path = policy['file_path']
@@ -171,22 +187,39 @@ def main(root_dir=None):
             content = f.read()
 
         # Check if wiki page already exists
+        # Determine if page exists first
         try:
             existing_page = WikiPage.get(Frontpage, wiki_name)
-            print(f"  Wiki page already exists. Updating...")
-            existing_page.revise(content, author=system_user, reason="Updated from docs/policies/")
-            print(f"  SUCCESS: Updated {display_name}\n")
+            page_exists = True
         except Exception:
-            # Page doesn't exist, create it
+            existing_page = None
+            page_exists = False
+
+        if page_exists:
+            if force:
+                print(f"  Wiki page exists; --force given, attempting update...")
+                try:
+                    existing_page.revise(content, author=system_user, reason="Updated from docs/policies/")
+                    print(f"  SUCCESS: Updated {display_name}\n")
+                except Exception as e:
+                    print(f"  ERROR: Failed to revise existing page '{wiki_name}': {e}")
+                    import traceback
+                    traceback.print_exc()
+                    print()
+                    continue
+            else:
+                print(f"  Wiki page already exists; skipping (use --force to overwrite).\n")
+                continue
+        else:
             try:
                 print(f"  Creating new wiki page...")
-                
+
                 # Log the ID we are about to create
                 expected_id = WikiPage.id_for(Frontpage, wiki_name)
                 print(f"  DEBUG: Creating page with ID: '{expected_id}'")
                 print(f"  DEBUG: Frontpage _id36: '{getattr(Frontpage, '_id36', 'N/A')}'")
                 print(f"  DEBUG: Frontpage name: '{getattr(Frontpage, 'name', 'N/A')}'")
-                
+
                 wp = WikiPage.create(Frontpage, wiki_name)
                 wp.revise(content, author=system_user, reason="Initial creation from docs/policies/")
                 print(f"  SUCCESS: Created {display_name}\n")

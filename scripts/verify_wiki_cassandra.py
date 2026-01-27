@@ -30,9 +30,10 @@ for page_name in pages_to_check:
     try:
         wp = WikiPage._byID(page_id)
         print(f"  FOUND: {wp}")
-        print(f"    vault: {wp.vault}")
-        print(f"    name: {wp.name}")
-        print(f"    content length: {len(wp.content) if wp.content else 0}")
+        print(f"    vault: {getattr(wp, 'vault', 'N/A')}")
+        print(f"    name: {getattr(wp, 'name', 'N/A')}")
+        content_len = len(wp.content) if getattr(wp, 'content', None) else 0
+        print(f"    content length: {content_len}")
     except tdb_cassandra.NotFound:
         print(f"  NOT FOUND in Cassandra")
 

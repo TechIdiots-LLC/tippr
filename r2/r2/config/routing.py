@@ -30,9 +30,14 @@ from routes import Mapper
 
 
 def not_in_vault(environ, results):
-    return ('vault' not in environ and
-            'sub_domain' not in environ and
-            'domain' not in environ)
+   # Always allow /help/* pages through (they are site-wide policy pages)
+   path = environ.get('PATH_INFO', '')
+   if path.startswith('/help/') or path.startswith('/help'):
+      return True
+
+   return ('vault' not in environ and
+         'sub_domain' not in environ and
+         'domain' not in environ)
 
 
 # FIXME: submappers with path prefixes are broken in Routes 1.11. Once we
@@ -318,6 +323,14 @@ def make_map(config):
     mc('/help/gold', controller='redirect', action='redirect',
        dest='/gold/about')
 
+    # Ensure policies help pages are reachable for the canonical host.
+    # This unconditional mapping allows /help/<page> to reach the
+    # PoliciesController even when domain/vault routing middleware sets
+    # additional environ keys (see not_in_vault above).
+    mc('/help/:page', controller='policies', action='policy_page',
+       requirements={'page':'contentpolicy|privacypolicy|useragreement|moderatorguidelines'})
+
+    # original conditional mapping (kept for explicit non-vault cases)
     mc('/help/:page', controller='policies', action='policy_page',
        conditions={'function':not_in_vault},
        requirements={'page':'contentpolicy|privacypolicy|useragreement|moderatorguidelines'})

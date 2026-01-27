@@ -183,6 +183,15 @@ class DomainMiddleware:
         http_host = environ.get('HTTP_HOST', 'localhost').lower()
         domain, s, port = http_host.partition(':')
 
+        # Temporary debug: log basic request routing info for troubleshooting
+        try:
+            with open('/tmp/help_middleware_debug.log', 'a') as _fh:
+                _fh.write('HOST=%s PATH=%s FULLPATH=%s vault=%s domain=%s sub_domain=%s\n' % (
+                    http_host, environ.get('PATH_INFO'), environ.get('FULLPATH'),
+                    environ.get('vault'), environ.get('domain'), environ.get('sub_domain')))
+        except Exception:
+            pass
+
         # remember the port
         try:
             environ['request_port'] = int(port)

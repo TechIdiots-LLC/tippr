@@ -32,7 +32,16 @@ from itertools import chain
 from uuid import UUID, uuid1
 
 import pytz
-from r2.lib.db.cassandra_compat import ColumnFamily, NotFoundException, ConnectionPool, SystemManager, UTF8_TYPE, TIME_UUID_TYPE, ASCII_TYPE
+import pytz
+from r2.lib.db.cassandra_compat import (
+    ColumnFamily,
+    NotFoundException,
+    ConnectionPool,
+    SystemManager,
+    UTF8_TYPE,
+    TIME_UUID_TYPE,
+    ASCII_TYPE,
+)
 from cassandra import ReadTimeout
 from cassandra import ConsistencyLevel
 from cassandra.util import datetime_from_uuid1
@@ -426,6 +435,16 @@ class ThingBase(metaclass=ThingMeta):
         def lookup(l_ids):
             if properties is None:
                 rows = cls._cf.multiget(l_ids, column_count=max_column_count)
+                try:
+                    g.log.debug("tdb_cassandra.lookup: class=%s ids=%r rows=%r",
+                                cls.__name__, l_ids, list(rows.keys()))
+                except Exception:
+                    pass
+                try:
+                    with open('/tmp/tdb_lookup_debug.log', 'a') as _f:
+                        _f.write(f"tdb_lookup: class={cls.__name__} ids={l_ids!r} rows={list(rows.keys())!r}\n")
+                except Exception:
+                    pass
 
                 # if we got max_column_count columns back for a row, it was
                 # probably clipped. in this case, we should fetch the remaining
@@ -542,6 +561,13 @@ class ThingBase(metaclass=ThingMeta):
 
     @classmethod
     def _deserialize_column(cls, attr, val):
+        # Compatibility: some storage layers (our cassandra_compat shim)
+        # store map values as pickled (value, timestamp) tuples. If we
+        # receive such a tuple here, unwrap it so the type-specific
+        # deserializers operate on the original stored value.
+        if isinstance(val, tuple) and len(val) >= 1:
+            val = val[0]
+
         if attr in cls._int_props or (cls._value_type and cls._value_type == 'int'):
             try:
                 return int(val)
@@ -553,9 +579,17 @@ class ThingBase(metaclass=ThingMeta):
             # note that only the string "1" is considered true!
             return val == '1'
         elif attr in cls._pickle_props or (cls._value_type and cls._value_type == 'pickle'):
-            return pickle.loads(val)
+            # value may already be unpickled by the storage shim; only
+            # call pickle.loads on raw bytes
+            if isinstance(val, (bytes, bytearray)):
+                return pickle.loads(val)
+            return val
         elif attr in cls._json_props or (cls._value_type and cls._value_type == 'json'):
-            return json.loads(val)
+            if isinstance(val, (bytes, bytearray)):
+                return json.loads(val.decode('utf-8'))
+            if isinstance(val, str):
+                return json.loads(val)
+            return val
         elif attr in cls._date_props or attr == cls._timestamp_prop or (cls._value_type and cls._value_type == 'date'):
             return cls._deserialize_date(val)
         elif attr in cls._bytes_props or (cls._value_type and cls._value_type == 'bytes'):
@@ -1157,6 +1191,19 @@ class ColumnQuery:
                     return
                 elif nrows == 1:
                     columns = list(r.values())[0]
+                # If the view's column comparator is TimeUUID, convert
+                # textual UUID column names back to UUID objects so
+                # sorting and downstream processing work correctly.
+                if self.cls._compare_with == TIME_UUID_TYPE and columns:
+                    from uuid import UUID
+                    new_cols = OrderedDict()
+                    for k, v in columns.items():
+                        try:
+                            new_key = UUID(k) if not isinstance(k, UUID) else k
+                        except Exception:
+                            new_key = k
+                        new_cols[new_key] = v
+                    columns = new_cols
                 else:
                     r_combined = {}
                     for d in list(r.values()):
@@ -1351,7 +1398,10 @@ class View(ThingBase):
         single item dict {column name:column value} or list of dicts."""
         objs, is_single = tup(objs, ret_is_single=True)
 
-        columns = [{obj._id: obj._id} for obj in objs]
+        # Column names in CQL must be textual for our map<text,blob>
+        # storage; coerce IDs (which may be UUID objects) to strings
+        # while preserving the original object ID as the stored value.
+        columns = [{str(obj._id): obj._id} for obj in objs]
 
         if len(columns) == 1:
             return columns[0]
