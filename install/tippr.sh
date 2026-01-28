@@ -762,6 +762,7 @@ sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
     boto3 \
     captcha \
     cassandra-driver \
+    cqlsh \
     chardet \
     httpagentparser \
     kazoo \

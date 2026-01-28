@@ -167,6 +167,27 @@ class ColumnFamily:
         placeholders = ','.join(["%s"] * len(keys))
         cql = "SELECT key, columns FROM %s.%s WHERE key IN (%s)" % (self.keyspace, self.table, placeholders)
         # pass keys through as-is (they may be text or UUID/timeuuid)
+        # Debug snapshot: write session/cluster/cql info to stderr and disk
+        # to aid diagnosis when the app appears to be using a dummy session.
+        try:
+            import sys
+            try:
+                sys.stderr.write(f"cassandra_compat: multiget cql={cql!r} keys={keys!r} session={repr(getattr(self, 'session', None))}\n")
+            except Exception:
+                pass
+            try:
+                with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
+                    _dbg.write(f"MULTIGET: session={repr(getattr(self, 'session', None))}\n")
+                    try:
+                        cl = getattr(self.session, 'cluster', None)
+                        _dbg.write(f"MULTIGET: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
+                    except Exception:
+                        pass
+                    _dbg.write(f"MULTIGET: cql={cql!r} keys={keys!r}\n")
+            except Exception:
+                pass
+        except Exception:
+            pass
         rows = self.session.execute(cql, tuple(keys))
         ret = {}
         for row in rows:
@@ -258,7 +279,28 @@ class ColumnFamily:
         """
         cql = "SELECT columns FROM %s.%s WHERE key = %%s" % (self.keyspace, self.table)
         # pass key through as-is (text or UUID)
-        row = self.session.execute(cql, (key,)).one()
+        params = (key,)
+        import sys
+        try:
+            sys.stderr.write(f"cassandra_compat: get cql={cql!r} params={params!r}\n")
+        except Exception:
+            pass
+        # write a short debug snapshot to disk to help diagnose which
+        # Session object the app is using (helps when a local shim is
+        # shadowing the real driver or when a DummySession is in use)
+        try:
+            with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
+                _dbg.write(f"GET: session={repr(getattr(self, 'session', None))}\n")
+                try:
+                    cl = getattr(self.session, 'cluster', None)
+                    _dbg.write(f"GET: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
+                except Exception:
+                    pass
+                _dbg.write(f"GET: cql={cql!r} params={params!r}\n")
+        except Exception:
+            pass
+
+        row = self.session.execute(cql, params).one()
         if not row:
             raise NotFoundException()
         raw = row.columns if hasattr(row, 'columns') else row[0]
@@ -314,10 +356,31 @@ class ColumnFamily:
         ser = {str(k): pickle.dumps((v, now_us)) for k, v in columns.items()}
         if ttl:
             cql = "UPDATE %s.%s USING TTL %d SET columns = columns + %%s WHERE key = %%s" % (self.keyspace, self.table, ttl)
-            self.session.execute(cql, (ser, key))
         else:
             cql = "UPDATE %s.%s SET columns = columns + %%s WHERE key = %%s" % (self.keyspace, self.table)
-            self.session.execute(cql, (ser, key))
+
+        params = (ser, key)
+        import sys, traceback
+        try:
+            try:
+                sys.stderr.write(f"cassandra_compat: insert cql={cql!r} params={params!r}\n")
+            except Exception:
+                pass
+            try:
+                with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
+                    _dbg.write(f"INSERT: session={repr(getattr(self, 'session', None))}\n")
+                    try:
+                        cl = getattr(self.session, 'cluster', None)
+                        _dbg.write(f"INSERT: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
+                    except Exception:
+                        pass
+                    _dbg.write(f"INSERT: cql={cql!r} params={params!r}\n")
+            except Exception:
+                pass
+            self.session.execute(cql, params)
+        except Exception:
+            sys.stderr.write(f"cassandra_compat: insert failed: {traceback.format_exc()}\n")
+            raise
 
     def remove(self, key: str, columns: Optional[Iterable[str]] = None):
         if columns is None:
@@ -467,6 +530,18 @@ class Mutator:
                     sys.stderr.write(f"cassandra_compat: batch op kind={kind} cql={cql} params={params!r} param_types={param_types!r}\n")
                 except Exception:
                     pass
+            try:
+                with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
+                    _dbg.write(f"BATCH: session={repr(getattr(self, 'session', None))}\n")
+                    try:
+                        cl = getattr(self.session, 'cluster', None)
+                        _dbg.write(f"BATCH: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
+                    except Exception:
+                        pass
+                    for kind, cql, params in self._ops:
+                        _dbg.write(f"BATCH_OP: kind={kind} cql={cql!r} params={params!r}\n")
+            except Exception:
+                pass
             self.session.execute(batch)
         except Exception:
             import sys

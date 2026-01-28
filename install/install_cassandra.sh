@@ -64,6 +64,23 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         sleep 2
     done
 
+    # Ensure a usable cqlsh is available. Some distros/package choices ship
+    # cqlsh with the Cassandra package, others require installing the CLI via
+    # pip. Prefer a system `cqlsh` if present; otherwise install the pypi
+    # `cqlsh` package so scripts like import_policy_cqlsh.py work reliably.
+    if ! command -v cqlsh >/dev/null 2>&1; then
+        echo "cqlsh not found on PATH; installing via pip3..."
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install cqlsh || true
+        if command -v cqlsh >/dev/null 2>&1; then
+            echo "Installed cqlsh"
+        else
+            echo "Warning: failed to install system cqlsh; snap-based cqlsh may still work."
+        fi
+    else
+        echo "cqlsh found: $(command -v cqlsh)"
+    fi
+
 else
     ###########################################################################
     # Ubuntu 14.04 - Legacy Cassandra 1.2.x installation

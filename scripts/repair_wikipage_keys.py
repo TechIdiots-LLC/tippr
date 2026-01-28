@@ -20,8 +20,8 @@ import tempfile
 from pathlib import Path
 
 
-EXPORT_CSV = Path('/tmp/wikipage_full.csv')
-CORRECTED_CSV = Path('/tmp/wikipage_wikipage_corrected.csv')
+EXPORT_CSV = Path('/home/tippr/wikipage_full.csv')
+CORRECTED_CSV = Path('/home/tippr/wikipage_wikipage_corrected.csv')
 
 
 def run_cmd(cmd):
@@ -31,14 +31,21 @@ def run_cmd(cmd):
 
 
 def export_wikipage():
-    if EXPORT_CSV.exists():
-        print('Removing existing', EXPORT_CSV)
-        EXPORT_CSV.unlink()
-    cmd = ['cqlsh', '-e', f"COPY tippr.wikipage TO '{EXPORT_CSV}' WITH HEADER = TRUE;"]
-    r = run_cmd(cmd)
+    # Capture CSV output via cqlsh COPY TO STDOUT to avoid snap confinement
+    cmd = ['snap', 'run', 'cqlsh', '127.0.0.1', '9042', '-u', 'cassandra', '-p', 'cassandra', '-e', "COPY tippr.wikipage TO STDOUT WITH HEADER = TRUE;"]
+    print('RUN:', ' '.join(cmd))
+    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if r.returncode != 0:
         print('EXPORT failed:', r.stderr.decode('utf-8', 'replace'))
         sys.exit(1)
+
+    # write captured CSV to a local file for processing
+    try:
+        if EXPORT_CSV.exists():
+            EXPORT_CSV.unlink()
+    except Exception:
+        pass
+    EXPORT_CSV.write_bytes(r.stdout)
     print('Exported to', EXPORT_CSV)
 
 
@@ -102,7 +109,7 @@ def apply_import():
     # Use an actual tab character in the COPY command string so cqlsh sees a
     # 1-character delimiter. subprocess will pass this as a single -e arg.
     tab = '\t'
-    cmd = ['cqlsh', '-e', f"COPY tippr.wikipage (key, columns) FROM '{CORRECTED_CSV}' WITH DELIMITER = '{tab}' AND HEADER = TRUE;"]
+    cmd = ['snap', 'run', 'cqlsh', '127.0.0.1', '9042', '-u', 'cassandra', '-p', 'cassandra', '-e', f"COPY tippr.wikipage (key, columns) FROM '{CORRECTED_CSV}' WITH DELIMITER = '{tab}' AND HEADER = TRUE;"]
     r = run_cmd(cmd)
     if r.returncode != 0:
         print('IMPORT failed:', r.stderr.decode('utf-8', 'replace'))
