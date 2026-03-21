@@ -457,13 +457,12 @@ class Mutator:
         return self
 
     def __exit__(self, exc_type, exc, tb):
-        try:
+        # Only send if the body of the with-block succeeded.  If the body
+        # raised we skip the send (act like a rollback) and let the original
+        # exception propagate.  Any exception raised by send() propagates
+        # naturally — callers must see write failures.
+        if exc_type is None:
             self.send()
-        except Exception as e:
-            import sys
-            sys.stderr.write(f"CASSANDRA ERROR in Mutator.__exit__: {e}\n")
-            # don't raise during cleanup
-            return False
 
     def insert(self, key_or_cf, columns_or_key, ttl_or_columns=None, ttl=None):
         # Handle both calling conventions:

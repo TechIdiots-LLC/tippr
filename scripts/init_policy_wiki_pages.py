@@ -199,7 +199,7 @@ def main(root_dir=None):
             if force:
                 print(f"  Wiki page exists; --force given, attempting update...")
                 try:
-                    existing_page.revise(content, author=system_user, reason="Updated from docs/policies/")
+                    existing_page.revise(content, author=system_user._id36, reason="Updated from docs/policies/")
                     print(f"  SUCCESS: Updated {display_name}\n")
                 except Exception as e:
                     print(f"  ERROR: Failed to revise existing page '{wiki_name}': {e}")
@@ -221,7 +221,7 @@ def main(root_dir=None):
                 print(f"  DEBUG: Frontpage name: '{getattr(Frontpage, 'name', 'N/A')}'")
 
                 wp = WikiPage.create(Frontpage, wiki_name)
-                wp.revise(content, author=system_user, reason="Initial creation from docs/policies/")
+                wp.revise(content, author=system_user._id36, reason="Initial creation from docs/policies/")
                 print(f"  SUCCESS: Created {display_name}\n")
             except Exception as e:
                 import traceback

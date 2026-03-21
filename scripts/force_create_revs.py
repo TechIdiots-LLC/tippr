@@ -19,7 +19,7 @@ def parse_args():
     p.add_argument('--root', help='Repository root (defaults to parent of scripts dir)')
     p.add_argument('--dry-run', action='store_true', help="Don't write; only show what would be done")
     p.add_argument('--force', action='store_true', help='Allow destructive writes')
-    return p.parse_args()
+    return p.parse_known_args()[0]
 
 
 def main():
@@ -56,11 +56,23 @@ def main():
             continue
 
         try:
-            wr = WikiRevision.create(wp._id, content, author=system_user, reason='Import from docs/policies')
+            wr = WikiRevision.create(wp._id, content, author=system_user._id36, reason='Import from docs/policies')
             print('Created revision', getattr(wr, '_id', None))
+            # Update the WikiPage to point at the new revision so that
+            # revise() won't skip it next time due to stale content.
+            wp.content = content
+            wp.revision = str(wr._id)
+            wp.last_edit_by = system_user._id36
+            wp._commit()
+            print('Updated WikiPage', wiki_name)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print('Failed create for', wiki_name, e)
 
 
 if __name__ == '__main__':
+    main()
+else:
+    # When loaded via tippr-run or paster run, execute main automatically
     main()
