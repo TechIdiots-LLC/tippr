@@ -46,10 +46,27 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         apt-get install -y python3-six || true
     fi
 
-    cqlsh -e "CREATE KEYSPACE IF NOT EXISTS tippr WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};" || true
+    # Verify Cassandra is actually accepting connections before running cqlsh.
+    # If this fails the keyspace will be silently missing and the app will 404.
+    echo "Verifying Cassandra CQL port is open before running setup..."
+    if ! nc -z localhost 9042 2>/dev/null; then
+        echo "ERROR: Cassandra is not listening on port 9042 — cannot set up schema." >&2
+        echo "Start Cassandra first, wait for it to be ready, then re-run setup_cassandra.sh" >&2
+        exit 1
+    fi
+
+    cqlsh -e "CREATE KEYSPACE IF NOT EXISTS tippr WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to create tippr keyspace in Cassandra." >&2
+        exit 1
+    fi
 
     # Create permacache table
-    cqlsh -e "CREATE TABLE IF NOT EXISTS tippr.permacache (key text PRIMARY KEY, value blob);" || true
+    cqlsh -e "CREATE TABLE IF NOT EXISTS tippr.permacache (key text PRIMARY KEY, value blob);"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to create tippr.permacache table." >&2
+        exit 1
+    fi
 
     echo "Cassandra keyspace and tables created."
 
