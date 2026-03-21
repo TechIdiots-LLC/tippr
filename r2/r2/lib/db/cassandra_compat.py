@@ -350,6 +350,8 @@ class ColumnFamily:
         return od
 
     def insert(self, key: str, columns: Dict[str, object], ttl: Optional[int] = None):
+        # Coerce key to str — UuidThing._id is a UUID object but the table key column is text.
+        key = str(key)
         # serialize values and attach a write timestamp (microseconds)
         now_us = int(time.time() * 1e6)
         # Ensure map keys are text (CQL map<text, blob>)
@@ -490,6 +492,8 @@ class Mutator:
         now_us = int(time.time() * 1e6)
         # ensure map keys are strings for CQL map<text, blob>
         ser = {str(k): pickle.dumps((v, now_us)) for k, v in columns.items()}
+        # Coerce key to str — UuidThing._id is a UUID object but the table key column is text.
+        key = str(key)
         if ttl:
             cql = "UPDATE %s.%s USING TTL %d SET columns = columns + %%s WHERE key = %%s" % (cf.keyspace, cf.table, int(ttl))
             params = (ser, key)
@@ -499,6 +503,7 @@ class Mutator:
         self._ops.append(("insert", cql, params))
 
     def remove(self, cf, key, columns=None, timestamp=None):
+        key = str(key)
         if columns is None:
             cql = "DELETE FROM %s.%s WHERE key = %%s" % (cf.keyspace, cf.table)
             params = (key,)
