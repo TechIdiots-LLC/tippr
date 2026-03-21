@@ -43,15 +43,14 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     # Java 21 which is the Ubuntu 24.04 default. update-alternatives is the
     # most reliable way to ensure all paths (PATH, JAVA_HOME detection, sudo
     # invocations that strip env vars) all resolve to Java 11.
-    JAVA11_BIN=/usr/lib/jvm/java-1.11.0-openjdk-amd64/bin/java
-    JAVAC11_BIN=/usr/lib/jvm/java-1.11.0-openjdk-amd64/bin/javac
-    if [ -x "$JAVA11_BIN" ]; then
-        echo "Setting Java 11 as default via update-alternatives"
-        update-alternatives --set java  "$JAVA11_BIN"
-        update-alternatives --set javac "$JAVAC11_BIN" 2>/dev/null || true
+    JAVA11_ALT=$(update-java-alternatives -l 2>/dev/null \
+        | grep 'java-1.11\|java-11-openjdk' | awk '{print $1}' | head -1)
+    if [ -n "$JAVA11_ALT" ]; then
+        echo "Setting Java 11 as default via update-java-alternatives ($JAVA11_ALT)"
+        update-java-alternatives --set "$JAVA11_ALT"
         java -version
     else
-        echo "WARNING: Java 11 not found at $JAVA11_BIN — Cassandra may fail to start" >&2
+        echo "WARNING: Java 11 alternative not found — Cassandra may fail to start" >&2
     fi
 
     # Import Cassandra GPG key using the modern /etc/apt/keyrings/ approach
