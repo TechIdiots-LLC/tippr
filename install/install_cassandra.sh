@@ -38,13 +38,17 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     # Install Java 11 (required for Cassandra)
     apt-get install $APTITUDE_OPTIONS openjdk-11-jdk
 
+    # Import Cassandra GPG key using the modern /etc/apt/keyrings/ approach
+    # (apt-key is deprecated on Ubuntu 22.04+ and non-functional on 24.04)
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://downloads.apache.org/cassandra/KEYS \
+        | gpg --dearmor --batch -o /etc/apt/keyrings/cassandra.gpg
+
     # Add Apache Cassandra 4.1.x repository if not already present
     if ! grep -q "debian.cassandra.apache.org" /etc/apt/sources.list.d/cassandra.sources.list 2>/dev/null; then
-        echo "deb https://debian.cassandra.apache.org 41x main" | sudo tee /etc/apt/sources.list.d/cassandra.sources.list
+        echo "deb [signed-by=/etc/apt/keyrings/cassandra.gpg] https://debian.cassandra.apache.org 41x main" \
+            | tee /etc/apt/sources.list.d/cassandra.sources.list
     fi
-
-    # Import Cassandra GPG key
-    curl https://downloads.apache.org/cassandra/KEYS | sudo apt-key add -
 
     # Install Cassandra
     apt-get update
@@ -56,13 +60,22 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
 
     # Wait for Cassandra to be available (CQL native port 9042)
     echo "Waiting for Cassandra to be available..."
+    CASSANDRA_UP=0
     for i in $(seq 1 60); do
-        if nc -vz localhost 9042 2>/dev/null; then
+        if nc -z localhost 9042 2>/dev/null; then
             echo "Cassandra is up!"
+            CASSANDRA_UP=1
             break
         fi
+        echo "  attempt $i/60 — not yet available, sleeping 2s..."
         sleep 2
     done
+    if [ "$CASSANDRA_UP" = "0" ]; then
+        echo "ERROR: Cassandra did not start within 120 seconds." >&2
+        echo "Check systemd logs: journalctl -u cassandra --no-pager | tail -50" >&2
+        systemctl status cassandra --no-pager || true
+        exit 1
+    fi
 
     # Ensure a usable cqlsh is available. Some distros/package choices ship
     # cqlsh with the Cassandra package, others require installing the CLI via
