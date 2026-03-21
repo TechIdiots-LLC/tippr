@@ -48,11 +48,15 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         exit 1
     fi
 
-    # Use the venv's cassandra-driver directly — system cqlsh uses system Python
-    # and cannot find packages installed in the venv (including six and its
-    # six.moves virtual module which the bundled system cassandra driver needs).
-    echo "Creating tippr keyspace and permacache table via venv cassandra-driver..."
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/python - <<'PYEOF'
+    # Use system Python with a freshly pip-installed cassandra-driver.
+    # We cannot use the tippr venv here because it has not been created yet
+    # (setup_cassandra.sh runs before the venv creation step in tippr.sh).
+    # System cqlsh bundles its own driver zip that requires six.moves but can't
+    # find it reliably, so we bypass cqlsh entirely.
+    pip3 install --quiet cassandra-driver 2>/dev/null || true
+
+    echo "Creating tippr keyspace and permacache table via system cassandra-driver..."
+    python3 - <<'PYEOF'
 from cassandra.cluster import Cluster
 cluster = Cluster(['127.0.0.1'])
 session = cluster.connect()
