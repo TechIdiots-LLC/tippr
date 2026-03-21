@@ -35,17 +35,39 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     # Ubuntu 24.04 - Install Cassandra 4.1.x from Apache repository
     ###########################################################################
 
-    # Install Java 11 (required for Cassandra)
+    # Install Java 11 (required for Cassandra 4.1 — Java 21 removed JVM flags
+    # like UseBiasedLocking that Cassandra's cassandra-env.sh still uses)
     apt-get install $APTITUDE_OPTIONS openjdk-11-jdk
+
+    # Set Java 11 as the system default. Cassandra 4.1 is incompatible with
+    # Java 21 which is the Ubuntu 24.04 default. update-alternatives is the
+    # most reliable way to ensure all paths (PATH, JAVA_HOME detection, sudo
+    # invocations that strip env vars) all resolve to Java 11.
+    JAVA11_BIN=/usr/lib/jvm/java-1.11.0-openjdk-amd64/bin/java
+    JAVAC11_BIN=/usr/lib/jvm/java-1.11.0-openjdk-amd64/bin/javac
+    if [ -x "$JAVA11_BIN" ]; then
+        echo "Setting Java 11 as default via update-alternatives"
+        update-alternatives --set java  "$JAVA11_BIN"
+        update-alternatives --set javac "$JAVAC11_BIN" 2>/dev/null || true
+        java -version
+    else
+        echo "WARNING: Java 11 not found at $JAVA11_BIN — Cassandra may fail to start" >&2
+    fi
 
     # Import Cassandra GPG key using the modern /etc/apt/keyrings/ approach
     # (apt-key is deprecated on Ubuntu 22.04+ and non-functional on 24.04)
+    # Always re-download so a corrupt/partial file from a previous run doesn't block us.
     mkdir -p /etc/apt/keyrings
+    rm -f /etc/apt/keyrings/cassandra.gpg
     curl -fsSL https://downloads.apache.org/cassandra/KEYS \
         | gpg --dearmor --batch -o /etc/apt/keyrings/cassandra.gpg
 
-    # Add Apache Cassandra 4.1.x repository if not already present
-    if ! grep -q "debian.cassandra.apache.org" /etc/apt/sources.list.d/cassandra.sources.list 2>/dev/null; then
+    # Add Apache Cassandra 4.1.x repository if not already present.
+    # Note: Apache now serves the repo via JFrog (apache.jfrog.io) but the
+    # canonical apt source line still uses debian.cassandra.apache.org; both
+    # may appear depending on when the list was created, so check for either.
+    if ! grep -qE "debian\.cassandra\.apache\.org|apache\.jfrog\.io/artifactory/cassandra" \
+            /etc/apt/sources.list.d/cassandra.sources.list 2>/dev/null; then
         echo "deb [signed-by=/etc/apt/keyrings/cassandra.gpg] https://debian.cassandra.apache.org 41x main" \
             | tee /etc/apt/sources.list.d/cassandra.sources.list
     fi
@@ -59,9 +81,17 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         apt-get install $APTITUDE_OPTIONS cassandra
     fi
 
-    # Enable and start Cassandra (start is idempotent — no-op if already running)
+    # Enable Cassandra and ensure the JVM is actually running.
+    # `systemctl start` is a no-op when the SysV wrapper reports "active (exited)"
+    # (systemd considers it up even if the JVM died). Use `restart` when the JVM
+    # is not running so the daemon is reliably launched.
     systemctl enable cassandra
-    systemctl start cassandra
+    if pgrep -f 'org.apache.cassandra' > /dev/null 2>&1; then
+        echo "Cassandra JVM is already running; skipping start."
+    else
+        echo "Cassandra JVM is not running; restarting service..."
+        systemctl restart cassandra
+    fi
 
     # Cassandra 4.1 on Ubuntu 24.04 uses a SysV init wrapper: systemctl reports
     # "active (exited)" immediately but the JVM forks in the background and
