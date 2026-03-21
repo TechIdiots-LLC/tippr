@@ -55,25 +55,36 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     apt-get install $APTITUDE_OPTIONS cassandra
 
     # Enable and start Cassandra
-    sudo systemctl enable cassandra
-    sudo systemctl start cassandra
+    systemctl enable cassandra
+    systemctl start cassandra
 
-    # Wait for Cassandra to be available (CQL native port 9042)
-    echo "Waiting for Cassandra to be available..."
+    # Cassandra 4.1 on Ubuntu 24.04 uses a SysV init wrapper: systemctl reports
+    # "active (exited)" immediately but the JVM forks in the background and
+    # takes 60-180 s to open port 9042.  Wait up to 5 minutes.
+    echo "Waiting for Cassandra JVM to open port 9042 (up to 5 minutes)..."
     CASSANDRA_UP=0
-    for i in $(seq 1 60); do
+    for i in $(seq 1 150); do
+        # Bail early if the JVM died rather than spin the full 5 minutes
+        if ! pgrep -f 'org.apache.cassandra' > /dev/null 2>&1; then
+            echo "  Cassandra JVM process is not running — startup failed early." >&2
+            break
+        fi
         if nc -z localhost 9042 2>/dev/null; then
-            echo "Cassandra is up!"
+            echo "Cassandra is up! (attempt $i)"
             CASSANDRA_UP=1
             break
         fi
-        echo "  attempt $i/60 — not yet available, sleeping 2s..."
+        echo "  attempt $i/150 — not yet available, sleeping 2s..."
         sleep 2
     done
     if [ "$CASSANDRA_UP" = "0" ]; then
-        echo "ERROR: Cassandra did not start within 120 seconds." >&2
-        echo "Check systemd logs: journalctl -u cassandra --no-pager | tail -50" >&2
+        echo "ERROR: Cassandra did not start within expected time." >&2
+        echo "--- systemctl status ---" >&2
         systemctl status cassandra --no-pager || true
+        echo "--- last 80 lines of /var/log/cassandra/system.log ---" >&2
+        tail -80 /var/log/cassandra/system.log 2>/dev/null || true
+        echo "--- journalctl -u cassandra (last 50 lines) ---" >&2
+        journalctl -u cassandra --no-pager | tail -50 || true
         exit 1
     fi
 
