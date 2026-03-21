@@ -29,7 +29,7 @@ def main():
         print('Refusing to run without --force or TIPPR_ALLOW_MUTATE=1')
         sys.exit(2)
 
-    root = args.root or os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    root = args.root or os.path.abspath(os.path.join(os.environ.get('TIPPR_SRC', '/home/tippr/src/tippr')))
 
     system_user = Account._by_name(g.system_user)
     policies = [g.wiki_page_user_agreement, g.wiki_page_privacy_policy, g.wiki_page_content_policy, getattr(g, 'wiki_page_moderator_guidelines', 'moderatorguidelines')]
