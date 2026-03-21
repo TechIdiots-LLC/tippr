@@ -50,11 +50,16 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
             | tee /etc/apt/sources.list.d/cassandra.sources.list
     fi
 
-    # Install Cassandra
-    apt-get update
-    apt-get install $APTITUDE_OPTIONS cassandra
+    # Install Cassandra (skip if already installed to avoid the package postinst
+    # script restarting the running daemon mid-install)
+    if dpkg -s cassandra >/dev/null 2>&1; then
+        echo "Cassandra is already installed; skipping apt-get install to avoid service restart."
+    else
+        apt-get update
+        apt-get install $APTITUDE_OPTIONS cassandra
+    fi
 
-    # Enable and start Cassandra
+    # Enable and start Cassandra (start is idempotent — no-op if already running)
     systemctl enable cassandra
     systemctl start cassandra
 
