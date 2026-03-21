@@ -39,14 +39,7 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     # Ubuntu 24.04 - Use cqlsh (installed via apt with Cassandra)
     ###########################################################################
 
-    # Create keyspace using cqlsh
-    # Ensure python3 'six' package is available for cqlsh's Cassandra driver
-    if ! python3 -c "import six" >/dev/null 2>&1; then
-        apt-get update -y
-        apt-get install -y python3-six || true
-    fi
-
-    # Verify Cassandra is actually accepting connections before running cqlsh.
+    # Verify Cassandra is actually accepting connections before running setup.
     # If this fails the keyspace will be silently missing and the app will 404.
     echo "Verifying Cassandra CQL port is open before running setup..."
     if ! nc -z localhost 9042 2>/dev/null; then
@@ -55,16 +48,29 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         exit 1
     fi
 
-    cqlsh -e "CREATE KEYSPACE IF NOT EXISTS tippr WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};"
+    # Use the venv's cassandra-driver directly — system cqlsh uses system Python
+    # and cannot find packages installed in the venv (including six and its
+    # six.moves virtual module which the bundled system cassandra driver needs).
+    echo "Creating tippr keyspace and permacache table via venv cassandra-driver..."
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/python - <<'PYEOF'
+from cassandra.cluster import Cluster
+cluster = Cluster(['127.0.0.1'])
+session = cluster.connect()
+session.execute("""
+    CREATE KEYSPACE IF NOT EXISTS tippr
+    WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
+""")
+session.execute("""
+    CREATE TABLE IF NOT EXISTS tippr.permacache (
+        key text PRIMARY KEY,
+        value blob
+    )
+""")
+print("Cassandra keyspace and permacache table ready.")
+cluster.shutdown()
+PYEOF
     if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to create tippr keyspace in Cassandra." >&2
-        exit 1
-    fi
-
-    # Create permacache table
-    cqlsh -e "CREATE TABLE IF NOT EXISTS tippr.permacache (key text PRIMARY KEY, value blob);"
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to create tippr.permacache table." >&2
+        echo "ERROR: Failed to set up Cassandra schema." >&2
         exit 1
     fi
 
