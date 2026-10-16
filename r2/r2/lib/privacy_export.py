@@ -21,6 +21,7 @@ It gathers all user data into a structured JSON format that can be
 downloaded by the user.
 """
 
+import itertools
 import json
 import os
 import tempfile
@@ -29,6 +30,7 @@ from datetime import datetime
 
 from pylons import app_globals as g
 
+from r2.lib.db.thing import Thing
 from r2.lib.utils import tup
 from r2.models import (
     Account,
@@ -146,8 +148,7 @@ class UserDataExporter:
             posts = []
             query = get_submitted(self.account, 'new', 'all')
             if query:
-                items = list(query)[:limit]
-                links = Link._byID([item._id for item in items], data=True, return_dict=False)
+                links = self._things(query, limit)
                 
                 for link in links:
                     posts.append({
@@ -155,7 +156,7 @@ class UserDataExporter:
                         'title': link.title,
                         'url': getattr(link, 'url', None),
                         'selftext': getattr(link, 'selftext', None),
-                        'vault': link.vault.name if hasattr(link, 'vault') else None,
+                        'vault': self._vault_name(link),
                         'created_utc': link._date.isoformat() if link._date else None,
                         'score': link._score,
                         'upvotes': link._ups,
@@ -180,14 +181,13 @@ class UserDataExporter:
             comments = []
             query = get_comments(self.account, 'new', 'all')
             if query:
-                items = list(query)[:limit]
-                comment_objs = Comment._byID([item._id for item in items], data=True, return_dict=False)
+                comment_objs = self._things(query, limit)
                 
                 for comment in comment_objs:
                     comments.append({
                         'id': comment._id36,
                         'body': comment.body,
-                        'vault': comment.vault.name if hasattr(comment, 'vault') else None,
+                        'vault': self._vault_name(comment),
                         'link_id': comment.link_id if hasattr(comment, 'link_id') else None,
                         'parent_id': comment.parent_id if hasattr(comment, 'parent_id') else None,
                         'created_utc': comment._date.isoformat() if comment._date else None,
@@ -217,8 +217,7 @@ class UserDataExporter:
             try:
                 inbox_query = get_inbox_messages(self.account)
                 if inbox_query:
-                    items = list(inbox_query)[:limit]
-                    msg_objs = Message._byID([item._id for item in items], data=True, return_dict=False)
+                    msg_objs = self._things(inbox_query, limit)
                     
                     for msg in msg_objs:
                         messages['inbox'].append({
@@ -236,8 +235,7 @@ class UserDataExporter:
             try:
                 sent_query = get_sent(self.account)
                 if sent_query:
-                    items = list(sent_query)[:limit]
-                    msg_objs = Message._byID([item._id for item in items], data=True, return_dict=False)
+                    msg_objs = self._things(sent_query, limit)
                     
                     for msg in msg_objs:
                         messages['sent'].append({
@@ -258,29 +256,31 @@ class UserDataExporter:
     def _collect_saved(self, limit=500):
         """Collect saved items."""
         try:
-            from r2.models.link import SavedLinksByAccount, SavedCommentsByAccount
+            from r2.lib.db.queries import get_saved_comments, get_saved_links
             
             saved = {'links': [], 'comments': []}
             
             try:
-                saved_links = SavedLinksByAccount.by_account(self.account, limit=limit)
+                saved_links = self._things(
+                    get_saved_links(self.account, 'none'), limit)
                 for link in saved_links:
                     saved['links'].append({
                         'id': link._id36,
                         'title': link.title,
-                        'vault': link.vault.name if hasattr(link, 'vault') else None,
+                        'vault': self._vault_name(link),
                         'saved_at': None,  # Timestamp not stored
                     })
             except Exception as e:
                 self.errors.append(f"Error collecting saved links: {str(e)}")
             
             try:
-                saved_comments = SavedCommentsByAccount.by_account(self.account, limit=limit)
+                saved_comments = self._things(
+                    get_saved_comments(self.account, 'none'), limit)
                 for comment in saved_comments:
                     saved['comments'].append({
                         'id': comment._id36,
                         'body_preview': comment.body[:200] if comment.body else None,
-                        'vault': comment.vault.name if hasattr(comment, 'vault') else None,
+                        'vault': self._vault_name(comment),
                         'saved_at': None,
                     })
             except Exception as e:
@@ -294,19 +294,15 @@ class UserDataExporter:
     def _collect_hidden(self, limit=500):
         """Collect hidden items."""
         try:
-            from r2.models.link import HiddenLinksByAccount
+            from r2.lib.db.queries import get_hidden_links
             
             hidden = []
-            try:
-                hidden_links = HiddenLinksByAccount.by_account(self.account, limit=limit)
-                for link in hidden_links:
-                    hidden.append({
-                        'id': link._id36,
-                        'title': link.title,
-                        'vault': link.vault.name if hasattr(link, 'vault') else None,
-                    })
-            except Exception:
-                pass
+            for link in self._things(get_hidden_links(self.account), limit):
+                hidden.append({
+                    'id': link._id36,
+                    'title': link.title,
+                    'vault': self._vault_name(link),
+                })
             
             return hidden
         except Exception as e:
@@ -316,38 +312,44 @@ class UserDataExporter:
     def _collect_votes(self, limit=1000):
         """Collect voting history."""
         try:
-            from r2.models.vote import VotesByAccount
+            from r2.lib.db.queries import get_disliked, get_liked
             
             votes = {'upvoted': [], 'downvoted': []}
             
-            try:
-                # Get liked items
-                liked = VotesByAccount.get_liked(self.account, limit=limit)
-                for item in liked:
-                    votes['upvoted'].append({
-                        'id': item._id36,
-                        'type': 'link' if isinstance(item, Link) else 'comment',
-                        'title': getattr(item, 'title', None) or getattr(item, 'body', '')[:100],
-                    })
-            except Exception:
-                pass
-            
-            try:
-                # Get disliked items
-                disliked = VotesByAccount.get_disliked(self.account, limit=limit)
-                for item in disliked:
-                    votes['downvoted'].append({
-                        'id': item._id36,
-                        'type': 'link' if isinstance(item, Link) else 'comment',
-                        'title': getattr(item, 'title', None) or getattr(item, 'body', '')[:100],
-                    })
-            except Exception:
-                pass
+            for key, query in (('upvoted', get_liked(self.account)),
+                               ('downvoted', get_disliked(self.account))):
+                try:
+                    for item in self._things(query, limit):
+                        votes[key].append({
+                            'id': item._id36,
+                            'type': 'link' if isinstance(item, Link) else 'comment',
+                            'title': getattr(item, 'title', None) or getattr(item, 'body', '')[:100],
+                        })
+                except Exception as e:
+                    self.errors.append(f"Error collecting {key} items: {str(e)}")
             
             return votes
         except Exception as e:
             self.errors.append(f"Error collecting votes: {str(e)}")
             return {'upvoted': [], 'downvoted': []}
+    
+    def _things(self, query, limit):
+        """Load the Things for the first `limit` fullnames in a query.
+
+        Cached queries yield fullnames, not Things.
+        """
+        names = list(itertools.islice(query, limit))
+        if not names:
+            return []
+        return Thing._by_fullname(names, data=True, return_dict=False,
+                                  ignore_missing=True)
+    
+    def _vault_name(self, thing):
+        """Name of the vault a Link or Comment was posted in."""
+        try:
+            return thing.vault_slow.name
+        except Exception:
+            return None
     
     def _collect_subscriptions(self):
         """Collect vault subscriptions."""
