@@ -558,7 +558,7 @@
     %if thing.can_block:
       ${self.banbuttons()}
         %if thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
-          %if getattr(thing.thing, "from_sr", False):
+          %if getattr(thing.thing, "from_vault", False):
             %if not (thing.thing.user_is_moderator or c.user_is_admin):
               <li>
                 %if getattr(thing.thing, "vault_blocked", False):
