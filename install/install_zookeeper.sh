@@ -41,6 +41,13 @@ ZOO_CFG=/etc/zookeeper/conf/zoo.cfg
 ZOO_DATA=/var/lib/zookeeper
 if [ -f "$ZOO_CFG" ]; then
     restart_zookeeper=0
+    # The package ships a placeholder myid ("replace this text with ..."),
+    # which ZooKeeper rejects as an invalid config once dataDir points at
+    # /var/lib/zookeeper (whose myid links to it). Use 1 for a single server.
+    if ! grep -qE "^[0-9]+$" /etc/zookeeper/conf/myid 2>/dev/null; then
+        echo 1 > /etc/zookeeper/conf/myid
+        restart_zookeeper=1
+    fi
     if grep -q '^dataDir=/tmp/zookeeper' "$ZOO_CFG"; then
         systemctl stop zookeeper || true
         if [ -d /tmp/zookeeper/version-2 ] && [ ! -d "$ZOO_DATA/version-2" ]; then
