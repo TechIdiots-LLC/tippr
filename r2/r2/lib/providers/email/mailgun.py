@@ -51,8 +51,8 @@ class MailgunEmailProvider(EmailProvider):
                    parent_email_id=None, other_email_ids=None):
         from pylons import app_globals as g
 
-        if not text and not html:
-            msg = "must provide either text or html in email body"
+        if not text:
+            msg = "must provide text in email body"
             raise TypeError(msg)
 
         # pick out the mailgun domain from the from_address field domain

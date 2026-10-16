@@ -126,7 +126,7 @@ class CMemcache(CacheUtils):
 
     def set_multi(self, keys, prefix='', time=0):
         if time < 0:
-            raise ValueError("Rejecting negative TTL for key %s" % key)
+            raise ValueError("Rejecting negative TTL for keys %s" % list(keys))
 
         str_keys = {str(k): v for k, v in keys.items()}
         with self.clients.reserve() as mc:
@@ -136,7 +136,7 @@ class CMemcache(CacheUtils):
     def add_multi(self, keys, prefix='', time=0):
         # pylibmc converts this number to an unsigned integer without warning
         if time < 0:
-            raise ValueError("Rejecting negative TTL for key %s" % key)
+            raise ValueError("Rejecting negative TTL for keys %s" % list(keys))
 
         str_keys = {str(k): v for k, v in keys.items()}
         with self.clients.reserve() as mc:

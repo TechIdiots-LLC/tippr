@@ -108,7 +108,7 @@ def mr_map_parallel(processor, fd = stdin,
     # mr_tools functions, we break on newlines in the emitted output
 
     if workers == 1:
-        return mr_map(process, fd=fd)
+        return mr_map(processor, fd=fd)
 
     pool = multiprocessing.Pool(workers)
 

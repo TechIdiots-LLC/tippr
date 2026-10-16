@@ -84,6 +84,9 @@ def parse_s3_path(path):
     return S3Path(*_from_path(path))
 
 
+EXPIRES_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
 def format_expires(expires):
     return expires.strftime(EXPIRES_DATE_FORMAT)
 
