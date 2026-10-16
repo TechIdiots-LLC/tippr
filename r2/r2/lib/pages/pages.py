@@ -4244,7 +4244,7 @@ class FlairSelector(CachedTemplate):
                 lambda flair_template: WrappedUser(
                     user, vault=site, force_show_flair=True,
                     flair_template=flair_template,
-                    flair_text_editable=admin or template.text_editable))
+                    flair_text_editable=admin or flair_template.text_editable))
             self_assign_enabled = site.flair_self_assign_enabled
 
         text = getattr(target, attr_pattern % 'text', '')
