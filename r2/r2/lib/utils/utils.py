@@ -47,7 +47,7 @@ import pytz
 import snudown
 import unidecode
 from babel.dates import TIMEDELTA_UNITS
-from BeautifulSoup import BeautifulSoup, SoupStrainer
+from bs4 import BeautifulSoup, SoupStrainer
 from mako.filters import url_escape
 from pylons import app_globals as g
 from pylons import config, request
@@ -292,10 +292,10 @@ def extract_title(data):
     the <title> tag instead if one is not found. If using <title>,
     also attempts to trim off the site's name from the end.
     """
-    bs = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
-    if not bs or not bs.html.head:
+    bs = BeautifulSoup(data, 'html.parser')
+    head_soup = bs.head
+    if not head_soup:
         return
-    head_soup = bs.html.head
 
     title = None
 
@@ -1631,7 +1631,7 @@ def extract_urls_from_markdown(md):
     html = snudown.markdown(_force_utf8(md))
     links = SoupStrainer("a")
 
-    for link in BeautifulSoup(html, parseOnlyThese=links):
+    for link in BeautifulSoup(html, 'html.parser', parse_only=links).find_all('a'):
         url = link.get('href')
         if url:
             yield url
