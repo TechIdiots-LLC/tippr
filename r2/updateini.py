@@ -53,8 +53,7 @@ def main(source_ini, *update_inis):
             # fails. Use read_file for Python 3 compatibility.
             parser.read_file(StringIO(updates))
         except MissingSectionHeaderError:
-            updates = "[DEFAULT]
-" + updates
+            updates = "[DEFAULT]\n" + updates
             parser.read_file(StringIO(updates))
     print(HEADER)
     parser.write(sys.stdout)

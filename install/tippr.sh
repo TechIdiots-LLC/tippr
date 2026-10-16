@@ -1065,7 +1065,7 @@ sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" PYTHONPATH="$TIPPR_SRC/tippr:$T
 
 # Ensure `development.ini` exists. If `make ini` didn't create it (CI or
 # permission issues), try generating it directly with `updateini.py`.
-if [ ! -f development.ini ]; then
+if [ ! -s development.ini ]; then
     echo "development.ini not found; attempting to generate with updateini.py"
     sudo -u $TIPPR_USER bash -lc "PATH=\"$TIPPR_VENV/bin:\$PATH\" PYTHONPATH=\"$TIPPR_SRC/tippr:$TIPPR_SRC\" python updateini.py example.ini development.update development.secrets > development.ini" || true
 fi
@@ -1074,7 +1074,7 @@ chmod 0600 development.ini 2>/dev/null || true
 
 # Ensure run.ini is a symlink to a real ini. Prefer development.ini, fall
 # back to example.ini if generation failed.
-if [ -f development.ini ]; then
+if [ -s development.ini ]; then
     # Create a real file (not a symlink) to avoid broken-link surprises in CI
     sudo -u $TIPPR_USER cp -f development.ini run.ini
     sudo -u $TIPPR_USER chown $TIPPR_USER run.ini || true
