@@ -111,7 +111,7 @@ if [ $INTERVAL = "all" ]; then
 fi
 
 MINID=$(run_query "SELECT thing_id
-                   FROM reddit_thing_$THING_CLS
+                   FROM tippr_thing_$THING_CLS
                    WHERE
                       date > now() - interval '1 $INTERVAL' AND
                       date < now()
@@ -123,7 +123,7 @@ if [ -z $MINID ]; then
 fi
 
 run_query "\\copy (SELECT thing_id, 'thing', '$THING_CLS', ups, downs, deleted, spam, extract(epoch from date)
-                   FROM reddit_thing_$THING_CLS
+                   FROM tippr_thing_$THING_CLS
                    WHERE
                        not deleted AND
                        thing_id >= $MINID

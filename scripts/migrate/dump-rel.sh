@@ -8,7 +8,7 @@ RELNAME=$1
 cat <<DUMP_REL | ./run-query.sh
 SET enable_bitmapscan=false;
 
-\\copy(SELECT rel_id, thing1_id, thing2_id, name, EXTRACT(epoch FROM date) FROM reddit_rel_$RELNAME) to 'input/$RELNAME.dump';
+\\copy(SELECT rel_id, thing1_id, thing2_id, name, EXTRACT(epoch FROM date) FROM tippr_rel_$RELNAME) to 'input/$RELNAME.dump';
 DUMP_REL
 
 cat <<DUMP_RELDATA | ./run-query.sh

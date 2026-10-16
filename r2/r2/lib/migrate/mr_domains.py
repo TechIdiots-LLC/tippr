@@ -39,16 +39,16 @@ cd ~/reddit/r2
 time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'link',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
-                   from reddit_thing_link t
+                   from tippr_thing_link t
                   where not t.spam and not t.deleted
                   )
-                  to 'reddit_thing_link.dump'"
+                  to 'tippr_thing_link.dump'"
 time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
                    from tippr_data_link d
                   where d.key = 'url' ) to 'tippr_data_link.dump'"
-cat tippr_data_link.dump reddit_thing_link.dump | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "join_links()" > links.joined
+cat tippr_data_link.dump tippr_thing_link.dump | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "join_links()" > links.joined
 cat links.joined | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "write_permacache()"
 """
 

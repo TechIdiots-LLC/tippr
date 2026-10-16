@@ -8,7 +8,7 @@ THING=$1
 cat <<DUMP_THING | ./run-query.sh
 SET enable_bitmapscan=false;
 
-\\copy (SELECT thing_id, ups, downs, deleted, spam, EXTRACT(epoch FROM date) FROM reddit_thing_$THING) to 'input/$THING.dump';
+\\copy (SELECT thing_id, ups, downs, deleted, spam, EXTRACT(epoch FROM date) FROM tippr_thing_$THING) to 'input/$THING.dump';
 DUMP_THING
 
 cat <<DUMP_THINGDATA | ./run-query.sh

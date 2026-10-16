@@ -45,41 +45,41 @@ SAVEHIDEDBHOST=db01s1
 time psql -F"\t" -A -t -d newvault -U ri -h $LINKDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'link',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
-                   from reddit_thing_link t) to 'reddit_thing_link.dump'"
+                   from tippr_thing_link t) to 'tippr_thing_link.dump'"
 time psql -F"\t" -A -t -d newvault -U ri -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
                    from tippr_data_link d
                   where d.key = 'author_id' or d.key = 'vault_id') to 'tippr_data_link.dump'"
-pv tippr_data_link.dump reddit_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
+pv tippr_data_link.dump tippr_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
 pv links.joined | ./mr_permacache "link_listings()" | sort -T. -S200m > links.listings
 
 ## comments
 psql -F"\t" -A -t -d newvault -U ri -h $COMMENTDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'comment',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
-                   from reddit_thing_comment t) to 'reddit_thing_comment.dump'"
+                   from tippr_thing_comment t) to 'tippr_thing_comment.dump'"
 psql -F"\t" -A -t -d newvault -U ri -h $COMMENTDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'comment',
                         d.key, d.value
                    from tippr_data_comment d
                   where d.key = 'author_id') to 'tippr_data_comment.dump'"
-cat tippr_data_comment.dump reddit_thing_comment.dump | sort -T. -S200m | ./mr_permacache "join_comments()" > comments.joined
+cat tippr_data_comment.dump tippr_thing_comment.dump | sort -T. -S200m | ./mr_permacache "join_comments()" > comments.joined
 cat links.joined | ./mr_permacache "comment_listings()" | sort -T. -S200m > comments.listings
 
 ## linkvotes
 psql -F"\t" -A -t -d newvault -U ri -h $VOTEDBHOST \
      -c "\\copy (select r.rel_id, 'vote_account_link',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
-                   from reddit_rel_vote_account_link r) to 'reddit_linkvote.dump'"
-pv reddit_linkvote.dump | ./mr_permacache "linkvote_listings()" | sort -T. -S200m > linkvotes.listings
+                   from tippr_rel_vote_account_link r) to 'tippr_linkvote.dump'"
+pv tippr_linkvote.dump | ./mr_permacache "linkvote_listings()" | sort -T. -S200m > linkvotes.listings
 
 #savehide
 psql -F"\t" -A -t -d newvault -U ri -h $SAVEHIDEDBHOST \
      -c "\\copy (select r.rel_id, 'savehide',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
-                   from reddit_rel_savehide r) to 'reddit_savehide.dump'"
-pv reddit_savehide.dump | ./mr_permacache "savehide_listings()" | sort -T. -S200m > savehide.listings
+                   from tippr_rel_savehide r) to 'tippr_savehide.dump'"
+pv tippr_savehide.dump | ./mr_permacache "savehide_listings()" | sort -T. -S200m > savehide.listings
 
 ## load them up
 # the individual .listings files are sorted so even if it's not sorted
