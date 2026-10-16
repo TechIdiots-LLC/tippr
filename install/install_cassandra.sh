@@ -98,8 +98,10 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     echo "Waiting for Cassandra JVM to open port 9042 (up to 5 minutes)..."
     CASSANDRA_UP=0
     for i in $(seq 1 150); do
-        # Bail early if the JVM died rather than spin the full 5 minutes
-        if ! pgrep -f 'org.apache.cassandra' > /dev/null 2>&1; then
+        # Bail early if the JVM died rather than spin the full 5 minutes. The
+        # init script takes a few seconds to exec java after a restart, so
+        # only treat a missing JVM as fatal after the first 30 seconds.
+        if [ "$i" -gt 15 ] && ! pgrep -f 'org.apache.cassandra' > /dev/null 2>&1; then
             echo "  Cassandra JVM process is not running — startup failed early." >&2
             break
         fi
