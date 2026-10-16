@@ -25,7 +25,7 @@
 
 from urllib.error import HTTPError
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c
@@ -60,13 +60,13 @@ class EmbedController(TipprController):
     allow_stylesheets = True
 
     def rendercontent(self, input, fp):
-        soup = BeautifulSoup(input)
+        soup = BeautifulSoup(input, 'html.parser')
 
         output = soup.find("div", { 'class':'wiki', 'id':'content'} )
 
         # Replace all links to "/wiki/help/..." with "/help/..."
-        for link in output.findAll('a'):
-            if 'href' in link and link['href'].startswith("/wiki/help"):
+        for link in output.find_all('a'):
+            if link.get('href', '').startswith("/wiki/help"):
                 link['href'] = link['href'][5:]
 
         output = SC_OFF + str(output) + SC_ON
