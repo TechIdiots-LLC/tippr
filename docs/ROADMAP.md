@@ -36,10 +36,10 @@ installed with `install-tippr.sh`.
 - **Search:** add an OpenSearch provider to replace CloudSearch/Solr; see
   [Search](#search).
 - **Shims:** remove the compatibility shims left over from the Python 3 and
-  upgrade work (`baseplate/`, `pylons/`, `pycassa/`, `weberror/`,
-  `BeautifulSoup.py`, …) wherever a maintained library can replace them.
-  The repo's `baseplate/` shim shadowing the real baseplate package has
-  already caused bugs.
+  upgrade work (`baseplate/`, `pylons/`, `pycassa/`, `weberror/`, …)
+  wherever a maintained library can replace them. The repo's `baseplate/`
+  shim shadowing the real baseplate package has already caused bugs.
+  `BeautifulSoup.py` is gone: the code uses bs4 directly.
 
 ## Then
 
