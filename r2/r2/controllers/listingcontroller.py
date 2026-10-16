@@ -536,7 +536,7 @@ class HotController(ListingWithPromos):
         if not c.user.pref_show_trending:
             return None
 
-        trending_data = trending.get_trending_Vaults()
+        trending_data = trending.get_trending_vaults()
 
         if not trending_data:
             return None

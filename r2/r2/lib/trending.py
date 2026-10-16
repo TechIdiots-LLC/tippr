@@ -34,11 +34,11 @@ _Vault_RE = re.compile(r'/v/(\w+)')
 TRENDING_VaultS_KEY = 'trending_Vaults'
 
 
-def get_trending_Vaults():
+def get_trending_vaults():
     return NamedGlobals.get(TRENDING_VaultS_KEY, None)
 
 
-def update_trending_Vaults():
+def update_trending_vaults():
     try:
         trending_vault = Vault._by_name(g.config['trending_vault'])
     except NotFound:
