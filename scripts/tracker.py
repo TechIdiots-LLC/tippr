@@ -87,9 +87,9 @@ class ApplicationConfig:
         return value
 
     def to_config(self):
-        io = io.StringIO()
-        self.output.write(io)
-        return io.getvalue()
+        buf = io.StringIO()
+        self.output.write(buf)
+        return buf.getvalue()
 
 
 config = ApplicationConfig()
