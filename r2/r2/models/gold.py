@@ -551,7 +551,7 @@ def make_gold_message(thing, user_gilded):
     if c.user_is_loggedin and thing.author_id == c.user._id:
         if isinstance(thing, Comment):
             gilded_message = ungettext(
-                "a redditor gifted you a month of tippr gold for this "
+                "a user gifted you a month of tippr gold for this "
                 "comment.",
                 "tippr users have gifted you %(months)d months of tippr gold "
                 "for this comment.",
@@ -559,7 +559,7 @@ def make_gold_message(thing, user_gilded):
             )
         else:
             gilded_message = ungettext(
-                "a redditor gifted you a month of tippr gold for this "
+                "a user gifted you a month of tippr gold for this "
                 "submission.",
                 "tippr users have gifted you %(months)d months of tippr gold "
                 "for this submission.",
@@ -585,7 +585,7 @@ def make_gold_message(thing, user_gilded):
     else:
         if isinstance(thing, Comment):
             gilded_message = ungettext(
-                "a redditor has gifted tippr gold to %(recipient)s for this "
+                "a user has gifted tippr gold to %(recipient)s for this "
                 "comment.",
                 "tippr users have gifted %(months)d months of tippr gold to "
                 "%(recipient)s for this comment.",
@@ -593,7 +593,7 @@ def make_gold_message(thing, user_gilded):
             )
         else:
             gilded_message = ungettext(
-                "a redditor has gifted tippr gold to %(recipient)s for this "
+                "a user has gifted tippr gold to %(recipient)s for this "
                 "submission.",
                 "tippr users have gifted %(months)d months of tippr gold to "
                 "%(recipient)s for this submission.",
