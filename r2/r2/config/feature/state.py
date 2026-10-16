@@ -27,6 +27,7 @@ import hashlib
 import json
 
 from pylons import app_globals as g
+from pylons import request
 from pylons import tmpl_context as c
 
 

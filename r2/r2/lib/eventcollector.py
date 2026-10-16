@@ -385,6 +385,7 @@ class EventQueue:
                 if action_name in ("wiki_settings", "wiki_edit"):
                     target = context.site
                 elif action_name in ("wiki_allow_editor"):
+                    from r2.models import Account
                     target = Account._by_name(request.POST.get("username"))
                 elif action_name in ("delete_sr_header", "delete_sr_icon",
                         "delete_sr_banner"):
