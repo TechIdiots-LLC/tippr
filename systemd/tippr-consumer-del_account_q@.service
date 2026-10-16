@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=@TIPPR_VENV@/bin/paster run --proctitle del_account_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c 'consume_deleted_accounts()'
+ExecStart=@TIPPR_VENV@/bin/paster --plugin=r2 run --proctitle del_account_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c 'consume_deleted_accounts()'
 Restart=always
 Nice=10
 
