@@ -33,7 +33,7 @@
   <ol class="list">
   %for vault, count in thing.facets:
     <li class="searchfacet tippr">
-      <a class="facet title word" href="${search_url(thing.prev_search, vault.name, restrict_sr='on', sort=thing.sort, recent=thing.recent, ref='search_facets')}">/r/${vault.name}</a>&nbsp;
+      <a class="facet title word" href="${search_url(thing.prev_search, vault.name, restrict_sr='on', sort=thing.sort, recent=thing.recent, ref='search_facets')}">/v/${vault.name}</a>&nbsp;
       <span class="facet count number">(${count})</span>
     </li>&nbsp;
   %endfor

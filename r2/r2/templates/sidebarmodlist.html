@@ -39,7 +39,7 @@
   %>
 
   <li class="${sr_class}">
-    <a href="${vault.path}" title="/v/${vault.name}">/r/${vault.name}</a>
+    <a href="${vault.path}" title="/v/${vault.name}">/v/${vault.name}</a>
     %if vault.quarantine:
       <span class="quarantine-stamp stamp">${quarantine_stamp()}</span>
     %elif vault.over_18 and c.user.pref_label_nsfw:
