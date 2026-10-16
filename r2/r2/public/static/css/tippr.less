@@ -5,120 +5,119 @@
 @import "search.less";
 @import "interstitial.less";
 @import "mobile-grid.less";
-.vault-interest-bar {
-    position: relative;
-    background: #cee3f8 url(../tippr-upside-down.png) 15px top no-repeat;
-    padding: 5px;
-    overflow: hidden;
-    border: 1px solid #336699;
-    margin-bottom: 10px;
+.no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-.organic-listing .vault-interest-bar {
-    border: none;
-    margin: 0;
-}
-
-.vault-interest-bar .bubble {
-    position: relative;
-    margin-left: 85px;
-    margin-right: 68px;
-    max-width: 700px;
-    font-size: 13px;
-    background: white;
-    padding: 6px;
-    border-radius: 8px;
-}
-
-.vault-interest-bar .bubble:after {
+.screenreader-only {
     position: absolute;
-    display: block;
-    content: '';
-    border: 10px solid;
-    border-style: solid solid outset;
-    border-color: transparent;
-    border-right-color: white;
-    left: -20px;
-    top: 15px;
-}
-
-.vault-interest-bar .bubble p {
-    margin: 6px 3px;
-    margin-top: 0;
-}
-
-.vault-interest-bar .subscribe {
-    background-image: url(../bg-button-add.png); /* SPRITE stretch-x */
-    border: 1px solid #444;
-    border-radius: 3px;
-    padding: 0 6px;
-    color: white;
-    font-weight: bold;
-}
-
-.vault-interest-bar .query-box {
-    position: relative;
-    padding: 2px 4px;
-    border: 2px solid #979797;
-    border-radius: 5px;
-}
-
-.vault-interest-bar.focus .query-box {
-    border-color: #5f99cf;
-}
-
-.vault-interest-bar.error .query-box {
-    border-color: #cf5e5e;
-}
-
-.vault-interest-bar .error-caption, .vault-interest-bar.error .caption {
-    display: none;
-}
-
-.vault-interest-bar.error .error-caption {
-    display: block;
-}
-
-.vault-interest-bar .query {
-    width: 100%;
-    font-size: 20px;
-    margin: 0;
+    width: 1px;
+    height: 1px;
     padding: 0;
-    border: none;
-    outline: none;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
 }
 
-.vault-interest-bar .throbber {
-    position: absolute;
-    right: 3px;
-    top: 5px;
+.basic-button {
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 5px;
+
+    &:focus {
+        outline: 0;
+        box-shadow: inset 0 0 0 1px fadeout(white, 65%);
+    }
+
+    &:active {
+        box-shadow: inset 0 1px 1px 1px fadeout(black, 90%);
+    }
+
+    &:disabled, &.disabled {
+        .linear-gradient(#e9edf1, #dce3ea) !important;
+        color: #999999 !important;
+        text-shadow: 0 1px 0 lighten(#dce3ea, 15%) !important;
+        border-color: darken(#dce3ea, 5%) !important;
+        box-shadow: none !important;
+    }
 }
 
-.vault-interest-bar ul.results {
-    margin: 0;
-    margin-top: 6px;
-    padding-top: 2px;
-    border-top: 1px dotted #bbb;
-    display: none;
+.button-style(@top-color, @bottom-color, @border-color) {
+    &:extend(.basic-button all);
+    .linear-gradient(@top-color, @bottom-color);
+    border-color: @border-color;
+    &:hover {
+        .linear-gradient(lighten(@top-color, 5%), @bottom-color);
+    }
 }
 
-.vault-interest-bar li {
-    display: inline-block;
-    margin: 6px 3px;
+@gold-fonts: Palatino, georgia, garamond, FreeSerif, serif;
+@gold-button-bg: #938870;
+@gold-button-hover: #B8AB90;
+@gold-button-active: #C3B598;
+@gold-button-border: 1px solid #5E5137;
+
+html {
+    height: 100%; /* Needed for toolbar's comments panel's pinstripe */
 }
 
-.vault-interest-bar a {
-    padding: 1px 2px;
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,th,td,iframe {
+  margin:0;
+  padding:0;
 }
 
-.vault-interest-bar a:hover {
-    text-decoration: underline;
+table { border-collapse:collapse; }
+
+fieldset,img { border:0; }
+
+address,caption,cite,code,dfn,em,strong,th,var { font-style:normal; font-weight:normal; }
+ol,ul { list-style:none; }
+caption,th { text-align:left; }
+h1,h2,h3,h4,h5,h6 { font-size:100%; }
+q:before,q:after { content:''; }
+
+body {
+    font: normal x-small verdana, arial, helvetica, sans-serif;
+    background-color: white;
+    z-index: 1;
+    min-height: 100%;
 }
 
-.vault-interest-bar .results .random {
-    color: gray;
-    font-weight: bold;
+textarea { font:  normal small verdana, arial, helvetica, sans-serif; }
+
+/* [1] fixes a bug in old versions of WebKit, as used in Android 4.0. See
+ * https://github.com/necolas/normalize.css/commit/79b3d21b697e ,
+ * https://github.com/h5bp/mobile-boilerplate/issues/121 */
+button,
+html input[type="button"], /* [1] */
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button;
+    cursor: pointer;
+    /* Since we reset the padding on some of these things above, make it
+     * something reasonable (and consistent). */
+    padding: 2px 6px 3px;
 }
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
+/*html,body { height: 100%; }*/
+
+/* IE dumbness patch. hidden input in a hidden block that is
+ * subsequently shown leads to the input to "show" and generate undesired
+ * )padding.  This makes it go away. */ 
+input[type=hidden] { position: absolute; }
+
+/* html element defaults */
+
 h1 { font-size: 18px; font-weight: normal; margin: 10px 0 }
 
 h2 { color: #369; font-size: 13px; }
