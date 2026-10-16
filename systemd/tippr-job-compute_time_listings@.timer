@@ -1,0 +1,10 @@
+[Unit]
+Description=Recompute time-limited %i listings every 15 minutes
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:0/15
+AccuracySec=1s
+
+[Install]
+WantedBy=tippr.target

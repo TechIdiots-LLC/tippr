@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-update_gold_users daily
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

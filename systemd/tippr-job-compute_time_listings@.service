@@ -1,0 +1,13 @@
+[Unit]
+Description=recompute time-limited %i listings (top/controversial this hour/day/week/month/year)
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=@TIPPR_SRC@/tippr/scripts/compute_time_listings %i year "['hour', 'day', 'week', 'month', 'year']"
+
+Nice=10

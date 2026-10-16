@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-update_vault_names daily at 03:00
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

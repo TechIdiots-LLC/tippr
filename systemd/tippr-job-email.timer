@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-email every minute
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:0/1
+AccuracySec=1s
+
+[Install]
+WantedBy=tippr.target

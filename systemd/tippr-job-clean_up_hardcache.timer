@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-clean_up_hardcache every 5 minutes
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:0/5
+AccuracySec=1s
+
+[Install]
+WantedBy=tippr.target

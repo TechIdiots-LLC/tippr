@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-trylater hourly
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

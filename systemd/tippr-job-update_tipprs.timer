@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-update_tipprs daily at 16:30
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*-*-* 16:30:00
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

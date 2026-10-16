@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-rising every 2 minutes
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:0/2
+AccuracySec=1s
+
+[Install]
+WantedBy=tippr.target
