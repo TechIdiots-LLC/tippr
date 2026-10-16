@@ -25,7 +25,9 @@
 ###############################################################################
 """Tools for evaluating promoted link distribution."""
 
+import copy
 import datetime
+import random
 from collections import defaultdict
 from math import sqrt
 
@@ -33,13 +35,13 @@ from pylons import app_globals as g
 from r2.lib import promote
 from r2.lib.utils import to36, weighted_lottery
 from r2.models import (
-    DefaultSR,
+    DefaultVault,
     Link,
     PromoCampaign,
 )
 from r2.models.bidding import PromotionWeights
 from r2.models.traffic import (
-    PageviewsBySubredditAndPath,
+    PageviewsByVaultAndPath,
     Session,
     TargetedImpressionsByCodename,
 )
@@ -117,7 +119,7 @@ def filter_campaigns(date, fullnames):
 
 def get_frontpage_pageviews(date):
     vault_name = DefaultVault.name
-    traffic_cls = PageviewsBySubredditAndPath
+    traffic_cls = PageviewsByVaultAndPath
     q = (Session.query(traffic_cls.srpath, traffic_cls.pageview_count)
            .filter(traffic_cls.interval == 'day')
            .filter(traffic_cls.date == date)
