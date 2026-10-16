@@ -409,8 +409,8 @@ action = add_vault(action, vault_path=False)
           (${_("show how much gold you have remaining on your userpage")})
         </span>
         <br>
-        <% ctip_link = unsafe('&#32;<a href="/ctips">ctip</a>&#32;') %>
-        ${checkbox(_wsf("use a %(ctip_link)s to automatically renew my gold if it expires", ctip_link=ctip_link), "ctip_autorenew")}
+        <% coin_link = unsafe('&#32;<a href="/coins">coin</a>&#32;') %>
+        ${checkbox(_wsf("use a %(coin_link)s to automatically renew my gold if it expires", coin_link=coin_link), "coin_autorenew")}
     </td>
   </tr>
   %elif c.user.is_moderator_somewhere:

@@ -31,15 +31,15 @@
 <form id="thanks" action="/api/claimgold" method="post"
       class="content"
       onsubmit="return post_form(this, 'claimgold');">
-%if thing.status == "ctips":
-  <h1>${_("thanks for buying ctips!")}</h1>
+%if thing.status == "coins":
+  <h1>${_("thanks for buying coins!")}</h1>
 %else:
   <h1>${_("thanks for subscribing!")}</h1>
 %endif
 
 <p class="blurb">
-%if thing.status == "ctips":
-  ${_("enter your confirmation code below to claim your gift ctips")}
+%if thing.status == "coins":
+  ${_("enter your confirmation code below to claim your gift coins")}
 %elif thing.status == "mundane":
   ${_("enter your confirmation code below to activate tippr gold")}
 %else:

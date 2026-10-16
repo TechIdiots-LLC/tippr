@@ -2436,7 +2436,7 @@ class ProfileBar(Templated):
         self.show_users_gold_expiration = (self.show_private_info or
             user.pref_show_gold_expiration) and user.gold
         self.show_private_gold_info = (self.show_private_info and
-            (user.gold or user.gold_ctips > 0 or user.num_gildings > 0))
+            (user.gold or user.gold_coins > 0 or user.num_gildings > 0))
 
         if self.show_users_gold_expiration:
             gold_days_left = (user.gold_expiration -
@@ -2458,12 +2458,12 @@ class ProfileBar(Templated):
                 if user.has_stripe_subscription:
                     self.stripe_customer_id = user.gold_subscr_id
 
-            if user.gold_ctips > 0 and self.show_private_info:
-                msg = ungettext("%(ctips)s gold ctip to give",
-                                "%(ctips)s gold ctips to give",
-                                user.gold_ctips)
-                msg = msg % dict(ctips=user.gold_ctips)
-                self.gold_ctip_message = msg
+            if user.gold_coins > 0 and self.show_private_info:
+                msg = ungettext("%(coins)s gold coin to give",
+                                "%(coins)s gold coins to give",
+                                user.gold_coins)
+                msg = msg % dict(coins=user.gold_coins)
+                self.gold_coin_message = msg
 
             if user.num_gildings > 0 and self.show_private_info:
                 gildings_msg = ungettext(
@@ -3104,7 +3104,7 @@ class Thanks(Templated):
     """The page to claim tippr gold trophies"""
     def __init__(self, secret=None):
         if secret and secret.startswith("cr_"):
-            status = "ctips"
+            status = "coins"
         elif c.user.gold:
             status = "gold"
         else:
@@ -3122,21 +3122,21 @@ class Gold(Templated):
                  edit=False):
 
         if c.user.employee:
-            user_ctips = 50
+            user_coins = 50
         else:
-            user_ctips = c.user.gold_ctips
+            user_coins = c.user.gold_coins
 
         Templated.__init__(self, goldtype = goldtype, period = period,
                            months = months, signed = signed,
                            email=email,
                            recipient=recipient,
                            giftmessage=giftmessage,
-                           user_ctips = user_ctips,
+                           user_coins = user_coins,
                            can_subscribe=can_subscribe,
                            edit=edit)
 
 
-class ctips(Templated):
+class coins(Templated):
     pass
 
 
@@ -3161,15 +3161,15 @@ class GoldPayment(Templated):
                 price = unit_price * years
 
         if c.user.employee:
-            user_ctips = 50
+            user_coins = 50
         else:
-            user_ctips = c.user.gold_ctips
+            user_coins = c.user.gold_coins
 
         if (goldtype in ("gift", "code", "onetime") and
-                months <= user_ctips):
-            can_use_ctips = True
+                months <= user_coins):
+            can_use_coins = True
         else:
-            can_use_ctips = False
+            can_use_coins = False
 
         if goldtype == "autorenew":
             if period == "monthly":
@@ -3215,7 +3215,7 @@ class GoldPayment(Templated):
                 if goldtype == "code":
                     paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYMONTH
                 else:
-                    paypal_buttonid = g.PAYPAL_BUTTONID_CTIPS_BYMONTH
+                    paypal_buttonid = g.PAYPAL_BUTTONID_COINS_BYMONTH
                 quantity = months
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
@@ -3223,15 +3223,15 @@ class GoldPayment(Templated):
                 if goldtype == "code":
                     paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYYEAR
                 else:
-                    paypal_buttonid = g.PAYPAL_BUTTONID_CTIPS_BYYEAR
+                    paypal_buttonid = g.PAYPAL_BUTTONID_COINS_BYYEAR
                 quantity = months / 12
                 months = quantity * 12
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
 
-            if goldtype == "ctips":
-                summary = strings.gold_summary_ctips % dict(
-                    amount=Score.somethings(months, "ctip"),
+            if goldtype == "coins":
+                summary = strings.gold_summary_coins % dict(
+                    amount=Score.somethings(months, "coin"),
                     price=price,
                 )
             elif goldtype == "gift":
@@ -3276,14 +3276,14 @@ class GoldPayment(Templated):
                            months=months, quantity=quantity,
                            unit_price=unit_price, price=price,
                            summary=summary, giftmessage=giftmessage,
-                           can_use_ctips=can_use_ctips,
+                           can_use_coins=can_use_coins,
                            passthrough=passthrough,
                            thing=thing, clone_template=clone_template,
                            description=desc, thing_type=thing_type,
                            paypal_buttonid=paypal_buttonid,
                            stripe_key=stripe_key,
                            coinbase_button_id=coinbase_button_id,
-                           user_ctips=user_ctips,
+                           user_coins=user_coins,
                            )
 
 
@@ -3713,8 +3713,8 @@ class AdminAwardWinners(Templated):
         Templated.__init__(self, award = award, trophies = trophies)
 
 
-class AdminCtips(Templated):
-    """The admin interface for giving ctips to a user."""
+class AdminCoins(Templated):
+    """The admin interface for giving coins to a user."""
     def __init__(self, recipient):
         self.recipient = recipient
         Templated.__init__(self)

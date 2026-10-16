@@ -12,7 +12,7 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/` — admin landing (controller=`awards`).
 - `/admin/awards` — manage awards (list/edit awards).
 - `/admin/awards/:awardcn/:action` — award actions (`give` or `winners`).
-- `/admin/ctips` — give ctips to a user (handler: `AdminToolController.GET_ctips`).
+- `/admin/coins` — give coins to a user (handler: `AdminToolController.GET_coins`).
 - `/admin/gold` — give/take gold days for a user (handler: `AdminToolController.GET_gold`).
 - `/traffic` and related routes — promoted link and traffic analytics (sitewide, language, advert traffic pages). Requires `VEmployee()`.
 - `/about/log` — moderation/audit log pages.
@@ -28,7 +28,7 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 
 ## Admin templates (common)
 Files under `r2/r2/templates/` used by admin pages include:
-- `adminctips.html`
+- `admincoins.html`
 - `admingold.html`
 - `adminawards.html`
 - `adminawardgive.html`
@@ -40,7 +40,7 @@ Files under `r2/r2/templates/` used by admin pages include:
 
 ## Where to look in the codebase
 - Controller endpoints: `r2/r2/controllers/admin.py` and other controllers (see `r2/r2/config/routing.py` for mappings).
-- Admin page helpers and sidebars: `r2/r2/lib/pages/admin_pages.py` and `r2/r2/lib/pages/pages.py` (admin page classes such as `AdminPage`, `AdminNotesSidebar`, `AdminCtips`, `AdminGold`).
+- Admin page helpers and sidebars: `r2/r2/lib/pages/admin_pages.py` and `r2/r2/lib/pages/pages.py` (admin page classes such as `AdminPage`, `AdminNotesSidebar`, `AdminCoins`, `AdminGold`).
 - Admin notes model: `r2/r2/models/admin_notes.py`.
 - Templates: `r2/r2/templates/*` (listed above).
 
@@ -59,7 +59,7 @@ Files under `r2/r2/templates/` used by admin pages include:
 ## Quick test steps
 1. Start the app locally and your memcached (if you want real fragment caching).
 2. In a browser or curl, enable admin: `GET /adminon`.
-3. Open an admin page, e.g.: `GET /admin/ctips` or `GET /admin/gold`.
+3. Open an admin page, e.g.: `GET /admin/coins` or `GET /admin/gold`.
 4. Check `/health` and `/health/caches` for quick system checks.
 
 ## Next improvements

@@ -606,8 +606,8 @@ def make_gold_message(thing, user_gilded):
     )
 
 
-def ctips_lock(user):
-    return g.make_lock("gold_ctips", "ctips_%s" % user._id)
+def coins_lock(user):
+    return g.make_lock("gold_coins", "coins_%s" % user._id)
 
 
 PENNIES_PER_SERVER_SECOND = {

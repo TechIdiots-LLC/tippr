@@ -139,7 +139,7 @@ def make_map(config):
     mc('/admin/awards/:awardcn/:action', controller='awards',
        requirements=dict(action="give|winners"))
 
-    mc('/admin/ctips', controller='admintool', action='ctips')
+    mc('/admin/coins', controller='admintool', action='coins')
     mc('/admin/gold', controller='admintool', action='gold')
 
     # Privacy Admin Dashboard
@@ -313,8 +313,8 @@ def make_map(config):
     mc('/gold/thanks', controller='front', action='goldthanks')
     mc('/gold/subscription', controller='forms', action='subscription')
     mc('/gilding', controller='front', action='gilding')
-    mc('/ctips', controller='redirect', action='redirect', 
-       dest='/gold?goldtype=ctips')
+    mc('/coins', controller='redirect', action='redirect', 
+       dest='/gold?goldtype=coins')
 
     mc('/password', controller='forms', action="password")
     mc('/random', controller='front', action="random")
@@ -396,7 +396,7 @@ def make_map(config):
     mc('/api/privacy/requests', controller='privacy',
        action='privacy_requests_json')
     
-    mc('/api/spendctips', controller='ipn', action="spendctips")
+    mc('/api/spendcoins', controller='ipn', action="spendcoins")
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
     mc('/api/modify_subscription', controller='stripe',
        action='modify_subscription')

@@ -85,7 +85,7 @@ PREFS_VALIDATORS = dict(
     pref_monitor_mentions=VBoolean("monitor_mentions"),
     pref_hide_locationbar=VBoolean("hide_locationbar"),
     pref_use_global_defaults=VBoolean("use_global_defaults"),
-    pref_ctip_autorenew=VBoolean("ctip_autorenew"),
+    pref_coin_autorenew=VBoolean("coin_autorenew"),
     pref_enable_default_themes=VBoolean("enable_default_themes", False),
     pref_default_theme_vault=VVaultByName("theme_selector", required=False,
         return_vaultname=True),

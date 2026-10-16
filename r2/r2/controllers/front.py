@@ -1484,8 +1484,8 @@ class FrontController(TipprController):
                           content=ContactUs(), page_classes=["contact-us-page"]
                           ).render()
 
-    @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-ctips",
-                                  "spent-ctips", "paypal", "coinbase",
+    @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-coins",
+                                  "spent-coins", "paypal", "coinbase",
                                   "stripe"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
@@ -1496,10 +1496,10 @@ class FrontController(TipprController):
             claim_msg = _("Claimed! Enjoy your tippr gold membership.")
             if g.lounge_vault:
                 lounge_md = strings.lounge_msg
-        elif vendor == "claimed-ctips":
-            claim_msg = _("Your gold ctips have been claimed! Now go to "
+        elif vendor == "claimed-coins":
+            claim_msg = _("Your gold coins have been claimed! Now go to "
                           "someone's userpage and give them a present!")
-        elif vendor == "spent-ctips":
+        elif vendor == "spent-coins":
             claim_msg = _("Thanks for buying tippr gold! Your transaction "
                           "has been completed.")
         elif vendor == "paypal":
@@ -1875,11 +1875,11 @@ class FormsController(TipprController):
 
     @validate(is_payment=VBoolean("is_payment"),
               goldtype=VOneOf("goldtype",
-                              ("autorenew", "onetime", "ctips", "gift",
+                              ("autorenew", "onetime", "coins", "gift",
                                "code")),
               period=VOneOf("period", ("monthly", "yearly")),
               months=VInt("months"),
-              num_ctips=VInt("num_ctips"),
+              num_coins=VInt("num_coins"),
               # variables below are just for gifts
               signed=VBoolean("signed", default=True),
               recipient=VExistingUname("recipient", default=None),
@@ -1888,7 +1888,7 @@ class FormsController(TipprController):
               email=ValidEmail("email"),
               edit=VBoolean("edit", default=False),
     )
-    def GET_gold(self, is_payment, goldtype, period, months, num_ctips,
+    def GET_gold(self, is_payment, goldtype, period, months, num_coins,
                  signed, recipient, giftmessage, thing, email, edit):
         VNotInTimeout().run(action_name="pageview", details_text="gold",
             target=thing)
@@ -1920,11 +1920,11 @@ class FormsController(TipprController):
         elif goldtype in ("onetime", "code"):
             if months is None or months < 1:
                 start_over = True
-        elif goldtype == "ctips":
-            if num_ctips is None or num_ctips < 1:
+        elif goldtype == "coins":
+            if num_coins is None or num_coins < 1:
                 start_over = True
             else:
-                months = num_ctips
+                months = num_coins
         elif goldtype == "gift":
             if months is None or months < 1:
                 start_over = True
@@ -1953,7 +1953,7 @@ class FormsController(TipprController):
             can_subscribe = (c.user_is_loggedin and
                              not c.user.has_gold_subscription)
             if not can_subscribe and goldtype == "autorenew":
-                self.redirect("/ctips", code=302)
+                self.redirect("/coins", code=302)
 
             return BoringPage(_("tippr gold"),
                               show_sidebar=False,
@@ -1991,8 +1991,8 @@ class FormsController(TipprController):
             passthrough = generate_blob(payment_blob)
 
             page_classes = ["gold-page", "gold-payment", "gold-page-ga-tracking"]
-            if goldtype == "ctips":
-                page_classes.append("ctips-payment")
+            if goldtype == "coins":
+                page_classes.append("coins-payment")
 
             return BoringPage(_("tippr gold"),
                               show_sidebar=False,
@@ -2003,11 +2003,11 @@ class FormsController(TipprController):
                               page_classes=page_classes,
                               ).render()
 
-    def GET_ctips(self):
-        return BoringPage(_("purchase ctips"),
+    def GET_coins(self):
+        return BoringPage(_("purchase coins"),
                           show_sidebar=False,
-                          content=ctips(),
-                          page_classes=["gold-page", "ctips-purchase", "gold-page-ga-tracking"],
+                          content=coins(),
+                          page_classes=["gold-page", "coins-purchase", "gold-page-ga-tracking"],
                           ).render()
 
     @validate(VUser())

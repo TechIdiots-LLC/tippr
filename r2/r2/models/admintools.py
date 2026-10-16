@@ -43,7 +43,7 @@ from r2.models.link import Comment, Link, Message
 from r2.models.report import Report
 from r2.models.vault import Vault
 from r2.models.award import Award
-from r2.models.gold import append_random_bottlecap_phrase, ctips_lock
+from r2.models.gold import append_random_bottlecap_phrase, coins_lock
 from r2.models.token import AwardClaimToken
 from r2.models.wiki import WikiPage
 
@@ -298,11 +298,11 @@ def update_gold_users():
     for account in all_gold_users():
         days_left = (account.gold_expiration - now).days
         if days_left < 0:
-            if account.pref_ctip_autorenew:
-                with ctips_lock(account):
-                    if account.gold_ctips > 0:
+            if account.pref_coin_autorenew:
+                with coins_lock(account):
+                    if account.gold_coins > 0:
                         admintools.adjust_gold_expiration(account, days=31)
-                        account.gold_ctips -= 1
+                        account.gold_coins -= 1
                         account._commit()
                         continue
 

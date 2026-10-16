@@ -121,10 +121,10 @@ class OAuth2Scope:
                 "information. Will not have access to your email or "
                 "password."),
         },
-        "ctips": {
-            "id": "ctips",
-            "name": _("Spend tippr gold ctips"),
-            "description": _("Spend my tippr gold ctips on giving "
+        "coins": {
+            "id": "coins",
+            "name": _("Spend tippr gold coins"),
+            "description": _("Spend my tippr gold coins on giving "
                 "gold to other users."),
         },
         "edit": {

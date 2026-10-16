@@ -503,7 +503,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
     _private_data_attrs = dict(
         inbox_count="inbox_count",
         over_18="pref_over_18",
-        gold_ctips="gold_ctips",
+        gold_coins="gold_coins",
         gold_expiration="gold_expiration",
         is_suspended="in_timeout",
         suspension_expiration_utc="timeout_expiration_utc",

@@ -52,16 +52,16 @@ r.gold = {
           r.gold.signupForm.init();
         }
 
-        $('form.ctips-gold .remaining').each(r.gold._renderCtipsAmount);
+        $('form.coins-gold .remaining').each(r.gold._renderCoinsAmount);
 
-        $(document.body).on('submit', 'form.ctips-gold', function(e) {
+        $(document.body).on('submit', 'form.coins-gold', function(e) {
           e.preventDefault();
           e.stopPropagation();
 
-          r.gold._expendCtips();
+          r.gold._expendCoins();
 
-          $(this).find('.gold-checkout:not(.ctips-gold)').hide();
-          return post_form(this, 'spendctips')
+          $(this).find('.gold-checkout:not(.coins-gold)').hide();
+          return post_form(this, 'spendcoins')
         })
     },
 
@@ -182,25 +182,25 @@ r.gold = {
         });
     },
 
-    // When spending ctips, update the templates we use to generate the gilding form to display the
-    // new total ctips remaining, or hide it if we have less than the current cost of gilding (1 ctip).
-    _expendCtips: function() {
-      $('.cloneable-comment, .cloneable-link').find('form.ctips-gold .remaining').each(function() {
+    // When spending coins, update the templates we use to generate the gilding form to display the
+    // new total coins remaining, or hide it if we have less than the current cost of gilding (1 coin).
+    _expendCoins: function() {
+      $('.cloneable-comment, .cloneable-link').find('form.coins-gold .remaining').each(function() {
         var $this = $(this);
-        var currentCtips = parseInt($this.data('current'), 10);
-        var totalCtips = parseInt($this.data('total'), 10);
-        var newTotal = totalCtips - currentCtips;
+        var currentCoins = parseInt($this.data('current'), 10);
+        var totalCoins = parseInt($this.data('total'), 10);
+        var newTotal = totalCoins - currentCoins;
 
-        if (newTotal < currentCtips) {
-          $this.parents('form.ctips-gold').remove()
+        if (newTotal < currentCoins) {
+          $this.parents('form.coins-gold').remove()
         } else {
           $(this).data('total', newTotal);
-          r.gold._renderCtipsAmount.apply(this)
+          r.gold._renderCoinsAmount.apply(this)
         }
       })
     },
 
-    _renderCtipsAmount: function() {
+    _renderCoinsAmount: function() {
       var $this = $(this);
       var tpl = $this.data('template');
       $this.html(_.template(tpl, _.omit($this.data(), 'template')))
@@ -351,8 +351,8 @@ r.gold.signupForm = (function() {
       case 'gift':
         fields.push('months', 'recipient', 'signed', 'giftmessage');
         break;
-      case 'ctips':
-        fields.push('num_ctips');
+      case 'coins':
+        fields.push('num_coins');
         break
     }
 
@@ -416,8 +416,8 @@ r.gold.signupForm = (function() {
 
     if ($tab.prop('id') == 'autorenew') {
       goldtype = 'autorenew'
-    } else if ($tab.prop('id') == 'ctips') {
-      goldtype = 'ctips'
+    } else if ($tab.prop('id') == 'coins') {
+      goldtype = 'coins'
     } else if (isGift && $gifttype.length > 0) {
       goldtype = $gifttype.val()
     } else {

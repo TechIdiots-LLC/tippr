@@ -68,7 +68,7 @@ class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
-                                               'reported', 'gold_ctips',
+                                               'reported', 'gold_coins',
                                                'inbox_count',
                                                'num_payment_methods',
                                                'num_failed_payments',
@@ -138,7 +138,7 @@ class Account(Thing):
                      pref_show_promote = None,
                      gold = False,
                      gold_charter = False,
-                     gold_ctips = 0,
+                     gold_coins = 0,
                      num_gildings=0,
                      cake_expiration=None,
                      otp_secret=None,
@@ -148,7 +148,7 @@ class Account(Thing):
                      banned_profile_visible=False,
                      pref_use_global_defaults=False,
                      pref_hide_locationbar=False,
-                     pref_ctip_autorenew=False,
+                     pref_coin_autorenew=False,
                      update_sent_messages=True,
                      num_payment_methods=0,
                      num_failed_payments=0,
@@ -699,7 +699,7 @@ class Account(Thing):
     @property
     def gold_will_autorenew(self):
         return (self.has_gold_subscription or
-                (self.pref_ctip_autorenew and self.gold_ctips > 0))
+                (self.pref_coin_autorenew and self.gold_coins > 0))
 
     @property
     def timeout_expiration(self):

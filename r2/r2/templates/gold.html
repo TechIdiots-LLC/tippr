@@ -99,7 +99,7 @@
       elif thing.goldtype == 'autorenew':
           active_tab = 'autorenew'
       else:
-          active_tab = 'ctips'
+          active_tab = 'coins'
   %>
   <form name="gold-form" class="gold-form" action="/gold/payment" method="get">
   <input type="hidden" name="edit" id="edit" value="true">
@@ -109,18 +109,18 @@
       <h3>${_('What type of tippr gold would you like to purchase?')}</h3>
       <a href="#onetime" class="tab-toggle ${'active' if active_tab == 'onetime' else ''}">${_('one-time purchase')}</a>
       <a href="#autorenew" class="tab-toggle ${'active' if active_tab == 'autorenew' else ''}">${_('ongoing subscription')}</a>
-      <a href="#ctips" class="tab-toggle ${'active' if active_tab == 'ctips' else ''}">${_('ctips')}</a>
+      <a href="#coins" class="tab-toggle ${'active' if active_tab == 'coins' else ''}">${_('coins')}</a>
     </section>
 
     <div id="form-options" class="container ${'hidden' if not active_tab else ''}">
 
-      <section id="ctips" class="tab ${'active' if active_tab == 'ctips' else ''}">
-        <h3>${_('How many ctips would you like to buy?')}</h3>
-        ${gold_dropdown("num_ctips", thing.months, somethings="ctips")}
+      <section id="coins" class="tab ${'active' if active_tab == 'coins' else ''}">
+        <h3>${_('How many coins would you like to buy?')}</h3>
+        ${gold_dropdown("num_coins", thing.months, somethings="coins")}
 
-        <section class="ctips-explained">
-          ${_('Stored as a balance on your account, ctips allow you to give gold without having to enter payment information. Each ctip you have can be converted into one month of tippr gold.')}
-          &#32;<a href="/gilding#what-are-ctips">${_('Learn more about using ctips')}</a>.
+        <section class="coins-explained">
+          ${_('Stored as a balance on your account, coins allow you to give gold without having to enter payment information. Each coin you have can be converted into one month of tippr gold.')}
+          &#32;<a href="/gilding#what-are-coins">${_('Learn more about using coins')}</a>.
         </section>
       </section>
 
@@ -137,8 +137,8 @@
         <h3>${_('How many months?')}</h3>
         <%
           append_or_somethings = None
-          if c.user_is_loggedin and c.user.gold_ctips > 0:
-              append_or_somethings = "ctips"
+          if c.user_is_loggedin and c.user.gold_coins > 0:
+              append_or_somethings = "coins"
         %>
         ${gold_dropdown("months", thing.months, append_or_somethings=append_or_somethings)}
 

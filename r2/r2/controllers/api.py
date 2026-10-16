@@ -3632,9 +3632,9 @@ class ApiController(TipprController):
                 c.user.gold_subscr_id = subscr_id
 
             if code.startswith("cr_"):
-                c.user.gold_ctips += int(days / 31)
+                c.user.gold_coins += int(days / 31)
                 c.user._commit()
-                status = 'claimed-ctips'
+                status = 'claimed-coins'
             else:
                 # send the user a message if they don't already have gold
                 if not c.user.gold:
@@ -4491,17 +4491,17 @@ class ApiController(TipprController):
         VAdmin(),
         VModhash(),
         recipient=VExistingUname("recipient"),
-        num_ctips=VInt('num_ctips', num_default=0),
+        num_coins=VInt('num_coins', num_default=0),
     )
-    def POST_givectips(self, form, jquery, recipient, num_ctips):
+    def POST_givecoins(self, form, jquery, recipient, num_coins):
         if form.has_errors("recipient",
                            errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
 
-        with ctips_lock(recipient):
-            recipient.gold_ctips += num_ctips
+        with coins_lock(recipient):
+            recipient.gold_coins += num_coins
             # make sure it doesn't go into the negative
-            recipient.gold_ctips = max(0, recipient.gold_ctips)
+            recipient.gold_coins = max(0, recipient.gold_coins)
             recipient._commit()
 
         form.set_text(".status", _('saved'))

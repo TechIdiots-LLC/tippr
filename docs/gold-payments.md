@@ -1,6 +1,6 @@
 # Gold payments — Overview and flow
 
-This document describes how gold (one-time purchases, gifts, ctips, and subscriptions) are processed in the codebase.
+This document describes how gold (one-time purchases, gifts, coins, and subscriptions) are processed in the codebase.
 
 Files of interest
 
@@ -13,13 +13,13 @@ Files of interest
 Summary flow (high level)
 
 1. Frontend displays a gold form (from `goldpayment.html`). The client can request a short-lived payment blob by calling `POST /api/generate_payment_blob` which returns a token (`passthrough`). The token encodes the intended gold action (gift/onetime/code) and some metadata.
-2. User selects a payment provider (ctips, PayPal, Stripe, Coinbase). The purchase forms carry the `passthrough` token.
+2. User selects a payment provider (coins, PayPal, Stripe, Coinbase). The purchase forms carry the `passthrough` token.
 3. Provider-specific flows:
-   - Ctips: client posts to `/api/spendctips` handled by `POST_spendctips` in `ipn.py` — processed immediately on the server.
+   - Coins: client posts to `/api/spendcoins` handled by `POST_spendcoins` in `ipn.py` — processed immediately on the server.
    - Stripe (cards/subscriptions): client posts card data to `/api/stripecharge/gold` (StripeController) which creates a Stripe customer/charge using `stripe` library and returns status. Stripe then sends webhooks to the server; StripeController processes the webhook and, when successful, calls the shared completion routine.
    - PayPal: hosted button flow + IPN callback. PayPal IPNs are received and processed via IPN handlers in `ipn.py` and mapped into the same completion logic.
    - Coinbase/Bitcoin: handled by coinbase flow and corresponding webhook endpoint; mapped into the same completion logic.
-4. The shared handler (`complete_gold_purchase`) validates the payment, credits ctips or gold, applies subscriptions or gifts, creates a DB transaction (`create_claimed_gold`) and sends notification messages.
+4. The shared handler (`complete_gold_purchase`) validates the payment, credits coins or gold, applies subscriptions or gifts, creates a DB transaction (`create_claimed_gold`) and sends notification messages.
 
 Mermaid sequence diagram
 
@@ -37,9 +37,9 @@ sequenceDiagram
   API-->>FE: passthrough token
   U->>FE: choose payment method, submit (passthrough included)
 
-  alt ctips
-    FE->>API: POST /api/spendctips with passthrough
-    API->>DB: apply ctips / call helpers
+  alt coins
+    FE->>API: POST /api/spendcoins with passthrough
+    API->>DB: apply coins / call helpers
     API-->>U: success (gold applied)
   else stripe (one-time)
     FE->>Proc: POST /api/stripecharge/gold (card or token)
@@ -63,7 +63,7 @@ Notes and troubleshooting
 - The server uses `payment_blob` (short-lived blob in hardcache) to pass user/intent data between the UI and backend processing. See `generate_blob` / `get_blob` in `r2/r2/controllers/ipn.py` and `POST_generate_payment_blob` in `r2/r2/controllers/api.py`.
 - Stripe flows create a `stripe.Customer` and `Charge`; the webhook handler maps Stripe event types to the internal event types and calls `complete_gold_purchase`.
 - For gift codes and unclaimed purchases the code paths in `r2/r2/models/gold.py` (`create_gold_code`, `claim_gold`, `create_unclaimed_gold`) manage code generation and claiming later.
-- Ctips are an internal balance (see `gold_ctips` counters) and are cheaper in bulk; spending triggers the same internal helpers to apply gold.
+- Coins are an internal balance (see `gold_coins` counters) and are cheaper in bulk; spending triggers the same internal helpers to apply gold.
 
 Quick pointers to trace a real purchase
 

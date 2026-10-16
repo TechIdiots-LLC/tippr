@@ -41,15 +41,15 @@ from r2.lib.validator import (
     validate,
 )
 from r2.models import Account, Comment, Link, NotFound
-from r2.models.gold import ctips_lock
+from r2.models.gold import coins_lock
 
 
 class APIv1GoldController(OAuth2OnlyController):
-    def _gift_using_ctips(self, recipient, months=1, thing_fullname=None,
+    def _gift_using_coins(self, recipient, months=1, thing_fullname=None,
             proxying_for=None):
-        with ctips_lock(c.user):
-            if not c.user.employee and c.user.gold_ctips < months:
-                err = TipprError("INSUFFICIENT_CTIPS")
+        with coins_lock(c.user):
+            if not c.user.employee and c.user.gold_coins < months:
+                err = TipprError("INSUFFICIENT_COINS")
                 self.on_validation_error(err)
 
             note = None
@@ -74,10 +74,10 @@ class APIv1GoldController(OAuth2OnlyController):
             )
 
             if not c.user.employee:
-                c.user.gold_ctips -= months
+                c.user.gold_coins -= months
                 c.user._commit()
 
-    @require_oauth2_scope("ctips")
+    @require_oauth2_scope("coins")
     @validate(
         VUser(),
         target=VByName("fullname"),
@@ -96,13 +96,13 @@ class APIv1GoldController(OAuth2OnlyController):
             self.on_validation_error(err)
         VNotInTimeout().run(target=target, vault=target.vault_slow)
 
-        self._gift_using_ctips(
+        self._gift_using_coins(
             recipient=target.author_slow,
             thing_fullname=target._fullname,
             proxying_for=request.POST.get("proxying_for"),
         )
 
-    @require_oauth2_scope("ctips")
+    @require_oauth2_scope("coins")
     @validate(
         VUser(),
         user=VAccountByName("username"),
@@ -114,7 +114,7 @@ class APIv1GoldController(OAuth2OnlyController):
         uri="/api/v1/gold/give/{username}",
     )
     def POST_give(self, user, months, timeout):
-        self._gift_using_ctips(
+        self._gift_using_coins(
             recipient=user,
             months=months,
             proxying_for=request.POST.get("proxying_for"),
