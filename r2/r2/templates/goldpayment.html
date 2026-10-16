@@ -117,7 +117,7 @@
               %endif
           </div>
           <div class="throbber"></div>
-          <span role="presentation" class="gold-snoo" title="${_('Felicitations on this momentous occasion!')}"></span>
+          <span role="presentation" class="gold-tippr" title="${_('Felicitations on this momentous occasion!')}"></span>
         </div>
       </div>
     </div>
@@ -130,7 +130,7 @@
         data-vendor="coins">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-    <button class="btn gold-button" type="button"><span class="snoo-head"></span>${_("coins")}</button>
+    <button class="btn gold-button" type="button"><span class="tippr-head"></span>${_("coins")}</button>
     <span class="status">
       <span class="remaining" data-current="${thing.months}" data-total="${thing.user_coins}" data-template="${websafe(_ws('(use %(current)s of your %(total)s coins)')) % dict(current='<%- current %>', total='<%- total %>')}">
       </span>
