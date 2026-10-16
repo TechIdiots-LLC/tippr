@@ -864,7 +864,7 @@ class PromoteApiController(ApiController):
     def POST_create_promo(self, form, jquery, username, title, url,
                           selftext, kind, disable_comments, sendreplies,
                           media_url, media_autoplay, media_override,
-                          iframe_embed_url, media_url_type, domain_override,
+                          gifts_embed_url, media_url_type, domain_override,
                           third_party_tracking, third_party_tracking_2,
                           is_managed):
 
@@ -874,7 +874,7 @@ class PromoteApiController(ApiController):
             form, jquery, username, title, url,
             selftext, kind, disable_comments, sendreplies,
             media_url, media_autoplay, media_override,
-            iframe_embed_url, media_url_type, domain_override,
+            gifts_embed_url, media_url_type, domain_override,
             third_party_tracking, third_party_tracking_2, is_managed,
             thumbnail=images.get("thumbnail", None),
             mobile=images.get("mobile", None),
@@ -910,7 +910,7 @@ class PromoteApiController(ApiController):
     def POST_edit_promo(self, form, jquery, username, title, url,
                         selftext, kind, disable_comments, sendreplies,
                         media_url, media_autoplay, media_override,
-                        iframe_embed_url, media_url_type, domain_override,
+                        gifts_embed_url, media_url_type, domain_override,
                         third_party_tracking, third_party_tracking_2,
                         is_managed, l):
 
@@ -920,7 +920,7 @@ class PromoteApiController(ApiController):
             form, jquery, username, title, url,
             selftext, kind, disable_comments, sendreplies,
             media_url, media_autoplay, media_override,
-            iframe_embed_url, media_url_type, domain_override,
+            gifts_embed_url, media_url_type, domain_override,
             third_party_tracking, third_party_tracking_2, is_managed,
             l=l,
             thumbnail=images.get("thumbnail", None),
@@ -930,7 +930,7 @@ class PromoteApiController(ApiController):
     def _edit_promo(self, form, jquery, username, title, url,
                     selftext, kind, disable_comments, sendreplies,
                     media_url, media_autoplay, media_override,
-                    iframe_embed_url, media_url_type, domain_override,
+                    gifts_embed_url, media_url_type, domain_override,
                     third_party_tracking, third_party_tracking_2,
                     is_managed, l=None, thumbnail=None, mobile=None):
         should_ratelimit = False
@@ -982,7 +982,7 @@ class PromoteApiController(ApiController):
             # Adzerk limits URLs length for creatives
             if len(url) > ADZERK_URL_MAX_LENGTH:
                 c.errors.add(errors.TOO_LONG, field='url',
-                    msg_params={'max_length': PROMO_URL_MAX_LENGTH})
+                    msg_params={'max_length': ADZERK_URL_MAX_LENGTH})
 
         if is_link:
             if form.has_errors('url', errors.NO_URL, errors.BAD_URL,
@@ -1099,7 +1099,7 @@ class PromoteApiController(ApiController):
                     'allow-scripts',
                 )
                 iframe_attributes = {
-                    'embed_url': websafe(iframe_embed_url),
+                    'embed_url': websafe(gifts_embed_url),
                     'sandbox': ' '.join(sandbox),
                 }
                 iframe = """
