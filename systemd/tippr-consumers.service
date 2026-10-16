@@ -1,0 +1,15 @@
+[Unit]
+Description=Start the configured number of tippr queue consumers
+After=network.target rabbitmq-server.service
+PartOf=tippr.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=-/etc/default/tippr
+ExecStart=@TIPPR_SRC@/tippr/scripts/manage-consumers start
+ExecReload=@TIPPR_SRC@/tippr/scripts/manage-consumers restart
+ExecStop=@TIPPR_SRC@/tippr/scripts/manage-consumers stop
+
+[Install]
+WantedBy=tippr.target

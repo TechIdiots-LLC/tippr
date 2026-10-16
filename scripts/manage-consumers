@@ -1,50 +1,59 @@
 #!/bin/bash
+# Start, stop or restart the tippr queue consumers.
+#
+# $TIPPR_CONSUMER_CONFIG holds one file per queue, named after the queue
+# (e.g. vote_link_q), containing the number of consumer processes to run.
+# Each process is an instance of tippr-consumer-<queue>@<n>.service.
+#
+# usage: manage-consumers [start|stop|restart] [queue]
+#
+# After changing a count, run "manage-consumers restart" (or
+# "systemctl reload tippr-consumers") to apply it.
 
-# If being called from a systemd service, the first argument should be the action.
-# Otherwise, we can try to infer it.
 action=${1:-start}
+target=${2:-${TARGET:-all}}
 
 if [ -f /etc/default/tippr ]; then
     . /etc/default/tippr
 fi
 
-if [ -z "$TIPPR_CONSUMER_CONFIG" ] || [ "$TIPPR_CONSUMER_CONFIG" = "/" ]; then
-    echo "TIPPR_CONSUMER_CONFIG is not set correctly. Exiting."
-    exit 0
+case "$action" in
+    start|stop|restart) ;;
+    *) echo "usage: $0 [start|stop|restart] [queue]" >&2; exit 2 ;;
+esac
+
+if [ -z "$TIPPR_CONSUMER_CONFIG" ] || [ ! -d "$TIPPR_CONSUMER_CONFIG" ]; then
+    echo "TIPPR_CONSUMER_CONFIG ('$TIPPR_CONSUMER_CONFIG') is not a directory" >&2
+    exit 1
 fi
 
-if [ ! -d "$TIPPR_CONSUMER_CONFIG" ]; then
-    echo "TIPPR_CONSUMER_CONFIG directory $TIPPR_CONSUMER_CONFIG does not exist. Exiting."
-    exit 0
-fi
-
-# Use a more explicit loop to avoid issues with empty directories or unexpected paths.
-for consumerpath in "$TIPPR_CONSUMER_CONFIG"/*; do
-    # Skip if the glob didn't match anything
-    [ -e "$consumerpath" ] || continue
-    # Only process directories in the config root
-    [ -d "$consumerpath" ] || continue
-    
-    consumer=$(basename "$consumerpath")
-
-    # allow targeting which consumer the event is meant for (defaulting to 'all')
-    if [ ! -z "$TARGET" ] && [ "$TARGET" != "all" ] && [ "$TARGET" != "$consumer" ]; then
+status=0
+for path in "$TIPPR_CONSUMER_CONFIG"/*; do
+    [ -f "$path" ] || continue
+    queue=$(basename "$path")
+    if [ "$target" != "all" ] && [ "$target" != "$queue" ]; then
         continue
     fi
 
-    # Inner loop for types (e.g. author_query_q, etc.)
-    for typepath in "$consumerpath"/*; do
-        [ -f "$typepath" ] || continue
-        
-        instance_count=$(cat "$typepath")
-        type_=$(basename "$typepath")
+    count=$(tr -dc '0-9' < "$path")
+    count=${count:-0}
 
-        # Ensure instance_count is a number and greater than 0
-        if [[ "$instance_count" =~ ^[0-9]+$ ]] && [ "$instance_count" -gt 0 ]; then
-            for i in $(seq 1 "$instance_count"); do
-                systemctl "$action" "tippr-consumer-$consumer@$i"
-            done
+    # stop every running instance on stop, and any instances above the
+    # configured count on start/restart
+    for unit in $(systemctl list-units --plain --no-legend \
+                      "tippr-consumer-$queue@*.service" | awk '{print $1}'); do
+        instance=${unit##*@}
+        instance=${instance%.service}
+        if [ "$action" = "stop" ] || [ "$instance" -gt "$count" ]; then
+            systemctl stop "$unit" || status=1
         fi
     done
+
+    if [ "$action" != "stop" ]; then
+        for i in $(seq 1 "$count"); do
+            systemctl "$action" "tippr-consumer-$queue@$i.service" || status=1
+        done
+    fi
 done
 
+exit $status
