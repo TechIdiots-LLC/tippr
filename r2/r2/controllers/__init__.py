@@ -54,7 +54,7 @@ def load_controllers():
     from .captcha import CaptchaController
     from .embed import EmbedController
     from .error import ErrorController
-    from .front import FormsController, FrontController
+    from .front import FormsController, FrontController, FrontUnstyledController
     from .googletagmanager import GoogleTagManagerController
     from .health import HealthController
     from .ipn import (
