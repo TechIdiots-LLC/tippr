@@ -24,7 +24,7 @@
 ###############################################################################
 
 <%!
-  import urlparse
+  import urllib.parse as urlparse
 %>
 
 <%
@@ -33,7 +33,7 @@
     scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
     netloc = "%s.%s" % ('m', g.domain)
     path = path.replace('.compact', '')
-    return urlparse.urlunsplit((None, netloc, path, query, fragment))
+    return urlparse.urlunsplit(("", netloc, path, query, fragment))
 %>
 
 <div hidden class="mobile-web-redirect-bar">
