@@ -399,7 +399,7 @@ function copy_systemd {
     if [ -d "${1}/systemd" ]; then
         echo "Copying and templating systemd units from ${1}/systemd to /etc/systemd/system/..."
         # Iterate over files to perform variable substitution before installation
-        for f in "${1}"/systemd/*.service "${1}"/systemd/*.target; do
+        for f in "${1}"/systemd/*.service "${1}"/systemd/*.timer "${1}"/systemd/*.target; do
             [ -e "$f" ] || continue
             dest="/etc/systemd/system/$(basename "$f")"
             echo "  -> Templating $(basename "$f")"
@@ -413,9 +413,6 @@ function copy_systemd {
                 -e "s|\${TIPPR_INI}|$TIPPR_SRC/tippr/r2/run.ini|g" \
                 -e "s|\"\${TIPPR_INI}\"|\"$TIPPR_SRC/tippr/r2/run.ini\"|g" \
                 -e "s|\${TIPPR_ROOT}|$TIPPR_SRC/tippr/r2|g" \
-                -e "s|EnvironmentFile=-/etc/default/tippr|EnvironmentFile=-/etc/default/tippr\nEnvironment=PATH=$TIPPR_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nEnvironment=PYTHONPATH=$TIPPR_SRC/tippr:$TIPPR_SRC/tippr/r2|g" \
-                -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job paster|$TIPPR_VENV/bin/paster|g" \
-                -e "s|/usr/bin/python3 @TIPPR_SRC@/tippr/scripts/wrap-job ||g" \
                 "$f" > "$dest"
         done
         systemctl daemon-reload
@@ -505,6 +502,8 @@ TIPPR_GROUP=${TIPPR_GROUP}
 TIPPR_CONSUMER_CONFIG=${CONSUMER_CONFIG_ROOT}
 PATH=${TIPPR_VENV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 PYTHONPATH=${TIPPR_SRC}/tippr:${TIPPR_SRC}/tippr/r2
+# used by scripts/compute_time_listings
+PGPASSWORD=password
 DEFAULT
 fi
 
@@ -972,41 +971,26 @@ cd $TIPPR_SRC/tippr/r2
 exec $TIPPR_VENV/bin/paster shell run.ini
 TIPPRSHELL
 
-helper-script /usr/local/bin/tippr-start <<TIPPRSTART
+# tippr.target pulls in the app, consumers (via tippr-consumers.service) and
+# job timers; every member is PartOf=tippr.target, so stopping or restarting
+# the target covers all of them.
+helper-script /usr/local/bin/tippr-start <<'TIPPRSTART'
 #!/bin/bash
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl start tippr.target
-    [ -f /etc/default/tippr ] && . /etc/default/tippr
-    $TIPPR_SRC/tippr/scripts/manage-consumers start
-else
-    echo "No systemctl found; cannot start services"
-fi
+exec systemctl start tippr.target
 TIPPRSTART
 
-helper-script /usr/local/bin/tippr-stop <<TIPPRSTOP
+helper-script /usr/local/bin/tippr-stop <<'TIPPRSTOP'
 #!/bin/bash
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    [ -f /etc/default/tippr ] && . /etc/default/tippr
-    $TIPPR_SRC/tippr/scripts/manage-consumers stop
-    systemctl stop tippr.target
-else
-    echo "No systemctl found; cannot stop services"
-fi
+exec systemctl stop tippr.target
 TIPPRSTOP
 
-helper-script /usr/local/bin/tippr-restart <<TIPPRRESTART
+helper-script /usr/local/bin/tippr-restart <<'TIPPRRESTART'
 #!/bin/bash
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    # If a specific target is provided, attempt to restart matching unit(s)
-    if [ -n "$1" ] && [ "$1" != "all" ]; then
-        systemctl restart "$1" || true
-    else
-        systemctl restart tippr.target
-        $TIPPR_SRC/tippr/scripts/manage-consumers restart
-    fi
-else
-    echo "No systemctl found; cannot restart services"
+# usage: tippr-restart [unit]   (default: the whole stack)
+if [ -n "$1" ] && [ "$1" != "all" ]; then
+    exec systemctl restart "$1"
 fi
+exec systemctl restart tippr.target
 TIPPRRESTART
 
 helper-script /usr/local/bin/tippr-flush <<TIPPRFLUSH
@@ -1329,6 +1313,7 @@ set_consumer_count butler_q 1
 set_consumer_count author_query_q 1
 set_consumer_count vault_query_q 1
 set_consumer_count domain_query_q 1
+set_consumer_count privacy_export_q 1
 
 chown -R $TIPPR_USER:$TIPPR_GROUP $CONSUMER_CONFIG_ROOT/
 
@@ -1350,44 +1335,37 @@ done
 # vying with eachother to get there first
 tippr-run -c 'print("ok done")'
 
-# ok, now start everything else up (portable)
+###############################################################################
+# Scheduled jobs (systemd timers)
+###############################################################################
+# Jobs used to be scheduled from /etc/cron.d/tippr; they are now systemd
+# timers that are part of tippr.target. Remove the old cron file so jobs do
+# not run twice on upgraded installs.
+rm -f /etc/cron.d/tippr
+
+TIPPR_TIMERS=(
+    tippr-job-update_vault_names.timer
+    tippr-job-update_tipprs.timer
+    tippr-job-update_promos.timer
+    tippr-job-clean_up_hardcache.timer
+    tippr-job-broken_things.timer
+    tippr-job-rising.timer
+    tippr-job-trylater.timer
+    tippr-job-update_popular_vaults.timer
+    tippr-job-update_trending_vaults.timer
+    tippr-job-compute_time_listings@link.timer
+    tippr-job-compute_time_listings@comment.timer
+)
+# Disabled by default; enable with "systemctl enable --now <timer>":
+#   tippr-job-email.timer             send queued email every minute
+#   tippr-job-update_gold_users.timer expire gold subscriptions daily
+
+# ok, now start everything else up
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl enable tippr.target || true
-    systemctl stop tippr.target || true
-    systemctl start tippr.target || true
-    
-    if [ -f /etc/default/tippr ]; then
-        set -a
-        . /etc/default/tippr
-        set +a
-    fi
-    $TIPPR_SRC/tippr/scripts/manage-consumers start || true
+    systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"
+    systemctl restart tippr.target
 else
-    echo "No systemctl found; services not started."
-fi
-
-###############################################################################
-# Cron Jobs
-###############################################################################
-if [ ! -f /etc/cron.d/tippr ]; then
-    cat > /etc/cron.d/tippr <<CRON
-0    3 * * * root systemctl start tippr-job-update_sr_names
-30  16 * * * root systemctl start tippr-job-update_tipprs
-0    * * * * root systemctl start tippr-job-update_promos
-*/5  * * * * root systemctl start tippr-job-clean_up_hardcache
-*/2  * * * * root systemctl start tippr-job-broken_things
-*/2  * * * * root systemctl start tippr-job-rising
-0    * * * * root systemctl start tippr-job-trylater
-
-# jobs that recalculate time-limited listings (e.g. top this year)
-PGPASSWORD=password
-*/15 * * * * $TIPPR_USER $TIPPR_SRC/tippr/scripts/compute_time_listings link year "['hour', 'day', 'week', 'month', 'year']"
-*/15 * * * * $TIPPR_USER $TIPPR_SRC/tippr/scripts/compute_time_listings comment year "['hour', 'day', 'week', 'month', 'year']"
-
-# disabled by default, uncomment if you need these jobs
-#*    * * * * root systemctl start tippr-job-email
-#0    0 * * * root systemctl start tippr-job-update_gold_users
-CRON
+    echo "No systemd found; services not started."
 fi
 
 ###############################################################################

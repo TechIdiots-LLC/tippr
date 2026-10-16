@@ -35,25 +35,28 @@ cat <<CONCLUSION
 
 Congratulations! tippr is now installed.
 
-The tippr application code is managed with upstart, to see what's currently
-running, run
+The tippr application is managed by systemd as tippr.target. To see what's
+currently running, run
 
-    sudo initctl list | grep tippr
+    systemctl list-dependencies tippr.target
+    systemctl list-timers 'tippr-job-*'
 
-Cron jobs start with "tippr-job-" and queue processors start with
-"tippr-consumer-". The crons are managed by /etc/cron.d/tippr. You can
-initiate a restart of all the consumers by running:
+Scheduled jobs are "tippr-job-*" services run by timers of the same name, and
+queue processors are "tippr-consumer-<queue>@<n>" services. The number of
+processors per queue is set by the files in $TIPPR_HOME/consumer-count.d;
+apply a changed count with:
+
+    sudo systemctl reload tippr-consumers
+
+Logs go to the journal, e.g.
+
+    journalctl -u tippr-paster -f
+    journalctl -u 'tippr-consumer-vote_link_q@*' --since today
+
+You can restart the whole stack, or a single unit, with:
 
     sudo tippr-restart
-
-or target specific ones:
-
-    sudo tippr-restart scraper_q
-
-See the GitHub wiki for more information on these jobs:
-
-* https://github.com/reddit/reddit/wiki/Cron-jobs
-* https://github.com/reddit/reddit/wiki/Services
+    sudo tippr-restart tippr-consumer-scraper_q@1
 
 The tippr code can be shut down or started up with
 

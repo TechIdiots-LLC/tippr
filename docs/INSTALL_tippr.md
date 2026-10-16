@@ -128,25 +128,21 @@ After adding the host mapping, you should be able to visit `https://tippr.local`
 
 Systemd / init scripts and service names created by the installer
 
-The installer creates several service units, init scripts, and helper scripts so the tippr stack can be managed via `systemctl` (preferred) or Upstart on older systems. Common files/units created by `install/tippr.sh` and the helper scripts include:
+The installer creates systemd units and helper scripts so the tippr stack can be managed with `systemctl`. Units are written to `/etc/systemd/system/`:
 
-- Systemd unit files (written to `/etc/systemd/system/`):
-  - `tippr-serve.service` — the main web app (paster serve) unit.
+- `tippr.target` — the whole stack. Every unit below is `PartOf=tippr.target`, so `systemctl start|stop|restart tippr.target` (or `tippr-start`, `tippr-stop`, `tippr-restart`) covers all of them.
+  - `tippr-paster.service` — the main web app (paster serve).
   - `tippr-websockets.service` — websockets service (baseplate-serve).
   - `tippr-activity.service` — activity service (baseplate-serve).
   - `gunicorn-click.service` — gunicorn process for the click/tracker app (binds to a unix socket).
   - `gunicorn-geoip.service` — gunicorn geoip server (binds to 127.0.0.1:5000).
-
-- Upstart jobs (if `/etc/init` exists):
-  - `/etc/init/tippr-websockets.conf` — websockets upstart job.
-  - `/etc/init/tippr-activity.conf` — activity upstart job.
-  - The installer also copies any plugin-provided `upstart/` jobs into `/etc/init` or `/etc/init.d` via `copy_upstart`.
+  - `tippr-consumers.service` — starts `tippr-consumer-<queue>@<n>.service` queue processors. The number per queue comes from the files in `$TIPPR_HOME/consumer-count.d`; apply a change with `systemctl reload tippr-consumers`.
+  - `tippr-job-*.timer` — schedule the `tippr-job-*.service` maintenance jobs (rising, broken things, hardcache cleanup, time listings, ...). See `systemctl list-timers 'tippr-job-*'`. `tippr-job-email.timer` and `tippr-job-update_gold_users.timer` are installed but not enabled.
 
 - Other init / service-related files created or enabled:
   - `/etc/gunicorn.d/click.conf` and `/etc/gunicorn.d/geoip.conf` — per-app gunicorn configs.
   - `/etc/nginx/sites-available/tippr-media`, `/etc/nginx/sites-available/tippr-pixel`, `/etc/nginx/sites-available/tippr-ssl` and corresponding symlinks in `/etc/nginx/sites-enabled/`.
   - `/etc/haproxy/haproxy.cfg` is modified (backed up) and `haproxy` is restarted.
-  - A cron file at `/etc/cron.d/tippr` is created to schedule periodic tippr maintenance jobs.
 
 - System services installed/enabled by `install_services.sh` (package-provided units):
   - `memcached` (unit name may be `memcached.service`)
