@@ -54,7 +54,7 @@ def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
     dsn = "%20".join("%s=%s" % x for x in arguments.items())
 
     engine = sqlalchemy.create_engine(
-        'postgresql:///?dsn=' + dsn,
+        'postgresql+psycopg2:///?dsn=' + dsn,
         pool_size=int(pool_size),
         max_overflow=int(max_overflow),
     )
