@@ -80,34 +80,39 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
         apt-get install $APTITUDE_OPTIONS cassandra
     fi
 
-    # Enable Cassandra and ensure the JVM is actually running.
+    # Enable Cassandra and make sure it is starting or running.
     # `systemctl start` is a no-op when the SysV wrapper reports "active (exited)"
-    # (systemd considers it up even if the JVM died). Use `restart` when the JVM
-    # is not running so the daemon is reliably launched.
+    # (systemd considers it up even if the JVM died), so use `restart` when no
+    # Cassandra process exists at all. Count the /usr/sbin/cassandra start
+    # script as well as the JVM: installing the package already starts it, and
+    # the script can spend a long time (searching for libjemalloc) before it
+    # execs java. Restarting during that window starts a second, racing copy.
+    cassandra_running() {
+        pgrep -f 'org.apache.cassandra|/usr/sbin/cassandra' > /dev/null 2>&1
+    }
     systemctl enable cassandra
-    if pgrep -f 'org.apache.cassandra' > /dev/null 2>&1; then
-        echo "Cassandra JVM is already running; skipping start."
+    if cassandra_running; then
+        echo "Cassandra is already starting or running; not restarting."
     else
-        echo "Cassandra JVM is not running; restarting service..."
+        echo "Cassandra is not running; restarting service..."
         systemctl restart cassandra
     fi
 
     # Cassandra 4.1 on Ubuntu 24.04 uses a SysV init wrapper: systemctl reports
     # "active (exited)" immediately but the JVM forks in the background and
     # takes 60-180 s to open port 9042.  Wait up to 5 minutes.
-    echo "Waiting for Cassandra JVM to open port 9042 (up to 5 minutes)..."
+    echo "Waiting for Cassandra to open port 9042 (up to 5 minutes)..."
     CASSANDRA_UP=0
     for i in $(seq 1 150); do
-        # Bail early if the JVM died rather than spin the full 5 minutes. The
-        # init script takes a few seconds to exec java after a restart, so
-        # only treat a missing JVM as fatal after the first 30 seconds.
-        if [ "$i" -gt 15 ] && ! pgrep -f 'org.apache.cassandra' > /dev/null 2>&1; then
-            echo "  Cassandra JVM process is not running — startup failed early." >&2
-            break
-        fi
         if nc -z localhost 9042 2>/dev/null; then
             echo "Cassandra is up! (attempt $i)"
             CASSANDRA_UP=1
+            break
+        fi
+        # Bail early if Cassandra died rather than spin the full 5 minutes.
+        # Allow 60 seconds for the start script to get going first.
+        if [ "$i" -gt 30 ] && ! cassandra_running; then
+            echo "  No Cassandra process is running; startup failed." >&2
             break
         fi
         echo "  attempt $i/150 — not yet available, sleeping 2s..."
