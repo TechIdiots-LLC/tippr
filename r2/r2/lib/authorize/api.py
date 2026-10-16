@@ -38,7 +38,7 @@ from http.client import HTTPSConnection
 from urllib.parse import urlparse
 from xml.sax.saxutils import escape
 
-from BeautifulSoup import BeautifulStoneSoup
+from bs4 import BeautifulSoup
 from pylons import app_globals as g
 
 from r2.lib.export import export
@@ -312,9 +312,11 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
     def handle_response(self, res):
         res = self._autoclose_re.sub(self._autoclose_handler, res)
-        res = BeautifulStoneSoup(res, 
-                                 markupMassage=False, 
-                                 convertEntities=BeautifulStoneSoup.XML_ENTITIES)
+        # Parse with the HTML parser: it lowercases tag names (resultCode ->
+        # resultcode) as BeautifulSoup 3's BeautifulStoneSoup did, which the
+        # lookups below and in SimpleXMLObject.fromXML rely on. bs4's XML
+        # parser keeps the original case.
+        res = BeautifulSoup(res, "html.parser")
         if res.resultcode.contents[0] == "Ok":
             return self.process_response(res)
         else:
@@ -387,7 +389,7 @@ class GetCustomerProfileRequest(AuthorizeNetRequest):
         profile_id = int(res.customerprofileid.contents[0])
 
         payment_profiles = []
-        for profile in res.findAll("paymentprofiles"):
+        for profile in res.find_all("paymentprofiles"):
             address = Address.fromXML(profile)
             credit_card = CreditCard.fromXML(profile.payment)
             customerPaymentProfileId = int(address.customerPaymentProfileId)

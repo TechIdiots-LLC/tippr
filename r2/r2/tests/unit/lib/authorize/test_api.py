@@ -83,17 +83,17 @@ class SimpleXMLObjectTest(TipprTestCase):
                          '<cat breed="calico" demenor="evil">Jini</cat>')
 
     def test_from_xml(self):
-        from BeautifulSoup import BeautifulStoneSoup
+        from bs4 import BeautifulSoup
 
         from r2.lib.authorize.api import SimpleXMLObject
         class TestXML(SimpleXMLObject):
             _keys = ["color", "breed"]
 
-        parsed = BeautifulStoneSoup("<dog>" +
+        parsed = BeautifulSoup("<dog>" +
                                     "<color>black</color>" +
                                     "<breed>mixed</breed>" +
                                     "<something>else</something>" +
-                                    "</dog>")
+                                    "</dog>", "html.parser")
         constructed = TestXML.fromXML(parsed)
         # Use the same class with _keys to ensure consistent ordering
         expected = TestXML(color="black", breed="mixed")
