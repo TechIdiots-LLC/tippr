@@ -1,0 +1,157 @@
+# Tippr Roadmap
+
+What is planned, in what order, and the decisions behind it. For how to run
+tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
+[PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md).
+
+## Done
+
+- **Rename cleanup.** Fixed what the reddit → tippr / subreddit → vault
+  rebrand broke: symlinks and templates, half-finished renames
+  (creddits → coins, `.sr-*` CSS classes, `/r/` → `/v/`), and Python 3
+  porting bugs.
+- **systemd.** Upstart is gone. Jobs run from systemd timers, and queue
+  consumers start with `tippr.target` through `tippr-consumers.service`.
+- **Installer.** The installer completes on Ubuntu 24.04, including under
+  WSL2. The mcrouter source build is opt-in (`TIPPR_BUILD_MCROUTER=1`).
+
+## Next: single-VM production setup
+
+The first supported deployment is **one Ubuntu 24.04 VM** running everything,
+installed with `install-tippr.sh`.
+
+- **Passwords:** generate random passwords for PostgreSQL, RabbitMQ, ZooKeeper
+  and the default admin account, stored in a root-only file. A value passed to
+  the installer (for example `TIPPR_DB_PASSWORD=...`) takes precedence.
+- **App server:** run the app under gunicorn instead of
+  `paster serve --reload`.
+- **Production settings:** `debug = false`, captcha and rate limiting on,
+  admin TOTP required.
+- **Site settings:** set the domain, site name and page title
+  (`short_description`) from installer options.
+- **TLS:** a Cloudflare Origin Certificate or Let's Encrypt for real
+  domains, a self-signed certificate for `.local` ones. Redirect `http://`
+  to `https://`.
+- **Cloudflare (Free plan):** see [Cloudflare](#cloudflare) below.
+- **Search:** add an OpenSearch provider to replace CloudSearch/Solr; see
+  [Search](#search).
+- **Shims:** remove the compatibility shims left over from the Python 3 and
+  upgrade work (`baseplate/`, `pylons/`, `pycassa/`, `weberror/`,
+  `BeautifulSoup.py`, …) wherever a maintained library can replace them.
+  The repo's `baseplate/` shim shadowing the real baseplate package has
+  already caused bugs.
+
+## Then
+
+1. **Docker image.** Build and publish an image from CI, and add a
+   `docker-compose.yml` with health checks and one-shot setup jobs (modelled
+   on artcraft-services' `build/selfhost`). Domain and site name are set
+   through environment variables.
+2. **Admin security.** Require TOTP for admin mode, add WebAuthn passkeys,
+   and use recovery codes instead of email as the fallback.
+3. **Admin config page.** Edit the live config stored in ZooKeeper from
+   `/admin/config`, with type checking and an audit log.
+
+## Payments and tipping
+
+Decided order:
+
+1. **Bitcoin for gold and coins (next payments work).** Accept Bitcoin
+   (Lightning and on-chain) through a self-hosted
+   [BTCPay Server](https://btcpayserver.org/), alongside the existing payment
+   providers. The site is simply accepting a payment method.
+2. **Direct user-to-user tips (after 1).** Users add a Lightning address to
+   their profile. A tip button requests an invoice from the recipient's
+   wallet, and the tipper pays it from their own wallet. tippr shows the tip
+   and its receipt on the post or comment but **never holds the funds**,
+   which avoids becoming a money transmitter.
+3. **On hold: karma cash-out / revenue sharing.** Paying users out of a pool
+   based on votes needs more thought before any work starts:
+   - Holding pooled funds raises money-transmission, financial-product and
+     tax-reporting questions that need legal advice.
+   - Paying for votes invites vote buying, bot rings and sockpuppets.
+     Steemit/Hive is the precedent to study.
+   - Safer variants to consider: pay out from site revenue rather than a
+     pool users pay into, base payouts on tips received rather than raw
+     karma, and add caps, delays and fraud review.
+
+## Search
+
+[OpenSearch](https://opensearch.org/) (Apache 2.0) replaces CloudSearch and
+Solr. It runs as a single node with a 1 GB heap, from the apt repository or
+the Docker image. r2 already has a pluggable search provider and a
+`search_q` indexing consumer, so the work is:
+
+- an `opensearch` provider (index mappings, indexer, query builder);
+- relevance tuning: title weighted above body and URL, recency and vote
+  score boosts, typo tolerance, and fast vault-name autocomplete;
+- keeping the existing `vault:`, `author:`, `site:`, `nsfw:` and `self:`
+  query syntax;
+- installer support and an index rebuild script;
+- possibly comment search later.
+
+## Cloudflare
+
+Cloudflare's Free plan works in front of tippr:
+
+- **Real client IPs:** nginx accepts `CF-Connecting-IP` only from
+  Cloudflare's published IP ranges (`real_ip` module). Without this, rate
+  limits, spam checks and IP bans see Cloudflare addresses. r2's bundled
+  Cloudflare provider expects a reddit-specific `CF-CIP-Tag` header and does
+  not work on a standard account.
+- **Page caching:** r2 already marks logged-in responses `private`. Plan:
+  send `Cache-Control: public, s-maxage=60, max-age=0` on logged-out HTML,
+  and add a Cache Rule that makes HTML eligible for cache and respects the
+  origin's Cache-Control. The Free plan's 2-hour minimum applies to Edge TTL
+  overrides; confirm with the `cf-cache-status` / `age` headers that a short
+  origin `s-maxage` is honoured.
+- **Fallback:** an nginx `proxy_cache` on the VM can cache logged-out pages
+  for 30–60 seconds, with or without Cloudflare.
+- **TLS:** use SSL mode Full (strict) with an Origin Certificate.
+
+## Deployment layouts
+
+### Now: single VM
+
+Run everything on one Ubuntu 24.04 VM (or Proxmox LXC) with the installer.
+Allow 4–6 cores and 8–12 GB RAM. Proxmox snapshots and backups cover the
+whole site.
+
+### Later: Proxmox containers by role
+
+| Container | Components | Notes |
+|---|---|---|
+| db | PostgreSQL | Primary data; own backups and disk. Read replicas supported by r2 |
+| cassandra | Cassandra | Memory hungry; holds votes, listings, wiki. Clusters natively |
+| search | OpenSearch | Can be rebuilt from the database. Clusters natively |
+| cache-queue | memcached, RabbitMQ, ZooKeeper | Small; shared by all app nodes |
+| app (1..n) | r2, queue consumers, timers | Stateless; add more to scale |
+| edge | nginx / haproxy | TLS, Cloudflare real IP, page cache, load balancing |
+
+Cassandra and OpenSearch need `vm.max_map_count` raised on the Proxmox
+host. Proxmox recommends running Docker in a VM rather than in LXC.
+
+### Later: nodes joining a cluster
+
+Goal: stand up another VM, point it at the cluster, and have it start
+contributing.
+
+- **Installer roles:** `TIPPR_ROLE=all` (default), `app`, `data`, plus a
+  join setting pointing at ZooKeeper, which already holds most live config
+  and secrets.
+- **App and consumer nodes** need no extra coordination: RabbitMQ shares
+  queue work across consumers, and the edge balances web traffic.
+- **Scheduled jobs** must run on one node at a time. Take a ZooKeeper lock
+  (kazoo) before each job so any node can run the timers safely.
+- **Data tier:** Cassandra, OpenSearch and RabbitMQ join by seed addresses.
+  PostgreSQL stays a single primary with replicas; automatic failover
+  (Patroni or similar) is a separate project.
+- **Caching:** more memcached nodes means more servers in the cache lists.
+  At that point mcrouter (routing and failover across memcached servers) is
+  worth running, preferably as a prebuilt container image rather than a
+  source build.
+
+## Open questions
+
+- What to call users in site text: the code still has a few "redditor"
+  strings, and the translation catalogs say "tipprors".
