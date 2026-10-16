@@ -39,7 +39,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-import BeautifulSoup
+from bs4 import BeautifulSoup
 import lxml.html
 import requests
 from PIL import Image, ImageFile
@@ -699,7 +699,7 @@ class _ThumbnailOnlyScraper(Scraper):
         return thumbnail, preview_object, None, None
 
     def _extract_image_urls(self, soup):
-        for img in soup.findAll("img", src=True):
+        for img in soup.find_all("img", src=True):
             yield urllib.parse.urljoin(self.url, img["src"])
 
     def _find_thumbnail_image(self):
@@ -716,7 +716,7 @@ class _ThumbnailOnlyScraper(Scraper):
             return self.url, content
 
         if content_type and "html" in content_type and content:
-            soup = BeautifulSoup.BeautifulSoup(content)
+            soup = BeautifulSoup(content, 'html.parser')
         else:
             return None, None
 
