@@ -527,8 +527,12 @@ $RUNDIR/setup_cassandra.sh
 # Configure PostgreSQL
 $RUNDIR/setup_postgres.sh
 
-# Configure mcrouter
-$RUNDIR/setup_mcrouter.sh
+# Configure mcrouter (optional; see TIPPR_BUILD_MCROUTER in install.cfg)
+if [ "$TIPPR_BUILD_MCROUTER" = "1" ]; then
+    $RUNDIR/setup_mcrouter.sh
+else
+    echo "Skipping mcrouter build (TIPPR_BUILD_MCROUTER=$TIPPR_BUILD_MCROUTER); r2 uses memcached directly."
+fi
 
 # Configure RabbitMQ
 $RUNDIR/setup_rabbitmq.sh

@@ -74,6 +74,7 @@ Customize the installation by setting environment variables before running the i
 | `TIPPR_VENV` | `/home/$TIPPR_USER/venv` | Python virtual environment location |
 | `TIPPR_PLUGINS` | `about gold` | Space-separated list of plugins to install |
 | `PYTHON_VERSION` | `3.12` | Python version to use |
+| `TIPPR_BUILD_MCROUTER` | `0` | Set to `1` to build mcrouter from source (20+ minutes; not used by the default config) |
 
 Example with custom settings:
 ```bash
