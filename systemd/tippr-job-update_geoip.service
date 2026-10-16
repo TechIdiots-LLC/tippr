@@ -14,5 +14,3 @@ ExecStart=/usr/bin/systemctl reload gunicorn-geoip.service
 
 Nice=10
 
-[Install]
-WantedBy=tippr.target
