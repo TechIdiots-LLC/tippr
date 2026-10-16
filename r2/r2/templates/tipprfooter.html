@@ -38,13 +38,6 @@
       </div>
       %endfor
   </div>
-  <!-- http://code.reddit.com/LICENSE see Exhibit B -->
-  <a href="http://code.reddit.com/" title="Powered by reddit"
-     style="text-align:center;display:block">
-    <img src="${static('powered_by_reddit.png')}"
-         alt="Powered by reddit"
-         style="width:140px; height:47px; margin-bottom: 5px"/>
-  </a>
   <p class="bottommenu">
     ${text_with_links(
             _("Use of this site constitutes acceptance of our "
@@ -60,4 +53,10 @@
     )}.<br />
     Tippr is &copy; ${datetime.datetime.utcnow().year} TechIdiots LLC. All rights reserved. — Based on reddit open source code.
   </p>
+  <!-- http://code.reddit.com/LICENSE see Exhibit B -->
+  <div class="footer-attribution">
+    <a href="http://code.reddit.com/" title="Powered by reddit">
+      <img src="${static('powered_by_reddit.png')}" alt="Powered by reddit" />
+    </a>
+  </div>
 </footer>
