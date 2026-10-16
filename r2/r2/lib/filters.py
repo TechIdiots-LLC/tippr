@@ -28,7 +28,7 @@ import re
 from collections import Counter
 
 import snudown
-from BeautifulSoup import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from pylons import tmpl_context as c
 
 from r2.lib.souptest import (
@@ -255,10 +255,10 @@ def wikimarkdown(text, include_toc=True, target=None):
     
     # TODO: We should test how much of a load this adds to the app
     if isinstance(text, bytes):
-        soup = BeautifulSoup(text.decode('utf-8'))
+        soup = BeautifulSoup(text.decode('utf-8'), 'html.parser')
     else:
-        soup = BeautifulSoup(text)
-    images = soup.findAll('img')
+        soup = BeautifulSoup(text, 'html.parser')
+    images = soup.find_all('img')
     
     if images:
         [img_swap(image) for image in images]
@@ -269,7 +269,7 @@ def wikimarkdown(text, include_toc=True, target=None):
             link['href'] = add_vault(link.get('href'), vault_path=False)
 
     if c.render_style == 'compact':
-        links = soup.findAll('a')
+        links = soup.find_all('a')
         [add_ext_to_link(a) for a in links]
 
     if include_toc:
@@ -285,24 +285,24 @@ title_re = re.compile(r'[^\w.-]')
 header_re = re.compile('^h[1-6]$')
 def generate_table_of_contents(soup, prefix):
     header_ids = Counter()
-    headers = soup.findAll(header_re)
+    headers = soup.find_all(header_re)
     if not headers:
         return
-    tocdiv = Tag(soup, "div", [("class", "toc")])
-    parent = Tag(soup, "ul")
+    tocdiv = soup.new_tag("div", attrs={"class": "toc"})
+    parent = soup.new_tag("ul")
     parent.level = 0
     tocdiv.append(parent)
     level = 0
     previous = 0
     for header in headers:
-        contents = ''.join(header.findAll(text=True))
+        contents = ''.join(header.find_all(string=True))
         
         # In the event of an empty header, skip
         if not contents:
             continue
         
-        # Convert html entities to avoid ugly header ids
-        aid = str(BeautifulSoup(contents, convertEntities=BeautifulSoup.XML_ENTITIES))
+        # bs4 has already decoded html entities in the header text
+        aid = contents
         # Prefix with PREFIX_ to avoid ID conflict with the rest of the page
         aid = '{}_{}'.format(prefix, aid.replace(" ", "_").lower())
         # Convert down to ascii replacing special characters with hex
@@ -317,24 +317,24 @@ def generate_table_of_contents(soup, prefix):
         
         header['id'] = aid
         
-        li = Tag(soup, "li", [("class", aid)])
-        a = Tag(soup, "a", [("href", "#%s" % aid)])
+        li = soup.new_tag("li", attrs={"class": aid})
+        a = soup.new_tag("a", href="#%s" % aid)
         a.string = contents
         li.append(a)
         
         thislevel = int(header.name[-1])
         
         if previous and thislevel > previous:
-            newul = Tag(soup, "ul")
+            newul = soup.new_tag("ul")
             newul.level = thislevel
-            newli = Tag(soup, "li", [("class", "toc_child")])
+            newli = soup.new_tag("li", attrs={"class": "toc_child"})
             newli.append(newul)
             parent.append(newli)
             parent = newul
             level += 1
         elif level and thislevel < previous:
             while level and parent.level > thislevel:
-                parent = parent.findParent("ul")
+                parent = parent.find_parent("ul")
                 level -= 1
         
         previous = thislevel

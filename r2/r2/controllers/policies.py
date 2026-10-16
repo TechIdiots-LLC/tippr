@@ -23,7 +23,7 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-from BeautifulSoup import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from pylons import app_globals as g
 from pylons import tmpl_context as c
 from pylons.i18n import _
@@ -111,9 +111,9 @@ class PoliciesController(TipprController):
 
         doc_html = wikimarkdown(display_rev.content, include_toc=True)
         if isinstance(doc_html, bytes):
-            soup = BeautifulSoup(doc_html.decode('utf-8'))
+            soup = BeautifulSoup(doc_html.decode('utf-8'), 'html.parser')
         else:
-            soup = BeautifulSoup(doc_html)
+            soup = BeautifulSoup(doc_html, 'html.parser')
         # Prefer TOC produced by wikimarkdown when available; avoid calling
         # generate_table_of_contents directly to prevent builder mismatches.
         toc_el = soup.find('div', 'toc')
@@ -134,31 +134,18 @@ class PoliciesController(TipprController):
 
     def _number_sections(self, soup):
         count = 1
-        for para in soup.find('div', 'md').findAll(['p'], recursive=False):
-            try:
-                a = soup.new_tag('a')
-                a['class'] = 'p-anchor'
-                a['id'] = 'p_%d' % count
-                a['href'] = '#p_%d' % count
-                a.string = str(count)
-                para.insert(0, a)
-                para.insert(1, ' ')
-            except Exception:
-                # Fallback for older BeautifulSoup versions
-                a = Tag(soup, 'a', [
-                    ('class', 'p-anchor'),
-                    ('id', 'p_%d' % count),
-                    ('href', '#p_%d' % count),
-                ])
-                a.append(str(count))
-                para.insert(0, a)
-                para.insert(1, ' ')
+        for para in soup.find('div', 'md').find_all(['p'], recursive=False):
+            a = soup.new_tag('a', href='#p_%d' % count,
+                             attrs={'class': 'p-anchor', 'id': 'p_%d' % count})
+            a.string = str(count)
+            para.insert(0, a)
+            para.insert(1, ' ')
             count += 1
 
     def _linkify_headings(self, soup):
         md_el = soup.find('div', 'md')
-        for heading in md_el.findAll(['h1', 'h2', 'h3'], recursive=False):
-            heading_a = Tag(soup, "a", [('href', '#%s' % heading['id'])])
+        for heading in md_el.find_all(['h1', 'h2', 'h3'], recursive=False):
+            heading_a = soup.new_tag('a', href='#%s' % heading['id'])
             # Move the children with extract(): assigning .contents directly
             # (the BeautifulSoup 3 idiom) leaves bs4's tree links pointing at
             # the old parent, and serialization then stops at this heading.
