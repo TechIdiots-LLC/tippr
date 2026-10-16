@@ -16,6 +16,7 @@ refactor.
 """
 from __future__ import annotations
 
+import logging
 import pickle
 import time
 from collections import OrderedDict
@@ -24,6 +25,8 @@ from typing import Dict, Iterable, Optional
 from cassandra.cluster import Cluster
 from cassandra.query import SimpleStatement, BatchStatement, BatchType
 from cassandra import InvalidRequest
+
+log = logging.getLogger(__name__)
 
 # Compatibility constants for pycassa types
 UTF8_TYPE = 'org.apache.cassandra.db.marshal.UTF8Type'
@@ -167,27 +170,6 @@ class ColumnFamily:
         placeholders = ','.join(["%s"] * len(keys))
         cql = "SELECT key, columns FROM %s.%s WHERE key IN (%s)" % (self.keyspace, self.table, placeholders)
         # pass keys through as-is (they may be text or UUID/timeuuid)
-        # Debug snapshot: write session/cluster/cql info to stderr and disk
-        # to aid diagnosis when the app appears to be using a dummy session.
-        try:
-            import sys
-            try:
-                sys.stderr.write(f"cassandra_compat: multiget cql={cql!r} keys={keys!r} session={repr(getattr(self, 'session', None))}\n")
-            except Exception:
-                pass
-            try:
-                with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
-                    _dbg.write(f"MULTIGET: session={repr(getattr(self, 'session', None))}\n")
-                    try:
-                        cl = getattr(self.session, 'cluster', None)
-                        _dbg.write(f"MULTIGET: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
-                    except Exception:
-                        pass
-                    _dbg.write(f"MULTIGET: cql={cql!r} keys={keys!r}\n")
-            except Exception:
-                pass
-        except Exception:
-            pass
         rows = self.session.execute(cql, tuple(keys))
         ret = {}
         for row in rows:
@@ -280,26 +262,6 @@ class ColumnFamily:
         cql = "SELECT columns FROM %s.%s WHERE key = %%s" % (self.keyspace, self.table)
         # pass key through as-is (text or UUID)
         params = (key,)
-        import sys
-        try:
-            sys.stderr.write(f"cassandra_compat: get cql={cql!r} params={params!r}\n")
-        except Exception:
-            pass
-        # write a short debug snapshot to disk to help diagnose which
-        # Session object the app is using (helps when a local shim is
-        # shadowing the real driver or when a DummySession is in use)
-        try:
-            with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
-                _dbg.write(f"GET: session={repr(getattr(self, 'session', None))}\n")
-                try:
-                    cl = getattr(self.session, 'cluster', None)
-                    _dbg.write(f"GET: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
-                except Exception:
-                    pass
-                _dbg.write(f"GET: cql={cql!r} params={params!r}\n")
-        except Exception:
-            pass
-
         row = self.session.execute(cql, params).one()
         if not row:
             raise NotFoundException()
@@ -362,26 +324,10 @@ class ColumnFamily:
             cql = "UPDATE %s.%s SET columns = columns + %%s WHERE key = %%s" % (self.keyspace, self.table)
 
         params = (ser, key)
-        import sys, traceback
         try:
-            try:
-                sys.stderr.write(f"cassandra_compat: insert cql={cql!r} params={params!r}\n")
-            except Exception:
-                pass
-            try:
-                with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
-                    _dbg.write(f"INSERT: session={repr(getattr(self, 'session', None))}\n")
-                    try:
-                        cl = getattr(self.session, 'cluster', None)
-                        _dbg.write(f"INSERT: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
-                    except Exception:
-                        pass
-                    _dbg.write(f"INSERT: cql={cql!r} params={params!r}\n")
-            except Exception:
-                pass
             self.session.execute(cql, params)
         except Exception:
-            sys.stderr.write(f"cassandra_compat: insert failed: {traceback.format_exc()}\n")
+            log.exception("cassandra_compat: insert failed: %s", cql)
             raise
 
     def remove(self, key: str, columns: Optional[Iterable[str]] = None):
@@ -395,25 +341,24 @@ class ColumnFamily:
                 # column names must be text; coerce column name to str, but keep row key type
                 self.session.execute(cql, (str(col), key))
 
-    def xget(self, key: str, column_start: Optional[str] = None, buffer_size: Optional[int] = None):
-        # approximate xget by returning columns after column_start
-        od = self.get(key)
-        if column_start is None:
-            return od
-        items = list(od.items())
-        res = OrderedDict()
-        found = False
-        for k, v in items:
-            if not found:
-                if k == column_start:
-                    found = True
-                    continue
-                else:
-                    continue
-            res[k] = v
-            if buffer_size and len(res) >= buffer_size:
-                break
-        return res
+    def xget(self, key: str, column_start: Optional[str] = None,
+             column_finish: Optional[str] = None,
+             buffer_size: Optional[int] = None,
+             include_timestamp: bool = False):
+        """Iterate over a row's (column, value) pairs, like pycassa's xget.
+
+        Yields nothing if the row does not exist. As in pycassa,
+        column_start is inclusive and buffer_size only controls fetch
+        batching (the whole row is fetched at once here), not how many
+        columns are returned.
+        """
+        try:
+            od = self.get(key, column_start=column_start,
+                          column_finish=column_finish,
+                          include_timestamp=include_timestamp)
+        except NotFoundException:
+            return
+        yield from od.items()
 
     # convenience wrapper for older multiget usages with columns kw
     def multiget_slice(self, keys, columns=None):
@@ -525,30 +470,8 @@ class Mutator:
             batch.add(stmt, params)
         # execute the batch
         try:
-            # debug: log batch contents
-            import sys
-            for kind, cql, params in self._ops:
-                try:
-                    # Also print types of parameters to aid diagnosis
-                    param_types = tuple((type(p).__name__, p) for p in params)
-                    sys.stderr.write(f"cassandra_compat: batch op kind={kind} cql={cql} params={params!r} param_types={param_types!r}\n")
-                except Exception:
-                    pass
-            try:
-                with open('/tmp/cassandra_compat_debug.log', 'a') as _dbg:
-                    _dbg.write(f"BATCH: session={repr(getattr(self, 'session', None))}\n")
-                    try:
-                        cl = getattr(self.session, 'cluster', None)
-                        _dbg.write(f"BATCH: cluster={repr(cl)} contact_points={getattr(cl, 'contact_points', None)}\n")
-                    except Exception:
-                        pass
-                    for kind, cql, params in self._ops:
-                        _dbg.write(f"BATCH_OP: kind={kind} cql={cql!r} params={params!r}\n")
-            except Exception:
-                pass
             self.session.execute(batch)
         except Exception:
-            import sys
-            sys.stderr.write(f"cassandra_compat: batch execute failed: {sys.exc_info()[1]}\n")
+            log.exception("cassandra_compat: batch execute failed")
             raise
         self._ops = []
