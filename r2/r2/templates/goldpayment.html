@@ -37,7 +37,7 @@
 %>
 
 <div class="gold-wrap ${clone_class}">
-  <h1 class="gold-banner"><a href="${'/gold' if thing.goldtype != 'creddits' else '/creddits'}">${_('tippr gold')}</a></h1>
+  <h1 class="gold-banner"><a href="${'/gold' if thing.goldtype != 'ctips' else '/ctips'}">${_('tippr gold')}</a></h1>
 
   <div class="fancy">
     <div class="fancy-inner">
@@ -87,8 +87,8 @@
             <div class="buttons">
               <p>${_("Please select a payment method.")}</p>
 
-              %if thing.can_use_creddits:
-                ${self.creddits_button()}
+              %if thing.can_use_ctips:
+                ${self.ctips_button()}
               %endif:
 
               %if thing.paypal_buttonid:
@@ -109,8 +109,8 @@
 
               %if thing.clone_template:
                 <div class="note">
-                  %if not thing.user_creddits:
-                    ${_md("Give gold often? Consider [buying creddits to use](/creddits), they're 40% cheaper if purchased in a set of 12.")}
+                  %if not thing.user_ctips:
+                    ${_md("Give gold often? Consider [buying ctips to use](/ctips), they're 40% cheaper if purchased in a set of 12.")}
                   %endif
                   ${_md("Would you like to [learn more about giving gold](/gilding)?")}
                 </div>
@@ -124,15 +124,15 @@
   </div>
 </div>
 
-<%def name="creddits_button()">
-  <form id="giftgold" action="/api/spendcreddits" method="post"
-        class="gold-checkout creddits-gold"
-        data-vendor="creddits">
+<%def name="ctips_button()">
+  <form id="giftgold" action="/api/spendctips" method="post"
+        class="gold-checkout ctips-gold"
+        data-vendor="ctips">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-    <button class="btn gold-button" type="button"><span class="snoo-head"></span>${_("creddits")}</button>
+    <button class="btn gold-button" type="button"><span class="snoo-head"></span>${_("ctips")}</button>
     <span class="status">
-      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_creddits}" data-template="${websafe(_ws('(use %(current)s of your %(total)s creddits)')) % dict(current='<%- current %>', total='<%- total %>')}">
+      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_ctips}" data-template="${websafe(_ws('(use %(current)s of your %(total)s ctips)')) % dict(current='<%- current %>', total='<%- total %>')}">
       </span>
     </span>
   </form>

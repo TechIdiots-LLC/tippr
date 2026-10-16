@@ -45,7 +45,7 @@ from r2.models.gold import ctips_lock
 
 
 class APIv1GoldController(OAuth2OnlyController):
-    def _gift_using_creddits(self, recipient, months=1, thing_fullname=None,
+    def _gift_using_ctips(self, recipient, months=1, thing_fullname=None,
             proxying_for=None):
         with ctips_lock(c.user):
             if not c.user.employee and c.user.gold_ctips < months:
@@ -96,7 +96,7 @@ class APIv1GoldController(OAuth2OnlyController):
             self.on_validation_error(err)
         VNotInTimeout().run(target=target, vault=target.vault_slow)
 
-        self._gift_using_creddits(
+        self._gift_using_ctips(
             recipient=target.author_slow,
             thing_fullname=target._fullname,
             proxying_for=request.POST.get("proxying_for"),
@@ -114,7 +114,7 @@ class APIv1GoldController(OAuth2OnlyController):
         uri="/api/v1/gold/give/{username}",
     )
     def POST_give(self, user, months, timeout):
-        self._gift_using_creddits(
+        self._gift_using_ctips(
             recipient=user,
             months=months,
             proxying_for=request.POST.get("proxying_for"),

@@ -52,16 +52,16 @@ r.gold = {
           r.gold.signupForm.init();
         }
 
-        $('form.creddits-gold .remaining').each(r.gold._renderCredditsAmount);
+        $('form.ctips-gold .remaining').each(r.gold._renderCtipsAmount);
 
-        $(document.body).on('submit', 'form.creddits-gold', function(e) {
+        $(document.body).on('submit', 'form.ctips-gold', function(e) {
           e.preventDefault();
           e.stopPropagation();
 
-          r.gold._expendCreddits();
+          r.gold._expendCtips();
 
-          $(this).find('.gold-checkout:not(.creddits-gold)').hide();
-          return post_form(this, 'spendcreddits')
+          $(this).find('.gold-checkout:not(.ctips-gold)').hide();
+          return post_form(this, 'spendctips')
         })
     },
 
@@ -182,25 +182,25 @@ r.gold = {
         });
     },
 
-    // When spending creddits, update the templates we use to generate the gilding form to display the
-    // new total creddits remaining, or hide it if we have less than the current cost of gilding (1 creddit).
-    _expendCreddits: function() {
-      $('.cloneable-comment, .cloneable-link').find('form.creddits-gold .remaining').each(function() {
+    // When spending ctips, update the templates we use to generate the gilding form to display the
+    // new total ctips remaining, or hide it if we have less than the current cost of gilding (1 ctip).
+    _expendCtips: function() {
+      $('.cloneable-comment, .cloneable-link').find('form.ctips-gold .remaining').each(function() {
         var $this = $(this);
-        var currentCreddits = parseInt($this.data('current'), 10);
-        var totalCreddits = parseInt($this.data('total'), 10);
-        var newTotal = totalCreddits - currentCreddits;
+        var currentCtips = parseInt($this.data('current'), 10);
+        var totalCtips = parseInt($this.data('total'), 10);
+        var newTotal = totalCtips - currentCtips;
 
-        if (newTotal < currentCreddits) {
-          $this.parents('form.creddits-gold').remove()
+        if (newTotal < currentCtips) {
+          $this.parents('form.ctips-gold').remove()
         } else {
           $(this).data('total', newTotal);
-          r.gold._renderCredditsAmount.apply(this)
+          r.gold._renderCtipsAmount.apply(this)
         }
       })
     },
 
-    _renderCredditsAmount: function() {
+    _renderCtipsAmount: function() {
       var $this = $(this);
       var tpl = $this.data('template');
       $this.html(_.template(tpl, _.omit($this.data(), 'template')))
@@ -351,8 +351,8 @@ r.gold.signupForm = (function() {
       case 'gift':
         fields.push('months', 'recipient', 'signed', 'giftmessage');
         break;
-      case 'creddits':
-        fields.push('num_creddits');
+      case 'ctips':
+        fields.push('num_ctips');
         break
     }
 
@@ -416,8 +416,8 @@ r.gold.signupForm = (function() {
 
     if ($tab.prop('id') == 'autorenew') {
       goldtype = 'autorenew'
-    } else if ($tab.prop('id') == 'creddits') {
-      goldtype = 'creddits'
+    } else if ($tab.prop('id') == 'ctips') {
+      goldtype = 'ctips'
     } else if (isGift && $gifttype.length > 0) {
       goldtype = $gifttype.val()
     } else {

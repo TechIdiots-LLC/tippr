@@ -2463,7 +2463,7 @@ class ProfileBar(Templated):
                                 "%(ctips)s gold ctips to give",
                                 user.gold_ctips)
                 msg = msg % dict(ctips=user.gold_ctips)
-                self.gold_creddit_message = msg
+                self.gold_ctip_message = msg
 
             if user.num_gildings > 0 and self.show_private_info:
                 gildings_msg = ungettext(
@@ -3122,16 +3122,16 @@ class Gold(Templated):
                  edit=False):
 
         if c.user.employee:
-            user_creddits = 50
+            user_ctips = 50
         else:
-            user_creddits = c.user.gold_ctips
+            user_ctips = c.user.gold_ctips
 
         Templated.__init__(self, goldtype = goldtype, period = period,
                            months = months, signed = signed,
                            email=email,
                            recipient=recipient,
                            giftmessage=giftmessage,
-                           user_creddits = user_creddits,
+                           user_ctips = user_ctips,
                            can_subscribe=can_subscribe,
                            edit=edit)
 
@@ -3161,15 +3161,15 @@ class GoldPayment(Templated):
                 price = unit_price * years
 
         if c.user.employee:
-            user_creddits = 50
+            user_ctips = 50
         else:
-            user_creddits = c.user.gold_ctips
+            user_ctips = c.user.gold_ctips
 
         if (goldtype in ("gift", "code", "onetime") and
-                months <= user_creddits):
-            can_use_creddits = True
+                months <= user_ctips):
+            can_use_ctips = True
         else:
-            can_use_creddits = False
+            can_use_ctips = False
 
         if goldtype == "autorenew":
             if period == "monthly":
@@ -3215,7 +3215,7 @@ class GoldPayment(Templated):
                 if goldtype == "code":
                     paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYMONTH
                 else:
-                    paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
+                    paypal_buttonid = g.PAYPAL_BUTTONID_CTIPS_BYMONTH
                 quantity = months
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
@@ -3223,14 +3223,14 @@ class GoldPayment(Templated):
                 if goldtype == "code":
                     paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYYEAR
                 else:
-                    paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
+                    paypal_buttonid = g.PAYPAL_BUTTONID_CTIPS_BYYEAR
                 quantity = months / 12
                 months = quantity * 12
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
 
             if goldtype == "ctips":
-                summary = strings.gold_summary_creddits % dict(
+                summary = strings.gold_summary_ctips % dict(
                     amount=Score.somethings(months, "ctip"),
                     price=price,
                 )
@@ -3276,14 +3276,14 @@ class GoldPayment(Templated):
                            months=months, quantity=quantity,
                            unit_price=unit_price, price=price,
                            summary=summary, giftmessage=giftmessage,
-                           can_use_creddits=can_use_creddits,
+                           can_use_ctips=can_use_ctips,
                            passthrough=passthrough,
                            thing=thing, clone_template=clone_template,
                            description=desc, thing_type=thing_type,
                            paypal_buttonid=paypal_buttonid,
                            stripe_key=stripe_key,
                            coinbase_button_id=coinbase_button_id,
-                           user_creddits=user_creddits,
+                           user_ctips=user_ctips,
                            )
 
 

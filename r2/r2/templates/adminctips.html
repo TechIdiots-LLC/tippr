@@ -25,10 +25,10 @@
 
 <%namespace file="utils.html" import="error_field"/>
 
-<h1>${_("give creddits to a user")}</h1>
+<h1>${_("give ctips to a user")}</h1>
 
-<form id="creddits" action="/api/givecreddits" method="post" class="pretty-form medium-text"
-      onsubmit="return post_form(this, 'givecreddits');">
+<form id="ctips" action="/api/givectips" method="post" class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'givectips');">
 
   <table class="lined-table borderless">
     <tr>
@@ -40,9 +40,9 @@
       </td>
     </tr>
     <tr>
-        <td>${_("creddits")}</td>
+        <td>${_("ctips")}</td>
       <td>
-        <input type="number" name="num_creddits">
+        <input type="number" name="num_ctips">
         ${_("(negative to take away)")}
       </td>
     </tr>
