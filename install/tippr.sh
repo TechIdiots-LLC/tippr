@@ -532,13 +532,11 @@ function tippr_secret {
 }
 
 # Installs from before generated secrets used the ZooKeeper password "tippr",
-# and ZooKeeper nodes are ACL'd to the credentials that created them. Keep it
-# for those installs instead of locking the app out of its own nodes.
+# and ZooKeeper nodes are ACL'd to the credentials that created them. If
+# ZooKeeper already holds data (and no password was saved yet), keep "tippr"
+# instead of locking the app out of its own nodes.
 function existing_zookeeper_password {
-    local ini=$TIPPR_SRC/tippr/r2/development.update
-    if [ -f "$ini" ] && grep -q '^zookeeper_password' "$ini"; then
-        sed -n 's/^zookeeper_password *= *//p' "$ini" | tail -n 1
-    elif [ -f "$TIPPR_SRC/tippr/r2/development.ini" ]; then
+    if ls /var/lib/zookeeper/version-2/* /tmp/zookeeper/version-2/* >/dev/null 2>&1; then
         echo "tippr"
     else
         random_password
