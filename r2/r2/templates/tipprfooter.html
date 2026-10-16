@@ -24,6 +24,7 @@
 ###############################################################################
 
 <%!
+   from r2.lib.template_helpers import static
    from r2.lib.strings import strings
    import datetime
 %>
@@ -37,14 +38,13 @@
       </div>
       %endfor
   </div>
-  %if g.domain != "tippr.net":
-    <!-- http://code.reddit.com/LICENSE see Exhibit B -->
-    <a href="https://www.tippr.net/code/" style="text-align:center;display:block">
-      <img src="https://s3.amazonaws.com/sp.tippr.net/powered_by_reddit.png"
-           alt="Powered by tippr."
-           style="width:140px; height:47px; margin-bottom: 5px"/>
-    </a>
-  %endif
+  <!-- http://code.reddit.com/LICENSE see Exhibit B -->
+  <a href="http://code.reddit.com/" title="Powered by reddit"
+     style="text-align:center;display:block">
+    <img src="${static('powered_by_reddit.png')}"
+         alt="Powered by reddit"
+         style="width:140px; height:47px; margin-bottom: 5px"/>
+  </a>
   <p class="bottommenu">
     ${text_with_links(
             _("Use of this site constitutes acceptance of our "
@@ -60,9 +60,4 @@
     )}.<br />
     Tippr is &copy; ${datetime.datetime.utcnow().year} TechIdiots LLC. All rights reserved. — Based on reddit open source code.
   </p>
-  <div class="footer-attribution">
-    <a href="http://code.reddit.com/" title="Powered by reddit">
-      <img src="http://code.reddit.com/reddit_logo.png" alt="Powered by reddit" />
-    </a>
-  </div>
 </footer>
