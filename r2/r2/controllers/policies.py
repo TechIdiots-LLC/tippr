@@ -109,15 +109,13 @@ class PoliciesController(TipprController):
         else:
             display_rev = revs[0]
 
-        doc_html = wikimarkdown(display_rev.content, include_toc=True)
+        doc_html = wikimarkdown(display_rev.content, include_toc=False)
         if isinstance(doc_html, bytes):
             soup = BeautifulSoup(doc_html.decode('utf-8'), 'html.parser')
         else:
             soup = BeautifulSoup(doc_html, 'html.parser')
-        # Prefer TOC produced by wikimarkdown when available; avoid calling
-        # generate_table_of_contents directly to prevent builder mismatches.
-        toc_el = soup.find('div', 'toc')
-        toc = toc_el if toc_el is not None else ''
+        # The table of contents goes in the side column, not the body.
+        toc = generate_table_of_contents(soup, prefix='section') or ''
         self._number_sections(soup)
         self._linkify_headings(soup)
 
