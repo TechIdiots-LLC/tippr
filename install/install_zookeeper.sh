@@ -33,3 +33,31 @@ echo "Waiting for ZooKeeper to be available..."
 while ! nc -vz localhost 2181; do
     sleep 1
 done
+
+# Ubuntu's zookeeperd ships dataDir=/tmp/zookeeper, which is cleared on
+# reboot. Keep the data in /var/lib/zookeeper (moving any existing data), and
+# only listen on localhost: r2 is the only client.
+ZOO_CFG=/etc/zookeeper/conf/zoo.cfg
+ZOO_DATA=/var/lib/zookeeper
+if [ -f "$ZOO_CFG" ]; then
+    restart_zookeeper=0
+    if grep -q '^dataDir=/tmp/zookeeper' "$ZOO_CFG"; then
+        systemctl stop zookeeper || true
+        if [ -d /tmp/zookeeper/version-2 ] && [ ! -d "$ZOO_DATA/version-2" ]; then
+            cp -a /tmp/zookeeper/version-2 "$ZOO_DATA/"
+            chown -R zookeeper:zookeeper "$ZOO_DATA/version-2"
+        fi
+        sed -i "s#^dataDir=.*#dataDir=$ZOO_DATA#" "$ZOO_CFG"
+        restart_zookeeper=1
+    fi
+    if ! grep -q '^clientPortAddress=' "$ZOO_CFG"; then
+        echo 'clientPortAddress=127.0.0.1' >> "$ZOO_CFG"
+        restart_zookeeper=1
+    fi
+    if [ "$restart_zookeeper" = "1" ]; then
+        systemctl restart zookeeper
+        while ! nc -z localhost 2181; do
+            sleep 1
+        done
+    fi
+fi
