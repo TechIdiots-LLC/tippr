@@ -14,6 +14,9 @@ EnvironmentFile=-/etc/default/tippr
 # baseplate/ compatibility shim for r2 would shadow the real baseplate this
 # service runs on.
 UnsetEnvironment=PYTHONPATH
+Environment=PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_tippr
+ExecStartPre=+/bin/mkdir -p /tmp/prometheus_tippr
+ExecStartPre=+/bin/chown @TIPPR_USER@:@TIPPR_GROUP@ /tmp/prometheus_tippr
 ExecStart=@TIPPR_VENV@/bin/baseplate-serve --bind 127.0.0.1:9002 @TIPPR_SRC@/activity/example.ini
 Restart=on-failure
 TimeoutStartSec=120
