@@ -136,10 +136,16 @@ if [ ! -x /usr/local/bin/mcrouter ]; then
   rm -rf /opt/mcrouter/mcrouter-install/install
 
   pushd /opt/mcrouter >/dev/null 2>&1 || true
-  # add known upstream fix branch if not already present
+  # Build the fix-oss-build branch from the markbhasawut fork (upstream
+  # 3558cc23 from 2025-12-18 plus the OSS build fixes), pinned to a known
+  # commit. Merging it into the latest upstream main stopped applying
+  # cleanly once main moved on (conflict in McrouterLogger.cpp).
+  MCROUTER_REF=${MCROUTER_REF:-c2838dd072cc529b246567dd6c7afa1ea1d6078d}
   git remote add markbhasawut https://github.com/markbhasawut/mcrouter.git 2>/dev/null || true
-  git fetch markbhasawut 2>/dev/null || true
-  git merge --no-edit markbhasawut/fix-oss-build 2>/dev/null || true
+  git fetch markbhasawut
+  git merge --abort 2>/dev/null || true
+  git reset -q --hard
+  git checkout -q --detach "$MCROUTER_REF"
 
   # fix for missing thrift annotations in carbon build
   # we inject an include path that thrift1 can use
