@@ -435,17 +435,6 @@ class ThingBase(metaclass=ThingMeta):
         def lookup(l_ids):
             if properties is None:
                 rows = cls._cf.multiget(l_ids, column_count=max_column_count)
-                try:
-                    g.log.debug("tdb_cassandra.lookup: class=%s ids=%r rows=%r",
-                                cls.__name__, l_ids, list(rows.keys()))
-                except Exception:
-                    pass
-                try:
-                    with open('/tmp/tdb_lookup_debug.log', 'a') as _f:
-                        _f.write(f"tdb_lookup: class={cls.__name__} ids={l_ids!r} rows={list(rows.keys())!r}\n")
-                except Exception:
-                    pass
-
                 # if we got max_column_count columns back for a row, it was
                 # probably clipped. in this case, we should fetch the remaining
                 # columns for that row and add them to the result.
