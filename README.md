@@ -18,7 +18,7 @@ This fork is intended for local development, experimentation, and educational pu
 
 This project is licensed under the Common Public Attribution License Version 1.0 (CPAL), the same license as the original reddit code. See the [LICENSE](LICENSE) file for details.
 
-**Attribution:** Based on reddit open-source code. Original code © 2006-2015 tippr Inc.
+**Attribution:** Based on reddit open-source code. Original code © 2006-2015 reddit Inc.
 
 ---
 
@@ -131,7 +131,7 @@ journalctl -u tippr-serve -f
 
 ## Documentation
 
-For detailed installation information, see [INSTALL_tippr.md](INSTALL_tippr.md).
+For detailed installation information, see [docs/INSTALL_tippr.md](docs/INSTALL_tippr.md).
 
 ## Contributing
 
