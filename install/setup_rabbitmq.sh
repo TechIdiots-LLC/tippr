@@ -38,8 +38,10 @@ fi
 
 if ! sudo rabbitmqctl list_users | egrep "^tippr"
 then
-    sudo rabbitmqctl add_user tippr tippr
+    sudo rabbitmqctl add_user tippr "$TIPPR_AMQP_PASSWORD"
 fi
+# keep the password in step with the generated one on every run
+sudo rabbitmqctl change_password tippr "$TIPPR_AMQP_PASSWORD"
 
 sudo rabbitmqctl set_permissions -p / tippr ".*" ".*" ".*"
 sudo rabbitmq-plugins enable rabbitmq_management

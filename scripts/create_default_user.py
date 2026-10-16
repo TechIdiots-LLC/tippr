@@ -1,23 +1,32 @@
 
-from r2.models import Account, register, NotFound
-from pylons import app_globals as g
+"""Create the site's first admin account.
 
-username = "tippr"
-password = "password"
+The name and password come from TIPPR_ADMIN_USER (default "tippr") and
+TIPPR_ADMIN_PASSWORD, which install/tippr.sh generates once per install.
+An existing account's password is only changed when
+TIPPR_ADMIN_PASSWORD_RESET=1 is set.
+"""
 
-print(f"Ensuring user '{username}' exists...")
+import os
+
+from r2.models import Account, NotFound, change_password, register
+
+username = os.environ.get("TIPPR_ADMIN_USER", "tippr")
+password = os.environ.get("TIPPR_ADMIN_PASSWORD")
+reset = os.environ.get("TIPPR_ADMIN_PASSWORD_RESET") == "1"
+
+if not password:
+    raise SystemExit("TIPPR_ADMIN_PASSWORD is not set; not creating an admin account.")
 
 try:
     user = Account._by_name(username)
-    print(f"User '{username}' already exists.")
 except NotFound:
-    print(f"Creating user '{username}' with password '{password}'...")
-    try:
-        # Register the user with a local IP
-        user = register(username, password, "127.0.0.1")
-        
-        # Ensure changes are committed
-        user._commit()
-        print(f"SUCCESS: User '{username}' created.")
-    except Exception as e:
-        print(f"ERROR: Failed to create user: {e}")
+    user = register(username, password, "127.0.0.1")
+    user._commit()
+    print(f"Created admin account '{username}'.")
+else:
+    if reset:
+        change_password(user, password)
+        print(f"Reset the password of admin account '{username}'.")
+    else:
+        print(f"Admin account '{username}' already exists; password unchanged.")

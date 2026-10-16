@@ -29,6 +29,7 @@ fi
 
 # load configuration
 RUNDIR=$(dirname $0)
+export TIPPR_INSTALLER=1
 SCRIPTDIR="$RUNDIR/install"
 
 # the canonical source of all installers

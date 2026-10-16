@@ -67,6 +67,16 @@ And if you think caching might be hurting you, you can flush memcache with
 
     tippr-flush
 
+Log in at https://$TIPPR_DOMAIN/ as the admin account "${TIPPR_ADMIN_USER:-tippr}".
+Its password, and every other generated password and secret, is kept in
+${TIPPR_SECRETS_FILE:-/etc/tippr/secrets.env} (readable by root only):
+
+    sudo grep TIPPR_ADMIN_PASSWORD ${TIPPR_SECRETS_FILE:-/etc/tippr/secrets.env}
+
+To choose your own, re-run the installer with it set, e.g.
+TIPPR_ADMIN_PASSWORD=... TIPPR_ADMIN_PASSWORD_RESET=1 (the reset flag also
+changes the password of an existing admin account).
+
 Now that the core of tippr is installed, you may want to do some additional
 steps:
 
