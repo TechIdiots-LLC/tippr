@@ -41,13 +41,6 @@ from r2.models.wiki import WikiBadRevision, WikiPage, WikiRevision
 class PoliciesController(TipprController):
     @validate(requested_rev=nop('v'))
     def GET_policy_page(self, page, requested_rev):
-        # runtime debug: log host, page and request info to aid diagnosis
-        try:
-            with open('/tmp/help_page_debug.log', 'a') as _dbg:
-                _dbg.write(f"POLICIES REQUEST host={getattr(c, 'cur_domain', '')} page={page} requested_rev={requested_rev}\n")
-        except Exception:
-            pass
-
         if c.render_style == 'compact':
             self.redirect('/wiki/' + page)
         if page == 'privacypolicy':
@@ -68,23 +61,6 @@ class PoliciesController(TipprController):
         try:
             wp = WikiPage.get(Frontpage, wiki_name)
         except tdb_cassandra.NotFound:
-            # Debugging 404s
-            import sys
-            try:
-                debug_id = WikiPage.id_for(Frontpage, wiki_name)
-                try:
-                    with open('/tmp/help_page_debug.log', 'a') as _dbg:
-                        _dbg.write(f"PoliciesController 404: WikiPage '{wiki_name}' not found. ID: '{debug_id}'. Frontpage: {Frontpage}\n")
-                except Exception:
-                    pass
-                sys.stderr.write(f"PoliciesController 404: WikiPage '{wiki_name}' not found. ID: '{debug_id}'. Frontpage: {Frontpage}\n")
-            except Exception as e:
-                try:
-                    with open('/tmp/help_page_debug.log', 'a') as _dbg:
-                        _dbg.write(f"PoliciesController 404: Error generating debug ID: {e}\n")
-                except Exception:
-                    pass
-                sys.stderr.write(f"PoliciesController 404: Error generating debug ID: {e}\n")
             abort(404)
 
         revs = list(wp.get_revisions())
@@ -103,13 +79,6 @@ class PoliciesController(TipprController):
                 revs.sort(key=lambda r: getattr(r._id, 'time', 0), reverse=True)
             except Exception:
                 revs = []
-
-        # log revision lookup outcome
-        try:
-            with open('/tmp/help_page_debug.log', 'a') as _dbg:
-                _dbg.write(f"PoliciesController: page={page} wiki_name={wiki_name} wp_id={getattr(wp, '_id', None)} revs_found={len(revs)}\n")
-        except Exception:
-            pass
 
         if not revs:
             # No revisions found for this wiki page — treat as not found
@@ -190,6 +159,9 @@ class PoliciesController(TipprController):
         md_el = soup.find('div', 'md')
         for heading in md_el.findAll(['h1', 'h2', 'h3'], recursive=False):
             heading_a = Tag(soup, "a", [('href', '#%s' % heading['id'])])
-            heading_a.contents = heading.contents
-            heading.contents = []
+            # Move the children with extract(): assigning .contents directly
+            # (the BeautifulSoup 3 idiom) leaves bs4's tree links pointing at
+            # the old parent, and serialization then stops at this heading.
+            for child in list(heading.contents):
+                heading_a.append(child.extract())
             heading.append(heading_a)
