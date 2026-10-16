@@ -33,8 +33,8 @@
 <%namespace name="utils" file="utils.html"/>
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
-                    action=${add_vault("/submit")},
-                    _class="submit content",
+                    action="${add_vault('/submit')}"
+                    _class="submit content"
                     _id="newlink">
 
 %if thing.show_link and thing.show_self:
