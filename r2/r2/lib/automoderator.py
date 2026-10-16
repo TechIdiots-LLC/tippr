@@ -273,6 +273,7 @@ class Ruleset(object):
                     try:
                         rule = Rule(rule_def.values, rule_def.yaml)
                     except AutoModeratorRuleTypeError as type_error:
+                        last_type_error = type_error
                         continue
 
                     # only keep the rule if it had any checks
@@ -281,7 +282,7 @@ class Ruleset(object):
 
                 # if both types hit exceptions we should actually error
                 if not rule:
-                    raise type_error
+                    raise last_type_error
             else:
                 self.rules.append(Rule(rule_def.values, rule_def.yaml))
 

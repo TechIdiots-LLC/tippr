@@ -394,13 +394,14 @@ def rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
             try:
                 uploader.inject()
             except http.client.HTTPException as err:
+                last_err = err
                 print("Got {}, sleeping {} secs".format(err, x))
                 time.sleep(x)
                 continue
             else:
                 break
         else:
-            raise err
+            raise last_err
         last_update = chunk[-1]
         print("last updated %s" % last_update._fullname)
         time.sleep(sleeptime)

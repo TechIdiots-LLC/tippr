@@ -109,14 +109,15 @@ def get_aggregate(interval, category_cls):
         for i in range(5):
             try:
                 txt = get_text_from_s3(s3_connection, path)
-            except ClientError:
+            except ClientError as err:
+                last_err = err
                 print('S3ResponseError on %s, retrying' % path)
                 sleep(300)
             else:
                 break
         else:
             print('Could not retrieve %s' % path)
-            raise e
+            raise last_err
 
         for line in txt.splitlines():
             tuples = line.rstrip('\n').split('\t')

@@ -105,7 +105,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                 if 'error' in response_json:
                     message = response_json['error'].get('msg', 'Unknown error')
                     raise InvalidQuery(resp.status, resp.reason, message,
-                                       search_api, path, reasons)
+                                       search_api, path)
             raise SearchHTTPError(resp.status, resp.reason,
                                   search_api, path, response)
     except OSError as e:
@@ -726,13 +726,14 @@ def _rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
             try:
                 uploader.inject()
             except http.client.HTTPException as err:
+                last_err = err
                 print("Got {}, sleeping {} secs".format(err, x))
                 time.sleep(x)
                 continue
             else:
                 break
         else:
-            raise err
+            raise last_err
         last_update = chunk[-1]
         print("last updated %s" % last_update._fullname)
         time.sleep(sleeptime)
