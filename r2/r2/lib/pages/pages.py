@@ -1091,43 +1091,24 @@ class TipprFooter(CachedTemplate):
     def __init__(self):
         self.nav = [
             NavMenu([
-                    NamedButton("blog", False, dest="/blog"),
-                    OffsiteButton("about", "https://about.tippr.net/"),
                     NamedButton("source_code", False, dest="/code"),
-                    NamedButton("advertising", False),
-                    NamedButton("jobs", False),
+                    NamedButton("contact", False),
                 ],
                 title = _("about"),
                 type = "flat_vert",
                 separator = ""),
 
             NavMenu([
-                    NamedButton("rules", False),
-                    OffsiteButton(_("FAQ"), "https://reddit.zendesk.com"),
-                    NamedButton("wiki", False),
-                    NamedButton("reddiquette", False, dest="/wiki/reddiquette"),
-                    NamedButton("transparency", False, dest="/wiki/transparency"),
-                    NamedButton("contact", False),
+                    NamedButton("contentpolicy", False, dest="/help/contentpolicy"),
+                    NamedButton("useragreement", False, dest="/help/useragreement"),
+                    NamedButton("privacypolicy", False, dest="/help/privacypolicy"),
                 ],
                 title = _("help"),
                 type = "flat_vert",
                 separator = ""),
 
             NavMenu([
-                    OffsiteButton(_("Tippr for iPhone"),
-                        "https://itunes.apple.com/us/app/tippr-the-official-app/id1064216828?mt=8"),
-                    OffsiteButton(_("Tippr for Android"),
-                        "https://play.google.com/store/apps/details?id=com.tippr.frontpage"),
-                    OffsiteButton(_("mobile website"), "https://m.tippr.net"),
-                    NamedButton("buttons", False),
-                ],
-                title = _("apps & tools"),
-                type = "flat_vert",
-                separator = ""),
-
-            NavMenu([
                     NamedButton("gold", False, dest="/gold/about", css_class="buygold"),
-                    OffsiteButton(_("tipprgifts"), "//tipprgifts.com"),
                 ],
                 title = _("<3"),
                 type = "flat_vert",

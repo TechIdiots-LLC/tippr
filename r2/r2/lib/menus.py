@@ -98,6 +98,9 @@ menu =   MenuHandler(hot          = _('hot'),
                      jobs         = _('jobs'),
                      transparency = _("transparency"),
                      source_code  = _("source code"),
+                     contentpolicy = _("content policy"),
+                     useragreement = _("user agreement"),
+                     privacypolicy = _("privacy policy"),
                      values       = _("values"),
 
                      #preferences
