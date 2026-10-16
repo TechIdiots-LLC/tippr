@@ -1107,7 +1107,7 @@ def new_comment(comment, inbox_rels):
 
     if comment._deleted:
         job_key = "delete_items"
-        job.append(get_sr_comments(vault))
+        job.append(get_vault_comments(vault))
         job.append(get_all_comments())
     else:
         job_key = "insert_items"
@@ -1603,7 +1603,7 @@ def unban(things, insert=True):
             query_cache_deletes.append([get_spam_links(vault), links])
 
         if insert and comments:
-            add_queries([get_all_comments(), get_sr_comments(vault)],
+            add_queries([get_all_comments(), get_vault_comments(vault)],
                         insert_items=comments)
             query_cache_deletes.append([get_spam_comments(vault), comments])
 
