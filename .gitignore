@@ -18,6 +18,7 @@ r2/r2/lib/generated_strings.py
 # ini files
 *.ini
 *.update
+*.secrets
 
 # static files
 r2/r2/public/static/names.json

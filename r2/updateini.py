@@ -39,26 +39,30 @@ HEADER = '''
 # or be added to the base 'example.ini' file.
 '''
 
-def main(source_ini, update_ini):
+def main(source_ini, *update_inis):
     with open(source_ini) as source:
         parser = parse_ini_file(source)
-    with open(update_ini) as f:
-        updates = f.read()
-    try:
-        # Existing *.update files don't include section
-        # headers; inject a [DEFAULT] header if the parsing
-        # fails. Use read_file for Python 3 compatibility.
-        parser.read_file(StringIO(updates))
-    except MissingSectionHeaderError:
-        updates = "[DEFAULT]\n" + updates
-        parser.read_file(StringIO(updates))
+    # Later update files override earlier ones (e.g. development.update, then
+    # the installer-generated development.secrets).
+    for update_ini in update_inis:
+        with open(update_ini) as f:
+            updates = f.read()
+        try:
+            # Existing *.update files don't include section
+            # headers; inject a [DEFAULT] header if the parsing
+            # fails. Use read_file for Python 3 compatibility.
+            parser.read_file(StringIO(updates))
+        except MissingSectionHeaderError:
+            updates = "[DEFAULT]
+" + updates
+            parser.read_file(StringIO(updates))
     print(HEADER)
     parser.write(sys.stdout)
 
 if __name__ == '__main__':
     args = sys.argv
-    if len(args) != 3:
-        print('usage: %s [source] [update]' % sys.argv[0])
+    if len(args) < 3:
+        print('usage: %s [source] [update] [more updates...]' % sys.argv[0])
         sys.exit(1)
     else:
-        main(sys.argv[1], sys.argv[2])
+        main(*sys.argv[1:])
