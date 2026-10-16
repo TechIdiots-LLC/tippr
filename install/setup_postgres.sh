@@ -83,6 +83,15 @@ sudo -u postgres env LC_ALL=C psql -c "ALTER DATABASE tippr OWNER TO tippr;" || 
 # database owner is different or defaults are restrictive)
 sudo -u postgres env LC_ALL=C psql tippr -c "GRANT ALL PRIVILEGES ON SCHEMA public TO tippr;" || true
 
+# Each r2 process keeps a connection pool per database role (up to ~13
+# connections). The web app, a dozen queue consumers and overlapping jobs
+# exhaust the default limit of 100. ALTER SYSTEM only applies after a restart.
+CURRENT_MAX_CONNECTIONS=$(sudo -u postgres env LC_ALL=C psql -Atc "SHOW max_connections;")
+if [ "$CURRENT_MAX_CONNECTIONS" -lt 300 ]; then
+    sudo -u postgres env LC_ALL=C psql -c "ALTER SYSTEM SET max_connections = 300;"
+    systemctl restart postgresql
+fi
+
 sudo -u postgres env LC_ALL=C psql tippr <<FUNCTIONSQL
 create or replace function hot(ups integer, downs integer, date timestamp with time zone) returns numeric as \$\$
     select round(cast(log(greatest(abs(\$1 - \$2), 1)) * sign(\$1 - \$2) + (date_part('epoch', \$3) - 1134028003) / 45000.0 as numeric), 7)
