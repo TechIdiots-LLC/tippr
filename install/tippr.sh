@@ -167,7 +167,7 @@ function copy_systemd {
     if [ -d "${1}/systemd" ]; then
         echo "Copying and templating systemd units from ${1}/systemd to /etc/systemd/system/..."
         # Iterate over files to perform variable substitution before installation
-        for f in "${1}"/systemd/*.service "${1}"/systemd/*.timer "${1}"/systemd/*.target; do
+        for f in "${1}"/systemd/*.service "${1}"/systemd/*.timer "${1}"/systemd/*.target "${1}"/systemd/*.path; do
             [ -e "$f" ] || continue
             dest="/etc/systemd/system/$(basename "$f")"
             echo "  -> Templating $(basename "$f")"
@@ -1065,6 +1065,19 @@ helper-script /usr/local/bin/tippr-flush <<TIPPRFLUSH
 echo flush_all | nc localhost 11211
 TIPPRFLUSH
 
+# Site backups (docs/BACKUP.md): tippr-backup exports, imports and restores
+# as root. /admin/backups queues requests in the queue folder (writable by
+# the web app) for tippr-backup.service, started by tippr-backup.path.
+# Backups belong to $TIPPR_USER and are private to it (and root).
+install -d -m 0755 /var/lib/tippr
+install -d -m 0700 -o $TIPPR_USER /var/lib/tippr/backups
+install -d -m 0700 -o $TIPPR_USER /var/lib/tippr/backup-queue
+helper-script /usr/local/bin/tippr-backup <<TIPPRBACKUP
+#!/bin/bash
+# usage: sudo tippr-backup export|list|import|restore ... (--help)
+exec $TIPPR_VENV/bin/python $TIPPR_SRC/tippr/scripts/tippr_backup.py --ini $TIPPR_SRC/tippr/r2/run.ini "\$@"
+TIPPRBACKUP
+
 helper-script /usr/local/bin/tippr-serve <<TIPPRSERVE
 #!/bin/bash
 cd $TIPPR_SRC/tippr/r2
@@ -1559,6 +1572,7 @@ fi
 # ok, now start everything else up
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"
+    systemctl enable --now tippr-backup.path
     systemctl restart tippr.target
 else
     echo "No systemd found; services not started."

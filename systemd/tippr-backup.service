@@ -1,0 +1,15 @@
+[Unit]
+Description=run backup, import and restore requests from /admin/backups
+Documentation=file://@TIPPR_SRC@/tippr/docs/BACKUP.md
+# Not part of tippr.target: offline exports and restores stop and start it.
+After=network.target postgresql.service cassandra.service zookeeper.service
+
+[Service]
+Type=oneshot
+# root: pg_dump/pg_restore with the site's credentials, stopping tippr,
+# reading and writing media and the signing secrets
+User=root
+EnvironmentFile=-/etc/default/tippr
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/tippr_backup.py --ini @TIPPR_INI@ process-queue
+# exports and restores of a large site can take hours
+TimeoutStartSec=infinity

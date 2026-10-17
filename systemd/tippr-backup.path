@@ -1,0 +1,10 @@
+[Unit]
+Description=watch for backup requests from /admin/backups
+
+[Path]
+# the web app (r2.lib.backups) writes one JSON file per request here
+PathExistsGlob=/var/lib/tippr/backup-queue/*.json
+Unit=tippr-backup.service
+
+[Install]
+WantedBy=multi-user.target
