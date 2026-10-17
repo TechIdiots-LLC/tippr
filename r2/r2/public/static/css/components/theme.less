@@ -1,0 +1,63 @@
+// tippr's colour theme.
+//
+// Colours are CSS custom properties so a theme can be switched at runtime
+// (for example a dark theme redefining them under [data-theme=dark]). Use
+// the LESS aliases below in stylesheets; each carries the light theme's
+// colour as a fallback, so a stylesheet still works where the :root block
+// isn't loaded (e.g. tippr-embed on other sites).
+//
+// LESS colour functions (lighten(), darken(), ...) can't work on var(), so
+// those use the -hex constants instead; they don't follow a runtime theme.
+
+// light theme ("teal"), from the tippr bot's screen colour
+:root {
+    --tp-bg: #f2f6f7;              // page background
+    --tp-surface: #ffffff;         // cards, boxes, the header
+    --tp-text: #1d2a30;
+    --tp-text-muted: #6b7f86;
+    --tp-border: #dde7ea;
+    --tp-panel: #e8eff1;           // side panels (the listing chooser)
+    --tp-link: #0b7a87;            // links (was reddit's #369)
+    --tp-accent: #12a4b5;          // brand teal
+    --tp-accent-strong: #0b7f8c;   // selected tabs and highlights (was orangered)
+    --tp-tint: #e3f6f8;            // tinted areas (was #cee3f8)
+    --tp-tint-soft: #f0f9fa;       // faintly tinted areas (was #eff7ff)
+    --tp-border-accent: #8fd3db;   // tinted borders (was #5f99cf)
+    --tp-topbar-bg: #0f2a33;       // the vault bar across the top
+    --tp-topbar-text: #cfe9ee;
+    --tp-topbar-highlight: #4fd6e6;
+    --tp-title: #10303a;           // post titles
+    --tp-title-visited: #6b7f86;
+    --tp-upvote: #12a4b5;
+    --tp-downvote: #8a6fd1;
+    --tp-on-accent: #ffffff;       // text on teal buttons
+}
+
+@tp-bg: var(--tp-bg, #f2f6f7);
+@tp-surface: var(--tp-surface, #ffffff);
+@tp-text: var(--tp-text, #1d2a30);
+@tp-text-muted: var(--tp-text-muted, #6b7f86);
+@tp-border: var(--tp-border, #dde7ea);
+@tp-panel: var(--tp-panel, #e8eff1);
+@tp-link: var(--tp-link, #0b7a87);
+@tp-accent: var(--tp-accent, #12a4b5);
+@tp-accent-strong: var(--tp-accent-strong, #0b7f8c);
+@tp-tint: var(--tp-tint, #e3f6f8);
+@tp-tint-soft: var(--tp-tint-soft, #f0f9fa);
+@tp-border-accent: var(--tp-border-accent, #8fd3db);
+@tp-topbar-bg: var(--tp-topbar-bg, #0f2a33);
+@tp-topbar-text: var(--tp-topbar-text, #cfe9ee);
+@tp-topbar-highlight: var(--tp-topbar-highlight, #4fd6e6);
+@tp-title: var(--tp-title, #10303a);
+@tp-title-visited: var(--tp-title-visited, #6b7f86);
+@tp-upvote: var(--tp-upvote, #12a4b5);
+@tp-downvote: var(--tp-downvote, #8a6fd1);
+@tp-on-accent: var(--tp-on-accent, #ffffff);
+
+// compile-time constants for LESS colour functions
+@tp-link-hex: #0b7a87;
+@tp-accent-hex: #12a4b5;
+@tp-tint-hex: #e3f6f8;
+@tp-downvote-hex: #8a6fd1;
+
+@tp-font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;

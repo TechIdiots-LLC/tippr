@@ -88,7 +88,7 @@
         z-index: 9999;
         white-space: nowrap;
         overflow: hidden;
-        box-shadow: 0 -5px 15px #cee3f8 inset;
+        box-shadow: 0 -5px 15px var(--tp-tint, #e3f6f8) inset;
         .no-select;
 
         .caption {
@@ -165,7 +165,7 @@
             & > span {
                 border-left: 1px solid #ccc;
                 padding: 0 7px;
-                color: #369;
+                color: var(--tp-link, #0b7a87);
                 cursor: default;
 
                 .state {
@@ -177,7 +177,7 @@
             .dropdown.lightdrop .selected {
                 font-weight: normal;
                 text-decoration: none;
-                color: #369;
+                color: var(--tp-link, #0b7a87);
             }
         }
     }
