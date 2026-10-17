@@ -1435,7 +1435,7 @@ class MergeCursor(MultiCursor):
                 yield_pair[:] = safe_next(c)
 
             pairs = undone(pairs)
-        raise StopIteration
+        return
 
 
 class MultiQuery(Query):

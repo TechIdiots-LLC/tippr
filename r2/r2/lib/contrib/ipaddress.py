@@ -826,7 +826,7 @@ class _BaseNetwork(_IPAddressBase):
             raise ValueError('{} not contained in {}'.format(str(other), str(self)))
 
         if other == self:
-            raise StopIteration
+            return
 
         ret_addrs = []
 
