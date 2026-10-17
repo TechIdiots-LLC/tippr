@@ -1623,9 +1623,11 @@ TIPPR_TIMERS=(
     tippr-job-update_trending_vaults.timer
     tippr-job-compute_time_listings@link.timer
     tippr-job-compute_time_listings@comment.timer
+    # sends queued email every minute; does nothing until email is set up
+    # (mail_transport, or /admin/email)
+    tippr-job-email.timer
 )
 # Disabled by default; enable with "systemctl enable --now <timer>":
-#   tippr-job-email.timer             send queued email every minute
 #   tippr-job-update_gold_users.timer expire gold subscriptions daily
 
 ###############################################################################
