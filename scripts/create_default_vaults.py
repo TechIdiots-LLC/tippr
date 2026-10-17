@@ -31,48 +31,64 @@ AI_ONLY = ai_content.POLICY_AI_ONLY
 
 # (name, title, description, AI policy, front page default)
 VAULTS = [
-    # technology
+    # tech & geek core
     ("technology", "Technology", "News and discussion about technology.", ANY, True),
     ("programming", "Programming", "Code, languages, tools and the craft of programming.", ANY, True),
     ("linux", "Linux", "Linux, its distributions and the software around it.", ANY, True),
-    ("selfhosted", "Self-hosted", "Running your own services and servers instead of renting them, homelabs included.", ANY, True),
-    ("electronics", "Electronics", "Circuits, components, repairs and projects.", NO_GEN, True),
-    # science
+    ("selfhosted", "Self-hosted", "Homelabs, self-hosting services, and digital sovereignty.", ANY, True),
+    ("electronics", "Electronics", "Circuits, components, repairs, and hardware projects.", NO_GEN, True),
+    ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, True),
+    ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, True),
+    
+    # science & space
     ("science", "Science", "Research, discoveries and how the world works.", NO_GEN, True),
     ("space", "Space", "Astronomy, spaceflight and everything off-planet.", ANY, True),
-    # making things
-    ("diy", "DIY", "Things you built, fixed or improved yourself.", NO_GEN, True),
-    ("3dprinting", "3D Printing", "Printers, prints, models and troubleshooting.", NO_GEN, True),
-    # games
+    
+    # digital entertainment
     ("gaming", "Gaming", "Video games of every kind.", ANY, True),
-    ("retrogaming", "Retro Gaming", "Classic consoles, computers and games.", ANY, True),
-    ("anime", "Anime", "Anime and manga: series, recommendations, fan art and discussion.", ANY, True),
-    # creative (human-made; AI-generated work has its own vaults)
-    ("art", "Art", "Art made by people. AI-generated art goes in /v/aiart.", NO_GEN, True),
-    ("music", "Music", "Music made by people. AI-generated music goes in /v/aimusic.", NO_GEN, True),
+    ("cozygaming", "Cozy Gaming", "Relaxing games, farming sims, and low-stress gaming.", ANY, True),
+    ("retrogaming", "Retro Gaming", "Classic consoles, emulation, and arcade history.", ANY, True),
+    ("anime", "Anime & Manga", "Series, webtoons, fan art, and community discussion.", ANY, True),
+    
+    # physical making & lifestyle
+    ("diy", "DIY & Making", "Things you built, fixed, or machined yourself.", NO_GEN, True),
+    ("fiberarts", "Fiber Arts", "Crochet, knitting, sewing, and textile crafts.", NO_GEN, True),
+    ("thrift", "Thrift & Upcycling", "Second-hand finds, vintage fashion, and sustainable flips.", NO_GEN, True),
+    ("3dprinting", "3D Printing", "Printers, prints, models and troubleshooting.", NO_GEN, True),
+    ("food", "Food & Baking", "Cooking, recipes, and culinary experiments.", ANY, True),
+    
+    # human-made creative hubs
+    ("art", "Art", "Art made by people. AI art goes in /v/aiart.", NO_GEN, True),
+    ("music", "Music", "Music made by people. AI music goes in /v/aimusic.", NO_GEN, True),
     ("photography", "Photography", "Photos and the craft of taking them.", NO_GEN, True),
-    ("writing", "Writing", "Stories, poems and writing about writing.", NO_GEN, True),
+    ("writing", "Writing", "Stories, poems, and the written word.", NO_GEN, True),
+    
+    # internet culture & aesthetics
+    ("memes", "Memes", "Shitposts, templates, and internet lore.", ANY, True),
+    ("aesthetics", "Aesthetics", "Liminal spaces, visual moods, and subculture curation.", NO_GEN, True),
+    ("popculture", "Pop Culture", "Fandoms, internet drama, and modern media trends.", ANY, True),
+    ("pics", "Pics", "Pictures worth sharing.", NO_GEN, True),
+    ("aww", "Aww", "Cute animals and wholesome content.", NO_GEN, True),
+    
+    # discussion & communities
+    ("books", "Books", "Reading, recommendations, and literary discussion.", ANY, True),
+    ("movies", "Movies & TV", "Films and television, old and new.", ANY, True),
+    ("til", "Today I Learned", "Interesting facts with verified sources.", ANY, True),
+    ("asktippr", "Ask Tippr", "Ask the community a question.", ANY, True),
+    ("lgbtq", "LGBTQ+", "A welcoming place for LGBTQ+ people and allies.", ANY, True),
+    ("skincare", "Skincare & Wellness", "Routine advice, self-care, and mental well-being.", ANY, True),
+
+    # ai designated zones (not default)
     ("aiart", "AI Art", "Art made with AI image tools.", AI_ONLY, False),
     ("aimusic", "AI Music", "Music made with AI tools.", AI_ONLY, False),
-    # everything else
-    ("books", "Books", "Reading, recommendations and discussion.", ANY, True),
-    ("movies", "Movies", "Films, old and new.", ANY, True),
-    ("food", "Food", "Cooking, recipes and things worth eating.", ANY, True),
-    ("pics", "Pics", "Pictures worth sharing.", NO_GEN, True),
-    ("funny", "Funny", "Things that made you laugh.", ANY, True),
-    ("aww", "Aww", "Cute animals and other things that make you smile.", NO_GEN, True),
-    ("til", "Today I Learned", "Interesting facts you just found out, with a source.", ANY, True),
-    ("asktippr", "Ask Tippr", "Ask the community a question.", ANY, True),
-    # community
-    ("lgbtq", "LGBTQ+", "A welcoming place for LGBTQ+ people and allies: news, culture, support and community.", ANY, True),
-    ("dragrace", "Drag Race", "Drag Race and drag culture: episodes, queens, looks and lip syncs.", ANY, False),
-    ("tippr", "Tippr", "News, feedback and questions about the site itself.", ANY, True),
-    # exist, but not on the default front page
+    
+    # sitewide meta & heavy news (not default)
+    ("tippr", "Tippr Meta", "News, feedback, and questions about the site.", ANY, True),
+    ("dragrace", "Drag Race", "Drag culture, episodes, and looks.", ANY, False),
     ("news", "News", "News from around the world.", ANY, False),
     ("worldnews", "World News", "International news.", ANY, False),
     ("politics", "Politics", "Political news and discussion.", ANY, False),
 ]
-
 
 def owner_account():
     """The admin account that creates and moderates the starter vaults."""
