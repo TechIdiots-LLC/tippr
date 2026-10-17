@@ -45,6 +45,7 @@ These fields can be mixed in; put `-` in front of one to exclude it:
 | `self:` | `self:yes` |
 | `flair:` | `flair:meta` |
 | `title:`, `selftext:`, `url:` | `title:release` |
+| `ai:` | `ai:no`, `ai:generated` (see [CONTENT.md](CONTENT.md)) |
 
 Relevance results are nudged up by votes and down by age; the hot, top, new
 and comments sorts and the time filters work as on listings. Vault search
