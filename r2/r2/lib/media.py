@@ -184,7 +184,7 @@ def _prepare_image(image):
     else:
         thumbnail_size = g.thumbnail_size
 
-    image.thumbnail(thumbnail_size, Image.ANTIALIAS)
+    image.thumbnail(thumbnail_size, Image.LANCZOS)
     return image
 
 
@@ -486,7 +486,7 @@ def force_mobile_ad_image(link, image_data, file_type=".jpg"):
     x,y = g.mobile_ad_image_size
     max_height = image_width * y / x
     image = _crop_image_vertically(image, max_height)
-    image.thumbnail(g.mobile_ad_image_size, Image.ANTIALIAS)
+    image.thumbnail(g.mobile_ad_image_size, Image.LANCZOS)
     image_url = upload_media(image, file_type=file_type)
 
     link.mobile_ad_url = image_url
@@ -497,7 +497,7 @@ def force_mobile_ad_image(link, image_data, file_type=".jpg"):
 def upload_icon(image_data, size):
     image = str_to_image(image_data)
     image.format = 'PNG'
-    image.thumbnail(size, Image.ANTIALIAS)
+    image.thumbnail(size, Image.LANCZOS)
     icon_data = _image_to_str(image)
     file_name = _filename_from_content(icon_data)
     return g.media_provider.put('icons', file_name + ".png", icon_data)
