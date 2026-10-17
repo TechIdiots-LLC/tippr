@@ -364,6 +364,9 @@ class QueryButton(NavButton):
             del params[self.query_param]
 
         self.base_path = base_path
+        # NavMenu.find_selected compares bare_path when several buttons match
+        self.bare_path = _force_unicode(base_path.replace('//', '/')).lower()
+        self.bare_path = self.bare_path.rstrip('/')
         base_path += query_string(params)
         self.path = base_path.replace('//', '/')
 
