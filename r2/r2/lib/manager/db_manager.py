@@ -37,9 +37,19 @@ logger.addHandler(logging.StreamHandler())
 APPLICATION_NAME = "tippr@%s:%d" % (socket.gethostname(), os.getpid())
 
 
+# engines by connection settings: the configured databases (main, comment,
+# email, ...) usually all point at the same PostgreSQL database, and one
+# pool each kept about a dozen idle connections open per process
+_engines = {}
+
+
 def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
                pool_size=5, max_overflow=5, g_override=None):
     db_port = int(db_port)
+    key = (name, db_host, db_user, db_pass, db_port, int(pool_size),
+           int(max_overflow), id(g_override))
+    if key in _engines:
+        return _engines[key]
 
     arguments = {
         "dbname": name,
@@ -65,6 +75,7 @@ def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
         sqlalchemy.event.listens_for(engine, 'after_cursor_execute')(
             g_override.stats.pg_after_cursor_execute)
 
+    _engines[key] = engine
     return engine
 
 
