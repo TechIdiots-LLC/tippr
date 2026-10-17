@@ -114,11 +114,11 @@ class Validator:
         a = []
         if self.param:
             for p in utils.tup(self.param):
-                # cgi.FieldStorage is falsy even if it has a filled value
-                # property. :(
+                # an upload is a cgi.FieldStorage, which raises TypeError
+                # when tested for truth in Python 3: check its type first
                 post_val = request.POST.get(p)
-                if self.post and (post_val or
-                                  isinstance(post_val, cgi.FieldStorage)):
+                if self.post and (isinstance(post_val, cgi.FieldStorage) or
+                                  post_val):
                     val = request.POST[p]
                 elif ((self.get_multiple and
                       (self.get_multiple == True or
@@ -676,9 +676,17 @@ class VLength(Validator):
 
 class VUploadLength(VLength):
     def run(self, upload, text2=''):
-        # upload is expected to be a FieldStorage object
+        # upload is expected to be a FieldStorage object; its value is bytes,
+        # so only check that it's there and not too big
         if isinstance(upload, cgi.FieldStorage):
-            return VLength.run(self, upload.value, text2)
+            data = upload.value or b""
+            if not data:
+                self.set_error(self.empty_error, code=400)
+            elif len(data) > self.max_length:
+                self.set_error(self.length_error,
+                               {'max_length': self.max_length}, code=400)
+            else:
+                return data
         else:
             self.set_error(self.empty_error, code=400)
 
