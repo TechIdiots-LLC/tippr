@@ -1653,6 +1653,9 @@ class LinkInfoPage(Tippr):
         self.link_listing = wrap_links(link, wrapper=wrapper, vault_detail=vault_detail)
         things = self.link_listing.things
         self.link = things[0]
+        # no ads on the page of an NSFW post (r2.lib.ad_settings)
+        c.page_nsfw = bool(getattr(self.link, "over_18", False) or
+                           getattr(self.link, "nsfw", False))
 
         # add click tracker
         self.link.campaign = campaign_fullname
@@ -3725,10 +3728,9 @@ class AdminGold(Templated):
 
 
 class Ads(Templated):
+    """The sidebar ad box (templates/ads.html; r2.lib.ad_settings)."""
     def __init__(self):
         Templated.__init__(self)
-        self.ad_url = g.ad_domain + "/ads/"
-        self.frame_id = "ad-frame"
 
 
 class ReadNext(Templated):

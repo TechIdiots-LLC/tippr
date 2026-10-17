@@ -25,8 +25,10 @@
 
 <%!
    from r2.lib.template_helpers import format_html
+   from r2.lib import ad_settings
  %>
 <%namespace file="utils.html" import="plain_link" />
+<%namespace file="adsense.html" import="adsense_unit"/>
 
 <%
    _id = ("_%s" % thing.parent_name) if hasattr(thing, 'parent_name') else ''
@@ -36,9 +38,27 @@
    if cls == 'searchlisting':
        cls = 'linklisting'
  %>
+<%
+   # an in-feed AdSense unit after the Nth post of a post listing
+   # (r2.lib.ad_settings), but not among NSFW posts
+   infeed_ads, infeed_after = None, None
+   if cls == 'linklisting':
+       infeed_ads = ad_settings.page_ads()
+       if infeed_ads and infeed_ads['listing'] and not any(
+               getattr(t, 'over_18', False) or getattr(t, 'nsfw', False)
+               for t in thing.things):
+           infeed_after = infeed_ads['adsense_listing_position']
+           if len(thing.things) <= infeed_after:
+               infeed_after = None
+ %>
 <div id="siteTable${_id}" class="sitetable ${cls}">
-  %for a in thing.things:
+  %for i, a in enumerate(thing.things):
       ${a}
+      %if infeed_after and i + 1 == infeed_after:
+        <div class="infeed-ad adsense-ad">
+          ${adsense_unit(infeed_ads, infeed_ads['adsense_listing_slot'], infeed_ads['adsense_listing_layout_key'] or None)}
+        </div>
+      %endif
   %endfor
 
   %if thing.nextprev and (thing.prev or thing.next):

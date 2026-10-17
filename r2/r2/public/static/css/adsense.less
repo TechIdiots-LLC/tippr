@@ -1,0 +1,37 @@
+// Google AdSense slots (templates/adsense.html, r2.lib.ad_settings): the
+// sidebar unit and the in-feed unit after the Nth post in listings
+
+.adsense-ad {
+    position: relative;
+    overflow: hidden;
+
+    &:before {
+        content: "advertisement";
+        display: block;
+        margin-bottom: 4px;
+        color: @tp-text-muted;
+        font-size: @tp-font-xxs;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    // AdSense marks unfilled units; hide the box rather than leave a gap
+    &:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+        display: none;
+    }
+}
+
+.sidebar-ad {
+    margin: 0 0 12px 0;
+    width: 300px;
+    min-height: 250px;
+}
+
+.infeed-ad {
+    margin: 0 0 8px 0;
+    padding: 8px 10px;
+    background: @tp-surface;
+    border: 1px solid @tp-border;
+    border-radius: 8px;
+    clear: both;
+}
