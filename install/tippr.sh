@@ -1177,15 +1177,27 @@ if [ "$TIPPR_ENVIRONMENT" = "production" ]; then
     TIPPR_NODE_TOOLS=$TIPPR_HOME/node-tools
     sudo -u $TIPPR_USER -H npm install --no-audit --no-fund \
         --prefix "$TIPPR_NODE_TOOLS" less@1.4.2 uglify-js@1.3.5
+    # LESSC: less 1.4's own lessc prints nothing on current Node, so use
+    # scripts/lessc.js, which calls the library directly.
     function make_static {
         sudo -u $TIPPR_USER \
             PATH="$TIPPR_NODE_TOOLS/node_modules/.bin:$TIPPR_VENV/bin:/usr/bin:/bin" \
             PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC/tippr/r2" \
-            make static
+            NODE_PATH="$TIPPR_NODE_TOOLS/node_modules" \
+            make static LESSC="node $TIPPR_SRC/tippr/scripts/lessc.js"
     }
+    # Rebuild from scratch: outputs from an earlier failed build (e.g. empty
+    # CSS) would otherwise look up to date.
+    sudo -u $TIPPR_USER PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC/tippr/r2" \
+        PATH="$TIPPR_VENV/bin:/usr/bin:/bin" make clean_static
     # make can miss files that the same run copies into build/, so a first
     # build on a clean tree may need a second pass.
     make_static || make_static
+    # fail the install rather than serve empty stylesheets
+    if [ ! -s "$(readlink -f build/public/static/tippr.css)" ]; then
+        echo "ERROR: the static build produced an empty tippr.css" >&2
+        exit 1
+    fi
 fi
 
 popd
