@@ -30,6 +30,9 @@
 
 import sys
 
+# r2.models first: importing queries first is a circular import (queries ->
+# comment_tree -> models -> builder -> comment_tree)
+import r2.models  # noqa: F401
 from r2.lib import mr_tools
 from r2.lib.db import queries
 from r2.lib.db.sorts import controversy, epoch_seconds, score

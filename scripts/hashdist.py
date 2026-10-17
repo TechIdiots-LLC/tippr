@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 import argparse
 import errno
@@ -120,7 +120,7 @@ def _main():
     args = parser.parse_args()
 
     if args.field_re and args.field_sep:
-        args.print_usage()
+        parser.print_usage()
         return sys.exit(1)
 
     if args.nprocs == 1:
@@ -129,9 +129,10 @@ def _main():
         return sys.exit(1) # will never get here
 
     if args.field_re:
-        first_field_re = re.compile(args.field_re)
+        first_field_re = re.compile(args.field_re.encode())
     else:
-        first_field_re = re.compile('^([^'+re.escape(args.field_sep)+']+)')
+        sep = re.escape(args.field_sep.encode())
+        first_field_re = re.compile(b'^([^' + sep + b']+)')
 
     logging.basicConfig(level=getattr(logging, args.logging.upper()))
 
@@ -144,12 +145,13 @@ def _main():
                               stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE)
         psi = JobInputter(x, ps, Queue(maxsize=args.bufsize))
-        pso = JobOutputter(x, ps, sys.stdout, stdout_mutex)
+        # the jobs' pipes are binary, so pass lines through as bytes
+        pso = JobOutputter(x, ps, sys.stdout.buffer, stdout_mutex)
         psi.start()
         pso.start()
         processes.append((psi, pso))
 
-    for line in sys.stdin:
+    for line in sys.stdin.buffer:
         if not line:
             continue
 
