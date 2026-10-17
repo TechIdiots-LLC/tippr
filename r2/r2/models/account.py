@@ -366,6 +366,10 @@ class Account(Thing):
         if g.disable_captcha:
             return False
 
+        # site staff; on a new site nobody has the karma to be exempt yet
+        if self.employee:
+            return False
+
         hook = hooks.get_hook("account.is_captcha_exempt")
         captcha_exempt = hook.call_until_return(account=self)
         if captcha_exempt:
