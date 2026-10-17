@@ -133,6 +133,10 @@ $(foreach plugin,$(PLUGINS),$(eval $(call PLUGIN_STATIC_TEMPLATE,$(plugin))))
 LESSC := lessc
 CSS_COMPRESS := $(PYTHON) r2/lib/contrib/rcssmin.py
 CSS_SOURCE_DIR := $(STATIC_BUILD_DIR)/css
+# Stylesheets refer to images relative to static/css (url(../gold/x.png)),
+# but the built ones are served from static/ itself, where "../" would
+# point outside it. Drop the "../" so the paths are relative to static/.
+CSS_REBASE := $(SED) -E "s@url\(([\"']?)\.\./@url(\1@g"
 
 PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(SPRITED_STYLESHEETS:.less=.css))
 SPRITES := $(addprefix $(STATIC_BUILD_DIR)/, $(patsubst %.css,sprite-%.png, $(SPRITED_STYLESHEETS:.less=.css)))
@@ -154,28 +158,28 @@ css: $(STATIC_BUILDSTAMP) $(CSS_OUTPUTS)
 $(LESS_OUTPUTS): $(STATIC_BUILD_DIR)/%.css : $(CSS_SOURCE_DIR)/%.less
 	rm -f $@
 	$(LESSC) $< > $@.tmp
-	$(CSS_COMPRESS) < $@.tmp > $@
+	$(CSS_COMPRESS) < $@.tmp | $(CSS_REBASE) > $@
 	rm $@.tmp
 
 $(MINIFIED_OTHER_STYLESHEETS): $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
 	# when static file names are mangled, the original becomes a symlink to the mangled name
 	# remove the original file here in case it's a symlink so we don't just rewrite the old file
 	rm -f $@
-	$(CAT) $< | $(CSS_COMPRESS) > $@
+	$(CAT) $< | $(CSS_COMPRESS) | $(CSS_REBASE) > $@
 
 $(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.less $(STATIC_BUILDSTAMP)
 	# see above
 	rm -f $(STATIC_BUILD_DIR)/sprite-$*.png $(STATIC_BUILD_DIR)/$*.css
 	$(PYTHON) r2/lib/nymph.py $(CSS_SOURCE_DIR)/$*.less $(STATIC_BUILD_DIR)/sprite-$*.png > $(CSS_SOURCE_DIR)/$*.less.tmp
 	$(LESSC) $(CSS_SOURCE_DIR)/$*.less.tmp > $(STATIC_BUILD_DIR)/$*.css.tmp
-	$(CSS_COMPRESS) < $(STATIC_BUILD_DIR)/$*.css.tmp > $(STATIC_BUILD_DIR)/$*.css
+	$(CSS_COMPRESS) < $(STATIC_BUILD_DIR)/$*.css.tmp | $(CSS_REBASE) > $(STATIC_BUILD_DIR)/$*.css
 	rm $(CSS_SOURCE_DIR)/$*.less.tmp $(STATIC_BUILD_DIR)/$*.css.tmp
 
 # deprecated; remove once compact.scss has been converted to LESS
 $(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css $(STATIC_BUILDSTAMP)
 	# see above
 	rm -f $(STATIC_BUILD_DIR)/sprite-$*.png $(STATIC_BUILD_DIR)/$*.css
-	$(PYTHON) r2/lib/nymph.py $< $(STATIC_BUILD_DIR)/sprite-$*.png | $(CSS_COMPRESS) > $(STATIC_BUILD_DIR)/$*.css
+	$(PYTHON) r2/lib/nymph.py $< $(STATIC_BUILD_DIR)/sprite-$*.png | $(CSS_COMPRESS) | $(CSS_REBASE) > $(STATIC_BUILD_DIR)/$*.css
 
 clean_css:
 	rm -f $(CSS_OUTPUTS)
