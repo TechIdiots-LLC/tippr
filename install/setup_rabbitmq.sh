@@ -31,6 +31,16 @@ source $RUNDIR/install.cfg
 ###############################################################################
 # Configure RabbitMQ
 ###############################################################################
+# r2 and the websockets service are the only clients, so AMQP and the
+# management UI listen on localhost only. (epmd and Erlang distribution,
+# ports 4369/25672, need the Erlang cookie; leave them to the firewall.)
+cat > /etc/rabbitmq/rabbitmq.conf <<RABBITCONF
+# Managed by tippr install/setup_rabbitmq.sh
+listeners.tcp.default = 127.0.0.1:5672
+management.tcp.ip = 127.0.0.1
+management.tcp.port = 15672
+RABBITCONF
+
 if ! sudo rabbitmqctl list_vhosts | egrep "^/$"
 then
     sudo rabbitmqctl add_vhost /

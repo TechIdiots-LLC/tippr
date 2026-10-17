@@ -589,6 +589,8 @@ web.conn_shed_rate = 5
 
 metrics.namespace = websockets
 metrics.endpoint =
+# baseplate otherwise starts a Prometheus exporter on 0.0.0.0:6060
+metrics.enabled = false
 
 secrets.path = tippr_secrets.json
 
@@ -613,6 +615,14 @@ WEBSOCKETSINI
 WEBSOCKETSSECRETS
     chown "$TIPPR_USER:$TIPPR_GROUP" "$TIPPR_SRC/websockets/tippr.ini" "$TIPPR_SRC/websockets/tippr_secrets.json"
     chmod 0600 "$TIPPR_SRC/websockets/tippr.ini" "$TIPPR_SRC/websockets/tippr_secrets.json"
+fi
+
+# The activity service runs from its example.ini plus metrics.enabled = false:
+# baseplate otherwise starts a Prometheus exporter on 0.0.0.0:6060.
+if [ -f "$TIPPR_SRC/activity/example.ini" ]; then
+    sed -e 's/^\[app:main\]$/[app:main]\nmetrics.enabled = false/' \
+        "$TIPPR_SRC/activity/example.ini" > "$TIPPR_SRC/activity/tippr.ini"
+    chown "$TIPPR_USER:$TIPPR_GROUP" "$TIPPR_SRC/activity/tippr.ini"
 fi
 
 # Create the environment file early so services can use it. It is managed by
@@ -1056,6 +1066,10 @@ cache_poisoning = $TIPPR_SECRET_CACHE_POISONING
 adserver_click_url_secret = $TIPPR_SECRET_ADSERVER_CLICK_URL_SECRET
 modmail_email_secret = $TIPPR_SECRET_MODMAIL_EMAIL_SECRET
 request_signature_secret = $TIPPR_SECRET_REQUEST_SIGNATURE_SECRET
+
+# Installer-managed: haproxy is the only client of the app server.
+[server:main]
+host = 127.0.0.1
 SECRETS
 chown $TIPPR_USER development.secrets
 chmod 0600 development.secrets
@@ -1226,7 +1240,7 @@ chown $TIPPR_USER:$TIPPR_GROUP /srv/www/media
 
 cat > /etc/nginx/sites-available/tippr-media <<MEDIA
 server {
-    listen 9000;
+    listen 127.0.0.1:9000;
 
     expires max;
 
@@ -1242,7 +1256,7 @@ upstream click_server {
 }
 
 server {
-  listen 8082;
+  listen 127.0.0.1:8082;
     access_log      /var/log/nginx/traffic/traffic.log directlog;
 
   location / {
@@ -1373,7 +1387,7 @@ backend tippr
     timeout queue 60000
     balance roundrobin
 
-    server app01-8001 localhost:8001 maxconn 30
+    server app01-8001 127.0.0.1:8001 maxconn 30
 
 backend websockets
     mode http
@@ -1381,7 +1395,7 @@ backend websockets
     timeout server 24h
     balance roundrobin
 
-    server websockets localhost:9001 maxconn 250
+    server websockets 127.0.0.1:9001 maxconn 250
 
 backend media
     mode http
@@ -1390,7 +1404,7 @@ backend media
     timeout queue 60000
     balance roundrobin
 
-    server nginx localhost:9000 maxconn 20
+    server nginx 127.0.0.1:9000 maxconn 20
 
 backend pixel
     mode http
@@ -1399,7 +1413,7 @@ backend pixel
     timeout queue 60000
     balance roundrobin
 
-    server nginx localhost:8082 maxconn 20
+    server nginx 127.0.0.1:8082 maxconn 20
 HAPROXY
 
 # this will start it even if currently stopped
