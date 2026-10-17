@@ -1,0 +1,25 @@
+# The base of the Proxmox template: Ubuntu 24.04 with systemd and what a
+# Proxmox container expects (systemd-networkd, which pct configures, SSH,
+# locales). build-template.sh boots it, runs the tippr installer inside and
+# exports the filesystem as the template.
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive container=lxc
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        systemd systemd-sysv systemd-resolved dbus libpam-systemd \
+        iproute2 iputils-ping netcat-openbsd ca-certificates curl wget \
+        sudo locales tzdata less nano vim-tiny cron logrotate rsyslog \
+        openssh-server git gnupg lsb-release \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8 \
+    # services that make no sense in a container
+    && systemctl mask systemd-udevd.service systemd-udevd-kernel.socket \
+        systemd-udevd-control.socket systemd-modules-load.service \
+        sys-kernel-config.mount sys-kernel-debug.mount \
+    && systemctl enable systemd-networkd.service \
+    # Docker's Ubuntu image stops apt from starting services; a real system
+    # (and the installer) expects them to start
+    && rm -f /usr/sbin/policy-rc.d \
+    && rm -rf /var/lib/apt/lists/*
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

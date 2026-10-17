@@ -1,0 +1,77 @@
+#!/bin/bash
+# Make this container its own tippr site (run once, on first boot, by
+# tippr-firstboot.service; can be run again by hand).
+#
+# The template was installed for a placeholder domain with throwaway
+# passwords. This re-runs the installer for the real domain with new
+# passwords and signing secrets (the database, RabbitMQ and ZooKeeper are
+# switched to them), a new admin password and a certificate for the domain.
+#
+# The domain comes from, in order:
+#   1. the first argument (tippr-firstboot forum.example.com)
+#   2. TIPPR_DOMAIN in /etc/tippr/firstboot.env
+#   3. the container's hostname, if it's a full name (forum.example.com)
+#   4. <hostname>.local, a development site
+# Any other installer setting can go in /etc/tippr/firstboot.env too, e.g.
+# TIPPR_LETSENCRYPT_EMAIL=you@example.com or TIPPR_SITE_NAME="My Site".
+set -euo pipefail
+
+PENDING=/etc/tippr/firstboot-pending
+LOGIN_FILE=/root/tippr-first-login.txt
+SRC=/home/tippr/src/tippr
+
+if [ -f /etc/tippr/firstboot.env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . /etc/tippr/firstboot.env
+    set +a
+fi
+
+domain=${1:-${TIPPR_DOMAIN:-}}
+if [ -z "$domain" ]; then
+    fqdn=$(hostname -f 2>/dev/null || hostname)
+    case "$fqdn" in
+        *.*) domain=$fqdn ;;
+        *) domain="$(hostname).local" ;;
+    esac
+fi
+domain=$(echo "$domain" | tr 'A-Z' 'a-z')
+echo "tippr-firstboot: setting up $domain"
+
+if [ -f "$PENDING" ]; then
+    # first boot: new SSH host keys, machine ID and passwords for this
+    # container (the template's are shared by every copy)
+    if [ -d /etc/ssh ] && ! ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1; then
+        dpkg-reconfigure -f noninteractive openssh-server >/dev/null 2>&1 || true
+    fi
+    if [ ! -s /etc/machine-id ]; then
+        systemd-machine-id-setup
+    fi
+    rm -f /etc/tippr/secrets.env
+    export TIPPR_ADMIN_PASSWORD_RESET=1
+fi
+
+# wait for the network (packages may need updating)
+for i in $(seq 60); do
+    getent hosts github.com >/dev/null 2>&1 && break
+    sleep 5
+done
+
+cd "$SRC"
+TIPPR_YES=1 TIPPR_USER=${TIPPR_USER:-tippr} TIPPR_DOMAIN=$domain \
+    ./install-tippr.sh </dev/null
+
+admin_password=$(grep -E '^TIPPR_ADMIN_PASSWORD=' /etc/tippr/secrets.env | cut -d= -f2-)
+umask 077
+cat > "$LOGIN_FILE" <<LOGIN
+tippr is set up at https://$domain/
+
+Admin account: ${TIPPR_ADMIN_USER:-tippr}
+Password:      $admin_password
+
+(Also in /etc/tippr/secrets.env as TIPPR_ADMIN_PASSWORD.) After logging in,
+set up two-factor authentication under preferences -> security; admin mode
+needs it. Then see /admin/site, /admin/email and /admin/backups.
+LOGIN
+rm -f "$PENDING"
+echo "tippr-firstboot: done; login details are in $LOGIN_FILE"

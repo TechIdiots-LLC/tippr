@@ -1,0 +1,17 @@
+[Unit]
+Description=set up this tippr container for its domain (first boot)
+Documentation=file:///home/tippr/src/tippr/docs/PROXMOX.md
+ConditionPathExists=/etc/tippr/firstboot-pending
+Wants=network-online.target
+After=network-online.target postgresql.service cassandra.service zookeeper.service rabbitmq-server.service opensearch.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tippr-firstboot
+StandardOutput=journal+console
+# the installer takes a while
+TimeoutStartSec=infinity
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
