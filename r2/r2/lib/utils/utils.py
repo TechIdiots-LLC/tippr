@@ -1761,7 +1761,7 @@ class GoldPrice:
     def __mul__(self, other):
         return type(self)(self.decimal * other)
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         return type(self)(self.decimal / other)
 
     def __str__(self):
