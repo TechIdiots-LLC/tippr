@@ -32,7 +32,6 @@ from pylons import request
 from pylons import tmpl_context as c
 from pylons.util import AttribSafeContextObj, ContextObj, PylonsContext
 from raven.processors import Processor
-from weberror.reporter import Reporter
 
 from r2.lib.app_globals import Globals
 
@@ -97,6 +96,11 @@ class SanitizeStackLocalsProcessor(Processor):
         for frame in data.get('frames', []):
             if 'vars' in frame:
                 remove_keys(frame['vars'])
+
+
+class Reporter:
+    """Base class for the error reporters (it was WebError's Reporter,
+    whose behaviour the subclasses define entirely)."""
 
 
 class RavenErrorReporter(Reporter):
