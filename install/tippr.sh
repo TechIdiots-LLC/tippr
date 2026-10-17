@@ -17,12 +17,6 @@
 # Several configuration options (listed in the "Configuration" section below)
 # are overridable with environment variables. e.g.
 #
-
-# Ensure installed baseplate package exposes `metrics_client_from_config`
-# for older code that imports it from `baseplate` directly. Prefer the
-# implementation in `baseplate.lib.metrics` if available, otherwise
-# provide a noop fallback. This edits the venv site-packages package
-# after pip installs so runtime imports succeed regardless of PYTHONPATH.
 #    sudo TIPPR_DOMAIN=example.com ./install/tippr.sh
 #
 ###############################################################################
@@ -129,72 +123,6 @@ for plugin in $TIPPR_PLUGINS; do
     fi
 done
 
-# Ensure venv-installed baseplate exposes `secrets_store_from_config` by
-# creating a small `secrets.py` shim in the package when missing. This
-# keeps runtime imports working for older services that import
-# `baseplate.secrets` directly.
-for p in "$TIPPR_VENV"/lib/python*/site-packages/baseplate; do
-    if [ -d "$p" ]; then
-        target="$p/secrets.py"
-        if [ ! -f "$target" ]; then
-            cat > "$target" <<'PYSECRETS'
-"""Compatibility shim for baseplate.secrets added by installer.
-
-Prefer `baseplate.lib.secrets.secrets_store_from_config` when available,
-otherwise provide a noop secrets store for development.
-"""
-try:
-    from baseplate.lib.secrets import secrets_store_from_config as _r2_secrets_store_from_config
-except Exception:
-    _r2_secrets_store_from_config = None
-
-if _r2_secrets_store_from_config is not None:
-    secrets_store_from_config = _r2_secrets_store_from_config
-else:
-    class _NoopSecretsStore:
-        def get(self, key, default=None):
-            return default
-
-        def get_bytes(self, key, default=None):
-            return default
-
-        def put(self, key, value):
-            return None
-
-    def secrets_store_from_config(config=None):
-        return _NoopSecretsStore()
-
-__all__ = ['secrets_store_from_config']
-PYSECRETS
-        fi
-    fi
-done
-
-# Provide a small compatibility module for Python 2 `urlparse` imports.
-# Some older services do `import urlparse`; create a shim in the venv
-# site-packages that re-exports `urllib.parse` for Python 3.
-for p in "$TIPPR_VENV"/lib/python*/site-packages; do
-    if [ -d "$p" ]; then
-        target="$p/urlparse.py"
-        if [ ! -f "$target" ]; then
-            cat > "$target" <<'PYURL'
-"""Compatibility shim: provide Python2 `urlparse` module for Python3.
-
-This module re-exports the `urllib.parse` API under the old
-`urlparse` name so legacy code importing `urlparse` continues to work.
-"""
-from urllib.parse import *
-
-__all__ = [
-    'urlparse', 'urlunparse', 'urljoin', 'urlsplit', 'urlunsplit',
-    'parse_qs', 'parse_qsl', 'quote', 'quote_plus', 'unquote',
-    'unquote_plus', 'urlencode',
-]
-PYURL
-        fi
-    fi
-done
-
 # Add tippr source to the virtualenv path so all modules (pylons, r2, etc)
 # are findable regardless of working directory or manual vs service start.
 for p in "$TIPPR_VENV"/lib/python*/site-packages; do
@@ -203,172 +131,6 @@ for p in "$TIPPR_VENV"/lib/python*/site-packages; do
 $TIPPR_SRC/tippr
 $TIPPR_SRC/tippr/r2
 PTH
-    fi
-done
-
-# Provide a compatibility module for Python 2 `imp` module.
-# The `imp` module was removed in Python 3.12. Some legacy packages
-# still use it. This shim provides the commonly used functions
-# using importlib.
-for p in "$TIPPR_VENV"/lib/python*/site-packages; do
-    if [ -d "$p" ]; then
-        target="$p/imp.py"
-        if [ ! -f "$target" ]; then
-            cat > "$target" <<'PYIMP'
-"""Compatibility shim: provide deprecated `imp` module for Python 3.12+.
-
-The `imp` module was removed in Python 3.12. This shim provides the
-commonly used functions using importlib for legacy packages.
-"""
-import importlib
-import importlib.util
-import sys
-import os
-import tokenize
-
-# Constants that were in the imp module
-PY_SOURCE = 1
-PY_COMPILED = 2
-C_EXTENSION = 3
-PKG_DIRECTORY = 5
-C_BUILTIN = 6
-PY_FROZEN = 7
-
-def find_module(name, path=None):
-    """Find a module, returning (file, pathname, description)."""
-    if path is None:
-        path = sys.path
-    for directory in path:
-        if not isinstance(directory, str):
-            continue
-        full_path = os.path.join(directory, name)
-        # Check for package
-        if os.path.isdir(full_path):
-            init_path = os.path.join(full_path, '__init__.py')
-            if os.path.exists(init_path):
-                return (None, full_path, ('', '', PKG_DIRECTORY))
-        # Check for .py file
-        py_path = full_path + '.py'
-        if os.path.exists(py_path):
-            return (open(py_path, 'r'), py_path, ('.py', 'r', PY_SOURCE))
-        # Check for .pyc file
-        pyc_path = full_path + '.pyc'
-        if os.path.exists(pyc_path):
-            return (open(pyc_path, 'rb'), pyc_path, ('.pyc', 'rb', PY_COMPILED))
-    raise ImportError(f"No module named {name}")
-
-def load_module(name, file, pathname, description):
-    """Load a module given the info from find_module."""
-    suffix, mode, type_ = description
-    if type_ == PKG_DIRECTORY:
-        spec = importlib.util.spec_from_file_location(
-            name, os.path.join(pathname, '__init__.py'),
-            submodule_search_locations=[pathname]
-        )
-    elif type_ == PY_SOURCE:
-        spec = importlib.util.spec_from_file_location(name, pathname)
-    elif type_ == PY_COMPILED:
-        spec = importlib.util.spec_from_file_location(name, pathname)
-    else:
-        spec = importlib.util.find_spec(name)
-
-    if spec is None:
-        raise ImportError(f"Cannot load module {name}")
-
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
-
-def reload(module):
-    """Reload a module."""
-    return importlib.reload(module)
-
-def get_suffixes():
-    """Return a list of (suffix, mode, type) tuples."""
-    return [
-        ('.py', 'r', PY_SOURCE),
-        ('.pyc', 'rb', PY_COMPILED),
-    ]
-
-def new_module(name):
-    """Create a new empty module."""
-    import types
-    return types.ModuleType(name)
-
-def is_builtin(name):
-    """Return True if the module is built-in."""
-    return name in sys.builtin_module_names
-
-def is_frozen(name):
-    """Return True if the module is frozen."""
-    return importlib.util.find_spec(name) is not None and \
-           getattr(importlib.util.find_spec(name), 'origin', None) == 'frozen'
-
-# NullImporter for compatibility
-class NullImporter:
-    def __init__(self, path):
-        if os.path.isdir(path):
-            raise ImportError("existing directory")
-
-    def find_module(self, fullname, path=None):
-        return None
-
-def acquire_lock():
-    """Acquire the import lock (no-op in Python 3)."""
-    pass
-
-def release_lock():
-    """Release the import lock (no-op in Python 3)."""
-    pass
-
-def lock_held():
-    """Return True if the import lock is held."""
-    return False
-
-__all__ = [
-    'find_module', 'load_module', 'reload', 'get_suffixes', 'new_module',
-    'is_builtin', 'is_frozen', 'NullImporter', 'acquire_lock', 'release_lock',
-    'lock_held', 'PY_SOURCE', 'PY_COMPILED', 'C_EXTENSION', 'PKG_DIRECTORY',
-    'C_BUILTIN', 'PY_FROZEN',
-]
-PYIMP
-        fi
-    fi
-done
-
-# Ensure venv-installed baseplate exposes a `crypto` module expected by
-# older services (e.g. `from baseplate.crypto import validate_signature`).
-for p in "$TIPPR_VENV"/lib/python*/site-packages/baseplate; do
-    if [ -d "$p" ]; then
-        target="$p/crypto.py"
-        if [ ! -f "$target" ]; then
-            cat > "$target" <<'PYCRYPTO'
-"""Compatibility shim for baseplate.crypto added by installer.
-
-Prefer `baseplate.lib.crypto.validate_signature` when available,
-otherwise provide a no-op `validate_signature` and `SignatureError`.
-"""
-try:
-    from baseplate.lib.crypto import validate_signature as _r2_validate_signature
-    from baseplate.lib.crypto import SignatureError as _r2_SignatureError
-except Exception:
-    _r2_validate_signature = None
-    _r2_SignatureError = None
-
-if _r2_validate_signature is not None:
-    validate_signature = _r2_validate_signature
-    SignatureError = _r2_SignatureError
-else:
-    class SignatureError(Exception):
-        pass
-
-    def validate_signature(secret, payload):
-        return True
-
-__all__ = ['validate_signature', 'SignatureError']
-PYCRYPTO
-        fi
     fi
 done
 
@@ -963,7 +725,7 @@ sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
     whoosh \
     webtest \
     mock \
-    nose \
+    pytest \
     coverage \
     "snudown @ https://github.com/nicnacnic/snudown/archive/refs/heads/master.zip" || true
 

@@ -133,7 +133,7 @@ setup(
         "raven",
         # Test dependencies (formerly in tests_require, now in install_requires for modern setuptools)
         "mock",
-        "nose",
+        "pytest",
         "coverage",
     ],
     packages=find_packages(exclude=["ez_setup"]),
