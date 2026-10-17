@@ -87,7 +87,8 @@
   %if thing.show_unmarknsfw:
     <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw", event_action='unmarknsfw')}</li>
   %endif
-  %if thing.show_ai_label:
+  ## only LinkButtons set show_ai_label; comments share these buttons
+  %if getattr(thing, 'show_ai_label', False):
     ## authors, moderators and admins can correct a post's AI label
     <li class="ai-label-button">
       <a href="javascript:void(0)" class="access-required"
