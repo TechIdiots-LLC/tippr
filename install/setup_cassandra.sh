@@ -64,12 +64,19 @@ session.execute("""
     CREATE KEYSPACE IF NOT EXISTS tippr
     WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
 """)
+# Same layout as every table r2's cassandra_compat creates.
 session.execute("""
     CREATE TABLE IF NOT EXISTS tippr.permacache (
         key text PRIMARY KEY,
-        value blob
+        columns map<text, blob>
     )
 """)
+# Earlier installs created permacache with a "value" column, which
+# cassandra_compat never reads; reading it failed ("Undefined column name
+# columns"), which broke submitting posts.
+permacache = cluster.metadata.keyspaces["tippr"].tables["permacache"]
+if "columns" not in permacache.columns:
+    session.execute("ALTER TABLE tippr.permacache ADD columns map<text, blob>")
 print("Cassandra keyspace and permacache table ready.")
 cluster.shutdown()
 PYEOF
