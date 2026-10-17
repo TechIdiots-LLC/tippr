@@ -1,0 +1,184 @@
+# tippr with Docker Compose: the app image (one container per role) and the
+# data stores it needs. Copy .env.example to .env, fill it in, then:
+#
+#   docker compose up -d
+#
+# The first start runs the one-shot "setup" container (Cassandra keyspace,
+# admin account, starter vaults); the app containers start when it's done.
+# See docker/README.md.
+
+name: tippr
+
+x-tippr: &tippr
+  image: ${TIPPR_IMAGE:-techidiots/tippr}:${TIPPR_VERSION:-latest}
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - config:/config
+    - media:/srv/www/media
+  depends_on:
+    setup:
+      condition: service_completed_successfully
+
+services:
+  # --- the app -------------------------------------------------------------
+  setup:
+    <<: *tippr
+    command: setup
+    restart: "no"
+    depends_on:
+      postgres: {condition: service_healthy}
+      cassandra: {condition: service_healthy}
+      zookeeper: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      memcached: {condition: service_started}
+      opensearch: {condition: service_healthy}
+
+  web:
+    <<: *tippr
+    command: web
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "-H", "X-Forwarded-Proto: https", "http://127.0.0.1:8001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+
+  consumers:
+    <<: *tippr
+    command: consumers
+
+  jobs:
+    <<: *tippr
+    command: jobs
+
+  websockets:
+    <<: *tippr
+    command: websockets
+
+  geoip:
+    <<: *tippr
+    command: geoip
+
+  activity:
+    <<: *tippr
+    command: activity
+    depends_on:
+      setup: {condition: service_completed_successfully}
+      redis: {condition: service_started}
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${TIPPR_HTTP_PORT:-80}:80"
+      - "${TIPPR_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - media:/srv/www/media:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+      - websockets
+
+  # --- data stores ---------------------------------------------------------
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    command: ["postgres", "-c", "max_connections=300"]
+    environment:
+      POSTGRES_USER: ${TIPPR_DB_USER:-tippr}
+      POSTGRES_PASSWORD: ${TIPPR_DB_PASSWORD:?set TIPPR_DB_PASSWORD in .env}
+      POSTGRES_DB: ${TIPPR_DB_NAME:-tippr}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  cassandra:
+    image: cassandra:4.1
+    restart: unless-stopped
+    environment:
+      MAX_HEAP_SIZE: ${TIPPR_CASSANDRA_HEAP:-1G}
+      HEAP_NEWSIZE: 200M
+      CASSANDRA_CLUSTER_NAME: tippr
+    volumes:
+      - cassandra:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  zookeeper:
+    image: zookeeper:3.9
+    restart: unless-stopped
+    environment:
+      ZOO_4LW_COMMANDS_WHITELIST: ruok
+    volumes:
+      - zookeeper-data:/data
+      - zookeeper-datalog:/datalog
+    healthcheck:
+      test: ["CMD-SHELL", "zkServer.sh status >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${TIPPR_AMQP_USER:-tippr}
+      RABBITMQ_DEFAULT_PASS: ${TIPPR_AMQP_PASSWORD:?set TIPPR_AMQP_PASSWORD in .env}
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  memcached:
+    image: memcached:1.6
+    restart: unless-stopped
+    command: ["memcached", "-m", "${TIPPR_MEMCACHED_MB:-256}"]
+
+  opensearch:
+    image: opensearchproject/opensearch:3
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms${TIPPR_OPENSEARCH_HEAP:-1g} -Xmx${TIPPR_OPENSEARCH_HEAP:-1g}"
+    volumes:
+      - opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+
+volumes:
+  config:
+  media:
+  postgres:
+  cassandra:
+  zookeeper-data:
+  zookeeper-datalog:
+  rabbitmq:
+  opensearch:
+  caddy-data:
+  caddy-config:

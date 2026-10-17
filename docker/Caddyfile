@@ -1,0 +1,29 @@
+# tippr's front end in Docker Compose: TLS, media files, websockets, the app.
+# TIPPR_TLS: an email address for a Let's Encrypt certificate (the domain
+# must point at this server and ports 80/443 be reachable), or "internal"
+# (the default) for a self-signed certificate.
+{$TIPPR_DOMAIN} {
+	tls {$TIPPR_TLS:internal}
+	encode zstd gzip
+
+	handle /media/* {
+		root * /srv/www
+		header Cache-Control "public, max-age=31536000"
+		file_server
+	}
+
+	@websocket {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	handle @websocket {
+		reverse_proxy websockets:9001
+	}
+
+	handle {
+		reverse_proxy web:8001 {
+			# r2 compares the host with its domain; drop a published port
+			header_up Host {host}
+		}
+	}
+}
