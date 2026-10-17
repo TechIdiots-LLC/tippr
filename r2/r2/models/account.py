@@ -330,6 +330,19 @@ class Account(Thing):
         to_hash_b = b','.join(parts_b)
         return id_time + ',' + hashlib.sha1(to_hash_b).hexdigest()
 
+    def modhash(self):
+        """The CSRF token ("modhash") for this account's forms and API calls.
+
+        An HMAC of the account id and password hash keyed with SECRET: only
+        the server can produce it, and it changes when the password does.
+        """
+        password = self.password
+        if isinstance(password, str):
+            password = password.encode('utf-8')
+        message = b','.join((b'modhash', self._id36.encode('ascii'), password))
+        return hmac.new(g.secrets["SECRET"], message,
+                        hashlib.sha256).hexdigest()[:40]
+
     def make_admin_cookie(self, first_login=None, last_request=None):
         first_login = first_login or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
         last_request = last_request or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)

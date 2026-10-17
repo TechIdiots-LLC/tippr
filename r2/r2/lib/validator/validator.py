@@ -1148,9 +1148,11 @@ class VModhash(Validator):
         hook = hooks.get_hook("modhash.validate")
         result = hook.call_until_return(modhash=modhash)
 
-        # if no plugins validate the hash, just check if it's the user name
+        # if no plugins validate the hash, check it against the account's
+        # HMAC-based modhash
         if result is None:
-            result = (modhash == c.user.name)
+            result = bool(modhash) and constant_time_compare(
+                modhash, c.user.modhash())
 
         if not result:
             g.stats.simple_event("event.modhash.invalid")

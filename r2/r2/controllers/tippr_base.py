@@ -693,8 +693,8 @@ def generate_modhash():
     if modhash is not None:
         return modhash
 
-    # if no plugins generate a modhash, just use the user name
-    return c.user.name
+    # if no plugins generate a modhash, use the account's HMAC-based one
+    return c.user.modhash()
 
 
 def enforce_https():
