@@ -36,7 +36,7 @@ from pylons import request
 from pylons.i18n import _
 from sqlalchemy.dialects.postgresql.base import PGInet
 
-from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
+from r2.lib.db.tdb_sql import create_table, execute_statement, index_str, make_metadata
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum, tup
 
@@ -164,9 +164,8 @@ class EmailHandler:
 
     def has_opted_out(self, email):
         o = self.opt_table
-        s = sa.select([o.c.email], o.c.email == email, limit = 1)
-        res = s.execute()
-        return bool(res.fetchall())
+        s = sa.select(o.c.email).where(o.c.email == email).limit(1)
+        return bool(execute_statement(o, s).fetchall())
 
 
     def opt_out(self, msg_hash):
@@ -176,8 +175,8 @@ class EmailHandler:
         if email:
             o = self.opt_table
             try:
-                o.insert().values({o.c.email: email,
-                                   o.c.msg_hash: msg_hash}).execute()
+                execute_statement(o, o.insert().values({o.c.email: email,
+                                                        o.c.msg_hash: msg_hash}))
                 g.stats.simple_event('share.opt_out')
 
                 #clear caches
@@ -194,7 +193,7 @@ class EmailHandler:
         if email:
             o = self.opt_table
             if self.has_opted_out(email):
-                sa.delete(o, o.c.email == email).execute()
+                execute_statement(o, sa.delete(o).where(o.c.email == email))
                 g.stats.simple_event('share.opt_in')
 
                 #clear caches
@@ -207,8 +206,9 @@ class EmailHandler:
 
     def get_recipient(self, msg_hash):
         t = self.track_table
-        s = sa.select([t.c.to_addr], t.c.msg_hash == msg_hash).execute()
-        res = s.fetchall()
+        res = execute_statement(
+            t, sa.select(t.c.to_addr).where(t.c.msg_hash == msg_hash)
+        ).fetchall()
         return res[0][0] if res and res[:1] else None
 
 
@@ -255,13 +255,14 @@ class EmailHandler:
             if kind:
                 where.append(s.c.kind == kind)
 
-            res = sa.select([s.c.to_addr, s.c.account_id,
-                             s.c.from_name, s.c.fullname, s.c.body,
-                             s.c.kind, s.c.ip, s.c.date, s.c.uid,
-                             s.c.msg_hash, s.c.fr_addr, s.c.reply_to],
-                            sa.and_(*where),
-                            order_by = s.c.uid, limit = batch_limit).execute()
-            res = res.fetchall()
+            stmt = (sa.select(s.c.to_addr, s.c.account_id,
+                              s.c.from_name, s.c.fullname, s.c.body,
+                              s.c.kind, s.c.ip, s.c.date, s.c.uid,
+                              s.c.msg_hash, s.c.fr_addr, s.c.reply_to)
+                    .where(sa.and_(*where))
+                    .order_by(s.c.uid)
+                    .limit(batch_limit))
+            res = execute_statement(s, stmt).fetchall()
 
             if not res: break
 
@@ -291,8 +292,8 @@ class EmailHandler:
         s = self.queue_table
         where = [s.c.date < max_date]
         if kind:
-            where.append([s.c.kind == kind])
-        sa.delete(s, sa.and_(*where)).execute()
+            where.append(s.c.kind == kind)
+        execute_statement(s, sa.delete(s).where(sa.and_(*where)))
 
 
 class Email:
@@ -405,7 +406,7 @@ class Email:
             self.date = date or datetime.datetime.now(g.tz)
             t = self.handler.reject_table if rejected else self.handler.track_table
             try:
-                t.insert().values({t.c.account_id:
+                execute_statement(t, t.insert().values({t.c.account_id:
                                        self.user._id if self.user else 0,
                                    t.c.to_addr :   self.to_addr,
                                    t.c.fr_addr :   self.fr_addr,
@@ -416,18 +417,23 @@ class Email:
                                    t.c.date:       self.date,
                                    t.c.kind :      self.kind,
                                    t.c.msg_hash :  self.msg_hash,
-                                   }).execute()
-            except:
-                print("failed to send message")
+                                   }))
+            except sa.exc.SQLAlchemyError:
+                g.log.exception("mail_queue: failed to record sent message %s",
+                                self.msg_hash)
 
             self.sent = True
 
     def to_MIMEText(self):
         def utf8(s, reject_newlines=True):
+            # Python 3's email package takes str; utf-8 encoding happens when
+            # the message is serialized
+            if isinstance(s, bytes):
+                s = s.decode('utf8')
             if reject_newlines and '\n' in s:
                 raise HeaderParseError(
                     'header value contains unexpected newline: {!r}'.format(s))
-            return s.encode('utf8') if isinstance(s, str) else s
+            return s
 
         fr = '"{}" <{}>'.format(
             self.from_name().replace('"', ''),
@@ -438,8 +444,7 @@ class Email:
         # software's argument parsers, and thus are disallowed by default in
         # Postfix: http://www.postfix.org/postconf.5.html#allow_min_user
         if not fr.startswith('-') and not self.to_addr.startswith('-'):
-            msg = MIMEText(utf8(self.body, reject_newlines=False))
-            msg.set_charset('utf8')
+            msg = MIMEText(utf8(self.body, reject_newlines=False), 'plain', 'utf-8')
             msg['To']      = utf8(self.to_addr)
             msg['From']    = utf8(fr)
             msg['Subject'] = utf8(self.subject)
@@ -456,14 +461,12 @@ class Email:
 @memoize('r2.models.mail_queue.has_opted_out')
 def has_opted_out(email):
     o = Email.handler.opt_table
-    s = sa.select([o.c.email], o.c.email == email, limit = 1)
-    res = s.execute()
-    return bool(res.fetchall())
+    s = sa.select(o.c.email).where(o.c.email == email).limit(1)
+    return bool(execute_statement(o, s).fetchall())
 
 
 @memoize('r2.models.mail_queue.opt_count')
 def opt_count():
     o = Email.handler.opt_table
-    s = sa.select([sa.func.count(o.c.email)])
-    res = s.execute().fetchone()
+    res = execute_statement(o, sa.select(sa.func.count(o.c.email))).fetchone()
     return int(res[0])
