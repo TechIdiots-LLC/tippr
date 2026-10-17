@@ -1241,13 +1241,14 @@ class LinksByUrlAndVault(tdb_cassandra.View):
         else:
             rowkey = cls.make_all_rowkey(canonical_url)
         try:
-            columns = cls._cf.get(
-                rowkey, column_reversed=True, column_count=limit)
+            columns = cls._cf.get(rowkey)
         except tdb_cassandra.NotFoundException:
             return []
 
-        link_ids = list(columns.keys())
-        return link_ids
+        # cassandra_compat stores column names as text, so the LongType
+        # ordering (newest link first) is done here
+        link_ids = sorted((int(i) for i in columns.keys()), reverse=True)
+        return link_ids[:limit]
 
 
 # Note that there are no instances of PromotedLink or LinkCompressed,
