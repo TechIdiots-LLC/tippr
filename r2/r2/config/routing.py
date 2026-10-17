@@ -68,6 +68,9 @@ def make_map(config):
 
     mc('/robots.txt', controller='robots', action='robots')
     mc('/ads.txt', controller='robots', action='ads')
+    # another tippr server copying this one's backups (r2.lib.backups)
+    mc('/backup_transfer/:action', controller='backuptransfer')
+    mc('/backup_transfer/:action/:name', controller='backuptransfer')
     mc('/crossdomain', controller='robots', action='crossdomain')
 
     mc('/login', controller='forms', action='login')

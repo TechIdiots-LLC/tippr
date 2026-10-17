@@ -97,6 +97,7 @@ def load_controllers():
         SponsorListingController,
     )
     from .redirect import RedirectController
+    from .backup_transfer import BackupTransferController
     from .robots import RobotsController
     from .toolbar import ToolbarController
     from .web import WebLogController
