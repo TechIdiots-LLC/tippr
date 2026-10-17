@@ -110,11 +110,12 @@ find /var/log -type f -exec truncate -s 0 {} +
 FINALIZE
 
 log "stopping and exporting"
+# Docker's marker file (systemd would think it's in Docker, not LXC);
+# removed in the container, so the export leaves it out. pct writes its own
+# hostname, hosts and resolv.conf.
+docker exec "$name" rm -f /.dockerenv
 docker stop -t 120 "$name" >/dev/null
-work=$(mktemp -d)
-docker export "$name" > "$work/rootfs.tar"
-# Docker's own files; pct writes its own hostname, hosts and resolv.conf
-tar --delete -f "$work/rootfs.tar" .dockerenv 2>/dev/null || true
-zstd -q -T0 -19 --long=27 "$work/rootfs.tar" -o "$output" -f
-rm -rf "$work"
+docker export "$name" | zstd -q -T0 -19 --long=27 -o "$output" -f
+# check the archive reads back
+zstd -dc "$output" | tar -t >/dev/null
 log "template: $output ($(du -h "$output" | cut -f1))"
