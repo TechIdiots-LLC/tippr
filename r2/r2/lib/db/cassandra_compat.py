@@ -160,6 +160,15 @@ class ColumnFamily:
             od[str(k)] = val
         return od
 
+    @staticmethod
+    def _strip_timestamps(od: OrderedDict) -> OrderedDict:
+        """Values are written as (value, write timestamp); return just the
+        values, as pycassa did without include_timestamp."""
+        return OrderedDict(
+            (k, v[0] if isinstance(v, tuple) and len(v) == 2
+             and isinstance(v[1], int) else v)
+            for k, v in od.items())
+
     def multiget(self, keys: Iterable[str], columns: Optional[Iterable[str]] = None,
                  column_count: Optional[int] = None, column_start: Optional[str] = None,
                  column_finish: Optional[str] = None, column_reversed: bool = False,
@@ -220,7 +229,7 @@ class ColumnFamily:
                         od_ts[k] = (v, None)
                 ret[str(row.key)] = od_ts
             else:
-                ret[str(row.key)] = od
+                ret[str(row.key)] = self._strip_timestamps(od)
         return ret
 
     def get_range(self, start: Optional[str] = None, row_count: Optional[int] = None):
@@ -246,7 +255,7 @@ class ColumnFamily:
         for row in rows:
             raw = row.columns if hasattr(row, 'columns') else row[1]
             od = self._deserialize_map(raw)
-            out.append((str(row.key), od))
+            out.append((str(row.key), self._strip_timestamps(od)))
         return out
 
     def get(self, key: str, columns: Optional[Iterable[str]] = None,
@@ -309,7 +318,7 @@ class ColumnFamily:
                     od_ts[k] = (v, None)
             return od_ts
 
-        return od
+        return self._strip_timestamps(od)
 
     def insert(self, key: str, columns: Dict[str, object], ttl: Optional[int] = None):
         # Coerce key to str — UuidThing._id is a UUID object but the table key column is text.
