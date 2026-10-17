@@ -1833,8 +1833,10 @@ class AllFiltered(Filtered, AllMinus):
 
 class _DefaultVault(FakeVault):
     analytics_name = 'frontpage'
-    #notice the space before tippr.net
-    name = ' tippr.net'
+    @property
+    def name(self):
+        # the leading space keeps it from colliding with a real vault name
+        return ' ' + g.site_name
     path = '/'
     header = g.default_header_url
 
