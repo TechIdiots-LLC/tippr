@@ -235,8 +235,11 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
         # fn_args includes 'self' at index 0 for bound methods. The
         # decorators pass (form, jquery) for validatedForm and (responder,)
         # for json_validate positionally, so they must not also be keywords.
-        if len(fn_args) >= 2 and fn_args[1] == 'form':
-            # remove 'form' and the next positional argument if present
+        # validatedForm passes (form, jquery) positionally, whatever the form
+        # argument is called (POST_comment uses commentform)
+        if len(fn_args) >= 2 and (fn_args[1] == 'form' or
+                                  fn_args[2:3] == ['jquery']):
+            # remove the form argument and the next positional argument
             for argname in fn_args[1:3]:
                 kw.pop(argname, None)
         elif len(fn_args) >= 2 and fn_args[1] == 'responder':
@@ -1498,7 +1501,7 @@ class VSubmitVault(Validator):
             return
 
         if not vault.allow_ads and self.promotion:
-            self.set_error(errors.Vault_DISABLED_ADS)
+            self.set_error(errors.VAULT_DISABLED_ADS)
             return
 
         if self.require_linktype:

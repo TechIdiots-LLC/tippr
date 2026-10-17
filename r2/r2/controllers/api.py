@@ -375,8 +375,8 @@ class ApiController(TipprController):
             if not from_vault.is_moderator_with_perms(c.user, "mail"):
                 abort(403)
             elif from_vault.is_muted(to) and not c.user_is_admin:
-                c.errors.add(errors.MUTED_FROM_Vault, field="to")
-                form.has_errors("to", errors.MUTED_FROM_Vault)
+                c.errors.add(errors.MUTED_FROM_VAULT, field="to")
+                form.has_errors("to", errors.MUTED_FROM_VAULT)
                 g.events.muted_forbidden_event("muted mod", vault=from_vault,
                     target=to, request=request, context=c)
                 form.set_inputs(to="", subject="", text="", captcha="")
@@ -1050,8 +1050,8 @@ class ApiController(TipprController):
                 form.set_error(errors.BANNED_FROM_Vault, "name")
                 return
             elif container.is_muted(friend):
-                c.errors.add(errors.MUTED_FROM_Vault, field="name")
-                form.set_error(errors.MUTED_FROM_Vault, "name")
+                c.errors.add(errors.MUTED_FROM_VAULT, field="name")
+                form.set_error(errors.MUTED_FROM_VAULT, "name")
                 return
 
         if type == "moderator":
@@ -2065,7 +2065,7 @@ class ApiController(TipprController):
                     muted_user = parent.get_muted_user_in_conversation()
                     if muted_user:
                         c.errors.add(
-                            errors.MUTED_FROM_Vault, field="parent")
+                            errors.MUTED_FROM_VAULT, field="parent")
                         g.events.muted_forbidden_event("muted mod",
                             vault, parent_message=parent, target=muted_user,
                             request=request, context=c,
@@ -2111,7 +2111,7 @@ class ApiController(TipprController):
                 commentform.has_errors("ratelimit", errors.RATELIMIT) or
                 commentform.has_errors("parent", errors.DELETED_COMMENT,
                     errors.TOO_OLD, errors.USER_BLOCKED,
-                    errors.USER_MUTED, errors.MUTED_FROM_Vault,
+                    errors.USER_MUTED, errors.MUTED_FROM_VAULT,
                     errors.THREAD_LOCKED)
         ):
             return
@@ -2887,8 +2887,8 @@ class ApiController(TipprController):
 
         can_set_hide_ads = can_set_gold_only and kw['type'] == 'gold_only'
         if kw['hide_ads'] and not can_set_hide_ads:
-            form.set_error(errors.GOLD_ONLY_SR_REQUIRED, 'hide_ads')
-            c.errors.add(errors.GOLD_ONLY_SR_REQUIRED, field='hide_ads')
+            form.set_error(errors.GOLD_ONLY_VAULT_REQUIRED, 'hide_ads')
+            c.errors.add(errors.GOLD_ONLY_VAULT_REQUIRED, field='hide_ads')
         elif not can_set_hide_ads and vault:
             kw['hide_ads'] = vault.hide_ads
 
@@ -2935,7 +2935,7 @@ class ApiController(TipprController):
         elif form.has_errors('related_Vaults', errors.VAULT_NOEXIST,
                              errors.BAD_VAULT_NAME, errors.TOO_MANY_VAULTS):
             pass
-        elif form.has_errors('hide_ads', errors.GOLD_ONLY_SR_REQUIRED):
+        elif form.has_errors('hide_ads', errors.GOLD_ONLY_VAULT_REQUIRED):
             pass
         #creating a new tippr
         elif not vault:
