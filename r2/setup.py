@@ -116,6 +116,8 @@ setup(
         "requests",
         "tinycss2",
         "unidecode",
+        # :shortcode: emoji in comments and posts (r2.lib.filters.emojify_html)
+        "emoji",
         "PyYAML",
         "Pillow",
         # pylibmc requires libmemcached-dev on Ubuntu: apt install libmemcached-dev

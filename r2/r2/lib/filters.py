@@ -216,12 +216,59 @@ def markdown_souptest(text, nofollow=False, target=None, renderer='tippr'):
 
     return smd
 
+def _load_emoji_shortcodes():
+    """{"thumbsup": "👍", ...} from the emoji package's names and aliases."""
+    try:
+        import emoji
+    except ImportError:
+        return {}
+    codes = {}
+    for char, data in emoji.EMOJI_DATA.items():
+        if data.get("status", emoji.STATUS["fully_qualified"]) != \
+                emoji.STATUS["fully_qualified"]:
+            continue
+        for name in [data.get("en", "")] + list(data.get("alias", [])):
+            name = name.strip(":").lower()
+            if name:
+                codes.setdefault(name, char)
+    return codes
+
+EMOJI_SHORTCODES = _load_emoji_shortcodes()
+# not touching letters, digits or slashes, so a:b:c, 10:30:45 and
+# URLs shown as text stay as typed
+_emoji_shortcode_re = re.compile(
+    r"(?<![\w/]):([a-z0-9_+\-]{1,60}):(?![\w/])")
+# code blocks, inline code and tags; emoji shortcodes are only replaced in
+# the text between them
+_emoji_skip_re = re.compile(r"(<pre\b.*?</pre>|<code\b.*?</code>|<[^>]*>)",
+                            re.S | re.I)
+
+
+def emojify_html(html):
+    """Replace :shortcode: in rendered markdown with the emoji, outside code
+    and tag attributes. The output is still plain text, so this is as safe
+    as the markdown it is applied to."""
+    if ":" not in html or not EMOJI_SHORTCODES:
+        return html
+
+    def replace(m):
+        return EMOJI_SHORTCODES.get(m.group(1).lower(), m.group(0))
+
+    parts = _emoji_skip_re.split(html)
+    # text segments are at even indexes, skipped segments at odd ones
+    for i in range(0, len(parts), 2):
+        if ":" in parts[i]:
+            parts[i] = _emoji_shortcode_re.sub(replace, parts[i])
+    return "".join(parts)
+
+
 def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     if not text:
         return None
 
     target = kwargs.get("target", None)
     text = snudown.markdown(_force_utf8(text), nofollow, target)
+    text = emojify_html(text)
 
     if wrap:
         return SC_OFF + MD_START + text + MD_END + SC_ON
