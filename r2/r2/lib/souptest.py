@@ -58,7 +58,11 @@ allowed_tags = {
     'div': {'class'},
     'a': {'href', 'title', 'target', 'nofollow', 'rel'},
     'img': {'src', 'alt', 'title'},
+    # >!spoilers!< (only with allowed_span_classes)
+    'span': {'class'},
 }
+
+allowed_span_classes = {'md-spoiler-text'}
 
 markdown_boring_tags = {
     'p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li', 'pre', 'code',
@@ -95,6 +99,10 @@ def souptest_sniff_node(node):
 
         for attr, val in node.items():
             if attr not in allowed_tags[tag_name]:
+                raise SoupUnsupportedAttrError(attr)
+
+            if (tag_name == 'span' and attr == 'class' and
+                    set(val.split()) - allowed_span_classes):
                 raise SoupUnsupportedAttrError(attr)
 
             if tag_name == 'a' and attr == 'href':
