@@ -50,13 +50,19 @@ inline_script_tag = '<script type="text/javascript">{content}</script>'
 
 
 class Uglify:
+    # uglify-js 1.x ("-nc" = no copyright comments); the installer provides
+    # it on PATH. TIPPR_UGLIFYJS overrides the executable.
+    command = os.environ.get("TIPPR_UGLIFYJS", "uglifyjs")
+
     def compile(self, data, dest):
         process = subprocess.Popen(
-            ["/usr/bin/uglifyjs", "-nc"],
+            [self.command, "-nc"],
             stdin=subprocess.PIPE,
             stdout=dest,
         )
 
+        if isinstance(data, str):
+            data = data.encode("utf-8")
         process.communicate(input=data)
 
         if process.returncode != 0:
