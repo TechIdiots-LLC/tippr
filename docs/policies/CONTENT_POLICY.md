@@ -42,7 +42,11 @@ Content that violates the law, including but not limited to:
 - Targeted harassment campaigns
 
 ### 4.3 Hateful Content
-- Content that promotes hate based on identity or vulnerability
+- Content that promotes hate based on identity or vulnerability, including
+  race, ethnicity, nationality, religion, disability, sex, sexual
+  orientation, gender identity or gender expression
+- Slurs, dehumanizing language or "jokes" aimed at any of these groups
+- Misgendering or deadnaming someone to demean them
 - Content designed to intimidate or silence others
 
 ### 4.4 Spam and Manipulation
