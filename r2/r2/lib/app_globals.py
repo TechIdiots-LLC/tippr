@@ -1070,11 +1070,18 @@ class Globals:
             try:
                 revision = subprocess.check_output(["git",
                                                     "--git-dir", git_dir,
-                                                    "rev-parse", "HEAD"])
-            except subprocess.CalledProcessError as e:
-                self.log.warning("Unable to fetch git revision: %r", e)
-            else:
-                self.versions[repo_name] = revision.rstrip()
+                                                    "rev-parse", "HEAD"],
+                                                   stderr=subprocess.DEVNULL)
+                revision = revision.decode("ascii").strip()
+            except (subprocess.CalledProcessError, OSError) as e:
+                # no git or no checkout (e.g. the Docker image, which sets
+                # TIPPR_REVISION when it's built)
+                revision = os.environ.get("TIPPR_REVISION", "") \
+                    if repo_name == "r2" else ""
+                if not revision and not isinstance(e, FileNotFoundError):
+                    self.log.warning("Unable to fetch git revision: %r", e)
+            if revision:
+                self.versions[repo_name] = revision
                 return revision[:7]
 
         return "(unknown)"
