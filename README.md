@@ -74,6 +74,8 @@ Customize the installation by setting environment variables before running the i
 | `TIPPR_VENV` | `/home/$TIPPR_USER/venv` | Python virtual environment location |
 | `TIPPR_PLUGINS` | `about gold` | Space-separated list of plugins to install |
 | `PYTHON_VERSION` | `3.12` | Python version to use |
+| `TIPPR_ENVIRONMENT` | `auto` | `production` or `development`; `auto` uses development for `.local`, `.localhost` and `.test` domains |
+| `TIPPR_WEB_WORKERS` | CPU count (max 8) | Number of gunicorn web workers |
 | `TIPPR_BUILD_MCROUTER` | `0` | Set to `1` to build mcrouter from source (20+ minutes; not used by the default config) |
 | `TIPPR_FIREWALL` | `0` | Set to `1` to enable a ufw firewall allowing only SSH, HTTP and HTTPS |
 | `TIPPR_SSH_PORT` | `22` | SSH port the firewall keeps open |

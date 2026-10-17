@@ -1,5 +1,5 @@
 [Unit]
-Description=Tippr API (paster)
+Description=Tippr web app (gunicorn)
 After=network.target tippr.target
 PartOf=tippr.target
 
@@ -9,7 +9,16 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 WorkingDirectory=@TIPPR_ROOT@
 EnvironmentFile=-/etc/default/tippr
-ExecStart=@TIPPR_VENV@/bin/paster serve --reload ${TIPPR_INI}
+# TIPPR_WEB_WORKERS and TIPPR_GUNICORN_ARGS ("--reload" in development) come
+# from /etc/default/tippr. haproxy, on the same host, is the only client.
+ExecStart=@TIPPR_VENV@/bin/gunicorn --paste ${TIPPR_INI} \
+    --bind 127.0.0.1:8001 \
+    --workers ${TIPPR_WEB_WORKERS} \
+    --timeout 60 \
+    --graceful-timeout 30 \
+    $TIPPR_GUNICORN_ARGS
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
 Restart=always
 
 [Install]
