@@ -25,6 +25,7 @@
 
 from r2.lib.pages import (
     AdminAdSettings,
+    AdminBackups,
     AdminCoins,
     AdminEmailSettings,
     AdminGold,
@@ -57,3 +58,7 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_ads(self):
         return AdminPage(content=AdminAdSettings()).render()
+
+    @validate(VAdmin())
+    def GET_backups(self):
+        return AdminPage(content=AdminBackups()).render()

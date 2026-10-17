@@ -1,0 +1,236 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+##
+## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
+## TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%!
+  import datetime
+
+  def human_size(n):
+      n = n or 0
+      for unit in ("B", "KB", "MB", "GB"):
+          if n < 1024 or unit == "GB":
+              return ("%d %s" if unit == "B" else "%.1f %s") % (n, unit)
+          n /= 1024.0
+
+  def when(stamp):
+      return (stamp.replace("T", " ")[:16] + " UTC") if stamp else ""
+
+  def utc(timestamp):
+      return datetime.datetime.utcfromtimestamp(timestamp).strftime(
+          "%Y-%m-%d %H:%M UTC")
+%>
+
+<%def name="action_form(action, button, name=None, confirm_domain=False)">
+  <form action="/api/backups" method="post" class="pretty-form backup-action"
+        onsubmit="return post_form(this, 'backups');">
+    <input type="hidden" name="action" value="${action}">
+    %if name:
+      <input type="hidden" name="name" value="${name}">
+    %endif
+    %if confirm_domain:
+      <input type="text" name="confirm" placeholder="${thing.domain}" size="14"
+             title="${_('type the domain to confirm')}">
+    %endif
+    <button class="btn" type="submit">${button}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<div class="admin-backups">
+<h1>${_("backups")}</h1>
+
+<p>
+  ${_("Export the whole site (database, Cassandra, saved settings, uploaded media and signing secrets) to a folder on this server, copy a backup from another tippr server, or restore one. To move from a single VM to separate servers or containers: export here, then import and restore on the new server.")}
+</p>
+
+%if not thing.installed:
+  <p class="error">
+    ${_("The backup service isn't installed on this server, so nothing here can run. Re-run the installer, or use the tippr-backup command as root.")}
+  </p>
+%endif
+
+## the request being run (or the last one), and any waiting
+%if thing.pending or thing.job:
+  <h2>${_("status")}</h2>
+  %for request in thing.pending:
+    <p>${_("waiting to start: %(action)s, requested by %(user)s") % dict(action=request.get("action"), user=request.get("requested_by"))}</p>
+  %endfor
+  %if thing.job:
+    <% job = thing.job %>
+    <p>
+      <strong>${job.get("action")}</strong>
+      ${job.get("name") or ""}
+      &mdash; ${job.get("state")}
+      (${_("started")} ${when(job.get("started"))}${(", " + _("finished") + " " + when(job.get("finished"))) if job.get("finished") else ""})
+      %if job.get("error"):
+        <br><span class="error">${job.get("error")}</span>
+      %endif
+    </p>
+    %if job.get("log"):
+      <pre class="backup-log">${"\n".join(job["log"][-15:])}</pre>
+    %endif
+  %endif
+  %if thing.busy:
+    <p><small>${_("This page reloads every 10 seconds while a request runs. Restores and offline exports stop the site for a while; reload once it's back.")}</small></p>
+    <script>setTimeout(function() { location.reload(); }, 10000);</script>
+  %endif
+%endif
+
+<h2>${_("export")}</h2>
+<form action="/api/backups" method="post" class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'backups');">
+  <input type="hidden" name="action" value="export">
+  <p>
+    <input type="checkbox" name="offline" id="backup-offline">
+    <label for="backup-offline">${_("take the site offline while exporting")}</label>
+    <br><small>${_("Stops tippr once the queues empty, so the copy is consistent; use this when moving servers. Without it the site stays up and the copy may miss changes made while it runs.")}</small>
+  </p>
+  <button class="btn" type="submit">${_("export now")}</button>
+  <span class="status"></span>
+</form>
+<p><small>${_("Backups are written to %(dir)s (backup_dir in the ini).") % dict(dir=thing.backup_dir)}</small></p>
+
+<h2>${_("backups on this server")}</h2>
+%if thing.backups:
+  <table class="lined-table backup-list">
+    <tr>
+      <th>${_("backup")}</th><th>${_("made")}</th><th>${_("status")}</th>
+      <th>${_("size")}</th><th>${_("from")}</th><th></th>
+    </tr>
+    %for b in thing.backups:
+      <tr>
+        <td><code>${b.get("name")}</code>
+          %if b.get("offline"):
+            <br><small>${_("offline")}</small>
+          %endif
+        </td>
+        <td>${when(b.get("started"))}</td>
+        <td>
+          ${b.get("state")}
+          %if b.get("state") == "running":
+            <br><small>${b.get("step")}</small>
+          %elif b.get("error"):
+            <br><small class="error">${b.get("error")}</small>
+          %endif
+        </td>
+        <td>${human_size(b.get("size"))}</td>
+        <td>
+          ${(b.get("source") or {}).get("domain") or ""}
+          %if b.get("imported_from"):
+            <br><small>${_("imported from %(url)s") % dict(url=b.get("imported_from"))}</small>
+          %endif
+        </td>
+        <td>
+          %if b.get("state") == "done":
+            ${action_form("restore", _("restore"), name=b.get("name"), confirm_domain=True)}
+          %endif
+          %if b.get("state") != "running":
+            ${action_form("delete", _("delete"), name=b.get("name"))}
+          %endif
+        </td>
+      </tr>
+    %endfor
+  </table>
+  <p><small>${_("Restore replaces all of this site's data with the backup and keeps this server's own passwords; type this site's domain to confirm. Everyone is logged out unless the backup came from this site.")}</small></p>
+%else:
+  <p>${_("No backups yet.")}</p>
+%endif
+
+<h2>${_("import from another server")}</h2>
+<form action="/api/backups" method="post" class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'backups');">
+  <input type="hidden" name="action" value="import">
+  <table class="lined-table borderless">
+    <tr>
+      <td>${_("other server")}</td>
+      <td><input type="text" name="url" placeholder="https://old.example.com" size="40"></td>
+    </tr>
+    <tr>
+      <td>${_("its transfer key")}</td>
+      <td>
+        <input type="password" name="key" autocomplete="off" size="40">
+        <br><small>${_("Made on that server's /admin/backups (transfer key, below).")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("backup")}</td>
+      <td>
+        <input type="text" name="name" placeholder="${_('its newest')}" size="30">
+        <br>
+        <input type="checkbox" name="fresh" id="import-fresh">
+        <label for="import-fresh">${_("have it make a new backup first")}</label>
+        <br>
+        <input type="checkbox" name="offline" id="import-offline">
+        <label for="import-offline">${_("offline: stop that site while it exports")}</label>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("then")}</td>
+      <td>
+        <input type="checkbox" name="restore" id="import-restore">
+        <label for="import-restore">${_("restore it here, replacing this site's data")}</label>
+        <br><input type="text" name="confirm" size="40"
+                   placeholder="${_('type %(domain)s to confirm a restore') % dict(domain=thing.domain)}">
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>
+        <input type="checkbox" name="insecure" id="import-insecure">
+        <label for="import-insecure">${_("don't check its TLS certificate (self-signed, such as a .local test site)")}</label>
+      </td>
+    </tr>
+  </table>
+  <button class="btn" type="submit">${_("import")}</button>
+  <span class="status"></span>
+</form>
+
+<h2>${_("transfer key")}</h2>
+<p>
+  ${_("Lets another tippr server copy this server's backups, and ask it to make new ones. Give it to the new server's admin. It expires after 7 days; only one exists at a time, and backups never include it.")}
+</p>
+<% key = thing.transfer_key %>
+%if key and not key["expired"]:
+  <p>${_("A key is active, made by %(user)s; it expires %(when)s.") % dict(user=key.get("created_by"), when=utc(key["expires"]))}</p>
+%elif key:
+  <p>${_("The last key has expired.")}</p>
+%endif
+<form action="/api/backups" method="post" class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'backups');">
+  <input type="hidden" name="action" value="create_key">
+  <button class="btn" type="submit">${_("make a new key") if key else _("make a key")}</button>
+  <code class="transfer-key-value"></code>
+  <span class="status"></span>
+</form>
+%if key:
+  ${action_form("revoke_key", _("revoke the key"))}
+%endif
+
+<h2>${_("from the command line")}</h2>
+<pre class="backup-log">sudo tippr-backup export [--offline]
+sudo tippr-backup list
+sudo tippr-backup import https://old.example.com --key KEY [--fresh] [--restore]
+sudo tippr-backup restore ${thing.backup_dir}/tippr-backup-YYYYMMDD-HHMMSS</pre>
+<p><small>${_("A backup folder can also be copied by hand (rsync or scp, as root) into backup_dir on the new server and restored there. See docs/BACKUP.md.")}</small></p>
+</div>

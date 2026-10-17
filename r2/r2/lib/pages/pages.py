@@ -3729,6 +3729,23 @@ class AdminAdSettings(Templated):
         Templated.__init__(self)
 
 
+class AdminBackups(Templated):
+    """The admin interface for exporting, importing and restoring the
+    site (r2.lib.backups; the work is done by tippr-backup.service)."""
+    def __init__(self):
+        from r2.lib import backups
+        self.installed = backups.service_installed()
+        self.backup_dir = backups.backup_dir()
+        self.backups = backups.list_backups()
+        self.job = backups.job_status()
+        self.pending = backups.pending_requests()
+        self.busy = bool(self.pending) or bool(
+            self.job and self.job.get("state") == "running")
+        self.transfer_key = backups.transfer_key_info()
+        self.domain = g.domain
+        Templated.__init__(self)
+
+
 class AdminGold(Templated):
     """The admin interface for giving or taking days of gold for a user."""
     def __init__(self, recipient):

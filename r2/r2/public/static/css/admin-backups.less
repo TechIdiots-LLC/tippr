@@ -1,0 +1,39 @@
+// /admin/backups (templates/adminbackups.html)
+
+.admin-backups {
+    max-width: 960px;
+
+    h2 {
+        margin: 18px 0 6px 0;
+    }
+
+    form.backup-action {
+        display: inline-block;
+        margin: 2px 6px 2px 0;
+    }
+
+    .backup-list td {
+        vertical-align: top;
+        padding: 4px 8px;
+    }
+
+    pre.backup-log {
+        max-height: 240px;
+        overflow: auto;
+        padding: 8px;
+        background: @tp-panel;
+        border: 1px solid @tp-border;
+        border-radius: 6px;
+        font-size: @tp-font-xs;
+        white-space: pre-wrap;
+    }
+
+    .transfer-key-value {
+        user-select: all;
+        word-break: break-all;
+    }
+
+    .error {
+        color: #c0392b;
+    }
+}

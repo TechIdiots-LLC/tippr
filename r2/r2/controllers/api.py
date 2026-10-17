@@ -4675,6 +4675,75 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        action=VOneOf("action", ("export", "delete", "restore", "import",
+                                 "create_key", "revoke_key")),
+        name=VLength("name", max_length=40, empty_error=None),
+        offline=VBoolean("offline"),
+        url=VLength("url", max_length=255, empty_error=None),
+        key=VLength("key", max_length=200, empty_error=None),
+        fresh=VBoolean("fresh"),
+        restore=VBoolean("restore"),
+        insecure=VBoolean("insecure"),
+        confirm=VLength("confirm", max_length=255, empty_error=None),
+    )
+    def POST_backups(self, form, jquery, action, name, offline, url, key,
+                     fresh, restore, insecure, confirm):
+        """Queue a backup request for tippr-backup.service, or manage the
+        transfer key other servers import with (/admin/backups)."""
+        from r2.lib import backups
+        if form.has_errors("action", errors.INVALID_OPTION):
+            return
+        if action == "create_key":
+            new_key = backups.create_transfer_key(c.user.name)
+            form.set_text(".transfer-key-value", new_key)
+            form.set_text(".status", _("Copy the key now; it isn't shown "
+                                       "again."))
+            return
+        if action == "revoke_key":
+            backups.revoke_transfer_key()
+            jquery.refresh()
+            return
+
+        if not backups.service_installed():
+            form.set_text(".status", _("tippr-backup isn't installed on this "
+                                       "server (re-run the installer)."))
+            return
+        name = (name or "").strip()
+        if action in ("delete", "restore") and not backups.get_backup(name):
+            form.set_text(".status", _("no such backup"))
+            return
+        # replacing every piece of data: make sure it's meant for this site
+        if action == "restore" or (action == "import" and restore):
+            if (confirm or "").strip().lower() != g.domain.lower():
+                form.set_text(".status", _("Type this site's domain "
+                                           "(%(domain)s) to confirm.")
+                              % {"domain": g.domain})
+                return
+
+        fields = {}
+        if action == "export":
+            fields = {"offline": bool(offline)}
+        elif action in ("delete", "restore"):
+            fields = {"name": name}
+        elif action == "import":
+            url = (url or "").strip()
+            if not url or not (key or "").strip():
+                form.set_text(".status", _("Enter the other server's address "
+                                           "and its transfer key."))
+                return
+            if name and not backups.NAME_RE.match(name):
+                form.set_text(".status", _("That isn't a backup name."))
+                return
+            fields = {"url": url, "key": key.strip(), "name": name or None,
+                      "fresh": bool(fresh), "offline": bool(offline),
+                      "restore": bool(restore),
+                      "verify_tls": not insecure}
+        backups.queue_request(action, c.user.name, **fields)
+        jquery.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         to=ValidEmail("to"),
     )
     def POST_test_email(self, form, jquery, to):
