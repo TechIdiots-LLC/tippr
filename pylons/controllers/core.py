@@ -1,9 +1,14 @@
 # Pylons controllers.core compatibility shim
 # Provides WSGIController base class for Pyramid migration
 
+import logging
+
+from paste.deploy.converters import asbool
 from webob import Response
 from webob.exc import HTTPException
 import pylons
+
+log = logging.getLogger(__name__)
 
 
 class WSGIController:
@@ -105,10 +110,20 @@ class WSGIController:
             return e(environ, start_response)
 
         except Exception as e:
-            import traceback
-            tb = traceback.format_exc()
+            # Log every unhandled error (to the service's journal); the error
+            # middleware then shows the 500 page. Only debug mode puts the
+            # traceback in the response.
+            log.exception("Error handling %s %s", environ.get('REQUEST_METHOD'),
+                          environ.get('PATH_INFO'))
             start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-            return [f'Controller error: {e}\n\n{tb}'.encode('utf-8')]
+            try:
+                debug = asbool(pylons.config.get('debug'))
+            except Exception:
+                debug = False
+            if debug:
+                import traceback
+                return [f'Controller error: {e}\n\n{traceback.format_exc()}'.encode('utf-8')]
+            return [b'Internal Server Error']
 
 
 __all__ = ['WSGIController']
