@@ -90,7 +90,7 @@ clean_ini:
 
 #################### CSS file lists
 SPRITED_STYLESHEETS += tippr.less compact.css modtools.less expando.less
-LESS_STYLESHEETS := wiki.less adminbar.less policies.less reddit-embed.less
+LESS_STYLESHEETS := wiki.less adminbar.less policies.less tippr-embed.less
 OTHER_STYLESHEETS := mobile.css highlight.css
 
 #################### Static Files
