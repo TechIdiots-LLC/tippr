@@ -1808,6 +1808,9 @@ echo "Ensuring application account exists..."
 tippr-run $TIPPR_SRC/tippr/scripts/create_default_user.py || echo "Note: create_default_user.py skipped"
 echo "Initializing policy wiki pages..."
 tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Policy wiki pages initialization skipped (can be run manually later)"
+# starter vaults and front page defaults (only sets defaults the first time)
+echo "Creating starter vaults..."
+tippr-run $TIPPR_SRC/tippr/scripts/create_default_vaults.py || echo "Note: starter vaults skipped (run scripts/create_default_vaults.py later)"
 
 # print this out here. if vagrant's involved, it's gonna do more steps
 # afterwards and then re-run this script but that's ok.
