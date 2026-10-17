@@ -388,6 +388,11 @@ $RUNDIR/install_zookeeper.sh
 # install services (rabbitmq, postgres, memcached, etc.)
 $RUNDIR/install_services.sh
 
+# install opensearch (TIPPR_SEARCH=opensearch)
+if [ "$TIPPR_SEARCH" = "opensearch" ]; then
+    $RUNDIR/install_opensearch.sh
+fi
+
 ###############################################################################
 # Install the tippr source repositories
 ###############################################################################
@@ -1701,7 +1706,12 @@ function set_consumer_count {
     fi
 }
 
-set_consumer_count search_q 0
+# search_q keeps the search index up to date
+if [ "$TIPPR_SEARCH" = "opensearch" ]; then
+    echo 1 > $CONSUMER_CONFIG_ROOT/search_q
+else
+    echo 0 > $CONSUMER_CONFIG_ROOT/search_q
+fi
 set_consumer_count del_account_q 1
 set_consumer_count scraper_q 1
 set_consumer_count markread_q 1
@@ -1735,6 +1745,14 @@ done
 # the initial database setup should be done by one process rather than a bunch
 # vying with eachother to get there first
 tippr-run -c 'print("ok done")'
+
+# Build the search index the first time (later changes go through search_q).
+# To rebuild it from scratch:
+#   tippr-run -c 'from pylons import app_globals as g; g.search.rebuild_index(recreate=True)'
+if [ "$TIPPR_SEARCH" = "opensearch" ] && \
+        ! curl -fsS -o /dev/null http://127.0.0.1:9200/tippr_links; then
+    tippr-run -c 'from pylons import app_globals as g; g.search.rebuild_index()'
+fi
 
 ###############################################################################
 # Scheduled jobs (systemd timers)
