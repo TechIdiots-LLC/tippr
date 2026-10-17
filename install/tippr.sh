@@ -817,7 +817,9 @@ if [ ! -f development.update ]; then
 [DEFAULT]
 # debug, captcha, rate limits, admin TOTP and static file handling are set by
 # the installer from TIPPR_ENVIRONMENT (see development.secrets).
-disable_ads = true
+# ads stay off until AdSense is set up on /admin/ads; true turns them off
+# regardless
+disable_ads = false
 
 domain = $TIPPR_DOMAIN
 oauth_domain = $TIPPR_DOMAIN

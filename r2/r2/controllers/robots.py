@@ -63,6 +63,12 @@ class RobotsController(MinimalController):
         else:
             return "User-Agent: *\nDisallow: /\n"
 
+    def GET_ads(self):
+        """ads.txt: names the ad networks allowed to sell this site's ads."""
+        from r2.lib import ad_settings
+        response.content_type = "text/plain"
+        return ad_settings.ads_txt()
+
     def GET_crossdomain(self):
         # Our middleware is weird and won't let us add a route for just
         # '/crossdomain.xml'. Just 404 for other extensions.

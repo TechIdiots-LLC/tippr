@@ -100,29 +100,37 @@ When running inside a VM or container, replace `192.168.33.10` with the VM/conta
 192.168.33.10 tippr.local
 ```
 
-### Google AdSense Configuration
+### Google AdSense
 
-You can configure tippr to use Google AdSense instead of the built-in local ads system.
+tippr can show Google AdSense ads from your own AdSense account. No IDs
+are built in, and ads are off until you set them up.
 
-1.  Open your configuration file (e.g., `development.ini` or `production.ini`).
-2.  Locate the `[DEFAULT]` section.
-3.  Set `use_adsense = true`.
-4.  Set `adsense_id` to your Google AdSense Publisher ID (e.g., `pub-1234567890123456`).
+1.  In AdSense, add your site and note your publisher ID (`pub-…`).
+2.  For tippr's own slots, create two ad units: a display unit for the
+    sidebar and an in-feed (or display) unit for post listings. Phones see
+    only the listing unit, because the sidebar is hidden on narrow screens.
+    Alternatively, use Google's Auto ads and skip the units.
+3.  As an admin (admin mode on), open **/admin/ads**. Enable ads, enter the
+    publisher ID, choose the placement, enter the ad unit IDs (and the
+    in-feed unit's layout key), and save. Changes apply immediately. Use
+    **test mode** while setting up.
+4.  `/ads.txt` is served automatically once a publisher ID is saved.
+5.  In the EU, UK and Switzerland, Google requires a consent message. Create
+    one in AdSense under **Privacy & messaging**. Also mention advertising
+    cookies in your privacy policy.
 
-Example:
+Ads are never shown:
 
-```ini
-[DEFAULT]
-...
-#### Ads
-# The Google Adsense Publisher ID
-adsense_id = pub-1234567890123456
+- in NSFW or quarantined vaults, on NSFW posts, or in listings that include
+  NSFW posts;
+- in vaults whose moderators turned ads off;
+- to gold members who chose to hide ads.
 
-#### Feature toggles
-disable_ads = false
-use_adsense = true
-...
-```
+The same settings can go in the ini (`use_adsense`, `adsense_id`,
+`adsense_mode`, `adsense_sidebar_slot`, `adsense_listing_slot`,
+`adsense_listing_layout_key`, `adsense_listing_position`,
+`adsense_test_mode`; see `example.ini`). Settings saved on /admin/ads
+override the ini. `disable_ads = true` turns all ads off regardless.
 
 After adding the host mapping, you should be able to visit `https://tippr.local` in your browser (or the HTTP/HTTPS endpoint the installer configures).
 

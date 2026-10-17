@@ -67,6 +67,7 @@ def make_map(config):
     mc('/admin/', controller='awards')
 
     mc('/robots.txt', controller='robots', action='robots')
+    mc('/ads.txt', controller='robots', action='ads')
     mc('/crossdomain', controller='robots', action='crossdomain')
 
     mc('/login', controller='forms', action='login')
