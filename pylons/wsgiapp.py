@@ -80,6 +80,15 @@ class _DefaultTmplContext(SimpleNamespace):
         self.user = None
 
 
+class _AttribSafeTmplContext(_DefaultTmplContext):
+    """Template context for pylons.strict_tmpl_context = False (which r2
+    sets): like Pylons' AttribSafeContextObj, a missing attribute is ''."""
+    def __getattr__(self, name):
+        if name.startswith('__'):
+            raise AttributeError(name)
+        return ''
+
+
 class PylonsApp:
     """A very small PylonsApp polyfill.
 
@@ -104,7 +113,10 @@ class PylonsApp:
         pylons_obj.config = self.config
         pylons_obj.app_globals = self.globals
         pylons_obj.h = self.helpers
-        pylons_obj.tmpl_context = _DefaultTmplContext()
+        if self.config.get('pylons.strict_tmpl_context', True):
+            pylons_obj.tmpl_context = _DefaultTmplContext()
+        else:
+            pylons_obj.tmpl_context = _AttribSafeTmplContext()
         pylons_obj.translator = _DefaultTranslator()
 
         # Create real WebOb request/response objects and push them onto
