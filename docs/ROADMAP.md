@@ -35,11 +35,12 @@ installed with `install-tippr.sh`.
 - **Cloudflare (Free plan):** see [Cloudflare](#cloudflare) below.
 - **Search:** OpenSearch, installed by default (done; see
   [SEARCH.md](SEARCH.md) and [Search](#search)).
-- **Shims:** remove the compatibility shims left over from the Python 3 and
-  upgrade work (`baseplate/`, `pylons/`, `pycassa/`, `weberror/`, …)
-  wherever a maintained library can replace them. The repo's `baseplate/`
-  shim shadowing the real baseplate package has already caused bugs.
-  `BeautifulSoup.py` is gone: the code uses bs4 directly.
+- **Shims:** `BeautifulSoup.py`, `baseplate/`, `pycassa/`, `weberror/`,
+  `Captcha/` and `cassandra.disabled/` are gone (r2 uses bs4, the real
+  baseplate 2.x and `r2.lib.db.cassandra_compat`), as are the installer's
+  venv patches. Left: `pylons/`, which is effectively r2's web framework
+  now (moving to Pyramid or similar is its own project), and `l2cs.py`,
+  used only by the AWS CloudSearch search provider.
 
 ## Then
 
