@@ -63,56 +63,23 @@ def _get_translator(lang=None):
         return _NoopTranslator()
 
 
-def translation(lang, localedir=None, languages=None, class_=None,
-                fallback=False, domain='messages'):
-    """Get a translations object for the given language.
+def translation(domain, localedir=None, languages=None, class_=None,
+                fallback=False):
+    """Load the gettext catalog `domain` for `languages`, like Pylons'
+    translation(): <localedir>/<lang>/LC_MESSAGES/<domain>.mo.
 
-    This is a compatibility function that mimics Pylons' translation() function.
-
-    Args:
-        lang: Language code (e.g., 'en', 'fr')
-        localedir: Directory containing locale files
-        languages: List of languages to try
-        class_: Translation class to use (defaults to NullTranslations)
-        fallback: If True, return NullTranslations on failure
-        domain: The message domain
-
-    Returns:
-        A translations object
-
-    Raises:
-        LanguageError: If the language cannot be found and fallback is False
+    Raises OSError (as Pylons does) if none of the languages has a catalog,
+    unless fallback is true.
     """
-    if languages is None:
-        languages = [lang] if lang else []
-
     if class_ is None:
-        class_ = NullTranslations
-
-    # Try to load translations using gettext
-    try:
-        if localedir and os.path.isdir(localedir):
-            return gettext_module.translation(
-                domain,
-                localedir=localedir,
-                languages=languages,
-                class_=class_,
-                fallback=fallback,
-            )
-    except Exception:
-        pass
-
-    # Try Babel if available
-    if BabelTranslations is not None:
-        try:
-            return BabelTranslations.load(dirname=localedir, locales=languages, domain=domain)
-        except Exception:
-            pass
-
-    if fallback:
-        return NullTranslations()
-
-    raise LanguageError(f"Could not load translations for language: {lang}")
+        class_ = gettext_module.GNUTranslations
+    return gettext_module.translation(
+        domain,
+        localedir=localedir,
+        languages=languages,
+        class_=class_,
+        fallback=fallback,
+    )
 
 
 __all__ = [

@@ -12,7 +12,12 @@ _translator_local = local()
 
 
 def get_translator():
-    """Get the current thread-local translator."""
+    """Get the current translator: the one r2's set_lang() installed on
+    pylons.translator for this request, else the thread-local one."""
+    import pylons
+    stack = pylons.translator._stack
+    if stack and hasattr(stack[-1], 'gettext'):
+        return stack[-1]
     translator = getattr(_translator_local, 'translator', None)
     if translator is None:
         translator = _NoopTranslator()
