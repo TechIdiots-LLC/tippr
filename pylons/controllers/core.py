@@ -1,6 +1,7 @@
 # Pylons controllers.core compatibility shim
 # Provides WSGIController base class for Pyramid migration
 
+import inspect
 import logging
 
 from paste.deploy.converters import asbool
@@ -50,8 +51,11 @@ class WSGIController:
                 start_response('404 Not Found', [('Content-Type', 'text/plain')])
                 return [f'Action {action_name} not found'.encode('utf-8')]
 
-            # Call the action
-            result = action()
+            # Call the action with the route variables it names, as Pylons
+            # did (e.g. GET_user_redirect(self, username, rest=None)).
+            # Actions wrapped by r2's validators take **kw and read the
+            # routes dict themselves.
+            result = action(**_route_args(action, routes_dict))
 
             # Call __after__ hook
             self.__after__()
@@ -124,6 +128,18 @@ class WSGIController:
                 import traceback
                 return [f'Controller error: {e}\n\n{traceback.format_exc()}'.encode('utf-8')]
             return [b'Internal Server Error']
+
+
+def _route_args(action, routes_dict):
+    try:
+        params = inspect.signature(action).parameters
+    except (TypeError, ValueError):
+        return {}
+    return {name: routes_dict[name] for name, param in params.items()
+            if name in routes_dict
+            and name not in ('controller', 'action')
+            and param.kind in (param.POSITIONAL_OR_KEYWORD,
+                               param.KEYWORD_ONLY)}
 
 
 __all__ = ['WSGIController']
