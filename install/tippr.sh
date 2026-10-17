@@ -1105,6 +1105,15 @@ DEVELOPMENT
     fi
 }
 
+# Branding and contact settings given to the installer. Unset ones are left
+# to development.update / example.ini.
+function site_settings {
+    [ -n "$TIPPR_SITE_NAME" ] && echo "site_name = $(ini_value "$TIPPR_SITE_NAME")"
+    [ -n "$TIPPR_SITE_DESCRIPTION" ] && echo "short_description = $(ini_value "$TIPPR_SITE_DESCRIPTION")"
+    [ -n "$TIPPR_CONTACT_EMAIL" ] && echo "contact_email = $(ini_value "$TIPPR_CONTACT_EMAIL")"
+    true
+}
+
 function ini_value {
     local value=$1
     echo "${value//%/%%}"
@@ -1118,6 +1127,7 @@ cat > development.secrets <<SECRETS
 
 [DEFAULT]
 $(environment_settings)
+$(site_settings)
 
 db_pass = $(ini_value "$TIPPR_DB_PASSWORD")
 amqp_pass = $(ini_value "$TIPPR_AMQP_PASSWORD")

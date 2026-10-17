@@ -74,6 +74,9 @@ Customize the installation by setting environment variables before running the i
 | `TIPPR_VENV` | `/home/$TIPPR_USER/venv` | Python virtual environment location |
 | `TIPPR_PLUGINS` | `about gold` | Space-separated list of plugins to install |
 | `PYTHON_VERSION` | `3.12` | Python version to use |
+| `TIPPR_SITE_NAME` | (example.ini: `tippr`) | Site name shown in page titles |
+| `TIPPR_SITE_DESCRIPTION` | (example.ini) | Front page title and search engine description |
+| `TIPPR_CONTACT_EMAIL` | (none) | Address shown on the contact page |
 | `TIPPR_ENVIRONMENT` | `auto` | `production` or `development`; `auto` uses development for `.local`, `.localhost` and `.test` domains |
 | `TIPPR_WEB_WORKERS` | CPU count (max 8) | Number of gunicorn web workers |
 | `TIPPR_BUILD_MCROUTER` | `0` | Set to `1` to build mcrouter from source (20+ minutes; not used by the default config) |
