@@ -446,7 +446,10 @@ function clone_tippr_repo {
         rm -rf "$destination" || true
         mkdir -p "$(dirname "$destination")"
         # Copy as the tippr user
-        sudo -u $TIPPR_USER -H bash -c "cp -a \"$TIPPR_COPY_LOCAL\" \"$destination\""
+        # copy the contents ("dir/."), so a destination that rm could not fully
+        # remove doesn't end up with the checkout nested inside it
+        sudo -u $TIPPR_USER -H mkdir -p "$destination"
+        sudo -u $TIPPR_USER -H bash -c "cp -a \"$TIPPR_COPY_LOCAL/.\" \"$destination/\""
     else
         if [ ! -d "$destination" ]; then
             # First try an anonymous clone (preserves previous CI behavior).
@@ -478,6 +481,15 @@ function clone_tippr_service_repo {
     local repo=${2:-tippr/tippr-service-$1}
     clone_tippr_repo $name "$repo"
 }
+
+# On a re-install, stop the running stack first. A running app writes into the
+# source tree (e.g. compiled templates) while it is being replaced, and jobs or
+# consumers that start while Python packages are reinstalled fail (e.g. with
+# pkg_resources missing mid-upgrade). Everything is started again at the end.
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ] &&         systemctl is-active -q tippr.target 2>/dev/null; then
+    echo "Stopping tippr.target during the install"
+    systemctl stop tippr.target
+fi
 
 clone_tippr_repo tippr TechIdiots-LLC/tippr
 # i18n repo lives under the organization owner – ensure we clone the
@@ -717,15 +729,6 @@ if [ -d "$TIPPR_VENV" ] && [ ! -w "$TIPPR_VENV" ]; then
 fi
 
 # Check if a working venv already exists (e.g., pre-created by CI workflow).
-# On a re-install, stop the running stack before touching the venv: jobs and
-# consumers that start while packages are being reinstalled fail (e.g. with
-# pkg_resources missing mid-upgrade). Everything is started again at the end.
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ] && \
-        systemctl is-active -q tippr.target 2>/dev/null; then
-    echo "Stopping tippr.target during the install"
-    systemctl stop tippr.target
-fi
-
 # A working venv has a python executable that can import basic stdlib modules.
 VENV_OK=0
 if [ -x "$TIPPR_VENV/bin/python" ]; then
