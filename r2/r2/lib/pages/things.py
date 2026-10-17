@@ -126,6 +126,11 @@ class LinkButtons(PrintableButtons):
                     not (thing.has_thumbnail or thing.media_object)):
                 show_rescrape = True
 
+        # who can change the post's AI label (POST_set_ai_label)
+        show_ai_label = (c.user_is_loggedin and not thing._deleted and
+                         thing.promoted is None and
+                         (is_author or thing.can_ban or c.user_is_admin))
+
         show_givegold = thing.can_gild and (
             getattr(c, 'permalink_page', False) or getattr(c, 'profilepage', False)
         )
@@ -191,6 +196,8 @@ class LinkButtons(PrintableButtons):
                                   show_unlock = show_unlock,
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
+                                  show_ai_label = show_ai_label,
+                                  ai_content = thing.ai_content,
                                   show_flair = thing.can_flair,
                                   show_rescrape=show_rescrape,
                                   show_givegold=show_givegold,

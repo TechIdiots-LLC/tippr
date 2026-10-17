@@ -36,7 +36,7 @@ from pylons.i18n import _
 
 from r2.config import feature
 from r2.config.extensions import API_TYPES, RSS_TYPES
-from r2.lib import hooks
+from r2.lib import ai_content, hooks
 from r2.lib.comment_tree import (
   conversation,
   get_comment_scores,
@@ -746,6 +746,11 @@ class SearchBuilder(IDBuilder):
               getattr(item, "author", None) and item.author._deleted):
             return False
         elif isinstance(item.lookups[0], Vault) and not item.is_exposed(user):
+            return False
+        # the user's AI content preference (not for their own posts)
+        elif (user and isinstance(item.lookups[0], Link) and
+              item.author_id != user._id and
+              ai_content.is_hidden(user, item)):
             return False
 
         # show NSFW to API and RSS users unless obey_over18=true

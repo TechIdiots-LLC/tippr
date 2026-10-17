@@ -28,6 +28,7 @@
    from r2.lib.pages import VaultSelector, UserText
    from r2.lib.template_helpers import add_vault, _wsf, format_html
    from r2.lib.filters import safemarkdown
+   from r2.lib import ai_content
 %>
 
 <%namespace file="utils.html" import="error_field, submit_form, _a_buffered, text_with_links"/>
@@ -109,6 +110,24 @@ ${thing.formtabs_menu}
 </div>
 
 <div class="spacer">
+  <%utils:round_field title="${_('AI content')}" id="ai-content-field">
+    <p class="ai-content-question">${_("how much AI went into this post?")}</p>
+    %if thing.default_vault and getattr(thing.default_vault, 'ai_policy', ai_content.POLICY_ANY) not in (None, ai_content.POLICY_ANY):
+      <p class="ai-content-policy">${_wsf("/v/%(vault)s accepts %(policy)s.", vault=thing.default_vault.name, policy=_(ai_content.POLICY_NAMES[thing.default_vault.ai_policy]))}</p>
+    %endif
+    %for label in ai_content.LABELS:
+      <label class="ai-content-choice">
+        <input type="radio" name="ai_content" value="${label}" required/>
+        <strong>${_(ai_content.LABEL_NAMES[label])}</strong>
+        <span class="ai-content-help">${_(ai_content.LABEL_HELP[label])}</span>
+      </label>
+    %endfor
+    ${error_field("AI_LABEL_REQUIRED", "ai_content", "div")}
+    ${error_field("AI_LABEL_NOT_ALLOWED", "ai_content", "div")}
+  </%utils:round_field>
+</div>
+
+<div class="spacer">
     <div class="submit_text roundfield">
         <h1>${_wsf('submitting to %(vault)s', vault=unsafe('/v/<span class="vault"></span>'))}</h1>
         <span class="content md-container">
@@ -133,14 +152,10 @@ ${thing.captcha}
 </div>
 
 <div class="roundfield info-notice">
-  ${text_with_links(_("please be mindful of tippr's %(content_policy)s and practice %(good_reddiquette)s."),
+  ${text_with_links(_("please be mindful of the %(content_policy)s."),
       content_policy=dict(
         link_text=_("content policy"),
         path="/help/contentpolicy",
-        target="_blank"),
-      good_reddiquette=dict(
-        link_text=_("good reddiquette"),
-        path="/wiki/reddiquette",
         target="_blank"),
   )}
 </div>

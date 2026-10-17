@@ -37,6 +37,7 @@
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.strings import Score, strings
+   from r2.lib import ai_content
 %>
  
 <%inherit  file="printable.html"/>
@@ -101,6 +102,13 @@
   %endif
 </%def>
 
+## AI-assisted / AI-generated label next to the title (r2.lib.ai_content)
+<%def name="ai_label()">
+  %if thing.ai_content in (ai_content.ASSISTED, ai_content.GENERATED):
+    <span class="ai-label ai-${thing.ai_content}" title="${_(ai_content.LABEL_HELP[thing.ai_content])}">${_(ai_content.LABEL_NAMES[thing.ai_content])}</span>
+  %endif
+</%def>
+
 <%def name="entry()">
   <p class="title">
     %if c.site.link_flair_position == 'left':
@@ -112,6 +120,7 @@
     %if c.site.link_flair_position == 'right':
       <%call expr="flair()" />
     %endif
+    ${self.ai_label()}
     ${self.approval_checkmark()}
     &#32;
 

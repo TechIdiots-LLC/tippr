@@ -27,6 +27,7 @@ from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 from r2.config import feature
+from r2.lib import ai_content
 from r2.lib.errors import errors
 from r2.lib.menus import CommentSortMenu
 from r2.lib.validator.validator import (
@@ -71,6 +72,8 @@ PREFS_VALIDATORS = dict(
     pref_show_link_flair=VBoolean('show_link_flair'),
     pref_no_profanity=VBoolean('no_profanity'),
     pref_label_nsfw=VBoolean('label_nsfw'),
+    pref_ai_content=VOneOf('ai_content', ai_content.PREFS,
+                           default=ai_content.PREF_SHOW),
     pref_show_promote=VBoolean('show_promote'),
     pref_mark_messages_read=VBoolean("mark_messages_read"),
     pref_threaded_messages=VBoolean("threaded_messages"),

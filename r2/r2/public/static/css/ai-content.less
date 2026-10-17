@@ -1,0 +1,78 @@
+// AI content labels (r2.lib.ai_content): the label next to post titles, the
+// question on the submit form and the label editor in the post buttons
+
+.link .title .ai-label,
+.ai-label {
+    display: inline-block;
+    margin-left: 5px;
+    padding: 0 4px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-size: x-small;
+    font-weight: normal;
+    line-height: 14px;
+    vertical-align: middle;
+    cursor: help;
+
+    &.ai-assisted {
+        border-color: #8fb3d9;
+        background: #eef4fb;
+        color: #2f5f8f;
+    }
+
+    &.ai-generated {
+        border-color: #b39ddb;
+        background: #f3eefb;
+        color: #5e35b1;
+    }
+}
+
+#ai-content-field {
+    // .roundfield styles paragraphs large; these are notes
+    .ai-content-question, .ai-content-policy {
+        margin: 0 0 6px;
+        font-size: small;
+        font-style: normal;
+    }
+
+    .ai-content-policy {
+        color: #666;
+    }
+
+    .ai-content-choice {
+        display: block;
+        font-size: small;
+        margin: 3px 0;
+        cursor: pointer;
+
+        input {
+            margin: 0 4px 0 0;
+        }
+
+        .ai-content-help {
+            margin-left: 4px;
+            color: #888;
+            font-size: smaller;
+        }
+    }
+}
+
+.ai-label-button .ai-label-form {
+    display: inline;
+    margin-left: 4px;
+
+    label {
+        margin-right: 6px;
+        font-weight: normal;
+        cursor: pointer;
+    }
+
+    button {
+        margin: 0 4px 0 0;
+        font-size: x-small;
+    }
+}
+
+.ai-content-pref {
+    margin: 6px 0;
+}

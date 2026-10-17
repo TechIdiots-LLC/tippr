@@ -43,7 +43,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _
 
 from r2.config import extensions, feature
-from r2.lib import hooks, utils
+from r2.lib import ai_content, hooks, utils
 from r2.lib.db import sorts, tdb_cassandra
 from r2.lib.db.tdb_cassandra import view_of
 from r2.lib.db.thing import CreationError, MultiRelation, NotFound, Relation, Thing
@@ -135,6 +135,9 @@ class Link(Thing, Printable):
                      admin_takedown=False,
                      removed_link_child=None,
                      precomputed_sorts=None,
+                     # how much AI went into the post (r2.lib.ai_content);
+                     # None for posts from before labels existed
+                     ai_content=None,
                      )
     _essentials = ('vault_id', 'author_id')
     _nsfw = re.compile(r"\bnsf[wl]\b", re.I)
@@ -205,7 +208,7 @@ class Link(Thing, Printable):
 
     @classmethod
     def _submit(cls, is_self, title, content, author, vault, ip,
-                sendreplies=True):
+                sendreplies=True, ai_content=None):
         from r2.lib.voting import cast_vote
         from r2.models import admintools
         from r2.models.comment_tree import CommentTree
@@ -243,6 +246,7 @@ class Link(Thing, Printable):
             ip=ip,
             is_self=is_self,
             over_18=over_18,
+            ai_content=ai_content,
         )
 
         l._commit()
@@ -372,6 +376,16 @@ class Link(Thing, Printable):
                      wrapped.score < user.pref_min_link_score)):
                 return False
 
+            # the user's AI content preference, except for their own posts
+            # and inside a vault that is for AI posts (visiting one is a
+            # choice to see them)
+            in_ai_vault = (isinstance(c.site, Vault) and
+                           c.site._id == self.vault_id and
+                           c.site.ai_policy == ai_content.POLICY_AI_ONLY)
+            if (self.author_id != user._id and not in_ai_vault and
+                    ai_content.is_hidden(user, self)):
+                return False
+
         # show NSFW to API and RSS users unless obey_over18=true
         is_api = c.render_style in extensions.API_TYPES
         is_rss = c.render_style in extensions.RSS_TYPES
@@ -393,6 +407,8 @@ class Link(Thing, Printable):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
+        # the label can be changed after posting
+        s.append(getattr(wrapped, "ai_content", None))
         if wrapped.promoted is not None:
             s.extend([
                 getattr(wrapped, "promote_status", -1),

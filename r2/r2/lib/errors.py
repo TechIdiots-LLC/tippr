@@ -188,6 +188,8 @@ error_list = dict((
         ('BAD_PROMO_MOBILE_DEVICE', _("you must select at least one device per OS to target")),
         ('USER_MUTED', _("You have been muted from this vault.")),
         ('MUTED_FROM_VAULT', _("This user has been muted from the vault.")),
+        ('AI_LABEL_REQUIRED', _("please say how much AI went into this post")),
+        ('AI_LABEL_NOT_ALLOWED', _("this vault only accepts: %(allowed)s")),
         ('COMMENT_NOT_STICKYABLE', _("This comment is not stickyable. Ensure that it is a top level comment.")),
         ('VAULT_RULE_EXISTS', _("A vault rule by that name already exists.")),
         ('VAULT_RULE_DOESNT_EXIST', _("No vault rule by that name exists.")),

@@ -31,6 +31,7 @@
    from r2.lib.strings import strings
    from r2.models import Link
    from r2.models.promo import PROMOTE_STATUS
+   from r2.lib import ai_content
  %>
 
 <%def name="banbuttons()">
@@ -85,6 +86,27 @@
   %endif
   %if thing.show_unmarknsfw:
     <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw", event_action='unmarknsfw')}</li>
+  %endif
+  %if thing.show_ai_label:
+    ## authors, moderators and admins can correct a post's AI label
+    <li class="ai-label-button">
+      <a href="javascript:void(0)" class="access-required"
+         onclick="$(this).siblings('form').toggle(); return false">${_("AI label")}</a>
+      <form class="ai-label-form" action="#" style="display:none"
+            onsubmit="return post_form(this, 'set_ai_label')">
+        <input type="hidden" name="id" value="${thing.fullname}"/>
+        %for label in ai_content.LABELS:
+          <label>
+            <input type="radio" name="ai_content" value="${label}"
+                   ${'checked="checked"' if thing.ai_content == label else ''}/>
+            ${_(ai_content.LABEL_NAMES[label])}
+          </label>
+        %endfor
+        <button type="submit">${_("save")}</button>
+        <span class="status"></span>
+        ${error_field("AI_LABEL_NOT_ALLOWED", "ai_content", "span")}
+      </form>
+    </li>
   %endif
   %if not getattr(thing, 'promoted', None) and thing.show_flair:
     <li>

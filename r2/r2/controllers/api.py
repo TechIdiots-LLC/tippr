@@ -46,6 +46,7 @@ from r2.controllers.tippr_base import (
     set_user_cookie,
 )
 from r2.lib import (
+    ai_content,
     amqp,
     emailer,
     hooks,
@@ -446,10 +447,13 @@ class ApiController(TipprController):
         extension=VLength("extension", 20,
                           docs={"extension": "extension used for redirects"}),
         resubmit=VBoolean('resubmit'),
+        ai_label=VOneOf('ai_content', ai_content.LABELS,
+                        docs={"ai_content": "how much AI went into the post: "
+                                            "human, assisted or generated"}),
     )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    vault, extension, sendreplies, resubmit):
+                    vault, extension, sendreplies, resubmit, ai_label):
         """Submit a link to a vault.
 
         Submit will create a link or self-post in the vault `vault` with the
@@ -538,6 +542,20 @@ class ApiController(TipprController):
                 form.set_error(errors.TOO_LONG, 'text')
                 return
 
+        if ai_label not in ai_content.LABELS:
+            c.errors.add(errors.AI_LABEL_REQUIRED, field='ai_content')
+            form.set_error(errors.AI_LABEL_REQUIRED, 'ai_content')
+            return
+
+        allowed_labels = ai_content.allowed_labels(vault.ai_policy)
+        if ai_label not in allowed_labels:
+            allowed = ", ".join(_(ai_content.LABEL_NAMES[label])
+                                for label in allowed_labels)
+            c.errors.add(errors.AI_LABEL_NOT_ALLOWED, field='ai_content',
+                         msg_params={'allowed': allowed})
+            form.set_error(errors.AI_LABEL_NOT_ALLOWED, 'ai_content')
+            return
+
         VNotInTimeout().run(action_name="submit", details_text=kind, target=vault)
 
         if not request.POST.get('sendreplies'):
@@ -555,6 +573,7 @@ class ApiController(TipprController):
             vault=vault,
             ip=request.ip,
             sendreplies=sendreplies,
+            ai_content=ai_label,
         )
 
         if not is_self:
@@ -1508,6 +1527,50 @@ class ApiController(TipprController):
                              action='marknsfw')
 
         thing.update_search_index()
+
+    @require_oauth2_scope("modposts")
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VVaultCanAlter('id'),
+        link=VByName('id', thing_cls=Link),
+        label=VOneOf('ai_content', ai_content.LABELS),
+    )
+    @api_doc(api_section.links_and_comments)
+    def POST_set_ai_label(self, form, jquery, link, label):
+        """Change a post's AI content label (`human`, `assisted` or
+        `generated`).
+
+        Its author, the vault's moderators and admins can change it. The
+        author is held to the vault's AI policy; moderators can correct a
+        label to anything.
+
+        """
+        if not link or label not in ai_content.LABELS:
+            abort(400, "bad request")
+
+        vault = link.vault_slow
+        is_author = c.user._id == link.author_id
+        is_mod = c.user_is_admin or vault.is_moderator(c.user)
+        allowed_labels = ai_content.allowed_labels(vault.ai_policy)
+        if not is_mod and label not in allowed_labels:
+            allowed = ", ".join(_(ai_content.LABEL_NAMES[l])
+                                for l in allowed_labels)
+            c.errors.add(errors.AI_LABEL_NOT_ALLOWED, field='ai_content',
+                         msg_params={'allowed': allowed})
+            form.set_error(errors.AI_LABEL_NOT_ALLOWED, 'ai_content')
+            return
+
+        if link.ai_content != label:
+            link.ai_content = label
+            link._commit()
+            link.update_search_index()
+            if not is_author:
+                g.log.info("%s set the AI label of %s to %s",
+                           c.user.name, link._fullname, label)
+
+        form.set_text(".status", _("saved"))
+        jquery.refresh()
 
     @require_oauth2_scope("modposts")
     @noresponse(VUser(),
@@ -2731,6 +2794,8 @@ class ApiController(TipprController):
                    spam_links = VOneOf('spam_links', ('low', 'high', 'all')),
                    spam_selfposts = VOneOf('spam_selfposts', ('low', 'high', 'all')),
                    spam_comments = VOneOf('spam_comments', ('low', 'high', 'all')),
+                   ai_policy=VOneOf('ai_policy', ai_content.POLICIES,
+                                    default=ai_content.POLICY_ANY),
                    type = VOneOf('type', Vault.valid_types),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    submit_link_label=VLength('submit_link_label', max_length=60),
@@ -2802,6 +2867,7 @@ class ApiController(TipprController):
 
         redir = False
         keyword_fields = [
+            'ai_policy',
             'allow_top',
             'collapse_deleted_comments',
             'comment_score_hide_mins',

@@ -29,6 +29,7 @@
    from r2.lib.menus import CommentSortMenu
    from r2.lib.template_helpers import add_vault, _wsf, format_html, make_url_protocol_relative
    from r2.lib.utils import UrlParser
+   from r2.lib import ai_content
    import random
 %>
 <%namespace file="utils.html" import="md, error_field, language_tool, plain_link"/>
@@ -335,6 +336,18 @@ action = add_vault(action, vault_path=False)
       <br/>
         ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
       <br/>
+      <div class="ai-content-pref">
+        ${_("posts labelled as made with AI:")}
+        <br/>
+        %for value in ai_content.PREFS:
+          <input id="ai_content_${value}" class="nomargin" type="radio"
+                 name="ai_content" value="${value}"
+                 ${"checked='checked'" if (c.user.pref_ai_content or ai_content.PREF_SHOW) == value else ''}/>
+          <label for="ai_content_${value}">${_(ai_content.PREF_NAMES[value])}</label>
+          <br/>
+        %endfor
+        <span class="details">(${_("posts in vaults that are for AI content are always shown there")})</span>
+      </div>
         ${checkbox(_("enable private RSS feeds"), "private_feeds")} 
        &#32;<span class="details">
         ${_("(available from the 'RSS feed' tab in prefs)")}</span>

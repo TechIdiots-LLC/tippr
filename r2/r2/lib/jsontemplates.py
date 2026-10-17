@@ -825,6 +825,8 @@ class LinkJsonTemplate(ThingTemplate):
             "secure_media": item.secure_media_object,
             "num_comments": item.num_comments,
             "over_18": item.over_18,
+            # human, assisted, generated, or None (unlabelled)
+            "ai_content": item.ai_content,
             "quarantine": item.quarantine,
             "permalink": item.permalink,
             "saved": item.saved,

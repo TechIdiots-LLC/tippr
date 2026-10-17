@@ -247,6 +247,8 @@ class Vault(Thing, Printable, BaseSite):
         submit_text="",
         public_traffic=False,
         spam_links='high',
+        # which AI content labels posts may have (r2.lib.ai_content.POLICIES)
+        ai_policy='any',
         spam_selfposts='high',
         spam_comments='low',
         archive_age=g.ARCHIVE_AGE,

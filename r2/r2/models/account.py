@@ -99,6 +99,8 @@ class Account(Thing):
                      pref_organic = True,
                      pref_no_profanity = True,
                      pref_label_nsfw = True,
+                     # which AI-labelled posts to show (r2.lib.ai_content.PREFS)
+                     pref_ai_content = 'show',
                      pref_show_stylesheets = True,
                      pref_enable_default_themes=False,
                      pref_default_theme_vault=None,

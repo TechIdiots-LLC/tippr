@@ -53,7 +53,7 @@ from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 import r2.lib.utils as r2utils
-from r2.lib import amqp, filters
+from r2.lib import ai_content, amqp, filters
 from r2.lib.configparse import ConfigValue
 from r2.lib.db.operators import desc
 from r2.lib.providers.search import SearchProvider
@@ -127,6 +127,9 @@ LINK_MAPPING = {
         "hot": {"type": "double"},
         "num_comments": {"type": "integer"},
         "type_id": {"type": "integer"},
+        # human, assisted or generated (r2.lib.ai_content); missing when
+        # unlabelled
+        "ai_content": {"type": "keyword"},
     },
 }
 
@@ -215,6 +218,10 @@ def ensure_index(kind, mapping, recreate=False):
     if recreate:
         _request("DELETE", "/" + name, ok_statuses=(404,))
     elif _request("HEAD", "/" + name, ok_statuses=(404,)) == 200:
+        # add fields introduced since the index was made (existing fields
+        # can't change; that needs recreate=True)
+        _request("PUT", "/%s/_mapping" % name,
+                 body={"properties": mapping["properties"]})
         return
     _request("PUT", "/" + name,
              body={"settings": _INDEX_SETTINGS, "mappings": mapping})
@@ -246,6 +253,8 @@ LINK_QUERY_FIELDS = {
     "selftext": ("selftext", "match"),
     "text": ("selftext", "match"),
     "url": ("url", "match"),
+    # ai:human|assisted|generated, or ai:yes / ai:no
+    "ai": ("ai_content", "ai"),
 }
 
 LINK_TEXT_FIELDS = ["title^3", "title.plain^2", "selftext", "selftext.plain",
@@ -443,6 +452,19 @@ class OpenSearchLinkQuery(OpenSearchQuery):
                 else:
                     raise InvalidQuery("%s must be yes or no" % name)
                 (must_not if negate else filter_).append(clause)
+            elif kind == "ai":
+                value = value.lower()
+                if value in ai_content.LABELS:
+                    clause = {"term": {field: value}}
+                elif value in _TRUE or value in _FALSE:
+                    clause = {"terms": {field: [ai_content.ASSISTED,
+                                                ai_content.GENERATED]}}
+                    if value in _FALSE:
+                        negate = not negate
+                else:
+                    raise InvalidQuery("ai must be human, assisted, "
+                                       "generated, yes or no")
+                (must_not if negate else filter_).append(clause)
             elif kind == "term":
                 clause = {"term": {field: value}}
                 (must_not if negate else filter_).append(clause)
@@ -464,6 +486,10 @@ class OpenSearchLinkQuery(OpenSearchQuery):
                 "gte": self.recents[self.recent]}}})
         if not self.include_over18:
             filter_.append({"term": {"over18": False}})
+        # the user's AI content preference
+        hidden = ai_content.hidden_labels(c.user if c.user_is_loggedin else None)
+        if hidden:
+            must_not.append({"terms": {"ai_content": list(hidden)}})
 
         query = {"bool": {"must": must or [{"match_all": {}}],
                           "filter": filter_, "must_not": must_not}}
@@ -735,6 +761,8 @@ class LinkUploader(OpenSearchUploader):
         doc["is_self"] = bool(doc.get("is_self"))
         doc["score"] = thing._score
         doc["hot"] = thing._hot
+        if getattr(thing, "ai_content", None):
+            doc["ai_content"] = thing.ai_content
         return doc
 
 
