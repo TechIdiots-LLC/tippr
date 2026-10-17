@@ -4490,6 +4490,70 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        mail_transport=VOneOf("mail_transport", ("none", "smtp", "gmail")),
+        smtp_server=VLength("smtp_server", max_length=255, empty_error=None),
+        smtp_security=VOneOf("smtp_security", ("none", "starttls", "ssl")),
+        smtp_username=VLength("smtp_username", max_length=255,
+                              empty_error=None),
+        smtp_password=VLength("smtp_password", max_length=1024,
+                              empty_error=None),
+        gmail_client_id=VLength("gmail_client_id", max_length=255,
+                                empty_error=None),
+        gmail_client_secret=VLength("gmail_client_secret", max_length=255,
+                                    empty_error=None),
+        gmail_refresh_token=VLength("gmail_refresh_token", max_length=1024,
+                                    empty_error=None),
+    )
+    def POST_email_settings(self, form, jquery, mail_transport, smtp_server,
+                            smtp_security, smtp_username, smtp_password,
+                            gmail_client_id, gmail_client_secret,
+                            gmail_refresh_token):
+        """Save the outgoing email settings (overrides the ini file)."""
+        from r2.lib import site_settings
+        if form.has_errors("mail_transport", errors.INVALID_OPTION):
+            return
+        settings = site_settings.get_settings("email")
+        settings.update({
+            "mail_transport": mail_transport,
+            "smtp_server": (smtp_server or "").strip(),
+            "smtp_security": smtp_security or "none",
+            "smtp_username": (smtp_username or "").strip(),
+            "gmail_client_id": (gmail_client_id or "").strip(),
+        })
+        # secrets are never shown in the form; a blank field keeps the
+        # saved value
+        for name, value in (("smtp_password", smtp_password),
+                            ("gmail_client_secret", gmail_client_secret),
+                            ("gmail_refresh_token", gmail_refresh_token)):
+            if value:
+                settings[name] = value.strip()
+        site_settings.save_settings("email", settings)
+        form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        to=ValidEmail("to"),
+    )
+    def POST_test_email(self, form, jquery, to):
+        """Send a test message right away with the current email settings."""
+        from r2.lib import emailer, mail_transport
+        if form.has_errors("to", errors.NO_EMAIL, errors.BAD_EMAIL):
+            return
+        try:
+            emailer.send_html_email(
+                to, g.notification_email, _("tippr test email"),
+                _("This is a test message from %(domain)s. Email is working.")
+                % {"domain": g.domain}, subtype="plain")
+        except (mail_transport.MailTransportError,
+                mail_transport.MessageRejected) as e:
+            form.set_text(".status", _("failed: %(error)s") % {"error": e})
+            return
+        form.set_text(".status", _("sent to %(address)s") % {"address": to})
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         recipient=VExistingUname("recipient"),
         num_coins=VInt('num_coins', num_default=0),
     )

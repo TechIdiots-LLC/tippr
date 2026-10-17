@@ -3701,6 +3701,22 @@ class AdminCoins(Templated):
         Templated.__init__(self)
 
 
+class AdminEmailSettings(Templated):
+    """The admin interface for configuring outgoing email."""
+    def __init__(self):
+        from r2.lib import mail_transport
+        settings = mail_transport.email_settings()
+        # never send saved secrets back to the browser, only whether they're set
+        self.settings = {name: value for name, value in settings.items()
+                         if name not in mail_transport.SECRET_SETTINGS}
+        self.secret_is_set = {name: bool(settings[name])
+                              for name in mail_transport.SECRET_SETTINGS}
+        self.transports = mail_transport.TRANSPORTS
+        self.smtp_security_options = mail_transport.SMTP_SECURITY
+        self.test_address = getattr(c.user, "email", "") or ""
+        Templated.__init__(self)
+
+
 class AdminGold(Templated):
     """The admin interface for giving or taking days of gold for a user."""
     def __init__(self, recipient):

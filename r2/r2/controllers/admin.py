@@ -23,7 +23,7 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-from r2.lib.pages import AdminCoins, AdminGold, AdminPage
+from r2.lib.pages import AdminCoins, AdminEmailSettings, AdminGold, AdminPage
 from r2.lib.validator import VAdmin, nop, validate
 
 from .tippr_base import TipprController
@@ -43,3 +43,7 @@ class AdminToolController(TipprController):
     )
     def GET_gold(self, recipient):
         return AdminPage(content=AdminGold(recipient)).render()
+
+    @validate(VAdmin())
+    def GET_email(self):
+        return AdminPage(content=AdminEmailSettings()).render()

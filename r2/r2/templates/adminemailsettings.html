@@ -1,0 +1,111 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+## 
+## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
+## TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="secret_field(name)">
+  <input type="password" name="${name}" autocomplete="new-password"
+         placeholder="${_('saved; leave blank to keep') if thing.secret_is_set[name] else _('not set')}">
+</%def>
+
+<h1>${_("email settings")}</h1>
+
+<p>
+  ${_("How tippr sends email (verification, password resets, notifications). Settings saved here override the ini file and apply immediately.")}
+</p>
+
+<form id="email-settings" action="/api/email_settings" method="post"
+      class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'email_settings');">
+  <table class="lined-table borderless">
+    <tr>
+      <td>${_("send email with")}</td>
+      <td>
+        <select name="mail_transport">
+          %for transport in thing.transports:
+            <option value="${transport}" ${'selected' if transport == thing.settings['mail_transport'] else ''}>${transport}</option>
+          %endfor
+        </select>
+        ${error_field("INVALID_OPTION", "mail_transport", "span")}
+      </td>
+    </tr>
+
+    <tr><th colspan="2">${_("SMTP")}</th></tr>
+    <tr>
+      <td>${_("server (host or host:port)")}</td>
+      <td><input type="text" name="smtp_server" value="${thing.settings['smtp_server']}"></td>
+    </tr>
+    <tr>
+      <td>${_("security")}</td>
+      <td>
+        <select name="smtp_security">
+          %for option in thing.smtp_security_options:
+            <option value="${option}" ${'selected' if option == thing.settings['smtp_security'] else ''}>${option}</option>
+          %endfor
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("username")}</td>
+      <td><input type="text" name="smtp_username" value="${thing.settings['smtp_username']}" autocomplete="off"></td>
+    </tr>
+    <tr>
+      <td>${_("password")}</td>
+      <td>${secret_field("smtp_password")}</td>
+    </tr>
+
+    <tr><th colspan="2">${_("Gmail (OAuth)")}</th></tr>
+    <tr>
+      <td>${_("OAuth client ID")}</td>
+      <td><input type="text" name="gmail_client_id" value="${thing.settings['gmail_client_id']}" autocomplete="off"></td>
+    </tr>
+    <tr>
+      <td>${_("OAuth client secret")}</td>
+      <td>${secret_field("gmail_client_secret")}</td>
+    </tr>
+    <tr>
+      <td>${_("refresh token")}</td>
+      <td>
+        ${secret_field("gmail_refresh_token")}
+        <br><small>${_("Run scripts/gmail_oauth_setup.py on the server to connect a Google account; it fills these in.")}</small>
+      </td>
+    </tr>
+  </table>
+
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+</form>
+
+<h2>${_("send a test email")}</h2>
+
+<form id="test-email" action="/api/test_email" method="post"
+      class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'test_email');">
+  <input type="email" name="to" value="${thing.test_address}" placeholder="${_('address')}">
+  ${error_field("NO_EMAIL", "to", "span")}
+  ${error_field("BAD_EMAIL", "to", "span")}
+  <button class="btn" type="submit">${_("send")}</button>
+  <span class="status"></span>
+</form>

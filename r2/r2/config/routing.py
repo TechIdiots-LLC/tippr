@@ -140,6 +140,7 @@ def make_map(config):
        requirements=dict(action="give|winners"))
 
     mc('/admin/coins', controller='admintool', action='coins')
+    mc('/admin/email', controller='admintool', action='email')
     mc('/admin/gold', controller='admintool', action='gold')
 
     # Privacy Admin Dashboard
