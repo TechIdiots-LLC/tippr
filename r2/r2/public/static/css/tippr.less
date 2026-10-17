@@ -408,7 +408,7 @@ ul.flat-vert {text-align: left;}
  }
 
 .drop-choices a.choice:hover {
-    background-color: #c7def7;
+    background-color: @tp-tint;
 }
 
 .drop-choices a.choice.selected {
@@ -4776,6 +4776,20 @@ ul#image-preview-list .description pre {
 #vault-header-area .dropdown.vaultdrop {
     float: left;
     padding-left: 5px;
+}
+
+// the "my vaults" menu drops down from the dark bar onto a light box
+#vault-header-area .drop-choices a.choice {
+    color: @tp-text;
+}
+
+#vault-header-area .drop-choices a.choice:hover {
+    color: @tp-accent-strong;
+    background-color: @tp-tint;
+}
+
+#vault-header-area .drop-choices .bottom-option {
+    color: @tp-link;
 }
 
 #vault-header-area .drop-choices.vaultdrop {
