@@ -607,7 +607,12 @@ class UrlParser:
     def canonicalize(self):
         subdomain = extract_subdomain(self.hostname)
         if subdomain == '' or is_language_subdomain(subdomain):
-            self.hostname = 'www.{}'.format(g.domain)
+            # the site's main host: reddit's was www., tippr's is usually
+            # the bare domain (domain_prefix is empty by default)
+            if g.domain_prefix:
+                self.hostname = '{}.{}'.format(g.domain_prefix, g.domain)
+            else:
+                self.hostname = g.domain
         if not self.path.endswith('/'):
             self.path += '/'
         self.scheme = 'https'
