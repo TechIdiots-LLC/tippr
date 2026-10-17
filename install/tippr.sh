@@ -782,7 +782,10 @@ else
 fi
 
 # Now upgrade pip/setuptools/wheel and packaging
-sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip setuptools wheel
+# setuptools stays below 81: paste.script (paster) imports pkg_resources, which
+# setuptools 81 deprecates and later versions remove. r2/pyproject.toml pins
+# the same for building r2.
+sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip 'setuptools<81' wheel
 sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade 'packaging>=23.1'
 
 # Install `baseplate` early so packages that inspect/import it at build time
@@ -937,7 +940,7 @@ fi
 function install_tippr_repo {
     pushd $TIPPR_SRC/$1
     # Ensure build-toolchain is pinned so metadata generation won't fail
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --upgrade --force-reinstall --no-deps pip setuptools wheel 'packaging>=23.1' || true
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --upgrade --force-reinstall --no-deps pip 'setuptools<81' wheel 'packaging>=23.1' || true
 
     sudo -u $TIPPR_USER $TIPPR_VENV/bin/python setup.py build
     # --no-build-isolation uses the venv's packages (like baseplate) instead of isolated env
