@@ -27,7 +27,7 @@ import json
 import os
 import token
 import tokenize
-from io import StringIO
+from io import BytesIO, StringIO
 
 import babel.messages.frontend
 import babel.messages.pofile
@@ -163,7 +163,8 @@ def extract_javascript_msgids(source):
     """Return message ids of translateable strings in JS source."""
 
     extracted = extract_javascript(
-        fileobj=StringIO(source),
+        # babel reads a binary file and decodes it itself
+        fileobj=BytesIO(source.encode("utf-8") if isinstance(source, str) else source),
         keywords={
             "_": None,
             "P_": (1, 2),
@@ -171,7 +172,7 @@ def extract_javascript_msgids(source):
             "NP_": (1, 2),
         },
         comment_tags={},
-        options={},
+        options={"encoding": "utf-8"},
     )
 
     return [msg_id for line, func, msg_id, comments in extracted]
