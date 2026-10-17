@@ -135,7 +135,6 @@ def password_email(user):
     token = PasswordResetToken._new(user)
     base = g.https_endpoint or g.origin
     passlink = base + '/resetpassword/' + token._id
-    g.log.info("Generated password reset link: " + passlink)
     _system_email(user.email,
                   PasswordReset(user=user,
                                 passlink=passlink).render(style='email'),
