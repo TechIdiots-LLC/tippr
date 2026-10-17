@@ -1,123 +1,171 @@
-# install-tippr.sh — development installer
+# Installing tippr
 
-This document summarizes what `install-tippr.sh` (the dev environment installer) does and which services it provisions when run. The script is intended for local development only — do not run it on production or personal machines you rely on for other tasks.
+`install-tippr.sh` sets up a complete tippr site on one Ubuntu 24.04
+server, VM or WSL2 instance: the app, every data store it needs, TLS, and
+systemd units. For how the pieces fit together, see
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
-Overview
-- The installer must be run as root (it exits if not run with elevated privileges).
-- It expects to live next to an `install/` directory containing helper install scripts. If those helpers are missing it will download them from the canonical repo.
-- It sources `install/install.cfg` for configuration values and respects environment variable overrides (for example `TIPPR_USER` and `TIPPR_DOMAIN`).
-- At the end it runs `install/tippr.sh`, which orchestrates the individual setup scripts.
+Give the installer a server of its own. It installs and configures
+system-wide services: PostgreSQL, Cassandra, ZooKeeper, RabbitMQ,
+memcached, OpenSearch, nginx and haproxy. Allow 4–6 cores and 8–12 GB of
+RAM.
 
-Typical invocation
+## Running it
 
-TIPPR_USER and TIPPR_DOMAIN are commonly provided when invoking the installer. In this project's docs we use `tippr.local` as the development domain. Example:
+As root, from a checkout of this repository:
 
-```
-TIPPR_USER=appuser TIPPR_DOMAIN=tippr.local ./install-tippr.sh
-```
-
-Configurable variables (from `install/install.cfg`)
-
-You can override these variables by exporting them on the command line when invoking the installer. The installer will use the value from the environment if provided, otherwise it falls back to the defaults shown here.
-
-- `TIPPR_USER` — user to install the code for (default: `$SUDO_USER`).
-- `TIPPR_GROUP` — group to run tippr code as (default: `nogroup`).
-- `TIPPR_HOME` — root directory for the install (default: `/home/$TIPPR_USER`).
-- `TIPPR_SRC` — source directory under the home (default: `$TIPPR_HOME/src`).
-- `TIPPR_VENV` — Python virtualenv path (default: `$TIPPR_HOME/venv`).
-- `TIPPR_DOMAIN` — domain used to access the install (default: `tippr.local`).
-- `TIPPR_PLUGINS` — space-separated plugins to install (default: `about gold`).
-- `APTITUDE_OPTIONS` — flags passed to `apt`/`apt-get` (default: `-y`).
-- `PYTHON_VERSION` — Python version to install/use (default: `3.12`).
-- `TIPPR_BASEPLATE_PIP_URL` — pip URL or requirement spec for `baseplate` installation (default: git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@develop#egg=baseplate).
-- `TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL` — pip URL for formenergy-observability fork (default: git+https://github.com/TechIdiots-LLC/tippr-formenergy-observability.git@main#egg=formenergy-observability).
-- `TIPPR_WEBSOCKETS_REPO` — owner/repo for the websockets service (default: `TechIdiots-LLC/tippr-service-websockets`).
-- `TIPPR_ACTIVITY_REPO` — owner/repo for the activity service (default: `TechIdiots-LLC/tippr-service-activity`).
-- `CASSANDRA_SOURCES_LIST` — path for a custom datastax APT sources list (default: `/etc/apt/sources.list.d/cassandra.sources.list`).
-- `DEBIAN_FRONTEND` — installer sets this to `noninteractive` by default to avoid interactive prompts.
-
-Example override (same as above):
-
-```
-TIPPR_USER=appuser TIPPR_DOMAIN=tippr.local ./install-tippr.sh
+```bash
+useradd -m -s /bin/bash tippr
+TIPPR_USER=tippr TIPPR_DOMAIN=example.com ./install-tippr.sh
 ```
 
+Re-running it is safe. It keeps the generated passwords and secrets, keeps
+existing data, and regenerates the config and systemd units.
 
-What the script does (high level)
-- Verifies it is running as root.
-- Ensures the `install/` helper scripts are available — downloads them if they are missing.
-- Loads configuration from `install/install.cfg` (you can edit this file or override settings via environment variables at runtime).
-- Prompts for confirmation before proceeding.
-- Executes `install/tippr.sh`, which in turn runs the platform-specific setup scripts (listed below).
+### Production or development
 
-Primary components and services created/installed
-Note: exact names and init/systemd units depend on the helper scripts and the target distribution. The installer intends to set up a working development stack including:
+`TIPPR_ENVIRONMENT` (default `auto`) picks the mode. `auto` uses
+development for `.local`, `.localhost` and `.test` domains and production
+for everything else.
 
-- System packages and dependencies (`install_apt.sh` or equivalent)
-- Cassandra (data store) — `install_cassandra.sh` / `setup_cassandra.sh`
-- Zookeeper (coordination) — `install_zookeeper.sh`
-- mcrouter / Memcached (caching layer) — `setup_mcrouter.sh`
-- PostgreSQL (relational DB) — `setup_postgres.sh`
-- RabbitMQ (message queue) — `setup_rabbitmq.sh`
-- Any system service wrappers or unit files for the above so they run on boot (handled by `install_services.sh`)
-- Tippr-specific setup (`tippr.sh`) which typically:
-  - creates the `TIPPR_USER` account (if configured),
-  - clones/places the tippr codebase under the chosen user/home,
-  - creates configuration files (pointing at the installed DBs/caches),
-  - optionally prepares CI/dev helpers (e.g. `travis.sh`) and finalization steps (`done.sh`).
+| | production | development |
+|---|---|---|
+| debug pages, template reloading | off | on |
+| captcha, rate limits | on | off |
+| admin mode needs TOTP | yes | no |
+| gunicorn `--reload` | no | yes |
 
-Important notes and warnings
-- This installer is destructive in places: it installs and configures system-level services, and may truncate or reinitialize databases. Only run it on throwaway VMs, containers, or dedicated dev hosts.
-- DNS: the script will not configure DNS or `/etc/hosts` on your host. If you want to use `tippr.local` you must map that name to the VM/container IP yourself (for example by adding an `/etc/hosts` entry on your host machine).
-- Configuration: edit `install/install.cfg` to change defaults, or export environment variables to override per-run.
-- If you run the installer without the `install/` helper scripts present it will fetch them from the network — ensure your network and firewall allow `wget` access.
+### Options
 
-Next steps after install
-- Verify the installed services are running (systemd or init scripts depending on platform).
-- Check the configuration files in the installed code and update `TIPPR_DOMAIN` if necessary.
-- Start the tippr dev server/process as the configured `TIPPR_USER` and visit `https://tippr.local` (or whatever domain you used) in your browser.
+Set these as environment variables when running the installer:
 
-If you want, I can also:
-- Add an example `/etc/hosts` entry for `tippr.local` to this doc, or
-- Create a small checklist of verification commands to run after installation.
+| Variable | Default | |
+|---|---|---|
+| `TIPPR_USER` | `$SUDO_USER` | user tippr runs as |
+| `TIPPR_DOMAIN` | `tippr.local` | the site's domain; must contain a dot |
+| `TIPPR_ENVIRONMENT` | `auto` | `production`, `development` or `auto` (above) |
+| `TIPPR_SITE_NAME`, `TIPPR_SITE_DESCRIPTION`, `TIPPR_CONTACT_EMAIL` | | site name, front page title and description, contact address |
+| `TIPPR_WEB_WORKERS` | CPU count, at most 8 | gunicorn workers |
+| `TIPPR_SEARCH` | `opensearch` | `none` skips OpenSearch ([SEARCH.md](SEARCH.md)) |
+| `TIPPR_OPENSEARCH_HEAP` | `1g` | OpenSearch's Java heap |
+| `TIPPR_TLS_CERT`, `TIPPR_TLS_KEY` | | certificate and key to use, e.g. a Cloudflare Origin Certificate |
+| `TIPPR_LETSENCRYPT_EMAIL` | | get a Let's Encrypt certificate (the domain must point here) |
+| `TIPPR_BEHIND_CLOUDFLARE` | `0` | `1`: take client IPs from `CF-Connecting-IP`, from Cloudflare's ranges only |
+| `TIPPR_FIREWALL`, `TIPPR_SSH_PORT` | `0`, `22` | `1`: ufw allowing only SSH, HTTP and HTTPS |
+| `TIPPR_DB_PASSWORD`, ... | generated | override a generated password |
+| `TIPPR_PLUGINS` | `about gold` | plugins to install |
+| `TIPPR_BUILD_MCROUTER` | `0` | `1`: build mcrouter from source (20+ minutes; not used by default) |
+| `TIPPR_BRANCH`, `TIPPR_COPY_LOCAL` | | install a branch, or copy a local checkout instead of cloning |
 
-File: `install-tippr.sh` (source) — refer to that script for exact filenames called; the installer downloads/uses helpers such as:
-`done.sh`, `install_apt.sh`, `install_cassandra.sh`, `install_services.sh`, `install_zookeeper.sh`, `tippr.sh`, `setup_cassandra.sh`, `setup_mcrouter.sh`, `setup_postgres.sh`, `setup_rabbitmq.sh`, `travis.sh`.
+Without a certificate option, the installer makes a self-signed
+certificate. That suits `.local` test sites.
 
-Example `/etc/hosts` entry
+### Passwords and secrets
 
-If you want `tippr.local` to resolve on your host machine, add an `/etc/hosts` entry mapping the chosen hostname to the VM/container IP or to localhost for a local install. Examples:
+The installer generates passwords for PostgreSQL, RabbitMQ, ZooKeeper and
+the admin account, plus the site's signing secrets. It keeps them in
+`/etc/tippr/secrets.env`, readable by root only, and writes them into
+`r2/development.secrets`. The admin account is `tippr` (or
+`TIPPR_ADMIN_USER`), and its password is in `secrets.env` as
+`TIPPR_ADMIN_PASSWORD`.
 
-Local development on the same machine (binds to localhost):
+## After installing
 
-```
-127.0.0.1 tippr.local
-```
+1. **DNS.** Point the domain at the server. For a test site, add a hosts
+   entry on your computer, e.g. `192.168.1.50 tippr.local`.
+2. **Log in** as the admin account. In production, set up two-factor
+   authentication under preferences → security; admin mode needs it.
+3. **Admin mode:** `/adminon`. Then:
+   - `/admin/email`: outgoing email ([EMAIL.md](EMAIL.md)). Without it,
+     verification and password-reset emails aren't sent.
+   - `/admin/ads`: Google AdSense, if you want ads ([below](#google-adsense)).
+   - `/admin/backups`: backups ([BACKUP.md](BACKUP.md)).
+4. **Starter vaults** and front page defaults are created by
+   `scripts/create_default_vaults.py`, which the installer runs
+   ([CONTENT.md](CONTENT.md)).
 
-When running inside a VM or container, replace `192.168.33.10` with the VM/container IP:
+## What gets installed
 
-```
-192.168.33.10 tippr.local
-```
+### systemd units
 
-### Google AdSense
+`tippr.target` is the whole stack. Every unit below is part of it, so
+`tippr-start`, `tippr-stop` and `tippr-restart` (or `systemctl ...
+tippr.target`) cover them all.
+
+- `tippr-paster.service`: the web app (gunicorn on 127.0.0.1:8001).
+- `tippr-websockets.service`, `tippr-activity.service`: live updates and
+  activity counts.
+- `gunicorn-click.service`, `gunicorn-geoip.service`: click tracking and
+  geoip.
+- `tippr-consumers.service` starts the `tippr-consumer-<queue>@<n>.service`
+  queue processors. The number per queue comes from the files in
+  `$TIPPR_HOME/consumer-count.d`; apply a change with
+  `systemctl reload tippr-consumers`.
+- `tippr-job-*.timer`: scheduled maintenance jobs. List them with
+  `systemctl list-timers 'tippr-job-*'`. `tippr-job-update_gold_users.timer`
+  is installed but not enabled.
+
+Not part of `tippr.target`:
+
+- `tippr-backup.path` and `tippr-backup.service` run requests from
+  /admin/backups ([BACKUP.md](BACKUP.md)).
+
+Packaged services: `postgresql`, `cassandra`, `zookeeper`,
+`rabbitmq-server`, `memcached`, `opensearch`, `nginx`, `haproxy` (and
+`redis-server`, which r2 doesn't currently use).
+
+### Web front end
+
+- **nginx** terminates TLS on port 443 (`/etc/nginx/sites-available/tippr-ssl`)
+  and passes requests to haproxy. It also serves media
+  (`/srv/www/media`) and the tracking pixel.
+- **haproxy** (`/etc/haproxy/haproxy.cfg`; the original is backed up)
+  routes to the app, websockets, media and pixel backends. On port 80 it
+  redirects to HTTPS.
+
+### Commands in /usr/local/bin
+
+| Command | |
+|---|---|
+| `tippr-start`, `tippr-stop`, `tippr-restart [unit]` | the whole stack, or one unit |
+| `tippr-run script.py` / `tippr-run -c '...'` | run Python with the app loaded |
+| `tippr-shell` | an interactive shell with the app loaded |
+| `tippr-flush` | empty memcached |
+| `tippr-backup` | export, import and restore ([BACKUP.md](BACKUP.md)) |
+| `tippr-serve` | run the app in the foreground with reloading (development) |
+
+### Files
+
+| Path | |
+|---|---|
+| `$TIPPR_HOME/src/tippr` | the code |
+| `$TIPPR_HOME/venv` | the Python virtualenv |
+| `r2/development.update` | the site's settings; run `make ini` in `r2/` after editing |
+| `r2/development.secrets` | generated by the installer; don't edit |
+| `r2/run.ini` | the config the app runs with (generated) |
+| `/etc/tippr/secrets.env` | generated passwords and secrets (root only) |
+| `/etc/tippr/tls` | TLS certificate and key |
+| `/etc/default/tippr` | environment for the systemd units |
+| `/srv/www/media` | uploaded media |
+| `/var/lib/tippr/backups` | backups |
+
+## Google AdSense
 
 tippr can show Google AdSense ads from your own AdSense account. No IDs
 are built in, and ads are off until you set them up.
 
-1.  In AdSense, add your site and note your publisher ID (`pub-…`).
-2.  For tippr's own slots, create two ad units: a display unit for the
-    sidebar and an in-feed (or display) unit for post listings. Phones see
-    only the listing unit, because the sidebar is hidden on narrow screens.
-    Alternatively, use Google's Auto ads and skip the units.
-3.  As an admin (admin mode on), open **/admin/ads**. Enable ads, enter the
-    publisher ID, choose the placement, enter the ad unit IDs (and the
-    in-feed unit's layout key), and save. Changes apply immediately. Use
-    **test mode** while setting up.
-4.  `/ads.txt` is served automatically once a publisher ID is saved.
-5.  In the EU, UK and Switzerland, Google requires a consent message. Create
-    one in AdSense under **Privacy & messaging**. Also mention advertising
-    cookies in your privacy policy.
+1. In AdSense, add your site and note your publisher ID (`pub-…`).
+2. For tippr's own slots, create two ad units: a display unit for the
+   sidebar and an in-feed (or display) unit for post listings. Phones see
+   only the listing unit, because the sidebar is hidden on narrow screens.
+   Alternatively, use Google's Auto ads and skip the units.
+3. On **/admin/ads**, enable ads, enter the publisher ID, choose the
+   placement, enter the ad unit IDs (and the in-feed unit's layout key),
+   and save. Changes apply immediately. Use **test mode** while setting up.
+4. `/ads.txt` is served automatically once a publisher ID is saved.
+5. In the EU, UK and Switzerland, Google requires a consent message. Create
+   one in AdSense under **Privacy & messaging**. Also mention advertising
+   cookies in your privacy policy.
 
 Ads are never shown:
 
@@ -132,41 +180,12 @@ The same settings can go in the ini (`use_adsense`, `adsense_id`,
 `adsense_test_mode`; see `example.ini`). Settings saved on /admin/ads
 override the ini. `disable_ads = true` turns all ads off regardless.
 
-After adding the host mapping, you should be able to visit `https://tippr.local` in your browser (or the HTTP/HTTPS endpoint the installer configures).
+## Troubleshooting
 
-Systemd / init scripts and service names created by the installer
-
-The installer creates systemd units and helper scripts so the tippr stack can be managed with `systemctl`. Units are written to `/etc/systemd/system/`:
-
-- `tippr.target` — the whole stack. Every unit below is `PartOf=tippr.target`, so `systemctl start|stop|restart tippr.target` (or `tippr-start`, `tippr-stop`, `tippr-restart`) covers all of them.
-  - `tippr-paster.service` — the main web app (paster serve).
-  - `tippr-websockets.service` — websockets service (baseplate-serve).
-  - `tippr-activity.service` — activity service (baseplate-serve).
-  - `gunicorn-click.service` — gunicorn process for the click/tracker app (binds to a unix socket).
-  - `gunicorn-geoip.service` — gunicorn geoip server (binds to 127.0.0.1:5000).
-  - `tippr-consumers.service` — starts `tippr-consumer-<queue>@<n>.service` queue processors. The number per queue comes from the files in `$TIPPR_HOME/consumer-count.d`; apply a change with `systemctl reload tippr-consumers`.
-  - `tippr-job-*.timer` — schedule the `tippr-job-*.service` maintenance jobs (rising, broken things, hardcache cleanup, time listings, ...). See `systemctl list-timers 'tippr-job-*'`. `tippr-job-email.timer` and `tippr-job-update_gold_users.timer` are installed but not enabled.
-
-- Other init / service-related files created or enabled:
-  - `/etc/gunicorn.d/click.conf` and `/etc/gunicorn.d/geoip.conf` — per-app gunicorn configs.
-  - `/etc/nginx/sites-available/tippr-media`, `/etc/nginx/sites-available/tippr-pixel`, `/etc/nginx/sites-available/tippr-ssl` and corresponding symlinks in `/etc/nginx/sites-enabled/`.
-  - `/etc/haproxy/haproxy.cfg` is modified (backed up) and `haproxy` is restarted.
-
-- System services installed/enabled by `install_services.sh` (package-provided units):
-  - `memcached` (unit name may be `memcached.service`)
-  - `postgresql` (e.g. `postgresql.service`)
-  - `rabbitmq-server` (e.g. `rabbitmq-server.service`)
-  - `redis-server` (e.g. `redis-server.service`)
-  - On older Ubuntu targets `mcrouter` may be installed instead of mcrouter availability varies by distro/ppa.
-
-- Helper CLI wrappers installed to `/usr/local/bin/`:
-  - `tippr-run`, `tippr-shell`, `tippr-start`, `tippr-stop`, `tippr-restart`, `tippr-flush`, `tippr-serve` — thin helpers that call into the venv and service scripts.
-
-Notes
-- Unit names can vary slightly between distributions (for example `postgresql` vs `postgresql@12-main`), and `install_services.sh` uses package names when enabling services where appropriate. Check the exact unit name with `systemctl list-units | grep tippr` or `systemctl status <unit>` on your host.
-- To follow the main web app logs live, run:
-
-```
-journalctl -u tippr-serve -f -o cat
-```
-
+- **Logs:** `journalctl -u tippr-paster -f` for the web app;
+  `journalctl -u 'tippr-consumer-*' -f` for the consumers.
+- **Status:** `systemctl list-units 'tippr*'` and `systemctl --failed`.
+- **Locale errors** creating the PostgreSQL database:
+  `localedef -i en_US -f UTF-8 en_US.UTF-8`.
+- **Cookies don't stick:** the domain needs a dot. Browsers don't keep
+  cookies for `localhost` or a bare `tippr`.

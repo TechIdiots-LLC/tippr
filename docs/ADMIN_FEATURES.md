@@ -14,6 +14,10 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/awards/:awardcn/:action` — award actions (`give` or `winners`).
 - `/admin/coins` — give coins to a user (handler: `AdminToolController.GET_coins`).
 - `/admin/gold` — give/take gold days for a user (handler: `AdminToolController.GET_gold`).
+- `/admin/email` — outgoing email settings: SMTP or Gmail, and a test message ([EMAIL.md](EMAIL.md)).
+- `/admin/ads` — Google AdSense settings ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)).
+- `/admin/backups` — export, import and restore the site, and transfer keys for moving servers ([BACKUP.md](BACKUP.md)).
+- `/admin/privacy` — users' data export and deletion requests ([PRIVACY_FEATURES.md](PRIVACY_FEATURES.md)).
 - `/traffic` and related routes — promoted link and traffic analytics (sitewide, language, advert traffic pages). Requires `VEmployee()`.
 - `/about/log` — moderation/audit log pages.
 - `/health` — JSON versions and service info.
@@ -67,4 +71,4 @@ Files under `r2/r2/templates/` used by admin pages include:
 - Add a debug helper page that lists rendercache stub keys and recent misses for local development.
 
 ---
-Generated on: January 1, 2026
+Updated: October 17, 2026

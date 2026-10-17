@@ -2634,6 +2634,11 @@ s3_media_buckets = your-tippr-media-bucket
 
 ## Backup & Disaster Recovery
 
+For a site set up by the installer, use `tippr-backup` or /admin/backups:
+they export and restore every data store, and copy backups between
+servers. See [BACKUP.md](BACKUP.md). The rest of this section covers
+managed cloud services.
+
 ### Backup Strategy
 
 | Component | Backup Method | Frequency | Retention |
