@@ -53,6 +53,10 @@ cd /opt/tippr
 TIPPR_USER=tippr TIPPR_DOMAIN=example.com ./install-tippr.sh
 ```
 
+Or run it with Docker Compose: download `tippr-VERSION-compose.tar.gz`
+from a [release](https://github.com/TechIdiots-LLC/tippr/releases) and see
+[docker/README.md](docker/README.md).
+
 A domain ending in `.local`, `.localhost` or `.test` gets a development
 install; any other domain gets production settings. For a test site, map
 the name to the server in your hosts file (`192.168.1.50 tippr.local`)
@@ -79,6 +83,8 @@ sudo tippr-backup export --offline           # back up the site
 | [docs/INSTALL_tippr.md](docs/INSTALL_tippr.md) | installing, options, what gets installed, AdSense |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the pieces fit together and where data lives |
 | [docs/BACKUP.md](docs/BACKUP.md) | backups, moving to new servers, restoring |
+| [docker/README.md](docker/README.md) | running tippr with Docker Compose |
+| [docs/RELEASING.md](docs/RELEASING.md) | how releases (Docker image, bundles) are built |
 | [docs/ADMIN_FEATURES.md](docs/ADMIN_FEATURES.md) | admin mode and admin pages |
 | [docs/EMAIL.md](docs/EMAIL.md) | outgoing email (SMTP or Gmail) |
 | [docs/SEARCH.md](docs/SEARCH.md) | OpenSearch |

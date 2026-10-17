@@ -18,6 +18,11 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
   and restore PostgreSQL, Cassandra, ZooKeeper, media and the signing
   secrets. Another server can import a backup over HTTPS with a transfer
   key ([BACKUP.md](BACKUP.md)).
+- **Docker image and releases.** `docker/` builds one image for every app
+  role (web, consumers, jobs, websockets, activity, geoip) with a compose
+  file for the whole stack. Version tags publish the image to Docker Hub
+  and a GitHub release with a compose bundle and an installer tarball, all
+  smoke-tested first ([RELEASING.md](RELEASING.md)).
 - **Admin pages** for the site's name, description, contact address and
   logo (`/admin/site`), email (`/admin/email`), Google AdSense
   (`/admin/ads`) and recent errors (`/admin/errors`).
@@ -52,10 +57,10 @@ installed with `install-tippr.sh`.
 
 ## Then
 
-1. **Docker image.** Build and publish an image from CI, and add a
-   `docker-compose.yml` with health checks and one-shot setup jobs (modelled
-   on artcraft-services' `build/selfhost`). Domain and site name are set
-   through environment variables.
+1. **Proxmox LXC templates.** An all-in-one template (the single VM, with
+   first-boot domain and secrets), then per-role templates (app, edge) for
+   splitting a site across containers. App nodes need scheduled jobs to
+   take a ZooKeeper lock first, so only one node runs each job.
 2. **Admin security.** Require TOTP for admin mode, add WebAuthn passkeys,
    and use recovery codes instead of email as the fallback.
 3. **Admin config page.** Edit the live config stored in ZooKeeper from
