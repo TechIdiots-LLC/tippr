@@ -1,0 +1,99 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+##
+## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
+## TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="text_row(name, label, help, size=40)">
+  <tr>
+    <td>${label}</td>
+    <td>
+      <input type="text" name="${name}" value="${thing.saved.get(name, '')}"
+             size="${size}" placeholder="${thing.ini[name]}">
+      ${error_field("TOO_LONG", name, "span")}
+      ${error_field("BAD_EMAIL", name, "span")}
+      <br><small>${help}</small>
+    </td>
+  </tr>
+</%def>
+
+<div class="admin-site">
+<h1>${_("site settings")}</h1>
+
+<p>
+  ${_("The site's name, description, contact address and logo. Saved values apply right away on every web process; leave a field blank to use the ini file's value (shown greyed out). They are kept with the site's other saved settings, so they move with backups.")}
+</p>
+
+<form id="site-settings" action="/api/site_settings" method="post"
+      class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'site_settings');">
+  <table class="lined-table borderless">
+    ${text_row("site_name", _("site name"), _("In page titles and emails."), 30)}
+    ${text_row("short_description", _("description"), _("The front page title's tagline, and the description search engines show."), 60)}
+    ${text_row("contact_email", _("contact address"), _("Shown on the contact page."), 40)}
+  </table>
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+</form>
+
+<h2>${_("logo")}</h2>
+<p>
+  %if thing.current["site_logo"]:
+    <img class="site-logo-preview" src="${thing.logo_url}" alt="${_('current logo')}">
+  %else:
+    ${_("The site uses the default tippr logo.")}
+  %endif
+</p>
+<form action="/admin/site/logo" method="post" enctype="multipart/form-data"
+      class="pretty-form medium-text">
+  <input type="hidden" name="uh" value="${c.modhash}">
+  <input type="file" name="file" accept="image/png,image/jpeg,image/gif,image/webp">
+  <button class="btn" type="submit">${_("upload")}</button>
+  <br><small>${_("PNG, JPEG, GIF or WebP, up to 500 KB. Shown at most 48 pixels high in the header; a transparent background works best. Vaults with their own header image show that instead.")}</small>
+  %if thing.logo_error:
+    <br><span class="error">${thing.logo_error}</span>
+  %endif
+</form>
+%if thing.saved.get("site_logo"):
+  <form action="/admin/site/logo" method="post" class="pretty-form">
+    <input type="hidden" name="uh" value="${c.modhash}">
+    <input type="hidden" name="remove" value="1">
+    <button class="btn" type="submit">${_("use the default logo")}</button>
+  </form>
+%endif
+
+<h2>${_("domain")}</h2>
+<table class="lined-table borderless">
+  <tr><td>${_("domain")}</td><td><code>${g.domain}</code></td></tr>
+  <tr><td>${_("address")}</td><td><code>${g.https_endpoint}</code></td></tr>
+  <tr><td>${_("media")}</td><td><code>${g.media_domain}</code></td></tr>
+</table>
+<p>
+  ${_("The domain is also part of the web server and proxy configuration, the TLS certificate and login cookies, so it can't be changed here. To move the site to a new domain (for example after restoring a backup on a new server), point the new domain at the server and re-run the installer with it:")}
+</p>
+<pre class="backup-log">sudo TIPPR_DOMAIN=new.example.com ./install-tippr.sh</pre>
+<p>
+  <small>${_("It keeps the data, passwords and secrets, and updates the config, nginx, haproxy and the certificate. Everyone has to log in again on the new domain.")}</small>
+</p>
+</div>

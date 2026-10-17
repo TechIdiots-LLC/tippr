@@ -46,6 +46,7 @@ class _SettingsGroup:
     def __init__(self, client, name):
         self.path = "%s/%s" % (SETTINGS_ROOT, name)
         self.data = {}
+        self.listeners = []
 
         @client.DataWatch(self.path)
         def watcher(data, stat):
@@ -54,6 +55,15 @@ class _SettingsGroup:
             except ValueError:
                 log.exception("site_settings: bad JSON in %s", self.path)
                 self.data = {}
+            self.notify()
+
+    def notify(self):
+        for listener in self.listeners:
+            try:
+                listener(dict(self.data))
+            except Exception:
+                log.exception("site_settings: listener for %s failed",
+                              self.path)
 
 
 def _group(name):
@@ -61,6 +71,14 @@ def _group(name):
     if group is None:
         group = _groups[name] = _SettingsGroup(g.zookeeper, name)
     return group
+
+
+def on_change(name, listener):
+    """Call listener(data) now and whenever the group changes (in this or
+    any other process)."""
+    group = _group(name)
+    group.listeners.append(listener)
+    listener(dict(group.data))
 
 
 def get_settings(name):
@@ -79,3 +97,4 @@ def save_settings(name, data):
     client.set(group.path, json.dumps(data, sort_keys=True).encode("utf-8"))
     # the watcher will also update this, but make it visible immediately
     group.data = dict(data)
+    group.notify()

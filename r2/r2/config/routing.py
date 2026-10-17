@@ -144,6 +144,8 @@ def make_map(config):
        requirements=dict(action="give|winners"))
 
     mc('/admin/coins', controller='admintool', action='coins')
+    mc('/admin/site', controller='admintool', action='site')
+    mc('/admin/site/logo', controller='admintool', action='site_logo')
     mc('/admin/email', controller='admintool', action='email')
     mc('/admin/ads', controller='admintool', action='ads')
     mc('/admin/backups', controller='admintool', action='backups')

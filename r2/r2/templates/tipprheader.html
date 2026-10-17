@@ -59,6 +59,12 @@
         ${img_link(c.site.name, header_url(header_img),
             '/', _id="header-img-a", img_id='header-img',
             title=header_title, size=header_size)}
+    % elif getattr(g, "site_logo", None):
+        ## the site's own logo, from /admin/site
+        <%
+          from r2.lib import site_info
+        %>
+        <a href="/" id="header-img-a" class="site-logo"><img id="header-img" src="${site_info.logo_url()}" alt="${g.site_name}" title="${header_title}"></a>
     % else:
         <a href="/" id="header-img" class="default-header" title="${header_title}">${g.domain}</a>
     % endif

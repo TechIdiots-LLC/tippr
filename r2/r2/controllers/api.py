@@ -4675,6 +4675,35 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        site_name=VLength("site_name", max_length=40, empty_error=None),
+        short_description=VLength("short_description", max_length=200,
+                                  empty_error=None),
+        contact_email=VLength("contact_email", max_length=200,
+                              empty_error=None),
+    )
+    def POST_site_settings(self, form, jquery, site_name, short_description,
+                           contact_email):
+        """Save the site's name, description and contact address
+        (/admin/site); blank values go back to the ini."""
+        from r2.lib import site_info
+        if form.has_errors(("site_name", "short_description",
+                            "contact_email"), errors.TOO_LONG):
+            return
+        contact_email = (contact_email or "").strip()
+        if contact_email and not ValidEmails.email_re.match(contact_email):
+            c.errors.add(errors.BAD_EMAIL, field="contact_email")
+            form.has_errors("contact_email", errors.BAD_EMAIL)
+            return
+        site_info.save({
+            "site_name": site_name,
+            "short_description": short_description,
+            "contact_email": contact_email,
+        })
+        form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
     )
     def POST_clear_errors(self, form, jquery):
         """Empty the list on /admin/errors."""

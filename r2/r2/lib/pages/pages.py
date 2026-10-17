@@ -3754,6 +3754,19 @@ class AdminErrors(Templated):
         Templated.__init__(self)
 
 
+class AdminSiteSettings(Templated):
+    """The admin interface for the site's name, description, contact
+    address and logo (r2.lib.site_info)."""
+    def __init__(self, logo_error=None):
+        from r2.lib import site_info
+        self.saved = site_info.saved()
+        self.current = site_info.current()
+        self.ini = site_info.ini_values()
+        self.logo_url = site_info.logo_url()
+        self.logo_error = logo_error
+        Templated.__init__(self)
+
+
 class AdminGold(Templated):
     """The admin interface for giving or taking days of gold for a user."""
     def __init__(self, recipient):

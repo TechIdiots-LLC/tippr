@@ -39,7 +39,7 @@ try:
     # production
     from r2.config import extensions
     from r2.controllers.tippr_base import TipprController, UnloggedUser
-    from r2.lib import log, pages
+    from r2.lib import log, pages, site_info
     from r2.lib.base import abort
     from r2.lib.cookies import Cookies
     from r2.lib.errors import ErrorSet
@@ -176,7 +176,7 @@ class ErrorController(TipprController):
 
         template = g.mako_lookup.get_template(template_name)
         return template.render(
-            logo_url=static(g.default_header_url),
+            logo_url=site_info.logo_url() or static(g.default_header_url),
             retry_after=retry_after,
         )
 

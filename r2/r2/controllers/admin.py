@@ -23,6 +23,8 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
+from pylons.i18n import _
+
 from r2.lib.pages import (
     AdminAdSettings,
     AdminBackups,
@@ -31,8 +33,15 @@ from r2.lib.pages import (
     AdminErrors,
     AdminGold,
     AdminPage,
+    AdminSiteSettings,
 )
-from r2.lib.validator import VAdmin, nop, validate
+from r2.lib.validator import (
+    VAdmin,
+    VModhash,
+    VUploadLength,
+    nop,
+    validate,
+)
 
 from .tippr_base import TipprController
 
@@ -55,6 +64,31 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_email(self):
         return AdminPage(content=AdminEmailSettings()).render()
+
+    @validate(VAdmin())
+    def GET_site(self):
+        return AdminPage(content=AdminSiteSettings()).render()
+
+    @validate(
+        VAdmin(),
+        VModhash(),
+        file=VUploadLength("file", max_length=500 * 1024, empty_error=None),
+        remove=nop("remove"),
+    )
+    def POST_site_logo(self, file, remove):
+        """Upload the header logo, or go back to the default one."""
+        from r2.lib import site_info
+        if remove:
+            site_info.save({"site_logo": ""})
+            return self.redirect("/admin/site")
+        if not file:
+            error = _("Choose an image of at most 500 KB.")
+        else:
+            url, error = site_info.store_logo(file)
+            if url:
+                site_info.save({"site_logo": url})
+                return self.redirect("/admin/site")
+        return AdminPage(content=AdminSiteSettings(logo_error=error)).render()
 
     @validate(VAdmin())
     def GET_ads(self):
