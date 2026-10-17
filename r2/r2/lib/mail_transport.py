@@ -55,6 +55,7 @@ TRANSPORTS = ("none", "smtp", "gmail")
 SMTP_SECURITY = ("none", "starttls", "ssl")
 SETTINGS = (
     "mail_transport",
+    "mail_from",
     "smtp_server",
     "smtp_security",
     "smtp_username",
@@ -87,6 +88,15 @@ def email_settings():
     if settings["mail_transport"] not in TRANSPORTS:
         settings["mail_transport"] = "none"
     return settings
+
+
+def from_address():
+    """The address tippr's own mail is sent from (mail_from).
+
+    Defaults to noreply@<domain>. With the gmail transport it should be the
+    Google account or one of its "send mail as" addresses.
+    """
+    return email_settings()["mail_from"] or "noreply@%s" % g.domain
 
 
 def open_transport(settings=None):

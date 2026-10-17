@@ -52,6 +52,14 @@
       </td>
     </tr>
 
+    <tr>
+      <td>${_("send from address")}</td>
+      <td>
+        <input type="text" name="mail_from" value="${thing.settings['mail_from']}" placeholder="noreply@${g.domain}">
+        <br><small>${_("With Gmail, use the Google account or one of its \"send mail as\" addresses.")}</small>
+      </td>
+    </tr>
+
     <tr><th colspan="2">${_("SMTP")}</th></tr>
     <tr>
       <td>${_("server (host or host:port)")}</td>

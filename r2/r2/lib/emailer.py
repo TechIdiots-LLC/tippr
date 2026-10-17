@@ -50,7 +50,7 @@ from r2.models.token import EmailVerificationToken, PasswordResetToken
 trylater_hooks = hooks.HookRegistrar()
 
 def _system_email(email, plaintext_body, kind, reply_to="",
-        thing=None, from_address=g.feedback_email,
+        thing=None, from_address=None,
         html_body="", list_unsubscribe_header="", user=None,
         suppress_username=False):
     """
@@ -62,6 +62,7 @@ def _system_email(email, plaintext_body, kind, reply_to="",
     elif user is None and c.user_is_loggedin:
         user = c.user
 
+    from_address = from_address or mail_transport.from_address()
     Email.handler.add_to_queue(user,
         email, g.domain, from_address, kind,
         body=plaintext_body, reply_to=reply_to, thing=thing,
@@ -183,8 +184,7 @@ def message_notification_email(data):
         }
         _system_email(user.email,
                       MessageNotificationEmail(**templateData).render(style='email'),
-                      Email.Kind.MESSAGE_NOTIFICATION,
-                      from_address=g.notification_email)
+                      Email.Kind.MESSAGE_NOTIFICATION)
 
         g.stats.simple_event('email.message_notification.queued')
         g.cache.incr(MESSAGE_THROTTLE_KEY)
@@ -245,7 +245,8 @@ def share(link, emails, from_name = "", reply_to = "", body = ""):
     now = datetime.datetime.now(g.tz)
     ival = now - timeago(g.new_link_share_delay)
     date = max(now,link._date + ival)
-    Email.handler.add_to_queue(c.user, emails, from_name, g.share_reply,
+    Email.handler.add_to_queue(c.user, emails, from_name,
+                               mail_transport.from_address(),
                                Email.Kind.SHARE, date = date,
                                body = body, reply_to = reply_to,
                                thing = link)

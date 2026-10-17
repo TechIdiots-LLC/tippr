@@ -4491,6 +4491,7 @@ class ApiController(TipprController):
         VAdmin(),
         VModhash(),
         mail_transport=VOneOf("mail_transport", ("none", "smtp", "gmail")),
+        mail_from=VLength("mail_from", max_length=255, empty_error=None),
         smtp_server=VLength("smtp_server", max_length=255, empty_error=None),
         smtp_security=VOneOf("smtp_security", ("none", "starttls", "ssl")),
         smtp_username=VLength("smtp_username", max_length=255,
@@ -4504,7 +4505,8 @@ class ApiController(TipprController):
         gmail_refresh_token=VLength("gmail_refresh_token", max_length=1024,
                                     empty_error=None),
     )
-    def POST_email_settings(self, form, jquery, mail_transport, smtp_server,
+    def POST_email_settings(self, form, jquery, mail_transport, mail_from,
+                            smtp_server,
                             smtp_security, smtp_username, smtp_password,
                             gmail_client_id, gmail_client_secret,
                             gmail_refresh_token):
@@ -4515,6 +4517,7 @@ class ApiController(TipprController):
         settings = site_settings.get_settings("email")
         settings.update({
             "mail_transport": mail_transport,
+            "mail_from": (mail_from or "").strip(),
             "smtp_server": (smtp_server or "").strip(),
             "smtp_security": smtp_security or "none",
             "smtp_username": (smtp_username or "").strip(),
@@ -4542,7 +4545,7 @@ class ApiController(TipprController):
             return
         try:
             emailer.send_html_email(
-                to, g.notification_email, _("tippr test email"),
+                to, mail_transport.from_address(), _("tippr test email"),
                 _("This is a test message from %(domain)s. Email is working.")
                 % {"domain": g.domain}, subtype="plain")
         except (mail_transport.MailTransportError,
