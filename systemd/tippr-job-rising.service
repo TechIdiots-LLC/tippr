@@ -9,7 +9,8 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=@TIPPR_VENV@/bin/paster --plugin=r2 run ${TIPPR_INI} -c 'from r2.lib import rising; rising.set_rising()'
+# run-locked: on one server at a time when several share the site
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked rising @TIPPR_VENV@/bin/paster --plugin=r2 run ${TIPPR_INI} -c 'from r2.lib import rising; rising.set_rising()'
 
 Nice=10
 

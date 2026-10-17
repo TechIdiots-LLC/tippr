@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Run a scheduled job only if no other server is running it.
+
+usage: run-locked NAME COMMAND [ARGS...]
+
+The tippr-job-*.service units run their command through this, so that with
+several app servers (each with the same timers) every job still runs on
+one server at a time. It takes the ZooKeeper lock /tippr/locks/jobs/NAME
+(ZooKeeper settings from $TIPPR_INI); if another server holds it, this run
+is skipped. The lock is an ephemeral node, released when this process
+exits, even if it crashes.
+"""
+import configparser
+import os
+import socket
+import subprocess
+import sys
+
+from kazoo.client import KazooClient
+from kazoo.security import make_digest_acl
+
+
+def zookeeper_settings():
+    parser = configparser.ConfigParser(strict=False, interpolation=None)
+    parser.optionxform = str
+    parser.read(os.environ.get("TIPPR_INI", "run.ini"))
+    get = lambda key, default="": parser.defaults().get(key, default).strip()
+    return (get("zookeeper_connection_string", "localhost:2181"),
+            get("zookeeper_username"),
+            get("zookeeper_password").replace("%%", "%"))
+
+
+def main():
+    if len(sys.argv) < 3:
+        sys.exit(__doc__)
+    name, command = sys.argv[1], sys.argv[2:]
+    hosts, username, password = zookeeper_settings()
+    auth = [("digest", "%s:%s" % (username, password))] if username else None
+    zk = KazooClient(hosts=hosts, timeout=10, auth_data=auth)
+    zk.start(timeout=30)
+    try:
+        acl = [make_digest_acl(username, password, all=True)] if username else None
+        lock = zk.Lock("/tippr/locks/jobs/" + name,
+                       identifier=socket.gethostname())
+        if acl:
+            zk.ensure_path("/tippr/locks/jobs", acl=acl)
+        if not lock.acquire(blocking=False):
+            holders = lock.contenders()
+            print("%s is running on %s; skipping this run"
+                  % (name, ", ".join(holders) or "another server"))
+            return 0
+        try:
+            return subprocess.call(command)
+        finally:
+            lock.release()
+    finally:
+        zk.stop()
+        zk.close()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
