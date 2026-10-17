@@ -27,66 +27,59 @@
 from r2.lib.template_helpers import static
 %>
 
-  <h1>how can we help you?</h1>
-  <p class="info">
-    tippr is a community, and as such there are a lot of outlets to get help for what ails you.
-  </p>
+<%
+  contact_email = g.contact_email
+  dmca_email = g.dmca_email or contact_email
+  gold_email = g.goldsupport_email
+%>
 
+  <h1>${_("how can we help you?")}</h1>
   <ol class="contact-options">
-    <li id="get-help-moderating">
-      <h2 class="button">get help moderating</h2>
+    <li id="message-the-admins">
+      <h2 class="button">${_("message the admins")}</h2>
       <ul class="details">
-        <li>Are you a new moderator?  Need advice?  You'll find a community ready to assist you at&#32;<a href="/v/modhelp">/v/modhelp</a>.</li>
+        <li>${_("Questions, account problems or something we should know about?")}&#32;<a href="/message/compose?to=${g.admin_message_acct}">${_("Send the admins a message")}</a>.</li>
       </ul>
     </li>
     <li id="report-a-bug">
-      <h2 class="button">report a bug</h2>
+      <h2 class="button">${_("report a bug or suggest a feature")}</h2>
       <ul class="details">
-        <li>Check out&#32;<a href="/v/bugs">/v/bugs</a>&#32;for other people with the same problem, or submit your own bug report.</li>
-        <li>If you have an idea for a new feature, tell us about it in&#32;<a href="/v/ideasfortheadmins">/v/ideasfortheadmins</a>.</li>
+        <li>${_("tippr is open source. Search the existing issues, or open a new one,")}&#32;<a href="${g.bug_report_url}">${_("on our issue tracker")}</a>.</li>
       </ul>
     </li>
-    <li id="tippr-trademark">
-      <h2 class="button">use the tippr trademark</h2>
+    <li id="report-content">
+      <h2 class="button">${_("report content or copyright infringement")}</h2>
       <ul class="details">
-        <li>You'll need a license to use the tippr trademark.  Read our&#32;<a href="https://www.tippr.net/wiki/licensing">licensing page</a>&#32;to find out how to get permission.</li>
+        <li>${_("Use the report button on a post or comment to flag it to the moderators and admins. See the")}&#32;<a href="/help/contentpolicy">${_("content policy")}</a>&#32;${_("for what is allowed.")}</li>
+        %if dmca_email:
+          <li>${_("To file a copyright (DMCA) takedown request, see the")}&#32;<a href="/help/useragreement">${_("user agreement")}</a>&#32;${_("and email")}&#32;<a href="mailto:${dmca_email}">${dmca_email}</a>&#32;${_("with a link to the content on tippr.")}</li>
+        %endif
       </ul>
     </li>
-    <li id="press-enquiry">
-      <h2 class="button">make a press enquiry</h2>
+    <li id="privacy">
+      <h2 class="button">${_("privacy and your data")}</h2>
       <ul class="details">
-        <li>You can email us at&#32;<a href="mailto:press@tippr.net">press@tippr.net</a>&#32;or call us at&#32;<a href="tel:+1-424-234-9948">+1 424-234-9948</a>.</li>
+        <li>${_("Read the")}&#32;<a href="/help/privacypolicy">${_("privacy policy")}</a>&#32;${_("to learn what we collect and how to access, export or delete your data.")}</li>
       </ul>
     </li>
-    <li id="advertise">
-      <h2 class="button">advertise on tippr</h2>
-      <ul class="details">
-        <li>Subscribe to&#32;<a href="/v/selfserve">/v/selfserve</a>&#32;to talk with other advertisers about advertising on tippr.</li>
-        <li>Check out&#32;<a href="/v/ads">/v/ads</a>&#32;to see the most popular image ads on tippr.</li>
-        <li>Reach the tippr advertising team at&#32;<a href="mailto:advertising@tippr.net">advertising@tippr.net</a>.</li>
-        <li>Learn more about advertising products and best practices at&#32;<a href="/advertising">tippr.net/advertising</a>.</li>
-      </ul>
-    </li>
-    <li id="ask-a-question">
-      <h2 class="button">ask a general question</h2>
-      <ul class="details">
-        <li>Maybe you want to&#32;<a href="/v/askreddit">/v/askreddit</a>?  Or for help try making a post at&#32;<a href="/v/help">/v/help</a>.</li>
-        <li>Need help with a&#32;<a href="https://redditgifts.com/exchanges">redditgifts exchange</a>? Email&#32;<a href="mailto:support@redditgifts.com">support@redditgifts.com</a>.</li>
-        <li>Got a question about&#32;<a href="/gold/about">tippr gold</a>? Please email&#32;<a href="mailto:${g.goldsupport_email}">${g.goldsupport_email}</a>.</li>
-        <li>Anything we didn't cover? Email us at&#32;<a href="mailto:contact@tippr.net">contact@tippr.net</a>&#32;and include your tippr username if you have one.</li>
-      </ul>
-    </li>
-    <li id="message-the-admins">
-      <h2 class="button">message the admins</h2>
-      <ul class="details">
-        <li>Need to contact the admins? You can message them&#32;<a href="/message/compose?to=%2Fr%2Freddit.com">here</a>.</li>
-        <li>Need to file a&#32;<a href="/help/useragreement#section_dmca">DMCA</a>&#32;takedown request? Please email&#32;<a href="mailto:dmca@tippr.net">dmca@tippr.net</a>&#32;with a link to the content on tippr and all pertinent information.</li>
-      </ul>
-    </li>
+    %if gold_email:
+      <li id="gold-support">
+        <h2 class="button">${_("tippr gold")}</h2>
+        <ul class="details">
+          <li>${_("Got a question about")}&#32;<a href="/gold/about">${_("tippr gold")}</a>? ${_("Email")}&#32;<a href="mailto:${gold_email}">${gold_email}</a>.</li>
+        </ul>
+      </li>
+    %endif
+    %if contact_email:
+      <li id="email-us">
+        <h2 class="button">${_("anything else")}</h2>
+        <ul class="details">
+          <li>${_("Email us at")}&#32;<a href="mailto:${contact_email}">${contact_email}</a>&#32;${_("and include your tippr username if you have one.")}</li>
+        </ul>
+      </li>
+    %endif
   </ol>
-
   <img class="space-tippr" title="${_("\"In 5-billion years the Sun will expand and engulf our orbit as the charred ember that was once Earth vaporizes. Have a nice day.\"")}" alt="" src="${static('space-tippr.png')}">
-
 <script type="text/javascript">
 
 $('.contact-options').on('click', 'h2', function() {
