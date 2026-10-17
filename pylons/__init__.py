@@ -25,6 +25,12 @@ class LocalStack:
     def _pop_object(self, obj: Any = None) -> Any:
         return self._stack.pop()
 
+    def _current_obj(self) -> Any:
+        """The object currently pushed (Pylons' StackedObjectProxy API)."""
+        if not self._stack:
+            raise TypeError("no object pushed to LocalStack")
+        return self._stack[-1]
+
     def __getattr__(self, name: str) -> Any:
         if not self._stack:
             raise AttributeError(f"no object pushed to LocalStack (requested {name})")
