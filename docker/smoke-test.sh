@@ -4,8 +4,9 @@
 # stack running; "docker compose down -v" removes it.
 set -euo pipefail
 cd "$(dirname "$0")"
-domain=$(grep -E '^TIPPR_DOMAIN=' .env | cut -d= -f2)
-https_port=$(grep -E '^TIPPR_HTTPS_PORT=' .env | cut -d= -f2)
+# (|| true: a setting left out of .env isn't an error)
+domain=$(grep -E '^TIPPR_DOMAIN=' .env | cut -d= -f2 || true)
+https_port=$(grep -E '^TIPPR_HTTPS_PORT=' .env | cut -d= -f2 || true)
 https_port=${https_port:-443}
 
 docker compose up -d
