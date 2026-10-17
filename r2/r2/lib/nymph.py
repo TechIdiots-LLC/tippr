@@ -46,7 +46,9 @@ sprite_line = re.compile(
 
 def optimize_png(filename):
     with open(os.path.devnull, 'w') as devnull:
-        subprocess.check_call(("/usr/bin/optipng", filename), stdout=devnull)
+        # optipng reports on stderr; failures still raise
+        subprocess.check_call(("/usr/bin/optipng", filename), stdout=devnull,
+                              stderr=devnull)
 
 
 def _extract_css_info(match):

@@ -83,9 +83,10 @@ def _image_to_str(image):
 
 
 def str_to_image(s):
-    s = io.StringIO(s)
-    image = Image.open(s)
-    return image
+    """An uploaded or downloaded image (bytes) as a PIL image."""
+    if isinstance(s, str):
+        s = s.encode("latin-1")
+    return Image.open(io.BytesIO(s))
 
 
 def _image_entropy(img):
@@ -270,8 +271,10 @@ def thumbnail_url(link):
 
 
 def _filename_from_content(contents):
+    if isinstance(contents, str):
+        contents = contents.encode("utf-8")
     hash_bytes = hashlib.sha256(contents).digest()
-    return base64.urlsafe_b64encode(hash_bytes).rstrip("=")
+    return base64.urlsafe_b64encode(hash_bytes).decode("ascii").rstrip("=")
 
 
 def upload_media(image, file_type='.jpg', category='thumbs'):
@@ -280,8 +283,10 @@ def upload_media(image, file_type='.jpg', category='thumbs'):
     try:
         img = image
         do_convert = True
-        if isinstance(img, str):
-            img = str_to_image(img)
+        if isinstance(img, (bytes, str)):
+            if isinstance(image, str):
+                image = image.encode("latin-1")
+            img = str_to_image(image)
             if img.format == "PNG" and file_type == ".png":
                 img.verify()
                 f.write(image)
@@ -298,12 +303,14 @@ def upload_media(image, file_type='.jpg', category='thumbs'):
                 img.save(f, quality=85) # Bug in the JPG encoder with the optimize flag, even if set to false
             else:
                 img.save(f, optimize=True)
+            f.close()  # flush before the optimizers read the file
 
         if file_type == ".png":
             optimize_png(f.name)
         elif file_type == ".jpg":
             optimize_jpeg(f.name)
-        contents = open(f.name).read()
+        with open(f.name, "rb") as saved:
+            contents = saved.read()
         file_name = _filename_from_content(contents) + file_type
         return g.media_provider.put(category, file_name, contents)
     finally:

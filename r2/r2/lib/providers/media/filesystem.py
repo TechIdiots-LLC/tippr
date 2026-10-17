@@ -68,8 +68,10 @@ class FileSystemMediaProvider(MediaProvider):
     def put(self, category, name, contents, headers=None):
         assert os.path.dirname(name) == ""
         path = os.path.join(g.media_fs_root, name)
-        with open(path, "w") as f:
-            if isinstance(contents, str):
+        if isinstance(contents, str):
+            contents = contents.encode("utf-8")
+        with open(path, "wb") as f:
+            if isinstance(contents, bytes):
                 f.write(contents)
             else:
                 shutil.copyfileobj(contents, f)
