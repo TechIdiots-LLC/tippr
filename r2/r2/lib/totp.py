@@ -43,7 +43,7 @@ def make_hotp(secret, counter):
     hmac_result = hmac.HMAC(key, counter_encoded, hashlib.sha1).digest()
 
     # do HOTP dynamic truncation (see RFC4226 5.3)
-    offset = ord(hmac_result[-1]) & 0x0f
+    offset = hmac_result[-1] & 0x0f
     truncated_hash = hmac_result[offset:offset + 4]
     code_bits, = struct.unpack(">L", truncated_hash)
     htop = (code_bits & 0x7fffffff) % 1000000
@@ -55,7 +55,7 @@ def make_hotp(secret, counter):
 def make_totp(secret, skew=0, timestamp=None):
     """Generate an RFC-6238 Time-Based One Time Password."""
     timestamp = timestamp or time.time()
-    counter = timestamp // PERIOD
+    counter = int(timestamp // PERIOD)
     return make_hotp(secret, counter - skew)
 
 
@@ -63,13 +63,13 @@ def generate_secret():
     """Make a secret key suitable for use in TOTP."""
     from Crypto.Random import get_random_bytes
     bytes = get_random_bytes(20)
-    encoded = base64.b32encode(bytes)
+    encoded = base64.b32encode(bytes).decode("ascii")
     return encoded
 
 
 if __name__ == "__main__":
     # based on RFC-6238 Appendix B (trimmed to six-digit OTPs)
-    secret = base64.b32encode("12345678901234567890")
+    secret = base64.b32encode(b"12345678901234567890").decode("ascii")
     assert make_totp(secret, timestamp=59) == "287082"
     assert make_totp(secret, timestamp=1111111109) == "081804"
     assert make_totp(secret, timestamp=1111111111) == "050471"
