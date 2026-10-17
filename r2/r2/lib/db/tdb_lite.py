@@ -102,6 +102,13 @@ class tdb_lite:
         elif kind == 'none':
             val = None
         elif kind == 'pickle':
+            # the value column is text: pickled bytes come back in
+            # PostgreSQL's hex form ('\x8004...'), as in tdb_sql.db2py
+            if isinstance(val, str):
+                if val.startswith('\\x'):
+                    val = bytes.fromhex(val[2:])
+                else:
+                    val = val.encode('latin-1')
             val = pickle.loads(val)
 
         return val
