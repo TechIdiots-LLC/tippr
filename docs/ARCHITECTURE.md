@@ -43,8 +43,9 @@ Let's Encrypt challenges.
   - `development.secrets`, the passwords and signing secrets the installer
     generates from `/etc/tippr/secrets.env`.
 
-  Settings saved on admin pages (email, ads) are kept in ZooKeeper and
-  override the ini without a restart (`r2/lib/site_settings.py`).
+  Settings saved on admin pages (site details, email, ads) are kept in
+  ZooKeeper and override the ini without a restart
+  (`r2/lib/site_settings.py`).
 
 ## Data stores
 
@@ -93,6 +94,8 @@ With admin mode on (`/adminon`, which requires TOTP in production):
 
 | Page | For |
 |---|---|
+| `/admin/site` | site name, description, contact address and logo |
+| `/admin/errors` | recent unhandled errors with tracebacks |
 | `/admin/email` | outgoing email (SMTP or Gmail) |
 | `/admin/ads` | Google AdSense ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)) |
 | `/admin/backups` | export, import, restore, transfer keys ([BACKUP.md](BACKUP.md)) |

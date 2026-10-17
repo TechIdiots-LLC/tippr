@@ -18,8 +18,9 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
   and restore PostgreSQL, Cassandra, ZooKeeper, media and the signing
   secrets. Another server can import a backup over HTTPS with a transfer
   key ([BACKUP.md](BACKUP.md)).
-- **Admin pages** for email (`/admin/email`) and Google AdSense
-  (`/admin/ads`).
+- **Admin pages** for the site's name, description, contact address and
+  logo (`/admin/site`), email (`/admin/email`), Google AdSense
+  (`/admin/ads`) and recent errors (`/admin/errors`).
 
 ## Next: single-VM production setup
 
@@ -57,10 +58,7 @@ installed with `install-tippr.sh`.
    through environment variables.
 2. **Admin security.** Require TOTP for admin mode, add WebAuthn passkeys,
    and use recovery codes instead of email as the fallback.
-3. **Admin site settings page.** Change the site's name, description,
-   logo, domain and contact details from an admin page, for example after
-   restoring a backup on a new domain.
-4. **Admin config page.** Edit the live config stored in ZooKeeper from
+3. **Admin config page.** Edit the live config stored in ZooKeeper from
    `/admin/config`, with type checking and an audit log.
 
 ## Payments and tipping

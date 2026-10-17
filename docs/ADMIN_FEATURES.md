@@ -14,6 +14,8 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/awards/:awardcn/:action` — award actions (`give` or `winners`).
 - `/admin/coins` — give coins to a user (handler: `AdminToolController.GET_coins`).
 - `/admin/gold` — give/take gold days for a user (handler: `AdminToolController.GET_gold`).
+- `/admin/site` — the site's name, description, contact address and header logo. Saved values apply at once on every web process; blank ones fall back to the ini. Also shows how to change the domain (re-run the installer with `TIPPR_DOMAIN`).
+- `/admin/errors` — recent unhandled errors, grouped by error and code location, with counts and the last traceback (kept in the hardcache; full logs in `journalctl -u tippr-paster`).
 - `/admin/email` — outgoing email settings: SMTP or Gmail, and a test message ([EMAIL.md](EMAIL.md)).
 - `/admin/ads` — Google AdSense settings ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)).
 - `/admin/backups` — export, import and restore the site, and transfer keys for moving servers ([BACKUP.md](BACKUP.md)).

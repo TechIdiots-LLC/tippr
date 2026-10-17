@@ -110,9 +110,10 @@ If a step fails, tippr is left stopped, because its data is only partly
 restored. Fix the problem and run the restore again (it starts over), or
 start tippr with `tippr-start`.
 
-After restoring a backup from a different domain, update the domain and
-the other site details in `development.update` and run `make ini` (or
-re-run the installer with `TIPPR_DOMAIN=...`).
+The site's name, description, contact address and logo come with the
+backup; change them on **/admin/site** if the new site should differ. The
+domain is this server's own: to use a new one, re-run the installer with
+`TIPPR_DOMAIN=new.example.com`.
 
 ## Transfer keys
 

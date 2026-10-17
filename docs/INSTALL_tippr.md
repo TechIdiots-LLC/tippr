@@ -76,6 +76,8 @@ the admin account, plus the site's signing secrets. It keeps them in
 2. **Log in** as the admin account. In production, set up two-factor
    authentication under preferences → security; admin mode needs it.
 3. **Admin mode:** `/adminon`. Then:
+   - `/admin/site`: the site's name, description, contact address and
+     logo.
    - `/admin/email`: outgoing email ([EMAIL.md](EMAIL.md)). Without it,
      verification and password-reset emails aren't sent.
    - `/admin/ads`: Google AdSense, if you want ads ([below](#google-adsense)).

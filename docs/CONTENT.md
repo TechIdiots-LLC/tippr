@@ -7,10 +7,11 @@ starter set of vaults owned and moderated by the admin account, and makes
 most of them the front page defaults (what logged-out and new users see).
 
 - Defaults lean toward technology, science, making things and fun:
-  technology, programming, linux, selfhosted, electronics, science, space,
-  diy, 3dprinting, gaming, retrogaming, anime, art, music, photography,
-  writing, books, movies, food, pics, funny, aww, til, asktippr, lgbtq and
-  tippr.
+  technology, programming, linux, selfhosted, electronics,
+  mechanicalkeyboards, privacy, science, space, gaming, cozygaming,
+  retrogaming, anime, diy, fiberarts, thrift, 3dprinting, food, art, music,
+  photography, writing, memes, aesthetics, popculture, pics, aww, books,
+  movies, til, asktippr, lgbtq, skincare and tippr.
 - lgbtq is a default on purpose: tippr is meant to be a welcoming site for
   LGBTQ+ people, and the content policy bans hate based on sexual
   orientation and gender identity. dragrace exists too, but isn't a
