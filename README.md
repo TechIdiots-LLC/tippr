@@ -80,6 +80,9 @@ Customize the installation by setting environment variables before running the i
 | `TIPPR_ENVIRONMENT` | `auto` | `production` or `development`; `auto` uses development for `.local`, `.localhost` and `.test` domains |
 | `TIPPR_WEB_WORKERS` | CPU count (max 8) | Number of gunicorn web workers |
 | `TIPPR_BUILD_MCROUTER` | `0` | Set to `1` to build mcrouter from source (20+ minutes; not used by the default config) |
+| `TIPPR_TLS_CERT` / `TIPPR_TLS_KEY` | (none) | Certificate and key files to use, e.g. a Cloudflare Origin Certificate |
+| `TIPPR_LETSENCRYPT_EMAIL` | (none) | Get a Let's Encrypt certificate (the domain must point at this server) |
+| `TIPPR_BEHIND_CLOUDFLARE` | `0` | Set to `1` behind Cloudflare's proxy to take client IPs from `CF-Connecting-IP` |
 | `TIPPR_FIREWALL` | `0` | Set to `1` to enable a ufw firewall allowing only SSH, HTTP and HTTPS |
 | `TIPPR_SSH_PORT` | `22` | SSH port the firewall keeps open |
 
