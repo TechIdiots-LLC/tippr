@@ -3720,6 +3720,15 @@ class AdminEmailSettings(Templated):
         Templated.__init__(self)
 
 
+class AdminAdSettings(Templated):
+    """The admin interface for configuring Google AdSense."""
+    def __init__(self):
+        from r2.lib import ad_settings
+        self.settings = ad_settings.ad_settings()
+        self.modes = ad_settings.MODES
+        Templated.__init__(self)
+
+
 class AdminGold(Templated):
     """The admin interface for giving or taking days of gold for a user."""
     def __init__(self, recipient):

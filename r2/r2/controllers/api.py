@@ -4614,6 +4614,67 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        adsense_enabled=VBoolean("adsense_enabled"),
+        adsense_client=VLength("adsense_client", max_length=40,
+                               empty_error=None),
+        adsense_mode=VOneOf("adsense_mode", ("units", "auto")),
+        adsense_sidebar_slot=VLength("adsense_sidebar_slot", max_length=20,
+                                     empty_error=None),
+        adsense_listing_slot=VLength("adsense_listing_slot", max_length=20,
+                                     empty_error=None),
+        adsense_listing_layout_key=VLength("adsense_listing_layout_key",
+                                           max_length=40, empty_error=None),
+        adsense_listing_position=VInt("adsense_listing_position", min=1,
+                                      max=25, num_default=5),
+        adsense_test_mode=VBoolean("adsense_test_mode"),
+    )
+    def POST_ads_settings(self, form, jquery, adsense_enabled, adsense_client,
+                          adsense_mode, adsense_sidebar_slot,
+                          adsense_listing_slot, adsense_listing_layout_key,
+                          adsense_listing_position, adsense_test_mode):
+        """Save the Google AdSense settings (overrides the ini file)."""
+        from r2.lib import ad_settings, site_settings
+        if form.has_errors("adsense_mode", errors.INVALID_OPTION):
+            return
+        if form.has_errors("adsense_listing_position", errors.BAD_NUMBER):
+            return
+
+        def invalid(field, error=errors.INVALID_OPTION):
+            c.errors.add(error, field=field)
+            form.has_errors(field, error)
+
+        client = (adsense_client or "").strip()
+        if client:
+            client = ad_settings.normalize_client(client)
+            if not client:
+                return invalid("adsense_client")
+        elif adsense_enabled:
+            return invalid("adsense_client", errors.NO_TEXT)
+
+        settings = {
+            "adsense_enabled": bool(adsense_enabled),
+            "adsense_client": client,
+            "adsense_mode": adsense_mode,
+            "adsense_listing_position": adsense_listing_position,
+            "adsense_test_mode": bool(adsense_test_mode),
+        }
+        for name, value, valid in (
+                ("adsense_sidebar_slot", adsense_sidebar_slot,
+                 ad_settings.valid_slot),
+                ("adsense_listing_slot", adsense_listing_slot,
+                 ad_settings.valid_slot),
+                ("adsense_listing_layout_key", adsense_listing_layout_key,
+                 ad_settings.valid_layout_key)):
+            value = (value or "").strip()
+            if value and not valid(value):
+                return invalid(name)
+            settings[name] = value
+        site_settings.save_settings("ads", settings)
+        form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         to=ValidEmail("to"),
     )
     def POST_test_email(self, form, jquery, to):
