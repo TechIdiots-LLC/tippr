@@ -232,11 +232,15 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
         else:
             ga = inspect.getargspec(fn)
             fn_args = ga[0]
-        # fn_args includes 'self' at index 0 for bound methods
+        # fn_args includes 'self' at index 0 for bound methods. The
+        # decorators pass (form, jquery) for validatedForm and (responder,)
+        # for json_validate positionally, so they must not also be keywords.
         if len(fn_args) >= 2 and fn_args[1] == 'form':
             # remove 'form' and the next positional argument if present
             for argname in fn_args[1:3]:
                 kw.pop(argname, None)
+        elif len(fn_args) >= 2 and fn_args[1] == 'responder':
+            kw.pop('responder', None)
     except Exception:
         # Be conservative: if inspection fails, just remove 'form'
         kw.pop('form', None)
