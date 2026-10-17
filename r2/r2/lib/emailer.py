@@ -24,7 +24,6 @@
 ###############################################################################
 
 import datetime
-import smtplib
 import sys
 import traceback
 from email import encoders
@@ -38,7 +37,7 @@ from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 from r2.config import feature
-from r2.lib import hooks
+from r2.lib import hooks, mail_transport
 from r2.lib.ratelimit import SimpleRateLimit
 from r2.lib.utils import timeago
 from r2.models.account import Account
@@ -253,17 +252,21 @@ def share(link, emails, from_name = "", reply_to = "", body = ""):
                                thing = link)
 
 def send_queued_mail(test = False):
-    """sends mail from the mail queue to smtplib for delivery.  Also,
-    on successes, empties the mail queue and adds all emails to the
-    sent_mail list."""
+    """sends mail from the mail queue via the configured mail transport
+    (see r2.lib.mail_transport).  Also, on successes, empties the mail
+    queue and adds all emails to the sent_mail list."""
     from r2.lib.pages import Mail_Opt, Share
     now = datetime.datetime.now(g.tz)
     if not c.site:
         c.site = DefaultVault()
 
     clear = False
+    transport = None
     if not test:
-        session = smtplib.SMTP(g.smtp_server)
+        transport = mail_transport.open_transport()
+        if transport is None:
+            # mail_transport = none: leave the queue for when email is set up
+            return
     def sendmail(email):
         try:
             mimetext = email.to_MIMEText()
@@ -273,11 +276,12 @@ def send_queued_mail(test = False):
             if test:
                 print(mimetext.as_string())
             else:
-                session.sendmail(email.fr_addr, email.to_addr,
-                                 mimetext.as_string())
+                transport.send(email.fr_addr, email.to_addr,
+                               mimetext.as_string())
                 email.set_sent(rejected = False)
-        # exception happens only for local recipient that doesn't exist
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
+        # a message that can never be delivered (e.g. a bad recipient);
+        # MailTransportError instead stops this run so the queue is retried
+        except (mail_transport.MessageRejected,
                 UnicodeDecodeError, AttributeError, HeaderParseError):
             # handle error and print, but don't stall the rest of the queue
             print("Handled error sending mail (traceback to follow)")
@@ -315,8 +319,8 @@ def send_queued_mail(test = False):
             sendmail(email)
 
     finally:
-        if not test:
-            session.quit()
+        if transport is not None:
+            transport.close()
 
     # clear is true if anything was found and processed above
     if clear:
@@ -423,8 +427,13 @@ def send_html_email(to_addr, from_addr, subject, html,
             filename=attachment['name'])
         msg.attach(part)
 
-    session = smtplib.SMTP(g.smtp_server)
-    session.sendmail(from_addr, to_addr, msg.as_string())
-    session.quit()
+    transport = mail_transport.open_transport()
+    if transport is None:
+        raise mail_transport.MailTransportError(
+            "email is not configured (mail_transport = none)")
+    try:
+        transport.send(from_addr, to_addr, msg.as_string())
+    finally:
+        transport.close()
 
 trylater_hooks.register_all()
