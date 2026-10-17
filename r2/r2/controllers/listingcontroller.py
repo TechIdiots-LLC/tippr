@@ -506,7 +506,7 @@ class HotController(ListingWithPromos):
             vault_ids = Vault.user_vaults(c.user)
             return normalized_hot(vault_ids)
         elif isinstance(c.site, MultiVault):
-            return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False,
+            return normalized_hot(c.site.kept_vault_ids, obey_age_limit=False,
                                   ageweight=c.site.ageweight)
         else:
             sticky_fullnames = c.site.sticky_fullnames
@@ -624,7 +624,7 @@ class RisingController(NewController):
             vault_ids = Vault.user_vaults(c.user)
             return normalized_rising(vault_ids)
         elif isinstance(c.site, MultiVault):
-            return normalized_rising(c.site.kept_sr_ids)
+            return normalized_rising(c.site.kept_vault_ids)
 
         return get_rising(c.site)
 
@@ -1368,7 +1368,7 @@ class MessageController(ListingController):
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
         elif self.where == 'multi' and self.subwhere == 'unread':
-            q = queries.get_unread_Vault_messages_multi(c.site.kept_sr_ids)
+            q = queries.get_unread_Vault_messages_multi(c.site.kept_vault_ids)
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_vault:
                 vault_ids = Vault.reverse_moderator_ids(c.user)
