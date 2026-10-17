@@ -30,7 +30,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from baseplate.lib.crypto import MessageSigner
+from baseplate.lib.crypto import VersionedSecret, make_signature
 from pylons import app_globals as g
 
 from r2.lib import amqp
@@ -62,9 +62,11 @@ def make_url(namespace, max_age):
 
     """
 
-    signer = MessageSigner(g.secrets["websocket"])
-    signature = signer.make_signature(
-        namespace, max_age=datetime.timedelta(seconds=max_age))
+    # the websockets service validates this with the same secret
+    # (secret/websockets/authorization_key, written by the installer)
+    secret = VersionedSecret.from_simple_secret(g.secrets["websocket"])
+    signature = make_signature(
+        secret, namespace, max_age=datetime.timedelta(seconds=max_age))
 
     query_string = urllib.parse.urlencode({
         "m": signature,

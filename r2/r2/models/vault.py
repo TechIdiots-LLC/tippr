@@ -205,6 +205,13 @@ class BaseSite:
 class VaultExists(Exception): pass
 
 
+def _activity_service():
+    """The activity service client for this request, if one is configured
+    (activity_endpoint); it lives on the baseplate request context."""
+    context = getattr(c, "baseplate_context", None)
+    return getattr(context, "activity_service", None) if context else None
+
+
 class Vault(Thing, Printable, BaseSite):
     _cache = g.thingcache
 
@@ -685,11 +692,12 @@ class Vault(Thing, Printable, BaseSite):
         # we don't actually support other contexts yet
         assert self.activity_contexts == ("logged_in",)
 
-        if not getattr(c, 'activity_service', None):
+        activity_service = _activity_service()
+        if not activity_service:
             return
 
         try:
-            c.activity_service.record_activity(self._fullname, visitor_id)
+            activity_service.record_activity(self._fullname, visitor_id)
         except (TApplicationException, TProtocolException, TTransportException):
             pass
 
@@ -702,13 +710,14 @@ class Vault(Thing, Printable, BaseSite):
         # we don't actually support other contexts yet
         assert self.activity_contexts == ("logged_in",)
 
-        if not getattr(c, 'activity_service', None):
+        activity_service = _activity_service()
+        if not activity_service:
             return None
 
         try:
             # TODO: support batch lookup of multiple contexts (requires changes
             # to activity service)
-            with c.activity_service.retrying(attempts=4, budget=0.1) as svc:
+            with activity_service.retrying(attempts=4, budget=0.1) as svc:
                 activity = svc.count_activity(self._fullname)
             return self.VaultActivity(activity)
         except (TApplicationException, TProtocolException, TTransportException):

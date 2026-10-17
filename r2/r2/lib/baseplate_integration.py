@@ -34,82 +34,22 @@ than its own implementations.
 
 import functools
 
-from baseplate.observers import BaseplateObserver, ServerSpanObserver, SpanObserver
+from baseplate import BaseplateObserver, ServerSpanObserver, SpanObserver
 from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 
 def make_server_span(span_name):
+    """Start a baseplate server span for this request (or job) as c.trace.
+
+    Baseplate spans need a baseplate RequestContext (pylons' c isn't one); it
+    is kept as c.baseplate_context, where clients registered with
+    g.baseplate.add_to_context() appear.
+    """
     bp = g.baseplate
-
-    # Baseplate API has changed across releases. Try the older signature
-    # first (context, name=...), then fall back to newer variants.
-    # Try several possible Baseplate signatures and handle the case where
-    # the Baseplate instance does not expose `make_server_span` (older/new
-    # different API). Catch AttributeError as well as TypeError so attribute
-    # absence doesn't propagate here.
-    try:
-        span = bp.make_server_span(context=c, name=span_name)
-    except (TypeError, AttributeError):
-        try:
-            span = bp.make_server_span(span_name)
-        except (TypeError, AttributeError):
-            try:
-                span = bp.make_server_span(name=span_name)
-            except Exception:
-                # Fallback: return a no-op span compatible with the
-                # context-manager usage and `.finish()` call used by r2.
-                class _NoopSpan:
-                    def __enter__(self):
-                        return self
-
-                    def __exit__(self, exc_type, exc, tb):
-                        return False
-
-                    def start(self):
-                        return self
-
-                    def finish(self):
-                        return None
-
-                    def register(self, observer):
-                        # observers expect to be registered on real spans;
-                        # noop implementation accepts and ignores them
-                        return None
-
-                    def make_child(self, name=None):
-                        """Return a noop child span for compatibility with
-                        callers that expect `make_child(name)`.
-
-                        The child supports the same minimal interface as the
-                        noop server span: context-manager, `start()`,
-                        `finish()`, and `register()`.
-                        """
-                        return _NoopSpan()
-
-                    # older baseplate variants may use `create_child`
-                    create_child = make_child
-                    
-                    def set_tag(self, key, value):
-                        """Accept and ignore tag setting for noop spans."""
-                        try:
-                            self._tags[key] = value
-                        except AttributeError:
-                            # lazily create tags container
-                            self._tags = {key: value}
-                        return None
-
-                    def set_tags(self, tags):
-                        """Set multiple tags at once; ignore for noop spans."""
-                        try:
-                            self._tags.update(tags)
-                        except AttributeError:
-                            self._tags = dict(tags)
-                        return None
-
-                span = _NoopSpan()
-
-    c.trace = span
+    context = bp.make_context_object()
+    c.baseplate_context = context
+    c.trace = bp.make_server_span(context, name=span_name)
     return c.trace
 
 
