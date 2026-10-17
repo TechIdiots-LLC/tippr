@@ -9,6 +9,10 @@ body {
         "footer";
     grid-template-columns: 100%;
     width: 100%;
+    /* body is at least the window's height; without this, short pages
+       stretch every row (the header too) to fill it, and the header then
+       covers the listing chooser, which assumes a 65px header */
+    align-content: start;
 }
 
 #header {
