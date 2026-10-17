@@ -90,7 +90,9 @@ def declare_queues(g):
         "event_collector_failed": MessageQueue(bind_to_self=True),
         "modmail_email_q": MessageQueue(bind_to_self=True),
         "author_query_q": MessageQueue(bind_to_self=True),
-        "Vault_query_q": MessageQueue(bind_to_self=True),
+        "vault_query_q": MessageQueue(bind_to_self=True),
+        # user data export requests (r2.lib.privacy_export_consumer)
+        "privacy_export_q": MessageQueue(bind_to_self=True),
         "domain_query_q": MessageQueue(bind_to_self=True),
     })
 

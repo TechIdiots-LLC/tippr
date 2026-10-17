@@ -279,7 +279,9 @@ def consume_items(queue, callback, verbose=True):
     try:
         while chan.callbacks:
             try:
-                chan.wait()
+                # py-amqp 2+: deliveries arrive through the connection
+                # (Channel.wait now needs the method to wait for)
+                chan.connection.drain_events()
             except KeyboardInterrupt:
                 break
     finally:

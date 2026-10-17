@@ -34,6 +34,10 @@ import pytz
 from pylons import app_globals as g
 
 from r2.lib import amqp, filters, utils
+# r2.models before r2.lib.comment_tree: the other order is a circular import
+# (comment_tree -> models -> builder -> comment_tree), which broke every
+# queue consumer and job that imports queries first
+import r2.models  # noqa: F401
 from r2.lib.comment_tree import add_comments
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import and_, asc, desc, or_, timeago
