@@ -79,6 +79,8 @@ Customize the installation by setting environment variables before running the i
 | `TIPPR_CONTACT_EMAIL` | (none) | Address shown on the contact page |
 | `TIPPR_ENVIRONMENT` | `auto` | `production` or `development`; `auto` uses development for `.local`, `.localhost` and `.test` domains |
 | `TIPPR_WEB_WORKERS` | CPU count (max 8) | Number of gunicorn web workers |
+| `TIPPR_SEARCH` | `opensearch` | `opensearch` installs OpenSearch for search (see [docs/SEARCH.md](docs/SEARCH.md)); `none` skips it |
+| `TIPPR_OPENSEARCH_HEAP` | `1g` | OpenSearch's Java heap size |
 | `TIPPR_BUILD_MCROUTER` | `0` | Set to `1` to build mcrouter from source (20+ minutes; not used by the default config) |
 | `TIPPR_TLS_CERT` / `TIPPR_TLS_KEY` | (none) | Certificate and key files to use, e.g. a Cloudflare Origin Certificate |
 | `TIPPR_LETSENCRYPT_EMAIL` | (none) | Get a Let's Encrypt certificate (the domain must point at this server) |

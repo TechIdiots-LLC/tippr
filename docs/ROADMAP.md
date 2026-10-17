@@ -33,8 +33,8 @@ installed with `install-tippr.sh`.
   domains, a self-signed certificate for `.local` ones. Redirect `http://`
   to `https://`.
 - **Cloudflare (Free plan):** see [Cloudflare](#cloudflare) below.
-- **Search:** add an OpenSearch provider to replace CloudSearch/Solr; see
-  [Search](#search).
+- **Search:** OpenSearch, installed by default (done; see
+  [SEARCH.md](SEARCH.md) and [Search](#search)).
 - **Shims:** remove the compatibility shims left over from the Python 3 and
   upgrade work (`baseplate/`, `pylons/`, `pycassa/`, `weberror/`, …)
   wherever a maintained library can replace them. The repo's `baseplate/`
@@ -79,16 +79,20 @@ Decided order:
 
 [OpenSearch](https://opensearch.org/) (Apache 2.0) replaces CloudSearch and
 Solr. It runs as a single node with a 1 GB heap, from the apt repository or
-the Docker image. r2 already has a pluggable search provider and a
-`search_q` indexing consumer, so the work is:
+the Docker image. Done:
 
-- an `opensearch` provider (index mappings, indexer, query builder);
-- relevance tuning: title weighted above body and URL, recency and vote
-  score boosts, typo tolerance, and fast vault-name autocomplete;
-- keeping the existing `vault:`, `author:`, `site:`, `nsfw:` and `self:`
-  query syntax;
-- installer support and an index rebuild script;
-- possibly comment search later.
+- the `opensearch` provider (index mappings, indexer, query builder);
+- relevance: title weighted above body and URL, vote and age boosts, typo
+  tolerance, vault names matched by prefix;
+- the existing `vault:`, `author:`, `site:`, `nsfw:` and `self:` query
+  syntax;
+- installer support and `g.search.rebuild_index()`.
+
+Still to do:
+
+- use `g.search.suggest_vaults()` for the vault-name autocomplete in the
+  submit form and search box;
+- possibly comment search.
 
 ## Cloudflare
 
