@@ -1540,6 +1540,17 @@ TIPPR_TIMERS=(
 #   tippr-job-email.timer             send queued email every minute
 #   tippr-job-update_gold_users.timer expire gold subscriptions daily
 
+###############################################################################
+# Firewall (optional)
+###############################################################################
+if [ "$TIPPR_FIREWALL" = "1" ]; then
+    apt-get install $APTITUDE_OPTIONS ufw
+    ufw allow "${TIPPR_SSH_PORT}/tcp"
+    ufw allow 80/tcp
+    ufw allow 443/tcp
+    ufw --force enable
+fi
+
 # ok, now start everything else up
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"

@@ -75,6 +75,8 @@ Customize the installation by setting environment variables before running the i
 | `TIPPR_PLUGINS` | `about gold` | Space-separated list of plugins to install |
 | `PYTHON_VERSION` | `3.12` | Python version to use |
 | `TIPPR_BUILD_MCROUTER` | `0` | Set to `1` to build mcrouter from source (20+ minutes; not used by the default config) |
+| `TIPPR_FIREWALL` | `0` | Set to `1` to enable a ufw firewall allowing only SSH, HTTP and HTTPS |
+| `TIPPR_SSH_PORT` | `22` | SSH port the firewall keeps open |
 
 Example with custom settings:
 ```bash
