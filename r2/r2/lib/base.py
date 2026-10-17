@@ -25,6 +25,7 @@
 
 
 #TODO hack
+import ipaddress
 import logging
 import urllib.error
 import urllib.parse
@@ -46,8 +47,14 @@ logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
 
 
 def is_local_address(ip):
-    # TODO: support the /20 and /24 private networks? make this configurable?
-    return ip.startswith('10.') or ip == "127.0.0.1"
+    """Loopback or a private network (10/8, 172.16/12, 192.168/16, fc00::/7):
+    where trusted proxies are, e.g. haproxy on the host or Caddy in a Docker
+    network."""
+    try:
+        address = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return address.is_loopback or address.is_private
 
 def abort(code_or_exception=None, detail="", headers=None, comment=None,
           **kwargs):
