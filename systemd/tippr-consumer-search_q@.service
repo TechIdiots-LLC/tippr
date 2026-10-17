@@ -1,5 +1,5 @@
 [Unit]
-Description=update the cloudsearch index with new/changed documents
+Description=update the search index with new/changed documents
 PartOf=tippr.target
 After=network.target
 

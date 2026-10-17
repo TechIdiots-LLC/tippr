@@ -4925,9 +4925,6 @@ class ApiController(TipprController):
     @api_doc(api_section.vaults)
     def GET_Vaults_by_topic(self, responder, query):
         """Return a list of vaults that are relevant to a search query."""
-        if not g.CLOUDSEARCH_SEARCH_API:
-            return []
-
         query = query and query.strip()
         if not query or len(query) < 2:
             return []

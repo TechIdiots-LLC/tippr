@@ -90,7 +90,6 @@ from r2.lib.zookeeper import (
 LIVE_CONFIG_NODE = "/config/live"
 
 SEARCH_SYNTAXES = {
-        'cloudsearch': ('cloudsearch', 'lucene', 'plain'),
         'solr': ('solr', 'plain'),
         'opensearch': ('lucene', 'plain'),
         }

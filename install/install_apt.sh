@@ -158,7 +158,6 @@ python-amqplib
 python-bcrypt
 python-snappy
 python-snudown
-python-l2cs
 python-lxml
 python-kazoo
 python-stripe

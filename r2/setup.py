@@ -106,10 +106,6 @@ setup(
         # snudown requires compilation with gperf. On Ubuntu: apt install gperf build-essential python3-dev
         # Using master branch for Python 3.12 compatibility (v1.5.0 uses Py_InitModule3 which is Python 2 only)
         "snudown @ https://github.com/reddit/snudown/archive/refs/heads/master.zip",
-        # l2cs (Lucene to CloudSearch) was an internal Tippr library, not publicly available.
-        # Only needed for CloudSearch provider. Use Solr provider instead (search_provider = solr)
-        # which doesn't require l2cs and is fully open source.
-        # "l2cs>=2.0.2",
         "lxml",
         "kazoo",
         "stripe",
@@ -167,7 +163,6 @@ setup(
     [r2.provider.support]
     zendesk = r2.lib.providers.support.zendesk:ZenDeskProvider
     [r2.provider.search]
-    cloudsearch = r2.lib.providers.search.cloudsearch:CloudSearchProvider
     solr = r2.lib.providers.search.solr:SolrSearchProvider
     opensearch = r2.lib.providers.search.opensearch:OpenSearchProvider
     [r2.provider.image_resizing]

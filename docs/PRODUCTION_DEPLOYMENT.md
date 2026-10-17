@@ -1865,10 +1865,9 @@ disable_require_admin_otp = false
 ENFORCE_RATELIMIT = true
 RL_SITEWIDE_ENABLED = true
 
-# Search (if using CloudSearch)
-search_provider = cloudsearch
-CLOUDSEARCH_SEARCH_API = https://search-xxx.us-east-1.cloudsearch.amazonaws.com
-CLOUDSEARCH_DOC_API = https://doc-xxx.us-east-1.cloudsearch.amazonaws.com
+# Search (see SEARCH.md)
+search_provider = opensearch
+opensearch_url = http://127.0.0.1:9200
 
 # Monitoring
 statsd_addr = your-statsd-host:8125

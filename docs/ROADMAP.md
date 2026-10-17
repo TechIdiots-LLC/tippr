@@ -36,11 +36,12 @@ installed with `install-tippr.sh`.
 - **Search:** OpenSearch, installed by default (done; see
   [SEARCH.md](SEARCH.md) and [Search](#search)).
 - **Shims:** `BeautifulSoup.py`, `baseplate/`, `pycassa/`, `weberror/`,
-  `Captcha/` and `cassandra.disabled/` are gone (r2 uses bs4, the real
-  baseplate 2.x and `r2.lib.db.cassandra_compat`), as are the installer's
-  venv patches. Left: `pylons/`, which is effectively r2's web framework
-  now (moving to Pyramid or similar is its own project), and `l2cs.py`,
-  used only by the AWS CloudSearch search provider.
+  `Captcha/`, `cassandra.disabled/` and `l2cs.py` are gone (r2 uses bs4,
+  the real baseplate 2.x and `r2.lib.db.cassandra_compat`; the AWS
+  CloudSearch provider that needed `l2cs.py` was replaced by OpenSearch),
+  as are the installer's venv patches. Left: `pylons/`, which is
+  effectively r2's web framework now (moving to Pyramid or similar is its
+  own project).
 
 ## Then
 
