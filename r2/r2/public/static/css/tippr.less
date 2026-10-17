@@ -1,5 +1,6 @@
 @import "components/variables.less";
 @import "components/components.less";
+@import "components/fonts.less";
 @import "markdown.less";
 @import "post-sharing.less";
 @import "search.less";
@@ -243,7 +244,7 @@ ul.flat-vert {text-align: left;}
 .flat-vert .separator { margin: 0 }
 
 .flat-vert.title {
-    font-family:arial,verdana,helvetica,sans-serif;
+    font-family: @tp-font;
     color: #777;
     font-size: 18px;
     font-weight: normal;
@@ -796,7 +797,7 @@ body > .content .link.compressed .midcol {
     margin-left: 3px;
     opacity: 1;
 }
-.domain { color: #888; font-size:x-small; white-space: nowrap; }
+.domain { color: #888; font-size:@tp-font-xs; white-space: nowrap; }
 .domain a {
     color: #888;
     display: inline-block;
@@ -815,7 +816,7 @@ body > .content .link.compressed .midcol {
 .link-note {
     background-color: white;
     color: #ff4444;
-    font-size:x-small;
+    font-size:@tp-font-xs;
 }
 
 @moderator-color: #228822;
@@ -823,7 +824,7 @@ body > .content .link.compressed .midcol {
 
 .user-distinction {
   color: #888;
-  font-size:x-small;
+  font-size:@tp-font-xs;
   margin: 5px 5px 0px 5px;
 }
 
@@ -833,7 +834,7 @@ body > .content .link.compressed .midcol {
   font-weight: bold;
 }
 
-.tagline { color:#888; font-size:x-small; }
+.tagline { color:#888; font-size:@tp-font-xs; }
 .tagline a {color: @tp-link; text-decoration: none; }
 .tagline .friend    { color: @tp-accent-strong }
 .tagline .submitter { color: #0055df }
@@ -886,11 +887,11 @@ a.banned-user { color: red; }
 .collapsed .flair { display: none; }
 
 .flair input {
-    font-size: xx-small;
+    font-size: @tp-font-xxs;
 }
 
 .linkflairlabel {
-    font-size: x-small;
+    font-size: @tp-font-xs;
     max-width: 10em;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -898,7 +899,7 @@ a.banned-user { color: red; }
 }
 
 .link .flair {
-    font-size: x-small;
+    font-size: @tp-font-xs;
     margin-top: -1px;
 }
 
@@ -960,7 +961,7 @@ a.banned-user { color: red; }
 
 .flairselector {
     box-shadow: 4px 4px 4px #ccc;
-    font-size: x-small;
+    font-size: @tp-font-xs;
     position: absolute;
     width: 400px;
 }
@@ -1008,7 +1009,7 @@ a.banned-user { color: red; }
 .flairselector li:hover { background-color: #bbb;  border: 1px solid #bbb; }
 .flairselector li a:hover { text-decoration: none; }
 .flairselector li.selected { border: dashed 1px black; }
-.flairselector .title { font-size: x-small !important; }
+.flairselector .title { font-size: @tp-font-xs !important; }
 
 .flairselector form {
     border-top: solid 1px gray;
@@ -1107,7 +1108,7 @@ body.with-listing-chooser.explore-page #header .pagename {
     .explore-vault-details {
         color: #777;
         display: inline-block;
-        font-size: x-small;
+        font-size: @tp-font-xs;
         font-weight: normal;
         margin-left: 3px;
     }
@@ -1202,7 +1203,7 @@ body.with-listing-chooser.explore-page #header .pagename {
         overflow-y: hidden;
         position: relative;
         .md {
-            font-size: x-small;
+            font-size: @tp-font-xs;
             padding-bottom: 2px;
             p {
                 margin: 5px;
@@ -1301,7 +1302,7 @@ body.with-listing-chooser.explore-page #header .pagename {
   padding-left: 22px;
   min-width: 18px;
   width: auto;
-  font-size: 10px;
+  font-size: @tp-font-xxs;
   line-height: 16px;
 }
 
@@ -1781,7 +1782,7 @@ body.with-listing-chooser.explore-page #header .pagename {
 .commentarea .menuarea .toggle a {
     color: gray;
     font-weight: bold;
-    font-size: x-small;
+    font-size: @tp-font-xs;
 }
 
 .commentarea > .usertext {
@@ -2040,7 +2041,7 @@ a.star { text-decoration: none; color: @tp-upvote }
 
 /* links */
 
-.toggle .error { font-size: x-small; }
+.toggle .error { font-size: @tp-font-xs; }
 .toggle .option { display: none; }
 .toggle .option.active { display: inline; }
 
@@ -2069,7 +2070,7 @@ a.star { text-decoration: none; color: @tp-upvote }
     float:left;
     margin-top: 15px;
     color: #c6c6c6;
-    font-family: arial;
+    font-family: @tp-font;
     font-size: medium;
     text-align: right;
 }
@@ -2107,7 +2108,7 @@ a.star { text-decoration: none; color: @tp-upvote }
 /* recently viewed links */
 
 .gadget {
-  font-size: x-small;
+  font-size: @tp-font-xs;
 
   .midcol {
     width: 15px;
@@ -2654,7 +2655,7 @@ textarea.gray { color: gray; }
     background: white none repeat-x scroll center left;
 
     color: white;
-    font-size: 10px;
+    font-size: @tp-font-xxs;
     font-weight: bold;
 
     line-height: 20px;
@@ -2783,7 +2784,7 @@ textarea.gray { color: gray; }
 
 .login-form-side input[type=text],
 .login-form-side input[type=password] {
-    font-family: verdana; /* Override Chrome's defaults. */
+    font-family: @tp-font; /* Override Chrome's defaults. */
     font-size: 11px;
     .box-sizing(border-box);
     border: 1px solid #999;
@@ -3169,7 +3170,7 @@ label + #moresearchinfo {
 #search input[type=text] {
     border: 1px solid gray;
     font-size: 13px;
-    font-family: verdana; /* Override Chrome's defaults. */
+    font-family: @tp-font; /* Override Chrome's defaults. */
     width: 300px;
     .box-sizing(border-box);
     padding: 6px;
@@ -3555,7 +3556,7 @@ label + #moresearchinfo {
 
 .aboutpage .usertable { width: 45%; }
 
-.little a { font-size: x-small;  }
+.little a { font-size: @tp-font-xs;  }
 
 .oldbylink a {  background-color: #F0F0F0; margin: 2px; color: gray}
 
@@ -3807,7 +3808,7 @@ label + #moresearchinfo {
 }
 
 .details {
-    font-size: x-small; 
+    font-size: @tp-font-xs; 
     margin-bottom: 10px; 
 }
 
@@ -3941,7 +3942,7 @@ button.button[disabled] {
 
 .button a:hover { text-decoration: underline }
 
-.button .blog1 { font-size: x-small; }
+.button .blog1 { font-size: @tp-font-xs; }
 .button .blog1 .arrow { float:left; margin-left: 2px;  margin-right: 2px;  }
 
 .button .blog1 .headimgcell {
@@ -3963,7 +3964,7 @@ button.button[disabled] {
 .button .blog2 .bottomreddit { color: black; background-color: #c7def7; font-size: small; }
 .button .blog2 .score .submit { 
     display: block;
-    font-size: x-small; 
+    font-size: @tp-font-xs; 
     line-height: 17px;
 }
 
@@ -3977,7 +3978,7 @@ button.button[disabled] {
 .button .blog3 .right { float: right; margin-top: 5px; }
 .button .blog3 .score .submit { 
     display: block;
-    font-size: x-small; 
+    font-size: @tp-font-xs; 
     line-height: 17px;
 }
 .button .blog3 .tippr {
@@ -4453,7 +4454,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     border-radius: 3px;
     border: 1px solid;
     display: inline-block;
-    font-size: 10px;
+    font-size: @tp-font-xxs;
     line-height: 14px;
     padding: 0 4px;
 }
@@ -5380,7 +5381,7 @@ ul.tabmenu.formtab {
     padding:1px 10px;
 }
 .linefield .title + .gray {
-    font-size: x-small;
+    font-size: @tp-font-xs;
 }
 .linefield .small-field, .linefield .delete-field {
     padding: 0; 
@@ -5468,7 +5469,7 @@ ul.colors {
 }
 
 .linefield.usertext .edit-usertext {
-    font-size: x-small;
+    font-size: @tp-font-xs;
     float: right;
 }
 
@@ -5526,7 +5527,7 @@ ul.colors {
 }
 
 .campaign .status { 
-    font-size: x-small;
+    font-size: @tp-font-xs;
 }
 
 .campaign-detail {
@@ -5548,7 +5549,7 @@ ul.colors {
 }
 
 .existing-campaigns > table { 
-    font-size: x-small;
+    font-size: @tp-font-xs;
     width: 100%;
     margin: 0px 0; 
     border: none;
@@ -5691,7 +5692,7 @@ ul.colors {
     }
 }
 
-.campaign .bid-info { font-size: x-small; }
+.campaign .bid-info { font-size: @tp-font-xs; }
 .campaign .bid-info.error { color: red; }
 .campaign td.prefright { 
     padding: 8px 4px 4px;
@@ -5787,7 +5788,7 @@ ul.colors {
                     font-size: 15px;
                 }
                 .description {
-                    font-size: 10px;
+                    font-size: @tp-font-xxs;
                 }
             }
 
@@ -5860,7 +5861,7 @@ ul.colors {
     .label {
         margin: 5px 0;
         color: #404040;
-        font-size: 10px;
+        font-size: @tp-font-xxs;
     }
     ul {
         li {
@@ -5959,7 +5960,7 @@ div.timeseries {
 .timeseries-placeholder {
     width: 350px;
     height: 200px;
-    font-family: verdana;
+    font-family: @tp-font;
     font-size: small;
 }
 div.timeseries span.title {
@@ -6130,7 +6131,7 @@ p.totals-are-preliminary {
 .award-square .award-name {
     color: black;
     font-size: 22px;
-    font-family: verdana, arial, helvetica, sans-serif;
+    font-family: @tp-font;
     font-weight: bold;
     line-height: 1em;
 }
@@ -6239,7 +6240,7 @@ table.lined-table {
 
 .trophy-description {
     color: #555555;
-    font-size: x-small;
+    font-size: @tp-font-xs;
 }
 
 .dust {
@@ -6300,7 +6301,7 @@ table.lined-table {
 .datepicker.inuse { display: block; }
 
 .ui-datepicker-inline {
-    font-size: x-small; 
+    font-size: @tp-font-xs; 
     padding: 5px; 
 }
 .ui-corner-all {
@@ -6903,7 +6904,7 @@ div #campaign-field {
     .campaign-buttons,
     .campaign-total-budget {
         button {
-            font-size: 10px;
+            font-size: @tp-font-xxs;
             font-weight: normal;
             border-top-width: 1px;
             box-shadow: none;
@@ -6942,7 +6943,7 @@ div #campaign-field {
         }
         .thing {
             border-color: darken(@bg-color, 10%);
-            font-size: 10px;
+            font-size: @tp-font-xxs;
 
             .title {
                 padding: 0;
@@ -7289,7 +7290,7 @@ div #campaign-field {
     padding-left: 10px; 
     border-left: 1px #DDD dashed;  }
 .bidding-history .linefield .bid-table,
-.bidding-history .linefield .notes { font-size: x-small; }
+.bidding-history .linefield .notes { font-size: @tp-font-xs; }
 .bidding-history .linefield .notes { margin-top: 10px; }
 .bidding-history .linefield .notes p {
     text-indent: -20px;  
@@ -7418,7 +7419,7 @@ dd { margin-left: 20px;  }
 }
 
 .titlebox h1 {
-    font-family:arial,verdana,helvetica,sans-serif;
+    font-family: @tp-font;
     margin: 0px;
     margin-bottom: 5px;
     font-weight: bold;
@@ -7473,7 +7474,7 @@ dd { margin-left: 20px;  }
         padding: 0 4px;
         margin: 0;
         margin-top: 3px;
-        font-size: x-small;
+        font-size: @tp-font-xs;
     }
 }
 
@@ -7780,7 +7781,7 @@ dd { margin-left: 20px;  }
         }
 
         ul {
-            font-size: x-small;
+            font-size: @tp-font-xs;
             list-style-type: disc;
             margin: 4px 0 0 20px;
         }
@@ -7863,7 +7864,7 @@ dd { margin-left: 20px;  }
     height: 10px;
     line-height: 10px;
     text-align: center;
-    font-size: 10px;
+    font-size: @tp-font-xxs;
     background: #eee;
     color: #333;
     border: 1px solid #999;
@@ -8028,7 +8029,7 @@ dd { margin-left: 20px;  }
     padding: 5px;
     border: 1px solid @tp-border-accent;
     background-color: @tp-tint-soft;
-    font-family:arial,helvetica,sans-serif;
+    font-family: @tp-font;
     font-size: larger;
     border-radius:3px;
 }
@@ -8152,7 +8153,7 @@ a.pretty-button:hover { text-decoration: none !important }
     background: white none repeat-x scroll center left;
 
     color: #111;
-    font-size: 10px;
+    font-size: @tp-font-xxs;
     font-weight: normal;
 
     border-radius: 3px;
@@ -8321,7 +8322,7 @@ body:not(.gold) .allminus-link {
 
 .rel-note button[type=submit] { 
     visibility: hidden;
-    font-size: x-small;
+    font-size: @tp-font-xs;
     padding-top: 1px;
     padding-bottom: 1px;
     margin: 0px;
@@ -8331,7 +8332,7 @@ body:not(.gold) .allminus-link {
 .rel-note.edited input[name=note] { width: 65%; }
 
 .rel-note input[name=note] {
-    font-size: xx-small;
+    font-size: @tp-font-xxs;
     max-width: 200px;
     width: 100%;
 }
@@ -8576,7 +8577,7 @@ form#banned textarea {
 
 .coins-gold {
   .remaining {
-    font-size: 10px;
+    font-size: @tp-font-xxs;
     text-align: center;
     width: 125px;
     position: absolute;
@@ -9146,7 +9147,7 @@ form#banned textarea {
 
 .api-help .toc .mode-selector {
     display: inline-block;
-    font-size: x-small;
+    font-size: @tp-font-xs;
     border-radius: 5px;
     border: 1px solid #888;
     margin-top: 6px;
@@ -9518,7 +9519,7 @@ form#banned textarea {
     padding: 7px;
     position: relative;
     width: 880px;
-    font-size: x-small;
+    font-size: @tp-font-xs;
 }
 
 .developed-app.collapsed, .authorized-app { min-height: 100px; }
@@ -9537,7 +9538,7 @@ form#banned textarea {
 }
 
 .app-details h2 { font-size: medium; margin: 0px; }
-.app-details h3 { font-size: x-small; margin: 0px; }
+.app-details h3 { font-size: @tp-font-xs; margin: 0px; }
 
 .app-icon {
     display: inline-block;
@@ -9893,7 +9894,7 @@ body.post-under-6h-old .gilded-icon {
 .permission-bit.removed { text-decoration: line-through; }
 .permission-bit.none { font-style: italic; }
 
-.permissions-edit { font-size: x-small; }
+.permissions-edit { font-size: @tp-font-xs; }
 
 .permission-selector {
     border: 1px solid black;
@@ -10319,7 +10320,7 @@ body.with-listing-chooser {
         display: block;
         font-weight: bold;
         margin-left: 5px;
-        font-size: 10px;
+        font-size: @tp-font-xxs;
     }
     .savedcategory {
         border: 1px solid #ccc;
@@ -11166,7 +11167,7 @@ body.with-listing-chooser {
     @bg-color: #FBFBFB;
     @text-color: @color-semi-black;
 
-    font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    font-family: @tp-font;
     background-color: @bg-color;
     border: 1px solid darken(@bg-color, 10%);
     border-radius: 0;
