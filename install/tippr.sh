@@ -717,6 +717,15 @@ if [ -d "$TIPPR_VENV" ] && [ ! -w "$TIPPR_VENV" ]; then
 fi
 
 # Check if a working venv already exists (e.g., pre-created by CI workflow).
+# On a re-install, stop the running stack before touching the venv: jobs and
+# consumers that start while packages are being reinstalled fail (e.g. with
+# pkg_resources missing mid-upgrade). Everything is started again at the end.
+if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ] && \
+        systemctl is-active -q tippr.target 2>/dev/null; then
+    echo "Stopping tippr.target during the install"
+    systemctl stop tippr.target
+fi
+
 # A working venv has a python executable that can import basic stdlib modules.
 VENV_OK=0
 if [ -x "$TIPPR_VENV/bin/python" ]; then
