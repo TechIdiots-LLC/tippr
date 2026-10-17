@@ -5,6 +5,7 @@
 @import "search.less";
 @import "interstitial.less";
 @import "mobile-grid.less";
+@import "markdown-toolbar.less";
 .no-select {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -2885,6 +2886,8 @@ textarea.gray { color: gray; }
 .line-through { text-decoration: line-through }
 
 #noresults { margin-right: 310px;  }
+/* comment pages already say "no comments (yet)" */
+.commentarea #noresults { display: none; }
 
 #ad-frame, #ad_main {
     border: 0px;

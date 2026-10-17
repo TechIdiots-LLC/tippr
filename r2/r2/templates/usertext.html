@@ -97,6 +97,14 @@
           <td>super^script</td>
           <td>super<sup>script</sup></td>
       </tr>
+      <tr>
+          <td>&gt;!${_("spoiler")}!&lt;</td>
+          <td><span class="md-spoiler-text">${_("spoiler")}</span></td>
+      </tr>
+      <tr>
+          <td>:thumbsup: :tada: :heart:</td>
+          <td>&#128077; &#127881; &#10084;&#65039;</td>
+      </tr>
       % if show_embed_help:
       <tr>
           <td>${_md('Links on their own line will be embedded:\n\nhttps://example.com')}</td>
@@ -104,6 +112,26 @@
       </tr>
       % endif
     </table>
+  </div>
+</%def>
+
+## Formatting buttons for the text box (markdown-toolbar.js). They only insert
+## markdown, so they work the same as typing it.
+<%def name="md_toolbar()">
+  <div class="md-toolbar" role="toolbar" aria-label="${_('formatting')}">
+    <button type="button" class="md-tb" data-md="bold" title="${_('bold')} (Ctrl+B)"><b>B</b></button>
+    <button type="button" class="md-tb" data-md="italic" title="${_('italic')} (Ctrl+I)"><i>I</i></button>
+    <button type="button" class="md-tb" data-md="strike" title="${_('strikethrough')}"><s>S</s></button>
+    <button type="button" class="md-tb" data-md="superscript" title="${_('superscript')}">x<sup>2</sup></button>
+    <span class="md-tb-sep"></span>
+    <button type="button" class="md-tb" data-md="link" title="${_('link')}">${_('link')}</button>
+    <button type="button" class="md-tb" data-md="quote" title="${_('quote')}">&#10077;</button>
+    <button type="button" class="md-tb" data-md="code" title="${_('code')}">&lt;/&gt;</button>
+    <button type="button" class="md-tb" data-md="list" title="${_('bulleted list')}">&#8226;&#8212;</button>
+    <button type="button" class="md-tb" data-md="spoiler" title="${_('spoiler')}">${_('spoiler')}</button>
+    <span class="md-tb-sep"></span>
+    <button type="button" class="md-tb md-tb-emoji" title="${_('emoji')}" aria-haspopup="dialog" aria-expanded="false">&#128578;</button>
+    <button type="button" class="md-tb md-tb-preview" aria-pressed="false">${_('preview')}</button>
   </div>
 </%def>
 
@@ -147,6 +175,7 @@
     ##keep this on one line so we don't add extra spaces
     <div class="usertext-edit md-container"
          style="${"" if thing.creating else 'display: none'}">
+      ${md_toolbar()}
       <div class="md">
         <textarea rows="1" cols="1"
                   name="${thing.name}"
@@ -154,6 +183,7 @@
                   ${data(**thing.data_attrs)}
                   >${keep_space(thing.text)}</textarea>
       </div>
+      <div class="md-preview md" style="display:none" aria-live="polite"></div>
 
       <div class="bottom-area">
         ${toggle_button("help-toggle", _("formatting help"), _("hide help"),

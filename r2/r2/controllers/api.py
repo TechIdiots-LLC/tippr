@@ -231,6 +231,18 @@ class ApiController(TipprController):
         else:
             return {'data': {'features': feature.all_enabled(None)}}
 
+    @json_validate(
+        VUser(),
+        VModhash(),
+        text=VMarkdownLength("text", max_length=40000, empty_error=None),
+    )
+    def POST_preview_markdown(self, responder, text):
+        """Render text the way it will look once saved (the comment box's
+        preview). Uses the same renderer as comments and posts."""
+        if responder.has_errors("text", errors.TOO_LONG):
+            return {"html": "", "error": _("this is too long")}
+        return {"html": safemarkdown(text) or ""}
+
     @json_validate(user=VUname(("user",)))
     @api_doc(api_section.users)
     def GET_username_available(self, responder, user):

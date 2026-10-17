@@ -1,0 +1,158 @@
+// Formatting toolbar, emoji picker and preview for markdown text boxes
+// (markdown-toolbar.js, templates/usertext.html)
+
+.md-toolbar {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    max-width: 500px;
+    margin-bottom: 3px;
+
+    .md-tb {
+        margin: 0;  // overrides .usertext button
+        min-width: 26px;
+        height: 24px;
+        padding: 0 6px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background: #f8f8f8;
+        color: #333;
+        font-size: 12px;
+        line-height: 22px;
+        cursor: pointer;
+
+        &:hover, &:focus {
+            background: #eef3fa;
+            border-color: #a9c3e6;
+        }
+
+        &[aria-pressed="true"], &[aria-expanded="true"] {
+            background: #dbe7f7;
+            border-color: #7fa2d1;
+        }
+
+        sup {
+            font-size: 8px;
+        }
+    }
+
+    .md-tb-emoji {
+        font-size: 15px;
+    }
+
+    .md-tb-preview {
+        margin-left: auto;
+    }
+
+    .md-tb-sep {
+        width: 1px;
+        height: 18px;
+        margin: 0 3px;
+        background: #ddd;
+    }
+}
+
+.usertext .md-toolbar .md-tb {
+    margin: 0;
+}
+
+.md-emoji-picker {
+    position: absolute;
+    top: 28px;
+    right: 0;
+    z-index: 100;
+    width: 320px;
+    max-width: calc(~"100vw - 32px");
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .15);
+
+    .md-emoji-search {
+        box-sizing: border-box;
+        width: 100%;
+        margin-bottom: 6px;
+        padding: 4px 6px;
+        font-size: 13px;
+    }
+
+    .md-emoji-list {
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .md-emoji-heading {
+        margin: 4px 2px 2px;
+        color: #888;
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .md-emoji-grid {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .md-emoji {
+        width: 32px;
+        height: 32px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: none;
+        font-size: 20px;
+        line-height: 32px;
+        cursor: pointer;
+
+        &:hover, &:focus {
+            background: #eef3fa;
+        }
+    }
+}
+
+.usertext-edit .md-preview {
+    box-sizing: border-box;
+    max-width: 500px;
+    margin-top: 5px;
+    padding: 6px 8px;
+    border: 1px dashed #ccc;
+    border-radius: 3px;
+    background: #fcfcfc;
+}
+
+// >!spoilers!< stay hidden until hovered, focused or tapped
+.md .md-spoiler-text {
+    border-radius: 2px;
+    background: #545452;
+    color: transparent;
+    cursor: pointer;
+
+    a {
+        color: transparent;
+    }
+
+    &:hover, &:focus, &.revealed {
+        background: #e6e6de;
+        color: inherit;
+
+        a {
+            color: inherit;
+        }
+    }
+}
+
+@media (max-width: 600px) {
+    .md-toolbar, .usertext-edit .md-preview {
+        max-width: 100%;
+    }
+}
+
+// .usertext forms are overflow: auto, which would clip the emoji picker
+.md-picker-open {
+    overflow: visible !important;
+}

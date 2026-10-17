@@ -656,6 +656,7 @@ module["tippr"] = LocalizedModule("tippr.js",
     "tippr-hook.js",
     "link-click-tracking.js",
     "warn-on-unload.js",
+    "markdown-toolbar.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,
         "moderator_invite": ModeratorPermissionSet,
