@@ -30,7 +30,7 @@ from datetime import timedelta
 from itertools import chain
 from operator import itemgetter
 
-from pycassa.types import LongType
+from r2.lib.db.cassandra_compat import LongType
 from pylons import app_globals as g
 from pylons.i18n import _
 

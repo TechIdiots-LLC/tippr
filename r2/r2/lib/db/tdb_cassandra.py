@@ -1159,7 +1159,69 @@ class ColumnQuery:
         # Logic of standard tippr query is opposite of cassandra
         self.column_reversed = False
 
+    def _iter_time_uuid(self, yield_column_names=False):
+        """TimeUUID-named columns: fetch the rows and sort, bound and limit
+        them by time here. cassandra_compat keeps column names as text, and
+        text order isn't time order for UUID1s, so slicing in the store
+        (column_start / column_count) would pick the wrong columns.
+        """
+        def to_uuid(name):
+            if isinstance(name, UUID):
+                return name
+            try:
+                return UUID(str(name))
+            except (TypeError, ValueError):
+                return None
+
+        try:
+            rows = self.cls._cf.multiget(self.rowkeys)
+        except NotFoundException:
+            return
+
+        columns = {}
+        for row in rows.values():
+            for name, value in row.items():
+                key = to_uuid(name)
+                if key is not None:
+                    columns[key] = value
+
+        # column_reversed (the default) means newest first
+        names = sorted(columns, key=lambda u: u.time,
+                       reverse=self.column_reversed)
+
+        def before(a, b):
+            """a comes before b in this query's order"""
+            return a.time > b.time if self.column_reversed else a.time < b.time
+
+        start = to_uuid(self.column_start) if self.column_start else None
+        if start is not None:
+            # paging: everything after column_start, which itself is excluded
+            names = [n for n in names if before(start, n)]
+        finish = to_uuid(self.column_finish) if self.column_finish else None
+        if finish is not None:
+            names = [n for n in names if not before(finish, n)]
+
+        names = names[:self._limit]
+        if not names:
+            return
+
+        l_columns = [{name: columns[name]} for name in names]
+        objs = self.column_to_obj(l_columns)
+        if yield_column_names:
+            if len(names) == 1:
+                ret = (names[0], objs),
+            else:
+                ret = list(zip(names, objs))
+        else:
+            ret = objs
+        ret, is_single = tup(ret, ret_is_single=True)
+        yield from ret
+
     def __iter__(self, yield_column_names=False):
+        if self.cls._compare_with == TIME_UUID_TYPE:
+            yield from self._iter_time_uuid(yield_column_names)
+            return
+
         retrieved = 0
         column_start = self.column_start
         while retrieved < self._limit:
@@ -1175,31 +1237,14 @@ class ColumnQuery:
 
                 # multiget returns OrderedDict {rowkey: {column_name: column_value}}
                 # combine into single OrderedDict of {column_name: column_value}
-                nrows = len(list(r.keys()))
-                if nrows == 0:
+                if not r:
                     return
-                elif nrows == 1:
-                    columns = list(r.values())[0]
-                # If the view's column comparator is TimeUUID, convert
-                # textual UUID column names back to UUID objects so
-                # sorting and downstream processing work correctly.
-                if self.cls._compare_with == TIME_UUID_TYPE and columns:
-                    from uuid import UUID
-                    new_cols = OrderedDict()
-                    for k, v in columns.items():
-                        try:
-                            new_key = UUID(k) if not isinstance(k, UUID) else k
-                        except Exception:
-                            new_key = k
-                        new_cols[new_key] = v
-                    columns = new_cols
-                else:
-                    r_combined = {}
-                    for d in list(r.values()):
-                        r_combined.update(d)
-                    columns = OrderedDict(sorted(list(r_combined.items()),
-                                                 key=lambda t: self.sort_key(t[0]),
-                                                 reverse=self.column_reversed))
+                r_combined = {}
+                for d in r.values():
+                    r_combined.update(d)
+                columns = OrderedDict(sorted(r_combined.items(),
+                                             key=lambda t: self.sort_key(t[0]),
+                                             reverse=self.column_reversed))
             except NotFoundException:
                 return
 

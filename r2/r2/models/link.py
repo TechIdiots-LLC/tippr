@@ -30,13 +30,13 @@ from itertools import cycle
 
 import pytz
 import simplejson as json
-from pycassa.cassandra.ttypes import NotFoundException
-from pycassa.system_manager import (
+from r2.lib.db.cassandra_compat import NotFoundException
+from r2.lib.db.cassandra_compat import (
     ASCII_TYPE,
     DOUBLE_TYPE,
     UTF8_TYPE,
 )
-from pycassa.types import LongType
+from r2.lib.db.cassandra_compat import LongType
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c

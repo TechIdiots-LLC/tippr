@@ -27,7 +27,7 @@ from collections import defaultdict
 from datetime import timedelta
 from itertools import chain
 
-import pycassa
+from r2.lib.db import cassandra_compat
 from pylons import app_globals as g
 
 from r2.lib.db import tdb_cassandra
@@ -102,7 +102,7 @@ class AccountVaultFeedback(tdb_cassandra.DenormalizedRelation):
         try:
             row = AccountVaultFeedback._cf.get(account._id36,
                                             column_count=max_column_count)
-        except pycassa.NotFoundException:
+        except cassandra_compat.NotFoundException:
             return feedback
         for colkey, colval in row.items():
             action, vault_id36 = colkey.split('.')

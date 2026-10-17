@@ -25,7 +25,7 @@
 
 from itertools import product
 
-from pycassa.types import IntegerType
+from r2.lib.db.cassandra_compat import IntegerType
 
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup

@@ -38,7 +38,8 @@ from r2.lib.app_globals import Globals
 
 def get_operational_exceptions():
     import _pylibmc
-    import pycassa.pool
+    import cassandra
+    import cassandra.cluster
     import sqlalchemy.exc
 
     import r2.lib.cache
@@ -52,9 +53,12 @@ def get_operational_exceptions():
         r2.lib.lock.TimeoutExpired,
         sqlalchemy.exc.OperationalError,
         sqlalchemy.exc.IntegrityError,
-        pycassa.pool.AllServersUnavailable,
-        pycassa.pool.NoConnectionAvailable,
-        pycassa.pool.MaximumRetryException,
+        # Cassandra unreachable or overloaded (pycassa's AllServersUnavailable
+        # and friends before)
+        cassandra.cluster.NoHostAvailable,
+        cassandra.OperationTimedOut,
+        cassandra.Unavailable,
+        cassandra.Timeout,
     )
 
 

@@ -27,7 +27,7 @@ import json
 from datetime import datetime, timedelta
 from uuid import uuid1
 
-from pycassa.system_manager import TIME_UUID_TYPE
+from r2.lib.db.cassandra_compat import TIME_UUID_TYPE
 from pylons import app_globals as g
 
 from r2.lib import hooks

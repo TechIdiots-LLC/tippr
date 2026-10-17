@@ -31,8 +31,8 @@ from threading import local
 
 import pylibmc
 from _pylibmc import MemcachedError
-from pycassa import ColumnFamily
-from pycassa.cassandra.ttypes import ConsistencyLevel
+from r2.lib.db.cassandra_compat import ColumnFamily
+from cassandra import ConsistencyLevel
 from pylons import app_globals as g
 
 from r2.lib.hardcachebackend import HardCacheBackend

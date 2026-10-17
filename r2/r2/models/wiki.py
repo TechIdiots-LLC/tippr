@@ -33,8 +33,8 @@ except Exception:
 from datetime import timedelta
 from io import StringIO
 
-import pycassa.types
-from pycassa.system_manager import TIME_UUID_TYPE
+from r2.lib.db import cassandra_compat
+from r2.lib.db.cassandra_compat import TIME_UUID_TYPE
 from pylons import app_globals as g
 from pylons import tmpl_context as c
 
@@ -492,9 +492,9 @@ class ImagesByWikiPage(tdb_cassandra.View):
     _read_consistency_level = tdb_cassandra.CL.QUORUM
     _write_consistency_level = tdb_cassandra.CL.QUORUM
     _extra_schema_creation_args = {
-        "key_validation_class": pycassa.types.AsciiType(),
-        "column_name_class": pycassa.types.UTF8Type(),
-        "default_validation_class": pycassa.types.UTF8Type(),
+        "key_validation_class": cassandra_compat.AsciiType(),
+        "column_name_class": cassandra_compat.UTF8Type(),
+        "default_validation_class": cassandra_compat.UTF8Type(),
     }
 
     @classmethod

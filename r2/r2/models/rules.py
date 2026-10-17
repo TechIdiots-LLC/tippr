@@ -28,7 +28,7 @@ import time
 from datetime import datetime
 
 import pytz
-from pycassa.system_manager import UTF8_TYPE
+from r2.lib.db.cassandra_compat import UTF8_TYPE
 from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra

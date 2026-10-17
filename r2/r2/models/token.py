@@ -28,7 +28,7 @@ import functools
 from base64 import urlsafe_b64encode
 from os import urandom
 
-from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
+from r2.lib.db.cassandra_compat import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 from pylons import app_globals as g
 from pylons import tmpl_context as c
 from pylons.i18n import _

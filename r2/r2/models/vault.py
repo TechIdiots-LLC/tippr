@@ -31,10 +31,9 @@ import json
 import random
 import re
 
-import pycassa
-from pycassa import types
-from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
-from pycassa.util import convert_uuid_to_time
+from r2.lib.db import cassandra_compat
+from r2.lib.db.cassandra_compat import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
+from r2.lib.db.cassandra_compat import convert_uuid_to_time
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c
@@ -1533,7 +1532,8 @@ class SubscribedVaultsByAccount(tdb_cassandra.DenormalizedRelation):
 class SubscriptionsByDay(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
-    _compare_with = types.CompositeType(types.AsciiType(), types.AsciiType())
+    _compare_with = cassandra_compat.CompositeType(
+        cassandra_compat.AsciiType(), cassandra_compat.AsciiType())
     _extra_schema_creation_args = {
         "key_validation_class": DATE_TYPE,
     }
@@ -2192,7 +2192,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiVault):
         "column_name_class": UTF8_TYPE,
         "default_validation_class": UTF8_TYPE,
         "column_validation_classes": {
-            "date": pycassa.system_manager.DATE_TYPE,
+            "date": cassandra_compat.DATE_TYPE,
         },
     }
     _float_props = (

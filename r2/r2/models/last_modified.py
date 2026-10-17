@@ -25,7 +25,7 @@
 
 import datetime
 
-from pycassa.system_manager import ASCII_TYPE, DATE_TYPE
+from r2.lib.db.cassandra_compat import ASCII_TYPE, DATE_TYPE
 from pylons import app_globals as g
 
 from r2.lib.db import tdb_cassandra

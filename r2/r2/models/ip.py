@@ -1,8 +1,8 @@
 import datetime
 
 import pytz
-from pycassa.batch import Mutator
-from pycassa.system_manager import ASCII_TYPE
+from r2.lib.db.cassandra_compat import Mutator
+from r2.lib.db.cassandra_compat import ASCII_TYPE
 from pylons import app_globals as g
 
 from r2.lib.contrib.ipaddress import ip_address

@@ -16,9 +16,11 @@ refactor.
 """
 from __future__ import annotations
 
+import datetime
 import logging
 import pickle
 import time
+import uuid
 from collections import OrderedDict
 from typing import Dict, Iterable, Optional
 
@@ -28,27 +30,101 @@ from cassandra import InvalidRequest
 
 log = logging.getLogger(__name__)
 
-# Compatibility constants for pycassa types
+# Column and key type names, as pycassa had them (the models' _compare_with
+# and schema arguments). Code compares against these, so there must be only
+# one set: this one.
 UTF8_TYPE = 'org.apache.cassandra.db.marshal.UTF8Type'
 ASCII_TYPE = 'org.apache.cassandra.db.marshal.AsciiType'
 TIME_UUID_TYPE = 'org.apache.cassandra.db.marshal.TimeUUIDType'
+DATE_TYPE = 'org.apache.cassandra.db.marshal.DateType'
 LONG_TYPE = 'org.apache.cassandra.db.marshal.LongType'
+DOUBLE_TYPE = 'org.apache.cassandra.db.marshal.DoubleType'
+FLOAT_TYPE = 'org.apache.cassandra.db.marshal.FloatType'
 INT_TYPE = 'org.apache.cassandra.db.marshal.Int32Type'
 COUNTER_COLUMN_TYPE = 'org.apache.cassandra.db.marshal.CounterColumnType'
 
 
+# pycassa.types: column type classes some models declare their columns with
+# (LongType() etc.). The storage here keeps column names as text, so these
+# only mark the intended type.
+class CassandraType:
+    def __eq__(self, other):
+        return type(self) is type(other)
+
+    def __hash__(self):
+        return hash(type(self))
+
+    def __repr__(self):
+        return "%s()" % type(self).__name__
+
+
+class LongType(CassandraType):
+    pass
+
+
+class IntegerType(CassandraType):
+    pass
+
+
+class DateType(CassandraType):
+    pass
+
+
+class AsciiType(CassandraType):
+    pass
+
+
+class UTF8Type(CassandraType):
+    pass
+
+
+class CompositeType(CassandraType):
+    """A column type made of several types, e.g. CompositeType(AsciiType(),
+    AsciiType())."""
+    def __init__(self, *types):
+        self.types = types
+
+    def __eq__(self, other):
+        return isinstance(other, CompositeType) and self.types == other.types
+
+    def __hash__(self):
+        return hash((CompositeType, self.types))
+
+    def __repr__(self):
+        return "CompositeType(%s)" % ", ".join(map(repr, self.types))
+
+
 def convert_uuid_to_time(uuid_obj):
-    """Convert a UUID1 to a Unix timestamp.
+    """Convert a UUID1 (or its string form) to a Unix timestamp, as
+    pycassa.util.convert_uuid_to_time did.
 
     UUID1 timestamps are measured in 100-nanosecond intervals since
     October 15, 1582 (the date of Gregorian calendar reform).
     """
+    if isinstance(uuid_obj, datetime.datetime):
+        # pycassa turned datetime column names into TimeUUIDs; here they
+        # are stored as they are (e.g. TryLater's scheduled times)
+        return uuid_obj.timestamp()
+    if not isinstance(uuid_obj, uuid.UUID):
+        # column names come back from cassandra_compat as text: a UUID, or a
+        # datetime written as a TimeUUID column name
+        text = str(uuid_obj)
+        try:
+            uuid_obj = uuid.UUID(text)
+        except ValueError:
+            return datetime.datetime.fromisoformat(text).timestamp()
     # UUID1 timestamp is 100-nanosecond intervals since Oct 15, 1582
     # Unix epoch is Jan 1, 1970
     # Difference is 122192928000000000 (100-ns intervals)
     EPOCH_DIFF = 0x01b21dd213814000
     timestamp = (uuid_obj.time - EPOCH_DIFF) / 1e7
     return timestamp
+
+def _stored_key(key):
+    """Row keys are stored as text (inserts write str(key)), so look up UUID
+    keys (UuidThing ids) by their string form too."""
+    return str(key) if isinstance(key, uuid.UUID) else key
+
 
 class NotFoundException(Exception):
     pass
@@ -176,12 +252,15 @@ class ColumnFamily:
         keys = list(keys)
         if not keys:
             return {}
-        placeholders = ','.join(["%s"] * len(keys))
+        # keys are stored as text (insert() writes str(key)); results come
+        # back under the keys the caller asked for, e.g. UUID objects
+        requested = {_stored_key(k): k for k in keys}
+        placeholders = ','.join(["%s"] * len(requested))
         cql = "SELECT key, columns FROM %s.%s WHERE key IN (%s)" % (self.keyspace, self.table, placeholders)
-        # pass keys through as-is (they may be text or UUID/timeuuid)
-        rows = self.session.execute(cql, tuple(keys))
+        rows = self.session.execute(cql, tuple(requested))
         ret = {}
         for row in rows:
+            result_key = requested.get(str(row.key), str(row.key))
             raw = row.columns if hasattr(row, 'columns') else row[1]
             od = self._deserialize_map(raw)
             if columns is not None:
@@ -227,9 +306,9 @@ class ColumnFamily:
                         od_ts[k] = (v[0], v[1])
                     else:
                         od_ts[k] = (v, None)
-                ret[str(row.key)] = od_ts
+                ret[result_key] = od_ts
             else:
-                ret[str(row.key)] = self._strip_timestamps(od)
+                ret[result_key] = self._strip_timestamps(od)
         return ret
 
     def get_range(self, start: Optional[str] = None, row_count: Optional[int] = None):
@@ -270,7 +349,7 @@ class ColumnFamily:
         """
         cql = "SELECT columns FROM %s.%s WHERE key = %%s" % (self.keyspace, self.table)
         # pass key through as-is (text or UUID)
-        params = (key,)
+        params = (_stored_key(key),)
         row = self.session.execute(cql, params).one()
         if not row:
             raise NotFoundException()
@@ -339,7 +418,22 @@ class ColumnFamily:
             log.exception("cassandra_compat: insert failed: %s", cql)
             raise
 
-    def remove(self, key: str, columns: Optional[Iterable[str]] = None):
+    def remove(self, key: str, columns: Optional[Iterable[str]] = None,
+               timestamp: Optional[int] = None):
+        """Delete a row, or some of its columns. With timestamp (pycassa's
+        row delete "as of" a time), delete the columns written at or before
+        that write timestamp, using the timestamps stored with each value.
+        """
+        key = _stored_key(key)
+        if timestamp is not None and columns is None:
+            try:
+                row = self.get(key, include_timestamp=True)
+            except NotFoundException:
+                return
+            columns = [name for name, (value, ts) in row.items()
+                       if ts is not None and ts <= timestamp]
+            if not columns:
+                return
         if columns is None:
             cql = "DELETE FROM %s.%s WHERE key = %%s" % (self.keyspace, self.table)
             self.session.execute(cql, (key,))

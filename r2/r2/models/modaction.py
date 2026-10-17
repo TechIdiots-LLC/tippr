@@ -27,7 +27,7 @@ import itertools
 from datetime import timedelta
 from uuid import UUID
 
-from pycassa.system_manager import TIME_UUID_TYPE
+from r2.lib.db.cassandra_compat import TIME_UUID_TYPE
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c

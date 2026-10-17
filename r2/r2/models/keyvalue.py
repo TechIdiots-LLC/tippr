@@ -25,8 +25,8 @@
 
 import json
 
-from pycassa import NotFoundException
-from pycassa.system_manager import UTF8_TYPE
+from r2.lib.db.cassandra_compat import NotFoundException
+from r2.lib.db.cassandra_compat import UTF8_TYPE
 
 from r2.lib.db.tdb_cassandra import ThingMeta
 

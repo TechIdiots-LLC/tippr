@@ -29,7 +29,7 @@ Fix the urls of previously-uploaded preview images so they all work.
 
 
 import boto
-import pycassa
+from cassandra import InvalidRequest
 from boto.s3.key import Key
 from pylons import app_globals as g
 from r2.lib.media import _get_scrape_url
@@ -118,7 +118,7 @@ for uid, columns in LinksByImage._cf.get_range():
         cache._committed = True
         try:
             cache._destroy()
-        except pycassa.cassandra.ttypes.InvalidRequestException as e:
+        except InvalidRequest as e:
             print('    skipping cache deletion (%s)' % e.why)
             continue
     # Delete *after* we've updated all the Links so they'll continue to work

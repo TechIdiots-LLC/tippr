@@ -30,7 +30,7 @@ from collections import Counter, OrderedDict
 from datetime import datetime, timedelta
 
 import bcrypt
-from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
+from r2.lib.db.cassandra_compat import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c

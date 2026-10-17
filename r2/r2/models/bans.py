@@ -25,7 +25,7 @@
 
 from datetime import datetime
 
-from pycassa.util import convert_uuid_to_time
+from r2.lib.db.cassandra_compat import convert_uuid_to_time
 from pylons import app_globals as g
 
 from r2.models.trylater import TryLaterBySubject
