@@ -147,6 +147,7 @@ def make_map(config):
     mc('/admin/email', controller='admintool', action='email')
     mc('/admin/ads', controller='admintool', action='ads')
     mc('/admin/backups', controller='admintool', action='backups')
+    mc('/admin/errors', controller='admintool', action='errors')
     mc('/admin/gold', controller='admintool', action='gold')
 
     # Privacy Admin Dashboard

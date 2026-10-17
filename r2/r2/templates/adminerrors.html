@@ -1,0 +1,73 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+##
+## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
+## TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%!
+  import datetime
+
+  def utc(timestamp):
+      return datetime.datetime.utcfromtimestamp(timestamp).strftime(
+          "%Y-%m-%d %H:%M UTC")
+%>
+
+<div class="admin-errors">
+<h1>${_("errors")}</h1>
+
+<p>
+  ${_("Errors pages didn't handle, grouped by the error and the line of code that raised it, newest first. Each group keeps its last traceback. Full logs: journalctl -u tippr-paster.")}
+</p>
+
+%if thing.errors:
+  <form action="/api/clear_errors" method="post" class="pretty-form"
+        onsubmit="return post_form(this, 'clear_errors');">
+    <button class="btn" type="submit">${_("clear the list")}</button>
+    <span class="status"></span>
+  </form>
+
+  <table class="lined-table error-list">
+    <tr>
+      <th>${_("error")}</th><th>${_("count")}</th>
+      <th>${_("last seen")}</th><th>${_("first seen")}</th>
+    </tr>
+    %for e in thing.errors:
+      <tr>
+        <td>
+          <code>${e["summary"]}</code><br>
+          <small>${e["where"]}</small><br>
+          <small>${e["path"]}${(" " + _("(user %(name)s)") % dict(name=e["user"])) if e.get("user") else ""}</small>
+          <details>
+            <summary>${_("traceback")}</summary>
+            <pre>${e["traceback"]}</pre>
+          </details>
+        </td>
+        <td>${e["count"]}</td>
+        <td>${utc(e["last"])}</td>
+        <td>${utc(e["first"])}</td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No errors recorded.")}</p>
+%endif
+</div>

@@ -42,7 +42,7 @@ def admin_menu(**kwargs):
     buttons = [
         OffsiteButton("traffic", "/traffic"),
         NavButton(menu.awards, "awards"),
-        NavButton(menu.errors, "error log"),
+        NavButton(menu.errors, "errors"),
         NavButton(menu.email_settings, "email"),
         NavButton(menu.ad_settings, "ads"),
         NavButton(menu.backups, "backups"),

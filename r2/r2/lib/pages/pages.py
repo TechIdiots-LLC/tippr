@@ -3746,6 +3746,14 @@ class AdminBackups(Templated):
         Templated.__init__(self)
 
 
+class AdminErrors(Templated):
+    """Recent unhandled errors (r2.lib.error_log)."""
+    def __init__(self):
+        from r2.lib import error_log
+        self.errors = error_log.recent()
+        Templated.__init__(self)
+
+
 class AdminGold(Templated):
     """The admin interface for giving or taking days of gold for a user."""
     def __init__(self, recipient):

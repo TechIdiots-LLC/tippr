@@ -219,6 +219,12 @@ class BaseController(WSGIController):
     def pre(self): pass
     def post(self): pass
 
+    def on_unhandled_error(self, exc):
+        """Called by the controller shim for an error an action didn't
+        handle; keeps it for /admin/errors."""
+        from r2.lib import error_log
+        error_log.record(exc)
+
     def fix_cookie_header(self):
         """
         Detect and drop busted `Cookie` headers

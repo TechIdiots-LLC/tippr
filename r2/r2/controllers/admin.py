@@ -28,6 +28,7 @@ from r2.lib.pages import (
     AdminBackups,
     AdminCoins,
     AdminEmailSettings,
+    AdminErrors,
     AdminGold,
     AdminPage,
 )
@@ -62,3 +63,7 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_backups(self):
         return AdminPage(content=AdminBackups()).render()
+
+    @validate(VAdmin())
+    def GET_errors(self):
+        return AdminPage(content=AdminErrors()).render()

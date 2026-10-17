@@ -4675,6 +4675,16 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+    )
+    def POST_clear_errors(self, form, jquery):
+        """Empty the list on /admin/errors."""
+        from r2.lib import error_log
+        error_log.clear()
+        jquery.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         action=VOneOf("action", ("export", "delete", "restore", "import",
                                  "create_key", "revoke_key")),
         name=VLength("name", max_length=40, empty_error=None),

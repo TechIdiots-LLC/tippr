@@ -1,4 +1,4 @@
-// /admin/backups (templates/adminbackups.html)
+// admin pages: /admin/backups (templates/adminbackups.html)
 
 .admin-backups {
     max-width: 960px;
@@ -35,5 +35,26 @@
 
     .error {
         color: #c0392b;
+    }
+}
+
+// /admin/errors (templates/adminerrors.html)
+.admin-errors {
+    max-width: 1100px;
+
+    .error-list td {
+        vertical-align: top;
+        padding: 4px 8px;
+    }
+
+    pre {
+        max-height: 360px;
+        overflow: auto;
+        padding: 8px;
+        background: @tp-panel;
+        border: 1px solid @tp-border;
+        border-radius: 6px;
+        font-size: @tp-font-xs;
+        white-space: pre-wrap;
     }
 }

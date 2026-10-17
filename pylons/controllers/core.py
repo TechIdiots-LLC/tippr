@@ -119,6 +119,12 @@ class WSGIController:
             # traceback in the response.
             log.exception("Error handling %s %s", environ.get('REQUEST_METHOD'),
                           environ.get('PATH_INFO'))
+            hook = getattr(self, 'on_unhandled_error', None)
+            if hook is not None:
+                try:
+                    hook(e)
+                except Exception:
+                    log.exception("on_unhandled_error failed")
             start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
             try:
                 debug = asbool(pylons.config.get('debug'))
