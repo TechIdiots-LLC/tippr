@@ -54,19 +54,6 @@ version('Paste')  # Verify Paste is installed
 version('PasteScript')  # Verify PasteScript is installed
 
 
-# on case-insensitive file systems, Captcha gets masked by
-# r2.lib.captcha which is also in sys.path.  This import ensures
-# that the subsequent import is already in sys.modules, sidestepping
-# the issue
-try:
-    from Captcha import Base
-except ImportError:
-    with patch.object(
-        sys, "path",
-        [x for x in sys.path if not x.endswith("r2/r2/lib")]
-    ):
-        from Captcha import Base
-
 from pylons import app_globals as g
 
 from r2.config.middleware import TipprApp
