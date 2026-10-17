@@ -285,27 +285,42 @@ def split_query(query, known_fields):
 def _free_text_query(text, fields):
     """Relevance query for free text: exact matches score highest, close
     misspellings still match."""
-    return {
-        "bool": {
-            "should": [
-                {"simple_query_string": {
-                    "query": text,
-                    "fields": fields,
-                    "default_operator": "and",
-                    "flags": "AND|OR|NOT|PHRASE|PRECEDENCE|PREFIX|WHITESPACE",
-                }},
-                {"multi_match": {
-                    "query": text,
-                    "fields": fields,
-                    "fuzziness": "AUTO",
-                    "prefix_length": 1,
-                    "operator": "and",
-                    "boost": 0.3,
-                }},
-            ],
-            "minimum_should_match": 1,
-        },
-    }
+    # simple_query_string spells OR "|" and AND "+"
+    has_or = re.search(r"\sOR\s", text) is not None
+    simple = re.sub(r"\s+OR\s+", " | ", text)
+    simple = re.sub(r"\s+AND\s+", " + ", simple)
+    # quoted phrases must match exactly; the typo-tolerant match takes the
+    # remaining plain words, without operators or excluded words
+    phrases = re.findall(r'"([^"]+)"', text)
+    rest = re.sub(r'"[^"]*"?', " ", text)
+    words = [w for w in rest.split()
+             if w not in ("OR", "AND") and not w.startswith("-")]
+    fuzzy = " ".join(w.lstrip("+") for w in words)
+    should = [
+        {"simple_query_string": {
+            "query": simple,
+            "fields": fields,
+            "default_operator": "and",
+            "flags": "AND|OR|NOT|PHRASE|PRECEDENCE|PREFIX|WHITESPACE",
+        }},
+    ]
+    if fuzzy:
+        should.append({"multi_match": {
+            "query": fuzzy,
+            "fields": fields,
+            "fuzziness": "AUTO",
+            "prefix_length": 1,
+            "operator": "or" if has_or else "and",
+            "boost": 0.3,
+        }})
+    # excluded words apply to both clauses
+    must_not = [{"multi_match": {"query": w[1:], "fields": fields}}
+                for w in rest.split() if w.startswith("-") and len(w) > 1]
+    must = [] if has_or else [
+        {"multi_match": {"query": p, "fields": fields, "type": "phrase"}}
+        for p in phrases]
+    return {"bool": {"must": must, "should": should,
+                     "minimum_should_match": 1, "must_not": must_not}}
 
 
 class OpenSearchQuery:
