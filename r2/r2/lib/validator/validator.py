@@ -1215,7 +1215,9 @@ VAdminOrAdminSecret = make_or_admin_secret_cls(VAdmin)
 class VVerifiedUser(VUser):
     def run(self):
         VUser.run(self)
-        if not c.user.email_verified:
+        # admin mode already required the password and a one-time code, and
+        # on a new site email may not be set up yet
+        if not c.user.email_verified and not c.user_is_admin:
             raise VerifiedUserRequiredException
 
 class VGold(VUser):

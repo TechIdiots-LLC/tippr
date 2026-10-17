@@ -323,6 +323,9 @@ def make_map(config):
        requirements=dict(action="blog"))
     mc('/help/gold', controller='redirect', action='redirect',
        dest='/gold/about')
+    # /gold/about was reddit's gold plugin (not installed); the gold page
+    # explains gold, so send the many /gold/about links there
+    mc('/gold/about', controller='redirect', action='redirect', dest='/gold')
 
     # Ensure policies help pages are reachable for the canonical host.
     # This unconditional mapping allows /help/<page> to reach the

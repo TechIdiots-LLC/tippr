@@ -43,6 +43,7 @@ def admin_menu(**kwargs):
         OffsiteButton("traffic", "/traffic"),
         NavButton(menu.awards, "awards"),
         NavButton(menu.errors, "error log"),
+        NavButton(menu.email_settings, "email"),
     ]
 
     admin_menu = NavMenu(buttons, title='admin tools', base_path='/admin',
