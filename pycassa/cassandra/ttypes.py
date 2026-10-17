@@ -1,8 +1,10 @@
 # Minimal ttypes shim providing NotFoundException and ConsistencyLevel
 # used by legacy code migrating from pycassa to cassandra-driver
 
-class NotFoundException(Exception):
-    pass
+# The exception cassandra_compat actually raises: a separate class here would
+# never match `except NotFoundException` (comment pages broke on a missing
+# visits row).
+from r2.lib.db.cassandra_compat import NotFoundException  # noqa: F401
 
 
 class ConsistencyLevel:

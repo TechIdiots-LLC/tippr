@@ -3066,13 +3066,22 @@ class CommentVisitsByUser(tdb_cassandra.View):
     def get_previous_visits(cls, user, link):
         rowkey = cls._rowkey(user, link)
         try:
-            columns = cls._cf.get(
-                rowkey, column_count=cls.MAX_VISITS, column_reversed=True)
+            columns = cls._cf.get(rowkey)
         except NotFoundException:
             return []
-        # NOTE: dates return from pycassa are UTC but missing their timezone
-        dates = [date.replace(tzinfo=pytz.UTC) for date in list(columns.keys())]
-        return sorted(dates)
+
+        # cassandra_compat stores column names as text (str(datetime))
+        dates = []
+        for date in columns.keys():
+            if isinstance(date, str):
+                try:
+                    date = datetime.fromisoformat(date)
+                except ValueError:
+                    continue
+            if date.tzinfo is None:
+                date = date.replace(tzinfo=pytz.UTC)
+            dates.append(date)
+        return sorted(dates)[-cls.MAX_VISITS:]
 
     @classmethod
     def add_visit(cls, user, link, visit_time):
