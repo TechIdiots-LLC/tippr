@@ -7,9 +7,14 @@ starter set of vaults owned and moderated by the admin account, and makes
 most of them the front page defaults (what logged-out and new users see).
 
 - Defaults lean toward technology, science, making things and fun:
-  technology, programming, linux, selfhosted, homelab, electronics, science,
-  space, diy, 3dprinting, gaming, retrogaming, art, music, photography,
-  writing, books, movies, food, pics, funny, aww, til, asktippr and tippr.
+  technology, programming, linux, selfhosted, electronics, science, space,
+  diy, 3dprinting, gaming, retrogaming, anime, art, music, photography,
+  writing, books, movies, food, pics, funny, aww, til, asktippr, lgbtq and
+  tippr.
+- lgbtq is a default on purpose: tippr is meant to be a welcoming site for
+  LGBTQ+ people, and the content policy bans hate based on sexual
+  orientation and gender identity. dragrace exists too, but isn't a
+  default.
 - news, worldnews and politics exist but aren't defaults. They don't fill
   the front page unless people subscribe.
 - aiart and aimusic are for AI-generated work, so art and music can stay

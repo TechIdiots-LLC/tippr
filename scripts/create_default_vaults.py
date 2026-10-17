@@ -10,8 +10,10 @@ page unless people subscribe. Creative vaults take human-made and AI-assisted
 posts, with separate vaults for AI-generated art and music.
 
 Safe to re-run: existing vaults are left as their moderators set them, and
-the default list is only set when the site doesn't have one yet (change it
-later with set_defaults() below or the admin tools).
+the default list is only set when the site doesn't have one yet. To replace
+an existing site's defaults with this list (after changing it):
+
+    TIPPR_RESET_DEFAULTS=1 tippr-run scripts/create_default_vaults.py
 """
 
 import os
@@ -33,8 +35,7 @@ VAULTS = [
     ("technology", "Technology", "News and discussion about technology.", ANY, True),
     ("programming", "Programming", "Code, languages, tools and the craft of programming.", ANY, True),
     ("linux", "Linux", "Linux, its distributions and the software around it.", ANY, True),
-    ("selfhosted", "Self-hosted", "Running your own services instead of renting them.", ANY, True),
-    ("homelab", "Homelab", "Servers, networks and racks at home.", ANY, True),
+    ("selfhosted", "Self-hosted", "Running your own services and servers instead of renting them, homelabs included.", ANY, True),
     ("electronics", "Electronics", "Circuits, components, repairs and projects.", NO_GEN, True),
     # science
     ("science", "Science", "Research, discoveries and how the world works.", NO_GEN, True),
@@ -45,6 +46,7 @@ VAULTS = [
     # games
     ("gaming", "Gaming", "Video games of every kind.", ANY, True),
     ("retrogaming", "Retro Gaming", "Classic consoles, computers and games.", ANY, True),
+    ("anime", "Anime", "Anime and manga: series, recommendations, fan art and discussion.", ANY, True),
     # creative (human-made; AI-generated work has its own vaults)
     ("art", "Art", "Art made by people. AI-generated art goes in /v/aiart.", NO_GEN, True),
     ("music", "Music", "Music made by people. AI-generated music goes in /v/aimusic.", NO_GEN, True),
@@ -61,6 +63,9 @@ VAULTS = [
     ("aww", "Aww", "Cute animals and other things that make you smile.", NO_GEN, True),
     ("til", "Today I Learned", "Interesting facts you just found out, with a source.", ANY, True),
     ("asktippr", "Ask Tippr", "Ask the community a question.", ANY, True),
+    # community
+    ("lgbtq", "LGBTQ+", "A welcoming place for LGBTQ+ people and allies: news, culture, support and community.", ANY, True),
+    ("dragrace", "Drag Race", "Drag Race and drag culture: episodes, queens, looks and lip syncs.", ANY, False),
     ("tippr", "Tippr", "News, feedback and questions about the site itself.", ANY, True),
     # exist, but not on the default front page
     ("news", "News", "News from around the world.", ANY, False),
@@ -124,8 +129,10 @@ vaults = {}
 for name, title, description, policy, is_default in VAULTS:
     vaults[name] = ensure_vault(owner, name, title, description, policy)
 
-if LocalizedDefaultVaults.get_global_defaults():
-    print("front page defaults are already set; not changing them")
+if (LocalizedDefaultVaults.get_global_defaults()
+        and os.environ.get("TIPPR_RESET_DEFAULTS") != "1"):
+    print("front page defaults are already set; not changing them "
+          "(TIPPR_RESET_DEFAULTS=1 replaces them with this list)")
 else:
     set_defaults([vaults[name] for name, _, _, _, is_default in VAULTS
                   if is_default])
