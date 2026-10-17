@@ -23,6 +23,10 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
   file for the whole stack. Version tags publish the image to Docker Hub
   and a GitHub release with a compose bundle and an installer tarball, all
   smoke-tested first ([RELEASING.md](RELEASING.md)).
+- **Proxmox template.** Releases include an all-in-one LXC template that
+  sets itself up for its domain on first boot ([PROXMOX.md](PROXMOX.md)).
+  Scheduled jobs take a ZooKeeper lock (`scripts/run-locked`), so several
+  app servers can share a site.
 - **Admin pages** for the site's name, description, contact address and
   logo (`/admin/site`), email (`/admin/email`), Google AdSense
   (`/admin/ads`) and recent errors (`/admin/errors`).
@@ -57,10 +61,10 @@ installed with `install-tippr.sh`.
 
 ## Then
 
-1. **Proxmox LXC templates.** An all-in-one template (the single VM, with
-   first-boot domain and secrets), then per-role templates (app, edge) for
-   splitting a site across containers. App nodes need scheduled jobs to
-   take a ZooKeeper lock first, so only one node runs each job.
+1. **Per-role Proxmox templates.** App and edge templates (configured on
+   first boot to point at separate data store containers), next to the
+   all-in-one template, and an installer role setting (`TIPPR_ROLE`) for
+   data store containers.
 2. **Admin security.** Require TOTP for admin mode, add WebAuthn passkeys,
    and use recovery codes instead of email as the fallback.
 3. **Admin config page.** Edit the live config stored in ZooKeeper from

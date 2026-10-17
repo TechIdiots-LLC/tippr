@@ -10,7 +10,7 @@
 name: tippr
 
 x-tippr: &tippr
-  image: ${TIPPR_IMAGE:-techidiots/tippr}:${TIPPR_VERSION:-latest}
+  image: ${TIPPR_IMAGE:-techidiotsllc/tippr}:${TIPPR_VERSION:-latest}
   restart: unless-stopped
   env_file: .env
   volumes:

@@ -135,5 +135,7 @@ To move a site to that layout:
 3. Export from the old VM with `--offline`, and import and restore on the
    new app server ([BACKUP.md](BACKUP.md)).
 
-Restore writes to wherever the new ini points. [ROADMAP.md](ROADMAP.md)
-covers what's still needed for several app nodes (job locking, mcrouter).
+Restore writes to wherever the new ini points. Every app node has the
+same timers. Each job takes a ZooKeeper lock first (`scripts/run-locked`),
+so it runs on one node at a time. With several memcached servers, mcrouter
+becomes worthwhile ([ROADMAP.md](ROADMAP.md)).

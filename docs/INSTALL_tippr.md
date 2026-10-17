@@ -56,6 +56,7 @@ Set these as environment variables when running the installer:
 | `TIPPR_PLUGINS` | `about gold` | plugins to install |
 | `TIPPR_BUILD_MCROUTER` | `0` | `1`: build mcrouter from source (20+ minutes; not used by default) |
 | `TIPPR_BRANCH`, `TIPPR_COPY_LOCAL` | | install a branch, or copy a local checkout instead of cloning |
+| `TIPPR_YES` | | `1`: don't ask before starting (also skipped when there's no terminal) |
 
 Without a certificate option, the installer makes a self-signed
 certificate. That suits `.local` test sites.
