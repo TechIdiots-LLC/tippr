@@ -1157,9 +1157,10 @@ class Vault(Thing, Printable, BaseSite):
         else:
             vault_ids = NamedGlobals.get("popular_vault_ids", default=[])
 
+        excludes = set(cls.not_random_vault_ids())
         if user:
-            excludes = set(cls.user_vaults(user, limit=None))
-            vault_ids = list(set(vault_ids) - excludes)
+            excludes |= set(cls.user_vaults(user, limit=None))
+        vault_ids = list(set(vault_ids) - excludes)
 
         if not vault_ids:
             return Vault._by_name(g.default_vault)
@@ -1167,6 +1168,27 @@ class Vault(Thing, Printable, BaseSite):
         vault_id = random.choice(vault_ids)
         vault = Vault._byID(vault_id, data=True)
         return vault
+
+    @classmethod
+    def not_random_vault_ids(cls):
+        """The site's own working vaults, which /v/random shouldn't land on:
+        beta testing, takedowns, promotions, advertising links and the admin
+        vault "message the admins" goes to."""
+        names = [getattr(g, attr, None) for attr in
+                 ("beta_vault", "takedown_vault", "promo_vault_name",
+                  "advertising_links_vault")]
+        acct = getattr(g, "admin_message_acct", "") or ""
+        if acct.startswith("/v/"):
+            names.append(acct[len("/v/"):].strip("/"))
+        ids = []
+        for name in names:
+            if not name:
+                continue
+            try:
+                ids.append(cls._by_name(name, stale=True)._id)
+            except NotFound:
+                pass
+        return ids
 
     @classmethod
     def update_popular_vaults(cls, limit=5000):
@@ -1178,14 +1200,17 @@ class Vault(Thing, Printable, BaseSite):
         vault_ids = []
         over_18_vault_ids = []
 
-        # /v/promos is public but has special handling to make it unviewable
+        # /v/promos is public but has special handling to make it unviewable;
+        # the other working vaults (beta, takedowns, ...) aren't for
+        # discovering either
         promo_vault_id = cls.get_promote_vault_id()
+        working_ids = set(cls.not_random_vault_ids())
 
         for vault in vaults:
             if not vault.discoverable:
                 continue
 
-            if vault._id == promo_vault_id:
+            if vault._id == promo_vault_id or vault._id in working_ids:
                 continue
 
             if not vault.over_18:

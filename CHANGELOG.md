@@ -35,6 +35,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **/v/random** could land on the site's working vaults (beta, takedowns, promos, advertising links, the admin
+  vault). It no longer does. (NSFW vaults were already only in /v/randnsfw.)
 - **Times on the admin pages** marked UTC (support history, account actions) were in the server's time zone.
 - **Scheduled cleanups never ran**: the hourly `tippr-job-trylater` didn't register the app's hooks, so temporary
   vault bans and mutes never expired and deleted accounts weren't cleaned up after 90 days. Cancelling a scheduled
