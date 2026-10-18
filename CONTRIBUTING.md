@@ -34,7 +34,13 @@ is:
   ###############################################################################
   ```
 
-  Mako templates use the same text with `##` in place of `#`.
+  Mako templates use the same text with `##` in place of `#`; JavaScript
+  and LESS use `//`. A shebang (or a Dockerfile's `# syntax=` line) stays
+  first.
+
+- **Generated files** (such as the Thrift stubs) and **configuration**
+  (systemd units, workflow YAML, `pyproject.toml`, `.env` examples) don't
+  get a header.
 
 Don't start a new file by copying an existing one's header without checking
 which kind it is.
