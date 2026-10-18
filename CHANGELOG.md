@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/users** (admins only): find accounts by username (exact, then names starting with it), email address or IP
+  address, and see an account's email and verification, two-factor and gold status, the IP addresses it logged in
+  from in the last 100 days with other accounts seen on them, the vaults it moderates and its support tickets. Logins
+  and sign-ups now record the IP address (public addresses only, kept 100 days); before, only password resets did.
 - **/admin/apps**: every API app registered on /prefs/apps, with its developers, type and redirect address. Admins can
   approve, suspend (with a reason its developers see) or delete one; a suspended app's tokens stop working at once.
   New apps can wait for approval (`apps_require_approval`, on by default), working only for their own developers
@@ -17,6 +21,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Cassandra column ranges**: the compatibility layer treated an empty `column_start`/`column_finish` (pycassa's "no
+  bound") as a bound and returned nothing, and applied bounds the wrong way round for reversed queries. Column queries
+  with those defaults, such as the IP history, came back empty.
 - **Authorizing an app** failed for admins and employees (reddit's `mobile_auth_allowed_clients` setting doesn't
   exist here, and `employee_approved_clients` is live config).
 - **Deleting a multivault** did nothing (the delete failed on the Cassandra compatibility layer, which didn't accept

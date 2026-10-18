@@ -3764,6 +3764,33 @@ class AdminErrors(Templated):
         Templated.__init__(self)
 
 
+class AdminUsers(Templated):
+    """Account search (r2.lib.user_admin)."""
+    def __init__(self, query):
+        from r2.lib import user_admin
+        self.query = (query or "").strip()
+        self.kind, accounts = user_admin.search(self.query)
+        self.results = [dict(account=a, status=user_admin.status(a))
+                        for a in accounts]
+        Templated.__init__(self)
+
+
+class AdminUser(Templated):
+    """One account, as admins see it (r2.lib.user_admin)."""
+    def __init__(self, account):
+        from r2.lib import support, user_admin
+        self.account = account
+        self.status = user_admin.status(account)
+        self.ips = user_admin.ip_history(account)
+        self.related = user_admin.related_accounts(account, self.ips)
+        self.vaults = user_admin.moderated_vaults(account)
+        self.tickets = user_admin.support_tickets(account)
+        self.status_names = support.STATUSES
+        self.category_names = {cat: name for cat, (name, _tag)
+                               in support.CATEGORIES.items()}
+        Templated.__init__(self)
+
+
 class AdminApps(Templated):
     """Registered API apps (OAuth2Client), for approving, suspending or
     deleting them."""

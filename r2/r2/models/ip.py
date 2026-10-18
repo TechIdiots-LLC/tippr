@@ -17,6 +17,16 @@ CONNECTION_POOL = g.cassandra_pools['main']
 CF_TTL = datetime.timedelta(days=100).total_seconds()
 
 
+def _column_date(value):
+    """A column name as a UTC datetime: the Cassandra compatibility layer
+    hands DateType column names back as text ("2026-10-18 17:59:07+00:00")."""
+    if isinstance(value, str):
+        value = datetime.datetime.fromisoformat(value)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=pytz.utc)
+    return value
+
+
 class IPsByAccount(tdb_cassandra.View):
 
     _use_db = True
@@ -73,7 +83,7 @@ class IPsByAccount(tdb_cassandra.View):
             column_reversed=column_reversed)
         for date_ip in query:
             for dt, ip in date_ip.items():
-                results.append({dt.replace(tzinfo=pytz.utc): ip})
+                results.append({_column_date(dt): ip})
         return results
 
 
@@ -127,7 +137,7 @@ class AccountsByIP(tdb_cassandra.View):
             column_reversed=column_reversed)
         for date_account in query:
             for dt, account in date_account.items():
-                results.append({dt.replace(tzinfo=pytz.utc): int(account)})
+                results.append({_column_date(dt): int(account)})
         return results
 
 

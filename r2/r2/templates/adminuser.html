@@ -1,0 +1,109 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/users/<name>: one account, as admins see it (r2.lib.user_admin)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<% a = thing.account %>
+<div class="admin-users">
+<p><a href="/admin/users">&laquo; ${_("users")}</a></p>
+<h1>${a.name}
+  %if thing.status:
+    <small>(${", ".join(thing.status)})</small>
+  %endif
+</h1>
+
+<p>
+  <a href="/user/${a.name}">${_("profile")}</a>&#32;&middot;&#32;
+  <a href="/user/${a.name}/submitted">${_("posts")}</a>&#32;&middot;&#32;
+  <a href="/user/${a.name}/comments">${_("comments")}</a>&#32;&middot;&#32;
+  <a href="/message/compose?to=${a.name}">${_("send a message")}</a>
+</p>
+
+<h2>${_("account")}</h2>
+<table class="lined-table borderless">
+  <tr><td>${_("joined")}</td><td>${a._date.strftime('%Y-%m-%d')} (${timesince(a._date)} ${_("ago")})</td></tr>
+  <tr><td>${_("karma")}</td><td>${_("%(link)d post, %(comment)d comment") % dict(link=a.link_karma or 0, comment=a.comment_karma or 0)}</td></tr>
+  <tr><td>${_("email")}</td><td>
+    %if a.email:
+      <a href="/admin/users?q=${a.email}">${a.email}</a>
+      ${_("(verified)") if a.email_verified else _("(not verified)")}
+    %else:
+      ${_("none")}
+    %endif
+  </td></tr>
+  <tr><td>${_("two-factor")}</td><td>${_("on") if a.otp_secret else _("off")}</td></tr>
+  <tr><td>${_("gold")}</td><td>
+    %if getattr(a, 'gold', False):
+      ${_("yes")}
+      %if getattr(a, 'gold_expiration', None):
+        ${_("(until %(date)s)") % dict(date=a.gold_expiration.strftime('%Y-%m-%d'))}
+      %endif
+    %else:
+      ${_("no")}
+    %endif
+  </td></tr>
+</table>
+
+<h2>${_("logins by IP address")}</h2>
+<p><small>${_("The last 100 days, newest first. Other accounts seen on the same address can be one person's accounts, or just a shared network (a household, school, phone carrier or VPN).")}</small></p>
+%if thing.ips:
+  <table class="lined-table admin-user-ips">
+    <tr><th>${_("address")}</th><th>${_("last login")}</th><th>${_("other accounts from it")}</th></tr>
+    %for ip, date in thing.ips:
+      <tr>
+        <td><a href="/admin/users?q=${ip}">${ip}</a></td>
+        <td>${timesince(date)} ${_("ago")}</td>
+        <td>
+          %for other in thing.related.get(ip, []):
+            <a href="/admin/users/${other.name}">${other.name}</a>
+          %endfor
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No logins recorded yet (they're recorded from now on, for public addresses).")}</p>
+%endif
+
+<h2>${_("moderates")}</h2>
+%if thing.vaults:
+  <p>
+    %for v in thing.vaults:
+      <a href="/v/${v.name}">/v/${v.name}</a>&#32;
+    %endfor
+  </p>
+%else:
+  <p>${_("No vaults.")}</p>
+%endif
+
+<h2>${_("support tickets")}</h2>
+%if thing.tickets:
+  <table class="lined-table">
+    %for t in thing.tickets:
+      <tr>
+        <td><a href="/admin/support/${t['id']}">${t['subject'] or _("(no subject)")}</a></td>
+        <td>${_(thing.category_names.get(t['category'], t['category']))}</td>
+        <td>${_(thing.status_names.get(t['status'], t['status']))}</td>
+        <td>${timesince(t['updated'])} ${_("ago")}</td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("None.")}</p>
+%endif
+</div>

@@ -1,0 +1,62 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/users: account search (r2.lib.user_admin)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<div class="admin-users">
+<h1>${_("users")}</h1>
+
+<form action="/admin/users" method="get" class="pretty-form admin-users-search">
+  <input type="text" name="q" value="${thing.query}" size="40"
+         placeholder="${_('username, email address or IP address')}" autofocus>
+  <button class="btn" type="submit">${_("search")}</button>
+  <br><small>${_("A username finds that account and names starting with it; an email address finds every account that used it; an IP address finds the accounts that logged in from it (logins are kept for 100 days).")}</small>
+</form>
+
+%if thing.query:
+  %if thing.results:
+    <table class="lined-table admin-users-results">
+      <tr>
+        <th>${_("account")}</th><th>${_("joined")}</th><th>${_("karma")}</th>
+        <th>${_("email")}</th><th>${_("status")}</th>
+      </tr>
+      %for r in thing.results:
+        <% a = r['account'] %>
+        <tr>
+          <td><a href="/admin/users/${a.name}">${a.name}</a></td>
+          <td>${timesince(a._date)} ${_("ago")}</td>
+          <td>${(a.link_karma or 0) + (a.comment_karma or 0)}</td>
+          <td>
+            %if a.email:
+              ${a.email}
+              %if a.email_verified:
+                <small>${_("(verified)")}</small>
+              %endif
+            %else:
+              &mdash;
+            %endif
+          </td>
+          <td>${", ".join(r['status'])}</td>
+        </tr>
+      %endfor
+    </table>
+  %else:
+    <p>${_("No accounts found.")}</p>
+  %endif
+%endif
+</div>

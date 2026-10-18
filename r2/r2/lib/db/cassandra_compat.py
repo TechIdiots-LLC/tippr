@@ -282,18 +282,19 @@ class ColumnFamily:
             if columns is not None:
                 od = OrderedDict((k, od[k]) for k in columns if k in od)
 
-            # Handle column_start and column_finish filtering
-            if column_start is not None or column_finish is not None:
+            # Handle column_start and column_finish filtering. As in pycassa,
+            # "" (or None) means no bound, and for a reversed query the start
+            # is the high end (column_start >= name >= column_finish).
+            cs_str = None if column_start in (None, "") else str(column_start)
+            cf_str = None if column_finish in (None, "") else str(column_finish)
+            if cs_str is not None or cf_str is not None:
+                low, high = (cf_str, cs_str) if column_reversed else (cs_str, cf_str)
                 filtered = OrderedDict()
                 for k, v in od.items():
-                    # Convert to string for comparison
                     k_str = str(k) if not isinstance(k, str) else k
-                    cs_str = str(column_start) if column_start is not None and not isinstance(column_start, str) else column_start
-                    cf_str = str(column_finish) if column_finish is not None and not isinstance(column_finish, str) else column_finish
-
-                    if column_start is not None and k_str < cs_str:
+                    if low is not None and k_str < low:
                         continue
-                    if column_finish is not None and k_str > cf_str:
+                    if high is not None and k_str > high:
                         continue
                     filtered[k] = v
                 od = filtered

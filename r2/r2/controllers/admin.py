@@ -40,6 +40,8 @@ from r2.lib.pages import (
     AdminSiteSettings,
     AdminSupport,
     AdminSupportTicket,
+    AdminUser,
+    AdminUsers,
 )
 from r2.lib.validator import (
     VAdmin,
@@ -123,6 +125,21 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_errors(self):
         return AdminPage(content=AdminErrors()).render()
+
+    @validate(VAdmin(), q=nop("q"))
+    def GET_users(self, q):
+        """Find accounts by name, email or IP (r2.lib.user_admin)."""
+        return AdminPage(content=AdminUsers(q)).render()
+
+    @validate(VAdmin())
+    def GET_user(self, username):
+        from r2.lib.db.thing import NotFound
+        from r2.models import Account
+        try:
+            account = Account._by_name(username, allow_deleted=True)
+        except NotFound:
+            return self.abort404()
+        return AdminPage(content=AdminUser(account)).render()
 
     @validate(VAdmin(), show=nop("show"))
     def GET_apps(self, show):

@@ -1213,6 +1213,14 @@ class TipprController(OAuth2ResourceController):
     def login(user, rem=False):
         # This can't be handled in post() due to PRG and ErrorController fun.
         user.update_last_visit(c.start_time)
+        # Remember where the account was used from (kept 100 days; private
+        # addresses are skipped), for /admin/users. reddit recorded this
+        # through its own event pipeline, which isn't part of tippr.
+        try:
+            from r2.models.ip import set_account_ip
+            set_account_ip(user._id, request.ip, c.start_time)
+        except Exception:
+            g.log.exception("couldn't record the login IP for %s", user.name)
         force_https = feature.is_enabled("force_https", user)
         c.cookies[g.login_cookie] = Cookie(value=user.make_cookie(),
                                            expires=NEVER if rem else None,
