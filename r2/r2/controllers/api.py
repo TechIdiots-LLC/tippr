@@ -4824,13 +4824,16 @@ class ApiController(TipprController):
         VModhash(),
         username=nop("username"),
         do=VOneOf("do", ("timeout", "untimeout", "suspend", "unsuspend",
-                         "spam_content", "reset_2fa")),
+                         "remove_content", "spam_content", "delete_content",
+                         "reverify_email", "remove_email", "reset_2fa",
+                         "delete_account")),
         days=VInt("days", min=0, max=365, num_default=0),
         reason=VLength("reason", max_length=500, empty_error=None),
         confirm=nop("confirm"),
+        posts=VOneOf("posts", ("keep", "delete")),
     )
     def POST_admin_user(self, form, jquery, username, do, days, reason,
-                        confirm):
+                        confirm, posts):
         """Act on an account from /admin/users (r2.lib.user_admin)."""
         from r2.lib import user_admin
         from r2.lib.db.thing import NotFound
@@ -4846,11 +4849,21 @@ class ApiController(TipprController):
             form.set_text(".status", _("not on admins (take them off the employees list on /admin/config first)"))
             return
         reason = (reason or "").strip()
-        if do in ("timeout", "suspend") and not reason:
+        if account._deleted:
+            form.set_text(".status", _("the account is deleted"))
+            return
+        if do in ("timeout", "suspend", "delete_account") and not reason:
             form.set_text(".status", _("give a reason (it's logged, and a timeout's reason is sent to them)"))
             return
-        if do in ("spam_content", "suspend") and confirm != "yes":
+        if do in ("remove_content", "spam_content", "delete_content",
+                  "remove_email", "suspend", "delete_account")                 and confirm != "yes":
             form.set_text(".status", _("tick the box to confirm"))
+            return
+        if do == "delete_account" and not posts:
+            form.set_text(".status", _("choose whether to keep or delete their posts"))
+            return
+        if do == "reverify_email" and not account.email:
+            form.set_text(".status", _("they have no email address"))
             return
         if do == "timeout":
             user_admin.timeout(account, c.user, days or None, reason)
@@ -4860,8 +4873,19 @@ class ApiController(TipprController):
             user_admin.suspend(account, c.user, reason)
         elif do == "unsuspend":
             user_admin.unsuspend(account, c.user, reason)
+        elif do == "remove_content":
+            user_admin.remove_content(account, c.user)
         elif do == "spam_content":
             user_admin.remove_content_as_spam(account, c.user)
+        elif do == "delete_content":
+            user_admin.delete_content(account, c.user)
+        elif do == "reverify_email":
+            user_admin.require_email_verification(account, c.user)
+        elif do == "remove_email":
+            user_admin.remove_email(account, c.user, reason)
+        elif do == "delete_account":
+            user_admin.delete_account(account, c.user, posts == "delete",
+                                      reason)
         elif do == "reset_2fa":
             user_admin.reset_two_factor(account, c.user, reason)
         form.refresh()

@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **More tools on /admin/users/<name>**: the overview shows the address the account registered from and when it was
+  last active. A quick tools menu removes all their posts and comments (or removes them as spam, or deletes them),
+  requires them to verify their email again, or removes their email address. **Delete account** deletes it for good,
+  keeping or deleting their posts and comments: their sessions and app tokens end, and their password, email and
+  moderator roles go right away instead of after the 90 days a self-deleted account gets. Each is logged with the
+  other admin actions.
 - **The normal site works on phones** (first step towards dropping the separate mobile interface). Pages now size to
   the device instead of a 1024px-wide desktop page shrunk to fit. On phones (768px or narrower):
   - the vault bar and the sort tabs are rows you swipe sideways;
@@ -18,6 +24,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Deleting a post** failed in a vault that had never had a sticky post.
 - **The welcome panel** on an empty listing was squeezed into a narrow column; it's now as wide as the listing.
 - **The compact and old mobile interfaces** failed to load (leftovers from renaming reddit to vault, and Python 2 code).
 

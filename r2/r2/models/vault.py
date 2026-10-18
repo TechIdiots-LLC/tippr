@@ -1492,7 +1492,7 @@ class Vault(Thing, Printable, BaseSite):
         # XXX: have to work with a copy of the list instead of modifying
         #   it directly, because it doesn't get marked as "dirty" and
         #   saved properly unless we assign a new list to the attr
-        sticky_fullnames = self.sticky_fullnames[:]
+        sticky_fullnames = (self.sticky_fullnames or [])[:]
         try:
             sticky_fullnames.remove(link._fullname)
         except ValueError:
@@ -1509,7 +1509,7 @@ class Vault(Thing, Printable, BaseSite):
     def has_max_stickies(self):
         if not self.sticky_fullnames:
             return False
-        return len(self.sticky_fullnames) >= self.MAX_STICKIES
+        return len(self.sticky_fullnames or []) >= self.MAX_STICKIES
 
 
 class SubscribedVaultsByAccount(tdb_cassandra.DenormalizedRelation):

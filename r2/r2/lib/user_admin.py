@@ -223,7 +223,8 @@ actions_table = sa.Table(
     # who did it (None: the system, e.g. a timeout running out)
     sa.Column("admin_id", sa.BigInteger, nullable=True),
     sa.Column("time", sa.DateTime(timezone=True), nullable=False),
-    # timeout, untimeout, suspend, unsuspend, spam_content, reset_2fa
+    # timeout, untimeout, suspend, unsuspend, remove_content, spam_content,
+    # delete_content, reverify_email, remove_email, reset_2fa, delete_account
     sa.Column("action", sa.String, nullable=False),
     sa.Column("detail", sa.Text, nullable=True),
 )
@@ -236,9 +237,15 @@ ACTION_NAMES = {
     "untimeout": "timeout lifted",
     "suspend": "suspended",
     "unsuspend": "suspension lifted",
+    "remove_content": "content removed",
     "spam_content": "content removed as spam",
+    "delete_content": "content deleted",
+    "reverify_email": "email re-verification required",
+    "remove_email": "email address removed",
     "reset_2fa": "two-factor reset",
+    "delete_account": "account deleted",
 }
+MAX_CONTENT = 1000      # posts, and comments, acted on by the content tools
 MAX_TIMEOUT_DAYS = 365
 
 
@@ -304,23 +311,112 @@ def unsuspend(account, admin, reason=None):
     _log(account, admin, "unsuspend", reason)
 
 
-def remove_content_as_spam(account, admin, limit=1000):
-    """Remove the account's posts and comments as spam (the newest
-    `limit` of each). Returns how many were removed."""
+def _content(account, limit=MAX_CONTENT):
+    """The account's newest `limit` posts and newest `limit` comments that
+    aren't deleted (removed ones included)."""
     from r2.lib.db.operators import desc
     from r2.models import Comment, Link
-    from r2.models.admintools import admintools
     things = []
     for cls in (Link, Comment):
         query = cls._query(cls.c.author_id == account._id,
                            cls.c._spam == (True, False),
+                           cls.c._deleted == (True, False),
                            sort=desc("_date"), limit=limit, data=True)
-        things.extend(t for t in query if not t._spam and not t._deleted)
+        things.extend(t for t in query if not t._deleted)
+    return things
+
+
+def remove_content(account, admin, as_spam=False, limit=MAX_CONTENT):
+    """Remove the account's posts and comments, as moderators remove things
+    (they stay in the vaults' spam queues; as_spam also trains the spam
+    filter). Returns how many were removed."""
+    from r2.models.admintools import admintools
+    things = [t for t in _content(account, limit) if not t._spam]
     if things:
         admintools.spam(things, auto=False, moderator_banned=True,
-                        banner=admin.name)
-    _log(account, admin, "spam_content", "%d removed" % len(things))
+                        banner=admin.name, train_spam=as_spam)
+    _log(account, admin, "spam_content" if as_spam else "remove_content",
+         "%d removed" % len(things))
     return len(things)
+
+
+def remove_content_as_spam(account, admin, limit=MAX_CONTENT):
+    return remove_content(account, admin, as_spam=True, limit=limit)
+
+
+def _delete_thing(thing, admin):
+    """Delete a post or comment the way its author would
+    (ApiController.POST_del): it shows as [deleted]."""
+    from r2.lib import amqp
+    from r2.lib.db import queries
+    from r2.models import Comment, Link
+    thing._deleted = True
+    thing._commit()
+    try:
+        thing.update_search_index()
+    except Exception:
+        g.log.exception("user_admin: couldn't reindex %s", thing._fullname)
+    if isinstance(thing, Link):
+        amqp.add_item("deleted_link", thing._fullname)
+        queries.delete(thing)
+        thing.vault_slow.remove_sticky(thing)
+        if thing.preview_object:
+            thing.set_preview_object(None)
+            thing._commit()
+    elif isinstance(thing, Comment):
+        link = thing.link_slow
+        link._incr("num_comments", -1)
+        link.remove_sticky_comment(comment=thing, set_by=admin)
+        queries.new_comment(thing, None)
+        queries.unnotify(thing)
+        amqp.add_item("deleted_comment", thing._fullname)
+        queries.delete(thing)
+
+
+def delete_content(account, admin, limit=MAX_CONTENT, log=True):
+    """Delete the account's posts and comments (the newest `limit` of
+    each). Returns how many were deleted."""
+    things = _content(account, limit)
+    for thing in things:
+        _delete_thing(thing, admin)
+    if log:
+        _log(account, admin, "delete_content", "%d deleted" % len(things))
+    return len(things)
+
+
+def require_email_verification(account, admin):
+    """Mark the email address unverified and send a new verification
+    link."""
+    from r2.lib import emailer
+    emailer.verify_email(account)
+    _log(account, admin, "reverify_email", account.email)
+
+
+def remove_email(account, admin, reason=None):
+    old = account.email
+    account.set_email("")
+    account.email_verified = False
+    account._commit()
+    _log(account, admin, "remove_email",
+         "%s; %s" % (old, reason) if reason else old)
+
+
+def delete_account(account, admin, delete_posts, reason):
+    """Delete the account for good: its sessions and app tokens end, and
+    its password, email address, moderator and other roles go now, rather
+    than 90 days later as when people delete their own account. Its posts
+    and comments stay (by [deleted]) unless delete_posts."""
+    from r2.models.account import deleted_account_cleanup
+    from r2.models.token import OAuth2AccessToken, OAuth2RefreshToken
+    deleted = delete_content(account, admin, log=False) if delete_posts else 0
+    OAuth2AccessToken.revoke_all_by_user(account)
+    OAuth2RefreshToken.revoke_all_by_user(account)
+    account.delete(delete_message="deleted by the site's admins")
+    deleted_account_cleanup({"admin": account._id36})
+    _log(account, admin, "delete_account", "%s; %s" % (
+        reason or "no reason",
+        "%d posts and comments deleted" % deleted if delete_posts
+        else "posts and comments kept"))
 
 
 def reset_two_factor(account, admin, reason=None):

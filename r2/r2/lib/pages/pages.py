@@ -3790,6 +3790,14 @@ class AdminUser(Templated):
         self.protected = account.name in g.admins or account._id == c.user._id
         self.timeout_until = (account.timeout_expiration
                               if getattr(account, "in_timeout", False) else None)
+        self.registration_ip = getattr(account, "registration_ip", None)
+        # updated at most daily (Account.update_last_visit)
+        from r2.models.last_modified import LastModified
+        try:
+            self.last_visit = LastModified.get(account._fullname, "Visit")
+        except Exception:
+            self.last_visit = None
+        self.max_content = user_admin.MAX_CONTENT
         actor_ids = {a["admin_id"] for a in self.actions if a["admin_id"]}
         self.actors = (Account._byID(actor_ids, data=True, return_dict=True,
                                      ignore_missing=True) if actor_ids else {})

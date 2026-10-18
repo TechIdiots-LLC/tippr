@@ -37,6 +37,29 @@
 <h2>${_("account")}</h2>
 <table class="lined-table borderless">
   <tr><td>${_("joined")}</td><td>${a._date.strftime('%Y-%m-%d')} (${timesince(a._date)} ${_("ago")})</td></tr>
+  <tr><td>${_("registered from")}</td><td>
+    %if thing.registration_ip:
+      <a href="/admin/users?q=${thing.registration_ip}">${thing.registration_ip}</a>
+    %else:
+      ${_("not recorded")}
+    %endif
+  </td></tr>
+  <tr><td>${_("last active")}</td><td>
+    %if thing.last_visit:
+      ${thing.last_visit.strftime('%Y-%m-%d')} (${timesince(thing.last_visit)} ${_("ago")})
+    %else:
+      ${_("not recorded")}
+    %endif
+  </td></tr>
+  %if a._deleted:
+    <tr><td>${_("deleted")}</td><td>
+      %if getattr(a, 'delete_time', None):
+        ${a.delete_time.strftime('%Y-%m-%d')} (${timesince(a.delete_time)} ${_("ago")})
+      %else:
+        ${_("yes")}
+      %endif
+    </td></tr>
+  %endif
   <tr><td>${_("karma")}</td><td>${_("%(link)d post, %(comment)d comment") % dict(link=a.link_karma or 0, comment=a.comment_karma or 0)}</td></tr>
   <tr><td>${_("email")}</td><td>
     %if a.email:
@@ -79,7 +102,9 @@
 </%def>
 
 <h2>${_("actions")}</h2>
-%if thing.protected:
+%if a._deleted:
+  <p><small>${_("The account is deleted.")}</small></p>
+%elif thing.protected:
   <p><small>${_("Not available for admins or yourself; take an admin off the employees list on /admin/config first.")}</small></p>
 %else:
   <table class="lined-table borderless admin-user-actions">
@@ -100,8 +125,25 @@
         ${act("suspend", _("suspend"), reason=_("reason (logged)"), confirm=_("they can't log in; their sessions and app tokens end"))}
       %endif
     </td></tr>
-    <tr><td>${_("content")}</td><td>
-      ${act("spam_content", _("remove all as spam"), confirm=_("remove their posts and comments (newest 1000 of each) as spam"))}
+    <tr><td>${_("quick tools")}</td><td>
+      <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+            onsubmit="return post_form(this, 'admin_user');">
+        <input type="hidden" name="username" value="${a.name}">
+        <select name="do">
+          <option value="">${_("choose a tool")}</option>
+          <option value="remove_content">${_("remove all their posts and comments")}</option>
+          <option value="spam_content">${_("remove all their posts and comments as spam")}</option>
+          <option value="delete_content">${_("delete all their posts and comments")}</option>
+          %if a.email:
+            <option value="reverify_email">${_("require them to verify their email again")}</option>
+            <option value="remove_email">${_("remove their email address")}</option>
+          %endif
+        </select>
+        <label><input type="checkbox" name="confirm" value="yes"> ${_("confirm")}</label>
+        <button class="btn" type="submit">${_("go")}</button>
+        <span class="status"></span>
+      </form>
+      <small>${_("Removed posts and comments stay in each vault's spam queue, where moderators can approve them; \"as spam\" also teaches the spam filter. Deleted ones show as [deleted], as when someone deletes their own. Each acts on their newest %(n)d posts and newest %(n)d comments; run it again for more.") % dict(n=thing.max_content)}</small>
     </td></tr>
     %if a.otp_secret:
       <tr><td>${_("two-factor")}</td><td>
@@ -109,6 +151,23 @@
         <small>${_("For someone locked out: they can log in with their password and set it up again.")}</small>
       </td></tr>
     %endif
+    <tr><td>${_("delete account")}</td><td>
+      <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+            onsubmit="return confirm('${_("Delete %(name)s? This cannot be undone.") % dict(name=a.name)}') &amp;&amp; post_form(this, 'admin_user');">
+        <input type="hidden" name="username" value="${a.name}">
+        <input type="hidden" name="do" value="delete_account">
+        <select name="posts">
+          <option value="">${_("their posts and comments…")}</option>
+          <option value="keep">${_("keep them (shown by [deleted])")}</option>
+          <option value="delete">${_("delete them too")}</option>
+        </select>
+        <input type="text" name="reason" size="30" placeholder="${_('reason (logged)')}">
+        <label><input type="checkbox" name="confirm" value="yes"> ${_("delete for good")}</label>
+        <button class="btn" type="submit">${_("delete")}</button>
+        <span class="status"></span>
+      </form>
+      <small>${_("Final: their sessions and app tokens end, and their password, email address and moderator roles are removed now (not 90 days later, as when people delete their own account). The name can't be registered again.")}</small>
+    </td></tr>
   </table>
 %endif
 
