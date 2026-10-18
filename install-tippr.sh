@@ -22,6 +22,10 @@
 ###############################################################################
 set -e
 
+# The helpers the installer adds (tippr-run and friends) go in /usr/local/bin,
+# which minimal environments leave out of PATH (e.g. Proxmox's pct exec)
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+
 if [[ $EUID -ne 0 ]]; then
     echo "ERROR: Must be run with root privileges."
     exit 1

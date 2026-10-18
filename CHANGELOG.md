@@ -10,6 +10,8 @@
   which enabled and started every tippr unit before `tippr-firstboot` ran. Their jobs recreated ZooKeeper nodes with the
   template's password, and the first boot failed with `NoAuthError`. The template now ships a preset that keeps them
   off, and `tippr-firstboot` stops any that are running before it resets ZooKeeper.
+- **Installer under `pct exec`**: it put its helpers in /usr/local/bin and then couldn't find them, since `pct exec`
+  runs commands with a PATH that leaves that out. The installer and `tippr-firstboot` now set their own PATH.
 
 ## 0.3.0
 ### ✨ Features and improvements
