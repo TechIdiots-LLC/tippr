@@ -365,7 +365,8 @@ class Account(Thing):
         return ",".join((timestamp, signature))
 
     def needs_captcha(self):
-        if g.disable_captcha:
+        from r2.lib import antispam
+        if not antispam.captcha_enabled():
             return False
 
         # site staff; on a new site nobody has the karma to be exempt yet
@@ -946,7 +947,10 @@ def valid_password(a, password, compare_password=None):
 
 def bcrypt_password(password):
     salt = bcrypt.gensalt(rounds=g.bcrypt_work_factor)
-    return bcrypt.hashpw(password.encode('utf-8'), salt)
+    # VPassword hands passwords over as UTF-8 bytes; scripts pass text
+    if isinstance(password, str):
+        password = password.encode('utf-8')
+    return bcrypt.hashpw(password, salt)
 
 def passhash(username, password, salt = ''):
     if salt is True:
