@@ -94,14 +94,21 @@ jobs:
           # pipe a single 'Y' to answer the final confirmation prompt.
           sudo -E bash -c "printf 'Y\n' | ./install/tippr.sh"
 
+      # copied first: some of /var/log is readable by root only
+      - name: Collect installer logs on failure
+        if: failure()
+        run: |
+          mkdir -p installer-logs
+          sudo cp -r /var/log/*.log /var/log/apt installer-logs/ 2>/dev/null || true
+          sudo journalctl --no-pager -n 2000 > installer-logs/journal.txt 2>/dev/null || true
+          sudo chown -R "$(id -u)" installer-logs
+
       - name: Archive installer logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: installer-logs
-          path: |
-            /var/log/*.log
-            /var/log/apt/* || true
+          path: installer-logs/
 
       - name: Show services status (always)
         run: |
