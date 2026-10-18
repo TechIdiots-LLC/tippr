@@ -99,4 +99,69 @@
   <button class="btn" type="submit">${_("save")}</button>
   <span class="status"></span>
 </form>
+
+## checking existing accounts (r2.lib.cleantalk_scan)
+<h2>${_("check users for spam")}</h2>
+<p>${_("CleanTalk checks accounts' email addresses and the address they last logged in from against its lists of senders seen spamming other sites. Flagged accounts are listed below for you to look at; nothing happens to them by itself (shared networks and old reports can match too).")}</p>
+<p>${_("Checked %(checked)d of %(total)d accounts.") % dict(checked=thing.scan_checked, total=thing.scan_total)}</p>
+<form action="/api/cleantalk_scan" method="post" class="pretty-form"
+      onsubmit="return post_form(this, 'cleantalk_scan');">
+  <input type="hidden" name="do" value="run">
+  <input type="number" name="limit" value="500" min="1" max="5000" style="width: 6em">
+  ${_("accounts not checked yet")}
+  <button class="btn" type="submit">${_("check users for spam")}</button>
+  <span class="status"></span>
+</form>
+<form action="/api/cleantalk_scan" method="post" class="pretty-form"
+      onsubmit="return post_form(this, 'cleantalk_scan');">
+  <input type="hidden" name="do" value="reset">
+  <button class="btn" type="submit">${_("start over")}</button>
+  <small>${_("forgets every result, so the next checks cover everyone again")}</small>
+  <span class="status"></span>
+</form>
+
+<h3>${_("flagged by CleanTalk")}</h3>
+%if thing.flagged:
+  <form action="/api/cleantalk_flagged" method="post" class="pretty-form cleantalk-flagged"
+        onsubmit="return post_form(this, 'cleantalk_flagged');">
+    <table class="lined-table">
+      <tr>
+        <th></th><th>${_("account")}</th><th>${_("joined")}</th><th>${_("karma")}</th>
+        <th>${_("email")}</th><th>${_("IP address")}</th>
+      </tr>
+      %for account, row in thing.flagged:
+        <tr>
+          <td><input type="checkbox" name="accounts" value="${account.name}"></td>
+          <td><a href="/admin/users/${account.name}">${account.name}</a>${_(" (suspended)") if account._banned else ''}</td>
+          <td>${account._date.strftime('%Y-%m-%d')}</td>
+          <td>${(account.link_karma or 0) + (account.comment_karma or 0)}</td>
+          <td>
+            %if row['email_appears']:
+              <strong>${row['email']}</strong><br><small>${_("reported by %(n)s sites, last %(when)s") % dict(n=row['email_frequency'] or '?', when=row['email_updated'] or '?')}</small>
+            %elif row['email']:
+              <small>${row['email']} ${_("(clean)")}</small>
+            %endif
+          </td>
+          <td>
+            %if row['ip_appears']:
+              <strong>${row['ip']}</strong><br><small>${_("reported by %(n)s sites, last %(when)s") % dict(n=row['ip_frequency'] or '?', when=row['ip_updated'] or '?')}</small>
+            %elif row['ip']:
+              <small>${row['ip']} ${_("(clean)")}</small>
+            %endif
+          </td>
+        </tr>
+      %endfor
+    </table>
+    ${_("Selected:")}
+    <select name="do">
+      <option value="dismiss">${_("not spam (dismiss)")}</option>
+      <option value="suspend">${_("suspend")}</option>
+      <option value="spam">${_("suspend and remove their content as spam")}</option>
+    </select>
+    <button class="btn" type="submit">${_("apply")}</button>
+    <span class="status"></span>
+  </form>
+%else:
+  <p>${_("None.")}</p>
+%endif
 </div>

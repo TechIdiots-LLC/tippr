@@ -4769,6 +4769,59 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        do=VOneOf("do", ("run", "reset")),
+        limit=VInt("limit", min=1, max=5000, num_default=500),
+    )
+    def POST_cleantalk_scan(self, form, jquery, do, limit):
+        """Check the next accounts against CleanTalk, or start over
+        (r2.lib.cleantalk_scan)."""
+        from r2.lib import cleantalk_scan
+        if do == "reset":
+            cleantalk_scan.reset()
+            form.refresh()
+            return
+        try:
+            checked, flagged = cleantalk_scan.run(limit or 500)
+        except cleantalk_scan.ScanError as e:
+            form.set_text(".status", str(e))
+            return
+        if not checked:
+            form.set_text(".status", _("every account has been checked"))
+            return
+        form.refresh()
+
+    @validatedForm(VAdmin(), VModhash(),
+                   do=VOneOf("do", ("dismiss", "suspend", "spam")))
+    def POST_cleantalk_flagged(self, form, jquery, do):
+        """Act on accounts flagged by the CleanTalk check."""
+        from r2.lib import cleantalk_scan, user_admin
+        from r2.lib.db.thing import NotFound
+        names = request.POST.getall("accounts")
+        if not names or not do:
+            form.set_text(".status", _("select some accounts"))
+            return
+        accounts = []
+        for name in names[:500]:
+            try:
+                accounts.append(Account._by_name(name, allow_deleted=True))
+            except NotFound:
+                continue
+        if do == "dismiss":
+            cleantalk_scan.dismiss([a._id for a in accounts])
+        else:
+            for account in accounts:
+                if account.name in g.admins or account._id == c.user._id:
+                    continue
+                if not account._banned:
+                    user_admin.suspend(account, c.user,
+                                       "CleanTalk: known spam sender")
+                if do == "spam":
+                    user_admin.remove_content_as_spam(account, c.user)
+        form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         username=nop("username"),
         do=VOneOf("do", ("timeout", "untimeout", "suspend", "unsuspend",
                          "spam_content", "reset_2fa")),

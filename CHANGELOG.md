@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **CleanTalk: check users for spam** (/admin/antispam): checks existing accounts' email addresses and last login
+  addresses against CleanTalk's blacklists in batches (`spam_check`), remembering the results so each run carries on
+  where the last stopped ("start over" checks everyone again). Flagged accounts are listed with how many sites
+  reported them and when, for an admin to dismiss, suspend, or suspend and remove their content as spam.
 - **Account actions on /admin/users**: put an account in a timeout (for a number of days or until lifted; it's told
   why and can still message the admins), suspend it (it can't log in; its sessions and app tokens end), lift either,
   remove its posts and comments as spam, or reset two-factor for someone locked out. Each action is logged on the
