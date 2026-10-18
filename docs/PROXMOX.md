@@ -114,7 +114,7 @@ With Cloudflare in front of the firewall, add `TIPPR_BEHIND_CLOUDFLARE=1`
 too. nginx then follows `X-Forwarded-For` back through both Cloudflare and
 the firewall to the visitor.
 For a container already set up, add the setting to `firstboot.env` and run
-`tippr-firstboot DOMAIN` again. See [INSTALL_tippr.md](INSTALL_tippr.md#behind-another-proxy).
+`pct exec 210 -- /usr/local/sbin/tippr-firstboot DOMAIN` again. See [INSTALL_tippr.md](INSTALL_tippr.md#behind-another-proxy).
 
 ## Changing the domain later
 
@@ -122,7 +122,7 @@ Run the first-boot script again with the new domain. Your data and
 passwords are kept:
 
 ```bash
-pct exec 210 -- tippr-firstboot new.example.com
+pct exec 210 -- /usr/local/sbin/tippr-firstboot new.example.com
 ```
 
 ## Moving to more containers
