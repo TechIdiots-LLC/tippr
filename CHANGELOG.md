@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.7.0
+### ✨ Features and improvements
 - **Feed bots** (/admin/feeds): post new items from RSS or Atom feeds to vaults, e.g. a blog's articles or a project's
   releases, to give a new site something to read. Each feed has a vault, a bot account that posts it (made if it
   doesn't exist; its posts and comments show [bot] beside its name), an interval (15 minutes at least) and an optional
@@ -42,7 +48,6 @@
   when `admin_message_acct` was a vault).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **/v/random** could land on the site's working vaults (beta, takedowns, promos, advertising links, the admin
   vault). It no longer does. (NSFW vaults were already only in /v/randnsfw.)
 - **Times on the admin pages** marked UTC (support history, account actions) were in the server's time zone.
