@@ -3,6 +3,18 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **The normal site works on phones** (first step towards dropping the separate mobile interface). Pages now size to
+  the device instead of a 1024px-wide desktop page shrunk to fit. On phones (768px or narrower):
+  - the vault bar and the sort tabs are rows you swipe sideways;
+  - a menu button in the header opens a drawer with the account links, the sidebar (search, submit buttons, vault
+    info, moderation tools) and the multivault list; logged-out visitors also get a "Log in or sign up" button;
+  - posts, comments, the submit form, preferences, the inbox and search use the full width, with bigger text and
+    touch targets and shallower comment indents; images, code and tables no longer run off the screen.
+
+  On tablets the sidebar stays beside the content (before, it disappeared below 960px), and the account links no
+  longer cover the sort tabs. The "switch to mobile version" banner is gone, and m./simple. addresses and `.mobile`
+  pages now go to the same page on the normal site. The compact interface (`.compact`, `i.`) is still there, but
+  nothing promotes it any more.
 - **Feed bots** (/admin/feeds): post new items from RSS or Atom feeds to vaults, e.g. a blog's articles or a project's
   releases, to give a new site something to read. Each feed has a vault, a bot account that posts it (made if it
   doesn't exist; its posts and comments show [bot] beside its name), an interval (15 minutes at least) and an optional
@@ -43,6 +55,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The compact and old mobile interfaces** failed to load (leftovers from renaming reddit to vault, and Python 2 code).
 - **/v/random** could land on the site's working vaults (beta, takedowns, promos, advertising links, the admin
   vault). It no longer does. (NSFW vaults were already only in /v/randnsfw.)
 - **Times on the admin pages** marked UTC (support history, account actions) were in the server's time zone.

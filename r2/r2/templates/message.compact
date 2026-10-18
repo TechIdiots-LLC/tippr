@@ -39,8 +39,8 @@
     %if getattr(thing, "is_parent", False):
        %if thing.vault_id:
          <span class="correspondent reddit rounded">
-           <a href="${thing.Vault.path}message/moderator/inbox.compact">
-             /v/${thing.Vault.name}
+           <a href="${thing.vault.path}message/moderator/inbox.compact">
+             /v/${thing.vault.name}
            </a>
          </span>
        %else:
@@ -63,14 +63,14 @@
     substitutions = {}
 
     if thing.vault_id:
-        substitutions['Vault'] = format_html(u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>', path=thing.Vault.path)
+        substitutions['vault'] = format_html(u'<b>&nbsp;<a href="%(path)s.compact">%(path)s</a>&nbsp;</b>', path=thing.vault.path)
 
     substitutions['author'] = format_html(u"<b>%s</b>", WrappedUser(thing.author, thing.attribs, thing))
 
     if isinstance(thing.to, Account):
         substitutions['dest'] = format_html(u"<b>%s</b>", WrappedUser(thing.to, [], thing))
     elif thing.vault_id:
-        substitutions['dest'] = substitutions['Vault']
+        substitutions['dest'] = substitutions['vault']
 
     substitutions['when'] = thing.timesince
 

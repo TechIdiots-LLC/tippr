@@ -31,15 +31,15 @@
   </span>
 </%def>
 
-<%def name="Vault()">
+<%def name="vault()">
   <span class="hover pagename tipprname">
     ${plain_link(c.site.name, c.site.user_path, _vault_path=False)}
   </span>
 </%def>
 
-<%def name="Vaults()">
+<%def name="vaults()">
   <span class="hover pagename tipprname">
-    ${plain_link(_("Vaults"), "/Vaults/", _vault_path=False)}
+    ${plain_link(_("vaults"), "/vaults/", _vault_path=False)}
   </span>
 </%def>
 

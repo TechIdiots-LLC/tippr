@@ -11,36 +11,6 @@ r.ui.init = function() {
 
     var smallScreen = r.ui.isSmallScreen();
 
-    // mweb beta banner
-    var mwebOptInCookieName = "__cf_mob_redir";
-    var onFrontPage = $.url().attr('path') == '/';
-    if (smallScreen && onFrontPage && r.config.renderstyle != 'compact' && !r.ui.inMobileWebBlacklist()) {
-        var a = document.createElement('a');
-        a.href = window.location;
-        a.host = 'm.' + r.config.cur_domain;
-        a.search += (a.search ? '&' : '?') + 'ref=mobile_beta_banner&ref_source=desktop'
-        var url = a.href;
-
-        var $bar = $(_.template(
-          '<a href="<%- url %>" class="mobile-web-redirect"><%- button_text %></a>', {
-            url: url,
-            button_text: r._("switch to mobile version"),
-          }));
-
-        $bar.on('click', function() {
-           $.cookie(mwebOptInCookieName, '1', {
-               domain: r.config.cur_domain,
-               path:'/',
-               expires: 90
-            });
-
-           // redirect
-           return true;
-        });
-
-        $('#header').before($bar)
-    }
-
     $('.help-bubble').each(function(idx, el) {
         $(el).data('HelpBubble', new r.ui.Bubble({el: el}))
     })
@@ -90,7 +60,122 @@ r.ui.init = function() {
     r.ui.initReadNext();
 
     r.ui.initTimings();
+
+    r.ui.mobileLayout.init();
 }
+
+/* Phones and narrow windows (css/responsive.less): below the breakpoint the
+ * sidebar, the account links and the multivault list move into a drawer that
+ * a menu button in the header opens; above it they go back where they were.
+ */
+r.ui.mobileLayout = {
+    query: '(max-width: 768px)',
+    active: false,
+
+    init: function() {
+        if (!window.matchMedia || !document.getElementById('header')) {
+            return;
+        }
+        var mq = window.matchMedia(this.query);
+        var update = _.bind(function() { this.apply(mq.matches); }, this);
+        if (mq.addEventListener) {
+            mq.addEventListener('change', update);
+        } else if (mq.addListener) {
+            mq.addListener(update);
+        }
+        update();
+    },
+
+    build: function() {
+        if (this.$drawer) {
+            return;
+        }
+        var label = r._('menu');
+        this.$button = $('<button type="button" class="mobile-menu-button" ' +
+            'aria-controls="mobile-drawer" aria-expanded="false">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" ' +
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+            '<path d="M4 6h16M4 12h16M4 18h16"/></svg>' +
+            '<span class="screenreader-only"></span></button>');
+        this.$button.find('.screenreader-only').text(label);
+        this.$drawer = $('<div id="mobile-drawer" class="mobile-drawer" ' +
+            'role="dialog" aria-modal="true" tabindex="-1">' +
+            '<div class="mobile-drawer-head"><span class="mobile-drawer-title"></span>' +
+            '<button type="button" class="mobile-drawer-close">&times;</button></div>' +
+            '<div class="mobile-drawer-user"></div>' +
+            '<div class="mobile-drawer-body"></div></div>');
+        this.$drawer.attr('aria-label', label);
+        this.$drawer.find('.mobile-drawer-title').text(r.config.site_name || '');
+        this.$drawer.find('.mobile-drawer-close').attr('aria-label', r._('close'));
+        this.$backdrop = $('<div class="mobile-drawer-backdrop"></div>');
+
+        $('#header').append(this.$button);
+        $(document.body).append(this.$backdrop, this.$drawer);
+
+        this.$button.on('click', _.bind(this.open, this));
+        this.$backdrop.on('click', _.bind(this.close, this));
+        this.$drawer.find('.mobile-drawer-close').on('click', _.bind(this.close, this));
+        $(document).on('keydown', _.bind(function(e) {
+            if (e.which == 27 && this.isOpen()) {
+                this.close();
+            }
+        }, this));
+    },
+
+    // the account links: a copy of #header-bottom-right without its ids
+    // (the original stays, showing only the mail icons)
+    copyUserLinks: function() {
+        var $copy = $('#header-bottom-right').clone();
+        $copy.find('#mail, #modmail').addClass('mail-link');
+        $copy.find('[id]').addBack().removeAttr('id');
+        this.$drawer.find('.mobile-drawer-user').empty().append($copy.contents());
+    },
+
+    apply: function(small) {
+        if (small == this.active) {
+            return;
+        }
+        this.active = small;
+        if (small) {
+            this.build();
+            this.copyUserLinks();
+            var $body = this.$drawer.find('.mobile-drawer-body');
+            this.moved = [];
+            $('body > .side, body > .listing-chooser').each(_.bind(function(i, el) {
+                var placeholder = document.createComment('mobile-drawer');
+                el.parentNode.insertBefore(placeholder, el);
+                this.moved.push([el, placeholder]);
+                $body.append(el);
+            }, this));
+        } else {
+            this.close();
+            _.each(this.moved || [], function(pair) {
+                pair[1].parentNode.insertBefore(pair[0], pair[1]);
+                pair[1].parentNode.removeChild(pair[1]);
+            });
+            this.moved = [];
+        }
+    },
+
+    isOpen: function() {
+        return $(document.body).hasClass('mobile-drawer-open');
+    },
+
+    open: function() {
+        $(document.body).addClass('mobile-drawer-open');
+        this.$button.attr('aria-expanded', 'true');
+        this.$drawer.scrollTop(0).focus();
+    },
+
+    close: function() {
+        if (!this.isOpen()) {
+            return;
+        }
+        $(document.body).removeClass('mobile-drawer-open');
+        this.$button.attr('aria-expanded', 'false');
+        this.$button.focus();
+    },
+};
 
 r.ui.inMobileWebBlacklist = function() {
   return _.any(r.config.mweb_blacklist_expressions, function(regex) {

@@ -27,7 +27,7 @@
    from r2.config import feature
    from r2.lib.template_helpers import add_vault
    from r2.lib.template_helpers import make_url_protocol_relative
-   import urllib
+   import urllib.parse
    from r2.lib.filters import _force_unicode, _force_utf8
  %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
@@ -144,7 +144,7 @@ there's also a discussion going on here:
        tweet = "%s %s" % (title[0:(139-len(url))], url)
        %>
 
-        ${icon_button("Share", "email-icon", "mailto:?subject=" + urllib.quote(_force_utf8(subject)) + "&body=" + urllib.quote(_force_utf8(body)))}
+        ${icon_button("Share", "email-icon", "mailto:?subject=" + urllib.parse.quote(_force_utf8(subject)) + "&body=" + urllib.parse.quote(_force_utf8(body)))}
         ${self.save_button()}
         ${self.hide_button()}
         ${icon_button("Report","report-icon",onclick="return change_state(this, 'report', hide_thing)")}

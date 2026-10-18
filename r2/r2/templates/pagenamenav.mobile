@@ -29,7 +29,7 @@
   </span>
 </%def>
 
-<%def name="Vault()">
+<%def name="vault()">
   <span class="hover pagename tipprname">
     <a href="${c.site.path}">${c.site.name}</a>
   </span>
@@ -37,7 +37,7 @@
 
 <%def name="vaults()">
   <span class="hover pagename tipprname">
-    <a href="/Vaults/">${_("Vaults")}</a>
+    <a href="/vaults/">${_("vaults")}</a>
   </span>
 </%def>
 

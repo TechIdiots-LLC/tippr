@@ -35,7 +35,7 @@
 
 <%def name="entry()">
 <% fullname = thing._fullname %>
-<p class="Vault">
+<p class="vault">
   ${plain_link(thing.title, thing.path, _class="title")}
   &#32;<span class="domain">(${thing.path})</span> 
 </p>

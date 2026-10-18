@@ -468,12 +468,17 @@ def set_content_type():
                 c.user = user
                 c.user_is_loggedin = True
         if ext in ("mobile", "m") and not request.GET.get("keep_extension"):
-            try:
-                if request.cookies['tippr_mobility'] == "compact":
-                    c.extension = "compact"
-                    c.render_style = "compact"
-            except (ValueError, KeyError):
-                c.suggest_compact = True
+            # the old mobile interface (m., .mobile): the normal site works
+            # on phones, so send people there (keep_extension=1 still shows
+            # the old one)
+            if request.method.upper() in ("GET", "HEAD"):
+                path, _sep, query = request.environ.get(
+                    "FULLPATH", request.path).partition("?")
+                path = re.sub(r"\.(mobile|m)$", "", path) or "/"
+                location = (g.https_endpoint or g.origin) + path
+                if query:
+                    location += "?" + query
+                abort(302, location=location)
         if ext in ("mobile", "m", "compact"):
             if request.GET.get("keep_extension"):
                 c.cookies['tippr_mobility'] = Cookie(ext, expires=NEVER)

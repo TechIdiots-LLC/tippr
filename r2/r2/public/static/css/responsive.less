@@ -1,0 +1,716 @@
+// The contents of this file are subject to the Common Public Attribution
+// License Version 1.0 (the "License"); you may not use this file except in
+// compliance with the License. You may obtain a copy of the License at
+// https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+//
+// Software distributed under the License is distributed on an "AS IS" basis,
+// WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+// the specific language governing rights and limitations under the License.
+//
+// The Original Code is Tippr.
+//
+// The Initial Developer of the Original Code is TechIdiots LLC.
+// Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+
+// The normal site on phones and narrow windows (instead of the old separate
+// mobile interface). Imported last by tippr.less so these override the
+// desktop rules. Below the breakpoint:
+//
+// - the vault bar and the sort tabs are rows you can swipe sideways;
+// - the sidebar, the account links and the multivault list move into a
+//   drawer that the menu button in the header opens (r.ui.mobileLayout in
+//   ui.js; without JS the sidebar shows below the content, as the grid in
+//   mobile-grid.less places it);
+// - posts, comments and forms use the full width, with bigger text and
+//   touch targets.
+//
+// Colours come from the theme's CSS variables (components/theme.less) so this
+// file needs no imports.
+
+@mobile-max: 768px;
+@drawer-width: 320px;
+
+// hidden on wide screens: they only appear below the breakpoint
+.mobile-menu-button,
+.mobile-drawer,
+.mobile-drawer-backdrop {
+    display: none;
+}
+
+@media (max-width: @mobile-max) {
+
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        font-size: 13px;
+        overflow-x: hidden;
+    }
+
+    body.mobile-drawer-open {
+        overflow: hidden;
+    }
+
+    // -------------------------------------------------------------------
+    // header
+    // -------------------------------------------------------------------
+
+    // the vault bar: one row you swipe sideways
+    #vault-header-area {
+        height: auto;
+        line-height: 34px;
+        font-size: 12px;
+
+        .width-clip {
+            position: static;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown.vaultdrop {
+            float: none;
+            flex: none;
+        }
+
+        .vault-list {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            &::-webkit-scrollbar { display: none; }
+        }
+
+        .vault-list a {
+            display: inline-block;
+            padding: 0 2px;
+        }
+
+        #vault-more-link {
+            position: static;
+            flex: none;
+            padding: 0 8px;
+            background: none;
+        }
+    }
+
+    #header-bottom-left {
+        // room on the right for the menu button
+        padding-right: 52px;
+        font-size: 14px;
+    }
+
+    #header-img-a.site-logo img {
+        max-height: 40px;
+        max-width: 60vw;
+    }
+
+    .pagename {
+        font-size: 1.1em;
+    }
+
+    body.with-listing-chooser #header .pagename {
+        position: static;
+        margin-left: 0;
+    }
+
+    // the sort tabs: a row of their own, swiped sideways
+    #header .tabmenu {
+        display: block;
+        margin: 4px 0 0 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+
+        li {
+            display: inline-block;
+            margin: 0 1px;
+        }
+
+        li a {
+            display: inline-block;
+            padding: 8px 10px 6px;
+        }
+    }
+
+    body.with-listing-chooser #header .tabmenu {
+        margin-left: 0;
+    }
+
+    // the account links move into the drawer; only the mail icons stay
+    #header-bottom-right {
+        top: 34px;          // below the vault bar
+        right: 52px;        // left of the menu button
+        bottom: auto;
+        padding: 12px 4px;
+        background: transparent;
+        border-radius: 0;
+        line-height: 16px;
+
+        > * { display: none; }
+        > #mail,
+        > #modmail,
+        > .message-count {
+            display: inline-block;
+        }
+
+        #mail { transform: scale(1.4); margin: 0 6px; }
+        #modmail { transform: scale(1.2); margin: 0 6px; }
+        .message-count { font-size: 11px; padding: 1px 4px; }
+    }
+
+    // logged out: keep "log in or sign up" in the header, as a button
+    body:not(.loggedin) #header-bottom-right {
+        padding: 8px 4px;
+
+        > .user {
+            display: inline-block;
+            font-size: 0;       // hides "Want to join? … in seconds."
+        }
+
+        > .user a {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: var(--tp-accent, #12a4b5);
+            color: var(--tp-on-accent, #ffffff);
+        }
+    }
+
+    .mobile-menu-button {
+        display: block;
+        position: absolute;
+        top: 34px;
+        right: 4px;
+        width: 44px;
+        height: 40px;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--tp-text, #1d2a30);
+        cursor: pointer;
+
+        svg {
+            width: 26px;
+            height: 26px;
+            vertical-align: middle;
+        }
+
+        &:hover, &:focus-visible {
+            background: var(--tp-tint, #e3f6f8);
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // the drawer: sidebar, account links, multivaults
+    // -------------------------------------------------------------------
+
+    .mobile-drawer {
+        display: block;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1001;
+        width: @drawer-width;
+        max-width: 88vw;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        background: var(--tp-surface, #ffffff);
+        box-shadow: -2px 0 12px rgba(0, 0, 0, 0.25);
+        transform: translateX(105%);
+        visibility: hidden;
+        transition: transform 0.2s ease-out, visibility 0s linear 0.2s;
+        outline: none;
+    }
+
+    body.mobile-drawer-open .mobile-drawer {
+        transform: none;
+        visibility: visible;
+        transition: transform 0.2s ease-out;
+    }
+
+    .mobile-drawer-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0s linear 0.2s;
+    }
+
+    body.mobile-drawer-open .mobile-drawer-backdrop {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.2s;
+    }
+
+    .mobile-drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 6px 6px 14px;
+        border-bottom: 1px solid var(--tp-border, #dde7ea);
+        font-weight: bold;
+        font-size: 15px;
+    }
+
+    .mobile-drawer-close {
+        width: 44px;
+        height: 40px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--tp-text, #1d2a30);
+        font-size: 26px;
+        line-height: 1;
+        cursor: pointer;
+
+        &:hover, &:focus-visible {
+            background: var(--tp-tint, #e3f6f8);
+        }
+    }
+
+    // the account links (a copy of #header-bottom-right), one per row
+    .mobile-drawer-user {
+        padding: 4px 14px;
+        border-bottom: 1px solid var(--tp-border, #dde7ea);
+        font-size: 15px;
+        line-height: 20px;
+
+        .separator { display: none; }
+
+        > *, > form, > .user {
+            display: block;
+        }
+
+        a, .user, form a {
+            display: block;
+            padding: 10px 0;
+        }
+
+        .user a { display: inline; padding: 0; }
+
+        // the mail links show as text here, not icons
+        .mail-link {
+            text-indent: 0;
+            width: auto;
+            height: auto;
+            background: none !important;
+            position: static;
+            margin: 0;
+        }
+
+        .message-count {
+            display: inline-block;
+            padding: 0 5px;
+            margin: 10px 0 0;
+        }
+
+        .beta-hint { position: static; }
+    }
+
+    // the sidebar inside the drawer
+    .mobile-drawer .side {
+        float: none;
+        width: auto;
+        margin: 0;
+        padding: 8px 12px 16px;
+        background: transparent;
+    }
+
+    // without JS (no drawer) the sidebar stays in the page, below the content
+    body > .side {
+        float: none;
+        width: auto;
+        margin: 0 8px;
+    }
+
+    .side .spacer { margin: 8px 0 12px; }
+
+    // the multivault list, inside the drawer
+    .listing-chooser {
+        display: none;
+    }
+
+    .mobile-drawer .listing-chooser {
+        display: block;
+        position: static;
+        width: auto;
+        padding: 0 0 16px;
+        background: transparent;
+        overflow: visible;
+
+        .grippy { display: none; }
+        .intro { width: auto; }
+        h3 { text-align: left; padding: 8px 14px 4px; }
+        li a, .choice { display: block; padding: 8px 14px; }
+    }
+
+    body.with-listing-chooser > .content,
+    body.with-listing-chooser .footer-parent,
+    body.listing-chooser-collapsed > .content,
+    body.listing-chooser-collapsed .footer-parent {
+        margin-left: 0;
+    }
+
+    // -------------------------------------------------------------------
+    // content
+    // -------------------------------------------------------------------
+
+    .content {
+        margin: 6px 6px 0;
+    }
+
+    .menuarea {
+        line-height: 2;
+    }
+
+    .infobar {
+        margin: 6px 0;
+    }
+
+    // space kept free for the desktop sidebar, not needed here
+    .panestack-title,
+    .commentarea .menuarea,
+    #noresults,
+    .aboutpage,
+    .sheets {
+        margin-right: 0;
+    }
+
+    ul#image-preview-list {
+        margin: 12px 0;
+    }
+
+    .commentarea .menuarea {
+        margin-left: 4px;
+        line-height: 2;
+    }
+
+    main.content img {
+        max-width: 100%;
+    }
+
+    // the first-visit welcome bar: wrap instead of running off the screen
+    .infobar.welcome {
+        height: auto;
+        white-space: normal;
+        padding-bottom: 10px;
+
+        h1, h2 { display: block; margin: 10px 8px 0; }
+        .button-row { position: static; margin: 10px 8px 0; }
+    }
+
+    // fixed-width blocks (the submit form, error pages): the full width
+    .formtabs-content,
+    .errorpage-message {
+        width: auto;
+        max-width: 100%;
+    }
+
+    .errorpage-message img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    // rows of filters (the inbox's all / unread / messages …) wrap: the
+    // items are nowrap with nothing between them, so make each a block
+    .menuarea .flat-list li {
+        display: inline-block;
+        line-height: 2;
+    }
+
+    // search: no 600px minimum
+    .search-result-group,
+    .searchfacets,
+    #search input[type=text] {
+        min-width: 0 !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .search-result-group,
+    .searchfacets {
+        margin-left: 0;
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    #search {
+        padding-right: 0;
+    }
+
+    // posts in a listing
+    .link {
+        margin-bottom: 12px;
+    }
+
+    .link .rank,
+    .rank-spacer {
+        display: none;
+    }
+
+    .link .midcol {
+        margin-left: 2px;
+        margin-right: 6px;
+        min-width: 28px;
+    }
+
+    // bigger targets for voting; the arrow images stay the same size
+    .arrow {
+        width: 28px;
+        height: 22px;
+    }
+
+    body > .content .link.compressed .midcol {
+        width: 28px;
+    }
+
+    .link .title {
+        font-size: 16px;
+        line-height: 1.3;
+    }
+
+    .thumbnail {
+        width: 60px;
+        margin-right: 8px;
+    }
+
+    .thumbnail img {
+        max-width: 60px;
+        height: auto;
+    }
+
+    .domain a { max-width: 12em; }
+
+    .tagline {
+        line-height: 1.5;
+    }
+
+    // the comments / share / save … row: room for a thumb
+    .entry .buttons {
+        padding-top: 2px;
+    }
+
+    .entry .buttons li {
+        padding-right: 2px;
+        line-height: 1;
+    }
+
+    .entry .buttons li + li {
+        padding-left: 2px;
+    }
+
+    .entry .buttons li a {
+        display: inline-block;
+        padding: 8px 4px;
+        font-size: 13px;
+    }
+
+    // comments: shallower indents, so deep threads still fit
+    .comment, .content .details {
+        margin-left: 4px;
+    }
+
+    .comment .child,
+    .comment .showreplies {
+        margin-left: 6px;
+        padding-left: 2px;
+        border-left: 2px solid var(--tp-border, #dde7ea);
+    }
+
+    .comment .midcol {
+        width: 28px;
+        margin-right: 4px;
+    }
+
+    .comment .tagline {
+        font-size: 12px;
+    }
+
+    .usertext,
+    .md {
+        font-size: 14px;
+    }
+
+    .md {
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+
+    .md img,
+    .md video,
+    .md iframe {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .md pre {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+
+    .md table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    // expanded media and embeds
+    .expando {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .expando img,
+    .expando video,
+    .expando iframe,
+    .media-preview-content img,
+    .media-preview-content video {
+        max-width: 100% !important;
+        height: auto;
+    }
+
+    // -------------------------------------------------------------------
+    // forms: the full width instead of 500px
+    // -------------------------------------------------------------------
+
+    .usertext-edit,
+    .usertext-edit textarea,
+    .roundfield,
+    .roundfield-actions,
+    .roundfield .usertext-edit,
+    .roundfield textarea,
+    .roundfield input[type=text],
+    .roundfield input[type=url],
+    .roundfield input[type=password],
+    .roundfield input[type=number],
+    #compose-message .roundfield select {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .usertext-edit textarea {
+        font-size: 16px;    // 16px stops iOS zooming in on focus
+        min-height: 120px;
+    }
+
+    input[type=text],
+    input[type=url],
+    input[type=password],
+    input[type=email],
+    input[type=search],
+    input[type=number],
+    select,
+    textarea {
+        font-size: 16px;
+        max-width: 100%;
+    }
+
+    .usertext button,
+    button.btn,
+    .btn {
+        min-height: 36px;
+    }
+
+    // preference and settings tables: label above its control
+    .preftable {
+        width: 100%;
+    }
+
+    .preftable,
+    .preftable tbody,
+    .preftable tr,
+    .preftable th,
+    .preftable td {
+        display: block;
+    }
+
+    .preftable th {
+        padding: 12px 0 4px;
+        text-align: left;
+    }
+
+    .preftable td {
+        padding: 0 0 8px;
+    }
+
+    // wide tables (admin pages, mod tools) scroll instead of overflowing
+    .lined-table,
+    .admin-feeds-table,
+    .admin-apps-table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    // -------------------------------------------------------------------
+    // footer
+    // -------------------------------------------------------------------
+
+    .footer-parent {
+        padding-top: 24px;
+    }
+
+    .footer {
+        flex-wrap: wrap;
+        -webkit-flex-wrap: wrap;
+        margin: 15px 8px;
+    }
+
+    .footer .col {
+        flex: 0 0 50%;
+        -webkit-flex: 0 0 50%;
+        border-left: 0;
+    }
+
+    .footer .col a {
+        display: inline-block;
+        padding: 4px 0;
+    }
+
+    .bottommenu {
+        padding: 0 8px;
+    }
+}
+
+// tablets and narrow windows: the desktop layout, with the account links on
+// the top row (beside the logo) so they don't cover the sort tabs, which
+// scroll sideways if they don't fit
+@media (min-width: (@mobile-max + 1)) and (max-width: 1024px) {
+    #header-bottom-right {
+        top: 18px;          // below the vault bar
+        bottom: auto;
+        border-radius: 0 0 0 7px;
+    }
+
+    #header-bottom-left {
+        padding-top: 4px;
+    }
+
+    #header .tabmenu {
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+    }
+}

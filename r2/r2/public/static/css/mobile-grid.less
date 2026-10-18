@@ -40,9 +40,10 @@ div.content, main.content {
     margin: 0;
 }
 
+/* on phones the sidebar is in the menu drawer (responsive.less, and
+   r.ui.mobileLayout in ui.js); without JS it shows below the content */
 .side {
     grid-area: sidebar;
-    display: none; /* Hidden on mobile by default */
 }
 
 .footer-parent {
@@ -50,7 +51,7 @@ div.content, main.content {
 }
 
 /* Desktop Grid Override */
-@media (min-width: 960px) {
+@media (min-width: 769px) {
     body {
         grid-template-areas:
             "header header"
@@ -59,10 +60,6 @@ div.content, main.content {
         grid-template-columns: 1fr 310px;
     }
 
-    .side {
-        display: block;
-    }
-    
     /* Reset margins that might interfere with grid */
     div.content, main.content {
         margin-right: 15px;
@@ -70,7 +67,7 @@ div.content, main.content {
 }
 
 /* Article/Thing Styling for Mobile */
-@media (max-width: 959px) {
+@media (max-width: 768px) {
     .thing {
         padding: 10px;
         border-bottom: 1px solid #eee;

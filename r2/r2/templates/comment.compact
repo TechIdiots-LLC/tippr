@@ -52,7 +52,7 @@
           ${thing.link.url}
       %endif
     %endif
-    %if thing.Vault.quarantine:
+    %if thing.vault.quarantine:
       <span class="quarantine-warning">
         ${quarantine_stamp()}
       </span>

@@ -236,6 +236,7 @@ def js_config(extra_config=None):
 
         # current domain
         "cur_domain": get_domain(vault=False, no_www=True),
+        "site_name": g.site_name,
         # where do ajax requests go?
         "ajax_domain": get_domain(vault=False),
         "stats_domain": g.stats_domain or '',
