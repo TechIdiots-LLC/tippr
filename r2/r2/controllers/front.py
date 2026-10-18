@@ -25,7 +25,7 @@
 
 import random as rand
 import re
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 from pylons import app_globals as g
 from pylons import request
@@ -1759,6 +1759,10 @@ class FormsController(TipprController):
     def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
         self.logout()
+        # admin pages 404 for everyone else, so don't send the user back there
+        path = urlparse(dest).path
+        if path == "/admin" or path.startswith("/admin/"):
+            dest = "/"
         self.redirect(dest)
 
     @validate(VUser(),
