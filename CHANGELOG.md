@@ -3,13 +3,18 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.6.0
+### ✨ Features and improvements
 - **Gold is ad-free by default**: AdSense, promoted posts and the sponsor box are hidden for gold members unless they
   untick "hide ads" in their gold options (it used to be off until they found it).
 - **Hide multivaults**: a "hide" link on the side panel's multivaults section, and a preference to bring it back.
 - **The promoted tab** only appears when something is being promoted there (or for sponsors).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Gold support** messages (expiry notices, payment and subscription problems, gift code errors) named
   `goldsupport_email`, empty by default, so they read "write to us at ." They link to a new gold section of the
   contact page instead, which offers a message to the admins and shows the address when one is set.
