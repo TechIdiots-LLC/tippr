@@ -84,6 +84,11 @@ systemctl enable tippr-firstboot.service
 # ZooKeeper's nodes are ACL'd to the template's password: start empty
 systemctl stop zookeeper
 rm -rf /var/lib/zookeeper/version-2
+# OpenSearch starts empty too (first boot rebuilds the index): each
+# container gets its own cluster, and its data isn't on a lower image layer
+# whose copy-up trips Lucene's lock check (when testing under Docker)
+systemctl stop opensearch
+rm -rf /var/lib/opensearch/nodes
 # per-container identity and secrets
 rm -f /etc/tippr/secrets.env /etc/ssh/ssh_host_* /etc/tippr/tls/self-signed.*
 : > /etc/machine-id
