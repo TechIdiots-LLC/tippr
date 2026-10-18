@@ -27,7 +27,8 @@ Two ways to place ads:
 
 Ads are never shown in NSFW or quarantined vaults, on NSFW posts, in
 listings that include NSFW posts, in vaults that turned ads off, or to
-gold members who chose to hide them.
+gold members (ad-free by default; the "hide ads" preference lets them opt
+back in).
 """
 
 import re

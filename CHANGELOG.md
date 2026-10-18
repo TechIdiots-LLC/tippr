@@ -3,9 +3,19 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Gold is ad-free by default**: AdSense, promoted posts and the sponsor box are hidden for gold members unless they
+  untick "hide ads" in their gold options (it used to be off until they found it).
+- **Hide multivaults**: a "hide" link on the side panel's multivaults section, and a preference to bring it back.
+- **The promoted tab** only appears when something is being promoted there (or for sponsors).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **/explore** failed with an error (Python 2 division), as could `median()`, gold gift codes and the Solr provider.
+- **The gilded tab** had no side panel.
+- **Sample multis** in the side panel (`/user/tippr/m/hello` and `world`) led to "page not found"; only samples that
+  exist and are public are shown, and the defaults are empty.
+- **The promoted tab** showed reddit's "This is a placeholder ad." page, and the real listing then failed on a
+  memcached key with spaces (the front page's name).
 - **Newsletter**: the newsletter bar, the sign-up form's "get the best of tippr emailed to you" checkbox and
   /newsletter only appear when a newsletter is set up (`newsletter_api_key` and `newsletter_list_id`); without one
   they offered something that didn't exist. A link on the email settings page that subscribed people to reddit's own

@@ -112,7 +112,7 @@ class Account(Thing):
                      pref_email_messages = False,
                      pref_private_feeds = True,
                      pref_force_https = False,
-                     pref_hide_ads = False,
+                     pref_hide_ads = True,   # gold is ad-free unless the member opts back in
                      pref_show_trending=True,
                      pref_show_multis=True,
                      pref_highlight_new_comments = True,
