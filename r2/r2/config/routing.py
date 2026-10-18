@@ -157,6 +157,7 @@ def make_map(config):
     mc('/admin/ads', controller='admintool', action='ads')
     mc('/admin/backups', controller='admintool', action='backups')
     mc('/admin/apps', controller='admintool', action='apps')
+    mc('/admin/feeds', controller='admintool', action='feeds')
     mc('/admin/users', controller='admintool', action='users')
     mc('/admin/users/:username', controller='admintool', action='user')
     mc('/admin/support', controller='admintool', action='support')

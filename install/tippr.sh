@@ -1521,9 +1521,12 @@ TIPPR_TIMERS=(
     # sends queued email every minute; does nothing until email is set up
     # (mail_transport, or /admin/email)
     tippr-job-email.timer
+    # ends gold when it runs out (and warns 3 days before); does nothing
+    # without gold members
+    tippr-job-update_gold_users.timer
+    # posts new items from the feeds on /admin/feeds; does nothing without any
+    tippr-job-feeds.timer
 )
-# Disabled by default; enable with "systemctl enable --now <timer>":
-#   tippr-job-update_gold_users.timer expire gold subscriptions daily
 
 ###############################################################################
 # Firewall (optional)

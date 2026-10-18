@@ -103,6 +103,7 @@ class Builder:
         from r2.lib.db import queries
         from r2.lib.template_helpers import (
           add_admin_distinguish,
+          add_bot_distinguish,
           add_cakeday_distinguish,
           add_friend_distinguish,
           add_moderator_distinguish,
@@ -190,6 +191,10 @@ class Builder:
 
             if w.distinguished == 'special':
                 add_special_distinguish(distinguish_attribs_list, w.author)
+
+            if (not author_is_hidden and w.author and
+                    getattr(w.author, "feed_bot", False)):
+                add_bot_distinguish(distinguish_attribs_list)
 
             if (not author_is_hidden and
                     w.author and w.author._id in cakes and not c.profilepage):

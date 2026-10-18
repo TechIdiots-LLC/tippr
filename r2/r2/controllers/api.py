@@ -4898,6 +4898,79 @@ class ApiController(TipprController):
                    client.name)
         form.refresh()
 
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        do=VOneOf("do", ("add", "edit", "check", "enable", "disable",
+                         "delete")),
+        feed_id=VInt("feed_id", min=1),
+        url=VLength("url", max_length=2000, empty_error=None),
+        vault_name=VLength("vault", max_length=100, empty_error=None),
+        bot_name=VLength("bot", max_length=20, empty_error=None),
+        interval=VInt("interval", min=1, max=10080),
+        title_prefix=VLength("title_prefix", max_length=40, empty_error=None),
+    )
+    def POST_admin_feed(self, form, jquery, do, feed_id, url, vault_name,
+                        bot_name, interval, title_prefix):
+        """Add, edit, check now, enable, disable or delete a feed
+        (/admin/feeds, r2.lib.feeds)."""
+        from r2.lib import feeds
+        from r2.lib.db.thing import NotFound
+        if not do:
+            return
+        if do in ("add", "edit"):
+            url = (url or "").strip()
+            if not re.match(r"^https?://[^\s/]+", url):
+                form.set_text(".status", _("give the feed's http(s) address"))
+                return
+            try:
+                vault = Vault._by_name((vault_name or "").strip().lstrip("/")
+                                       .removeprefix("v/"))
+            except NotFound:
+                form.set_text(".status", _("no such vault"))
+                return
+            bot_name = (bot_name or "").strip()
+            if not chkuser(bot_name):
+                form.set_text(".status", _("give the bot account a valid username"))
+                return
+            try:
+                feeds.fetch(url)
+            except feeds.FeedError as e:
+                form.set_text(".status", str(e))
+                return
+            account = feeds.bot_account(bot_name)
+            if account._banned or account._deleted:
+                form.set_text(".status", _("that account is suspended or deleted"))
+                return
+            if do == "add":
+                feeds.add(url, vault, account, interval, title_prefix)
+            else:
+                if not feeds.get_feed(feed_id):
+                    form.set_text(".status", _("no such feed"))
+                    return
+                feeds.update(feed_id, url=url, vault_id=vault._id,
+                             account_id=account._id,
+                             interval_minutes=max(feeds.MIN_INTERVAL_MINUTES,
+                                                  interval or
+                                                  feeds.DEFAULT_INTERVAL_MINUTES),
+                             title_prefix=(title_prefix or "").strip() or None)
+            g.log.info("admin_feed: %s %s %s -> /v/%s as %s", c.user.name, do,
+                       url, vault.name, account.name)
+            form.refresh()
+            return
+        feed = feeds.get_feed(feed_id) if feed_id else None
+        if not feed:
+            form.set_text(".status", _("no such feed"))
+            return
+        if do == "check":
+            feeds.check(feed)
+        elif do in ("enable", "disable"):
+            feeds.update(feed["id"], enabled=(do == "enable"))
+        elif do == "delete":
+            feeds.remove(feed["id"])
+        g.log.info("admin_feed: %s %s %s", c.user.name, do, feed["url"])
+        form.refresh()
+
     def _support_ticket(self, ticket_id, reply=True):
         """The ticket if c.user may see (and, with reply, act on) it."""
         from r2.lib import support

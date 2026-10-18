@@ -1,0 +1,15 @@
+[Unit]
+Description=post new items from feeds to vaults (/admin/feeds)
+
+After=network.target
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+# run-locked: on one server at a time when several share the site
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked feeds @TIPPR_VENV@/bin/paster --plugin=r2 run ${TIPPR_INI} -c 'from r2.lib import feeds; feeds.run_due()'
+
+Nice=10

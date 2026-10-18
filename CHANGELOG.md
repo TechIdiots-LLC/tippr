@@ -3,6 +3,14 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Feed bots** (/admin/feeds): post new items from RSS or Atom feeds to vaults, e.g. a blog's articles or a project's
+  releases, to give a new site something to read. Each feed has a vault, a bot account that posts it (made if it
+  doesn't exist; its posts and comments show [bot] beside its name), an interval (15 minutes at least) and an optional
+  title prefix. Check now, pause, edit or delete a feed from the page. A new feed posts only its newest 3 items and
+  later checks at most the newest 5, so a vault isn't flooded; an item is never posted twice. The new
+  tippr-job-feeds timer checks them every 15 minutes.
+- **Gold now expires**: the installer enables tippr-job-update_gold_users (it was off by default), which ends gold
+  when it runs out, and warns 3 days before.
 - **A welcome instead of "nothing here"**: an empty front page or /v/all shows the site's name and description,
   buttons to submit a link or text post and the most subscribed vaults to explore; an empty vault invites people to
   post there.

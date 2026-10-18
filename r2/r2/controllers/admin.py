@@ -34,6 +34,7 @@ from r2.lib.pages import (
     AdminCoins,
     AdminEmailSettings,
     AdminErrors,
+    AdminFeeds,
     AdminGold,
     AdminLiveConfig,
     AdminPage,
@@ -140,6 +141,11 @@ class AdminToolController(TipprController):
         except NotFound:
             return self.abort404()
         return AdminPage(content=AdminUser(account)).render()
+
+    @validate(VAdmin())
+    def GET_feeds(self):
+        """Feeds posted to vaults by bot accounts (r2.lib.feeds)."""
+        return AdminPage(content=AdminFeeds()).render()
 
     @validate(VAdmin(), show=nop("show"))
     def GET_apps(self, show):

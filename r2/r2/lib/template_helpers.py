@@ -609,6 +609,12 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
         cssclass = 'wrong'
         if not label:
             raise ValueError ("Need a label")
+    elif kind == 'bot':
+        # an account that posts from a feed (r2.lib.feeds)
+        priority = 97
+        cssclass = 'bot'
+        if not label:
+            label = _('a bot: posts new items from a feed automatically')
     elif kind == 'special':
         priority = 98
     elif kind == "cake":
@@ -649,6 +655,10 @@ def add_cakeday_distinguish(distinguish_attribs_list, user):
     label %= {"user": user.name}
     link = "/user/%s" % user.name
     add_attr(distinguish_attribs_list, kind="cake", label=label, link=link)
+
+
+def add_bot_distinguish(distinguish_attribs_list):
+    add_attr(distinguish_attribs_list, kind='bot')
 
 
 def add_special_distinguish(distinguish_attribs_list, user):

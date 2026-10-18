@@ -3799,6 +3799,25 @@ class AdminUser(Templated):
         Templated.__init__(self)
 
 
+class AdminFeeds(Templated):
+    """Feeds posted to vaults by bot accounts (r2.lib.feeds)."""
+    def __init__(self):
+        from r2.lib import feeds
+        self.feeds = feeds.all_feeds()
+        vault_ids = {f["vault_id"] for f in self.feeds}
+        account_ids = {f["account_id"] for f in self.feeds}
+        self.vaults = (Vault._byID(vault_ids, data=True, return_dict=True,
+                                   ignore_missing=True) if vault_ids else {})
+        self.accounts = (Account._byID(account_ids, data=True,
+                                       return_dict=True, ignore_missing=True)
+                         if account_ids else {})
+        self.min_interval = feeds.MIN_INTERVAL_MINUTES
+        self.default_interval = feeds.DEFAULT_INTERVAL_MINUTES
+        self.first_fetch = feeds.FIRST_FETCH_POSTS
+        self.per_fetch = feeds.MAX_POSTS_PER_FETCH
+        Templated.__init__(self)
+
+
 class AdminApps(Templated):
     """Registered API apps (OAuth2Client), for approving, suspending or
     deleting them."""

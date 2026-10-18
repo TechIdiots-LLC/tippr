@@ -1,0 +1,144 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/feeds: feeds posted to vaults by bot accounts (r2.lib.feeds)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<%def name="action(feed_id, what, label)">
+  <form action="/api/admin_feed" method="post" class="pretty-form admin-feed-action"
+        onsubmit="return ${"confirm('%s') &&" % _("Delete this feed? Its posts stay.") if what == 'delete' else ''} post_form(this, 'admin_feed');">
+    <input type="hidden" name="feed_id" value="${feed_id}">
+    <input type="hidden" name="do" value="${what}">
+    <button class="btn" type="submit">${label}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<%def name="feed_form(what, feed=None, vault='', bot='')">
+  <form action="/api/admin_feed" method="post" class="pretty-form admin-feed-form"
+        onsubmit="return post_form(this, 'admin_feed');">
+    <input type="hidden" name="do" value="${what}">
+    %if feed:
+      <input type="hidden" name="feed_id" value="${feed['id']}">
+    %endif
+    <table class="preftable">
+      <tr><th>${_("feed address")}</th>
+        <td><input type="url" name="url" size="60" required
+                   value="${feed['url'] if feed else ''}"
+                   placeholder="https://example.com/feed.xml">
+          <br><small>${_("An RSS or Atom feed. Each new item becomes a link post.")}</small></td></tr>
+      <tr><th>${_("vault")}</th>
+        <td>/v/<input type="text" name="vault" size="20" required value="${vault}"></td></tr>
+      <tr><th>${_("posted by")}</th>
+        <td><input type="text" name="bot" size="20" required value="${bot}" placeholder="news_bot">
+          <br><small>${_("The account that posts the items. It's made if it doesn't exist, and its posts show [bot] beside its name. A name that says it's a bot (e.g. ending in _bot) helps too.")}</small></td></tr>
+      <tr><th>${_("check every")}</th>
+        <td><input type="number" name="interval" min="${thing.min_interval}" max="10080"
+                   value="${feed['interval_minutes'] if feed else thing.default_interval}"> ${_("minutes")}</td></tr>
+      <tr><th>${_("title prefix")}</th>
+        <td><input type="text" name="title_prefix" size="20" maxlength="40"
+                   value="${(feed['title_prefix'] or '') if feed else ''}" placeholder="[Blog]">
+          <br><small>${_("Optional, put before each post's title.")}</small></td></tr>
+    </table>
+    <button class="btn" type="submit">${_("add the feed") if what == 'add' else _("save")}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<div class="admin-feeds">
+<h1>${_("Feeds")}</h1>
+
+<p><small>
+  ${_("Post new items from RSS or Atom feeds to vaults, such as your blog's articles or a project's releases, to give the site something to read. Feeds are checked every 15 minutes, each no more often than its own interval.")}
+  ${_("So a new feed doesn't flood its vault, the first check posts only its newest %(first)d items; later checks post at most the newest %(per)d. Items left over are skipped, not posted later.") % dict(first=thing.first_fetch, per=thing.per_fetch)}
+</small></p>
+
+%if thing.feeds:
+  <table class="lined-table admin-feeds-table">
+    <tr>
+      <th>${_("feed")}</th><th>${_("vault")}</th><th>${_("posted by")}</th>
+      <th>${_("every")}</th><th>${_("last checked")}</th><th>${_("posts")}</th><th></th>
+    </tr>
+    %for f in thing.feeds:
+      <%
+        vault = thing.vaults.get(f['vault_id'])
+        bot = thing.accounts.get(f['account_id'])
+        vault_name = vault.name if vault else ''
+        bot_name = bot.name if bot else ''
+      %>
+      <tr class="${'' if f['enabled'] else 'admin-feed-disabled'}">
+        <td>
+          %if f['feed_title']:
+            <strong>${f['feed_title']}</strong><br>
+          %endif
+          <small><a href="${f['url']}" rel="nofollow noopener">${f['url']}</a></small>
+          %if f['title_prefix']:
+            <br><small>${_("titles start with")} <code>${f['title_prefix']}</code></small>
+          %endif
+          %if not f['enabled']:
+            <br><strong>${_("paused")}</strong>
+          %endif
+        </td>
+        <td>
+          %if vault:
+            <a href="/v/${vault.name}/">/v/${vault.name}</a>
+          %else:
+            ${_("(missing)")}
+          %endif
+        </td>
+        <td>
+          %if bot:
+            <a href="/user/${bot.name}">${bot.name}</a>
+          %else:
+            ${_("(missing)")}
+          %endif
+        </td>
+        <td>${f['interval_minutes']} ${_("min")}</td>
+        <td>
+          %if f['last_checked']:
+            ${timesince(f['last_checked'])} ${_("ago")}
+          %else:
+            ${_("not yet")}
+          %endif
+          %if f['last_error']:
+            <br><small class="error">${f['last_error']}</small>
+          %endif
+        </td>
+        <td>${f['posted']}</td>
+        <td>
+          ${action(f['id'], 'check', _('check now'))}
+          %if f['enabled']:
+            ${action(f['id'], 'disable', _('pause'))}
+          %else:
+            ${action(f['id'], 'enable', _('resume'))}
+          %endif
+          ${action(f['id'], 'delete', _('delete'))}
+          <details class="admin-feed-edit">
+            <summary>${_("edit")}</summary>
+            ${feed_form('edit', f, vault_name, bot_name)}
+          </details>
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No feeds yet.")}</p>
+%endif
+
+<h2>${_("Add a feed")}</h2>
+${feed_form('add')}
+</div>
