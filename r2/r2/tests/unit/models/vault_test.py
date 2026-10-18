@@ -230,7 +230,7 @@ class ByNameTest(unittest.TestCase):
         self.assertEqual(ret, vault)
         self.cache.set_multi.assert_called_once_with(
             keys={vault.name: vault._id},
-            prefix="vault_id:",
+            prefix="vaultid:",
             time=43200,
         )
 
@@ -244,7 +244,7 @@ class ByNameTest(unittest.TestCase):
 
         self.cache.set_multi.assert_called_once_with(
             keys={"doesnotexist": Vault.VAULTNAME_NOTFOUND},
-            prefix="vault_id:",
+            prefix="vaultid:",
             time=43200,
         )
 
