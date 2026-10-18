@@ -41,7 +41,7 @@
   <p class="bottommenu">
     ${text_with_links(
             _("Use of this site constitutes acceptance of our "
-              "%(user_agreement)s and %(privacy_policy)s"),
+              "%(user_agreement)s, %(privacy_policy)s and %(content_policy)s"),
             user_agreement=dict(
                 link_text=_("User Agreement"),
                 path="/help/useragreement",
@@ -49,6 +49,10 @@
             privacy_policy=dict(
                 link_text=_("Privacy Policy"),
                 path="/help/privacypolicy",
+            ),
+            content_policy=dict(
+                link_text=_("Content Policy"),
+                path="/help/contentpolicy",
             ),
     )}.<br />
     Tippr is &copy; ${datetime.datetime.utcnow().year} TechIdiots LLC. All rights reserved. — Based on reddit open source code.
