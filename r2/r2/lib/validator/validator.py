@@ -1308,6 +1308,15 @@ class VVerifiedSponsor(VSponsor):
         return super().run(*args, **kwargs)
 
 
+class VSupportStaff(Validator):
+    """The support queue's staff (r2.lib.support.is_staff): admins in admin
+    mode, and employees with two-factor on who were given a category."""
+    def run(self):
+        from r2.lib import support
+        if not (c.user_is_loggedin and support.is_staff(c.user)):
+            abort(404, "page not found")
+
+
 class VEmployee(VVerifiedUser):
     """Validate that user is an employee."""
     def run(self):

@@ -5008,7 +5008,7 @@ class ApiController(TipprController):
         return ticket
 
     @validatedForm(
-        VAdmin(),
+        VSupportStaff(),
         VModhash(),
         ticket_id=nop("ticket_id"),
         text=VMarkdownLength("text", max_length=10000),
@@ -5026,7 +5026,7 @@ class ApiController(TipprController):
         form.refresh()
 
     @validatedForm(
-        VAdmin(),
+        VSupportStaff(),
         VModhash(),
         ticket_id=nop("ticket_id"),
         status=VOneOf("status", ("new", "open", "waiting", "closed")),
@@ -5034,23 +5034,67 @@ class ApiController(TipprController):
     def POST_support_status(self, form, jquery, ticket_id, status):
         from r2.lib import support
         ticket = self._support_ticket(ticket_id)
-        if ticket and status:
-            support.set_status(ticket["id"], status, c.user)
+        if not ticket or not status:
+            form.set_text(".status", _("no such ticket"))
+            return
+        support.set_status(ticket["id"], status, c.user)
         form.refresh()
 
     @validatedForm(
-        VAdmin(),
+        VSupportStaff(),
         VModhash(),
         ticket_id=nop("ticket_id"),
         to=nop("to"),
     )
     def POST_support_assign(self, form, jquery, ticket_id, to):
-        """Take a ticket ("me") or let it go (empty)."""
+        """Take a ticket ("me"), let it go (empty) or give it to someone who
+        may reply in its category (a username)."""
         from r2.lib import support
+        from r2.lib.db.thing import NotFound
         ticket = self._support_ticket(ticket_id)
-        if ticket:
-            support.assign(ticket["id"], c.user if to == "me" else None, c.user)
+        if not ticket:
+            form.set_text(".status", _("no such ticket"))
+            return
+        if to == "me":
+            assignee = c.user
+        elif not to:
+            assignee = None
+        else:
+            try:
+                assignee = Account._by_name(to)
+            except NotFound:
+                assignee = None
+            if not assignee or not support.can_be_assigned(
+                    assignee, ticket["category"]):
+                form.set_text(".status", _("they can't reply in this category"))
+                return
+        support.assign(ticket["id"], assignee, c.user)
         form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        username=nop("username"),
+    )
+    def POST_support_staff(self, form, jquery, username):
+        """Set what an employee may do in each support category
+        (/admin/support/staff)."""
+        from r2.lib import support
+        from r2.lib.db.thing import NotFound
+        try:
+            account = Account._by_name(username or "")
+        except NotFound:
+            account = None
+        if not account or not support.is_employee(account):
+            form.set_text(".status", _("not on the employees list"))
+            return
+        perms = {}
+        for category in support.CATEGORIES:
+            level = request.POST.get("perm_" + category)
+            if level in support.LEVELS:
+                perms[category] = level
+        support.set_permissions(account, perms, c.user)
+        form.set_text(".status", _("saved"))
 
     @validatedForm(
         VAdmin(),

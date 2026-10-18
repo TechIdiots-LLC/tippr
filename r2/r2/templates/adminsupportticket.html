@@ -69,6 +69,19 @@
       <button class="btn" type="submit">${_("let it go")}</button>
     </form>
   %endif
+  %if thing.assignable:
+    <form action="/api/support_assign" method="post" class="pretty-form support-inline"
+          onsubmit="return post_form(this, 'support_assign');">
+      <input type="hidden" name="ticket_id" value="${t['id']}">
+      <select name="to">
+        %for person in thing.assignable:
+          <option value="${person.name}" ${'selected' if person._id == t['assignee_id'] else ''}>${person.name}</option>
+        %endfor
+      </select>
+      <button class="btn" type="submit">${_("assign")}</button>
+      <span class="status"></span>
+    </form>
+  %endif
   %for status in ('open', 'waiting', 'closed'):
     %if status != t['status']:
       <form action="/api/support_status" method="post" class="pretty-form support-inline"

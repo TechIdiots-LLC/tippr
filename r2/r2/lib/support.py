@@ -27,6 +27,12 @@ category (from the [tag] the contact page puts in the subject), a status
 Staff see and answer tickets on /admin/support, which checks
 can_view()/can_reply() for the ticket's category on every request.
 
+Staff are the site's admins (in admin mode), who see everything, and the
+people on the employees list (live config "employees", as name:employee)
+with two-factor sign-in on, who see only the categories an admin grants
+them on /admin/support/staff: to read, or to read and reply. So an employee
+helping with moderator questions needn't see privacy or legal requests.
+
 Tickets and their history are PostgreSQL tables, so they move with backups.
 """
 
@@ -122,6 +128,25 @@ create_table(tickets, [
 ])
 create_table(events, [index_str(events, "ticket_id", "ticket_id")])
 
+# what each employee may do in each category (admins may do everything)
+staff_permissions = sa.Table(
+    "support_staff", METADATA,
+    sa.Column("account_id", sa.BigInteger, primary_key=True),
+    sa.Column("category", sa.String, primary_key=True),
+    # view, or reply (view and reply)
+    sa.Column("level", sa.String, nullable=False),
+    sa.Column("updated", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("updated_by", sa.BigInteger, nullable=True),
+)
+create_table(staff_permissions)
+
+LEVELS = {
+    "view": N_("read"),
+    "reply": N_("read and reply"),
+}
+_PERMISSIONS_CACHE_KEY = "support_staff_permissions"
+_PERMISSIONS_CACHE_SECONDS = 300
+
 
 def _now():
     return datetime.now(g.tz)
@@ -193,14 +218,128 @@ def ensure_vault():
 # Permissions
 ###############################################################################
 
-def can_view(user, category=None):
-    """Whether user may see tickets (in category, if given)."""
+def all_permissions():
+    """{account_id: {category: level}} for every employee granted any."""
+    perms = g.gencache.get(_PERMISSIONS_CACHE_KEY)
+    if perms is None:
+        perms = {}
+        with ENGINE.connect() as conn:
+            for account_id, category, level in conn.execute(sa.select(
+                    staff_permissions.c.account_id,
+                    staff_permissions.c.category,
+                    staff_permissions.c.level)):
+                perms.setdefault(account_id, {})[category] = level
+        g.gencache.set(_PERMISSIONS_CACHE_KEY, perms,
+                    time=_PERMISSIONS_CACHE_SECONDS)
+    return perms
+
+
+def permissions_of(account):
+    return dict(all_permissions().get(account._id, {}))
+
+
+def set_permissions(account, perms, actor):
+    """Replace account's permissions with perms ({category: level});
+    categories missing or None get none."""
+    now = _now()
+    with ENGINE.begin() as conn:
+        conn.execute(staff_permissions.delete().where(
+            staff_permissions.c.account_id == account._id))
+        for category, level in perms.items():
+            if category in CATEGORIES and level in LEVELS:
+                conn.execute(staff_permissions.insert().values(
+                    account_id=account._id, category=category, level=level,
+                    updated=now, updated_by=actor._id))
+    g.gencache.delete(_PERMISSIONS_CACHE_KEY)
+    g.log.info("support: %s set %s's permissions to %s", actor.name,
+               account.name, perms)
+
+
+def is_employee(user):
+    """On the employees list (not an admin: admins see everything)."""
+    return bool(user and user.name in g.employees and
+                user.name not in g.admins)
+
+
+def has_two_factor(user):
+    return bool(getattr(user, "otp_secret", None))
+
+
+def employees():
+    """The Accounts on the employees list, by name."""
+    from r2.lib.db.thing import NotFound
+    from r2.models import Account
+    found = []
+    for name in sorted(g.employees, key=str.lower):
+        if name in g.admins:
+            continue
+        try:
+            found.append(Account._by_name(name))
+        except NotFound:
+            continue
+    return found
+
+
+def _is_admin_now(user):
+    """An admin in admin mode, making this request."""
     from pylons import tmpl_context as c
-    return bool(user and getattr(c, "user_is_admin", False))
+    current = getattr(c, "user", None)
+    return bool(user and getattr(c, "user_is_admin", False) and
+                current is not None and getattr(current, "_id", None) == user._id)
+
+
+def level(user, category, request=True):
+    """What user may do in category: "reply", "view" or None. request:
+    user is making this request, so an admin needs admin mode on;
+    otherwise (e.g. choosing whom to assign) any admin may reply."""
+    if not user:
+        return None
+    if request and _is_admin_now(user):
+        return "reply"
+    if not request and user.name in g.admins:
+        return "reply"
+    if not is_employee(user) or not has_two_factor(user):
+        return None
+    return all_permissions().get(user._id, {}).get(category)
+
+
+def can_view(user, category=None):
+    """Whether user may see tickets (in category, if given; else in any)."""
+    if category is None:
+        return any(can_view(user, cat) for cat in CATEGORY_ORDER)
+    return level(user, category) in LEVELS
 
 
 def can_reply(user, category=None):
-    return can_view(user, category)
+    if category is None:
+        return any(can_reply(user, cat) for cat in CATEGORY_ORDER)
+    return level(user, category) == "reply"
+
+
+def is_staff(user):
+    """Whether user may use the support queue at all."""
+    return bool(user) and (_is_admin_now(user) or (
+        is_employee(user) and has_two_factor(user) and
+        bool(all_permissions().get(user._id))))
+
+
+def can_be_assigned(account, category):
+    return level(account, category, request=False) == "reply"
+
+
+def assignable_staff(category):
+    """Accounts a ticket in category can be assigned to: the admins and the
+    employees who may reply in it."""
+    from r2.lib.db.thing import NotFound
+    from r2.models import Account
+    people = []
+    for name in sorted(g.admins, key=str.lower):
+        try:
+            people.append(Account._by_name(name))
+        except NotFound:
+            continue
+    people.extend(e for e in employees() if can_be_assigned(e, category))
+    return people
 
 
 def visible_categories(user):

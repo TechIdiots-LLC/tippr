@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Support staff** (/admin/support/staff): people other than the admins can now help with the support queue, each only
+  in the categories you choose, to read or to read and reply. So someone answering moderator questions doesn't see
+  privacy or legal requests. They must be on the employees list (/admin/config, `name:employee`) and have two-factor
+  sign-in on; they get a "support" link at the top of every page. Their replies still reach members as the admin
+  team. Tickets can also be assigned to anyone who may reply in their category.
 - **More tools on /admin/users/<name>**: the overview shows the address the account registered from and when it was
   last active. A quick tools menu removes all their posts and comments (or removes them as spam, or deletes them),
   requires them to verify their email again, or removes their email address. **Delete account** deletes it for good,

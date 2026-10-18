@@ -915,6 +915,12 @@ class Tippr(Templated):
                             (g.https_endpoint, quote(request.fullpath)),
                         target = "_self",
                     )]
+            # the support queue, for employees given a part of it (admins
+            # reach it from the admin bar)
+            from r2.lib import support
+            if c.user.name not in g.admins and support.is_staff(c.user):
+                buttons += [OffsiteButton(_("support"), dest="/admin/support",
+                                          target="_self")]
             buttons += [NamedButton("prefs", False,
                                   css_class = "pref-lang")]
         else:
@@ -3879,12 +3885,26 @@ class AdminSupport(Templated):
                                in support.CATEGORIES.items()}
         self.status_names = support.STATUSES
         self.counts = support.counts(c.user) if self.vault else {}
+        self.manage_staff = c.user_is_admin
         self.tickets = (support.list_tickets(c.user, view, category)
                         if self.vault else [])
         self.accounts = _support_accounts(
             [t["account_id"] for t in self.tickets] +
             [t["assignee_id"] for t in self.tickets] +
             [t["last_staff_id"] for t in self.tickets])
+        Templated.__init__(self)
+
+
+class AdminSupportStaff(Templated):
+    """Who besides the admins may use the support queue (r2.lib.support)."""
+    def __init__(self):
+        from r2.lib import support
+        self.categories = [(cat, support.CATEGORIES[cat][0])
+                           for cat in support.CATEGORY_ORDER]
+        self.levels = support.LEVELS
+        self.staff = [dict(account=a, two_factor=support.has_two_factor(a),
+                           perms=support.permissions_of(a))
+                      for a in support.employees()]
         Templated.__init__(self)
 
 
@@ -3904,6 +3924,8 @@ class AdminSupportTicket(Templated):
             [e["actor_id"] for e in self.events] +
             [ticket["account_id"], ticket["assignee_id"]])
         self.member = self.accounts.get(ticket["account_id"])
+        self.assignable = [a for a in support.assignable_staff(ticket["category"])
+                           if a._id != c.user._id]
         Templated.__init__(self)
 
 

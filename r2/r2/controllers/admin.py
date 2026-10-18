@@ -40,12 +40,14 @@ from r2.lib.pages import (
     AdminPage,
     AdminSiteSettings,
     AdminSupport,
+    AdminSupportStaff,
     AdminSupportTicket,
     AdminUser,
     AdminUsers,
 )
 from r2.lib.validator import (
     VAdmin,
+    VSupportStaff,
     VModhash,
     VUploadLength,
     nop,
@@ -154,7 +156,7 @@ class AdminToolController(TipprController):
             show = "pending"
         return AdminPage(content=AdminApps(show)).render()
 
-    @validate(VAdmin(), view=nop("view"), category=nop("category"))
+    @validate(VSupportStaff(), view=nop("view"), category=nop("category"))
     def GET_support(self, view, category):
         """The support queue (r2.lib.support)."""
         from r2.lib import support
@@ -165,6 +167,12 @@ class AdminToolController(TipprController):
         return AdminPage(content=AdminSupport(view, category)).render()
 
     @validate(VAdmin())
+    def GET_support_staff(self):
+        """Who besides the admins may use the support queue, and in which
+        categories (r2.lib.support)."""
+        return AdminPage(content=AdminSupportStaff()).render()
+
+    @validate(VSupportStaff())
     def GET_support_ticket(self, ticket_id):
         from r2.lib import support
         try:

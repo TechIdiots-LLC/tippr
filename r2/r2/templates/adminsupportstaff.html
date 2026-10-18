@@ -1,0 +1,68 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/support/staff: who besides the admins may use the support queue
+## (r2.lib.support)
+<div class="admin-support">
+<p><a href="/admin/support">&laquo; ${_("support queue")}</a></p>
+<h1>${_("support staff")}</h1>
+
+<p><small>
+  ${_("Admins (in admin mode) see and answer every ticket. Anyone else who helps must be on the employees list and have two-factor sign-in on; here you choose which categories they may read, or read and reply to. Replies always reach the member as the admin team, never by name.")}
+  <br>
+  ${_("To add someone, put them on the employees list on")}&#32;<a href="/admin/config">/admin/config</a>&#32;(<code>employees</code>,&#32;${_("as")}&#32;<code>name:employee</code>).
+  ${_("They then see a \"support\" link at the top of every page.")}
+</small></p>
+
+%if thing.staff:
+  <table class="lined-table support-staff">
+    <tr><th>${_("employee")}</th><th>${_("may use")}</th></tr>
+    %for s in thing.staff:
+      <% a = s['account'] %>
+      <tr>
+        <td>
+          <a href="/admin/users/${a.name}">${a.name}</a>
+          %if not s['two_factor']:
+            <br><small class="error">${_("no two-factor: they can't use the queue until they turn it on")}</small>
+          %endif
+        </td>
+        <td>
+          <form action="/api/support_staff" method="post" class="pretty-form support-staff-form"
+                onsubmit="return post_form(this, 'support_staff');">
+            <input type="hidden" name="username" value="${a.name}">
+            %for cat, label in thing.categories:
+              <label class="support-staff-perm">
+                <span>${_(label)}</span>
+                <select name="perm_${cat}">
+                  <option value="">${_("no access")}</option>
+                  %for level, level_label in thing.levels.items():
+                    <option value="${level}" ${'selected' if s['perms'].get(cat) == level else ''}>${_(level_label)}</option>
+                  %endfor
+                </select>
+              </label>
+            %endfor
+            <div>
+              <button class="btn" type="submit">${_("save")}</button>
+              <span class="status"></span>
+            </div>
+          </form>
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("Nobody is on the employees list yet.")}</p>
+%endif
+</div>

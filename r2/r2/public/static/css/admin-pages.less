@@ -119,3 +119,16 @@
     .admin-feed-form th { text-align: left; padding-right: 1em; vertical-align: top; }
     .admin-feed-form td { padding-bottom: 6px; }
 }
+
+// /admin/support/staff
+.admin-support {
+    .support-staff td { vertical-align: top; }
+    .support-staff-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 6px 16px;
+        max-width: 860px;
+    }
+    .support-staff-perm span { display: block; color: var(--tp-text-muted); }
+    .support-staff-perm select { width: 100%; }
+}
