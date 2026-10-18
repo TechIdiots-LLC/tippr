@@ -44,6 +44,7 @@ def admin_menu(**kwargs):
         NavButton(menu.awards, "awards"),
         NavButton(menu.errors, "errors"),
         NavButton(menu.site_settings, "site"),
+        NavButton(menu.antispam_settings, "antispam"),
         NavButton(menu.email_settings, "email"),
         NavButton(menu.ad_settings, "ads"),
         NavButton(menu.backups, "backups"),

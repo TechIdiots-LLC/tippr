@@ -479,6 +479,11 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
     },
 
     checkCaptcha: function(errors) {
+        // a captcha service's answer can only be used once
+        if (this.$el.has('.antispam-captcha').length) {
+            $.resetCaptchaWidgets(this.$el)
+            return
+        }
         if (this.$el.has('input[name="captcha"]').length) {
             var badCaptcha = $.grep(errors, function(el) {
                 return el[0] == 'badCaptcha'

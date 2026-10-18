@@ -48,6 +48,7 @@ from r2.controllers.tippr_base import (
 from r2.lib import (
     ai_content,
     amqp,
+    antispam,
     emailer,
     hooks,
     media,
@@ -406,6 +407,11 @@ class ApiController(TipprController):
                 VNotInTimeout().run(target=to)
             m, inbox_rel = Message._new(c.user, to, subject, body, request.ip)
 
+        allowed, reason = antispam.check_content(c.user, body, "message",
+                                                 title=subject)
+        if not allowed:
+            antispam.mark_spam(m, reason)
+
         form.set_text(".status", _("your message has been delivered"))
         form.set_inputs(to = "", subject = "", text = "", captcha="")
         queries.new_message(m, inbox_rel)
@@ -565,6 +571,9 @@ class ApiController(TipprController):
         cleaned_title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
         cleaned_title = cleaned_title.strip()
 
+        spam_check = antispam.check_content(
+            c.user, selftext if is_self else url, "link", title=cleaned_title)
+
         l = Link._submit(
             is_self=is_self,
             title=cleaned_title,
@@ -575,6 +584,8 @@ class ApiController(TipprController):
             sendreplies=sendreplies,
             ai_content=ai_label,
         )
+        if not spam_check[0]:
+            antispam.mark_spam(l, spam_check[1])
 
         if not is_self:
             ban = is_banned_domain(url)
@@ -666,6 +677,7 @@ class ApiController(TipprController):
     @cross_domain(allow_credentials=True)
     @validatedForm(
         VRatelimit(rate_ip=True, prefix="rate_register_"),
+        VCaptcha(signup=True),
         name=VUname(['user']),
         email=ValidEmail("email"),
         password=VPasswordChange(['passwd', 'passwd2']),
@@ -2227,6 +2239,11 @@ class ApiController(TipprController):
 
             item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                            comment, request.ip)
+
+        allowed, reason = antispam.check_content(
+            c.user, comment, "message" if is_message else "comment")
+        if not allowed:
+            antispam.mark_spam(item, reason)
 
         if is_message:
             queries.new_message(item, inbox_rel)
@@ -4700,6 +4717,54 @@ class ApiController(TipprController):
             "contact_email": contact_email,
         })
         form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        captcha_provider=VOneOf("captcha_provider",
+                                ("builtin", "turnstile", "hcaptcha",
+                                 "recaptcha", "none")),
+        captcha_site_key=VLength("captcha_site_key", max_length=200,
+                                 empty_error=None),
+        captcha_secret_key=VLength("captcha_secret_key", max_length=200,
+                                   empty_error=None),
+        captcha_on_register=VBoolean("captcha_on_register"),
+        cleantalk_enabled=VBoolean("cleantalk_enabled"),
+        cleantalk_auth_key=VLength("cleantalk_auth_key", max_length=200,
+                                   empty_error=None),
+        cleantalk_check_register=VBoolean("cleantalk_check_register"),
+        cleantalk_check_content=VBoolean("cleantalk_check_content"),
+    )
+    def POST_antispam_settings(self, form, jquery, captcha_provider,
+                               captcha_site_key, captcha_secret_key,
+                               captcha_on_register, cleantalk_enabled,
+                               cleantalk_auth_key, cleantalk_check_register,
+                               cleantalk_check_content):
+        """Save the captcha and CleanTalk settings (/admin/antispam)."""
+        from r2.lib import antispam
+        if form.has_errors("captcha_provider", errors.INVALID_OPTION):
+            return
+        antispam.save({
+            "captcha_provider": captcha_provider,
+            "captcha_site_key": (captcha_site_key or "").strip(),
+            "captcha_secret_key": (captcha_secret_key or "").strip(),
+            "captcha_on_register": bool(captcha_on_register),
+            "cleantalk_enabled": bool(cleantalk_enabled),
+            "cleantalk_auth_key": (cleantalk_auth_key or "").strip(),
+            "cleantalk_check_register": bool(cleantalk_check_register),
+            "cleantalk_check_content": bool(cleantalk_check_content),
+        })
+        status = _("saved")
+        settings = antispam.settings()
+        if settings["cleantalk_enabled"]:
+            if not settings["cleantalk_auth_key"]:
+                status = _("saved; CleanTalk needs an access key to work")
+            else:
+                problem = antispam.test_cleantalk(settings["cleantalk_auth_key"])
+                status = (_("saved; CleanTalk says: %(problem)s")
+                          % {"problem": problem} if problem
+                          else _("saved; the CleanTalk key works"))
+        form.set_text(".status", status)
 
     @validatedForm(
         VAdmin(),

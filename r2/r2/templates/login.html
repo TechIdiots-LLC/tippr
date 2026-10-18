@@ -25,6 +25,8 @@
 
 <%!
    from r2.config import feature
+   from r2.lib import antispam
+   from r2.lib.captcha import get_iden
    from r2.lib.template_helpers import add_vault
    from r2.lib.template_helpers import static
    from r2.lib.strings import strings
@@ -120,6 +122,25 @@
           <a href="/password" class="c-pull-right">${_('reset password')}</a>
         %endif
       </div>
+      %if register and antispam.captcha_on_register() and c.user.needs_captcha():
+      ## the captcha (r2.lib.antispam)
+      <div class="c-form-group signup-captcha">
+        %if antispam.captcha_provider() == "builtin":
+          <% signup_iden = get_iden() %>
+          <input name="iden" value="${signup_iden}" type="hidden"/>
+          <img class="capimage" alt="visual CAPTCHA" src="/captcha/${signup_iden}.png"/>
+          <input name="captcha" class="c-form-control" type="text"
+                 placeholder="${_('type the letters from the image')}"
+                 autocomplete="off" tabindex="${tabindex}">
+        %else:
+          ${unsafe(antispam.widget_html())}
+        %endif
+        ${error_field("BAD_CAPTCHA", "captcha")}
+      </div>
+      %endif
+      %if register:
+        ${error_field("SPAM_SIGNUP", "user")}
+      %endif
       %if register:
       <div class="c-checkbox">
         <input type="checkbox" name="newsletter_subscribe" id="newsletter_subscribe" tabindex="${tabindex}"

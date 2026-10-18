@@ -148,6 +148,13 @@ def handle_register(
         _event(error='SPONSOR_NO_EMAIL')
 
     else:
+        from r2.lib import antispam
+        allowed, reason = antispam.check_signup(name, email)
+        if not allowed:
+            c.errors.add(errors.SPAM_SIGNUP, field="user")
+            form.has_errors("user", errors.SPAM_SIGNUP)
+            _event(error='SPAM_SIGNUP')
+            return
         try:
             user = register(name, password, request.ip)
         except AccountExists:

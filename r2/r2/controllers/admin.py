@@ -27,6 +27,7 @@ from pylons.i18n import _
 
 from r2.lib.pages import (
     AdminAdSettings,
+    AdminAntispam,
     AdminBackups,
     AdminCoins,
     AdminEmailSettings,
@@ -64,6 +65,10 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_email(self):
         return AdminPage(content=AdminEmailSettings()).render()
+
+    @validate(VAdmin())
+    def GET_antispam(self):
+        return AdminPage(content=AdminAntispam()).render()
 
     @validate(VAdmin())
     def GET_site(self):

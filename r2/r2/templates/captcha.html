@@ -23,7 +23,10 @@
 ## TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-<%! from r2.lib.template_helpers import static %>
+<%!
+  from r2.lib.template_helpers import static
+  from r2.lib import antispam
+%>
 
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
@@ -32,7 +35,12 @@
 
 ${rounded_captcha()}
 
+## a captcha service's widget (r2.lib.antispam), or tippr's image
 <%def name="captcha_basics(iden='')">
+  <% widget = antispam.widget_html() %>
+  %if widget:
+    ${unsafe(widget)}
+  %else:
   <%
     iden = getattr(thing, "iden", iden)
   %>
@@ -46,12 +54,15 @@ ${rounded_captcha()}
        src="${static('kill.png')}" 
        %endif
        />
+  %endif
 </%def>
 
 <%def name="rounded_captcha()">
 <%utils:round_field title="${_('are you human?')}" description="${_('(sorry)')}" css_class="captcha">
     ${captcha_basics()}
+    %if not antispam.widget_html():
     <input name="captcha" class="captcha" type="text" />
+    %endif
     ${error_field("BAD_CAPTCHA", "captcha")}
   </%utils:round_field>
 </%def>
@@ -81,6 +92,7 @@ ${rounded_captcha()}
      </td>
      <td>
      %endif
+          %if antispam.captcha_provider() == "builtin":
           <input class="captcha cap-text" id="captcha_"
                  name="captcha" type="text" size="${size}"
                  placeholder="type the letters from the image above"
@@ -88,6 +100,7 @@ ${rounded_captcha()}
                    tabindex="${tabindex}"
                  %endif
                  />
+          %endif
      %if tabular:
      </td>
      <td>

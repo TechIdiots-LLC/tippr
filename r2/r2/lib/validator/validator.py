@@ -1076,11 +1076,21 @@ class VByNameIfAuthor(VByName):
         }
 
 class VCaptcha(Validator):
+    """The captcha (r2.lib.antispam: tippr's own or a service's widget),
+    for users who need one. signup=True: the sign-up form, which can have
+    the captcha turned off on its own."""
     default_param = ('iden', 'captcha')
 
+    def __init__(self, *args, signup=False, **kw):
+        self.signup = signup
+        Validator.__init__(self, *args, **kw)
+
     def run(self, iden, solution):
+        from r2.lib import antispam
+        if self.signup and not antispam.captcha_on_register():
+            return
         if c.user.needs_captcha():
-            valid_captcha = captcha.valid_solution(iden, solution)
+            valid_captcha = antispam.verify_captcha(iden, solution)
             if not valid_captcha:
                 self.set_error(errors.BAD_CAPTCHA)
             g.stats.action_event_count("captcha", valid_captcha)

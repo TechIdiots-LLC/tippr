@@ -1,0 +1,112 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2015
+## reddit Inc. All Rights Reserved.
+##
+## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
+## TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="secret_field(name)">
+  <input type="password" name="${name}" autocomplete="new-password" size="40"
+         placeholder="${_('saved; leave blank to keep') if thing.secret_is_set[name] else _('not set')}">
+</%def>
+
+<%def name="checkbox(name, label)">
+  <input type="checkbox" name="${name}" id="${name}"
+         ${'checked' if thing.settings[name] else ''}>
+  <label for="${name}">${label}</label>
+</%def>
+
+<div class="admin-site">
+<h1>${_("spam protection")}</h1>
+
+<p>
+  ${_("Who gets checked: people who are logged out, and new accounts without karma (the captcha_exempt_*_karma live config settings). Admins never are. Saved settings apply right away.")}
+</p>
+%if g.disable_captcha:
+  <p class="error">${_("disable_captcha is on in the ini (as in development), so no captcha is shown whatever is set here. CleanTalk still works.")}</p>
+%endif
+
+<form id="antispam-settings" action="/api/antispam_settings" method="post"
+      class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'antispam_settings');">
+  <h2>${_("captcha")}</h2>
+  <table class="lined-table borderless">
+    <tr>
+      <td>${_("captcha")}</td>
+      <td>
+        <select name="captcha_provider">
+          %for key, name in thing.providers:
+            <option value="${key}" ${'selected' if key == thing.settings['captcha_provider'] else ''}>${name}</option>
+          %endfor
+        </select>
+        ${error_field("INVALID_OPTION", "captcha_provider", "span")}
+        <br><small>${_("Shown when untrusted users sign up, post, send messages or create a vault. Cloudflare Turnstile, hCaptcha and reCAPTCHA need the site and secret keys from their dashboards; until both are set, tippr's own image captcha is used.")}</small>
+        %if thing.provider_in_use != thing.settings['captcha_provider']:
+          <br><span class="error">${_("Using tippr's image captcha: add both keys to use this service.")}</span>
+        %endif
+      </td>
+    </tr>
+    <tr>
+      <td>${_("site key")}</td>
+      <td><input type="text" name="captcha_site_key" size="40" autocomplete="off"
+                 value="${thing.settings['captcha_site_key']}"></td>
+    </tr>
+    <tr>
+      <td>${_("secret key")}</td>
+      <td>${secret_field("captcha_secret_key")}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>${checkbox("captcha_on_register", _("also on the sign-up form"))}</td>
+    </tr>
+  </table>
+
+  <h2>${_("CleanTalk")}</h2>
+  <p>
+    <small>${_("CleanTalk (cleantalk.org, a paid service) checks sign-ups, posts, comments and messages without asking anything of people. Spam sign-ups are refused; spam posts, comments and messages are saved but hidden as spam, for moderators to review in their spam queue. If CleanTalk can't be reached, everything goes through.")}</small>
+  </p>
+  <table class="lined-table borderless">
+    <tr>
+      <td></td>
+      <td>${checkbox("cleantalk_enabled", _("use CleanTalk"))}</td>
+    </tr>
+    <tr>
+      <td>${_("access key")}</td>
+      <td>
+        ${secret_field("cleantalk_auth_key")}
+        <br><small>${_("From your CleanTalk dashboard (add a website for this site).")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("check")}</td>
+      <td>
+        ${checkbox("cleantalk_check_register", _("sign-ups"))}<br>
+        ${checkbox("cleantalk_check_content", _("posts, comments and messages from untrusted users"))}
+      </td>
+    </tr>
+  </table>
+
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+</form>
+</div>

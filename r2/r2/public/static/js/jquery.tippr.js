@@ -617,13 +617,30 @@ $.fn.insert_table_rows = function(rows, index) {
 
 
 $.fn.captcha = function(iden) {
-    /*  */
+    /* a new captcha after a failed submit: a new image for tippr's own,
+       or a reset widget for a captcha service (r2.lib.antispam), whose
+       answers can only be used once */
+    $.resetCaptchaWidgets(this);
     var c = this.find(".capimage");
     if(iden) {
         c.attr("src", "/captcha/" + iden + ".png")
             .siblings('input[name="iden"]').val(iden);
     }
     return c;
+};
+
+$.resetCaptchaWidgets = function(scope) {
+    $(scope).find(".antispam-captcha").each(function() {
+        try {
+            if (window.turnstile && $(this).hasClass("cf-turnstile")) {
+                window.turnstile.reset(this);
+            } else if (window.hcaptcha && $(this).hasClass("h-captcha")) {
+                window.hcaptcha.reset($(this).attr("data-hcaptcha-widget-id"));
+            } else if (window.grecaptcha && $(this).hasClass("g-recaptcha")) {
+                window.grecaptcha.reset();
+            }
+        } catch (e) {}
+    });
 };
    
 

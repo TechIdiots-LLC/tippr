@@ -3767,6 +3767,23 @@ class AdminSiteSettings(Templated):
         Templated.__init__(self)
 
 
+class AdminAntispam(Templated):
+    """The admin interface for the captcha and CleanTalk
+    (r2.lib.antispam)."""
+    def __init__(self):
+        from r2.lib import antispam
+        settings = antispam.settings()
+        # secrets go back to the browser only as whether they're set
+        self.settings = {k: v for k, v in settings.items()
+                         if k not in antispam.SECRET_SETTINGS}
+        self.secret_is_set = {k: bool(settings[k])
+                              for k in antispam.SECRET_SETTINGS}
+        self.providers = [(key, value[0])
+                          for key, value in antispam.PROVIDERS.items()]
+        self.provider_in_use = antispam.captcha_provider()
+        Templated.__init__(self)
+
+
 class AdminGold(Templated):
     """The admin interface for giving or taking days of gold for a user."""
     def __init__(self, recipient):

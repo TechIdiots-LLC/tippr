@@ -133,6 +133,8 @@
     <script src="/static/js/infinitescroll.js"></script>
   %endif
   ${adsense_loader()}
+  <% from r2.lib import antispam %>
+  ${unsafe(antispam.bot_detector_html())}
 </%def>
 
 <%def name="bodyContent()">
