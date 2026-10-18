@@ -114,6 +114,7 @@ class Account(Thing):
                      pref_force_https = False,
                      pref_hide_ads = False,
                      pref_show_trending=True,
+                     pref_show_multis=True,
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
                      pref_collapse_left_bar=False,

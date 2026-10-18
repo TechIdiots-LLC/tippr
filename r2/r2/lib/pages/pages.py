@@ -5625,7 +5625,9 @@ class ListingChooser(Templated):
                           extra_class="gold-perks")
 
         self.show_samples = False
-        if c.user_is_loggedin:
+        # the multivaults section, unless hidden with the show_multis pref
+        self.show_multis = getattr(c.user, "pref_show_multis", True)
+        if c.user_is_loggedin and self.show_multis:
             multis = LabeledMulti.by_owner(c.user, load_Vaults=False)
             multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:

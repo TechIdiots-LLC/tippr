@@ -45,7 +45,13 @@
       ${section_items(thing.sections['global'])}
     </ul>
 
-    <h3>${_('multivaults')}</h3>
+    %if thing.show_multis:
+    ## hidden with the show_multis preference; the link sets it
+    <h3 class="multis-heading">
+      ${_('multivaults')}
+      <a href="/prefs/#show_multis" class="hide-multis"
+         title="${_('hide multivaults (turn them back on in preferences)')}">${_('hide')}</a>
+    </h3>
     %if thing.show_samples:
       <div class="intro">
         <p>${_('new! create sets of vaults to view together.')}</p>
@@ -66,9 +72,17 @@
         </form>
       </li>
     </ul>
+    %endif
 
     <ul class="other">
       ${section_items(thing.sections['other'])}
     </ul>
   </div>
 </div>
+<script>
+  // the multivaults "hide" link: save the preference instead of opening it
+  $(document).on('click', '.listing-chooser .hide-multis', function(e) {
+    e.preventDefault();
+    $.request('hide_multis', {});
+  });
+</script>

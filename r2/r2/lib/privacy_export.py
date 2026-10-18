@@ -135,7 +135,7 @@ class UserDataExporter:
                 'pref_min_comment_score', 'pref_num_comments', 'pref_numsites',
                 'pref_compress', 'pref_domain_details', 'pref_newwindow',
                 'pref_media', 'pref_media_preview', 'pref_default_comment_sort',
-                'pref_highlight_new_comments', 'pref_show_trending',
+                'pref_highlight_new_comments', 'pref_show_trending', 'pref_show_multis',
                 'pref_email_messages', 'pref_email_digests', 'pref_email_unsubscribe_all',
             ]
             for attr in pref_attrs:

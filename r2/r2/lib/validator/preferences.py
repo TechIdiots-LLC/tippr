@@ -83,6 +83,7 @@ PREFS_VALIDATORS = dict(
     pref_store_visits=VBoolean('store_visits'),
     pref_hide_ads=VBoolean("hide_ads"),
     pref_show_trending=VBoolean("show_trending"),
+    pref_show_multis=VBoolean("show_multis"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
     pref_show_gold_expiration=VBoolean("show_gold_expiration"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),

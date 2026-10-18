@@ -5655,6 +5655,14 @@ class ApiController(TipprController):
         c.user._commit()
         jquery(".locationbar").hide()
 
+    @validatedForm(VUser(), VModhash())
+    def POST_hide_multis(self, form, jquery):
+        """Hide the multivaults section of the side panel (the "hide" link
+        there; turned back on with the show_multis preference)."""
+        c.user.pref_show_multis = False
+        c.user._commit()
+        jquery.refresh()
+
     @validatedForm(VModhashIfLoggedIn())
     def POST_use_global_defaults(self, form, jquery):
         c.user.pref_use_global_defaults = True
