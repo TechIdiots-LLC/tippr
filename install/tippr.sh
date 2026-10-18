@@ -727,7 +727,7 @@ sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
     mock \
     pytest \
     coverage \
-    "snudown @ https://github.com/nicnacnic/snudown/archive/refs/heads/master.zip" || true
+    "snudown @ https://github.com/reddit/snudown/archive/refs/heads/master.zip" || true
 
 # Prefer psycopg2-binary to avoid requiring system postgres headers during
 # install; if you need the real psycopg2 build from source, install
