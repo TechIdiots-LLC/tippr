@@ -15,6 +15,13 @@
   longer cover the sort tabs. The "switch to mobile version" banner is gone, and m./simple. addresses and `.mobile`
   pages now go to the same page on the normal site. The compact interface (`.compact`, `i.`) is still there, but
   nothing promotes it any more.
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+- **The compact and old mobile interfaces** failed to load (leftovers from renaming reddit to vault, and Python 2 code).
+
+## 0.7.0
+### ✨ Features and improvements
 - **Feed bots** (/admin/feeds): post new items from RSS or Atom feeds to vaults, e.g. a blog's articles or a project's
   releases, to give a new site something to read. Each feed has a vault, a bot account that posts it (made if it
   doesn't exist; its posts and comments show [bot] beside its name), an interval (15 minutes at least) and an optional
@@ -54,8 +61,6 @@
   when `admin_message_acct` was a vault).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
-- **The compact and old mobile interfaces** failed to load (leftovers from renaming reddit to vault, and Python 2 code).
 - **/v/random** could land on the site's working vaults (beta, takedowns, promos, advertising links, the admin
   vault). It no longer does. (NSFW vaults were already only in /v/randnsfw.)
 - **Times on the admin pages** marked UTC (support history, account actions) were in the server's time zone.
