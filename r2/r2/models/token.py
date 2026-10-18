@@ -387,12 +387,20 @@ class OAuth2Client(Token):
     client_secret_size = 20
     _bool_props = (
         "deleted",
+        # set on /admin/apps: a suspended app's tokens stop working; an app
+        # that isn't approved works only for its own developers (apps from
+        # before approvals existed count as approved)
+        "suspended",
+        "approved",
     )
     _float_props = (
         "max_reqs_sec",
     )
     _defaults = dict(name="",
                      deleted=False,
+                     suspended=False,
+                     suspended_reason="",
+                     approved=True,
                      description="",
                      about_url="",
                      icon_url="",
@@ -554,6 +562,35 @@ class OAuth2Client(Token):
     def is_confidential(self):
         return self.app_type not in self.PUBLIC_APP_TYPES
 
+    def usable_by(self, account=None):
+        """Whether account (None: no account, an app-only token) may use
+        this app: not deleted or suspended, and approved, unless account is
+        one of its developers."""
+        if self.deleted or self.suspended:
+            return False
+        if self.approved:
+            return True
+        return bool(account and self.has_developer(account))
+
+    @property
+    def status(self):
+        if self.deleted:
+            return "deleted"
+        if self.suspended:
+            return "suspended"
+        if not self.approved:
+            return "pending"
+        return "active"
+
+    @classmethod
+    def all_clients(cls):
+        """Every registered app (for /admin/apps; there's no index, so this
+        reads them all, which is fine at a self-hosted site's scale)."""
+        ids = [key for key, _columns in cls._cf.get_range()]
+        if not ids:
+            return []
+        return list(cls._byID(ids, return_dict=True).values())
+
     def is_first_party(self):
         return self.has_developer(Account.system_user())
 
@@ -649,11 +686,21 @@ class OAuth2AccessToken(Token):
         if getattr(self, 'revoked', False):
             return False
 
-        # Is the OAuth2Client still valid?
+        # Is the OAuth2Client still valid? (not deleted or suspended, and
+        # approved unless the token's user is one of its developers)
         try:
             client = OAuth2Client._byID(self.client_id)
-            if client.deleted:
+            if client.deleted or getattr(client, "suspended", False):
                 raise NotFound
+            if not getattr(client, "approved", True):
+                user = None
+                if self.user_id:
+                    try:
+                        user = Account._byID36(self.user_id)
+                    except NotFound:
+                        pass
+                if not client.usable_by(user):
+                    raise NotFound
         except AttributeError:
             g.log.error("bad token %s: %s", self, self._t)
             raise

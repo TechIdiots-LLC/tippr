@@ -50,6 +50,7 @@ def admin_menu(**kwargs):
         NavButton(menu.ad_settings, "ads"),
         NavButton(menu.backups, "backups"),
         NavButton(menu.support_queue, "support"),
+        NavButton(menu.api_apps, "apps"),
     ]
 
     admin_menu = NavMenu(buttons, title='admin tools', base_path='/admin',

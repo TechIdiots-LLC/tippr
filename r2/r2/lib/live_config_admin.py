@@ -74,6 +74,15 @@ COMMON = [
     ("discovery_vaults", N_(
         "Vaults that help people find more vaults, for the explore tab: "
         "names, comma-separated.")),
+    ("apps_require_approval", N_(
+        "New API apps (registered on /prefs/apps) work only for their own "
+        "developers until an admin approves them on /admin/apps.")),
+    ("app_create_min_account_age_days", N_(
+        "How old an account must be, in days, to register an API app.")),
+    ("app_create_min_karma", N_(
+        "Total karma (posts and comments) needed to register an API app.")),
+    ("app_create_require_verified_email", N_(
+        "Whether registering an API app needs a verified email address.")),
     ("cflag_min_votes", N_(
         "Votes a post or comment needs before it can count as controversial.")),
     ("cflag_lower_bound", N_(

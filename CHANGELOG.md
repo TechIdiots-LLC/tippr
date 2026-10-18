@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/apps**: every API app registered on /prefs/apps, with its developers, type and redirect address. Admins can
+  approve, suspend (with a reason its developers see) or delete one; a suspended app's tokens stop working at once.
+  New apps can wait for approval (`apps_require_approval`, on by default), working only for their own developers
+  until then, and registering one needs an account 7 days old with 10 karma and a verified email (`app_create_*`).
+  All four are on /admin/config; admins are exempt.
 - **Support queue** (`/admin/support`, first stage, admins only): "message the admins" now goes to a private admin
   vault (`admin_message_acct = /v/siteadmins`, created by the installer), and each conversation becomes a ticket with
   a category (from the contact page's `[privacy]`, `[appeal]`, ... subject tags), a status (new, open, waiting on the
@@ -16,6 +21,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Authorizing an app** failed for admins and employees (reddit's `mobile_auth_allowed_clients` setting doesn't
+  exist here, and `employee_approved_clients` is live config).
 - **Deleting a multivault** did nothing (the delete failed on the Cassandra compatibility layer, which didn't accept
   pycassa's consistency level arguments). The same affected promoted-post metrics and the wiki's image count, which
   also failed for pages without images.

@@ -1,0 +1,122 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/apps: registered API apps (OAuth2Client)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<%def name="action(app_id, what, label, with_reason=False)">
+  <form action="/api/admin_app" method="post" class="pretty-form admin-app-action"
+        onsubmit="return post_form(this, 'admin_app');">
+    <input type="hidden" name="client_id" value="${app_id}">
+    <input type="hidden" name="do" value="${what}">
+    %if with_reason:
+      <input type="text" name="reason" size="24" placeholder="${_('reason (shown to its developers)')}">
+    %endif
+    <button class="btn" type="submit">${label}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<div class="admin-apps">
+<h1>${_("API apps")}</h1>
+
+<p><small>
+  ${_("Apps registered on /prefs/apps use the API on behalf of the accounts that authorize them. A suspended app's tokens stop working at once; an app waiting for approval works only for its own developers.")}
+  <br>
+  ${_("Now:")}
+  %if thing.requirements['approval']:
+    ${_("new apps need approval;")}
+  %else:
+    ${_("new apps work right away;")}
+  %endif
+  ${_("registering needs an account %(age)d days old with %(karma)d karma") % dict(age=thing.requirements['age'], karma=thing.requirements['karma'])}${_(" and a verified email address") if thing.requirements['email'] else ''}.
+  ${_("Change these on")} <a href="/admin/config">/admin/config</a> (apps_require_approval, app_create_*).
+</small></p>
+
+<ul class="support-tabs">
+  %for name, label in (('pending', _('waiting for approval')), ('active', _('active')), ('suspended', _('suspended')), ('deleted', _('deleted')), ('all', _('all'))):
+    <li class="${'selected' if name == thing.show else ''}">
+      <a href="/admin/apps?show=${name}">${label}
+        %if thing.counts.get(name):
+          <span class="support-count">${thing.counts[name]}</span>
+        %endif
+      </a>
+    </li>
+  %endfor
+</ul>
+
+%if thing.apps:
+  <table class="lined-table admin-apps-table">
+    <tr>
+      <th>${_("app")}</th><th>${_("type")}</th><th>${_("developers")}</th>
+      <th>${_("redirect")}</th><th>${_("registered")}</th><th>${_("status")}</th><th></th>
+    </tr>
+    %for a in thing.apps:
+      <% cl = a['client'] %>
+      <tr>
+        <td>
+          <strong>${cl.name or _("(no name)")}</strong>
+          %if a['first_party']:
+            <small>${_("(the site's own)")}</small>
+          %endif
+          <br><code>${cl._id}</code>
+          %if cl.about_url:
+            <br><a href="${cl.about_url}" rel="nofollow noopener">${cl.about_url}</a>
+          %endif
+          %if cl.description:
+            <br><small>${cl.description}</small>
+          %endif
+        </td>
+        <td>${cl.app_type}</td>
+        <td>
+          %for dev in a['developers']:
+            <a href="/user/${dev.name}">${dev.name}</a><br>
+          %endfor
+        </td>
+        <td><small>${cl.redirect_uri}</small></td>
+        <td>
+          %if getattr(cl, 'date', None):
+            ${timesince(cl.date)} ${_("ago")}
+          %endif
+        </td>
+        <td>
+          ${cl.status}
+          %if cl.suspended and cl.suspended_reason:
+            <br><small>${cl.suspended_reason}</small>
+          %endif
+        </td>
+        <td>
+          %if cl.status == 'pending':
+            ${action(cl._id, 'approve', _('approve'))}
+          %endif
+          %if cl.status in ('active', 'pending'):
+            ${action(cl._id, 'suspend', _('suspend'), with_reason=True)}
+          %endif
+          %if cl.status == 'suspended':
+            ${action(cl._id, 'unsuspend', _('lift the suspension'))}
+          %endif
+          %if cl.status != 'deleted' and not a['first_party']:
+            ${action(cl._id, 'delete', _('delete'))}
+          %endif
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("Nothing here.")}</p>
+%endif
+</div>

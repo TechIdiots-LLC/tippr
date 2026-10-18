@@ -3764,6 +3764,37 @@ class AdminErrors(Templated):
         Templated.__init__(self)
 
 
+class AdminApps(Templated):
+    """Registered API apps (OAuth2Client), for approving, suspending or
+    deleting them."""
+    FILTERS = ("pending", "active", "suspended", "deleted", "all")
+
+    def __init__(self, show):
+        from r2.models.token import OAuth2Client
+        self.show = show
+        clients = OAuth2Client.all_clients()
+        self.counts = {f: 0 for f in self.FILTERS}
+        for client in clients:
+            self.counts[client.status] = self.counts.get(client.status, 0) + 1
+            self.counts["all"] += 1
+        if show != "all":
+            clients = [cl for cl in clients if cl.status == show]
+        def created(cl):
+            date = getattr(cl, "date", None)
+            return date.timestamp() if date else 0
+        clients.sort(key=created, reverse=True)
+        self.apps = [dict(client=cl, developers=cl._developers,
+                          first_party=cl.is_first_party())
+                     for cl in clients]
+        self.requirements = dict(
+            approval=bool(g.live_config.get("apps_require_approval")),
+            age=g.live_config.get("app_create_min_account_age_days") or 0,
+            karma=g.live_config.get("app_create_min_karma") or 0,
+            email=bool(g.live_config.get("app_create_require_verified_email")),
+        )
+        Templated.__init__(self)
+
+
 def _support_accounts(ids):
     ids = {i for i in ids if i}
     if not ids:

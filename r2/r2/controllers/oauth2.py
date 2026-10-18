@@ -98,6 +98,12 @@ class OAuth2FrontendController(TipprController):
         if not redirect_uri or redirect_uri != client.redirect_uri:
             self._abort_oauth_error(errors.OAUTH2_INVALID_REDIRECT_URI)
 
+        # an app awaiting admin approval (/admin/apps) is only for its
+        # developers until then
+        user = c.user if c.user_is_loggedin else None
+        if not client.usable_by(user):
+            self._abort_oauth_error(errors.OAUTH2_APP_NOT_APPROVED)
+
     def _check_response_type_and_scope(self, response_type, scope):
         if (errors.INVALID_OPTION, 'response_type') in c.errors:
             self._abort_oauth_error(errors.OAUTH2_INVALID_RESPONSE_TYPE)
@@ -132,9 +138,12 @@ class OAuth2FrontendController(TipprController):
     def _check_employee_grants(self, client, scope):
         if not c.user.employee or not client or not scope:
             return
-        if client._id in g.employee_approved_clients:
+        # employee_approved_clients is live config ("name:client_id, ...");
+        # mobile_auth_allowed_clients was reddit's own and isn't configured
+        approved = g.live_config.get("employee_approved_clients") or {}
+        if client._id in set(approved.values()):
             return
-        if client._id in g.mobile_auth_allowed_clients:
+        if client._id in (getattr(g, "mobile_auth_allowed_clients", None) or ()):
             return
         # The identity scope doesn't leak much, and we don't mind if employees
         # prove their identity to some external service
@@ -174,10 +183,11 @@ class OAuth2FrontendController(TipprController):
         [app preferences](/prefs/apps).  All errors will show a 400 error
         page along with some information on what option was wrong.
         """
-        self._check_employee_grants(client, scope)
-
-        # Check redirect URI first; it will ensure client exists
+        # Check redirect URI first; it will ensure client exists (and that
+        # it's approved, or the user is one of its developers)
         self._check_redirect_uri(client, redirect_uri)
+
+        self._check_employee_grants(client, scope)
 
         self._check_response_type_and_scope(response_type, scope)
 
@@ -204,9 +214,9 @@ class OAuth2FrontendController(TipprController):
                        duration, response_type):
         """Endpoint for OAuth2 authorization."""
 
-        self._check_employee_grants(client, scope)
-
         self._check_redirect_uri(client, redirect_uri)
+
+        self._check_employee_grants(client, scope)
 
         self._check_response_type_and_scope(response_type, scope)
 

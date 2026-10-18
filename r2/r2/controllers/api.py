@@ -4766,6 +4766,38 @@ class ApiController(TipprController):
         else:
             form.set_text(".status", _("saved"))
 
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        client_id=nop("client_id"),
+        do=VOneOf("do", ("approve", "suspend", "unsuspend", "delete")),
+        reason=VLength("reason", max_length=300, empty_error=None),
+    )
+    def POST_admin_app(self, form, jquery, client_id, do, reason):
+        """Approve, suspend, unsuspend or delete an API app (/admin/apps)."""
+        from r2.models.token import OAuth2Client
+        client = OAuth2Client.get_token(client_id) if client_id else None
+        if not client or not do:
+            form.set_text(".status", _("no such app"))
+            return
+        if do == "delete" and client.is_first_party():
+            form.set_text(".status", _("the site's own apps can't be deleted here"))
+            return
+        if do == "approve":
+            client.approved = True
+        elif do == "suspend":
+            client.suspended = True
+            client.suspended_reason = (reason or "").strip()
+        elif do == "unsuspend":
+            client.suspended = False
+            client.suspended_reason = ""
+        elif do == "delete":
+            client.deleted = True
+        client._commit()
+        g.log.info("admin_app: %s %s %s (%s)", c.user.name, do, client._id,
+                   client.name)
+        form.refresh()
+
     def _support_ticket(self, ticket_id, reply=True):
         """The ticket if c.user may see (and, with reply, act on) it."""
         from r2.lib import support
@@ -5247,6 +5279,22 @@ class ApiController(TipprController):
 
         return vault_results
 
+    def _app_requirements_unmet(self):
+        """Why c.user can't register an API app (live config app_create_*),
+        or None."""
+        cfg = g.live_config
+        min_days = cfg.get("app_create_min_account_age_days") or 0
+        if min_days and c.user._age.days < min_days:
+            return _("accounts need to be %(n)d days old") % {"n": min_days}
+        min_karma = cfg.get("app_create_min_karma") or 0
+        karma = (c.user.link_karma or 0) + (c.user.comment_karma or 0)
+        if min_karma and karma < min_karma:
+            return _("accounts need %(n)d karma") % {"n": min_karma}
+        if (cfg.get("app_create_require_verified_email") and
+                not c.user.email_verified):
+            return _("verify your email address first")
+        return None
+
     @noresponse(VUser(),
                 VModhash(),
                 client=VOAuth2ClientID())
@@ -5312,12 +5360,23 @@ class ApiController(TipprController):
             jquery('#developed-app-%s' % client._id).replaceWith(
                 apps.render_developed_app(client, collapsed=False))
         else:
-            # client_id was omitted or empty, creating new OAuth2Client
+            # client_id was omitted or empty, creating new OAuth2Client.
+            # The requirements and approval are set on /admin/config; admins
+            # are exempt.
+            reason = None if c.user_is_admin else self._app_requirements_unmet()
+            if reason:
+                c.errors.add(errors.APP_REQUIREMENTS, field='name',
+                             msg_params={"reason": reason})
+                form.has_errors('name', errors.APP_REQUIREMENTS)
+                return
+            needs_approval = (bool(g.live_config.get("apps_require_approval"))
+                              and not c.user_is_admin)
             client = OAuth2Client._new(name=name,
                                        description=description,
                                        about_url=about_url or '',
                                        redirect_uri=redirect_uri,
-                                       app_type=app_type)
+                                       app_type=app_type,
+                                       approved=not needs_approval)
             client._commit()
             client.add_developer(c.user)
             form.set_text('.status', _('application created'))

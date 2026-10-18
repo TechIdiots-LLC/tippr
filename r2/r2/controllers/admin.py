@@ -29,6 +29,7 @@ from pylons.i18n import _
 from r2.lib.pages import (
     AdminAdSettings,
     AdminAntispam,
+    AdminApps,
     AdminBackups,
     AdminCoins,
     AdminEmailSettings,
@@ -122,6 +123,13 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_errors(self):
         return AdminPage(content=AdminErrors()).render()
+
+    @validate(VAdmin(), show=nop("show"))
+    def GET_apps(self, show):
+        """Registered API apps: approve, suspend or delete them."""
+        if show not in AdminApps.FILTERS:
+            show = "pending"
+        return AdminPage(content=AdminApps(show)).render()
 
     @validate(VAdmin(), view=nop("view"), category=nop("category"))
     def GET_support(self, view, category):

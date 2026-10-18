@@ -42,6 +42,8 @@ error_list = dict((
         ('BAD_CAPTCHA', _('care to try these again?')),
         ('SPAM_SIGNUP', _("this sign-up looks like spam; if it isn't, contact the site's admins")),
         ('SIGNUPS_CLOSED', _("this site isn't taking new accounts right now")),
+        ('OAUTH2_APP_NOT_APPROVED', _("this app is waiting for the site's admins to approve it")),
+        ('APP_REQUIREMENTS', _("your account can't register apps yet: %(reason)s")),
         ('BAD_TITLE_FORMAT', _('the format needs {title} where the page title goes')),
         ('BAD_USERNAME', _('invalid user name')),
         ('USERNAME_TOO_SHORT', _('username must be between %(min)d and %(max)d characters')),

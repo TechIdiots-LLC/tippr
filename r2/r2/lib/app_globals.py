@@ -363,10 +363,15 @@ class Globals:
     live_config_spec = {
         ConfigValue.bool: [
             'frontend_logging',
+            # registering API apps (/prefs/apps; overseen on /admin/apps)
+            'app_create_require_verified_email',
+            'apps_require_approval',
             'mobile_gild_first_login',
             'precomputed_comment_suggested_sort',
         ],
         ConfigValue.int: [
+            'app_create_min_account_age_days',
+            'app_create_min_karma',
             'captcha_exempt_comment_karma',
             'captcha_exempt_link_karma',
             'create_vault_account_age_days',

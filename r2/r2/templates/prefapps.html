@@ -100,6 +100,16 @@ ${utils.radio_type('app_type', "script", _("script"),
         ${app.name}
       %endif
       </h2>
+      ## set by the site's admins on /admin/apps
+      %if getattr(app, 'suspended', False):
+        <p class="error app-status">${_("Suspended by the site's admins.")}
+          %if getattr(app, 'suspended_reason', ''):
+            ${app.suspended_reason}
+          %endif
+          ${_("It can't be used until they lift it.")}</p>
+      %elif not getattr(app, 'approved', True):
+        <p class="app-status">${_("Waiting for the site's admins to approve it. Until then it works only for its developers.")}</p>
+      %endif
       <h3>
         %if app.app_type == 'web':
           ${_("web app")}
@@ -144,6 +154,7 @@ ${utils.radio_type('app_type', "script", _("script"),
               <td class="prefright">
                 <input class="text" name="name" value="${app.name}">
                 ${error_field("NO_TEXT", "name")}
+          ${error_field("APP_REQUIREMENTS", "name")}
               </td>
             </tr>
             <tr>
@@ -338,6 +349,7 @@ ${utils.radio_type('app_type', "script", _("script"),
         <td class="prefright">
           <input class="text" name="name">
           ${error_field("NO_TEXT", "name")}
+          ${error_field("APP_REQUIREMENTS", "name")}
         </td>
       </tr>
       ${app_type_selector()}
