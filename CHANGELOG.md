@@ -6,9 +6,16 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Proxmox first boot**: systemd applies unit presets on a container's first start (the template has no machine ID),
+  which enabled and started every tippr unit before `tippr-firstboot` ran. Their jobs recreated ZooKeeper nodes with the
+  template's password, and the first boot failed with `NoAuthError`. The template now ships a preset that keeps them
+  off, and `tippr-firstboot` stops any that are running before it resets ZooKeeper.
 
 ## 0.3.0
 ### ✨ Features and improvements
+- **nginx only**: the installer no longer runs haproxy in front of nginx; nginx routes websockets, media and the app
+  itself. `TIPPR_EXTERNAL_PROXY` runs it behind another proxy that does TLS (e.g. HAProxy on OPNsense or pfSense), with real
+  client addresses from that proxy.
 
 ### 🐞 Bug fixes
 
@@ -36,9 +43,6 @@
 - **Spam protection** (/admin/antispam): choose the captcha — tippr's own, Cloudflare Turnstile, hCaptcha or Google
   reCAPTCHA — now also on the sign-up form, and use CleanTalk to check sign-ups, posts, comments and messages from new
   accounts without a challenge (spam is hidden in the moderators' spam queue).
-- **nginx only**: the installer no longer runs haproxy in front of nginx; nginx routes websockets, media and the app
-  itself. `TIPPR_EXTERNAL_PROXY` runs it behind another proxy that does TLS (e.g. HAProxy on OPNsense or pfSense), with real
-  client addresses from that proxy.
 - **Several app servers can share a site**: scheduled jobs take a ZooKeeper lock, so each runs on one server at a
   time.
 

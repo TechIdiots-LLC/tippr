@@ -93,6 +93,16 @@ rm -rf /var/lib/opensearch/nodes
 rm -f /etc/tippr/secrets.env /etc/ssh/ssh_host_* /etc/tippr/tls/self-signed.*
 : > /etc/machine-id
 rm -f /var/lib/dbus/machine-id
+# With no machine ID, systemd treats the container's first start as a first
+# boot and applies unit presets, whose default is "enable": every tippr unit
+# would start before tippr-firstboot has set the container up. Keep them off
+# (tippr-firstboot removes this file when it's done).
+install -d /etc/systemd/system-preset
+cat > /etc/systemd/system-preset/10-tippr-firstboot.preset <<'PRESET'
+enable tippr-firstboot.service
+disable tippr*
+disable gunicorn-*
+PRESET
 touch /etc/tippr/firstboot-pending
 cat > /etc/tippr/firstboot.env <<'ENV'
 # Settings for the first boot (tippr-firstboot). Uncomment and set before

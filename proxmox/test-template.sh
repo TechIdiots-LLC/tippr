@@ -61,6 +61,7 @@ done
 docker exec "$name" sh -c "! grep -q 'tippr.template' /home/tippr/src/tippr/r2/run.ini"
 docker exec "$name" sh -c "grep -q '^domain = $domain' /home/tippr/src/tippr/r2/run.ini"
 docker exec "$name" test ! -f /etc/tippr/firstboot-pending
+docker exec "$name" test ! -e /etc/systemd/system-preset/10-tippr-firstboot.preset
 docker exec "$name" sh -c 'ls /etc/ssh/ssh_host_*_key >/dev/null'
 docker exec "$name" sh -c 'test -s /etc/machine-id'
 docker exec "$name" systemctl is-active -q tippr-paster.service

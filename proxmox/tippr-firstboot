@@ -47,6 +47,17 @@ if [ -f "$PENDING" ]; then
     if [ ! -s /etc/machine-id ]; then
         systemd-machine-id-setup
     fi
+    # Stop any tippr unit that started anyway (e.g. enabled by systemd's
+    # first-boot presets in templates up to 0.3.0): its jobs and
+    # consumers would recreate ZooKeeper nodes with the template's password
+    # as soon as it's wiped. The installer starts what's needed again.
+    units=$(systemctl list-units --all --plain --no-legend 'tippr*' 'gunicorn-*' \
+        | awk '{ for (i = 1; i <= 2; i++) if ($i ~ /^(tippr|gunicorn)/) { print $i; break } }' \
+        | grep -vx 'tippr-firstboot.service' || true)
+    if [ -n "$units" ]; then
+        # shellcheck disable=SC2086
+        systemctl stop $units || true
+    fi
     # Start ZooKeeper empty: anything in it came from the template build,
     # ACL'd to that build's password (a new site has nothing there to keep)
     systemctl stop zookeeper || true
@@ -85,5 +96,5 @@ Password:      $admin_password
 set up two-factor authentication under preferences -> security; admin mode
 needs it. Then see /admin/site, /admin/email and /admin/backups.
 LOGIN
-rm -f "$PENDING"
+rm -f "$PENDING" /etc/systemd/system-preset/10-tippr-firstboot.preset
 echo "tippr-firstboot: done; login details are in $LOGIN_FILE"
