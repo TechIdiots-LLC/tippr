@@ -1,5 +1,8 @@
+// variables.less comes from tippr.less, which imports it before this file.
+// Don't import it here too: LESS 1.4 reads both copies at once and keeps
+// whichever finishes first, which can drop colors.less or theme.less
+// ("variable @color-white is undefined") depending on disk timing.
 @import "animations.less";
-@import "variables.less";
 @import "mixins.less";
 @import "utils.less";
 @import "forms.less";

@@ -12,6 +12,9 @@
   off, and `tippr-firstboot` stops any that are running before it resets ZooKeeper.
 - **Installer under `pct exec`**: it put its helpers in /usr/local/bin and then couldn't find them, since `pct exec`
   runs commands with a PATH that leaves that out. The installer and `tippr-firstboot` now set their own PATH.
+- **Static build**: `tippr.less` sometimes failed to build with "variable @color-white is undefined" (or
+  `@tp-link-hex`), depending on disk timing. `variables.less` was imported twice, and LESS 1.4 races the two copies
+  and can drop the colours or theme with them. It's now imported once.
 
 ## 0.3.0
 ### ✨ Features and improvements
