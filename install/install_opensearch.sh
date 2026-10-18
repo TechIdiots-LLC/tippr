@@ -44,10 +44,13 @@ echo "deb [signed-by=$OPENSEARCH_KEYRING] https://artifacts.opensearch.org/relea
 
 if ! dpkg -s opensearch >/dev/null 2>&1; then
     apt-get update
-    # The package refuses to install without an initial admin password (for
-    # its security plugin). The security plugin is disabled below -- only
-    # local processes can reach the port -- so the password is never used.
-    env OPENSEARCH_INITIAL_ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')Aa1!" \
+    # The security plugin is disabled below (only local processes can reach
+    # the port), so skip the package's demo security setup, which can fail
+    # on its own (it did on GitHub's runners). Older packages ignore the
+    # DISABLE_ settings and need an initial admin password instead; it's
+    # never used.
+    env DISABLE_INSTALL_DEMO_CONFIG=true DISABLE_SECURITY_PLUGIN=true \
+        OPENSEARCH_INITIAL_ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')Aa1!" \
         apt-get install $APTITUDE_OPTIONS opensearch
 fi
 
