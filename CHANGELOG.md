@@ -2,6 +2,13 @@
 
 ## master
 ### ✨ Features and improvements
+- _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.2.0
+### ✨ Features and improvements
 - **Releases**: each version is published as a Docker image (Docker Hub), a Docker Compose bundle, an installer
   tarball and a Proxmox LXC template, all built and tested by the release workflow. See docs/RELEASING.md.
 - **Docker Compose**: the whole site in containers, one per role (web, consumers, jobs, websockets, activity,
