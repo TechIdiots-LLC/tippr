@@ -355,7 +355,9 @@ class Tippr(Templated):
                 if getattr(self, "show_welcomebar", True):
                     self.welcomebar = WelcomeBar()
                 if self.show_newsletterbar:
-                    self.newsletterbar = NewsletterBar()
+                    from r2.lib import newsletter
+                    if newsletter.enabled():
+                        self.newsletterbar = NewsletterBar()
 
             if (c.render_style == "compact" and
                     getattr(self, "show_mobilewebredirectbar", True)):

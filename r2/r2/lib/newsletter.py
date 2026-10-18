@@ -37,6 +37,13 @@ LIST_ID = g.newsletter_list_id
 STATS_NAMESPACE = "providers.campaignmonitor"
 
 
+def enabled():
+    """Whether there's a newsletter to sign up for (Campaign Monitor's API
+    key and list ID are set). Without one, the newsletter bar, the sign-up
+    form's checkbox and /newsletter are hidden."""
+    return bool(API_KEY and LIST_ID)
+
+
 class NewsletterError(Exception):
     pass
 

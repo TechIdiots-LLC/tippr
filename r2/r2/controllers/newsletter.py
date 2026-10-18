@@ -29,4 +29,8 @@ from r2.lib.pages import Newsletter
 
 class NewsletterController(TipprController):
     def GET_newsletter(self):
+        from r2.lib import newsletter
+        if not newsletter.enabled():
+            # no newsletter set up (newsletter_api_key, newsletter_list_id)
+            return self.abort404()
         return Newsletter().render()
