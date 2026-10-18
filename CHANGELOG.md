@@ -24,6 +24,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Deleting a multivault** left you on its page, which then gave a 404; it now goes to the front page.
 - **Deleting a post** failed in a vault that had never had a sticky post.
 - **The welcome panel** on an empty listing was squeezed into a narrow column; it's now as wide as the listing.
 - **The compact and old mobile interfaces** failed to load (leftovers from renaming reddit to vault, and Python 2 code).

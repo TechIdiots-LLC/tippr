@@ -464,9 +464,18 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     deleteMulti: function() {
+        // leave the multi's page once it's gone. The API answers a delete
+        // with an empty body, which jQuery fails to parse as JSON, so Backbone
+        // calls error rather than success: go on any 2xx status.
+        var leave = function() {
+            window.location = '/'
+        }
         this.model.destroy({
-            success: function() {
-                window.location = '/'
+            success: leave,
+            error: function(model, xhr) {
+                if (xhr && xhr.status >= 200 && xhr.status < 300) {
+                    leave()
+                }
             }
         })
     },
