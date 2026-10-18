@@ -84,13 +84,11 @@ steps:
 
 * To populate the database with test data, run:
 
-    cd $TIPPR_SRC/tippr
-    tippr-run scripts/inject_test_data.py -c 'inject_test_data()'
+    tippr-run $TIPPR_SRC/tippr/scripts/inject_test_data.py -c 'inject_test_data()'
 
 * To update or re-initialize policy wiki pages (Terms of Use, Privacy Policy, etc.):
 
-    cd $TIPPR_SRC/tippr
-    tippr-run scripts/init_policy_wiki_pages.py
+    sudo env FORCE_POLICY_IMPORT=1 tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py
 
 * After populating the db or adding your own vaults, update the /vaults
   rankings and vault name search right away (they otherwise run on a timer):

@@ -70,6 +70,10 @@ SETTINGS = {
     "announcement_link": 500,
     # "closed" to stop new accounts; anything else is open
     "signups": 10,
+    # who runs the site, for the policy pages (docs/policies): the legal
+    # name, and whose laws govern them
+    "site_operator": 120,
+    "governing_law": 120,
 }
 
 # the settings set from the /admin/site text form (the others have their
@@ -77,7 +81,7 @@ SETTINGS = {
 TEXT_SETTINGS = (
     "site_name", "short_description", "contact_email", "front_page_title",
     "title_format", "google_site_verification", "bing_site_verification",
-    "announcement", "announcement_link",
+    "announcement", "announcement_link", "site_operator", "governing_law",
 )
 
 _lock = threading.Lock()
@@ -179,6 +183,52 @@ def title(page_title, front_page=False):
     if site_name and site_name.lower() in page_title.lower():
         return page_title
     return fmt.replace("{title}", page_title).replace("{site}", site_name)
+
+
+# sections of the contact page (templates/contactus.html) that other pages
+# and the policies send people to
+CONTACT_SECTIONS = ("message-the-admins", "privacy", "legal", "appeals",
+                    "report-content", "moderators", "ratelimit")
+
+
+def contact_url(section=None):
+    """The contact page (or one of its sections), as a full address: it
+    offers a message to the admins and the contact address when one is set,
+    so no address has to be written into other pages."""
+    url = g.https_endpoint.rstrip("/") + "/contact"
+    if section:
+        assert section in CONTACT_SECTIONS, section
+        url += "#" + section
+    return url
+
+
+def contact_link_html(section=None, text=None):
+    """contact_url() as a link."""
+    from r2.lib.filters import websafe
+    return '<a href="%s">%s</a>' % (websafe(contact_url(section)),
+                                    websafe(text or _("the contact page")))
+
+
+def policy_values():
+    """What the {{PLACEHOLDERS}} in docs/policies/*.md stand for on this
+    site (scripts/init_policy_wiki_pages.py fills them in)."""
+    site_name = (g.site_name or g.domain).strip()
+    return {
+        "SITE_NAME": site_name,
+        "DOMAIN": g.domain,
+        "SITE_URL": g.https_endpoint.rstrip("/"),
+        "OPERATOR": getattr(g, "site_operator", None) or site_name,
+        "GOVERNING_LAW": (getattr(g, "governing_law", None) or
+                          "the place where the site's operator is established"),
+    }
+
+
+def fill_policy(text):
+    """docs/policies text with this site's details in place of the
+    placeholders."""
+    for name, value in policy_values().items():
+        text = text.replace("{{%s}}" % name, value)
+    return text
 
 
 def signups_open():

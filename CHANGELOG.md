@@ -15,6 +15,15 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Policies and contact details were tippr.net's**: every install's user agreement, privacy and content policies and
+  moderator guidelines named TechIdiots LLC, tippr.net, Massachusetts law and six @tippr.net addresses, and the privacy
+  pages, export emails and rate-limit page pointed at more. The policies are now templates filled in from /admin/site
+  (site name, domain, and new **operator** and **governing law** fields), and everything that told people where to
+  write links to a section of the contact page instead, which offers a pre-filled message to the admins (privacy,
+  copyright and legal, appeals, serious content reports, moderator help, rate limits) and the contact address when one
+  is set. The sample config no longer points share, feedback and ads mail at tippr.net or a stranger's Gmail address.
+  Existing policy pages aren't changed; rebuild them with
+  `sudo env FORCE_POLICY_IMPORT=1 tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py`.
 - **Link previews** said "tippr" whatever the site's name, and vault and post previews showed `â€¢` instead of `•`.
 - **robots.txt** still used reddit's `/r/` paths, and its `Disallow: /*.xml` would have hidden the sitemap.
 

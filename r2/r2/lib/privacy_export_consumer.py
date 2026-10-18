@@ -28,7 +28,7 @@ from datetime import datetime
 from pylons import app_globals as g
 
 from r2.lib import amqp
-from r2.lib.privacy_export import UserDataExporter
+from r2.lib.privacy_export import UserDataExporter, _contact
 from r2.models import Account, Message
 from r2.models.privacy import (
     DataExportFile,
@@ -144,7 +144,7 @@ def send_export_ready_notification(account, privacy_request, export_file):
     try:
         from r2.lib.db import queries
         
-        subject = "Your Tippr data export is ready"
+        subject = "Your %s data export is ready" % g.site_name
         body = """Your data export request has been processed and is ready for download.
 
 **Download your data:**
@@ -157,10 +157,10 @@ Visit your [Privacy Settings](/prefs/privacy) page to download your data export.
 - You can download the file up to 5 times
 - The file is in ZIP format containing JSON data
 
-If you did not request this export, please contact us at privacy@tippr.net.
+If you did not request this export, please contact us at """ + _contact() + """.
 
 ---
-This is an automated message from Tippr.
+This is an automated message from """ + g.site_name + """.
 """
         
         # Get system user for sending
@@ -185,14 +185,14 @@ def send_export_failed_notification(account, privacy_request, error_msg):
     try:
         from r2.lib.db import queries
         
-        subject = "Your Tippr data export could not be completed"
+        subject = "Your %s data export could not be completed" % g.site_name
         body = """Unfortunately, we were unable to process your data export request.
 
-If you continue to experience issues, please contact us at privacy@tippr.net 
+If you continue to experience issues, please contact us at """ + _contact() + """
 and we will assist you manually.
 
 ---
-This is an automated message from Tippr.
+This is an automated message from """ + g.site_name + """.
 """
         
         system_user = Account.system_user()

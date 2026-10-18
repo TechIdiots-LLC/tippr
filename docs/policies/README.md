@@ -100,13 +100,36 @@ This message is defined in `r2/r2/lib/system_messages.py`.
 
 ## Customization
 
-When customizing these policies for your instance:
+The files here are templates. When the installer creates the wiki pages
+(`scripts/init_policy_wiki_pages.py`), it fills in these placeholders from
+the site's settings on `/admin/site`:
 
-1. **Update Contact Information**: Replace `legal@tippr.net`, `privacy@tippr.net`, etc. with your actual contact emails
-2. **Update Company Name**: Replace "TechIdiots LLC" with your company name
-3. **Update Domain**: Replace "tippr.net" with your domain
-4. **Review Jurisdiction**: The policies reference Massachusetts law and US regulations; update for your jurisdiction if different
-5. **Add Specific Rules**: Add any additional rules specific to your community
+| Placeholder | Filled with | When it isn't set |
+|---|---|---|
+| `{{SITE_NAME}}` | the site name | the domain |
+| `{{DOMAIN}}`, `{{SITE_URL}}` | the site's domain and address | |
+| `{{OPERATOR}}` | the operator (who runs the site, by legal name) | the site name |
+| `{{GOVERNING_LAW}}` | the governing law, e.g. "the State of New York" | "the place where the site's operator is established" |
+
+Where the policies tell people how to reach the site, they link to a
+section of the site's contact page (`/contact#privacy`, `#legal`, `#appeals`,
+`#report-content`, `#moderators`), which offers a message to the admins and,
+where one is set, an email address. That works on any domain, and nobody's
+address is built into the text.
+
+Set those before the pages are created, or rebuild the pages afterwards
+(this replaces edits made on the wiki):
+
+```bash
+sudo env FORCE_POLICY_IMPORT=1 tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py
+```
+
+Existing pages are never changed otherwise, so editing them on the wiki
+(`/wiki/useragreement` and so on) is safe. Still:
+
+1. **Review the jurisdiction**: the policies are written with US law in
+   mind; adapt them if you're elsewhere.
+2. **Add specific rules** for your community.
 
 ## Legal Disclaimer
 

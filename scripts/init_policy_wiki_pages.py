@@ -185,6 +185,10 @@ def main(root_dir=None):
         # Read the content
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
+        # the templates are generic: put in this site's name, domain,
+        # operator, contact address and governing law (/admin/site)
+        from r2.lib import site_info
+        content = site_info.fill_policy(content)
 
         # Check if wiki page already exists
         # Determine if page exists first

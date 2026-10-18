@@ -1,16 +1,16 @@
-# Tippr Content Policy
+# {{SITE_NAME}} Content Policy
 
 *Effective Date: January 22, 2026*
 
 *Last Revised: January 22, 2026*
 
-Tippr is a platform for communities to discuss, connect, and share. The following Content Policy governs what is allowed on Tippr and what is not.
+{{SITE_NAME}} is a platform for communities to discuss, connect, and share. The following Content Policy governs what is allowed on {{SITE_NAME}} and what is not.
 
 ---
 
 ## 1. Remember the Human
 
-Tippr is a place for creating community and belonging, not for attacking marginalized or vulnerable groups. Everyone has a right to use Tippr free of harassment, bullying, and threats of violence.
+{{SITE_NAME}} is a place for creating community and belonging, not for attacking marginalized or vulnerable groups. Everyone has a right to use {{SITE_NAME}} free of harassment, bullying, and threats of violence.
 
 ## 2. Abide by Community Rules
 
@@ -27,7 +27,7 @@ Posting personal information (doxxing) is prohibited. Do not post or share:
 
 ## 4. Prohibited Content
 
-The following content is not allowed on Tippr:
+The following content is not allowed on {{SITE_NAME}}:
 
 ### 4.1 Illegal Content
 Content that violates the law, including but not limited to:
@@ -74,8 +74,8 @@ Coordinating with others to overwhelm a vault or interfere with another communit
 ### 5.3 Abuse of the Report System
 Repeatedly filing false reports or abusing the reporting system is prohibited.
 
-### 5.4 Breaking Tippr
-Attempting to exploit vulnerabilities, disrupt services, or interfere with Tippr's operation is prohibited.
+### 5.4 Breaking {{SITE_NAME}}
+Attempting to exploit vulnerabilities, disrupt services, or interfere with {{SITE_NAME}}'s operation is prohibited.
 
 ## 6. Moderator Responsibilities
 
@@ -99,7 +99,7 @@ Accounts that violate this policy may be temporarily or permanently suspended.
 Vaults that consistently host content violating this policy may be quarantined or banned.
 
 ### 7.4 Appeals
-If you believe your content was removed or your account was suspended in error, you can appeal by contacting us at appeals@tippr.net.
+If you believe your content was removed or your account was suspended in error, you can appeal through the [contact page](/contact#appeals).
 
 ## 8. Reporting Violations
 
@@ -107,7 +107,7 @@ If you see content that violates this policy:
 
 1. Use the **Report** button on the content
 2. Contact vault moderators through modmail
-3. For serious violations, contact admins at contentpolicy@tippr.net
+3. For serious violations, [message the admins](/contact#report-content)
 
 ## 9. Changes to This Policy
 

@@ -342,9 +342,10 @@ def send_gold_code(buyer, months, days,
     subject = _('Your gold gift code has been generated!')
     message = _('Here is your gift code for %(amount)s of tippr gold:\n\n'
                 '%(code)s\n\nThe recipient (or you!) can enter it at '
-                'https://www.tippr.net/gold or go directly to '
-                'https://www.tippr.net/thanks/%(code)s to claim it.'
-              ) % {'amount': amount, 'code': code}
+                '%(site)s/gold or go directly to '
+                '%(site)s/thanks/%(code)s to claim it.'
+              ) % {'amount': amount, 'code': code,
+                   'site': g.https_endpoint.rstrip('/')}
 
     if buyer:
         # bought by a logged-in user, send a tippr PM
@@ -1421,7 +1422,7 @@ def subscr_pm(pennies, months, new_subscr=True):
 
     message %= {
         "price": price,
-        "subscr_url": "https://www.tippr.net/gold/subscription",
+        "subscr_url": g.https_endpoint.rstrip("/") + "/gold/subscription",
         "gold_email": g.goldsupport_email,
     }
     return subject, message

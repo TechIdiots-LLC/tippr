@@ -1,10 +1,10 @@
-# Tippr User Agreement
+# {{SITE_NAME}} User Agreement
 
 *Effective Date: January 22, 2026*
 
 *Last Revised: January 22, 2026*
 
-This User Agreement ("Agreement") between you and TechIdiots LLC ("Company," "we," "us," or "our") sets out the terms and conditions that govern your use of [tippr.net](https://tippr.net) and related services (collectively, the "Services").
+This User Agreement ("Agreement") between you and {{OPERATOR}} ("Company," "we," "us," or "our") sets out the terms and conditions that govern your use of [{{DOMAIN}}]({{SITE_URL}}) and related services (collectively, the "Services").
 
 By accessing or using the Services, you agree to be bound by this Agreement. If you do not agree, you may not access or use the Services.
 
@@ -124,7 +124,7 @@ Violation of these provisions may result in immediate termination of access, leg
 
 ### 8.3 Trademarks
 
-"Tippr," the Tippr logo, and other marks are trademarks of TechIdiots LLC. You may not use these marks without our written permission.
+"{{SITE_NAME}}," the {{SITE_NAME}} logo, and other marks are trademarks of {{OPERATOR}}. You may not use these marks without our written permission.
 
 ## 9. Termination
 
@@ -159,7 +159,7 @@ The Company is a provider of an interactive computer service. In accordance with
 
 ## 13. Governing Law
 
-This Agreement shall be governed by the laws of the State of Massachusetts, without regard to its conflict of law provisions.
+This Agreement shall be governed by the laws of {{GOVERNING_LAW}}, without regard to its conflict of law provisions.
 
 ## 14. Dispute Resolution
 
@@ -180,8 +180,8 @@ We may update this Agreement from time to time. If we make material changes, we 
 
 If you have questions about this Agreement, please contact us at:
 
-**TechIdiots LLC**  
-Email: legal@tippr.net
+**{{OPERATOR}}**  
+Contact: [legal and copyright requests](/contact#legal)
 
 ---
 

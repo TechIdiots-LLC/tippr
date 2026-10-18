@@ -330,7 +330,9 @@ class PrivacySettingsContent:
         html.append('<h2>%s</h2>' % _('Contact Us'))
         html.append('<p>%s</p>' % _(
             'For privacy-related inquiries or to exercise your rights, contact us at:'))
-        html.append('<p><a href="mailto:privacy@tippr.net">privacy@tippr.net</a></p>')
+        from r2.lib import site_info
+        html.append('<p>%s</p>' % site_info.contact_link_html(
+            'privacy', _('Send a privacy request')))
         html.append('</div>')
         
         html.append('</div>')  # End privacy-settings

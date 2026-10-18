@@ -1,10 +1,10 @@
-# Tippr Privacy Policy
+# {{SITE_NAME}} Privacy Policy
 
 *Effective Date: January 22, 2026*
 
 *Last Revised: January 22, 2026*
 
-This Privacy Policy explains how TechIdiots LLC ("Company," "we," "us," or "our") collects, uses, and shares information about you when you use [tippr.net](https://tippr.net) and related services (collectively, the "Services").
+This Privacy Policy explains how {{OPERATOR}} ("Company," "we," "us," or "our") collects, uses, and shares information about you when you use [{{DOMAIN}}]({{SITE_URL}}) and related services (collectively, the "Services").
 
 By using the Services, you consent to the collection, use, and disclosure of your information as described in this Privacy Policy.
 
@@ -190,7 +190,7 @@ If you are a California resident, you have additional rights under the Californi
 - **Right to Opt-Out**: You can opt out of the "sale" of your personal information (we do not sell personal information).
 - **Non-Discrimination**: We will not discriminate against you for exercising your rights.
 
-To exercise these rights, contact us at privacy@tippr.net.
+To exercise these rights, contact us through the [contact page](/contact#privacy).
 
 ## 13. European Privacy Rights
 
@@ -204,7 +204,7 @@ If you are in the European Economic Area (EEA), you have additional rights under
 - **Objection**: Right to object to processing.
 - **Withdraw Consent**: Right to withdraw consent at any time.
 
-To exercise these rights, contact us at privacy@tippr.net.
+To exercise these rights, contact us through the [contact page](/contact#privacy).
 
 **Legal Basis for Processing**: We process your data based on:
 
@@ -215,16 +215,15 @@ To exercise these rights, contact us at privacy@tippr.net.
 
 ## 14. Governing Law
 
-This Privacy Policy and any disputes arising from it shall be governed by the laws of the Commonwealth of Massachusetts, without regard to its conflict of law provisions.
+This Privacy Policy and any disputes arising from it shall be governed by the laws of {{GOVERNING_LAW}}, without regard to its conflict of law provisions.
 
 ## 15. Contact Information
 
 If you have questions about this Privacy Policy, please contact us at:
 
-**TechIdiots LLC**  
-Email: privacy@tippr.net
+**{{OPERATOR}}**  
+Contact: [privacy requests](/contact#privacy)
 
-For data protection inquiries, you can also contact our Data Protection Officer at: dpo@tippr.net
 
 ---
 

@@ -22,44 +22,93 @@
 ## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 ## TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-
 <%!
+from urllib.parse import urlencode
 from r2.lib.template_helpers import static
 %>
 
 <%
-  contact_email = g.contact_email
-  dmca_email = g.dmca_email or contact_email
-  gold_email = g.goldsupport_email
+  contact_email = getattr(g, "contact_email", None)
+  dmca_email = getattr(g, "dmca_email", None) or contact_email
+  gold_email = getattr(g, "goldsupport_email", None)
+  site_name = g.site_name or g.domain
 %>
+
+## A message to the admins with the subject filled in. Every section that
+## other pages and the policies link to (r2.lib.site_info.CONTACT_SECTIONS)
+## offers one, so no email address has to be published; the contact
+## address from /admin/site is added where one is set.
+<%def name="message_admins(subject, text)">
+  <a class="c-btn c-btn-primary contact-message-button"
+     href="/message/compose?${urlencode({'to': g.admin_message_acct, 'subject': subject})}">${text}</a>
+  %if not c.user_is_loggedin:
+    &#32;<small>${_("(you'll be asked to log in first)")}</small>
+  %endif
+</%def>
+
+<%def name="or_email(address)">
+  %if address:
+    &#32;${_("Or email")}&#32;<a href="mailto:${address}">${address}</a>.
+  %endif
+</%def>
 
   <h1>${_("how can we help you?")}</h1>
   <ol class="contact-options">
     <li id="message-the-admins">
       <h2 class="button">${_("message the admins")}</h2>
       <ul class="details">
-        <li>${_("Questions, account problems or something we should know about?")}&#32;<a href="/message/compose?to=${g.admin_message_acct}">${_("Send the admins a message")}</a>.</li>
+        <li>${_("Questions, account problems or something we should know about?")}</li>
+        <li>${message_admins(_("Question for the admins"), _("Send the admins a message"))}</li>
+      </ul>
+    </li>
+    <li id="report-content">
+      <h2 class="button">${_("report content")}</h2>
+      <ul class="details">
+        <li>${_("Use the report button on a post or comment to flag it to the moderators and admins. See the")}&#32;<a href="/help/contentpolicy">${_("content policy")}</a>&#32;${_("for what is allowed.")}</li>
+        <li>${_("For something serious, such as threats, someone's private information, or content that endangers a child, tell the admins directly and include links:")}</li>
+        <li>${message_admins(_("Serious content report"), _("Report it to the admins"))}${or_email(contact_email)}</li>
+      </ul>
+    </li>
+    <li id="appeals">
+      <h2 class="button">${_("appeal a removal or suspension")}</h2>
+      <ul class="details">
+        <li>${_("If you think your content was removed or your account suspended by mistake, tell the admins what happened, with links. For removals by a vault's moderators, ask them first through the vault's \"message the moderators\" link.")}</li>
+        <li>${message_admins(_("Appeal"), _("Send an appeal"))}${or_email(contact_email)}</li>
+      </ul>
+    </li>
+    <li id="privacy">
+      <h2 class="button">${_("privacy and your data")}</h2>
+      <ul class="details">
+        <li>${_("Read the")}&#32;<a href="/help/privacypolicy">${_("privacy policy")}</a>&#32;${_("for what we collect. You can download or delete your data yourself in")}&#32;<a href="/prefs/privacy">${_("privacy settings")}</a>.</li>
+        <li>${_("For anything else about your data:")}</li>
+        <li>${message_admins(_("Privacy request"), _("Send a privacy request"))}${or_email(contact_email)}</li>
+      </ul>
+    </li>
+    <li id="legal">
+      <h2 class="button">${_("copyright and legal")}</h2>
+      <ul class="details">
+        <li>${_("For a copyright (DMCA) takedown or another legal matter, see the")}&#32;<a href="/help/useragreement">${_("user agreement")}</a>&#32;${_("and include links to the content on %(site)s.") % dict(site=site_name)}</li>
+        <li>${message_admins(_("Copyright or legal request"), _("Send a legal request"))}${or_email(dmca_email)}</li>
+      </ul>
+    </li>
+    <li id="moderators">
+      <h2 class="button">${_("help for moderators")}</h2>
+      <ul class="details">
+        <li>${_("See the")}&#32;<a href="/help/moderatorguidelines">${_("moderator guidelines")}</a>.&#32;${_("For urgent problems in a vault you moderate, such as raids or spam waves:")}</li>
+        <li>${message_admins(_("Moderator help"), _("Ask the admins for help"))}</li>
+      </ul>
+    </li>
+    <li id="ratelimit">
+      <h2 class="button">${_("blocked for too many requests")}</h2>
+      <ul class="details">
+        <li>${_("If the site says you've made too many requests and you think that's a mistake, tell the admins your IP address (shown on that page) and what you were doing.")}</li>
+        <li>${message_admins(_("Blocked for too many requests"), _("Message the admins"))}${or_email(contact_email)}</li>
       </ul>
     </li>
     <li id="report-a-bug">
       <h2 class="button">${_("report a bug or suggest a feature")}</h2>
       <ul class="details">
         <li>${_("tippr is open source. Search the existing issues, or open a new one,")}&#32;<a href="${g.bug_report_url}">${_("on our issue tracker")}</a>.</li>
-      </ul>
-    </li>
-    <li id="report-content">
-      <h2 class="button">${_("report content or copyright infringement")}</h2>
-      <ul class="details">
-        <li>${_("Use the report button on a post or comment to flag it to the moderators and admins. See the")}&#32;<a href="/help/contentpolicy">${_("content policy")}</a>&#32;${_("for what is allowed.")}</li>
-        %if dmca_email:
-          <li>${_("To file a copyright (DMCA) takedown request, see the")}&#32;<a href="/help/useragreement">${_("user agreement")}</a>&#32;${_("and email")}&#32;<a href="mailto:${dmca_email}">${dmca_email}</a>&#32;${_("with a link to the content on tippr.")}</li>
-        %endif
-      </ul>
-    </li>
-    <li id="privacy">
-      <h2 class="button">${_("privacy and your data")}</h2>
-      <ul class="details">
-        <li>${_("Read the")}&#32;<a href="/help/privacypolicy">${_("privacy policy")}</a>&#32;${_("to learn what we collect and how to access, export or delete your data.")}</li>
       </ul>
     </li>
     %if gold_email:
@@ -74,7 +123,7 @@ from r2.lib.template_helpers import static
       <li id="email-us">
         <h2 class="button">${_("anything else")}</h2>
         <ul class="details">
-          <li>${_("Email us at")}&#32;<a href="mailto:${contact_email}">${contact_email}</a>&#32;${_("and include your tippr username if you have one.")}</li>
+          <li>${_("Email us at")}&#32;<a href="mailto:${contact_email}">${contact_email}</a>&#32;${_("and include your username if you have one.")}</li>
         </ul>
       </li>
     %endif
@@ -89,6 +138,14 @@ $('.contact-options').on('click', 'h2', function() {
   } else {
     $(".details").slideUp();
     toggled_details.slideDown();
+  }
+});
+
+// a link to a section (/contact#privacy) opens it
+$(function() {
+  var section = window.location.hash && $('.contact-options > li' + window.location.hash.replace(/[^#\w-]/g, ''));
+  if (section && section.length) {
+    section.children('.details').show();
   }
 });
 </script>

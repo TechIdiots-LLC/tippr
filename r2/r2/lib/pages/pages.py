@@ -4607,7 +4607,7 @@ class PromoteLinkEdit(PromoteLinkBase):
                     "or [/v/selfserve](%(selfserve)s).")
         message %= {
             'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
-            'selfserve': 'https://www.tippr.net/v/selfserve'
+            'selfserve': '/v/selfserve'
         }
         self.infobar = TipprInfoBar(message=message)
         self.price_dict = PromotionPrices.get_price_dict(self.author)

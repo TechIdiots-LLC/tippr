@@ -46,6 +46,9 @@ def main():
             continue
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
+        # this site's details in place of the templates' placeholders
+        from r2.lib import site_info
+        content = site_info.fill_policy(content)
         print('Revising', wiki_name)
         if args.dry_run:
             print('DRY-RUN: would revise', wiki_name)

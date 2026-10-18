@@ -1,16 +1,16 @@
-# Tippr Moderator Guidelines
+# {{SITE_NAME}} Moderator Guidelines
 
 *Effective Date: January 22, 2026*
 
 *Last Revised: January 22, 2026*
 
-Welcome to the Tippr Moderator Community! This document outlines the expectations, responsibilities, and best practices for moderators on Tippr.
+Welcome to the {{SITE_NAME}} Moderator Community! This document outlines the expectations, responsibilities, and best practices for moderators on {{SITE_NAME}}.
 
 ---
 
 ## Welcome, Moderator!
 
-Thank you for volunteering to help build and maintain our community. Moderators are the backbone of Tippr, ensuring that vaults remain welcoming, engaging, and safe for all users.
+Thank you for volunteering to help build and maintain our community. Moderators are the backbone of {{SITE_NAME}}, ensuring that vaults remain welcoming, engaging, and safe for all users.
 
 As a moderator, you are trusted with significant responsibilities. This guide will help you understand your role and provide resources to be an effective moderator.
 
@@ -28,9 +28,9 @@ As a moderator, you are trusted with significant responsibilities. This guide wi
 
 ### 1.2 What Moderators Are NOT
 
-- **Employees**: You are a volunteer, not an employee, contractor, or agent of TechIdiots LLC.
+- **Employees**: You are a volunteer, not an employee, contractor, or agent of {{OPERATOR}}.
 - **Paid Staff**: Moderation is a volunteer activity; there is no compensation.
-- **Company Representatives**: You do not speak for or represent Tippr/TechIdiots LLC.
+- **Company Representatives**: You do not speak for or represent {{SITE_NAME}} or {{OPERATOR}}.
 
 ## 2. Volunteer Status & Legal Clarifications
 
@@ -39,7 +39,7 @@ As a moderator, you are trusted with significant responsibilities. This guide wi
 As stated in the [User Agreement](/help/useragreement), moderators are independent volunteers. You:
 
 - Are not entitled to compensation or benefits;
-- Cannot enter into agreements on behalf of Tippr;
+- Cannot enter into agreements on behalf of {{SITE_NAME}};
 - Act on your own judgment within site guidelines;
 - May have your moderator status revoked at any time.
 
@@ -193,7 +193,7 @@ Moderation can be stressful. To avoid burnout:
 ### 8.2 How to Contact Admins
 
 - Use the "Contact Admins" feature.
-- For urgent issues, email: modhelp@tippr.net
+- For urgent issues, [message the admins](/contact#moderators)
 
 ## 9. Resources
 
@@ -214,7 +214,7 @@ Moderation can be stressful. To avoid burnout:
 
 By accepting a moderator invitation, you acknowledge that you have read and agree to follow these Moderator Guidelines, the User Agreement, Content Policy, and Privacy Policy.
 
-Thank you for being part of the Tippr moderator community!
+Thank you for being part of the {{SITE_NAME}} moderator community!
 
 ---
 

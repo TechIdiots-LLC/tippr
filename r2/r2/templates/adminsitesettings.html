@@ -118,6 +118,14 @@
     </tr>
   </table>
 
+  <h2>${_("policy pages")}</h2>
+  <p><small>${_("The user agreement, privacy policy, content policy and moderator guidelines start from the templates in docs/policies, filled in with the site name, domain and these two; where they say how to reach you, they link to sections of the contact page (/contact), which offers a message to the admins and the contact address above when it is set. They're wiki pages: edit them at /wiki/useragreement and so on. To rebuild them from the templates after changing these (this replaces any edits):")}</small></p>
+  <pre class="backup-log">sudo env FORCE_POLICY_IMPORT=1 tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py</pre>
+  <table class="lined-table borderless">
+    ${text_row("site_operator", _("operator"), _("Who runs the site, by legal name (a company, or your own name). Blank: the site name."), 50, placeholder=g.site_name)}
+    ${text_row("governing_law", _("governing law"), _("Whose laws the policies are under, e.g. \"the State of New York\" or \"England and Wales\". Blank: wherever the operator is established."), 50, placeholder="")}
+  </table>
+
   <button class="btn" type="submit">${_("save")}</button>
   <span class="status"></span>
 </form>

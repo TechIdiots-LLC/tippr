@@ -73,6 +73,8 @@ def _ads_email(body, from_name, kind):
     """
     For sending email to ads
     """
+    if not g.ads_email:
+        return
     Email.handler.add_to_queue(None, g.ads_email, from_name, g.ads_email,
                                kind, body=body)
 
