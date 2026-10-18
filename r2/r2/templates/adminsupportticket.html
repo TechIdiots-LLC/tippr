@@ -1,0 +1,124 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/support/<id>: one ticket (r2.lib.support)
+<%!
+  from r2.lib.filters import safemarkdown, unsafe
+  from r2.lib.utils import timesince
+%>
+
+<%def name="name_of(account_id)">
+  <% account = thing.accounts.get(account_id) if account_id else None %>
+  %if account:
+    ${account.name}
+  %else:
+    ${_("the system")}
+  %endif
+</%def>
+
+<% t = thing.ticket %>
+<div class="admin-support">
+<p><a href="/admin/support">&laquo; ${_("support queue")}</a></p>
+<h1>${t['subject'] or _("(no subject)")}</h1>
+
+<table class="lined-table borderless support-ticket-info">
+  <tr><td>${_("from")}</td><td>
+    %if thing.member:
+      <a href="/user/${thing.member.name}">${thing.member.name}</a>
+    %else:
+      &mdash;
+    %endif
+  </td></tr>
+  <tr><td>${_("category")}</td><td>${_(thing.category_name)}</td></tr>
+  <tr><td>${_("status")}</td><td>${_(thing.status_names.get(t['status'], t['status']))}</td></tr>
+  <tr><td>${_("assigned to")}</td><td>
+    %if t['assignee_id']:
+      ${name_of(t['assignee_id'])}
+    %else:
+      ${_("nobody")}
+    %endif
+  </td></tr>
+</table>
+
+%if thing.can_reply:
+<div class="support-actions">
+  %if t['assignee_id'] != c.user._id:
+    <form action="/api/support_assign" method="post" class="pretty-form support-inline"
+          onsubmit="return post_form(this, 'support_assign');">
+      <input type="hidden" name="ticket_id" value="${t['id']}">
+      <input type="hidden" name="to" value="me">
+      <button class="btn" type="submit">${_("take this")}</button>
+    </form>
+  %else:
+    <form action="/api/support_assign" method="post" class="pretty-form support-inline"
+          onsubmit="return post_form(this, 'support_assign');">
+      <input type="hidden" name="ticket_id" value="${t['id']}">
+      <input type="hidden" name="to" value="">
+      <button class="btn" type="submit">${_("let it go")}</button>
+    </form>
+  %endif
+  %for status in ('open', 'waiting', 'closed'):
+    %if status != t['status']:
+      <form action="/api/support_status" method="post" class="pretty-form support-inline"
+            onsubmit="return post_form(this, 'support_status');">
+        <input type="hidden" name="ticket_id" value="${t['id']}">
+        <input type="hidden" name="status" value="${status}">
+        <button class="btn" type="submit">${_("mark %(status)s") % dict(status=_(thing.status_names[status]))}</button>
+      </form>
+    %endif
+  %endfor
+</div>
+%endif
+
+<h2>${_("conversation")}</h2>
+<div class="support-thread">
+  %for m in thing.messages:
+    <% staff = bool(getattr(m, 'from_vault', False)) or m.author_id != t['account_id'] %>
+    <div class="support-message ${'support-message-staff' if staff else 'support-message-member'}">
+      <p class="support-message-head">
+        <strong>${name_of(m.author_id)}</strong>
+        %if staff:
+          <small>${_("(staff; the member sees %(acct)s)") % dict(acct=g.admin_message_acct)}</small>
+        %endif
+        &#32;&middot;&#32;${timesince(m._date)} ${_("ago")}
+      </p>
+      <div class="md">${unsafe(safemarkdown(m.body))}</div>
+    </div>
+  %endfor
+</div>
+
+%if thing.can_reply:
+  <h2>${_("reply as the admin team")}</h2>
+  <form action="/api/support_reply" method="post" class="pretty-form"
+        onsubmit="return post_form(this, 'support_reply');">
+    <input type="hidden" name="ticket_id" value="${t['id']}">
+    <textarea name="text" rows="8" cols="80"></textarea>
+    <br>
+    <button class="btn" type="submit">${_("send")}</button>
+    <span class="status"></span>
+  </form>
+%endif
+
+<h2>${_("history")}</h2>
+<table class="lined-table support-history">
+  %for e in thing.events:
+    <tr>
+      <td>${e['time'].strftime('%Y-%m-%d %H:%M UTC')}</td>
+      <td>${name_of(e['actor_id'])}</td>
+      <td>${e['action']}${(': ' + e['detail']) if e['detail'] else ''}</td>
+    </tr>
+  %endfor
+</table>
+</div>

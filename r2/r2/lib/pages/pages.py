@@ -3764,6 +3764,56 @@ class AdminErrors(Templated):
         Templated.__init__(self)
 
 
+def _support_accounts(ids):
+    ids = {i for i in ids if i}
+    if not ids:
+        return {}
+    return Account._byID(ids, data=True, return_dict=True, ignore_missing=True)
+
+
+class AdminSupport(Templated):
+    """The support queue (r2.lib.support)."""
+    def __init__(self, view, category):
+        from r2.lib import support
+        self.enabled = support.enabled()
+        self.vault = support.get_vault()
+        self.view = view
+        self.category = category
+        self.views = [(name, support.VIEWS[name][0]) for name in support.VIEW_ORDER]
+        self.categories = [(cat, support.CATEGORIES[cat][0])
+                           for cat in support.visible_categories(c.user)]
+        self.category_names = {cat: name for cat, (name, _tag)
+                               in support.CATEGORIES.items()}
+        self.status_names = support.STATUSES
+        self.counts = support.counts(c.user) if self.vault else {}
+        self.tickets = (support.list_tickets(c.user, view, category)
+                        if self.vault else [])
+        self.accounts = _support_accounts(
+            [t["account_id"] for t in self.tickets] +
+            [t["assignee_id"] for t in self.tickets] +
+            [t["last_staff_id"] for t in self.tickets])
+        Templated.__init__(self)
+
+
+class AdminSupportTicket(Templated):
+    """One support ticket: the conversation, its status and a reply form."""
+    def __init__(self, ticket):
+        from r2.lib import support
+        self.ticket = ticket
+        self.category_name = support.CATEGORIES[ticket["category"]][0] \
+            if ticket["category"] in support.CATEGORIES else ticket["category"]
+        self.status_names = support.STATUSES
+        self.can_reply = support.can_reply(c.user, ticket["category"])
+        self.messages = support.thread(ticket)
+        self.events = support.ticket_events(ticket["id"])
+        self.accounts = _support_accounts(
+            [m.author_id for m in self.messages] +
+            [e["actor_id"] for e in self.events] +
+            [ticket["account_id"], ticket["assignee_id"]])
+        self.member = self.accounts.get(ticket["account_id"])
+        Templated.__init__(self)
+
+
 class AdminLiveConfig(Templated):
     """The admin interface for the live config (r2.lib.live_config_admin)."""
     def __init__(self):

@@ -167,3 +167,10 @@ if (LocalizedDefaultVaults.get_global_defaults()
 else:
     set_defaults([vaults[name] for name, _, _, _, is_default in VAULTS
                   if is_default])
+
+# the private vault "message the admins" goes to (admin_message_acct), whose
+# messages become tickets in the support queue (/admin/support)
+from r2.lib import support
+admin_vault = support.ensure_vault()
+if admin_vault:
+    print(f"support vault: /v/{admin_vault.name}")

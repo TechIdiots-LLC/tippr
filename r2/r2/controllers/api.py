@@ -4766,6 +4766,63 @@ class ApiController(TipprController):
         else:
             form.set_text(".status", _("saved"))
 
+    def _support_ticket(self, ticket_id, reply=True):
+        """The ticket if c.user may see (and, with reply, act on) it."""
+        from r2.lib import support
+        try:
+            ticket = support.get_ticket(int(ticket_id))
+        except (TypeError, ValueError):
+            return None
+        check = support.can_reply if reply else support.can_view
+        if not ticket or not check(c.user, ticket["category"]):
+            return None
+        return ticket
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        ticket_id=nop("ticket_id"),
+        text=VMarkdownLength("text", max_length=10000),
+    )
+    def POST_support_reply(self, form, jquery, ticket_id, text):
+        """Answer a support ticket as the admin team (/admin/support)."""
+        from r2.lib import support
+        ticket = self._support_ticket(ticket_id)
+        if not ticket:
+            form.set_text(".status", _("no such ticket"))
+            return
+        if form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG):
+            return
+        support.reply(ticket, c.user, text, request.ip)
+        form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        ticket_id=nop("ticket_id"),
+        status=VOneOf("status", ("new", "open", "waiting", "closed")),
+    )
+    def POST_support_status(self, form, jquery, ticket_id, status):
+        from r2.lib import support
+        ticket = self._support_ticket(ticket_id)
+        if ticket and status:
+            support.set_status(ticket["id"], status, c.user)
+        form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        ticket_id=nop("ticket_id"),
+        to=nop("to"),
+    )
+    def POST_support_assign(self, form, jquery, ticket_id, to):
+        """Take a ticket ("me") or let it go (empty)."""
+        from r2.lib import support
+        ticket = self._support_ticket(ticket_id)
+        if ticket:
+            support.assign(ticket["id"], c.user if to == "me" else None, c.user)
+        form.refresh()
+
     @validatedForm(
         VAdmin(),
         VModhash(),

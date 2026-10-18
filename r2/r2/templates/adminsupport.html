@@ -1,0 +1,91 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/support: the support queue (r2.lib.support)
+<%!
+  from urllib.parse import urlencode
+  from r2.lib.utils import timesince
+%>
+
+<%def name="name_of(account_id)">
+  <% account = thing.accounts.get(account_id) if account_id else None %>
+  %if account:
+    ${account.name}
+  %else:
+    &mdash;
+  %endif
+</%def>
+
+<%def name="queue_link(view, category)">/admin/support?${urlencode(dict((k, v) for k, v in (('view', view), ('category', category)) if v))}</%def>
+
+<div class="admin-support">
+<h1>${_("support")}</h1>
+
+%if not thing.enabled:
+  <p class="error">${_("Support isn't set up: admin_message_acct in the ini is %(acct)s, not a vault. Set it to a vault, e.g. /v/siteadmins, and re-run the installer (it creates the vault).") % dict(acct=g.admin_message_acct)}</p>
+%elif not thing.vault:
+  <p class="error">${_("The admin vault %(acct)s doesn't exist yet. Re-run the installer, or run scripts/create_default_vaults.py, to create it.") % dict(acct=g.admin_message_acct)}</p>
+%else:
+  <p><small>${_("Messages to %(acct)s (the contact page's \"message the admins\" links) become tickets here. Replies reach the member as messages from %(acct)s, without your name.") % dict(acct=g.admin_message_acct)}</small></p>
+
+  <ul class="support-tabs">
+    %for view, label in thing.views:
+      <li class="${'selected' if view == thing.view else ''}">
+        <a href="${queue_link(view, thing.category)}">${_(label)}
+          %if thing.counts.get(view):
+            <span class="support-count">${thing.counts[view]}</span>
+          %endif
+        </a>
+      </li>
+    %endfor
+  </ul>
+
+  <p class="support-categories">
+    ${_("category:")}
+    <a href="${queue_link(thing.view, None)}" class="${'selected' if not thing.category else ''}">${_("all")}</a>
+    %for cat, label in thing.categories:
+      &#32;&middot;&#32;<a href="${queue_link(thing.view, cat)}" class="${'selected' if cat == thing.category else ''}">${_(label)}</a>
+    %endfor
+  </p>
+
+  %if thing.tickets:
+    <table class="lined-table support-queue">
+      <tr>
+        <th>${_("subject")}</th><th>${_("category")}</th><th>${_("from")}</th>
+        <th>${_("status")}</th><th>${_("assigned")}</th><th>${_("last reply by staff")}</th><th>${_("activity")}</th>
+      </tr>
+      %for t in thing.tickets:
+        <tr class="support-status-${t['status']}">
+          <td><a href="/admin/support/${t['id']}">${t['subject'] or _("(no subject)")}</a></td>
+          <td>${_(thing.category_names.get(t['category'], t['category']))}</td>
+          <td>${name_of(t['account_id'])}</td>
+          <td>${_(thing.status_names.get(t['status'], t['status']))}</td>
+          <td>${name_of(t['assignee_id'])}</td>
+          <td>
+            %if t['last_staff_id']:
+              ${name_of(t['last_staff_id'])}, ${timesince(t['last_staff_at'])} ${_("ago")}
+            %else:
+              &mdash;
+            %endif
+          </td>
+          <td>${timesince(t['updated'])} ${_("ago")}</td>
+        </tr>
+      %endfor
+    </table>
+  %else:
+    <p>${_("Nothing here.")}</p>
+  %endif
+%endif
+</div>

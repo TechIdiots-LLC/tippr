@@ -38,9 +38,11 @@ from r2.lib.template_helpers import static
 ## other pages and the policies link to (r2.lib.site_info.CONTACT_SECTIONS)
 ## offers one, so no email address has to be published; the contact
 ## address from /admin/site is added where one is set.
-<%def name="message_admins(subject, text)">
+## The [tag] puts the message in the support queue's category
+## (r2.lib.support.CATEGORIES).
+<%def name="message_admins(tag, subject, text)">
   <a class="c-btn c-btn-primary contact-message-button"
-     href="/message/compose?${urlencode({'to': g.admin_message_acct, 'subject': subject})}">${text}</a>
+     href="/message/compose?${urlencode({'to': g.admin_message_acct, 'subject': '[%s] %s' % (tag, subject)})}">${text}</a>
   %if not c.user_is_loggedin:
     &#32;<small>${_("(you'll be asked to log in first)")}</small>
   %endif
@@ -58,7 +60,7 @@ from r2.lib.template_helpers import static
       <h2 class="button">${_("message the admins")}</h2>
       <ul class="details">
         <li>${_("Questions, account problems or something we should know about?")}</li>
-        <li>${message_admins(_("Question for the admins"), _("Send the admins a message"))}</li>
+        <li>${message_admins("general", _("Question for the admins"), _("Send the admins a message"))}</li>
       </ul>
     </li>
     <li id="report-content">
@@ -66,14 +68,14 @@ from r2.lib.template_helpers import static
       <ul class="details">
         <li>${_("Use the report button on a post or comment to flag it to the moderators and admins. See the")}&#32;<a href="/help/contentpolicy">${_("content policy")}</a>&#32;${_("for what is allowed.")}</li>
         <li>${_("For something serious, such as threats, someone's private information, or content that endangers a child, tell the admins directly and include links:")}</li>
-        <li>${message_admins(_("Serious content report"), _("Report it to the admins"))}${or_email(contact_email)}</li>
+        <li>${message_admins("report", _("Serious content report"), _("Report it to the admins"))}${or_email(contact_email)}</li>
       </ul>
     </li>
     <li id="appeals">
       <h2 class="button">${_("appeal a removal or suspension")}</h2>
       <ul class="details">
         <li>${_("If you think your content was removed or your account suspended by mistake, tell the admins what happened, with links. For removals by a vault's moderators, ask them first through the vault's \"message the moderators\" link.")}</li>
-        <li>${message_admins(_("Appeal"), _("Send an appeal"))}${or_email(contact_email)}</li>
+        <li>${message_admins("appeal", _("Appeal"), _("Send an appeal"))}${or_email(contact_email)}</li>
       </ul>
     </li>
     <li id="privacy">
@@ -81,28 +83,28 @@ from r2.lib.template_helpers import static
       <ul class="details">
         <li>${_("Read the")}&#32;<a href="/help/privacypolicy">${_("privacy policy")}</a>&#32;${_("for what we collect. You can download or delete your data yourself in")}&#32;<a href="/prefs/privacy">${_("privacy settings")}</a>.</li>
         <li>${_("For anything else about your data:")}</li>
-        <li>${message_admins(_("Privacy request"), _("Send a privacy request"))}${or_email(contact_email)}</li>
+        <li>${message_admins("privacy", _("Privacy request"), _("Send a privacy request"))}${or_email(contact_email)}</li>
       </ul>
     </li>
     <li id="legal">
       <h2 class="button">${_("copyright and legal")}</h2>
       <ul class="details">
         <li>${_("For a copyright (DMCA) takedown or another legal matter, see the")}&#32;<a href="/help/useragreement">${_("user agreement")}</a>&#32;${_("and include links to the content on %(site)s.") % dict(site=site_name)}</li>
-        <li>${message_admins(_("Copyright or legal request"), _("Send a legal request"))}${or_email(dmca_email)}</li>
+        <li>${message_admins("legal", _("Copyright or legal request"), _("Send a legal request"))}${or_email(dmca_email)}</li>
       </ul>
     </li>
     <li id="moderators">
       <h2 class="button">${_("help for moderators")}</h2>
       <ul class="details">
         <li>${_("See the")}&#32;<a href="/help/moderatorguidelines">${_("moderator guidelines")}</a>.&#32;${_("For urgent problems in a vault you moderate, such as raids or spam waves:")}</li>
-        <li>${message_admins(_("Moderator help"), _("Ask the admins for help"))}</li>
+        <li>${message_admins("moderators", _("Moderator help"), _("Ask the admins for help"))}</li>
       </ul>
     </li>
     <li id="ratelimit">
       <h2 class="button">${_("blocked for too many requests")}</h2>
       <ul class="details">
         <li>${_("If the site says you've made too many requests and you think that's a mistake, tell the admins your IP address (shown on that page) and what you were doing.")}</li>
-        <li>${message_admins(_("Blocked for too many requests"), _("Message the admins"))}${or_email(contact_email)}</li>
+        <li>${message_admins("ratelimit", _("Blocked for too many requests"), _("Message the admins"))}${or_email(contact_email)}</li>
       </ul>
     </li>
     <li id="report-a-bug">
@@ -115,7 +117,7 @@ from r2.lib.template_helpers import static
       <h2 class="button">${_("tippr gold")}</h2>
       <ul class="details">
         <li>${_("A question about")}&#32;<a href="/gold/about">${_("tippr gold")}</a>, ${_("a payment, a gift code or a subscription? Include your username and, for a payment, its date and amount.")}</li>
-        <li>${message_admins(_("Gold support"), _("Ask about gold"))}${or_email(gold_email)}</li>
+        <li>${message_admins("gold", _("Gold support"), _("Ask about gold"))}${or_email(gold_email)}</li>
       </ul>
     </li>
     %if contact_email:

@@ -78,3 +78,21 @@
     .live-config-log td { vertical-align: top; }
     .live-config-log code { white-space: pre-wrap; word-break: break-all; }
 }
+
+// /admin/support
+.admin-support {
+    .support-tabs { list-style: none; padding: 0; margin: 1em 0 0.5em; }
+    .support-tabs li { display: inline-block; margin-right: 1em; }
+    .support-tabs li.selected a { font-weight: bold; }
+    .support-count { background: var(--tp-accent); color: var(--tp-on-accent);
+                     border-radius: 8px; padding: 0 6px; font-size: 11px; }
+    .support-categories a.selected { font-weight: bold; }
+    .support-queue { width: 100%; }
+    .support-status-new td:first-child a { font-weight: bold; }
+    .support-actions { margin: 1em 0; }
+    .support-inline { display: inline-block; margin-right: 0.5em; }
+    .support-message { border: 1px solid var(--tp-border); border-radius: 4px;
+                       padding: 8px 12px; margin: 8px 0; max-width: 800px; }
+    .support-message-staff { background: var(--tp-tint-soft); }
+    .support-message-head { margin: 0 0 4px; color: var(--tp-text-muted); }
+}

@@ -23,6 +23,7 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
+from pylons import tmpl_context as c
 from pylons.i18n import _
 
 from r2.lib.pages import (
@@ -36,6 +37,8 @@ from r2.lib.pages import (
     AdminLiveConfig,
     AdminPage,
     AdminSiteSettings,
+    AdminSupport,
+    AdminSupportTicket,
 )
 from r2.lib.validator import (
     VAdmin,
@@ -119,3 +122,24 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_errors(self):
         return AdminPage(content=AdminErrors()).render()
+
+    @validate(VAdmin(), view=nop("view"), category=nop("category"))
+    def GET_support(self, view, category):
+        """The support queue (r2.lib.support)."""
+        from r2.lib import support
+        if view not in support.VIEWS:
+            view = "needs_reply"
+        if category not in support.CATEGORIES:
+            category = None
+        return AdminPage(content=AdminSupport(view, category)).render()
+
+    @validate(VAdmin())
+    def GET_support_ticket(self, ticket_id):
+        from r2.lib import support
+        try:
+            ticket = support.get_ticket(int(ticket_id))
+        except (TypeError, ValueError):
+            ticket = None
+        if not ticket or not support.can_view(c.user, ticket["category"]):
+            return self.abort404()
+        return AdminPage(content=AdminSupportTicket(ticket)).render()

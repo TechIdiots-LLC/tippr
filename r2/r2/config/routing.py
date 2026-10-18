@@ -156,6 +156,9 @@ def make_map(config):
     mc('/admin/email', controller='admintool', action='email')
     mc('/admin/ads', controller='admintool', action='ads')
     mc('/admin/backups', controller='admintool', action='backups')
+    mc('/admin/support', controller='admintool', action='support')
+    mc('/admin/support/:ticket_id', controller='admintool',
+       action='support_ticket', requirements=dict(ticket_id='[0-9]+'))
     mc('/admin/errors', controller='admintool', action='errors')
     mc('/admin/gold', controller='admintool', action='gold')
 

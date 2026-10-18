@@ -37,3 +37,7 @@ def register_hooks():
 
     from r2.models import vault
     vault.trylater_hooks.register_all()
+
+    # tickets for messages to the admin vault (/admin/support)
+    from r2.lib.support import support_hooks
+    support_hooks.register_all()
