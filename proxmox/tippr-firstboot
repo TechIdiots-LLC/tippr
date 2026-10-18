@@ -47,7 +47,10 @@ if [ -f "$PENDING" ]; then
     if [ ! -s /etc/machine-id ]; then
         systemd-machine-id-setup
     fi
-    rm -f /etc/tippr/secrets.env
+    # The template has no /etc/tippr/secrets.env, so the installer makes new
+    # passwords and secrets for this container. A retry after a failed first
+    # boot keeps the ones that attempt made: ZooKeeper's nodes, PostgreSQL
+    # and RabbitMQ already use them.
     export TIPPR_ADMIN_PASSWORD_RESET=1
 fi
 
