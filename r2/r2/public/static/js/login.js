@@ -427,6 +427,13 @@ r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
         this.$.find('#cover-msg').text(notice).toggle(!!notice);
 
         r.ui.Popup.prototype.show.call(this);
+        // the sign-up form's captcha widget, now that it's on screen (again
+        // once the opening animation is done, in case it wasn't visible yet)
+        var $popup = this.$;
+        $.renderCaptchaWidgets($popup);
+        this.once('opened.r.popup', function() {
+            $.renderCaptchaWidgets($popup);
+        });
 
         return false;
     },

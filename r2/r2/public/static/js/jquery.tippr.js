@@ -629,15 +629,59 @@ $.fn.captcha = function(iden) {
     return c;
 };
 
+/* Captcha service widgets (r2.lib.antispam) are placeholders that the
+   service's script, loaded in explicit mode, draws here: on page load, when
+   the script arrives (tipprCaptchaReady), and when a form is shown later
+   (the login popup). Only visible ones are drawn, so a hidden form that
+   gets copied doesn't take a live widget with it. */
+$.renderCaptchaWidgets = function(scope) {
+    $(scope || document).find(".antispam-captcha").each(function() {
+        var $el = $(this),
+            options = {sitekey: $el.attr("data-sitekey")},
+            id;
+        if ($el.data("captcha-rendered") || !$el.is(":visible")) {
+            return;
+        }
+        try {
+            if (window.turnstile && $el.hasClass("cf-turnstile")) {
+                id = window.turnstile.render(this, options);
+            } else if (window.hcaptcha && $el.hasClass("h-captcha")) {
+                id = window.hcaptcha.render(this, options);
+            } else if (window.grecaptcha && window.grecaptcha.render &&
+                       $el.hasClass("g-recaptcha")) {
+                id = window.grecaptcha.render(this, options);
+            } else {
+                return;  // the script hasn't loaded yet
+            }
+        } catch (e) {
+            return;
+        }
+        $el.data("captcha-rendered", true).data("captcha-widget-id", id);
+    });
+};
+
+window.tipprCaptchaReady = function() {
+    $.renderCaptchaWidgets(document);
+};
+
+$(function() {
+    $.renderCaptchaWidgets(document);
+});
+
 $.resetCaptchaWidgets = function(scope) {
     $(scope).find(".antispam-captcha").each(function() {
+        var $el = $(this),
+            id = $el.data("captcha-widget-id");
+        if (!$el.data("captcha-rendered")) {
+            return;
+        }
         try {
-            if (window.turnstile && $(this).hasClass("cf-turnstile")) {
-                window.turnstile.reset(this);
-            } else if (window.hcaptcha && $(this).hasClass("h-captcha")) {
-                window.hcaptcha.reset($(this).attr("data-hcaptcha-widget-id"));
-            } else if (window.grecaptcha && $(this).hasClass("g-recaptcha")) {
-                window.grecaptcha.reset();
+            if (window.turnstile && $el.hasClass("cf-turnstile")) {
+                window.turnstile.reset(id);
+            } else if (window.hcaptcha && $el.hasClass("h-captcha")) {
+                window.hcaptcha.reset(id);
+            } else if (window.grecaptcha && $el.hasClass("g-recaptcha")) {
+                window.grecaptcha.reset(id);
             }
         } catch (e) {}
     });

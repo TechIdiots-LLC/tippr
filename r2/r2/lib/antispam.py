@@ -145,19 +145,33 @@ def captcha_on_register():
 
 
 def widget_html():
-    """The captcha service's widget (and, once per page, its script), or ""
-    for the built-in captcha."""
+    """The captcha service's widget, or "" for the built-in captcha.
+
+    Only a placeholder: the page loads the service's script once
+    (script_html) and $.renderCaptchaWidgets draws the widget when its form
+    is shown. Forms can sit inside <script type="text/template"> blocks (the
+    login popup), where a <script> tag of their own would end the block.
+    """
     provider = captcha_provider()
     name, script, css_class, field, url = PROVIDERS[provider]
     if not css_class:
         return ""
     from r2.lib.filters import websafe
-    html = '<div class="%s antispam-captcha" data-sitekey="%s"></div>' % (
+    return '<div class="%s antispam-captcha" data-sitekey="%s"></div>' % (
         css_class, websafe(settings()["captcha_site_key"]))
-    if not getattr(c, "_captcha_script", False):
-        c._captcha_script = True
-        html += '<script src="%s" async defer></script>' % script
-    return html
+
+
+def script_html():
+    """The captcha service's script, for pages whose visitors may see a
+    captcha (logged out, or not yet trusted). It loads in explicit mode and
+    calls tipprCaptchaReady (jquery.tippr.js), which draws the widgets."""
+    if not captcha_enabled() or not c.user.needs_captcha():
+        return ""
+    name, script, css_class, field, url = PROVIDERS[captcha_provider()]
+    if not script:
+        return ""
+    return ('<script src="%s?render=explicit&amp;onload=tipprCaptchaReady" '
+            'async defer></script>' % script)
 
 
 def verify_captcha(iden=None, solution=None):

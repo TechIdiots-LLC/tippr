@@ -15,6 +15,11 @@
 - **Static build**: `tippr.less` sometimes failed to build with "variable @color-white is undefined" (or
   `@tp-link-hex`), depending on disk timing. `variables.less` was imported twice, and LESS 1.4 races the two copies
   and can drop the colours or theme with them. It's now imported once.
+- **Captcha services in the sign-up popup**: with Turnstile, hCaptcha or reCAPTCHA chosen, the widget's `<script>`
+  tag ended the popup's template early, so half the sign-up form and the whole log-in form appeared at the bottom of
+  every page. The service's script now loads once per page and draws each widget when its form is shown.
+- **Logging out from an admin page** went to "page not found" (admin pages 404 for everyone else); it now goes to the
+  front page.
 
 ## 0.3.0
 ### ✨ Features and improvements

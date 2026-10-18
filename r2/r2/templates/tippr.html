@@ -135,6 +135,7 @@
   ${adsense_loader()}
   <% from r2.lib import antispam %>
   ${unsafe(antispam.bot_detector_html())}
+  ${unsafe(antispam.script_html())}
 </%def>
 
 <%def name="bodyContent()">
