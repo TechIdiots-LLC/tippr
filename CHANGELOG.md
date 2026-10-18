@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Starter feeds**: `scripts/import_feeds.py` adds many feeds to /admin/feeds at once from a list, and
+  `scripts/starter_feeds.txt` has about 50 public news, technology, culture and art feeds for the default vaults.
+  It's a dry run until `FEEDS_ADD=1`; a line can give a site's homepage instead of its feed when the page links to
+  one, and vaults that don't exist yet are reported. To use it:
+  `sudo env FEEDS_ADD=1 tippr-run /home/tippr/src/tippr/scripts/import_feeds.py`.
 - **Support staff** (/admin/support/staff): people other than the admins can now help with the support queue, each only
   in the categories you choose, to read or to read and reply. So someone answering moderator questions doesn't see
   privacy or legal requests. They must be on the employees list (/admin/config, `name:employee`) and have two-factor

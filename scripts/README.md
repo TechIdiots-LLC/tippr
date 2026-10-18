@@ -26,6 +26,12 @@ Files:
   `docs/policies`. Requires `--force` or `TIPPR_ALLOW_MUTATE=1` and supports
   `--dry-run`.
 
+- `import_feeds.py`: adds many feeds to /admin/feeds at once from a list
+  (`FEEDS_FILE`, default `starter_feeds.txt`: public feeds for the vaults
+  `create_default_vaults.py` makes). A dry run unless `FEEDS_ADD=1` or
+  `TIPPR_ALLOW_MUTATE=1`; an address can be a site's homepage if the page
+  links to its feed. Run it with `tippr-run`.
+
 - `inspect_cassandra.py`: read-only inspection of app Cassandra pools.
 
 - `inspect_wikirevision_schema.py`: prints the `wikirevision` table schema.
