@@ -99,7 +99,7 @@ jobs:
         if: failure()
         run: |
           mkdir -p installer-logs
-          sudo cp -r /var/log/*.log /var/log/apt installer-logs/ 2>/dev/null || true
+          sudo cp -r /var/log/*.log /var/log/apt /var/log/opensearch installer-logs/ 2>/dev/null || true
           sudo journalctl --no-pager -n 2000 > installer-logs/journal.txt 2>/dev/null || true
           sudo chown -R "$(id -u)" installer-logs
 
