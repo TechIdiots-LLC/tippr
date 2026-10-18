@@ -14,20 +14,19 @@ can move to its own server or container later (see
 
 ```
 browser
-  │ HTTPS :443
+  │ HTTPS :443 (or, behind an external proxy, HTTP :80 from it)
   ▼
-nginx ──── TLS; real client IPs (Cloudflare ranges only, when enabled)
-  │ 127.0.0.1:8080
-  ▼
-haproxy ── routes by host and path:
-  ├── tippr ........ gunicorn, 127.0.0.1:8001 (r2, the web app)
-  ├── websockets ... tippr-websockets (live updates)
-  ├── media ........ nginx serving /srv/www/media
-  └── pixel/click .. tracking pixel and click redirector
+nginx ──── TLS; real client IPs from trusted proxies only
+  ├── websocket upgrades .. tippr-websockets, 127.0.0.1:9001 (live updates)
+  ├── /media/ ............. files in /srv/www/media
+  ├── /pixel/, /click ..... tracking pixel and click redirector
+  └── everything else ..... gunicorn, 127.0.0.1:8001 (r2, the web app)
 ```
 
-haproxy also listens on port 80, where it redirects to HTTPS and answers
-Let's Encrypt challenges.
+Standalone, nginx also listens on port 80, where it redirects to HTTPS and
+answers Let's Encrypt's challenges. Behind a proxy that does TLS itself
+(`TIPPR_EXTERNAL_PROXY`, e.g. HAProxy on pfSense), nginx serves plain HTTP
+on port 80 and takes client addresses from that proxy's `X-Forwarded-For`.
 
 ## The web app (r2)
 
@@ -127,7 +126,7 @@ The single VM can be split by role:
 | search | OpenSearch |
 | cache-queue | memcached, RabbitMQ, ZooKeeper |
 | app (1..n) | r2, queue consumers, timers |
-| edge | nginx, haproxy |
+| edge | a load balancer (nginx, HAProxy) in front of the app nodes' nginx |
 
 To move a site to that layout:
 

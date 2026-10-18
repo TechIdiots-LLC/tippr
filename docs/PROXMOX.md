@@ -56,8 +56,9 @@ Cassandra and OpenSearch use most of the memory.
    ```
 
    Uncomment the lines you need: `TIPPR_DOMAIN` (if it differs from the
-   hostname), `TIPPR_LETSENCRYPT_EMAIL`, `TIPPR_SITE_NAME`. Any other
-   installer setting works there too.
+   hostname), `TIPPR_LETSENCRYPT_EMAIL`, `TIPPR_SITE_NAME`, or
+   `TIPPR_EXTERNAL_PROXY` (below). Any other installer setting works there
+   too.
 
 4. Start it and watch the first boot. It re-runs the installer with the
    real settings, which takes about 10–20 minutes:
@@ -80,6 +81,28 @@ authentication; admin mode needs it. After that, use `/admin/site`,
 If the hostname isn't a full domain (no dot), the first boot sets up a
 development site at `HOSTNAME.local`.
 
+## Behind HAProxy on pfSense (or another proxy)
+
+If HAProxy on pfSense (or another proxy) handles TLS for the domain, put
+its address on this network in `firstboot.env` before the first start:
+
+```bash
+TIPPR_EXTERNAL_PROXY=192.168.1.1
+```
+
+The container then serves plain HTTP on port 80 with no certificate of its
+own, and takes visitors' addresses from the proxy's `X-Forwarded-For`. On
+pfSense:
+
+- the frontend has the certificate (the ACME package can get it), and
+  redirects port 80 to HTTPS;
+- the backend is the container's address, port 80, with *forwardfor* on;
+- set the backend's tunnel timeout to an hour or so, for websockets.
+
+With Cloudflare in front of pfSense, add `TIPPR_BEHIND_CLOUDFLARE=1` too.
+For a container already set up, add the setting to `firstboot.env` and run
+`tippr-firstboot DOMAIN` again. See [INSTALL_tippr.md](INSTALL_tippr.md#behind-another-proxy).
+
 ## Changing the domain later
 
 Run the first-boot script again with the new domain. Your data and
@@ -95,7 +118,8 @@ A container made from the template holds everything, which suits most
 sites. To spread a site over several containers later:
 
 - **App containers** (web, consumers and jobs) are interchangeable. Run
-  several behind an nginx or haproxy container to share the load.
+  several behind a load balancer (HAProxy, or an nginx container) to
+  share the load, with `TIPPR_EXTERNAL_PROXY` set to its address.
   Scheduled jobs take a ZooKeeper lock first (`scripts/run-locked`), so
   each still runs on one container at a time.
 - **The data stores** scale their own way: PostgreSQL with replicas,

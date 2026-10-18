@@ -148,7 +148,7 @@ whole site.
 | search | OpenSearch | Can be rebuilt from the database. Clusters natively |
 | cache-queue | memcached, RabbitMQ, ZooKeeper | Small; shared by all app nodes |
 | app (1..n) | r2, queue consumers, timers | Stateless; add more to scale |
-| edge | nginx / haproxy | TLS, Cloudflare real IP, page cache, load balancing |
+| edge | HAProxy or nginx | TLS, Cloudflare real IP, page cache, load balancing (app nodes run with `TIPPR_EXTERNAL_PROXY`) |
 
 Cassandra and OpenSearch need `vm.max_map_count` raised on the Proxmox
 host. Proxmox recommends running Docker in a VM rather than in LXC.

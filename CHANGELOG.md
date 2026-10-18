@@ -24,6 +24,9 @@
 - **Spam protection** (/admin/antispam): choose the captcha — tippr's own, Cloudflare Turnstile, hCaptcha or Google
   reCAPTCHA — now also on the sign-up form, and use CleanTalk to check sign-ups, posts, comments and messages from new
   accounts without a challenge (spam is hidden in the moderators' spam queue).
+- **nginx only**: the installer no longer runs haproxy in front of nginx; nginx routes websockets, media and the app
+  itself. `TIPPR_EXTERNAL_PROXY` runs it behind another proxy that does TLS (e.g. HAProxy on pfSense), with real
+  client addresses from that proxy.
 - **Several app servers can share a site**: scheduled jobs take a ZooKeeper lock, so each runs on one server at a
   time.
 

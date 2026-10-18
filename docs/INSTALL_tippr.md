@@ -7,7 +7,7 @@ systemd units. For how the pieces fit together, see
 
 Give the installer a server of its own. It installs and configures
 system-wide services: PostgreSQL, Cassandra, ZooKeeper, RabbitMQ,
-memcached, OpenSearch, nginx and haproxy. Allow 4–6 cores and 8–12 GB of
+memcached, OpenSearch and nginx. Allow 4–6 cores and 8–12 GB of
 RAM.
 
 ## Running it
@@ -51,6 +51,7 @@ Set these as environment variables when running the installer:
 | `TIPPR_TLS_CERT`, `TIPPR_TLS_KEY` | | certificate and key to use, e.g. a Cloudflare Origin Certificate |
 | `TIPPR_LETSENCRYPT_EMAIL` | | get a Let's Encrypt certificate (the domain must point here) |
 | `TIPPR_BEHIND_CLOUDFLARE` | `0` | `1`: take client IPs from `CF-Connecting-IP`, from Cloudflare's ranges only |
+| `TIPPR_EXTERNAL_PROXY` | | behind another proxy that does TLS (e.g. HAProxy on pfSense): its address(es), e.g. `192.168.1.1`. nginx then serves plain HTTP on port 80 and trusts `X-Forwarded-For` from those addresses only ([below](#behind-another-proxy)) |
 | `TIPPR_FIREWALL`, `TIPPR_SSH_PORT` | `0`, `22` | `1`: ufw allowing only SSH, HTTP and HTTPS |
 | `TIPPR_DB_PASSWORD`, ... | generated | override a generated password |
 | `TIPPR_PLUGINS` | `about gold` | plugins to install |
@@ -117,17 +118,44 @@ Not part of `tippr.target`:
   /admin/backups ([BACKUP.md](BACKUP.md)).
 
 Packaged services: `postgresql`, `cassandra`, `zookeeper`,
-`rabbitmq-server`, `memcached`, `opensearch`, `nginx`, `haproxy` (and
+`rabbitmq-server`, `memcached`, `opensearch`, `nginx` (and
 `redis-server`, which r2 doesn't currently use).
 
 ### Web front end
 
-- **nginx** terminates TLS on port 443 (`/etc/nginx/sites-available/tippr-ssl`)
-  and passes requests to haproxy. It also serves media
-  (`/srv/www/media`) and the tracking pixel.
-- **haproxy** (`/etc/haproxy/haproxy.cfg`; the original is backed up)
-  routes to the app, websockets, media and pixel backends. On port 80 it
-  redirects to HTTPS.
+- **nginx** (`/etc/nginx/sites-available/tippr`, with
+  `snippets/tippr-locations.conf` and `conf.d/tippr-*.conf`) is the only
+  web server. It terminates TLS on port 443 and redirects port 80 to it,
+  routes websocket upgrades to the websockets service, serves media
+  (`/srv/www/media`) and the tracking pixel, and passes everything else to
+  the app, shielding gunicorn from slow clients. (Earlier installs also ran
+  haproxy; re-running the installer turns it off.)
+
+### Behind another proxy
+
+If something else in front does TLS, such as HAProxy on pfSense, a cloud
+load balancer or another nginx, set `TIPPR_EXTERNAL_PROXY` to its
+address(es):
+
+```bash
+TIPPR_EXTERNAL_PROXY=192.168.1.1 TIPPR_USER=tippr TIPPR_DOMAIN=example.com ./install-tippr.sh
+```
+
+nginx then serves plain HTTP on port 80, with no certificate here, and
+takes each visitor's address from `X-Forwarded-For`, but only on
+connections from those addresses. With Cloudflare in front of that proxy,
+add `TIPPR_BEHIND_CLOUDFLARE=1` too. On the proxy:
+
+- send everything for the domain to this server's port 80, and redirect
+  plain HTTP to HTTPS there;
+- add `X-Forwarded-For` (HAProxy: `option forwardfor`); requests count as
+  HTTPS unless the proxy sends `X-Forwarded-Proto: http`;
+- allow long-lived connections for websockets (HAProxy:
+  `timeout tunnel 1h`);
+- optionally, health-check `GET /health`.
+
+Don't expose port 80 directly to the internet in this mode: anyone
+reaching it would get plain HTTP.
 
 ### Commands in /usr/local/bin
 
