@@ -10,7 +10,7 @@ Group=@TIPPR_GROUP@
 WorkingDirectory=@TIPPR_ROOT@
 EnvironmentFile=-/etc/default/tippr
 # TIPPR_WEB_WORKERS and TIPPR_GUNICORN_ARGS ("--reload" in development) come
-# from /etc/default/tippr. haproxy, on the same host, is the only client.
+# from /etc/default/tippr. nginx, on the same host, is the only client.
 ExecStart=@TIPPR_VENV@/bin/gunicorn --paste ${TIPPR_INI} \
     --bind 127.0.0.1:8001 \
     --workers ${TIPPR_WEB_WORKERS} \

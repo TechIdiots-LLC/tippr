@@ -99,6 +99,8 @@ cat > /etc/tippr/firstboot.env <<'ENV'
 # starting the container, or leave the domain to come from its hostname.
 #TIPPR_DOMAIN=forum.example.com
 #TIPPR_LETSENCRYPT_EMAIL=you@example.com
+# behind HAProxy on pfSense (or another proxy doing TLS): its address
+#TIPPR_EXTERNAL_PROXY=192.168.1.1
 #TIPPR_SITE_NAME=tippr
 ENV
 cat > /etc/motd <<'MOTD'

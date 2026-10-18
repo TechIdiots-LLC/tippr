@@ -45,7 +45,6 @@ memcached
 postgresql
 postgresql-contrib
 rabbitmq-server
-haproxy
 nginx
 gunicorn
 redis-server
