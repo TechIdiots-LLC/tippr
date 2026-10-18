@@ -26,10 +26,6 @@
 <%namespace file="less.html" import="less_stylesheet"/>
 <%inherit file="tippr.html"/>
 
-<%def name="viewport()">
-<meta name="viewport" content="width=700, initial-scale=1">
-</%def>
-
 <%def name="stylesheet()">
   ${parent.stylesheet()}
   ${less_stylesheet('policies.less')}
