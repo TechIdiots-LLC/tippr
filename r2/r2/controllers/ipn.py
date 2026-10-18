@@ -83,6 +83,12 @@ from r2.models import (
 BLOB_TTL = 86400 * 30
 stripe.api_key = g.secrets['stripe_secret_key']
 
+def _gold_support():
+    """Where gold messages send people: the contact page's gold section."""
+    from r2.lib import site_info
+    return site_info.gold_support()
+
+
 
 def generate_blob(data):
     passthrough = generate_token(15)
@@ -423,7 +429,7 @@ class IpnController(TipprController):
                 except MessageError:
                     msg = _("there was an error creating a gift code. "
                             "please try again later, or contact %(email)s "
-                            "for assistance.") % {'email': g.goldsupport_email}
+                            "for assistance.") % {'email': _gold_support()}
                     form.set_text(".status", msg)
                     return
                 form.set_text(".status",
@@ -735,7 +741,7 @@ class GoldPaymentController(TipprController):
             subject = _('tippr gold payment cancelled')
             msg = _('Your tippr gold payment has been cancelled, contact '
                     '%(gold_email)s for details') % {'gold_email':
-                                                     g.goldsupport_email}
+                                                     _gold_support()}
             if existing:
                 # note that we don't check status on existing, probably
                 # should update gold_table when a cancellation happens
@@ -751,7 +757,7 @@ class GoldPaymentController(TipprController):
             subject = _('tippr gold payment failed')
             msg = _('Your tippr gold payment has failed, contact '
                     '%(gold_email)s for details') % {'gold_email':
-                                                     g.goldsupport_email}
+                                                     _gold_support()}
         elif event_type == 'deleted_subscription':
             # the subscription may have been deleted directly by the user using
             # POST_delete_subscription, in which case gold_subscr_id is already
@@ -761,7 +767,7 @@ class GoldPaymentController(TipprController):
                 msg = _('Your tippr gold subscription has been cancelled '
                         'because your credit card could not be charged. '
                         'Contact %(gold_email)s for details')
-                msg %= {'gold_email': g.goldsupport_email}
+                msg %= {'gold_email': _gold_support()}
                 webhook.buyer.gold_subscr_id = None
                 webhook.buyer._commit()
         elif event_type == 'refunded':
@@ -771,7 +777,7 @@ class GoldPaymentController(TipprController):
             subject = _('tippr gold refund')
             msg = _('Your tippr gold payment has been refunded, contact '
                    '%(gold_email)s for details') % {'gold_email':
-                                                    g.goldsupport_email}
+                                                    _gold_support()}
             reverse_gold_purchase(webhook.transaction_id)
 
         if msg:
@@ -1078,8 +1084,8 @@ class StripeController(GoldPaymentController):
         user.gold_subscr_id = None
         user._commit()
         subject = _('your gold subscription has been cancelled')
-        message = _('if you have any questions please email %(email)s')
-        message %= {'email': g.goldsupport_email}
+        message = _('if you have any questions please contact us at %(email)s')
+        message %= {'email': _gold_support()}
         send_system_message(user, subject, message)
         return customer
 
@@ -1423,6 +1429,6 @@ def subscr_pm(pennies, months, new_subscr=True):
     message %= {
         "price": price,
         "subscr_url": g.https_endpoint.rstrip("/") + "/gold/subscription",
-        "gold_email": g.goldsupport_email,
+        "gold_email": _gold_support(),
     }
     return subject, message

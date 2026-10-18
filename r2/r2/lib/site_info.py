@@ -178,7 +178,7 @@ def title(page_title, front_page=False):
 # sections of the contact page (templates/contactus.html) that other pages
 # and the policies send people to
 CONTACT_SECTIONS = ("message-the-admins", "privacy", "legal", "appeals",
-                    "report-content", "moderators", "ratelimit")
+                    "report-content", "moderators", "ratelimit", "gold")
 
 
 def contact_url(section=None):
@@ -190,6 +190,13 @@ def contact_url(section=None):
         assert section in CONTACT_SECTIONS, section
         url += "#" + section
     return url
+
+
+def gold_support():
+    """Where gold messages (receipts, expiry notices, payment problems)
+    send people: the contact page's gold section, which shows the
+    goldsupport_email address too when one is set."""
+    return contact_url("gold")
 
 
 def contact_link_html(section=None, text=None):

@@ -1511,8 +1511,9 @@ class FrontController(TipprController):
         elif vendor in {"coinbase", "stripe"}:  # Pending vendors
             claim_msg = _("Thanks for buying tippr gold! Your transaction is "
                           "being processed. If you have any questions please "
-                          "email us at %(gold_email)s")
-            claim_msg = claim_msg % {'gold_email': g.goldsupport_email}
+                          "contact us at %(gold_email)s")
+            from r2.lib import site_info
+            claim_msg = claim_msg % {'gold_email': site_info.gold_support()}
         else:
             abort(404)
 

@@ -285,15 +285,16 @@ def accountid_from_subscription(subscr_id):
         return None
 
 def update_gold_users():
+    from r2.lib import site_info
     now = datetime.now(g.display_tz)
     warning_days = 3
     renew_msg = _("[Click here for details on how to set up an "
                   "automatically-renewing subscription or to renew.]"
                   "(/gold) If you have any thoughts, complaints, "
-                  "rants, suggestions about tippr gold, please write "
-                  "to us at %(gold_email)s. Your feedback would be "
+                  "rants, suggestions about tippr gold, please contact "
+                  "us at %(gold_email)s. Your feedback would be "
                   "much appreciated.\n\nThank you for your past "
-                  "patronage.") % {'gold_email': g.goldsupport_email}
+                  "patronage.") % {'gold_email': site_info.gold_support()}
 
     for account in all_gold_users():
         days_left = (account.gold_expiration - now).days

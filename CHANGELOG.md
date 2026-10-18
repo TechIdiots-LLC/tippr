@@ -10,6 +10,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Gold support** messages (expiry notices, payment and subscription problems, gift code errors) named
+  `goldsupport_email`, empty by default, so they read "write to us at ." They link to a new gold section of the
+  contact page instead, which offers a message to the admins and shows the address when one is set.
 - **/explore** failed with an error (Python 2 division), as could `median()`, gold gift codes and the Solr provider.
 - **The gilded tab** had no side panel.
 - **Sample multis** in the side panel (`/user/tippr/m/hello` and `world`) led to "page not found"; only samples that

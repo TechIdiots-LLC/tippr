@@ -111,14 +111,13 @@ from r2.lib.template_helpers import static
         <li>${_("tippr is open source. Search the existing issues, or open a new one,")}&#32;<a href="${g.bug_report_url}">${_("on our issue tracker")}</a>.</li>
       </ul>
     </li>
-    %if gold_email:
-      <li id="gold-support">
-        <h2 class="button">${_("tippr gold")}</h2>
-        <ul class="details">
-          <li>${_("Got a question about")}&#32;<a href="/gold/about">${_("tippr gold")}</a>? ${_("Email")}&#32;<a href="mailto:${gold_email}">${gold_email}</a>.</li>
-        </ul>
-      </li>
-    %endif
+    <li id="gold">
+      <h2 class="button">${_("tippr gold")}</h2>
+      <ul class="details">
+        <li>${_("A question about")}&#32;<a href="/gold/about">${_("tippr gold")}</a>, ${_("a payment, a gift code or a subscription? Include your username and, for a payment, its date and amount.")}</li>
+        <li>${message_admins(_("Gold support"), _("Ask about gold"))}${or_email(gold_email)}</li>
+      </ul>
+    </li>
     %if contact_email:
       <li id="email-us">
         <h2 class="button">${_("anything else")}</h2>
