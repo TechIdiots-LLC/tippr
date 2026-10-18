@@ -92,6 +92,8 @@ steps:
     cd $TIPPR_SRC/tippr
     tippr-run scripts/init_policy_wiki_pages.py
 
-* Manually run tippr-job-update_reddits immediately after populating the db
-  or adding your own vaults.
+* After populating the db or adding your own vaults, update the /vaults
+  rankings and vault name search right away (they otherwise run on a timer):
+
+    sudo systemctl start tippr-job-update_tipprs tippr-job-update_vault_names
 CONCLUSION
