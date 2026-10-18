@@ -16,7 +16,9 @@
 # filesystem. OpenSearch needs vm.max_map_count >= 262144 on the host.
 set -euo pipefail
 tarball=$(readlink -f "$1")
-output=$(readlink -f "$2")
+# -m: the output's folder may not exist yet
+output=$(readlink -m "$2")
+mkdir -p "$(dirname "$output")"
 here=$(cd "$(dirname "$0")" && pwd)
 name=tippr-template-build-$$
 placeholder=tippr.template
@@ -106,8 +108,9 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.bash_history
 journalctl --rotate >/dev/null 2>&1 || true
 journalctl --vacuum-time=1s >/dev/null 2>&1 || true
-find /var/log -type f \( -name '*.gz' -o -name '*.1' \) -delete
-find /var/log -type f -exec truncate -s 0 {} +
+# (best effort: some services' logs can't be emptied while mounted this way)
+find /var/log -type f \( -name '*.gz' -o -name '*.1' \) -delete || true
+find /var/log -type f -exec truncate -s 0 {} + 2>/dev/null || true
 FINALIZE
 
 # make sure that took
