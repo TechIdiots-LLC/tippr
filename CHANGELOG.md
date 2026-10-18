@@ -6,6 +6,11 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+
+## 0.4.0
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
 - **Proxmox first boot**: systemd applies unit presets on a container's first start (the template has no machine ID),
   which enabled and started every tippr unit before `tippr-firstboot` ran. Their jobs recreated ZooKeeper nodes with the
   template's password, and the first boot failed with `NoAuthError`. The template now ships a preset that keeps them
