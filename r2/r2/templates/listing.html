@@ -25,7 +25,7 @@
 
 <%!
    from r2.lib.template_helpers import format_html
-   from r2.lib import ad_settings
+   from r2.lib import ad_settings, welcome
  %>
 <%namespace file="utils.html" import="plain_link" />
 <%namespace file="adsense.html" import="adsense_unit"/>
@@ -80,6 +80,55 @@
     </div>
   %endif
   %if not thing.things:
-    <p id="noresults" class="error">${_("there doesn't seem to be anything here")}</p>
+    <% welcome_kind = welcome.kind() if cls == 'linklisting' and not thing.prev else None %>
+    %if welcome_kind:
+      ${empty_welcome(welcome_kind)}
+    %else:
+      <p id="noresults" class="error">${_("there doesn't seem to be anything here")}</p>
+    %endif
   %endif
 </div>
+
+## an empty front page or vault: a welcome instead of "nothing here"
+## (r2.lib.welcome)
+<%def name="empty_welcome(kind)">
+  <div id="noresults" class="empty-welcome">
+    %if kind == 'site':
+      <h2>${_("Welcome to %(site)s") % dict(site=g.site_name or g.domain)}</h2>
+      %if g.short_description:
+        <p class="empty-welcome-tagline">${g.short_description}</p>
+      %endif
+      <p>${_("There's nothing to show here yet. Start something: share a link, ask a question or tell people what you're working on.")}</p>
+      <% submit_base = '' %>
+    %else:
+      <h2>${_("Nothing in /v/%(vault)s yet") % dict(vault=c.site.name)}</h2>
+      %if getattr(c.site, 'public_description', ''):
+        <p class="empty-welcome-tagline">${c.site.public_description}</p>
+      %endif
+      <p>${_("Be the first to post here.")}</p>
+      <% submit_base = '/v/%s' % c.site.name %>
+    %endif
+    %if welcome.can_submit_here():
+      <p class="empty-welcome-actions">
+        <a class="c-btn c-btn-primary" href="${submit_base}/submit">${_("Submit a new link")}</a>
+        <a class="c-btn c-btn-primary" href="${submit_base}/submit?selftext=true">${_("Submit a new text post")}</a>
+      </p>
+    %endif
+    %if kind == 'site':
+      <% vaults = welcome.popular_vaults() %>
+      %if vaults:
+        <h3>${_("Find a vault")}</h3>
+        <ul class="empty-welcome-vaults">
+          %for name, title in vaults:
+            <li><a href="/v/${name}/">/v/${name}</a>
+              %if title and title.lower() != name.lower():
+                &#32;&mdash;&#32;${title}
+              %endif
+            </li>
+          %endfor
+        </ul>
+        <p><a href="/vaults/">${_("browse all vaults")}</a></p>
+      %endif
+    %endif
+  </div>
+</%def>

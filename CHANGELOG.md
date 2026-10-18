@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **A welcome instead of "nothing here"**: an empty front page or /v/all shows the site's name and description,
+  buttons to submit a link or text post and the most subscribed vaults to explore; an empty vault invites people to
+  post there.
 - **CleanTalk statistics** on /admin/antispam: the CleanTalk account (as CleanTalk shows it), whether the key is valid,
   paid-until and trial status, the last check, the last 7 days' checks by outcome (allowed, spam sign-ups, spam
   posts, comments or messages, unreachable) and the average response time.

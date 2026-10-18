@@ -11586,3 +11586,22 @@ body:not(.loggedin) .report-button {
     font-weight: normal;
     color: var(--tp-text-muted);
 }
+
+// an empty front page or vault (templates/listing.html, r2.lib.welcome)
+.empty-welcome {
+    max-width: 640px;
+    margin: 16px 12px;
+    padding: 16px 20px;
+    background: var(--tp-surface);
+    border: 1px solid var(--tp-border);
+    border-radius: 6px;
+    color: var(--tp-text);
+    font-size: 14px;
+
+    h2 { font-size: 20px; margin: 0 0 6px; color: var(--tp-title); }
+    h3 { font-size: 15px; margin: 14px 0 6px; }
+    .empty-welcome-tagline { color: var(--tp-text-muted); margin: 0 0 10px; }
+    .empty-welcome-actions .c-btn { margin-right: 8px; }
+    .empty-welcome-vaults { columns: 2; list-style: none; padding: 0; margin: 0; }
+    .empty-welcome-vaults li { margin: 2px 0; }
+}
