@@ -1107,42 +1107,69 @@ def keywords_from_context(
     return keywords
 
 
-# special handling for memcache ascii protocol
-SPECIAL_NAMES = {" tippr.net": "_reddit.com"}
-REVERSED_NAMES = {v: k for k, v in SPECIAL_NAMES.items()}
+def _promo_cache_key(vault_name):
+    """A memcached-safe key for a vault name. The front page's name has a
+    leading space (and the site name's own spaces), which memcached keys
+    can't contain, so names other than plain ones are hashed."""
+    if vault_name and all(ch.isalnum() or ch in "_-." for ch in vault_name):
+        return vault_name
+    digest = hashlib.sha1(vault_name.encode("utf-8")).hexdigest()
+    return "_" + digest
 
 
-def _get_live_promotions(sanitized_names):
+def _live_promotions_by_name(vault_names):
+    """{vault name: [PromoTuple]} for the campaigns running now."""
     now = promo_datetime_now()
-    vault_names = [REVERSED_NAMES.get(name, name) for name in sanitized_names]
-    ret = {vault_name: [] for vault_name in sanitized_names}
+    ret = {vault_name: [] for vault_name in vault_names}
     for camp, link in get_promos(now, vault_names=vault_names):
         if is_live_promo(link, camp):
             weight = (camp.total_budget_dollars / camp.ndays)
             pt = PromoTuple(link=link._fullname, weight=weight,
                             campaign=camp._fullname)
             for vault_name in camp.target.Vault_names:
-                if vault_name in vault_names:
-                    sanitized_name = SPECIAL_NAMES.get(vault_name, vault_name)
-                    ret[sanitized_name].append(pt)
+                if vault_name in ret:
+                    ret[vault_name].append(pt)
     return ret
 
 
 def get_live_promotions(vault_names):
-    sanitized_names = [SPECIAL_NAMES.get(name, name) for name in vault_names]
-    promos_by_sanitized_name = sgm(
+    names_by_key = {_promo_cache_key(name): name for name in vault_names}
+
+    def miss_fn(keys):
+        found = _live_promotions_by_name([names_by_key[key] for key in keys])
+        return {_promo_cache_key(name): val for name, val in found.items()}
+
+    promos_by_key = sgm(
         cache=g.gencache,
-        keys=sanitized_names,
-        miss_fn=_get_live_promotions,
+        keys=list(names_by_key),
+        miss_fn=miss_fn,
         prefix='vaultpromos:',
         time=60,
         stale=True,
     )
-    promos_by_vaultname = {
-        REVERSED_NAMES.get(name, name): val
-        for name, val in promos_by_sanitized_name.items()
-    }
-    return itertools.chain.from_iterable(iter(promos_by_vaultname.values()))
+    return itertools.chain.from_iterable(iter(promos_by_key.values()))
+
+
+def has_live_promotions(site):
+    """Whether anything is being promoted on site (a vault, a multi or the
+    front page), for showing the "promoted" tab only when it has something
+    in it. Uses the same 60-second cache as the promoted listings."""
+    from r2.models import DefaultVault, MultiVault
+    if isinstance(site, DefaultVault):
+        # front page campaigns target the front page's name (some older
+        # code uses '')
+        names = [site.name, '']
+    elif isinstance(site, MultiVault):
+        names = [vault.name for vault in site.vaults]
+    else:
+        names = [site.name]
+    if not names:
+        return False
+    try:
+        return any(True for _ in get_live_promotions(names))
+    except Exception:
+        g.log.exception("couldn't check for live promotions")
+        return False
 
 
 def lottery_promoted_links(vault_names, n=10):

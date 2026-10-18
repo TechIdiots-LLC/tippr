@@ -510,9 +510,6 @@ def make_map(config):
     mc('/socialite', controller='redirect', action='redirect',
        dest='https://addons.mozilla.org/firefox/addon/socialite/')
 
-    # Used for showing ads
-    mc("/ads/", controller="ad", action="ad")
-
     mc("/try", controller="forms", action="try_compact")
 
     mc("/web/timings", controller="weblog", action="timings")

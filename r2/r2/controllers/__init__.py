@@ -81,7 +81,7 @@ def load_controllers():
         UserListListingController,
     )
     from .mailgun import MailgunWebhookController
-    from .mediaembed import AdController, MediaembedController
+    from .mediaembed import MediaembedController
     from .multi import MultiApiController
     from .newsletter import NewsletterController
     from .oauth2 import OAuth2AccessController, OAuth2FrontendController

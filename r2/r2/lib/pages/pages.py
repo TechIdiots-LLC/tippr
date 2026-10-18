@@ -955,8 +955,11 @@ class Tippr(Templated):
                 if not g.disable_wiki:
                     main_buttons.append(NavButton('wiki', 'wiki'))
 
+            # the promoted tab, when something is being promoted here (or
+            # for sponsors, who manage promotions)
             if (isinstance(c.site, (Vault, DefaultVault, MultiVault)) and
-                    c.site.allow_ads):
+                    c.site.allow_ads and
+                    (c.user_is_sponsor or promote.has_live_promotions(c.site))):
                 main_buttons.append(NavButton(menu.promoted, 'ads'))
 
         more_buttons = []
