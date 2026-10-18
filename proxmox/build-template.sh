@@ -68,7 +68,8 @@ code=$(docker exec "$name" curl -sk -o /dev/null -w '%{http_code}' \
 log "preparing for first boot"
 docker cp "$here/tippr-firstboot" "$name:/usr/local/sbin/tippr-firstboot"
 docker cp "$here/tippr-firstboot.service" "$name:/etc/systemd/system/tippr-firstboot.service"
-docker exec "$name" bash -s <<'FINALIZE'
+# -i: the script comes on stdin
+docker exec -i "$name" bash -s <<'FINALIZE'
 set -e
 chmod 0755 /usr/local/sbin/tippr-firstboot
 systemctl stop tippr.target tippr-backup.path 2>/dev/null || true
@@ -108,6 +109,12 @@ journalctl --vacuum-time=1s >/dev/null 2>&1 || true
 find /var/log -type f \( -name '*.gz' -o -name '*.1' \) -delete
 find /var/log -type f -exec truncate -s 0 {} +
 FINALIZE
+
+# make sure that took
+docker exec "$name" test -f /etc/tippr/firstboot-pending
+docker exec "$name" test ! -e /etc/tippr/secrets.env
+docker exec "$name" systemctl is-enabled -q tippr-firstboot.service
+! docker exec "$name" systemctl is-enabled -q tippr.target
 
 log "stopping and exporting"
 # Docker's marker file (systemd would think it's in Docker, not LXC);
