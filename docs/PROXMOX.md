@@ -146,6 +146,11 @@ writes to wherever the new container's ini points.
 
 ## Notes
 
+- `pct enter` and `pct exec` start with a short PATH that leaves out
+  `/usr/local/bin` and `/usr/local/sbin`, where `tippr-run`,
+  `tippr-shell`, `tippr-backup` and `tippr-firstboot` live. Run `su -`
+  after `pct enter` to get a normal login shell, or call them by their full
+  paths.
 - The template is built by `proxmox/build-template.sh`, which runs the
   installer in a container booted with systemd and exports its filesystem.
   `proxmox/test-template.sh` boots the result and checks the first boot.
