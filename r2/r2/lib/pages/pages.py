@@ -5638,6 +5638,8 @@ class ListingChooser(Templated):
 
         if self.show_samples:
             self.add_samples()
+            # no sample worth showing: no "for starters, try one of these"
+            self.show_samples = bool(self.sections["sample"])
 
         self.selected_item = self.find_selected()
         if self.selected_item:
@@ -5655,7 +5657,23 @@ class ListingChooser(Templated):
         })
 
     def add_samples(self):
-        for path in g.live_config["listing_chooser_sample_multis"]:
+        """The sample multis (listing_chooser_sample_multis) that exist and
+        are public: the setting's defaults point at multis no new site has,
+        which led to "page not found"."""
+        paths = [path.rstrip('/') for path in
+                 g.live_config["listing_chooser_sample_multis"] if path]
+        if not paths:
+            return
+        try:
+            multis = LabeledMulti._byID(paths, return_dict=True,
+                                        load_Vaults=False)
+        except Exception:
+            g.log.exception("listing chooser: couldn't load the sample multis")
+            return
+        for path in paths:
+            multi = multis.get(path)
+            if multi is None or not multi.is_public():
+                continue
             self.add_item(
                 section="sample",
                 name=path.rpartition('/')[2],

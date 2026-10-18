@@ -163,7 +163,7 @@ def get_recommended_content(prefs, src, settings):
                                               over18=settings.nsfw)
         random.shuffle(recommended_vaults)
         # split list of recommended vaults in half
-        midpoint = len(recommended_vaults) / 2
+        midpoint = len(recommended_vaults) // 2
         vaults_slice1 = recommended_vaults[:midpoint]
         vaults_slice2 = recommended_vaults[midpoint:]
         # get hot links plus top comments from one half

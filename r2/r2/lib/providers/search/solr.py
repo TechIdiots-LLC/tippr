@@ -607,7 +607,7 @@ def chunk_xml(xml, depth=0):
     else:
         depth += 1
         print("WARNING: Chunking (depth=%s)" % depth)
-        half = len(xml) / 2
+        half = len(xml) // 2
         left_half = xml # for ease of reading
         right_half = etree.Element(root)
         # etree magic simultaneously removes the elements from one tree

@@ -331,7 +331,7 @@ def send_gold_code(buyer, months, days,
     code = create_gold_code(trans_id, payer_email,
                             paying_id, pennies, days, c.start_time)
     # format the code so it's easier to read (XXXXX-XXXXX)
-    split_at = len(code) / 2
+    split_at = len(code) // 2
     code = code[:split_at] + '-' + code[split_at:]
 
     if months == 1:

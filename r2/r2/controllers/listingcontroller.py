@@ -2076,6 +2076,8 @@ class UserListListingController(ListingController):
 class GildedController(VaultListingController):
     where = 'gilded'
     title_text = _("gilded")
+    # the listing chooser on the left, like the other front page tabs
+    show_chooser = True
 
     @property
     def infotext(self):

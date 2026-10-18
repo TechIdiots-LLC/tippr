@@ -439,7 +439,7 @@ def long_datetime(datetime):
 def median(l):
     if l:
         s = sorted(l)
-        i = len(s) / 2
+        i = len(s) // 2
         return s[i]
 
 def query_string(dict):
