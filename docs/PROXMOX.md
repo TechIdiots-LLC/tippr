@@ -114,7 +114,7 @@ With Cloudflare in front of the firewall, add `TIPPR_BEHIND_CLOUDFLARE=1`
 too. nginx then follows `X-Forwarded-For` back through both Cloudflare and
 the firewall to the visitor.
 For a container already set up, add the setting to `firstboot.env` and run
-`pct exec 210 -- /usr/local/sbin/tippr-firstboot DOMAIN` again. See [INSTALL_tippr.md](INSTALL_tippr.md#behind-another-proxy).
+`pct exec 210 -- /usr/local/sbin/tippr-firstboot forum.example.com` again. See [INSTALL_tippr.md](INSTALL_tippr.md#behind-another-proxy).
 
 ## Changing the domain later
 
@@ -176,7 +176,7 @@ of those; ZooKeeper is only reset on the very first boot. Settings in
    chown -R tippr:tippr /home/tippr/src
 
    install -m 0755 /home/tippr/src/tippr/proxmox/tippr-firstboot /usr/local/sbin/tippr-firstboot
-   /usr/local/sbin/tippr-firstboot DOMAIN
+   /usr/local/sbin/tippr-firstboot forum.example.com   # your domain
    ```
 
    This takes 5–10 minutes and ends with `tippr-firstboot: done`.
@@ -185,7 +185,7 @@ of those; ZooKeeper is only reset on the very first boot. Settings in
 
    ```bash
    systemctl is-active tippr-paster tippr-websockets nginx
-   curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: DOMAIN' http://127.0.0.1/   # 200
+   curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: forum.example.com' http://127.0.0.1/   # 200
    ```
 
    Then log in and look around. Once you're happy, remove the old code
@@ -196,7 +196,7 @@ of those; ZooKeeper is only reset on the very first boot. Settings in
 vzdump backup) returns the container, data included, to the moment of the
 copy. To go back to the old code only, keeping data written since, put
 `/home/tippr/src.old` back in place of `/home/tippr/src` and run
-`/usr/local/sbin/tippr-firstboot DOMAIN` again.
+`/usr/local/sbin/tippr-firstboot forum.example.com` again.
 
 Read the release's CHANGELOG entry before upgrading: anything that needs
 doing by hand is noted there.
