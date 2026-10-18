@@ -33,6 +33,10 @@ with two-factor sign-in on, who see only the categories an admin grants
 them on /admin/support/staff: to read, or to read and reply. So an employee
 helping with moderator questions needn't see privacy or legal requests.
 
+Staff can leave notes on a ticket for each other (add_note()): they're kept
+in the ticket's history, shown in the conversation, and never sent to the
+member. /admin/support/activity shows what staff have done lately.
+
 Tickets and their history are PostgreSQL tables, so they move with backups.
 """
 
@@ -79,6 +83,19 @@ VIEWS = {
 }
 VIEW_ORDER = ["needs_reply", "mine", "waiting", "closed", "all"]
 
+# how the history describes each action (detail: the new status, the
+# assignee's name)
+EVENT_NAMES = {
+    "created": N_("opened the ticket"),
+    "member_message": N_("wrote again"),
+    "reply": N_("replied"),
+    "status": N_("marked it %(detail)s"),
+    "assign": N_("assigned it to %(detail)s"),
+    "unassign": N_("unassigned it"),
+    "note": N_("left a note"),
+}
+MAX_NOTE_LENGTH = 5000
+
 _TAG_RE = re.compile(r"^\s*(?:re:\s*)*\[([a-z]+)\]", re.IGNORECASE)
 
 
@@ -115,7 +132,7 @@ events = sa.Table(
     sa.Column("time", sa.DateTime(timezone=True), nullable=False),
     # who did it (None: the system)
     sa.Column("actor_id", sa.BigInteger, nullable=True),
-    # created, member_message, reply, status, assign
+    # created, member_message, reply, status, assign, note
     sa.Column("action", sa.String, nullable=False),
     sa.Column("detail", sa.Text, nullable=True),
 )
@@ -516,6 +533,103 @@ def assign(ticket_id, assignee, actor):
                      .values(assignee_id=assignee._id if assignee else None))
         _add_event(conn, ticket_id, actor._id, "assign",
                    assignee.name if assignee else None)
+
+
+def add_note(ticket_id, staff, text):
+    """A note for the other staff on the ticket; the member never sees it.
+    It doesn't move the ticket up the queue."""
+    with ENGINE.begin() as conn:
+        _add_event(conn, ticket_id, staff._id, "note",
+                   text.strip()[:MAX_NOTE_LENGTH])
+
+
+def describe(event):
+    """The history's wording for an event (untranslated template filled)."""
+    from pylons.i18n import _
+    action = event["action"]
+    if action == "assign" and not event["detail"]:
+        action = "unassign"
+    name = EVENT_NAMES.get(action)
+    if not name:
+        return action
+    detail = event["detail"] or ""
+    if action == "status":
+        detail = _(STATUSES.get(detail, detail))
+    return _(name) % dict(detail=detail) if "%(detail)s" in name else _(name)
+
+
+def timeline(messages, events):
+    """The conversation with the staff's notes in it: [(date, "message",
+    Message) or (date, "note", event)], oldest first."""
+    items = [(m._date, "message", m) for m in messages]
+    items += [(e["time"], "note", e) for e in events if e["action"] == "note"]
+    return sorted(items, key=lambda item: item[0])
+
+
+def member_tickets(user, account_id, exclude=None, limit=20):
+    """The member's other tickets that user may see, newest first."""
+    categories = visible_categories(user)
+    if not account_id or not categories:
+        return []
+    query = sa.select(tickets).where(
+        tickets.c.account_id == account_id,
+        tickets.c.category.in_(categories))
+    if exclude:
+        query = query.where(tickets.c.id != exclude)
+    query = query.order_by(tickets.c.updated.desc()).limit(limit)
+    with ENGINE.connect() as conn:
+        return [dict(row) for row in conn.execute(query).mappings()]
+
+
+def recent_activity(user, actor_id=None, limit=100):
+    """The latest events on tickets user may see (by actor_id, if given),
+    newest first, each with its ticket's subject and category."""
+    categories = visible_categories(user)
+    if not categories:
+        return []
+    query = (sa.select(events, tickets.c.subject, tickets.c.category,
+                       tickets.c.account_id)
+             .select_from(events.join(tickets,
+                                      events.c.ticket_id == tickets.c.id))
+             .where(tickets.c.category.in_(categories)))
+    if actor_id:
+        query = query.where(events.c.actor_id == actor_id)
+    query = query.order_by(events.c.time.desc()).limit(limit)
+    with ENGINE.connect() as conn:
+        rows = [dict(row) for row in conn.execute(query).mappings()]
+    for row in rows:
+        row["time"] = row["time"].astimezone(timezone.utc)
+    return rows
+
+
+def staff_summary(user, days):
+    """{actor_id: {"reply": n, "note": n, "closed": n}} for the last days,
+    on tickets user may see; members' own events aren't counted."""
+    from datetime import timedelta
+    categories = visible_categories(user)
+    if not categories:
+        return {}
+    since = _now() - timedelta(days=days)
+    query = (sa.select(events.c.actor_id, events.c.action, events.c.detail,
+                       sa.func.count())
+             .select_from(events.join(tickets,
+                                      events.c.ticket_id == tickets.c.id))
+             .where(tickets.c.category.in_(categories),
+                    events.c.time >= since,
+                    events.c.action.in_(("reply", "note", "status")),
+                    events.c.actor_id.isnot(None))
+             .group_by(events.c.actor_id, events.c.action, events.c.detail))
+    summary = {}
+    with ENGINE.connect() as conn:
+        for actor_id, action, detail, n in conn.execute(query):
+            if action == "status":
+                if detail != "closed":
+                    continue
+                action = "closed"
+            counts = summary.setdefault(actor_id,
+                                        {"reply": 0, "note": 0, "closed": 0})
+            counts[action] += n
+    return summary
 
 
 def reply(ticket, staff, body, ip):

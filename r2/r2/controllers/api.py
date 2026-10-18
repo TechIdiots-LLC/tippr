@@ -5029,6 +5029,25 @@ class ApiController(TipprController):
         VSupportStaff(),
         VModhash(),
         ticket_id=nop("ticket_id"),
+        text=VMarkdownLength("note", max_length=5000),
+    )
+    def POST_support_note(self, form, jquery, ticket_id, text):
+        """Leave a note on a ticket for the other staff; the member never
+        sees it. Anyone who may see the ticket may leave one."""
+        from r2.lib import support
+        ticket = self._support_ticket(ticket_id, reply=False)
+        if not ticket:
+            form.set_text(".status", _("no such ticket"))
+            return
+        if form.has_errors("note", errors.NO_TEXT, errors.TOO_LONG):
+            return
+        support.add_note(ticket["id"], c.user, text)
+        form.refresh()
+
+    @validatedForm(
+        VSupportStaff(),
+        VModhash(),
+        ticket_id=nop("ticket_id"),
         status=VOneOf("status", ("new", "open", "waiting", "closed")),
     )
     def POST_support_status(self, form, jquery, ticket_id, status):

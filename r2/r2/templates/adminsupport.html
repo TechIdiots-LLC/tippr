@@ -39,6 +39,7 @@
   <p class="error">${_("The admin vault %(acct)s doesn't exist yet. Re-run the installer, or run scripts/create_default_vaults.py, to create it.") % dict(acct=g.admin_message_acct)}</p>
 %else:
   <p><small>${_("Messages to %(acct)s (the contact page's \"message the admins\" links) become tickets here. Replies reach the member as messages from %(acct)s, without your name.") % dict(acct=g.admin_message_acct)}
+    <a href="/admin/support/activity">${_("See what the staff have done lately")}</a>.
     %if thing.manage_staff:
       <a href="/admin/support/staff">${_("Choose who else can help")}</a>.
     %endif

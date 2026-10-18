@@ -1,0 +1,88 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/support/activity: what the support staff have done lately
+## (r2.lib.support), in the categories the viewer may see
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<%def name="name_of(account_id)">
+  <% account = thing.accounts.get(account_id) if account_id else None %>
+  %if account:
+    ${account.name}
+  %else:
+    ${_("the system")}
+  %endif
+</%def>
+
+<div class="admin-support">
+<p><a href="/admin/support">&laquo; ${_("support queue")}</a></p>
+<h1>${_("support activity")}</h1>
+
+<h2>${_("who's been helping")}</h2>
+%if thing.staff_ids:
+  <table class="lined-table support-summary">
+    <tr>
+      <th>${_("staff")}</th>
+      <th>${_("replies")}<br><small>${_("7 / 30 days")}</small></th>
+      <th>${_("notes")}<br><small>${_("7 / 30 days")}</small></th>
+      <th>${_("closed")}<br><small>${_("7 / 30 days")}</small></th>
+    </tr>
+    %for staff_id in thing.staff_ids:
+      <% week = thing.week.get(staff_id, {}); month = thing.month.get(staff_id, {}) %>
+      <% account = thing.accounts.get(staff_id) %>
+      <tr>
+        <td>
+          %if account:
+            <a href="/admin/support/activity?by=${account.name}">${account.name}</a>
+          %else:
+            &mdash;
+          %endif
+        </td>
+        %for action in ('reply', 'note', 'closed'):
+          <td>${week.get(action, 0)} / ${month.get(action, 0)}</td>
+        %endfor
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No replies, notes or closed tickets in the last 30 days.")}</p>
+%endif
+
+<h2>
+  %if thing.by:
+    ${_("what %(name)s did") % dict(name=thing.by.name)}
+    <small>(<a href="/admin/support/activity">${_("everyone")}</a>)</small>
+  %else:
+    ${_("latest")}
+  %endif
+</h2>
+%if thing.events:
+  <table class="lined-table support-activity">
+    %for e in thing.events:
+      <tr>
+        <td>${timesince(e['time'])} ${_("ago")}</td>
+        <td>${name_of(e['actor_id'])}</td>
+        <td>${thing.describe(e)}</td>
+        <td><a href="/admin/support/${e['ticket_id']}">${e['subject'] or _("(no subject)")}</a></td>
+        <td>${_(thing.category_names.get(e['category'], e['category']))}</td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("Nothing yet.")}</p>
+%endif
+</div>

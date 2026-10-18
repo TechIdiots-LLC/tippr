@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Staff notes and activity in the support queue**: staff can leave notes on a ticket for each other (what they
+  checked, who should take it); notes show in the conversation, marked as internal, and are never sent to the
+  member. Anyone who can see a ticket can leave one, including staff who can only read it. A ticket also lists the
+  member's other tickets, and its history reads as sentences ("marked it closed", "assigned it to …").
+  /admin/support/activity shows who's been helping (replies, notes and closed tickets over 7 and 30 days) and the
+  latest actions, for everyone or one person, in the categories you can see.
 - **Starter feeds**: `scripts/import_feeds.py` adds many feeds to /admin/feeds at once from a list, and
   `scripts/starter_feeds.txt` has about 50 public news, technology, culture and art feeds for the default vaults.
   It's a dry run until `FEEDS_ADD=1`; a line can give a site's homepage instead of its feed when the page links to

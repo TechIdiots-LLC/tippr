@@ -162,6 +162,8 @@ def make_map(config):
     mc('/admin/users/:username', controller='admintool', action='user')
     mc('/admin/support', controller='admintool', action='support')
     mc('/admin/support/staff', controller='admintool', action='support_staff')
+    mc('/admin/support/activity', controller='admintool',
+       action='support_activity')
     mc('/admin/support/:ticket_id', controller='admintool',
        action='support_ticket', requirements=dict(ticket_id='[0-9]+'))
     mc('/admin/errors', controller='admintool', action='errors')

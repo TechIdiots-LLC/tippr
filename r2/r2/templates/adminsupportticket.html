@@ -97,20 +97,42 @@
 
 <h2>${_("conversation")}</h2>
 <div class="support-thread">
-  %for m in thing.messages:
-    <% staff = bool(getattr(m, 'from_vault', False)) or m.author_id != t['account_id'] %>
-    <div class="support-message ${'support-message-staff' if staff else 'support-message-member'}">
-      <p class="support-message-head">
-        <strong>${name_of(m.author_id)}</strong>
-        %if staff:
-          <small>${_("(staff; the member sees %(acct)s)") % dict(acct=g.admin_message_acct)}</small>
-        %endif
-        &#32;&middot;&#32;${timesince(m._date)} ${_("ago")}
-      </p>
-      <div class="md">${unsafe(safemarkdown(m.body))}</div>
-    </div>
+  %for date, kind, item in thing.timeline:
+    %if kind == 'note':
+      <div class="support-message support-note">
+        <p class="support-message-head">
+          <strong>${name_of(item['actor_id'])}</strong>
+          &#32;<small>${_("(a note for the staff; the member doesn't see it)")}</small>
+          &#32;&middot;&#32;${timesince(date)} ${_("ago")}
+        </p>
+        <div class="md">${unsafe(safemarkdown(item['detail'] or ''))}</div>
+      </div>
+    %else:
+      <% m = item %>
+      <% staff = bool(getattr(m, 'from_vault', False)) or m.author_id != t['account_id'] %>
+      <div class="support-message ${'support-message-staff' if staff else 'support-message-member'}">
+        <p class="support-message-head">
+          <strong>${name_of(m.author_id)}</strong>
+          %if staff:
+            &#32;<small>${_("(staff; the member sees %(acct)s)") % dict(acct=g.admin_message_acct)}</small>
+          %endif
+          &#32;&middot;&#32;${timesince(m._date)} ${_("ago")}
+        </p>
+        <div class="md">${unsafe(safemarkdown(m.body))}</div>
+      </div>
+    %endif
   %endfor
 </div>
+
+<h2>${_("leave a note for the staff")}</h2>
+<form action="/api/support_note" method="post" class="pretty-form support-note-form"
+      onsubmit="return post_form(this, 'support_note');">
+  <input type="hidden" name="ticket_id" value="${t['id']}">
+  <textarea name="note" rows="3" cols="80" placeholder="${_('only staff see this, e.g. what you checked, or who should take it')}"></textarea>
+  <br>
+  <button class="btn" type="submit">${_("add note")}</button>
+  <span class="status"></span>
+</form>
 
 %if thing.can_reply:
   <h2>${_("reply as the admin team")}</h2>
@@ -124,13 +146,27 @@
   </form>
 %endif
 
+%if thing.other_tickets:
+  <h2>${_("their other tickets")}</h2>
+  <table class="lined-table">
+    %for o in thing.other_tickets:
+      <tr>
+        <td><a href="/admin/support/${o['id']}">${o['subject'] or _("(no subject)")}</a></td>
+        <td>${_(thing.category_names.get(o['category'], o['category']))}</td>
+        <td>${_(thing.status_names.get(o['status'], o['status']))}</td>
+        <td>${timesince(o['updated'])} ${_("ago")}</td>
+      </tr>
+    %endfor
+  </table>
+%endif
+
 <h2>${_("history")}</h2>
 <table class="lined-table support-history">
   %for e in thing.events:
     <tr>
       <td>${e['time'].strftime('%Y-%m-%d %H:%M UTC')}</td>
       <td>${name_of(e['actor_id'])}</td>
-      <td>${e['action']}${(': ' + e['detail']) if e['detail'] else ''}</td>
+      <td>${thing.describe(e)}</td>
     </tr>
   %endfor
 </table>

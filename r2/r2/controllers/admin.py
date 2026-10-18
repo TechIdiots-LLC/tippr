@@ -40,6 +40,7 @@ from r2.lib.pages import (
     AdminPage,
     AdminSiteSettings,
     AdminSupport,
+    AdminSupportActivity,
     AdminSupportStaff,
     AdminSupportTicket,
     AdminUser,
@@ -171,6 +172,11 @@ class AdminToolController(TipprController):
         """Who besides the admins may use the support queue, and in which
         categories (r2.lib.support)."""
         return AdminPage(content=AdminSupportStaff()).render()
+
+    @validate(VSupportStaff(), by=nop("by"))
+    def GET_support_activity(self, by):
+        """What the support staff have done lately (r2.lib.support)."""
+        return AdminPage(content=AdminSupportActivity(by)).render()
 
     @validate(VSupportStaff())
     def GET_support_ticket(self, ticket_id):

@@ -3895,6 +3895,34 @@ class AdminSupport(Templated):
         Templated.__init__(self)
 
 
+class AdminSupportActivity(Templated):
+    """What the support staff have done lately (r2.lib.support)."""
+    def __init__(self, by):
+        from r2.lib import support
+        from r2.lib.db.thing import NotFound
+        self.by = None
+        if by:
+            try:
+                self.by = Account._by_name(by)
+            except NotFound:
+                pass
+        self.events = support.recent_activity(
+            c.user, actor_id=self.by._id if self.by else None)
+        self.week = support.staff_summary(c.user, 7)
+        self.month = support.staff_summary(c.user, 30)
+        staff_ids = set(self.week) | set(self.month)
+        self.accounts = _support_accounts(
+            [e["actor_id"] for e in self.events] +
+            [e["account_id"] for e in self.events] + list(staff_ids))
+        # the busiest first
+        self.staff_ids = sorted(
+            staff_ids, key=lambda i: -sum(self.month.get(i, {}).values()))
+        self.category_names = {cat: name for cat, (name, _tag)
+                               in support.CATEGORIES.items()}
+        self.describe = support.describe
+        Templated.__init__(self)
+
+
 class AdminSupportStaff(Templated):
     """Who besides the admins may use the support queue (r2.lib.support)."""
     def __init__(self):
@@ -3924,6 +3952,12 @@ class AdminSupportTicket(Templated):
             [e["actor_id"] for e in self.events] +
             [ticket["account_id"], ticket["assignee_id"]])
         self.member = self.accounts.get(ticket["account_id"])
+        self.timeline = support.timeline(self.messages, self.events)
+        self.describe = support.describe
+        self.other_tickets = support.member_tickets(
+            c.user, ticket["account_id"], exclude=ticket["id"])
+        self.category_names = {cat: name for cat, (name, _tag)
+                               in support.CATEGORIES.items()}
         self.assignable = [a for a in support.assignable_staff(ticket["category"])
                            if a._id != c.user._id]
         Templated.__init__(self)
