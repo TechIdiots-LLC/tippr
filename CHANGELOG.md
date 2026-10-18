@@ -21,10 +21,14 @@
 - **A welcoming default community**: starter vaults leaning toward technology, science, making things and fun,
   including LGBTQ+; the content policy names the identities its hate rules protect.
 - **A new look**: the teal theme, Noto Sans and the tippr bot.
+- **Spam protection** (/admin/antispam): choose the captcha — tippr's own, Cloudflare Turnstile, hCaptcha or Google
+  reCAPTCHA — now also on the sign-up form, and use CleanTalk to check sign-ups, posts, comments and messages from new
+  accounts without a challenge (spam is hidden in the moderators' spam queue).
 - **Several app servers can share a site**: scheduled jobs take a ZooKeeper lock, so each runs on one server at a
   time.
 
 ### 🐞 Bug fixes
+- **Signing up and changing passwords failed** (a Python 3 bytes/text mix-up in password hashing).
 - Python 3 fixes across the codebase: image uploads, the hardcache, route arguments, generators, multi-vault
   listings (/v/mod), canonical links and more.
 

@@ -95,6 +95,7 @@ With admin mode on (`/adminon`, which requires TOTP in production):
 | Page | For |
 |---|---|
 | `/admin/site` | site name, description, contact address and logo |
+| `/admin/antispam` | the captcha (built-in, Turnstile, hCaptcha, reCAPTCHA) and CleanTalk |
 | `/admin/errors` | recent unhandled errors with tracebacks |
 | `/admin/email` | outgoing email (SMTP or Gmail) |
 | `/admin/ads` | Google AdSense ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)) |
