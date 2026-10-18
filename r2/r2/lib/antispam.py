@@ -240,16 +240,29 @@ def _cleantalk(method, **fields):
         result = resp.json()
     except (requests.RequestException, ValueError) as e:
         g.log.warning("antispam: CleanTalk unreachable (%s); allowing", e)
+        _record(method, "error", None)
         return True, None
     if result.get("error_message") or result.get("error_no"):
         g.log.warning("antispam: CleanTalk error %s: %s; allowing",
                       result.get("error_no"), result.get("error_message"))
+        _record(method, "error", time.time() - started)
         return True, None
     allowed = str(result.get("allow", 1)) == "1"
+    seconds = time.time() - started
     g.log.info("antispam: CleanTalk %s -> %s in %.2fs (%s)", method,
-               "allow" if allowed else "spam", time.time() - started,
+               "allow" if allowed else "spam", seconds,
                result.get("comment", ""))
+    _record(method, "allow" if allowed else "spam", seconds)
     return allowed, result.get("comment")
+
+
+def _record(method, outcome, seconds):
+    """For the statistics on /admin/antispam (r2.lib.cleantalk_stats)."""
+    try:
+        from r2.lib import cleantalk_stats
+        cleantalk_stats.record(method, outcome, seconds)
+    except Exception:
+        g.log.exception("antispam: couldn't record CleanTalk statistics")
 
 
 def check_signup(name, email):

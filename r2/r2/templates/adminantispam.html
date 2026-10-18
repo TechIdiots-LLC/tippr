@@ -100,6 +100,51 @@
   <span class="status"></span>
 </form>
 
+## CleanTalk's account status and this site's statistics (r2.lib.cleantalk_stats)
+<h2>${_("CleanTalk statistics")}</h2>
+<table class="lined-table borderless">
+  %if thing.ct_account:
+    %if thing.ct_account.get('error'):
+      <tr><td>${_("account")}</td><td class="error">${thing.ct_account['error']}</td></tr>
+    %else:
+      <tr><td>${_("account")}</td><td>
+        ${thing.ct_account.get('account_name_ob') or _("(CleanTalk didn't say)")}
+        %if str(thing.ct_account.get('valid')) == '1':
+          &#32;<span class="ok">${_("key is ok")}</span>
+        %else:
+          &#32;<span class="error">${_("key isn't valid")}</span>
+        %endif
+      </td></tr>
+      %if thing.ct_account.get('paid_till'):
+        <tr><td>${_("paid until")}</td><td>${thing.ct_account['paid_till']}${_(" (trial)") if str(thing.ct_account.get('trial')) == '1' else ''}</td></tr>
+      %endif
+      %if str(thing.ct_account.get('moderate', '1')) != '1':
+        <tr><td></td><td class="error">${_("Checking is off for this website in your CleanTalk dashboard.")}</td></tr>
+      %endif
+    %endif
+  %else:
+    <tr><td>${_("account")}</td><td>${_("no access key set")}</td></tr>
+  %endif
+  <% st = thing.ct_stats %>
+  <tr><td>${_("last check")}</td><td>
+    %if st['last']:
+      ${st['last']['time'].strftime('%Y-%m-%d %H:%M:%S UTC')} (${st['last']['method']}: ${st['last']['outcome']})
+    %else:
+      ${_("none yet")}
+    %endif
+  </td></tr>
+  <tr><td>${_("last %(n)d days") % dict(n=st['days'])}</td><td>
+    ${_("%(checks)d checks: %(allowed)d allowed, %(spam)d spam (%(signups)d sign-ups, %(content)d posts, comments or messages), %(errors)d couldn't reach CleanTalk") % dict(checks=st['checks'], allowed=st['allowed'], spam=st['spam'], signups=st['spam_signups'], content=st['spam_content'], errors=st['errors'])}
+  </td></tr>
+  <tr><td>${_("average response")}</td><td>
+    %if st['average_seconds'] is not None:
+      ${"%.3f" % st['average_seconds']} ${_("seconds")}
+    %else:
+      &mdash;
+    %endif
+  </td></tr>
+</table>
+
 ## checking existing accounts (r2.lib.cleantalk_scan)
 <h2>${_("check users for spam")}</h2>
 <p>${_("CleanTalk checks accounts' email addresses and the address they last logged in from against its lists of senders seen spamming other sites. Flagged accounts are listed below for you to look at; nothing happens to them by itself (shared networks and old reports can match too).")}</p>

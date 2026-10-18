@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **CleanTalk statistics** on /admin/antispam: the CleanTalk account (as CleanTalk shows it), whether the key is valid,
+  paid-until and trial status, the last check, the last 7 days' checks by outcome (allowed, spam sign-ups, spam
+  posts, comments or messages, unreachable) and the average response time.
 - **CleanTalk: check users for spam** (/admin/antispam): checks existing accounts' email addresses and last login
   addresses against CleanTalk's blacklists in batches (`spam_check`), remembering the results so each run carries on
   where the last stopped ("start over" checks everyone again). Flagged accounts are listed with how many sites
@@ -29,6 +32,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Times on the admin pages** marked UTC (support history, account actions) were in the server's time zone.
 - **Scheduled cleanups never ran**: the hourly `tippr-job-trylater` didn't register the app's hooks, so temporary
   vault bans and mutes never expired and deleted accounts weren't cleaned up after 90 days. Cancelling a scheduled
   item (lifting a temporary ban early) also never removed it, so it could end a newer ban later.

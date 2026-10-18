@@ -31,7 +31,7 @@ Tickets and their history are PostgreSQL tables, so they move with backups.
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 import sqlalchemy as sa
 from pylons import app_globals as g
@@ -342,9 +342,13 @@ def get_ticket(ticket_id):
 
 def ticket_events(ticket_id):
     with ENGINE.connect() as conn:
-        return [dict(row) for row in conn.execute(
+        rows = [dict(row) for row in conn.execute(
             sa.select(events).where(events.c.ticket_id == ticket_id)
             .order_by(events.c.time)).mappings()]
+    # PostgreSQL hands times back in the server's zone; pages say UTC
+    for row in rows:
+        row["time"] = row["time"].astimezone(timezone.utc)
+    return rows
 
 
 def thread(ticket):

@@ -3929,8 +3929,11 @@ class AdminAntispam(Templated):
         self.providers = [(key, value[0])
                           for key, value in antispam.PROVIDERS.items()]
         self.provider_in_use = antispam.captcha_provider()
-        from r2.lib import cleantalk_scan
+        from r2.lib import cleantalk_scan, cleantalk_stats
         self.scan_checked, self.scan_total, _flagged = cleantalk_scan.progress()
+        self.ct_stats = cleantalk_stats.summary()
+        self.ct_account = cleantalk_stats.account_status(
+            settings.get("cleantalk_auth_key"))
         self.flagged = cleantalk_scan.flagged_accounts()
         Templated.__init__(self)
 

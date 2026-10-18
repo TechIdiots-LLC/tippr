@@ -206,7 +206,7 @@ def status(account):
 # Actions (each one logged in account_admin_actions)
 ###############################################################################
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
 from r2.lib.hooks import HookRegistrar
@@ -253,10 +253,14 @@ def _log(account, admin, action, detail=None):
 
 def action_log(account):
     with ENGINE.connect() as conn:
-        return [dict(row) for row in conn.execute(
+        rows = [dict(row) for row in conn.execute(
             sa.select(actions_table)
             .where(actions_table.c.account_id == account._id)
             .order_by(actions_table.c.time.desc()).limit(100)).mappings()]
+    # PostgreSQL hands times back in the server's zone; pages say UTC
+    for row in rows:
+        row["time"] = row["time"].astimezone(timezone.utc)
+    return rows
 
 
 def timeout(account, admin, days, reason):
