@@ -120,6 +120,25 @@ r.ui.mobileLayout = {
                 this.close();
             }
         }, this));
+
+        // swipe the drawer to the right to close it
+        var start = null;
+        this.$drawer.on('touchstart', function(e) {
+            var t = e.originalEvent.touches[0];
+            start = {x: t.clientX, y: t.clientY};
+        });
+        this.$drawer.on('touchend', _.bind(function(e) {
+            if (!start) {
+                return;
+            }
+            var t = e.originalEvent.changedTouches[0];
+            var dx = t.clientX - start.x;
+            var dy = Math.abs(t.clientY - start.y);
+            start = null;
+            if (dx > 70 && dy < dx / 2) {
+                this.close();
+            }
+        }, this));
     },
 
     // the account links: a copy of #header-bottom-right without its ids
