@@ -3,6 +3,16 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+- **Newsletter**: the newsletter bar, the sign-up form's "get the best of tippr emailed to you" checkbox and
+  /newsletter only appear when a newsletter is set up (`newsletter_api_key` and `newsletter_list_id`); without one
+  they offered something that didn't exist. A link on the email settings page that subscribed people to reddit's own
+  advertising mailing list is gone.
+
+## 0.5.0
+### ✨ Features and improvements
 - **/admin/config**: change the live config (the admin and employee list, captcha and vault-creation thresholds,
   sidebar and welcome messages, and the rest of `[live_config]`) without editing the ini. Values are checked against
   each setting's type, apply right away on every web process, can be undone back to the ini's value, and every change
@@ -18,11 +28,6 @@
   threads.com.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
-- **Newsletter**: the newsletter bar, the sign-up form's "get the best of tippr emailed to you" checkbox and
-  /newsletter only appear when a newsletter is set up (`newsletter_api_key` and `newsletter_list_id`); without one
-  they offered something that didn't exist. A link on the email settings page that subscribed people to reddit's own
-  advertising mailing list is gone.
 - **Policies and contact details were tippr.net's**: every install's user agreement, privacy and content policies and
   moderator guidelines named TechIdiots LLC, tippr.net, Massachusetts law and six @tippr.net addresses, and the privacy
   pages, export emails and rate-limit page pointed at more. The policies are now templates filled in from /admin/site
