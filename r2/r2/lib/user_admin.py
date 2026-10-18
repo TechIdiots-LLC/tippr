@@ -200,3 +200,156 @@ def status(account):
     if account.name in g.admins:
         labels.append("admin")
     return labels
+
+
+###############################################################################
+# Actions (each one logged in account_admin_actions)
+###############################################################################
+
+from datetime import datetime, timedelta
+
+from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
+from r2.lib.hooks import HookRegistrar
+
+user_admin_hooks = HookRegistrar()
+
+ENGINE = g.dbm.get_engine("main")
+METADATA = make_metadata(ENGINE)
+
+actions_table = sa.Table(
+    "account_admin_actions", METADATA,
+    sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column("account_id", sa.BigInteger, nullable=False),
+    # who did it (None: the system, e.g. a timeout running out)
+    sa.Column("admin_id", sa.BigInteger, nullable=True),
+    sa.Column("time", sa.DateTime(timezone=True), nullable=False),
+    # timeout, untimeout, suspend, unsuspend, spam_content, reset_2fa
+    sa.Column("action", sa.String, nullable=False),
+    sa.Column("detail", sa.Text, nullable=True),
+)
+create_table(actions_table, [
+    index_str(actions_table, "account_id", "account_id"),
+])
+
+ACTION_NAMES = {
+    "timeout": "timeout",
+    "untimeout": "timeout lifted",
+    "suspend": "suspended",
+    "unsuspend": "suspension lifted",
+    "spam_content": "content removed as spam",
+    "reset_2fa": "two-factor reset",
+}
+MAX_TIMEOUT_DAYS = 365
+
+
+def _log(account, admin, action, detail=None):
+    with ENGINE.begin() as conn:
+        conn.execute(actions_table.insert().values(
+            account_id=account._id, admin_id=admin._id if admin else None,
+            time=datetime.now(g.tz), action=action, detail=detail))
+    g.log.info("user_admin: %s %s %s (%s)", admin.name if admin else "system",
+               action, account.name, detail or "")
+
+
+def action_log(account):
+    with ENGINE.connect() as conn:
+        return [dict(row) for row in conn.execute(
+            sa.select(actions_table)
+            .where(actions_table.c.account_id == account._id)
+            .order_by(actions_table.c.time.desc()).limit(100)).mappings()]
+
+
+def timeout(account, admin, days, reason):
+    """Put account in timeout: it can read but not post, comment, vote or
+    message anyone except the admins. days: 1 to MAX_TIMEOUT_DAYS, or None
+    for no end."""
+    from r2.models.bans import TempTimeout
+    account.in_timeout = True
+    account._commit()
+    TempTimeout.unschedule(account)
+    if days:
+        TempTimeout.schedule(account, timedelta(days=days))
+    length = ("%d days" % days) if days else "no end date"
+    _log(account, admin, "timeout", "%s; %s" % (length, reason or "no reason"))
+    from r2.lib import site_info
+    _send_notice(account, "Your account is in a timeout",
+                 ("Your account can't post, comment, vote or send messages "
+                  "%s. Reason: %s\n\nIf you think this is a mistake, you can "
+                  "still reach the site's staff through the contact page: %s")
+                 % ("for %d days" % days if days else "until the staff lift it",
+                    reason or "not given", site_info.contact_url("appeals")))
+
+
+def untimeout(account, admin=None, reason=None):
+    from r2.models.bans import TempTimeout
+    account.in_timeout = False
+    account._commit()
+    TempTimeout.unschedule(account)
+    _log(account, admin, "untimeout", reason)
+
+
+def suspend(account, admin, reason):
+    """Suspend account: it can't log in, and its sessions and app tokens end
+    (Account._banned)."""
+    account._banned = True
+    _log(account, admin, "suspend", reason or "no reason")
+
+
+def unsuspend(account, admin, reason=None):
+    account._banned = False
+    _log(account, admin, "unsuspend", reason)
+
+
+def remove_content_as_spam(account, admin, limit=1000):
+    """Remove the account's posts and comments as spam (the newest
+    `limit` of each). Returns how many were removed."""
+    from r2.lib.db.operators import desc
+    from r2.models import Comment, Link
+    from r2.models.admintools import admintools
+    things = []
+    for cls in (Link, Comment):
+        query = cls._query(cls.c.author_id == account._id,
+                           cls.c._spam == (True, False),
+                           sort=desc("_date"), limit=limit, data=True)
+        things.extend(t for t in query if not t._spam and not t._deleted)
+    if things:
+        admintools.spam(things, auto=False, moderator_banned=True,
+                        banner=admin.name)
+    _log(account, admin, "spam_content", "%d removed" % len(things))
+    return len(things)
+
+
+def reset_two_factor(account, admin, reason=None):
+    """Turn off two-factor sign-in, for someone locked out of it."""
+    account.otp_secret = None
+    account._commit()
+    _log(account, admin, "reset_2fa", reason)
+
+
+def _send_notice(account, subject, body):
+    from r2.lib.db import queries
+    from r2.models import Account, Message
+    try:
+        system = Account.system_user()
+        message, inbox_rel = Message._new(system, account, subject, body,
+                                          "0.0.0.0")
+        message.distinguished = "admin"
+        message._commit()
+        queries.new_message(message, inbox_rel)
+    except Exception:
+        g.log.exception("user_admin: couldn't message %s", account.name)
+
+
+@user_admin_hooks.on("trylater.untimeout")
+def on_timeouts_ending(data):
+    """Timeouts whose time is up (scheduled by timeout())."""
+    from r2.models import Account
+    for fullname in data.values():
+        if isinstance(fullname, bytes):
+            fullname = fullname.decode("utf-8")
+        try:
+            account = Account._by_fullname(fullname, data=True)
+        except Exception:
+            continue
+        if getattr(account, "in_timeout", False):
+            untimeout(account, None, "the timeout ran out")

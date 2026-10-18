@@ -120,6 +120,10 @@ def convert_uuid_to_time(uuid_obj):
         # pycassa turned datetime column names into TimeUUIDs; here they
         # are stored as they are (e.g. TryLater's scheduled times)
         return uuid_obj.timestamp()
+    if isinstance(uuid_obj, (int, float)) and not isinstance(uuid_obj, bool):
+        # date values stored as milliseconds since the epoch (tdb's 'date'
+        # value type, e.g. TryLaterBySubject: when a timeout ends)
+        return uuid_obj / 1000.0 if uuid_obj > 1e11 else float(uuid_obj)
     if not isinstance(uuid_obj, uuid.UUID):
         # column names come back from cassandra_compat as text: a UUID, or a
         # datetime written as a TimeUUID column name
@@ -579,7 +583,19 @@ class Mutator:
             params = (ser, key)
         self._ops.append(("insert", cql, params))
 
-    def remove(self, cf, key, columns=None, timestamp=None):
+    def remove(self, cf_or_key, key_or_columns=None, columns=None,
+               timestamp=None):
+        # Both conventions, as in insert(): remove(key, columns=None) on a
+        # column family's own batch (cf.batch()), or remove(cf, key, columns)
+        if (self._default_cf is not None and
+                not isinstance(cf_or_key, ColumnFamily)):
+            cf, key = self._default_cf, cf_or_key
+            if columns is None:
+                columns = key_or_columns
+        else:
+            cf, key = cf_or_key, key_or_columns
+        if columns is not None:
+            columns = list(columns)
         key = str(key)
         if columns is None:
             cql = "DELETE FROM %s.%s WHERE key = %%s" % (cf.keyspace, cf.table)

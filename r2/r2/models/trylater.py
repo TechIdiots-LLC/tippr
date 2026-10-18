@@ -141,8 +141,14 @@ class TryLater(tdb_cassandra.View):
     @classmethod
     def run(cls):
         """Run all ready items through their processing hook."""
+        from r2.config.hooks import register_hooks
         from r2.lib import amqp
         from r2.lib.hooks import all_hooks
+
+        # Scripts (this runs from tippr-job-trylater) don't get the app's
+        # hooks registered, so without this the handlers below (temporary
+        # vault bans and mutes, timeouts, account deletion cleanup) never ran.
+        register_hooks()
 
         for hook_name, hook in list(all_hooks().items()):
             if hook_name.startswith("trylater."):
@@ -159,12 +165,23 @@ class TryLater(tdb_cassandra.View):
 
     @classmethod
     def search(cls, rowkey, when):
-        if isinstance(when, uuid.UUID):
-            when = convert_uuid_to_time(when)
+        """The items scheduled at `when` (a datetime, TimeUUID or epoch
+        milliseconds). Column names are stored as text to the microsecond
+        while TryLaterBySubject keeps the time to the millisecond, so match
+        within a couple of milliseconds rather than exactly."""
+        target = convert_uuid_to_time(when)
         try:
-            return cls._cf.get(rowkey, column_start=when, column_finish=when)
+            row = cls._cf.get(rowkey)
         except tdb_cassandra.NotFoundException:
             return {}
+        found = OrderedDict()
+        for name, value in row.items():
+            try:
+                if abs(convert_uuid_to_time(name) - target) < 0.002:
+                    found[name] = value
+            except (TypeError, ValueError):
+                continue
+        return found
 
     @classmethod
     def schedule(cls, system, data, delay=None):

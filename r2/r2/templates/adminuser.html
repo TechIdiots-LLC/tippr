@@ -59,6 +59,76 @@
   </td></tr>
 </table>
 
+<%def name="act(what, label, reason=False, days=False, confirm=None)">
+  <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+        onsubmit="return post_form(this, 'admin_user');">
+    <input type="hidden" name="username" value="${thing.account.name}">
+    <input type="hidden" name="do" value="${what}">
+    %if days:
+      <input type="number" name="days" min="0" max="365" value="3" style="width: 4em"> ${_("days (0: until lifted)")}
+    %endif
+    %if reason:
+      <input type="text" name="reason" size="40" placeholder="${reason}">
+    %endif
+    %if confirm:
+      <label><input type="checkbox" name="confirm" value="yes"> ${confirm}</label>
+    %endif
+    <button class="btn" type="submit">${label}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<h2>${_("actions")}</h2>
+%if thing.protected:
+  <p><small>${_("Not available for admins or yourself; take an admin off the employees list on /admin/config first.")}</small></p>
+%else:
+  <table class="lined-table borderless admin-user-actions">
+    <tr><td>${_("timeout")}</td><td>
+      %if getattr(a, 'in_timeout', False):
+        ${_("In a timeout")}${(_(" until %(date)s") % dict(date=thing.timeout_until.strftime('%Y-%m-%d %H:%M UTC'))) if thing.timeout_until else _(" with no end date")}.
+        ${act("untimeout", _("lift the timeout"), reason=_("note (optional)"))}
+      %else:
+        ${act("timeout", _("put in a timeout"), reason=_("reason (sent to them)"), days=True)}
+        <small>${_("They can still read and log in, and can message the admins, but can't post, comment, vote or message anyone else.")}</small>
+      %endif
+    </td></tr>
+    <tr><td>${_("suspension")}</td><td>
+      %if a._banned:
+        ${_("Suspended.")}
+        ${act("unsuspend", _("lift the suspension"), reason=_("note (optional)"))}
+      %else:
+        ${act("suspend", _("suspend"), reason=_("reason (logged)"), confirm=_("they can't log in; their sessions and app tokens end"))}
+      %endif
+    </td></tr>
+    <tr><td>${_("content")}</td><td>
+      ${act("spam_content", _("remove all as spam"), confirm=_("remove their posts and comments (newest 1000 of each) as spam"))}
+    </td></tr>
+    %if a.otp_secret:
+      <tr><td>${_("two-factor")}</td><td>
+        ${act("reset_2fa", _("reset two-factor"), reason=_("why (logged)"))}
+        <small>${_("For someone locked out: they can log in with their password and set it up again.")}</small>
+      </td></tr>
+    %endif
+  </table>
+%endif
+
+<h2>${_("admin actions")}</h2>
+%if thing.actions:
+  <table class="lined-table">
+    %for e in thing.actions:
+      <% actor = thing.actors.get(e['admin_id']) if e['admin_id'] else None %>
+      <tr>
+        <td>${e['time'].strftime('%Y-%m-%d %H:%M UTC')}</td>
+        <td>${actor.name if actor else _("the system")}</td>
+        <td>${_(thing.action_names.get(e['action'], e['action']))}</td>
+        <td>${e['detail'] or ''}</td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("None.")}</p>
+%endif
+
 <h2>${_("logins by IP address")}</h2>
 <p><small>${_("The last 100 days, newest first. Other accounts seen on the same address can be one person's accounts, or just a shared network (a household, school, phone carrier or VPN).")}</small></p>
 %if thing.ips:

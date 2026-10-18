@@ -122,7 +122,10 @@ class HookRegistrar:
         return hook_decorator
 
     def register_all(self):
-        """Complete all deferred registrations."""
+        """Complete all deferred registrations (once; calling it again does
+        nothing, so scripts can register hooks without doubling them)."""
+        if self.registered:
+            return
         for hook, handler in self.connections:
             hook.register_handler(handler)
         self.registered = True

@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Account actions on /admin/users**: put an account in a timeout (for a number of days or until lifted; it's told
+  why and can still message the admins), suspend it (it can't log in; its sessions and app tokens end), lift either,
+  remove its posts and comments as spam, or reset two-factor for someone locked out. Each action is logged on the
+  account with who did it and why. Admin accounts are protected. These replace reddit's private admin tools.
 - **/admin/users** (admins only): find accounts by username (exact, then names starting with it), email address or IP
   address, and see an account's email and verification, two-factor and gold status, the IP addresses it logged in
   from in the last 100 days with other accounts seen on them, the vaults it moderates and its support tickets. Logins
@@ -21,6 +25,12 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Scheduled cleanups never ran**: the hourly `tippr-job-trylater` didn't register the app's hooks, so temporary
+  vault bans and mutes never expired and deleted accounts weren't cleaned up after 90 days. Cancelling a scheduled
+  item (lifting a temporary ban early) also never removed it, so it could end a newer ban later.
+- **Cassandra compatibility**: batched deletes on a column family's own batch (revoking app tokens, so suspending an
+  account) failed, and dates stored as milliseconds couldn't be read back.
+- **Message events** failed: `events_collector_message_sample_rate` wasn't typed, so it stayed text.
 - **Cassandra column ranges**: the compatibility layer treated an empty `column_start`/`column_finish` (pycassa's "no
   bound") as a bound and returned nothing, and applied bounds the wrong way round for reversed queries. Column queries
   with those defaults, such as the IP history, came back empty.

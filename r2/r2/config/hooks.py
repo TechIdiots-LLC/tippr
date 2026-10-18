@@ -41,3 +41,7 @@ def register_hooks():
     # tickets for messages to the admin vault (/admin/support)
     from r2.lib.support import support_hooks
     support_hooks.register_all()
+
+    # timeouts running out (/admin/users)
+    from r2.lib.user_admin import user_admin_hooks
+    user_admin_hooks.register_all()

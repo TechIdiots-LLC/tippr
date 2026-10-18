@@ -3785,6 +3785,14 @@ class AdminUser(Templated):
         self.related = user_admin.related_accounts(account, self.ips)
         self.vaults = user_admin.moderated_vaults(account)
         self.tickets = user_admin.support_tickets(account)
+        self.actions = user_admin.action_log(account)
+        self.action_names = user_admin.ACTION_NAMES
+        self.protected = account.name in g.admins or account._id == c.user._id
+        self.timeout_until = (account.timeout_expiration
+                              if getattr(account, "in_timeout", False) else None)
+        actor_ids = {a["admin_id"] for a in self.actions if a["admin_id"]}
+        self.actors = (Account._byID(actor_ids, data=True, return_dict=True,
+                                     ignore_missing=True) if actor_ids else {})
         self.status_names = support.STATUSES
         self.category_names = {cat: name for cat, (name, _tag)
                                in support.CATEGORIES.items()}

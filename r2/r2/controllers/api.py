@@ -4769,6 +4769,53 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        username=nop("username"),
+        do=VOneOf("do", ("timeout", "untimeout", "suspend", "unsuspend",
+                         "spam_content", "reset_2fa")),
+        days=VInt("days", min=0, max=365, num_default=0),
+        reason=VLength("reason", max_length=500, empty_error=None),
+        confirm=nop("confirm"),
+    )
+    def POST_admin_user(self, form, jquery, username, do, days, reason,
+                        confirm):
+        """Act on an account from /admin/users (r2.lib.user_admin)."""
+        from r2.lib import user_admin
+        from r2.lib.db.thing import NotFound
+        try:
+            account = Account._by_name(username or "", allow_deleted=True)
+        except NotFound:
+            form.set_text(".status", _("no such account"))
+            return
+        if not do:
+            form.set_text(".status", _("unknown action"))
+            return
+        if account.name in g.admins or account._id == c.user._id:
+            form.set_text(".status", _("not on admins (take them off the employees list on /admin/config first)"))
+            return
+        reason = (reason or "").strip()
+        if do in ("timeout", "suspend") and not reason:
+            form.set_text(".status", _("give a reason (it's logged, and a timeout's reason is sent to them)"))
+            return
+        if do in ("spam_content", "suspend") and confirm != "yes":
+            form.set_text(".status", _("tick the box to confirm"))
+            return
+        if do == "timeout":
+            user_admin.timeout(account, c.user, days or None, reason)
+        elif do == "untimeout":
+            user_admin.untimeout(account, c.user, reason)
+        elif do == "suspend":
+            user_admin.suspend(account, c.user, reason)
+        elif do == "unsuspend":
+            user_admin.unsuspend(account, c.user, reason)
+        elif do == "spam_content":
+            user_admin.remove_content_as_spam(account, c.user)
+        elif do == "reset_2fa":
+            user_admin.reset_two_factor(account, c.user, reason)
+        form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         client_id=nop("client_id"),
         do=VOneOf("do", ("approve", "suspend", "unsuspend", "delete")),
         reason=VLength("reason", max_length=300, empty_error=None),
