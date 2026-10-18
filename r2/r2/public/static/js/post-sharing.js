@@ -2,6 +2,48 @@
   'use strict';
 
   /*
+    Sites shared to by opening their "compose a post" page with the link
+    filled in. None of these need an app ID or API key. params(link, title)
+    returns the query string.
+   */
+  var WEB_INTENTS = {
+    bluesky: {
+      name: 'Bluesky',
+      url: 'https://bsky.app/intent/compose',
+      params: function(link, title) { return { text: title + ' ' + link }; },
+    },
+    threads: {
+      name: 'Threads',
+      url: 'https://www.threads.com/intent/post',
+      params: function(link, title) { return { text: title + ' ' + link }; },
+    },
+    facebook: {
+      name: 'Facebook',
+      url: 'https://www.facebook.com/sharer/sharer.php',
+      params: function(link, title) { return { u: link }; },
+    },
+    x: {
+      name: 'X',
+      url: 'https://x.com/intent/post',
+      params: function(link, title) { return { text: title, url: link }; },
+    },
+    linkedin: {
+      name: 'LinkedIn',
+      url: 'https://www.linkedin.com/sharing/share-offsite/',
+      params: function(link, title) { return { url: link }; },
+    },
+    tumblr: {
+      name: 'Tumblr',
+      url: 'https://www.tumblr.com/widgets/share/tool',
+      params: function(link, title) {
+        return { canonicalUrl: link, posttype: 'link', title: title };
+      },
+    },
+  };
+
+  var MASTODON_INSTANCE_KEY = 'post-sharing.mastodon-instance';
+
+  /*
     Renders a single sharing option and it's tooltip
    */
   var shareOptionTemplate = _.template(
@@ -54,6 +96,10 @@
                  'type="text" ' +
                  'readonly ' +
                  'value="<%- link %>">' +
+          '<button class="post-sharing-copy c-btn c-btn-primary" ' +
+                  'ref="$copyButton" type="button">' +
+            _.escape(r._('copy')) +
+          '</button>' +
         '</div>' +
       '<% } %> ' +
     '</div>' +
@@ -119,6 +165,7 @@
       'click .post-sharing-link-input': 'selectLinkInputText',
       'copy .post-sharing-link-input': 'fireCopyEvent',
       'click .post-sharing-option': 'setPostSharingOption',
+      'click .post-sharing-copy': 'copyLink',
       'click .post-sharing-cancel': 'clearPostSharingOption',
       'click .post-sharing-submit': 'shareToEmail',
       'click .c-close': 'close',
@@ -203,16 +250,16 @@
             selectedOption: option,
           });
 
-        case 'facebook':
-          return this.shareToFacebook();
+        case 'native':
+          return this.shareToNative();
 
-        case 'threads':
-          return this.shareToThreads();
-
-        case 'tumblr':
-          return this.shareToTumblr();
+        case 'mastodon':
+          return this.shareToMastodon();
 
         default:
+          if (WEB_INTENTS[option]) {
+            return this.shareToWebIntent(option);
+          }
           this.close();
       }
     },
@@ -226,43 +273,79 @@
       return r.utils.replaceUrlParams(this.thingData.link, refParams);
     },
 
-    shareToFacebook: function() {
-      var redditUrl = this.getShareLink('facebook');
-      var redirectUrl = r.config.currentOrigin + '/share/close';
-      var shareParams = {
-        app_id: r.config.facebook_app_id,
-        display: 'popup',
-        link: redditUrl,
-        description: this.thingData.title,
-        redirect_uri: redirectUrl,
+    shareToWebIntent: function(option) {
+      var intent = WEB_INTENTS[option];
+      var shareUrl = r.utils.replaceUrlParams(
+        intent.url, intent.params(this.getShareLink(option), this.thingData.title));
+
+      this.openWebIntent(shareUrl, option);
+    },
+
+    /*
+      Mastodon has no central site to share through: each person is on their
+      own server. Ask for it once and remember it in this browser.
+     */
+    shareToMastodon: function() {
+      var instance = null;
+      try {
+        instance = window.localStorage.getItem(MASTODON_INSTANCE_KEY);
+      } catch (e) {}
+
+      instance = window.prompt(
+        r._('Your Mastodon server (for example mastodon.social):'),
+        instance || '');
+      if (!instance) {
+        return;
       }
-      var shareUrl = r.utils.replaceUrlParams('https://www.facebook.com/dialog/feed', shareParams);
+      instance = instance.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}(:\d+)?$/i.test(instance)) {
+        window.alert(r._('That doesn\'t look like a server name.'));
+        return;
+      }
+      try {
+        window.localStorage.setItem(MASTODON_INSTANCE_KEY, instance);
+      } catch (e) {}
 
-      this.openWebIntent(shareUrl, 'facebook');
+      var text = this.thingData.title + ' ' + this.getShareLink('mastodon');
+      var shareUrl = r.utils.replaceUrlParams(
+        'https://' + instance + '/share', { text: text });
+      this.openWebIntent(shareUrl, 'mastodon');
     },
 
-    shareToThreads: function() {
-      var redditUrl = this.getShareLink('threads');
-      var text = this.thingData.title + ' ' + redditUrl;
-      var shareParams = {
-        text: text,
+    /* The device's own share sheet (phones, and some desktop browsers). */
+    shareToNative: function() {
+      var shareData = {
+        title: this.thingData.title,
+        url: this.getShareLink('native'),
       };
-      var shareUrl = r.utils.replaceUrlParams('https://www.threads.net/intent/post', shareParams);
-
-      this.openWebIntent(shareUrl, 'threads');
+      navigator.share(shareData).then(function() {
+        this.trigger('web-intent', 'native');
+      }.bind(this), function() {
+        // cancelled, or not allowed: nothing to do
+      });
     },
 
-    shareToTumblr: function() {
-      var redditUrl = this.getShareLink('tumblr');
-      var title = this.thingData.title;
-      var shareParams = {
-        canonicalUrl: redditUrl,
-        posttype: 'link',
-        title: title,
-      };
-      var shareUrl = r.utils.replaceUrlParams('https://www.tumblr.com/widgets/share/tool', shareParams);
+    copyLink: function() {
+      var link = this.refs.$postSharingLinkInput.val();
+      var $button = this.refs.$copyButton;
+      var done = function() {
+        $button.text(r._('copied!'));
+        setTimeout(function() { $button.text(r._('copy')); }, 1500);
+        this.trigger('link', 'copy');
+      }.bind(this);
 
-      this.openWebIntent(shareUrl, 'tumblr');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done, function() {
+          this.selectLinkInputText();
+        }.bind(this));
+      } else {
+        this.selectLinkInputText();
+        try {
+          if (document.execCommand('copy')) {
+            done();
+          }
+        } catch (e) {}
+      }
     },
 
     openWebIntent: function(shareUrl, windowTitle) {
@@ -424,20 +507,33 @@
         }
       }
 
-      var shareOptions = [
-        {
-          name: 'facebook',
-          tooltip: r._('Share to %(name)s').format({name: 'Facebook'}),
-        },
-        {
-          name: 'threads',
-          tooltip: r._('Share to %(name)s').format({name: 'Threads'}),
-        },
-        {
-          name: 'tumblr',
-          tooltip: r._('Share to %(name)s').format({name: 'Tumblr'}),
-        },
-      ];
+      var shareTo = function(name, label) {
+        return {
+          name: name,
+          tooltip: r._('Share to %(name)s').format({name: label}),
+        };
+      };
+
+      var shareOptions = [];
+
+      // the device's share sheet first where there is one (mostly phones):
+      // it reaches every app the person has installed
+      if (navigator.share) {
+        shareOptions.push({
+          name: 'native',
+          tooltip: r._('More ways to share'),
+        });
+      }
+
+      shareOptions.push(
+        shareTo('bluesky', WEB_INTENTS.bluesky.name),
+        shareTo('mastodon', 'Mastodon'),
+        shareTo('threads', WEB_INTENTS.threads.name),
+        shareTo('facebook', WEB_INTENTS.facebook.name),
+        shareTo('x', WEB_INTENTS.x.name),
+        shareTo('linkedin', WEB_INTENTS.linkedin.name),
+        shareTo('tumblr', WEB_INTENTS.tumblr.name)
+      );
 
       if (r.config.logged && !r.config.user_in_timeout
           && r.config.email_verified) {

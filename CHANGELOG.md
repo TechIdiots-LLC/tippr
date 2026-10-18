@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Sharing**: the share menu adds Bluesky, Mastodon (asks for your server once and remembers it), X and LinkedIn,
+  plus the device's own share sheet where the browser has one, and a copy button for the link. Facebook now uses its
+  plain share link, which needs no Facebook app (the old dialog failed without `facebook_app_id`), and Threads uses
+  threads.com.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
