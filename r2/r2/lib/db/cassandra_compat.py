@@ -263,7 +263,8 @@ class ColumnFamily:
     def multiget(self, keys: Iterable[str], columns: Optional[Iterable[str]] = None,
                  column_count: Optional[int] = None, column_start: Optional[str] = None,
                  column_finish: Optional[str] = None, column_reversed: bool = False,
-                 include_timestamp: bool = False):
+                 include_timestamp: bool = False,
+                 read_consistency_level=None):
         keys = list(keys)
         if not keys:
             return {}
@@ -326,7 +327,8 @@ class ColumnFamily:
                 ret[result_key] = self._strip_timestamps(od)
         return ret
 
-    def get_range(self, start: Optional[str] = None, row_count: Optional[int] = None):
+    def get_range(self, start: Optional[str] = None, row_count: Optional[int] = None,
+                  read_consistency_level=None):
         """Return an iterator of (key, columns) over rows in the table.
 
         This mirrors pycassa's `get_range` minimal usage in the legacy code.
@@ -355,7 +357,8 @@ class ColumnFamily:
     def get(self, key: str, columns: Optional[Iterable[str]] = None,
             column_start: Optional[str] = None, column_finish: Optional[str] = None,
             column_reversed: bool = False, column_count: Optional[int] = None,
-            include_timestamp: bool = False):
+            include_timestamp: bool = False,
+                 read_consistency_level=None):
         """Fetch a single row and optionally filter/slice its columns.
 
         This mirrors the behaviour implemented in `multiget` so callers
@@ -414,7 +417,10 @@ class ColumnFamily:
 
         return self._strip_timestamps(od)
 
-    def insert(self, key: str, columns: Dict[str, object], ttl: Optional[int] = None):
+    def insert(self, key: str, columns: Dict[str, object], ttl: Optional[int] = None,
+               write_consistency_level=None):
+        # write_consistency_level: accepted for pycassa's callers; the session's
+        # consistency level applies.
         # Coerce key to str — UuidThing._id is a UUID object but the table key column is text.
         key = str(key)
         # serialize values and attach a write timestamp (microseconds)
@@ -434,10 +440,12 @@ class ColumnFamily:
             raise
 
     def remove(self, key: str, columns: Optional[Iterable[str]] = None,
-               timestamp: Optional[int] = None):
+               timestamp: Optional[int] = None, write_consistency_level=None):
         """Delete a row, or some of its columns. With timestamp (pycassa's
         row delete "as of" a time), delete the columns written at or before
         that write timestamp, using the timestamps stored with each value.
+        write_consistency_level is accepted for pycassa's callers (deleting
+        a Thing, such as a multivault, passes it) and otherwise ignored.
         """
         key = _stored_key(key)
         if timestamp is not None and columns is None:
@@ -462,7 +470,8 @@ class ColumnFamily:
     def xget(self, key: str, column_start: Optional[str] = None,
              column_finish: Optional[str] = None,
              buffer_size: Optional[int] = None,
-             include_timestamp: bool = False):
+             include_timestamp: bool = False,
+                 read_consistency_level=None):
         """Iterate over a row's (column, value) pairs, like pycassa's xget.
 
         Yields nothing if the row does not exist. As in pycassa,
@@ -479,11 +488,15 @@ class ColumnFamily:
         yield from od.items()
 
     # convenience wrapper for older multiget usages with columns kw
-    def multiget_slice(self, keys, columns=None):
+    def multiget_slice(self, keys, columns=None, read_consistency_level=None):
         return self.multiget(keys, columns=columns)
 
-    def get_count(self, key: str):
-        od = self.get(key)
+    def get_count(self, key: str, read_consistency_level=None):
+        # like pycassa: a row that doesn't exist has no columns
+        try:
+            od = self.get(key)
+        except NotFoundException:
+            return 0
         return len(od)
 
     def batch(self, write_consistency_level=None):

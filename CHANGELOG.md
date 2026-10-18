@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Support queue** (`/admin/support`, first stage, admins only): "message the admins" now goes to a private admin
+  vault (`admin_message_acct = /v/siteadmins`, created by the installer), and each conversation becomes a ticket with
+  a category (from the contact page's `[privacy]`, `[appeal]`, ... subject tags), a status (new, open, waiting on the
+  member, closed), an assignee and a history. Staff reply from the queue as the admin team; members see
+  /v/siteadmins, not the staff member's name. Members in timeout can reach the admins again (that only ever worked
+  when `admin_message_acct` was a vault).
 - **Gold is ad-free by default**: AdSense, promoted posts and the sponsor box are hidden for gold members unless they
   untick "hide ads" in their gold options (it used to be off until they found it).
 - **Hide multivaults**: a "hide" link on the side panel's multivaults section, and a preference to bring it back.
@@ -10,6 +16,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Deleting a multivault** did nothing (the delete failed on the Cassandra compatibility layer, which didn't accept
+  pycassa's consistency level arguments). The same affected promoted-post metrics and the wiki's image count, which
+  also failed for pages without images.
 - **Gold support** messages (expiry notices, payment and subscription problems, gift code errors) named
   `goldsupport_email`, empty by default, so they read "write to us at ." They link to a new gold section of the
   contact page instead, which offers a message to the admins and shows the address when one is set.
