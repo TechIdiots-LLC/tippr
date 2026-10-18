@@ -47,10 +47,19 @@ if [ -f "$PENDING" ]; then
     if [ ! -s /etc/machine-id ]; then
         systemd-machine-id-setup
     fi
+    # Start ZooKeeper empty: anything in it came from the template build,
+    # ACL'd to that build's password (a new site has nothing there to keep)
+    systemctl stop zookeeper || true
+    rm -rf /var/lib/zookeeper/version-2
+    systemctl start zookeeper
+    for i in $(seq 60); do
+        nc -z 127.0.0.1 2181 2>/dev/null && break
+        sleep 1
+    done
     # The template has no /etc/tippr/secrets.env, so the installer makes new
     # passwords and secrets for this container. A retry after a failed first
-    # boot keeps the ones that attempt made: ZooKeeper's nodes, PostgreSQL
-    # and RabbitMQ already use them.
+    # boot keeps the ones that attempt made, which PostgreSQL and RabbitMQ
+    # already use.
     export TIPPR_ADMIN_PASSWORD_RESET=1
 fi
 
