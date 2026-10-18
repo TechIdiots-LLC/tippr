@@ -125,6 +125,82 @@ passwords are kept:
 pct exec 210 -- /usr/local/sbin/tippr-firstboot new.example.com
 ```
 
+## Upgrading to a new release
+
+An existing container can be upgraded in place. The site's data isn't in
+the source tree: posts and accounts are in PostgreSQL and Cassandra, site
+settings in ZooKeeper, uploads in `/srv/www/media`, passwords and secrets
+in `/etc/tippr/secrets.env`. So an upgrade replaces the code with the new
+release's installer tarball and re-runs the installer. A re-run keeps all
+of those; ZooKeeper is only reset on the very first boot. Settings in
+`firstboot.env` (such as `TIPPR_EXTERNAL_PROXY`) still apply.
+
+1. **On the node, save a copy first:**
+
+   ```bash
+   pct snapshot 210 before-upgrade
+   ```
+
+   If the container has a mount point on storage that can't snapshot,
+   back up the root disk instead (mount points with `backup=0` are left
+   out):
+
+   ```bash
+   vzdump 210 --mode snapshot --storage local
+   ```
+
+2. **Open a login shell in the container.** Type these one at a time and
+   wait for each prompt. Pasted together, the second line is lost while
+   the shell starts, and `pct enter` alone has a PATH without
+   `/usr/local/bin`:
+
+   ```bash
+   pct enter 210
+   su -
+   ```
+
+3. **Replace the code and re-run the installer** (set `VER` to the new
+   release):
+
+   ```bash
+   VER=0.4.0
+   cd /root
+   wget -q https://github.com/TechIdiots-LLC/tippr/releases/download/v$VER/tippr-$VER-installer.tar.gz \
+           https://github.com/TechIdiots-LLC/tippr/releases/download/v$VER/SHA256SUMS
+   sha256sum --ignore-missing -c SHA256SUMS       # must say OK
+
+   systemctl stop tippr.target
+   mv /home/tippr/src /home/tippr/src.old          # kept for rolling back
+   install -d -o tippr -g tippr /home/tippr/src
+   tar -xzf tippr-$VER-installer.tar.gz -C /home/tippr/src
+   chown -R tippr:tippr /home/tippr/src
+
+   install -m 0755 /home/tippr/src/tippr/proxmox/tippr-firstboot /usr/local/sbin/tippr-firstboot
+   /usr/local/sbin/tippr-firstboot DOMAIN
+   ```
+
+   This takes 5–10 minutes and ends with `tippr-firstboot: done`.
+
+4. **Check it:**
+
+   ```bash
+   systemctl is-active tippr-paster tippr-websockets nginx
+   curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: DOMAIN' http://127.0.0.1/   # 200
+   ```
+
+   Then log in and look around. Once you're happy, remove the old code
+   (`rm -rf /home/tippr/src.old` in the container) and the snapshot
+   (`pct delsnapshot 210 before-upgrade` on the node).
+
+**Rolling back:** `pct rollback 210 before-upgrade` (or restore the
+vzdump backup) returns the container, data included, to the moment of the
+copy. To go back to the old code only, keeping data written since, put
+`/home/tippr/src.old` back in place of `/home/tippr/src` and run
+`/usr/local/sbin/tippr-firstboot DOMAIN` again.
+
+Read the release's CHANGELOG entry before upgrading: anything that needs
+doing by hand is noted there.
+
 ## Moving to more containers
 
 A container made from the template holds everything, which suits most
