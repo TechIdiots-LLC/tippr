@@ -67,6 +67,10 @@ def make_map(config):
     mc('/admin/', controller='awards')
 
     mc('/robots.txt', controller='robots', action='robots')
+    # /sitemap.xml and /sitemaps/<part>.xml (the extension is stripped
+    # before routing)
+    mc('/sitemap', controller='robots', action='sitemap')
+    mc('/sitemaps/:name', controller='robots', action='sitemap')
     mc('/ads.txt', controller='robots', action='ads')
     # another tippr server copying this one's backups (r2.lib.backups)
     mc('/backup_transfer/:action', controller='backuptransfer')
@@ -147,6 +151,7 @@ def make_map(config):
     mc('/admin/site', controller='admintool', action='site')
     mc('/admin/antispam', controller='admintool', action='antispam')
     mc('/admin/site/logo', controller='admintool', action='site_logo')
+    mc('/admin/site/image', controller='admintool', action='site_image')
     mc('/admin/email', controller='admintool', action='email')
     mc('/admin/ads', controller='admintool', action='ads')
     mc('/admin/backups', controller='admintool', action='backups')

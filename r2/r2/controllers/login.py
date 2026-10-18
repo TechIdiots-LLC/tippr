@@ -148,7 +148,12 @@ def handle_register(
         _event(error='SPONSOR_NO_EMAIL')
 
     else:
-        from r2.lib import antispam
+        from r2.lib import antispam, site_info
+        if not site_info.signups_open():
+            c.errors.add(errors.SIGNUPS_CLOSED, field="user")
+            form.has_errors("user", errors.SIGNUPS_CLOSED)
+            _event(error='SIGNUPS_CLOSED')
+            return
         allowed, reason = antispam.check_signup(name, email)
         if not allowed:
             c.errors.add(errors.SPAM_SIGNUP, field="user")

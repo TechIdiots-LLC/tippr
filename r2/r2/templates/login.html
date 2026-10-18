@@ -265,11 +265,22 @@
 
 
 <%def name="login_panel(lf, user_reg = '', user_login = '', dest='', registration_info=None)">
-  <% autofocus = (not thing.is_popup) %>
+  <%
+    from r2.lib import site_info
+    autofocus = (not thing.is_popup)
+  %>
   <div class="split-panel">
     <div class="split-panel-section split-panel-divider">
       <h4 class="modal-title">${_("create a new account")}</h4>
-      ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
+      %if site_info.signups_open():
+        ${lf(register=True, user=user_reg, dest=dest, autofocus=autofocus)}
+      %else:
+        ## sign-ups closed on /admin/site
+        <p class="signups-closed">${_("This site isn't taking new accounts right now.")}</p>
+        %if getattr(g, "contact_email", None):
+          <p class="signups-closed">${_("To ask about an account, write to %(address)s.") % dict(address=g.contact_email)}</p>
+        %endif
+      %endif
     </div>
     <div class="split-panel-section">
       <h4 class="modal-title">${_("log in")}</h4>

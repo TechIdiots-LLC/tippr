@@ -312,10 +312,10 @@ class VaultListingController(ListingController):
         # This doesn't handle `max_length`s shorter than `vault_fragment`.
         # Unknown what the behavior should be, but realistically it shouldn't
         # happen, since this is scoped pretty small.
-        max_title_length = max_length - len(" â€¢ %s" % vault_fragment)
+        max_title_length = max_length - len(" • %s" % vault_fragment)
         title = trunc_string(title, max_title_length)
 
-        return "{} â€¢ {}".format(_force_unicode(title), vault_fragment)
+        return "{} • {}".format(_force_unicode(title), vault_fragment)
 
     def canonical_link(self):
         """Return the canonical link of the vault.
@@ -352,11 +352,13 @@ class VaultListingController(ListingController):
             if not c.user_is_loggedin:
                 # This data is only for scrapers, which shouldn't be logged in.
                 
+                from r2.lib import site_info
                 render_params.update({
                     "og_data": {
-                        "site_name": "tippr",
+                        "site_name": g.site_name,
                         "title": self._build_og_title(),
-                        "image": static('icon.png', absolute=True),
+                        "image": (site_info.image_url("share_image") or
+                                  static('icon.png', absolute=True)),
                         "description": self._build_og_description(),
                     },
                 })

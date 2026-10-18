@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **More on /admin/site**: the front page's title and a title format for every other page (`{title} | {site}`),
+  Google and Bing verification tags, a favicon, a share image for link previews of the front page and vaults, a
+  dismissible announcement banner, and a switch to close sign-ups. All apply right away, without editing the ini.
+- **Sitemaps**: `/sitemap.xml` is served by the site itself (public vaults and the newest posts, cached for an hour)
+  and listed in robots.txt. reddit's version only uploaded to S3.
 - **Sharing**: the share menu adds Bluesky, Mastodon (asks for your server once and remembers it), X and LinkedIn,
   plus the device's own share sheet where the browser has one, and a copy button for the link. Facebook now uses its
   plain share link, which needs no Facebook app (the old dialog failed without `facebook_app_id`), and Threads uses
@@ -10,6 +15,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Link previews** said "tippr" whatever the site's name, and vault and post previews showed `â€¢` instead of `•`.
+- **robots.txt** still used reddit's `/r/` paths, and its `Disallow: /*.xml` would have hidden the sitemap.
 
 ## 0.4.0
 ### ✨ Features and improvements

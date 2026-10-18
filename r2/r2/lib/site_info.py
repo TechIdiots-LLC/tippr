@@ -22,16 +22,19 @@
 # Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""The site's name, description, contact address and logo (/admin/site).
+"""The site's identity and front-of-house settings (/admin/site): name,
+description, contact address, logo, favicon and share image, page titles,
+search engine verification, an announcement banner and whether sign-ups are
+open.
 
-They start as ini settings. Values saved on /admin/site (site settings
-group "site", in ZooKeeper) are set on g in every web process as soon as
-they change, so everything reading g.site_name and the like sees them
-without a restart; clearing one goes back to the ini value. They travel
+They start as ini settings (or empty). Values saved on /admin/site (site
+settings group "site", in ZooKeeper) are set on g in every web process as
+soon as they change, so everything reading g.site_name and the like sees
+them without a restart; clearing one goes back to the ini value. They travel
 with backups, since they're in ZooKeeper.
 
-The domain isn't here: it is also in the nginx and haproxy configs, the TLS
-certificate and cookies, so it's changed by re-running the installer.
+The domain isn't here: it is also in the nginx config, the TLS certificate
+and cookies, so it's changed by re-running the installer.
 """
 
 import hashlib
@@ -52,7 +55,30 @@ SETTINGS = {
     "short_description": 200,
     "contact_email": 200,
     "site_logo": 500,
+    # page titles: the front page's own, and a format for every other page
+    # ("{title}" is the page's title, "{site}" the site name)
+    "front_page_title": 120,
+    "title_format": 80,
+    # meta tags search engines ask for to prove you own the site
+    "google_site_verification": 120,
+    "bing_site_verification": 120,
+    # images (media store URLs)
+    "site_favicon": 500,
+    "share_image": 500,
+    # a banner at the top of every page, with an optional link
+    "announcement": 300,
+    "announcement_link": 500,
+    # "closed" to stop new accounts; anything else is open
+    "signups": 10,
 }
+
+# the settings set from the /admin/site text form (the others have their
+# own controls: image uploads, the sign-ups switch)
+TEXT_SETTINGS = (
+    "site_name", "short_description", "contact_email", "front_page_title",
+    "title_format", "google_site_verification", "bing_site_verification",
+    "announcement", "announcement_link",
+)
 
 _lock = threading.Lock()
 _installed = False
@@ -82,15 +108,30 @@ def _apply(target, data):
             delattr(target, name)
 
 
-# formats accepted for the logo (no SVG: it can carry scripts)
-LOGO_FORMATS = {"PNG": ".png", "JPEG": ".jpg", "GIF": ".gif", "WEBP": ".webp"}
-LOGO_MAX_PIXELS = 2000
+# Uploaded images: setting -> (file name prefix, accepted formats, largest
+# side in pixels). No SVG anywhere: it can carry scripts.
+IMAGE_EXTENSIONS = {"PNG": ".png", "JPEG": ".jpg", "GIF": ".gif",
+                    "WEBP": ".webp", "ICO": ".ico"}
+IMAGES = {
+    "site_logo": ("logo", ("PNG", "JPEG", "GIF", "WEBP"), 2000),
+    "site_favicon": ("favicon", ("PNG", "ICO"), 512),
+    "share_image": ("share", ("PNG", "JPEG", "WEBP"), 4000),
+}
+IMAGE_FORMAT_NAMES = {
+    "site_logo": "PNG, JPEG, GIF or WebP",
+    "site_favicon": "PNG or ICO",
+    "share_image": "PNG, JPEG or WebP",
+}
+# kept for the logo upload's callers
+LOGO_FORMATS = {f: IMAGE_EXTENSIONS[f] for f in IMAGES["site_logo"][1]}
+LOGO_MAX_PIXELS = IMAGES["site_logo"][2]
 
 
-def store_logo(data):
-    """Check an uploaded logo and put it in the media store, as uploaded
-    (keeping transparency and animation). Returns (url, None) or
-    (None, error)."""
+def store_image(setting, data):
+    """Check an uploaded image for one of IMAGES and put it in the media
+    store, as uploaded (keeping transparency and animation). Returns
+    (url, None) or (None, error)."""
+    prefix, formats, max_pixels = IMAGES[setting]
     if isinstance(data, str):
         data = data.encode("latin-1")
     try:
@@ -98,18 +139,61 @@ def store_logo(data):
         image.verify()
     except Exception:
         return None, _("That isn't an image tippr can read.")
-    extension = LOGO_FORMATS.get(image.format)
-    if not extension:
-        return None, _("Use a PNG, JPEG, GIF or WebP image.")
-    if max(image.size) > LOGO_MAX_PIXELS:
+    if image.format not in formats:
+        return None, _("Use a %(formats)s image.") % {
+            "formats": IMAGE_FORMAT_NAMES[setting]}
+    if max(image.size) > max_pixels:
         return None, _("Use an image at most %(n)d pixels wide and high.") % {
-            "n": LOGO_MAX_PIXELS}
-    name = "logo-" + hashlib.sha256(data).hexdigest()[:20] + extension
+            "n": max_pixels}
+    extension = IMAGE_EXTENSIONS[image.format]
+    name = prefix + "-" + hashlib.sha256(data).hexdigest()[:20] + extension
     try:
         return g.media_provider.put("logos", name, data), None
     except Exception:
-        g.log.exception("site_info: couldn't store the logo")
-        return None, _("The logo couldn't be saved; see the error log.")
+        g.log.exception("site_info: couldn't store the %s", setting)
+        return None, _("The image couldn't be saved; see the error log.")
+
+
+def store_logo(data):
+    return store_image("site_logo", data)
+
+
+def image_url(setting):
+    """A saved image's address over https (media URLs are stored as http),
+    or None when there is none."""
+    from r2.lib.template_helpers import make_url_https
+    url = getattr(g, setting, None)
+    return make_url_https(url) if url else None
+
+
+def title(page_title, front_page=False):
+    """A page's <title>. The front page gets its own title when one is set
+    (or keeps the one it has); other pages go through the title format,
+    unless their title already names the site ("tippr: page not found")."""
+    if front_page:
+        return getattr(g, "front_page_title", None) or page_title
+    fmt = getattr(g, "title_format", None)
+    if not page_title or not fmt or "{title}" not in fmt:
+        return page_title
+    site_name = (g.site_name or "").strip()
+    if site_name and site_name.lower() in page_title.lower():
+        return page_title
+    return fmt.replace("{title}", page_title).replace("{site}", site_name)
+
+
+def signups_open():
+    return getattr(g, "signups", None) != "closed"
+
+
+def announcement():
+    """(text, link, id) for the banner, or None. The id changes with the
+    text, so a banner someone dismissed comes back when it's changed."""
+    text = getattr(g, "announcement", None)
+    if not text:
+        return None
+    link = getattr(g, "announcement_link", None) or ""
+    ident = hashlib.sha256((text + "\n" + link).encode("utf-8")).hexdigest()[:12]
+    return text, link, ident
 
 
 def saved():
@@ -123,11 +207,8 @@ def current():
 
 
 def logo_url():
-    """The saved logo's address over https (media URLs are stored as
-    http), or None for the default logo."""
-    from r2.lib.template_helpers import make_url_https
-    logo = getattr(g, "site_logo", None)
-    return make_url_https(logo) if logo else None
+    """The saved logo's address over https, or None for the default logo."""
+    return image_url("site_logo")
 
 
 def ini_values():

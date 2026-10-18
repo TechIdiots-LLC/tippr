@@ -493,7 +493,7 @@ class Globals:
                     # with a compatible behaviour for our needs
                     self.baseplate.configure_context()
                 except TypeError:
-                    # signature mismatch â€” ignore and continue
+                    # signature mismatch — ignore and continue
                     pass
         except Exception:
             # Don't let logging configuration failures stop app startup;
@@ -521,7 +521,7 @@ class Globals:
                         sample_rate=self.config.get("tracing_sample_rate"),
                     )
                 except TypeError:
-                    # signature mismatch â€” ignore and continue
+                    # signature mismatch — ignore and continue
                     pass
             else:
                 # No helper available; best-effort: if baseplate exposes

@@ -47,11 +47,15 @@
 <%inherit file="base.html"/>
 
 <%def name="Title()">
-  %if thing.title:
-    ${thing.title}
-  %else:
-    ${parent.Title()}
-  %endif
+  ## the front page's own title and the title format (/admin/site)
+  ## (capture() gives HTML-escaped text: unescape it so it's escaped once)
+  <%
+    from html import unescape
+    from r2.lib import site_info
+    page_title = thing.title or unescape(capture(parent.Title).strip())
+    front_page = c.default_vault and request.path in ("/", "")
+  %>
+  ${site_info.title(page_title, front_page=front_page)}
 </%def>
 
 <%def name="global_stylesheets()">
@@ -84,15 +88,47 @@
     <link rel="shorturl" href="https://${thing.shortlink}"/>
   %endif
 
+  <% from r2.lib import site_info %>
   %if hasattr(thing, "og_data"):
     %for (og_property, og_value) in thing.og_data.items():
       <meta property="og:${og_property}" content="${og_value}">
     %endfor
+  %else:
+    ## pages without their own (the front page, vaults, ...): what link
+    ## previews on social media and in chat apps show
+    <%
+      share_image = site_info.image_url("share_image")
+      from html import unescape
+      og_title = unescape(capture(self.Title).strip())
+      og_description = getattr(thing, 'short_description', None) or g.short_description
+    %>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="${g.site_name}">
+    <meta property="og:title" content="${og_title}">
+    %if og_description:
+      <meta property="og:description" content="${og_description}">
+    %endif
+    <meta property="og:url" content="${thing.canonical_link}">
+    <meta property="og:image" content="${share_image or static('icon.png', absolute=True)}">
+    <meta name="twitter:card" content="${'summary_large_image' if share_image else 'summary'}">
   %endif
 
-  <link rel='icon' href="${static('icon.png')}" sizes="256x256" type="image/png" />
-  <link rel='shortcut icon' href="${static('favicon.ico')}" type="image/x-icon" />
-  <link rel='apple-touch-icon-precomposed' href="${static('icon-touch.png')}" />
+  %if getattr(g, "google_site_verification", None):
+    <meta name="google-site-verification" content="${g.google_site_verification}">
+  %endif
+  %if getattr(g, "bing_site_verification", None):
+    <meta name="msvalidate.01" content="${g.bing_site_verification}">
+  %endif
+
+  <% favicon = site_info.image_url("site_favicon") %>
+  %if favicon:
+    <link rel='icon' href="${favicon}" />
+    <link rel='apple-touch-icon' href="${favicon}" />
+  %else:
+    <link rel='icon' href="${static('icon.png')}" sizes="256x256" type="image/png" />
+    <link rel='shortcut icon' href="${static('favicon.ico')}" type="image/x-icon" />
+    <link rel='apple-touch-icon-precomposed' href="${static('icon-touch.png')}" />
+  %endif
   %if thing.extension_handling:
     <%
        rss = add_vault(join_urls(request.path,'.rss'))
@@ -142,6 +178,7 @@
   %if thing.header:
     <%include file="adminbar.html"/>
     <%include file="tipprheader.html"/>
+    ${site_announcement()}
   %endif
 
   %if thing.show_sidebar:
@@ -222,4 +259,40 @@
 
 <%def name="sidebar(content=None)">
   ${content}
+</%def>
+
+## the site-wide banner from /admin/site (r2.lib.site_info.announcement);
+## closing it is remembered in this browser until the text changes
+<%def name="site_announcement()">
+  <%
+    from r2.lib import site_info
+    banner = site_info.announcement()
+  %>
+  %if banner:
+    <% text, link, ident = banner %>
+    <div class="site-announcement" id="site-announcement" data-id="${ident}">
+      %if link:
+        <a class="site-announcement-text" href="${link}">${text}</a>
+      %else:
+        <span class="site-announcement-text">${text}</span>
+      %endif
+      <button type="button" class="site-announcement-close"
+              aria-label="${_('close')}" title="${_('close')}">&times;</button>
+    </div>
+    <script>
+      (function() {
+        var el = document.getElementById('site-announcement');
+        var key = 'site-announcement-closed';
+        try {
+          if (window.localStorage.getItem(key) === el.getAttribute('data-id')) {
+            el.style.display = 'none';
+          }
+        } catch (e) {}
+        el.querySelector('.site-announcement-close').onclick = function() {
+          el.style.display = 'none';
+          try { window.localStorage.setItem(key, el.getAttribute('data-id')); } catch (e) {}
+        };
+      })();
+    </script>
+  %endif
 </%def>

@@ -157,7 +157,14 @@ class ApiminimalController(MinimalController):
 
         iden = get_iden()
         jquery("body").captcha(iden)
-        form._send_data(iden = iden) 
+        form._send_data(iden = iden)
+
+
+def site_info_text_lengths():
+    """/admin/site's text settings and their maximum lengths."""
+    from r2.lib import site_info
+    return {name: site_info.SETTINGS[name]
+            for name in site_info.TEXT_SETTINGS}
 
 
 class ApiController(TipprController):
@@ -4692,30 +4699,39 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
-        site_name=VLength("site_name", max_length=40, empty_error=None),
-        short_description=VLength("short_description", max_length=200,
-                                  empty_error=None),
-        contact_email=VLength("contact_email", max_length=200,
-                              empty_error=None),
+        signups=VOneOf("signups", ("open", "closed")),
+        **{name: VLength(name, max_length=length, empty_error=None)
+           for name, length in site_info_text_lengths().items()}
     )
-    def POST_site_settings(self, form, jquery, site_name, short_description,
-                           contact_email):
-        """Save the site's name, description and contact address
-        (/admin/site); blank values go back to the ini."""
+    def POST_site_settings(self, form, jquery, signups, **values):
+        """Save the site settings on /admin/site; blank values go back to
+        the ini (or to nothing)."""
         from r2.lib import site_info
-        if form.has_errors(("site_name", "short_description",
-                            "contact_email"), errors.TOO_LONG):
+        if form.has_errors(tuple(values), errors.TOO_LONG):
             return
-        contact_email = (contact_email or "").strip()
-        if contact_email and not ValidEmails.email_re.match(contact_email):
+        values = {name: (value or "").strip() for name, value in values.items()}
+        if (values["contact_email"] and
+                not ValidEmails.email_re.match(values["contact_email"])):
             c.errors.add(errors.BAD_EMAIL, field="contact_email")
             form.has_errors("contact_email", errors.BAD_EMAIL)
             return
-        site_info.save({
-            "site_name": site_name,
-            "short_description": short_description,
-            "contact_email": contact_email,
-        })
+        if values["title_format"] and "{title}" not in values["title_format"]:
+            c.errors.add(errors.BAD_TITLE_FORMAT, field="title_format")
+            form.has_errors("title_format", errors.BAD_TITLE_FORMAT)
+            return
+        link = values["announcement_link"]
+        if link and not re.match(r"^(https?://|/)", link):
+            c.errors.add(errors.BAD_URL, field="announcement_link")
+            form.has_errors("announcement_link", errors.BAD_URL)
+            return
+        # verification codes: accept the whole <meta> tag Google or Bing
+        # hands out, and keep just its content
+        for name in ("google_site_verification", "bing_site_verification"):
+            match = re.search(r'content\s*=\s*["\']([^"\']+)["\']', values[name])
+            if match:
+                values[name] = match.group(1)
+        values["signups"] = "closed" if signups == "closed" else ""
+        site_info.save(values)
         form.set_text(".status", _("saved"))
 
     @validatedForm(

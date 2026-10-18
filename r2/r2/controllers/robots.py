@@ -69,6 +69,19 @@ class RobotsController(MinimalController):
         response.content_type = "text/plain"
         return ad_settings.ads_txt()
 
+    def GET_sitemap(self, name="index"):
+        """/sitemap.xml and /sitemaps/<part>.xml (r2.lib.sitemaps.live). The
+        middleware strips the extension, so check it here."""
+        from r2.lib.sitemaps import live
+        if request.environ.get('extension', None) != 'xml':
+            abort(404)
+        if name != "index" and name not in live.PARTS:
+            abort(404)
+        if not self.on_crawlable_domain():
+            abort(404)
+        response.content_type = "application/xml"
+        return live.sitemap(name)
+
     def GET_crossdomain(self):
         # Our middleware is weird and won't let us add a route for just
         # '/crossdomain.xml'. Just 404 for other extensions.

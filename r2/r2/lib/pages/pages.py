@@ -212,7 +212,8 @@ class Robots(Templated):
 
     def __init__(self, **context):
         Templated.__init__(self, **context)
-        self.Vault_sitemap = g.sitemap_vault_static_url
+        # served by the site itself (r2.lib.sitemaps.live)
+        self.Vault_sitemap = g.https_endpoint.rstrip("/") + "/sitemap.xml"
 
 class CrossDomain(Templated):
     pass
@@ -1741,8 +1742,8 @@ class LinkInfoPage(Tippr):
     def _build_og_data(self, link_title, meta_description):
         vault_fragment = "/v/" + c.site.name if not c.default_vault else get_domain()
         data = {
-            "site_name": "tippr",
-            "title": "{} â€¢ {}".format(link_title, vault_fragment),
+            "site_name": g.site_name,
+            "title": "{} • {}".format(link_title, vault_fragment),
             "description": self._build_og_description(meta_description),
             "ttl": "600",  # re-fetch frequently to update vote/comment count
         }
@@ -1803,9 +1804,13 @@ class LinkInfoPage(Tippr):
                 data['height'] = height
             return data
 
-        # Default to the tippr icon if we've got nothing else.  Force it to be
-        # absolute because not all scrapers handle relative protocols or paths
-        # well.
+        # Default to the share image set on /admin/site, or the tippr icon.
+        # Force it to be absolute because not all scrapers handle relative
+        # protocols or paths well.
+        from r2.lib import site_info
+        share_image = site_info.image_url("share_image")
+        if share_image:
+            return {'url': share_image}
         return {'url': static('icon.png', absolute=True)}
 
     def _build_og_description(self, meta_description):
@@ -3755,15 +3760,20 @@ class AdminErrors(Templated):
 
 
 class AdminSiteSettings(Templated):
-    """The admin interface for the site's name, description, contact
-    address and logo (r2.lib.site_info)."""
-    def __init__(self, logo_error=None):
+    """The admin interface for the site settings (r2.lib.site_info)."""
+    def __init__(self, image_errors=None, logo_error=None):
         from r2.lib import site_info
         self.saved = site_info.saved()
         self.current = site_info.current()
         self.ini = site_info.ini_values()
-        self.logo_url = site_info.logo_url()
-        self.logo_error = logo_error
+        self.image_urls = {name: site_info.image_url(name)
+                           for name in site_info.IMAGES}
+        self.image_formats = site_info.IMAGE_FORMAT_NAMES
+        self.logo_url = self.image_urls["site_logo"]
+        self.image_errors = dict(image_errors or {})
+        if logo_error:
+            self.image_errors["site_logo"] = logo_error
+        self.signups_open = site_info.signups_open()
         Templated.__init__(self)
 
 

@@ -242,7 +242,7 @@ class WikiPage(tdb_cassandra.Thing):
     def id_for(cls, vault, name):
         # Prefer the canonical _id36 for real vaults. Some special site
         # objects (e.g. `Frontpage` / `DefaultVault`) are not real vaults and
-        # won't have `_id36` set â€” fall back to using their `name` so global
+        # won't have `_id36` set — fall back to using their `name` so global
         # wiki pages (site-level policies, etc.) can be resolved.
         id_val = getattr(vault, '_id36', None)
         if not id_val:

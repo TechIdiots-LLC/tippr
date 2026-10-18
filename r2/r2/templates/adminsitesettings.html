@@ -25,63 +25,108 @@
 
 <%namespace file="utils.html" import="error_field"/>
 
-<%def name="text_row(name, label, help, size=40)">
+<%def name="text_row(name, label, help, size=40, placeholder=None)">
   <tr>
     <td>${label}</td>
     <td>
       <input type="text" name="${name}" value="${thing.saved.get(name, '')}"
-             size="${size}" placeholder="${thing.ini[name]}">
+             size="${size}" placeholder="${placeholder if placeholder is not None else thing.ini[name]}">
       ${error_field("TOO_LONG", name, "span")}
       ${error_field("BAD_EMAIL", name, "span")}
+      ${error_field("BAD_URL", name, "span")}
+      ${error_field("BAD_TITLE_FORMAT", name, "span")}
       <br><small>${help}</small>
     </td>
   </tr>
+</%def>
+
+<%def name="image_section(kind, title, help, none_text, preview_class)">
+  <h2>${title}</h2>
+  <p>
+    %if thing.image_urls[kind]:
+      <img class="${preview_class}" src="${thing.image_urls[kind]}" alt="${title}">
+    %else:
+      ${none_text}
+    %endif
+  </p>
+  <form action="/admin/site/image" method="post" enctype="multipart/form-data"
+        class="pretty-form medium-text">
+    <input type="hidden" name="uh" value="${c.modhash}">
+    <input type="hidden" name="kind" value="${kind}">
+    <input type="file" name="file">
+    <button class="btn" type="submit">${_("upload")}</button>
+    <br><small>${thing.image_formats[kind]}, ${_("up to 1 MB.")} ${help}</small>
+    %if thing.image_errors.get(kind):
+      <br><span class="error">${thing.image_errors[kind]}</span>
+    %endif
+  </form>
+  %if thing.saved.get(kind):
+    <form action="/admin/site/image" method="post" class="pretty-form">
+      <input type="hidden" name="uh" value="${c.modhash}">
+      <input type="hidden" name="kind" value="${kind}">
+      <input type="hidden" name="remove" value="1">
+      <button class="btn" type="submit">${_("use the default")}</button>
+    </form>
+  %endif
 </%def>
 
 <div class="admin-site">
 <h1>${_("site settings")}</h1>
 
 <p>
-  ${_("The site's name, description, contact address and logo. Saved values apply right away on every web process; leave a field blank to use the ini file's value (shown greyed out). They are kept with the site's other saved settings, so they move with backups.")}
+  ${_("Saved values apply right away on every web process; leave a field blank to use the ini file's value (shown greyed out) or nothing. They are kept with the site's other saved settings, so they move with backups.")}
 </p>
 
 <form id="site-settings" action="/api/site_settings" method="post"
       class="pretty-form medium-text"
       onsubmit="return post_form(this, 'site_settings');">
+  <h2>${_("the site")}</h2>
   <table class="lined-table borderless">
-    ${text_row("site_name", _("site name"), _("In page titles and emails."), 30)}
-    ${text_row("short_description", _("description"), _("The front page title's tagline, and the description search engines show."), 60)}
+    ${text_row("site_name", _("site name"), _("In page titles and emails, and what links shared elsewhere say they're from."), 30)}
+    ${text_row("short_description", _("description"), _("The description search engines show, and the front page title unless one is set below."), 60)}
     ${text_row("contact_email", _("contact address"), _("Shown on the contact page."), 40)}
   </table>
+
+  <h2>${_("page titles")}</h2>
+  <table class="lined-table borderless">
+    ${text_row("front_page_title", _("front page title"), _("The front page's title in the browser and in search results. Blank: the description above."), 60, placeholder=g.short_description)}
+    ${text_row("title_format", _("title format"), _("Wraps every other page's title. {title} is the page's own title and {site} the site name, e.g. \"{title} | {site}\". Blank: page titles as they are."), 40, placeholder="{title}")}
+  </table>
+
+  <h2>${_("search engines")}</h2>
+  <p><small>${_("Google Search Console and Bing Webmaster Tools ask you to add a meta tag to prove you own the site. Paste the code, or the whole tag. Submit https://%(domain)s/sitemap.xml there as the sitemap.") % dict(domain=g.domain)}</small></p>
+  <table class="lined-table borderless">
+    ${text_row("google_site_verification", _("Google verification"), _("The content of the google-site-verification tag."), 50, placeholder="")}
+    ${text_row("bing_site_verification", _("Bing verification"), _("The content of the msvalidate.01 tag."), 50, placeholder="")}
+  </table>
+
+  <h2>${_("announcement")}</h2>
+  <table class="lined-table borderless">
+    ${text_row("announcement", _("banner text"), _("Shown at the top of every page until someone closes it; it comes back for everyone when you change it. Blank: no banner."), 70, placeholder="")}
+    ${text_row("announcement_link", _("banner link"), _("Optional: where the banner leads, e.g. a post about the change (https://... or /v/...)."), 70, placeholder="")}
+  </table>
+
+  <h2>${_("new accounts")}</h2>
+  <table class="lined-table borderless">
+    <tr>
+      <td>${_("sign-ups")}</td>
+      <td>
+        <label><input type="radio" name="signups" value="open" ${'checked' if thing.signups_open else ''}> ${_("open")}</label>
+        <label><input type="radio" name="signups" value="closed" ${'' if thing.signups_open else 'checked'}> ${_("closed")}</label>
+        <br><small>${_("Closed: the sign-up form is replaced by a notice and new accounts are refused. Existing accounts can still log in.")}</small>
+      </td>
+    </tr>
+  </table>
+
   <button class="btn" type="submit">${_("save")}</button>
   <span class="status"></span>
 </form>
 
-<h2>${_("logo")}</h2>
-<p>
-  %if thing.current["site_logo"]:
-    <img class="site-logo-preview" src="${thing.logo_url}" alt="${_('current logo')}">
-  %else:
-    ${_("The site uses the default tippr logo.")}
-  %endif
-</p>
-<form action="/admin/site/logo" method="post" enctype="multipart/form-data"
-      class="pretty-form medium-text">
-  <input type="hidden" name="uh" value="${c.modhash}">
-  <input type="file" name="file" accept="image/png,image/jpeg,image/gif,image/webp">
-  <button class="btn" type="submit">${_("upload")}</button>
-  <br><small>${_("PNG, JPEG, GIF or WebP, up to 500 KB. Shown at most 48 pixels high in the header; a transparent background works best. Vaults with their own header image show that instead.")}</small>
-  %if thing.logo_error:
-    <br><span class="error">${thing.logo_error}</span>
-  %endif
-</form>
-%if thing.saved.get("site_logo"):
-  <form action="/admin/site/logo" method="post" class="pretty-form">
-    <input type="hidden" name="uh" value="${c.modhash}">
-    <input type="hidden" name="remove" value="1">
-    <button class="btn" type="submit">${_("use the default logo")}</button>
-  </form>
-%endif
+${image_section("site_logo", _("logo"), _("Shown at most 48 pixels high in the header; a transparent background works best. Vaults with their own header image show that instead."), _("The site uses the default tippr logo."), "site-logo-preview")}
+
+${image_section("site_favicon", _("favicon"), _("The icon in browser tabs and bookmarks. A square PNG of 192 or 512 pixels works everywhere."), _("The site uses the default tippr icon."), "site-favicon-preview")}
+
+${image_section("share_image", _("share image"), _("The picture shown when the front page or a vault is shared on social media or in chat apps (posts use their own image when they have one). 1200 by 630 pixels works best."), _("Shared links show the tippr icon."), "site-share-preview")}
 
 <p><a href="/admin/antispam">${_("Spam protection (captcha and CleanTalk)")}</a></p>
 
@@ -92,10 +137,10 @@
   <tr><td>${_("media")}</td><td><code>${g.media_domain}</code></td></tr>
 </table>
 <p>
-  ${_("The domain is also part of the web server and proxy configuration, the TLS certificate and login cookies, so it can't be changed here. To move the site to a new domain (for example after restoring a backup on a new server), point the new domain at the server and re-run the installer with it:")}
+  ${_("The domain is also part of the web server configuration, the TLS certificate and login cookies, so it can't be changed here. To move the site to a new domain (for example after restoring a backup on a new server), point the new domain at the server and re-run the installer with it:")}
 </p>
 <pre class="backup-log">sudo TIPPR_DOMAIN=new.example.com ./install-tippr.sh</pre>
 <p>
-  <small>${_("It keeps the data, passwords and secrets, and updates the config, nginx, haproxy and the certificate. Everyone has to log in again on the new domain.")}</small>
+  <small>${_("It keeps the data, passwords and secrets, and updates the config, nginx and the certificate. Everyone has to log in again on the new domain.")}</small>
 </p>
 </div>

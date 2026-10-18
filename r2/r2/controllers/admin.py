@@ -77,23 +77,31 @@ class AdminToolController(TipprController):
     @validate(
         VAdmin(),
         VModhash(),
-        file=VUploadLength("file", max_length=500 * 1024, empty_error=None),
+        file=VUploadLength("file", max_length=1024 * 1024, empty_error=None),
         remove=nop("remove"),
+        kind=nop("kind"),
     )
-    def POST_site_logo(self, file, remove):
-        """Upload the header logo, or go back to the default one."""
+    def POST_site_image(self, file, remove, kind):
+        """Upload the header logo, favicon or share image, or go back to
+        the default one."""
         from r2.lib import site_info
+        if kind not in site_info.IMAGES:
+            kind = "site_logo"
         if remove:
-            site_info.save({"site_logo": ""})
+            site_info.save({kind: ""})
             return self.redirect("/admin/site")
         if not file:
-            error = _("Choose an image of at most 500 KB.")
+            error = _("Choose an image of at most 1 MB.")
         else:
-            url, error = site_info.store_logo(file)
+            url, error = site_info.store_image(kind, file)
             if url:
-                site_info.save({"site_logo": url})
+                site_info.save({kind: url})
                 return self.redirect("/admin/site")
-        return AdminPage(content=AdminSiteSettings(logo_error=error)).render()
+        return AdminPage(content=AdminSiteSettings(
+            image_errors={kind: error})).render()
+
+    # the logo's upload address before favicons and share images
+    POST_site_logo = POST_site_image
 
     @validate(VAdmin())
     def GET_ads(self):

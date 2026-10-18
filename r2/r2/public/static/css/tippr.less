@@ -11549,3 +11549,32 @@ body:not(.loggedin) .report-button {
 .sitetable > .thing.link.stickied {
     border-color: @tp-border-accent;
 }
+
+// the site-wide banner (/admin/site)
+.site-announcement {
+    position: relative;
+    clear: both;
+    margin: 6px 5px 0;
+    padding: 8px 36px 8px 12px;
+    background: var(--tp-tint);
+    border: 1px solid var(--tp-border-accent);
+    border-radius: 4px;
+    color: var(--tp-text);
+    font-size: 13px;
+
+    a.site-announcement-text { color: var(--tp-link); font-weight: bold; }
+
+    .site-announcement-close {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        background: none;
+        border: 0;
+        color: var(--tp-text-muted);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+}

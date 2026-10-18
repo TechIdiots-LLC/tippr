@@ -48,9 +48,9 @@ Disallow: /*.rss
 Disallow: /*.i
 Disallow: /*.embed
 Disallow: /*/comments/*?*sort=
-Disallow: /r/*/comments/*/*/c*
+Disallow: /v/*/comments/*/*/c*
 Disallow: /comments/*/*/c*
-Disallow: /r/*/submit
+Disallow: /v/*/submit
 Disallow: /message/compose*
 Disallow: /api
 Disallow: /post
@@ -62,7 +62,9 @@ Disallow: /domain/*t=
 Disallow: /login
 Disallow: /vaults/search
 Disallow: /search
-Disallow: /r/*/search
+Disallow: /v/*/search
+Allow: /sitemap.xml
+Allow: /sitemaps/
 Allow: /
 
 Sitemap: ${thing.Vault_sitemap}

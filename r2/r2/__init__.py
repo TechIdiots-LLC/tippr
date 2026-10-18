@@ -111,7 +111,7 @@ try:
                 obj = getattr(obj, p)
             sys.modules.setdefault(f'boto.vendored.six.moves.{sub}', obj)
         except Exception:
-            # ignore any missing attributes â€” they'll error later if actually used
+            # ignore any missing attributes — they'll error later if actually used
             pass
 except Exception:
     # If anything goes wrong, don't break import-time; errors will surface

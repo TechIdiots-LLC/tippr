@@ -41,6 +41,8 @@ error_list = dict((
         ('INVALID_SCHEME', _('URI scheme must be one of: %(schemes)s')),
         ('BAD_CAPTCHA', _('care to try these again?')),
         ('SPAM_SIGNUP', _("this sign-up looks like spam; if it isn't, contact the site's admins")),
+        ('SIGNUPS_CLOSED', _("this site isn't taking new accounts right now")),
+        ('BAD_TITLE_FORMAT', _('the format needs {title} where the page title goes')),
         ('BAD_USERNAME', _('invalid user name')),
         ('USERNAME_TOO_SHORT', _('username must be between %(min)d and %(max)d characters')),
         ('USERNAME_INVALID_CHARACTERS', _('username must contain only letters, numbers, "-", and "_"')),
