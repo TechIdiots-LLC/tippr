@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/config**: change the live config (the admin and employee list, captcha and vault-creation thresholds,
+  sidebar and welcome messages, and the rest of `[live_config]`) without editing the ini. Values are checked against
+  each setting's type, apply right away on every web process, can be undone back to the ini's value, and every change
+  is logged with who made it. You can't remove your own admin permission there.
 - **More on /admin/site**: the front page's title and a title format for every other page (`{title} | {site}`),
   Google and Bing verification tags, a favicon, a share image for link previews of the front page and vaults, a
   dismissible announcement banner, and a switch to close sign-ups. All apply right away, without editing the ini.

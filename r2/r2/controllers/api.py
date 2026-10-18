@@ -4737,6 +4737,38 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        key=nop("key"),
+        value=nop("value"),
+        reset=nop("reset"),
+    )
+    def POST_live_config(self, form, jquery, key, value, reset):
+        """Override one live config setting (/admin/config), or go back to
+        the ini's value with reset."""
+        from r2.lib import live_config_admin
+        if not live_config_admin.editable():
+            form.set_text(".status", _("this site's live config is managed in ZooKeeper"))
+            return
+        known = {k for k, _d, _i, _o in live_config_admin.settings()}
+        if key not in known:
+            form.set_text(".status", _("unknown setting"))
+            return
+        if reset:
+            error = live_config_admin.save(key, None, c.user)
+        else:
+            value = (value or "").replace("\r\n", "\n").strip()
+            error = live_config_admin.save(key, value, c.user)
+        if error:
+            form.set_text(".status", _("not saved: %(error)s") % dict(error=error))
+            return
+        if reset:
+            # reload, to show the ini's value again
+            form.refresh()
+        else:
+            form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         captcha_provider=VOneOf("captcha_provider",
                                 ("builtin", "turnstile", "hcaptcha",
                                  "recaptcha", "none")),

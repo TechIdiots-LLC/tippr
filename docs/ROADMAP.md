@@ -67,7 +67,7 @@ installed with `install-tippr.sh`.
    data store containers.
 2. **Admin security.** Require TOTP for admin mode, add WebAuthn passkeys,
    and use recovery codes instead of email as the fallback.
-3. **Admin config page.** Edit the live config stored in ZooKeeper from
+3. **Admin config page** (done: /admin/config). Edit the live config from
    `/admin/config`, with type checking and an audit log.
 
 ## Payments and tipping

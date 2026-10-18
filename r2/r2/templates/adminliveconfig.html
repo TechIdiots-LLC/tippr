@@ -1,0 +1,111 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/config: the live config (r2.lib.live_config_admin)
+
+<%def name="setting_row(s)">
+  <tr id="setting-${s['key']}">
+    <td class="live-config-key">
+      <code>${s['key']}</code>
+      <br><small>${_(s['type'])}</small>
+    </td>
+    <td>
+      %if s['description']:
+        <p class="live-config-description">${_(s['description'])}</p>
+      %endif
+      %if thing.editable:
+        <form action="/api/live_config" method="post" class="pretty-form live-config-form"
+              onsubmit="return post_form(this, 'live_config');">
+          <input type="hidden" name="key" value="${s['key']}">
+          <% value = s['override'] if s['override'] is not None else (s['ini'] or '') %>
+          %if len(value) > 60 or s['type'] in ('quoted messages', 'name:value pairs, comma-separated'):
+            <textarea name="value" rows="2" cols="70">${value}</textarea>
+          %else:
+            <input type="text" name="value" value="${value}" size="40">
+          %endif
+          <button class="btn" type="submit">${_("save")}</button>
+          <span class="status"></span>
+        </form>
+        %if s['override'] is not None:
+          <form action="/api/live_config" method="post" class="pretty-form live-config-reset"
+                onsubmit="return post_form(this, 'live_config');">
+            <input type="hidden" name="key" value="${s['key']}">
+            <input type="hidden" name="reset" value="1">
+            <small>${_("Changed here.")}
+              %if s['ini']:
+                ${_("The ini says:")} <code>${s['ini']}</code>
+              %else:
+                ${_("The ini leaves it empty.")}
+              %endif
+            </small>
+            <button class="btn" type="submit">${_("use the ini's value")}</button>
+            <span class="status"></span>
+          </form>
+        %endif
+      %else:
+        <code>${s['ini'] or ''}</code>
+      %endif
+    </td>
+  </tr>
+</%def>
+
+<div class="admin-live-config">
+<h1>${_("live config")}</h1>
+
+%if thing.editable:
+  <p>${_("Settings from the [live_config] section of the ini file that can change while the site runs. Saved values apply right away on every web process and are kept with the site's other saved settings, so they move with backups. \"Use the ini's value\" undoes a change. Every change is logged below.")}</p>
+%else:
+  <p>${_("This site reads its live config from ZooKeeper (liveconfig_source = zookeeper), so it's managed with scripts/write_live_config rather than here. The values in use:")}</p>
+%endif
+
+<h2>${_("common settings")}</h2>
+<table class="lined-table borderless live-config-table">
+  %for s in thing.common:
+    ${setting_row(s)}
+  %endfor
+</table>
+
+<details class="live-config-other">
+  <summary>${_("other settings (%(n)d, mostly from reddit's own setup)") % dict(n=len(thing.other))}</summary>
+  <table class="lined-table borderless live-config-table">
+    %for s in thing.other:
+      ${setting_row(s)}
+    %endfor
+  </table>
+</details>
+
+<h2>${_("changes")}</h2>
+%if thing.log:
+  <table class="lined-table live-config-log">
+    <tr><th>${_("when")}</th><th>${_("who")}</th><th>${_("setting")}</th><th>${_("from")}</th><th>${_("to")}</th></tr>
+    %for entry in thing.log:
+      <tr>
+        <td>${entry['time']}</td>
+        <td><a href="/user/${entry['user']}">${entry['user']}</a></td>
+        <td><code>${entry['key']}</code></td>
+        <td><code>${entry['old'] if entry['old'] is not None else ''}</code></td>
+        <td>
+          <code>${entry['new'] if entry['new'] is not None else ''}</code>
+          %if entry.get('reset'):
+            <small>${_("(back to the ini)")}</small>
+          %endif
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No changes yet.")}</p>
+%endif
+</div>

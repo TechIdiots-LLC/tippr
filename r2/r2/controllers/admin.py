@@ -33,6 +33,7 @@ from r2.lib.pages import (
     AdminEmailSettings,
     AdminErrors,
     AdminGold,
+    AdminLiveConfig,
     AdminPage,
     AdminSiteSettings,
 )
@@ -69,6 +70,10 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_antispam(self):
         return AdminPage(content=AdminAntispam()).render()
+
+    @validate(VAdmin())
+    def GET_config(self):
+        return AdminPage(content=AdminLiveConfig()).render()
 
     @validate(VAdmin())
     def GET_site(self):

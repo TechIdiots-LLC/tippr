@@ -149,6 +149,7 @@ def make_map(config):
 
     mc('/admin/coins', controller='admintool', action='coins')
     mc('/admin/site', controller='admintool', action='site')
+    mc('/admin/config', controller='admintool', action='config')
     mc('/admin/antispam', controller='admintool', action='antispam')
     mc('/admin/site/logo', controller='admintool', action='site_logo')
     mc('/admin/site/image', controller='admintool', action='site_image')

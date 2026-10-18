@@ -3759,6 +3759,23 @@ class AdminErrors(Templated):
         Templated.__init__(self)
 
 
+class AdminLiveConfig(Templated):
+    """The admin interface for the live config (r2.lib.live_config_admin)."""
+    def __init__(self):
+        from r2.lib import live_config_admin
+        self.editable = live_config_admin.editable()
+        self.settings = [
+            dict(key=key, description=description, ini=ini, override=override,
+                 type=live_config_admin.type_name(key),
+                 current=g.live_config.get(key))
+            for key, description, ini, override in live_config_admin.settings()
+        ]
+        self.common = [s for s in self.settings if s["description"]]
+        self.other = [s for s in self.settings if not s["description"]]
+        self.log = live_config_admin.log_entries()[:50]
+        Templated.__init__(self)
+
+
 class AdminSiteSettings(Templated):
     """The admin interface for the site settings (r2.lib.site_info)."""
     def __init__(self, image_errors=None, logo_error=None):

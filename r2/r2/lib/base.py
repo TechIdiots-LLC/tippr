@@ -84,8 +84,10 @@ class BaseController(WSGIController):
 
         """
         # apply the name, logo etc. saved on /admin/site (first request)
-        from r2.lib import site_info
+        from r2.lib import live_config_admin, site_info
         site_info.install()
+        # and the live config overrides saved on /admin/config
+        live_config_admin.install()
 
         # we override this here to ensure that this header, and only this
         # header, is trusted to reduce the number of potential
