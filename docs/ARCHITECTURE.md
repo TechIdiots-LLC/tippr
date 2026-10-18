@@ -25,7 +25,7 @@ nginx ──── TLS; real client IPs from trusted proxies only
 
 Standalone, nginx also listens on port 80, where it redirects to HTTPS and
 answers Let's Encrypt's challenges. Behind a proxy that does TLS itself
-(`TIPPR_EXTERNAL_PROXY`, e.g. HAProxy on pfSense), nginx serves plain HTTP
+(`TIPPR_EXTERNAL_PROXY`, e.g. HAProxy on OPNsense or pfSense), nginx serves plain HTTP
 on port 80 and takes client addresses from that proxy's `X-Forwarded-For`.
 
 ## The web app (r2)

@@ -1142,7 +1142,7 @@ fi
 # Standalone (the default): HTTPS on 443; port 80 redirects to it and
 # answers Let's Encrypt's challenges.
 # TIPPR_EXTERNAL_PROXY="ADDRESS ...": behind another proxy that does TLS
-# (e.g. HAProxy on pfSense): plain HTTP on port 80, no certificate here, and
+# (e.g. HAProxy on OPNsense or pfSense): plain HTTP on port 80, no certificate here, and
 # the client address taken from X-Forwarded-For on connections from those
 # addresses only.
 

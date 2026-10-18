@@ -51,7 +51,7 @@ Set these as environment variables when running the installer:
 | `TIPPR_TLS_CERT`, `TIPPR_TLS_KEY` | | certificate and key to use, e.g. a Cloudflare Origin Certificate |
 | `TIPPR_LETSENCRYPT_EMAIL` | | get a Let's Encrypt certificate (the domain must point here) |
 | `TIPPR_BEHIND_CLOUDFLARE` | `0` | `1`: take client IPs from `CF-Connecting-IP`, from Cloudflare's ranges only |
-| `TIPPR_EXTERNAL_PROXY` | | behind another proxy that does TLS (e.g. HAProxy on pfSense): its address(es), e.g. `192.168.1.1`. nginx then serves plain HTTP on port 80 and trusts `X-Forwarded-For` from those addresses only ([below](#behind-another-proxy)) |
+| `TIPPR_EXTERNAL_PROXY` | | behind another proxy that does TLS (e.g. HAProxy on OPNsense or pfSense): its address(es), e.g. `192.168.1.1`. nginx then serves plain HTTP on port 80 and trusts `X-Forwarded-For` from those addresses only ([below](#behind-another-proxy)) |
 | `TIPPR_FIREWALL`, `TIPPR_SSH_PORT` | `0`, `22` | `1`: ufw allowing only SSH, HTTP and HTTPS |
 | `TIPPR_DB_PASSWORD`, ... | generated | override a generated password |
 | `TIPPR_PLUGINS` | `about gold` | plugins to install |
@@ -133,13 +133,20 @@ Packaged services: `postgresql`, `cassandra`, `zookeeper`,
 
 ### Behind another proxy
 
-If something else in front does TLS, such as HAProxy on pfSense, a cloud
+If something else in front does TLS, such as HAProxy on OPNsense or pfSense, a cloud
 load balancer or another nginx, set `TIPPR_EXTERNAL_PROXY` to its
-address(es):
+address(es), separated by spaces or commas:
 
 ```bash
 TIPPR_EXTERNAL_PROXY=192.168.1.1 TIPPR_USER=tippr TIPPR_DOMAIN=example.com ./install-tippr.sh
 ```
+
+For a high-availability pair (CARP on OPNsense or pfSense, keepalived), list
+both nodes' own addresses on this server's network as well as the shared
+virtual IP: the proxy usually connects from the active node's own address,
+not the VIP. For example, `TIPPR_EXTERNAL_PROXY="172.16.1.2 172.16.1.3 172.16.1.1"`.
+Avoid trusting a whole subnet, since any machine on it could then claim
+any client address.
 
 nginx then serves plain HTTP on port 80, with no certificate here, and
 takes each visitor's address from `X-Forwarded-For`, but only on

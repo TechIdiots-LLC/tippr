@@ -81,25 +81,38 @@ authentication; admin mode needs it. After that, use `/admin/site`,
 If the hostname isn't a full domain (no dot), the first boot sets up a
 development site at `HOSTNAME.local`.
 
-## Behind HAProxy on pfSense (or another proxy)
+## Behind HAProxy on OPNsense or pfSense (or another proxy)
 
-If HAProxy on pfSense (or another proxy) handles TLS for the domain, put
-its address on this network in `firstboot.env` before the first start:
+If HAProxy on the firewall (or another proxy) handles TLS for the domain,
+put its address on the container's network in `firstboot.env` before the
+first start:
 
 ```bash
 TIPPR_EXTERNAL_PROXY=192.168.1.1
 ```
 
+For an HA pair with CARP, list both firewalls' own addresses on that
+network and the CARP VIP. HAProxy connects from the active node's own
+address, so the VIP alone isn't enough:
+
+```bash
+TIPPR_EXTERNAL_PROXY="172.16.1.2 172.16.1.3 172.16.1.1"
+```
+
 The container then serves plain HTTP on port 80 with no certificate of its
-own, and takes visitors' addresses from the proxy's `X-Forwarded-For`. On
-pfSense:
+own, and takes visitors' addresses from the proxy's `X-Forwarded-For`. In
+HAProxy:
 
-- the frontend has the certificate (the ACME package can get it), and
+- the frontend has the certificate (the ACME plugin can get it), and
   redirects port 80 to HTTPS;
-- the backend is the container's address, port 80, with *forwardfor* on;
-- set the backend's tunnel timeout to an hour or so, for websockets.
+- the backend is the container's address, port 80, with *forwardfor*
+  (X-Forwarded-For) on;
+- set the backend's tunnel timeout to an hour or so, for websockets;
+- optionally, health-check `GET /health`.
 
-With Cloudflare in front of pfSense, add `TIPPR_BEHIND_CLOUDFLARE=1` too.
+With Cloudflare in front of the firewall, add `TIPPR_BEHIND_CLOUDFLARE=1`
+too. nginx then follows `X-Forwarded-For` back through both Cloudflare and
+the firewall to the visitor.
 For a container already set up, add the setting to `firstboot.env` and run
 `tippr-firstboot DOMAIN` again. See [INSTALL_tippr.md](INSTALL_tippr.md#behind-another-proxy).
 
