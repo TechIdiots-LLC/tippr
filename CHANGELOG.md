@@ -18,6 +18,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The welcome panel** on an empty listing was squeezed into a narrow column; it's now as wide as the listing.
 - **The compact and old mobile interfaces** failed to load (leftovers from renaming reddit to vault, and Python 2 code).
 
 ## 0.7.0

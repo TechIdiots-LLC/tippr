@@ -11594,10 +11594,11 @@ body:not(.loggedin) .report-button {
     color: var(--tp-text-muted);
 }
 
-// an empty front page or vault (templates/listing.html, r2.lib.welcome)
-.empty-welcome {
-    max-width: 640px;
-    margin: 16px 12px;
+// an empty front page or vault (templates/listing.html, r2.lib.welcome);
+// as wide as the listing, like the spotlight box above it (#noresults keeps
+// a 310px right margin from before the sidebar had its own grid column)
+#noresults.empty-welcome {
+    margin: 0 0 10px;
     padding: 16px 20px;
     background: var(--tp-surface);
     border: 1px solid var(--tp-border);
@@ -11609,8 +11610,8 @@ body:not(.loggedin) .report-button {
     h3 { font-size: 15px; margin: 14px 0 6px; }
     .empty-welcome-tagline { color: var(--tp-text-muted); margin: 0 0 10px; }
     .empty-welcome-actions .c-btn { margin-right: 8px; }
-    .empty-welcome-vaults { columns: 2; list-style: none; padding: 0; margin: 0; }
-    .empty-welcome-vaults li { margin: 2px 0; }
+    .empty-welcome-vaults { columns: 220px; column-gap: 24px; list-style: none; padding: 0; margin: 0; }
+    .empty-welcome-vaults li { margin: 2px 0; break-inside: avoid; }
 }
 
 // phones and narrow windows; last, so it overrides the rules above
