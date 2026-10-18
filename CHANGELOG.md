@@ -14,10 +14,6 @@
   member, closed), an assignee and a history. Staff reply from the queue as the admin team; members see
   /v/siteadmins, not the staff member's name. Members in timeout can reach the admins again (that only ever worked
   when `admin_message_acct` was a vault).
-- **Gold is ad-free by default**: AdSense, promoted posts and the sponsor box are hidden for gold members unless they
-  untick "hide ads" in their gold options (it used to be off until they found it).
-- **Hide multivaults**: a "hide" link on the side panel's multivaults section, and a preference to bring it back.
-- **The promoted tab** only appears when something is being promoted there (or for sponsors).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
@@ -26,6 +22,15 @@
 - **Deleting a multivault** did nothing (the delete failed on the Cassandra compatibility layer, which didn't accept
   pycassa's consistency level arguments). The same affected promoted-post metrics and the wiki's image count, which
   also failed for pages without images.
+
+## 0.6.0
+### ✨ Features and improvements
+- **Gold is ad-free by default**: AdSense, promoted posts and the sponsor box are hidden for gold members unless they
+  untick "hide ads" in their gold options (it used to be off until they found it).
+- **Hide multivaults**: a "hide" link on the side panel's multivaults section, and a preference to bring it back.
+- **The promoted tab** only appears when something is being promoted there (or for sponsors).
+
+### 🐞 Bug fixes
 - **Gold support** messages (expiry notices, payment and subscription problems, gift code errors) named
   `goldsupport_email`, empty by default, so they read "write to us at ." They link to a new gold section of the
   contact page instead, which offers a message to the admins and shows the address when one is set.
