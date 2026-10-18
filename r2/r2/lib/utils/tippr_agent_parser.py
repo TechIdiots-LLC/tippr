@@ -40,6 +40,9 @@ class TipprDetectorBase(DetectorBase):
     version_string = r'(\.?\d+)*'
 
     def __init__(self):
+        # httpagentparser's DetectorBase sets up _look_for and the version
+        # markers its detect() uses
+        super().__init__()
         if self.agent_string:
             self.agent_regex = re.compile(self.agent_string.format(
                 look_for=self.look_for, version_string=self.version_string))
