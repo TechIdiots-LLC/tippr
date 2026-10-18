@@ -7,6 +7,11 @@
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 
+## 0.3.0
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
+
 ## 0.2.0
 ### ✨ Features and improvements
 - **Releases**: each version is published as a Docker image (Docker Hub), a Docker Compose bundle, an installer
