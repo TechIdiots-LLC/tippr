@@ -1632,6 +1632,9 @@ TIPPR_TIMERS=(
     # predicts each vault's daily pageviews, the inventory sponsored posts
     # are sold from (r2.lib.inventory)
     tippr-job-update_promo_metrics.timer
+    # gives members their X-Year Club trophies on their cake day
+    # (r2.lib.year_club)
+    tippr-job-year_clubs.timer
 )
 
 ###############################################################################

@@ -87,6 +87,7 @@ DEFAULT_JOBS = (
     "tippr-job-compute_time_listings@comment", "tippr-job-email",
     "tippr-job-update_gold_users", "tippr-job-feeds",
     "tippr-job-subscribers", "tippr-job-update_promo_metrics",
+    "tippr-job-year_clubs",
 )
 
 

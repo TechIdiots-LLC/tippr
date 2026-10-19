@@ -11,6 +11,9 @@
   which the site gives by itself (and now also to members who verified or got gold before), and Staff, Early Member,
   Bug Hunter, Translator, Helpful Member and Best Comment for admins to give, each with an icon. The installer
   creates them (`scripts/create_default_awards.py`, safe to re-run); existing awards are left alone.
+- **X-Year Club trophies**, as on reddit: on their cake day members get the 1-Year Club, 2-Year Club and so on (only
+  the latest), from a new daily job, `tippr-job-year_clubs` (the installer and Docker run it; the starter awards
+  script gives everyone theirs the first time).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

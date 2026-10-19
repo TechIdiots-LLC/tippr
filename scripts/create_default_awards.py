@@ -30,6 +30,10 @@ button), with an optional note and link:
 
 - staff, early_member, bug_hunter, translator, helpful, best_comment
 
+The "N-Year Club" trophies are made as members reach them (r2.lib.year_club,
+kept up to date daily by tippr-job-year_clubs); the first run here gives
+everyone theirs.
+
 Members who verified their email or got gold before those two awards existed
 get them when the awards are made; TIPPR_AWARD_BACKFILL=1 does that again.
 
@@ -97,3 +101,8 @@ if "verified_email" in made or "tippr_gold" in made:
             given["tippr_gold"] += 1
     print("made sure %(verified_email)d members with a verified email and "
           "%(tippr_gold)d gold members have those awards" % given)
+
+    # and the X-Year Club trophies, which tippr-job-year_clubs keeps up to
+    # date from then on, on each member's cake day
+    from r2.lib import year_club
+    print("year clubs: looked at %d members" % year_club.update_all())
