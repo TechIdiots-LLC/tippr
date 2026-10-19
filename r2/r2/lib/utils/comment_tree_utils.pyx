@@ -24,6 +24,12 @@
 ###############################################################################
 
 
+def _none_first(x):
+    # top-level comments (parent None) first, then by id; Python 3 does not
+    # order None and numbers by itself
+    return (0, 0) if x is None else (1, x)
+
+
 def get_tree_details(dict tree):
     cdef:
         list cids = []
@@ -31,7 +37,7 @@ def get_tree_details(dict tree):
         dict parents = {}
         list child_ids
 
-    for parent_id in sorted(tree):
+    for parent_id in sorted(tree, key=_none_first):
         child_ids = tree[parent_id]
 
         cids.extend(child_ids)
@@ -49,7 +55,7 @@ def calc_num_children(dict tree):
         dict num_children = {}
         list child_ids
 
-    for parent_id in sorted(tree, reverse=True):
+    for parent_id in sorted(tree, key=_none_first, reverse=True):
         if parent_id is None:
             continue
 
