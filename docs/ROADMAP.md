@@ -27,37 +27,39 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
   sets itself up for its domain on first boot ([PROXMOX.md](PROXMOX.md)).
   Scheduled jobs take a ZooKeeper lock (`scripts/run-locked`), so several
   app servers can share a site.
-- **Admin pages** for the site's name, description, contact address and
-  logo (`/admin/site`), email (`/admin/email`), Google AdSense
-  (`/admin/ads`) and recent errors (`/admin/errors`).
-
-## Next: single-VM production setup
-
-The first supported deployment is **one Ubuntu 24.04 VM** running everything,
-installed with `install-tippr.sh`.
-
-- **Passwords:** generate random passwords for PostgreSQL, RabbitMQ, ZooKeeper
-  and the default admin account, stored in a root-only file. A value passed to
-  the installer (for example `TIPPR_DB_PASSWORD=...`) takes precedence.
-- **App server:** run the app under gunicorn instead of
-  `paster serve --reload`.
-- **Production settings:** `debug = false`, captcha and rate limiting on,
-  admin TOTP required.
-- **Site settings:** set the domain, site name and page title
-  (`short_description`) from installer options.
-- **TLS:** a Cloudflare Origin Certificate or Let's Encrypt for real
-  domains, a self-signed certificate for `.local` ones. Redirect `http://`
-  to `https://`.
-- **Cloudflare (Free plan):** see [Cloudflare](#cloudflare) below.
-- **Search:** OpenSearch, installed by default (done; see
-  [SEARCH.md](SEARCH.md) and [Search](#search)).
-- **Shims:** `BeautifulSoup.py`, `baseplate/`, `pycassa/`, `weberror/`,
-  `Captcha/`, `cassandra.disabled/` and `l2cs.py` are gone (r2 uses bs4,
-  the real baseplate 2.x and `r2.lib.db.cassandra_compat`; the AWS
-  CloudSearch provider that needed `l2cs.py` was replaced by OpenSearch),
+- **Single-VM production setup.** One Ubuntu 24.04 VM (or Proxmox LXC)
+  running everything, installed with `install-tippr.sh`: random passwords
+  in a root-only `secrets.env` (values passed to the installer win), the
+  app under gunicorn, production settings (`debug = false`, captcha and
+  rate limits, TOTP required for admin mode), the domain and site name from
+  installer options, TLS (Let's Encrypt, a Cloudflare Origin Certificate,
+  or self-signed for `.local`), Cloudflare's real client IPs in nginx, and
+  OpenSearch ([SEARCH.md](SEARCH.md)).
+- **Shims removed.** `BeautifulSoup.py`, `baseplate/`, `pycassa/`,
+  `weberror/`, `Captcha/`, `cassandra.disabled/` and `l2cs.py` are gone
+  (r2 uses bs4, the real baseplate 2.x and `r2.lib.db.cassandra_compat`),
   as are the installer's venv patches. Left: `pylons/`, which is
   effectively r2's web framework now (moving to Pyramid or similar is its
   own project).
+- **Admin pages:** the site's name, description, images, SEO and Google
+  Analytics (`/admin/site`), live config (`/admin/config`), email, Google
+  AdSense, spam protection, backups, recent errors, API apps, feed bots,
+  banned domains, accounts (`/admin/users`), vaults (`/admin/vaults`) and
+  the support queue with per-category staff ([ADMIN_FEATURES.md](ADMIN_FEATURES.md)).
+- **Traffic stats** counted by the site itself (`/traffic`, each vault's
+  traffic page), help pages (`/help`), and the normal site working on
+  phones (the separate mobile interface is no longer promoted).
+- **Optional S3-compatible media storage** (Garage, MinIO, Amazon S3 …;
+  [STORAGE.md](STORAGE.md)).
+- **GitLab CI/CD** alongside the GitHub workflows ([RELEASING.md](RELEASING.md)).
+
+## Next
+
+1. **Self-serve ads.** Make advertiser-bought ads work without reddit's
+   private services: ad images stored on the server when there's no
+   bucket, inventory from the site's own traffic counts, and impressions
+   and clicks counted by the site.
+2. **Payments** for gold and ads; see [Payments and gold](#payments-and-gold).
 
 ## Then
 
@@ -65,33 +67,28 @@ installed with `install-tippr.sh`.
    first boot to point at separate data store containers), next to the
    all-in-one template, and an installer role setting (`TIPPR_ROLE`) for
    data store containers.
-2. **Admin security.** Require TOTP for admin mode, add WebAuthn passkeys,
-   and use recovery codes instead of email as the fallback.
-3. **Admin config page** (done: /admin/config). Edit the live config from
-   `/admin/config`, with type checking and an audit log.
+2. **Admin security.** WebAuthn passkeys, and recovery codes instead of
+   email as the fallback (TOTP for admin mode is done).
 
-## Payments and tipping
+## Payments and gold
 
-Decided order:
+The site sells its own things (gold and ads) and nothing else. It **never
+holds members' money or pays it out**: no tipping between members, no
+balances, and no karma cash-out or revenue sharing. Holding or passing on
+other people's money is what money transmitters and banks do, with the
+licensing, compliance and tax reporting that comes with it, which isn't
+worth it for a site this size.
 
-1. **Bitcoin for gold and coins (next payments work).** Accept Bitcoin
-   (Lightning and on-chain) through a self-hosted
-   [BTCPay Server](https://btcpayserver.org/), alongside the existing payment
-   providers. The site is simply accepting a payment method.
-2. **Direct user-to-user tips (after 1).** Users add a Lightning address to
-   their profile. A tip button requests an invoice from the recipient's
-   wallet, and the tipper pays it from their own wallet. tippr shows the tip
-   and its receipt on the post or comment but **never holds the funds**,
-   which avoids becoming a money transmitter.
-3. **On hold: karma cash-out / revenue sharing.** Paying users out of a pool
-   based on votes needs more thought before any work starts:
-   - Holding pooled funds raises money-transmission, financial-product and
-     tax-reporting questions that need legal advice.
-   - Paying for votes invites vote buying, bot rings and sockpuppets.
-     Steemit/Hive is the precedent to study.
-   - Safer variants to consider: pay out from site revenue rather than a
-     pool users pay into, base payouts on tips received rather than raw
-     karma, and add caps, delays and fraud review.
+- **Gold is the paid tier:** an ad-free, VIP experience (gold-only
+  features and vaults, as now).
+- **Gifting gold is how members reward each other.** Anyone can buy gold
+  for another member, or gild a post or comment they like (both are
+  already in the code), so members can get gold for free when people value
+  what they write. The money goes to the site; the recipient gets gold.
+- **Payment providers,** shared by gold and ads: PayPal first, then
+  BitPay or Coinbase Commerce for cryptocurrency. The gold and ad checkout
+  code is reddit's (PayPal IPN and Stripe, set up for reddit's accounts)
+  and gets one payment layer with a provider per service.
 
 ## Search
 
@@ -109,19 +106,19 @@ the Docker image. Done:
 Still to do:
 
 - use `g.search.suggest_vaults()` for the vault-name autocomplete in the
-  submit form and search box;
+  submit form and search box (it still uses the old name search);
 - possibly comment search.
 
 ## Cloudflare
 
 Cloudflare's Free plan works in front of tippr:
 
-- **Real client IPs:** nginx accepts `CF-Connecting-IP` only from
+- **Real client IPs (done):** nginx accepts `CF-Connecting-IP` only from
   Cloudflare's published IP ranges (`real_ip` module). Without this, rate
   limits, spam checks and IP bans see Cloudflare addresses. r2's bundled
   Cloudflare provider expects a reddit-specific `CF-CIP-Tag` header and does
   not work on a standard account.
-- **Page caching:** r2 already marks logged-in responses `private`. Plan:
+- **Page caching (to do):** r2 already marks logged-in responses `private`. Plan:
   send `Cache-Control: public, s-maxage=60, max-age=0` on logged-out HTML,
   and add a Cache Rule that makes HTML eligible for cache and respects the
   origin's Cache-Control. The Free plan's 2-hour minimum applies to Edge TTL
