@@ -143,3 +143,26 @@
 .admin-domains {
     .admin-domain-removed td { color: var(--tp-text-muted); }
 }
+
+// the admin settings forms (label | field and help): room to breathe
+table.lined-table.borderless {
+    td {
+        padding: 8px 12px;
+        vertical-align: top;
+    }
+    td:first-child {
+        white-space: nowrap;
+        padding-top: 11px;
+    }
+    td input[type=text], td input[type=url], td input[type=number],
+    td input[type=email], td input[type=password], td select, td textarea {
+        padding: 4px 6px;
+        margin-bottom: 4px;
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+    td small {
+        display: inline-block;
+        line-height: 1.4;
+    }
+}
