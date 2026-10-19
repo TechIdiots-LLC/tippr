@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.11.0
+### ✨ Features and improvements
 - **/admin/config** saves every setting with one "save changes" button (kept at the bottom of the window) instead of
   a button per setting. Only the settings you changed are saved, so the ini's values don't become overrides; one
   that isn't valid says so on its row while the rest are saved.
@@ -29,7 +35,6 @@
   vaults are now only left out of a member's recommendations when they have no subscriptions of their own.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **The welcome bar** (`welcomebar_messages` on /admin/config) broke the front page for logged-out visitors when a
   message had no " / " (which splits it into a heading and a second line); one-part messages now show as just a
   heading. Saving messages with a quote missing is refused instead of making nonsense messages, and messages with
