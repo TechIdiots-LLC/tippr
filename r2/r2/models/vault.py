@@ -1167,7 +1167,9 @@ class Vault(Thing, Printable, BaseSite):
         vault_ids = list(set(vault_ids) - excludes)
 
         if not vault_ids:
-            return Vault._by_name(g.default_vault)
+            # nowhere else to go: the front page itself (not default_vault,
+            # the vault behind it, which isn't one to visit)
+            return Frontpage
 
         vault_id = random.choice(vault_ids)
         vault = Vault._byID(vault_id, data=True)
@@ -1175,12 +1177,14 @@ class Vault(Thing, Printable, BaseSite):
 
     @classmethod
     def not_random_vault_ids(cls):
-        """The site's own working vaults, which /v/random shouldn't land on:
-        beta testing, takedowns, promotions, advertising links and the admin
-        vault "message the admins" goes to."""
+        """The site's own working vaults, which /v/random and the vault lists
+        shouldn't show: the front page's own vault (default_vault, whose
+        wiki holds the policy pages), beta testing, takedowns, promotions,
+        advertising links and the admin vault "message the admins" goes
+        to."""
         names = [getattr(g, attr, None) for attr in
-                 ("beta_vault", "takedown_vault", "promo_vault_name",
-                  "advertising_links_vault")]
+                 ("default_vault", "beta_vault", "takedown_vault",
+                  "promo_vault_name", "advertising_links_vault")]
         acct = getattr(g, "admin_message_acct", "") or ""
         if acct.startswith("/v/"):
             names.append(acct[len("/v/"):].strip("/"))

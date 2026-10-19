@@ -1530,7 +1530,15 @@ class VaultsController(ListingController):
 
     def keep_fn(self):
         base_keep_fn = ListingController.keep_fn(self)
+        # the site's working vaults (the front page's own, promotions,
+        # beta, the admins' ...) aren't communities to browse
+        hidden = set(Vault.not_random_vault_ids())
+        promo_id = Vault.get_promote_vault_id()
+        if promo_id:
+            hidden.add(promo_id)
         def keep(item):
+            if item._id in hidden and self.where != 'banned':
+                return False
             if self.where == 'featured':
                 if item.type not in ('public', 'restricted'):
                     return False
@@ -1605,12 +1613,7 @@ class VaultsController(ListingController):
                                             stale = True)
                 vaults._sort = desc('_downs')
 
-            if g.domain != 'tippr.net':
-                # don't try to render /v/promos on opensource installations
-                promo_sr_id = Vault.get_promote_vault_id()
-                if promo_sr_id:
-                    vaults._filter(Vault.c._id != promo_sr_id)
-
+        # /v/promos and the other working vaults are left out in keep_fn
         return vaults
 
     @property

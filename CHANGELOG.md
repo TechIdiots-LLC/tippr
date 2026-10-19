@@ -22,6 +22,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **/v/frontpage** (the vault behind the front page, whose wiki holds the policy pages) showed up in /v/random and
+  the vault lists as if it were a community. It's left out now, with the site's other working vaults; on a site at
+  tippr.net the vault lists also showed /v/promos, which an old reddit check skipped hiding there.
 - **Releases**: a unit test now checks that the Docker jobs container can read every systemd timer, so a timer
   written in a form it doesn't know (as the 0.10.0 release's daily ad metrics timer was) fails the tests instead of
   the release.
