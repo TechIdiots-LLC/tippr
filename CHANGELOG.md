@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.10.0
+### ✨ Features and improvements
 - **Enhancements**, like the Reddit Enhancement Suite's, so members don't need a browser extension: a new
   "enhancements" section on /prefs turns on infinite scroll (the next page of a listing is added at the bottom),
   keyboard navigation (j/k, a/z, enter, c, x and more; ? lists them), show images (a button on posts that link to an
@@ -31,7 +37,6 @@
   request. See docs/RELEASING.md.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Rising** was nearly always empty: it divided votes by page views that only reddit's own infrastructure counted,
   needed a second upvote within 12 hours, ignored comments, and looked at only 50 of the period's posts in no
   particular order. Now it shows the posts other people have voted on or commented on, the most activity for their
