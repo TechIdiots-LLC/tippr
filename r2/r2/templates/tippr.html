@@ -165,9 +165,6 @@
     ${unsafe(js.use("expando-nsfw-flow"))}
   %endif
   ${unsafe(c.js_preload.use())}
-  %if c.user_is_loggedin:
-    <script src="/static/js/infinitescroll.js"></script>
-  %endif
   ${adsense_loader()}
   <% from r2.lib import antispam %>
   ${unsafe(antispam.bot_detector_html())}

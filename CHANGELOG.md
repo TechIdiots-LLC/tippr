@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Enhancements**, like the Reddit Enhancement Suite's, so members don't need a browser extension: a new
+  "enhancements" section on /prefs turns on infinite scroll (the next page of a listing is added at the bottom),
+  keyboard navigation (j/k, a/z, enter, c, x and more; ? lists them), show images (a button on posts that link to an
+  image shows it in the listing, and they can expand by themselves, except NSFW and spoiler posts), night mode and
+  "hide child comments" links. All are off until a member turns them on. The old infinite scroll prototype, which
+  ran for everyone and never found the next page, is gone.
 - **GitLab CI/CD**: `.gitlab-ci.yml` runs the unit tests and installer smoke test, and builds, tests and publishes
   releases (Docker image, compose bundle, installer tarball, Proxmox template) on a GitLab server, as the GitHub
   workflows do on GitHub, for a repository kept on GitLab and mirrored to GitHub. It also has the version bump merge
@@ -10,6 +16,13 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Comments pages with replies** crashed ("you broke tippr") as soon as a comment had a reply: the compiled comment
+  tree code still sorted top-level comments the Python 2 way.
+- **Privacy settings** (/prefs/privacy, linked from the contact page) showed a line of Python instead of the page. It
+  now shows, members can request and download their data export and see their requests, and admins see them in the
+  /admin/privacy queue (requests were never indexed, so neither list had anything in it). Exports also include the
+  member's subscriptions now, and the installer creates the folder they're written to
+  (`/var/lib/tippr/privacy_exports`), which the export job couldn't create itself.
 - **Subscribing and unsubscribing** didn't last: after a reload a vault was back the way it was. Accounts always
   looked as if they'd never subscribed, so pages showed the default vaults instead of your own, and each subscribe or
   unsubscribe signed you up to every default vault again.

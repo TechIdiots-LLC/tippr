@@ -402,7 +402,7 @@ ul.flat-vert {text-align: left;}
     left: 0px; /* top gets set in js */
     border: 1px solid gray;
     z-index: 100;
-    background-color: white;
+    background-color: @tp-surface;
     white-space: nowrap;
     line-height: normal;
     margin-top: 1px;
@@ -440,7 +440,7 @@ ul.flat-vert {text-align: left;}
 /*tab drop*/
 .dropdown.tabdrop .selected {
     position: relative;
-    background: white none no-repeat scroll center right;
+    background: @tp-surface none no-repeat scroll center right;
     background-image: url(../droparrowgray.gif);
     padding: 2px 21px 1px 5px;
     margin-left: 3px;
@@ -509,7 +509,7 @@ ul.flat-vert {text-align: left;}
 
 .side {
     float: right; 
-    background-color: white; 
+    background-color: @tp-surface; 
     margin: 0px 5px 0 5px;
     width: 300px;
 }
@@ -630,7 +630,7 @@ ul.flat-vert {text-align: left;}
     margin-top: 10px;
     padding: 5px 0 0 44px;
     min-height: 41px;
-    background: white none no-repeat scroll top left;
+    background: @tp-surface none no-repeat scroll top left;
 }
 
 .sidebox .spacer.no-icon {
@@ -822,7 +822,7 @@ body > .content .link.compressed .midcol {
 }
 
 .link-note {
-    background-color: white;
+    background-color: @tp-surface;
     color: #ff4444;
     font-size:@tp-font-xs;
 }
@@ -1344,7 +1344,7 @@ body.with-listing-chooser.explore-page #header .pagename {
 .hover-bubble {
     display: none;
     position: absolute;
-    background: white;
+    background: @tp-surface;
     color: #333;
     border: 1px solid gray;
     padding: 3px;
@@ -1511,7 +1511,7 @@ body.with-listing-chooser.explore-page #header .pagename {
             width: 12px;
             height: 12px;
             line-height: 12px;
-            background: white;
+            background: @tp-surface;
             border: 1px solid lighten(@tp-link-hex, 20%);
             border-radius: 2px;
             text-align: center;
@@ -1671,7 +1671,7 @@ body.with-listing-chooser.explore-page #header .pagename {
 #promo-form + form #img-preview-container { display: none; }
 
 .profile-page .link.promotedlink.saved {
-    background-color: white;
+    background-color: @tp-surface;
     border: none;
 
     .sponsored-tagline {
@@ -1853,7 +1853,7 @@ body.with-listing-chooser.explore-page #header .pagename {
     margin-left: 2%;
     padding: 7px 16px;
     font-size: 16px;
-    background: white;
+    background: @tp-surface;
     border-bottom: 2px solid @tp-border-accent;
 }
 
@@ -1866,7 +1866,7 @@ body.with-listing-chooser.explore-page #header .pagename {
 .infobar.welcome h2 {
     padding: 4px 14px;
     padding-left: 38px;
-    background: white url(../welcome-upvote.png) 12px center no-repeat;
+    background: @tp-surface url(../welcome-upvote.png) 12px center no-repeat;
     font-size: 13px;
     color: #222;
     border-bottom: 2px solid @tp-accent-strong;
@@ -2665,7 +2665,7 @@ textarea.gray { color: gray; }
 .fancy-toggle-button .active {
     border: 1px solid #444;
     padding: 1px 6px;
-    background: white none repeat-x scroll center left;
+    background: @tp-surface none repeat-x scroll center left;
 
     color: white;
     font-size: @tp-font-xxs;
@@ -2775,7 +2775,7 @@ textarea.gray { color: gray; }
     font-size: larger;
 }
 
-.load0 { background-color: #FFFFFF; } /* white */
+.load0 { background-color: @tp-surface; } /* white */
 .load1 { background-color: #f0f5FF; } /* pale blue */
 .load2 { background-color: #E2ECFF; } /* blue */
 .load3 { background-color: #d6f5cb; } /* pale green */
@@ -2917,7 +2917,7 @@ body.newsletter {
 .newsletter-box {
     .box-shadow(0 3px 10px 4px rgba(0,0,0,0.1));
     margin: 10% auto;
-    background-color: white;
+    background-color: @tp-surface;
     width: 90%;
     max-width: 600px;
     border-radius: 4px;
@@ -3077,7 +3077,7 @@ body.newsletter {
     border-bottom: 2px solid @tp-link; 
     background-color: whitesmoke}
 
-#searchmenu .searchlabel { background-color: white; 
+#searchmenu .searchlabel { background-color: @tp-surface; 
     padding: 2px 15px 0px 0px; 
     font-weight: bold; color: @tp-link }
 
@@ -3911,14 +3911,14 @@ button.button[disabled] {
  }
 
 .button .cover {  
-    background: white; 
+    background: @tp-surface; 
 }
 
 .button #popup {
     position: absolute; 
     width: 80%; 
     z-index: 1001; 
-    background: white; 
+    background: @tp-surface; 
     padding: 1px; 
     left: 0px; 
     top: 0px; 
@@ -3947,7 +3947,7 @@ button.button[disabled] {
     text-align: center;
     margin: 0px;
     border-radius: 4px;
-    background-color:white;
+    background-color:@tp-surface;
 }
 
 .button .blog .r { color: gray;  }
@@ -4246,7 +4246,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 /* delete page */
 .white-field, .delete-field {
-    background-color: white;
+    background-color: @tp-surface;
     padding: 10px;
 }
 
@@ -4543,7 +4543,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .thing.spam { background-color: #FA8072 }
 
 .comment.spam > .child, .message.spam > .child {
-    background-color: white;
+    background-color: @tp-surface;
 }
 .comment.spam > .child {
     margin-left: 0;
@@ -4979,7 +4979,7 @@ ul#image-preview-list .description pre {
     width: 100%;
     margin: 0;
     border: 1px solid gray;
-    background: white;
+    background: @tp-surface;
     display: none;
     left: 0;
 }
@@ -5204,7 +5204,7 @@ ul.tabmenu.formtab {
     height: 23px;
     width: 23px;
     margin: 2px 5px 2px 0;
-    background: white none no-repeat scroll center center;
+    background: @tp-surface none no-repeat scroll center center;
 }
 
 .expando-button.selftext.collapsed {
@@ -5534,7 +5534,7 @@ ul.colors {
 }
 
 .linefield .markhelp table {
-    background: #FFFFFF;
+    background: @tp-surface;
 }
 
 #kind-selector label {
@@ -5549,7 +5549,7 @@ ul.colors {
     .existing-campaigns {
         > table {
             width: auto;
-            background-color: white;
+            background-color: @tp-surface;
             border: 1px solid #cc9;
         }
 
@@ -5765,7 +5765,7 @@ ul.colors {
 
     .widget-container {
         width: 100%;
-        background: #fff;
+        background: @tp-surface;
         border: 1px solid #CECECE;
         border-radius: 5px;
         overflow: hidden;
@@ -5808,7 +5808,7 @@ ul.colors {
             }
 
             > input[type=radio]:checked + .label-group {
-                background: #FFFFFF;
+                background: @tp-surface;
                 display: block;
             }
         }
@@ -6473,7 +6473,7 @@ table.lined-table {
     border: none;
     color: black;
     font-weight: bold;
-    background-color: white;
+    background-color: @tp-surface;
 }
 
 .bid-table { margin: 5px 10px;  }
@@ -6677,7 +6677,7 @@ div #campaign-field {
 
     .campaign-set {
         padding: 10px;
-        background: #fff;
+        background: @tp-surface;
         border-radius: 2px;
         margin-bottom: 5px;
 
@@ -7088,7 +7088,7 @@ div #campaign-field {
             padding: 5px 10px;
 
             &:focus {
-                background: white;
+                background: @tp-surface;
                 border-color: lighten(@tp-link-hex, 15%);
                 outline: none;
                 box-shadow: 0 0 3px white;
@@ -7897,7 +7897,7 @@ dd { margin-left: 20px;  }
     padding: 5px 0px;
     font-size: smaller;
     color: gray;
-    background: white none no-repeat scroll center left;
+    background: @tp-surface none no-repeat scroll center left;
 }
 
 .usertable .moderator.toggle .main:before,
@@ -7958,7 +7958,7 @@ dd { margin-left: 20px;  }
 }
 
 .icon-menu a {
-    background: white none no-repeat scroll center left;
+    background: @tp-surface none no-repeat scroll center left;
 } 
 .icon-menu li {margin: 5px 0;}
 
@@ -8165,7 +8165,7 @@ a.pretty-button:hover { text-decoration: none !important }
 
     border: 1px solid #666;
     padding: 1px 6px;
-    background: white none repeat-x scroll center left;
+    background: @tp-surface none repeat-x scroll center left;
 
     color: #111;
     font-size: @tp-font-xxs;
@@ -8547,7 +8547,7 @@ form#banned textarea {
 }
 
 .giftmessage {
-    background-color: white;
+    background-color: @tp-surface;
     border-radius: 3px;
     border: solid #888 1px;
     color: black;
@@ -9430,7 +9430,7 @@ form#banned textarea {
     margin-right: 68px;
     max-width: 700px;
     font-size: 13px;
-    background: white;
+    background: @tp-surface;
     padding: 6px;
     border-radius: 8px;
 }
@@ -9442,7 +9442,7 @@ form#banned textarea {
     border: 10px solid;
     border-style: solid solid outset;
     border-color: transparent;
-    border-right-color: white;
+    border-right-color: @tp-surface;
     left: -20px;
     top: 15px;
 }
@@ -9913,7 +9913,7 @@ body.post-under-6h-old .gilded-icon {
 
 .permission-selector {
     border: 1px solid black;
-    background-color: white;
+    background-color: @tp-surface;
     position: absolute;
     width: 24ex;
 }
@@ -9946,7 +9946,7 @@ body.post-under-6h-old .gilded-icon {
 }
 
 .light-text-input {
-    background: white;
+    background: @tp-surface;
     border: 1px solid #ccc;
     padding: 2px 5px;
 }
@@ -10002,7 +10002,7 @@ body.with-listing-chooser {
             right: 0;
             width: @lc-grippy-width + @grippy-fudge;
             height: 100%;
-            background: white;
+            background: @tp-surface;
             border-left: 1px solid #ccc;
             box-shadow: 0 0 @lc-shadow-width rgba(0, 0, 0, .2);
             z-index: 25;
@@ -10155,7 +10155,7 @@ body.with-listing-chooser {
     li {
         text-align: left;
         margin-bottom: 3px;
-        background: #fff;
+        background: @tp-surface;
         border: 1px solid #ccc;
         border-bottom-width: 2px;
         border-right: none;
@@ -10761,7 +10761,7 @@ body.with-listing-chooser {
 
   .gold-payment {
     .gift-message {
-      background-color: #fff;
+      background-color: @tp-surface;
       margin: 10px 30px;
       padding: 0 10px;
       border: 1px solid #cccccb;
@@ -10852,7 +10852,7 @@ body.with-listing-chooser {
     .box-sizing(border-box);
     border: 1px solid @light;
     color: @dark;
-    background-color: #fff;
+    background-color: @tp-surface;
     font-family: @gold-fonts;
     font-style: italic;
     padding: 5px;
@@ -11080,7 +11080,7 @@ body.with-listing-chooser {
     }
 
     .tabmenu li.selected a {
-      background-color: #ffffff;
+      background-color: @tp-surface;
       border-color: @gold;
       border-bottom-color: #ffffff;
     }
@@ -11614,5 +11614,83 @@ body:not(.loggedin) .report-button {
     .empty-welcome-vaults li { margin: 2px 0; break-inside: avoid; }
 }
 
+// /prefs/privacy
+.privacy-settings {
+    max-width: 760px;
+    margin: 10px 20px;
+
+    .privacy-section {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid @tp-border;
+    }
+
+    h2 {
+        font-size: 16px;
+        margin: 0 0 8px;
+    }
+
+    h3 {
+        font-size: 13px;
+        margin: 14px 0 6px;
+    }
+
+    p, li {
+        line-height: 1.5;
+    }
+
+    ul {
+        list-style: disc;
+        margin: 6px 0 6px 20px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 6px 14px;
+        border: 1px solid @tp-accent-strong;
+        border-radius: 4px;
+        background: @tp-accent;
+        color: @tp-on-accent;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .btn-danger {
+        background: @brand-danger;
+        border-color: darken(@brand-danger, 10%);
+    }
+
+    .status-message {
+        padding: 8px 12px;
+        background: @tp-tint-soft;
+        border: 1px solid @tp-border;
+    }
+
+    .privacy-requests-table {
+        border-collapse: collapse;
+
+        th, td {
+            padding: 4px 12px 4px 0;
+            text-align: left;
+        }
+    }
+
+    .privacy-cancel {
+        display: inline;
+    }
+
+    .link-button {
+        background: none;
+        border: 0;
+        padding: 0;
+        color: @tp-link;
+        cursor: pointer;
+    }
+}
+
 // phones and narrow windows; last, so it overrides the rules above
 @import "responsive.less";
+
+// the optional enhancements and night mode; after everything, so night mode
+// wins over the rules above
+@import "enhancements.less";

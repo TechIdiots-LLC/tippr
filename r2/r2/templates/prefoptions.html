@@ -243,6 +243,49 @@ action = add_vault(action, vault_path=False)
     </td>
   </tr>
   <tr>
+    <th>${_("enhancements")}</th>
+    <td class="prefright">
+      <p>
+        ${checkbox(_("infinite scroll"), "infinite_scroll")}
+        &#32;
+        <span class="details">
+          ${_("(load the next page of a listing when you reach the bottom)")}
+        </span>
+      </p>
+      <p>
+        ${checkbox(_("keyboard navigation"), "keyboard_nav")}
+        &#32;
+        <span class="details">
+          ${_("(j and k move between posts and comments, a and z vote; press ? on any page for the full list)")}
+        </span>
+      </p>
+      <p>
+        ${checkbox(_("show images"), "show_images")}
+        &#32;
+        <span class="details">
+          ${_("(a button on posts that link to an image to show it in the listing, and a \"show images\" link to show them all)")}
+        </span>
+      </p>
+      <p>
+        ${checkbox(_("expand images automatically"), "auto_expand_images")}
+        &#32;
+        <span class="details">${_("(except NSFW and spoiler posts)")}</span>
+      </p>
+      <p>
+        ${checkbox(_("night mode"), "nightmode")}
+        &#32;
+        <span class="details">${_("(light text on a dark background)")}</span>
+      </p>
+      <p>
+        ${checkbox(_("hide child comments links"), "hide_child_comments")}
+        &#32;
+        <span class="details">
+          ${_("(on comments pages, links to fold up the replies under each comment, or all of them at once)")}
+        </span>
+      </p>
+    </td>
+  </tr>
+  <tr>
     <th>${_("comment options")}</th>
     <td class="prefright">
     <p>

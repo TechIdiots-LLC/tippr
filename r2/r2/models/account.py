@@ -117,6 +117,13 @@ class Account(Thing):
                      pref_hide_ads = True,   # gold is ad-free unless the member opts back in
                      pref_show_trending=True,
                      pref_show_multis=True,
+                     # enhancements, like the Reddit Enhancement Suite's
+                     pref_infinite_scroll=False,
+                     pref_keyboard_nav=False,
+                     pref_nightmode=False,
+                     pref_hide_child_comments=False,
+                     pref_show_images=False,
+                     pref_auto_expand_images=False,
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
                      pref_collapse_left_bar=False,

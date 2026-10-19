@@ -1,0 +1,288 @@
+// The contents of this file are subject to the Common Public Attribution
+// License Version 1.0 (the "License"); you may not use this file except in
+// compliance with the License. You may obtain a copy of the License at
+// https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+//
+// Software distributed under the License is distributed on an "AS IS" basis,
+// WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+// the specific language governing rights and limitations under the License.
+//
+// The Original Code is Tippr.
+//
+// The Initial Developer of the Original Code is TechIdiots LLC.
+// Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+
+// The optional enhancements (enhancements.js) and night mode, which members
+// turn on under "enhancements" on /prefs.
+
+@import "components/variables.less";
+
+// infinite scroll
+
+.infinite-scroll-page {
+    clear: both;
+    margin: 12px 0 8px;
+    padding: 4px 8px;
+    border-top: 1px solid @tp-border;
+    color: @tp-text-muted;
+    font-size: @tp-font-xs;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+
+    a {
+        color: @tp-text-muted;
+    }
+}
+
+.infinite-scroll-status {
+    clear: both;
+    padding: 16px 8px;
+    text-align: center;
+    color: @tp-text-muted;
+
+    &:empty {
+        padding: 0;
+        height: 1px;
+    }
+}
+
+// keyboard navigation
+
+.thing.keyboard-selected {
+    outline: 2px solid @tp-accent;
+    outline-offset: 2px;
+    background-color: @tp-tint-soft;
+}
+
+.keyboard-nav-help {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: @zindex-modal;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow: auto;
+    padding: 16px 24px;
+    background: @tp-surface;
+    color: @tp-text;
+    border: 1px solid @tp-border;
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .3);
+
+    h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+    }
+
+    dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 16px;
+        margin: 0 0 10px;
+    }
+
+    dt {
+        font-family: monospace;
+        font-weight: bold;
+        text-align: right;
+    }
+
+    dd {
+        margin: 0;
+    }
+}
+
+// show images
+
+.inline-image-button {
+    float: left;
+    width: 22px;
+    height: 22px;
+    margin: 2px 5px 2px 0;
+    padding: 0;
+    border: 1px solid @tp-border-accent;
+    border-radius: 3px;
+    background: @tp-tint;
+    color: @tp-accent-strong;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+
+    &.collapsed::before {
+        content: "+";
+    }
+
+    &.expanded::before {
+        content: "\2212";
+    }
+}
+
+.entry > .inline-image {
+    clear: left;
+    margin: 6px 0 8px;
+
+    img {
+        display: block;
+        max-width: 100%;
+        max-height: 80vh;
+        height: auto;
+        border: 1px solid @tp-border;
+    }
+}
+
+// hide child comments
+
+.comment > .child.children-hidden {
+    display: none;
+}
+
+.hide-all-child-comments {
+    margin-left: 12px;
+    font-size: @tp-font-xs;
+    font-weight: normal;
+}
+
+// night mode: the theme's colours, dark
+
+body.nightmode {
+    --tp-bg: #12191c;
+    --tp-surface: #1b2428;
+    --tp-text: #d7e2e5;
+    --tp-text-muted: #8fa3a9;
+    --tp-border: #2c3a3f;
+    --tp-panel: #222d31;
+    --tp-link: #5fc8d4;
+    --tp-accent: #22b5c6;
+    --tp-accent-strong: #3fc3d2;
+    --tp-tint: #1f3338;
+    --tp-tint-soft: #1a2a2e;
+    --tp-border-accent: #2f6f78;
+    --tp-topbar-bg: #0a1215;
+    --tp-topbar-text: #b9d3d8;
+    --tp-title: #e2ecee;
+    --tp-title-visited: #8fa3a9;
+    --tp-upvote: #22b5c6;
+    --tp-downvote: #a48ce3;
+
+    color-scheme: dark;
+    background-color: #12191c;
+    color: #d7e2e5;
+
+    // the parts of the old stylesheet that use fixed colours
+    #header, .side, .content, .thing, .entry, .md, .commentarea,
+    .menuarea, .infobar, .linkinfo, .titlebox, .sidecontentbox .content,
+    .tabmenu li a, .dropdown.lightdrop .selected, .drop-choices,
+    .usertext-edit, .roundfield, .formtabs-content, .preftable,
+    .wiki-page-content, .modal-content, .panestack-title, .nextprev a,
+    .footer-parent, .footer, .debuginfo {
+        background-color: transparent;
+        color: inherit;
+        border-color: #2c3a3f;
+    }
+
+    #header, .side, .drop-choices, .roundfield, .modal-content,
+    .tabmenu li.selected a, .infobar, .linkinfo, .morelink,
+    .sidecontentbox .content {
+        background-color: #1b2428;
+    }
+
+    .drop-choices a.choice:hover, .tabmenu li a:hover {
+        background-color: #222d31;
+    }
+
+    a, .md a, .tagline a, .flat-list a, .tabmenu li a {
+        color: #5fc8d4;
+    }
+
+    .thing .title a.title, .link .title {
+        color: #e2ecee;
+    }
+
+    .link .title a.title:visited, .link.visited .title a.title {
+        color: #8fa3a9;
+    }
+
+    .tagline, .tagline .score, .flat-list li a, .domain, .domain a,
+    .rank, .details, .gray, .little, .footer, .debuginfo {
+        color: #8fa3a9;
+    }
+
+    .md, .md p, .md li, .md h1, .md h2, .md h3, .md h4, .md h5, .md h6,
+    .usertext-body, .titlebox, .sidebox, label, th, td {
+        color: #d7e2e5;
+    }
+
+    .md blockquote {
+        color: #a9bcc1;
+        border-left-color: #2f6f78;
+    }
+
+    .md code, .md pre {
+        background-color: #10171a;
+        color: #d7e2e5;
+        border-color: #2c3a3f;
+    }
+
+    .md table th, .md table td {
+        border-color: #2c3a3f;
+    }
+
+    input[type="text"], input[type="password"], input[type="email"],
+    input[type="url"], input[type="number"], input[type="search"],
+    textarea, select, .usertext-edit textarea, .search-form input {
+        background-color: #10171a;
+        color: #d7e2e5;
+        border-color: #2c3a3f;
+    }
+
+    ::placeholder {
+        color: #6e8288;
+    }
+
+    .comment .child, .comment .child .sitetable {
+        border-left-color: #2c3a3f;
+    }
+
+    .comment .child, .comment .child .child .child {
+        background-color: transparent;
+    }
+
+    .thing.stickied .title a.title, .thing.stickied .title {
+        color: #6fd38a;
+    }
+
+    .spam .entry, .thing.spam {
+        background-color: #2a1d1d;
+    }
+
+    .thing.keyboard-selected {
+        background-color: #1a2a2e;
+    }
+
+    img.thumbnail-placeholder, .thumbnail.self, .thumbnail.default {
+        filter: invert(.85) hue-rotate(180deg);
+    }
+
+    .new-comment .usertext-body {
+        background-color: #1f3338;
+        border-color: #2f6f78;
+    }
+
+    .comment-visits-box, .gold-accent {
+        background-color: #2b2615;
+        border-color: #6b5a1e;
+        color: #e8dcb5;
+
+        select {
+            background-color: #1b1708;
+        }
+    }
+
+    .expando .md, .expando .usertext-body {
+        background-color: #1b2428;
+        border-color: #2c3a3f;
+    }
+}

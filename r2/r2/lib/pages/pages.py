@@ -1055,6 +1055,8 @@ class Tippr(Templated):
                 classes.add('gold')
             if c.user.pref_highlight_controversial:
                 classes.add('show-controversial')
+            if c.user.pref_nightmode:
+                classes.add('nightmode')
 
         if c.user_is_admin:
             if not isinstance(c.site, FakeVault) and c.site._spam:
