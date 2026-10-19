@@ -110,6 +110,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      blocked      = _("blocked"),
                      update       = _("password/email"),
                      deactivate   = _("deactivate"),
+                     privacy      = _("privacy"),
                      security     = _("security"),
 
                      # messages

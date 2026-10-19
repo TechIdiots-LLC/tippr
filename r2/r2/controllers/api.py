@@ -1478,15 +1478,21 @@ class ApiController(TipprController):
                    deactivate_message = VLength("deactivate_message", max_length=500),
                    username = VRequired("user", errors.NOT_USER),
                    user = VThrottledLogin(["user", "passwd"]),
+                   otp = VFreshOneTimePassword("otp", required=False),
+                   content = VOneOf("content", ("keep", "delete"),
+                                    default="keep"),
                    confirm = VBoolean("confirm"))
-    def POST_deactivate_user(self, form, jquery, deactivate_message, username, user, confirm):
-        """Deactivate the currently logged in account.
+    def POST_deactivate_user(self, form, jquery, deactivate_message, username,
+                             user, otp, content, confirm):
+        """Delete the currently logged in account.
 
-        A valid username/password and confirmation must be supplied. An
+        A valid username/password and confirmation must be supplied, and a
+        two-factor code (`otp`) if the account uses two-factor sign-in. An
         optional `deactivate_message` may be supplied to explain the reason the
-        account is to be deleted.
+        account is to be deleted. With `content=delete` the account's posts and
+        comments are deleted too (otherwise they stay, by [deleted]).
 
-        Called by /prefs/deactivate on the site.
+        Called by the "delete your account" form on /prefs/privacy.
 
         """
         if username and username.lower() != c.user.name.lower():
@@ -1498,8 +1504,13 @@ class ApiController(TipprController):
         if not (form.has_errors('ratelimit', errors.RATELIMIT) or
                 form.has_errors("user", errors.NOT_USER) or
                 form.has_errors("passwd", errors.WRONG_PASSWORD) or
+                form.has_errors("otp", errors.WRONG_PASSWORD,
+                                errors.RATELIMIT) or
                 form.has_errors("deactivate_message", errors.TOO_LONG) or
                 form.has_errors("confirm", errors.CONFIRM)):
+            if content == "delete":
+                from r2.lib import user_admin
+                user_admin.delete_content(c.user, c.user, log=False)
             redirect_url = "/?deactivated=true"
             c.user.delete(deactivate_message)
             form.redirect(redirect_url)

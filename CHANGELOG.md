@@ -3,9 +3,16 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Deleting your account** is on the privacy page (/prefs/privacy, now a tab in preferences) instead of a separate
+  "deactivate" tab, whose old address redirects there. The form says plainly what happens and when, lets you delete
+  your posts and comments too (before, it told you to delete them one by one), and asks for your two-factor code if
+  you use two-factor sign-in.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Releases**: a unit test now checks that the Docker jobs container can read every systemd timer, so a timer
+  written in a form it doesn't know (as the 0.10.0 release's daily ad metrics timer was) fails the tests instead of
+  the release.
 
 ## 0.10.0
 ### ✨ Features and improvements

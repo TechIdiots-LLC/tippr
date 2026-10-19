@@ -11703,6 +11703,47 @@ body:not(.loggedin) .report-button {
         display: inline;
     }
 
+    .privacy-delete-form {
+        max-width: 420px;
+
+        fieldset {
+            margin: 10px 0;
+            padding: 6px 10px;
+            border: 1px solid @tp-border;
+            border-radius: 4px;
+        }
+
+        legend {
+            font-weight: bold;
+            padding: 0 4px;
+        }
+
+        fieldset label, .privacy-confirm {
+            display: block;
+            margin: 4px 0;
+            font-weight: normal;
+        }
+
+        > label {
+            display: block;
+            margin: 10px 0 3px;
+            font-weight: bold;
+        }
+
+        input[type=text], input[type=password], textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .privacy-confirm {
+            margin-top: 12px;
+        }
+
+        .error {
+            color: @brand-danger;
+        }
+    }
+
     .link-button {
         background: none;
         border: 0;

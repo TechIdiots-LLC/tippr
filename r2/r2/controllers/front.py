@@ -1715,10 +1715,9 @@ class FormsController(TipprController):
                                developed_apps=OAuth2Client._by_developer(c.user))
         elif location == 'feeds' and c.user.pref_private_feeds:
             content = PrefFeeds()
-        elif location == 'deactivate':
-            content = PrefDeactivate()
-        elif location == 'delete':
-            return self.redirect('/prefs/deactivate', code=301)
+        elif location in ('deactivate', 'delete'):
+            # deleting your account is on the privacy page now
+            return self.redirect('/prefs/privacy#delete-account', code=301)
         elif location == 'security':
             if c.user.name not in g.admins:
                 return self.redirect('/prefs/')

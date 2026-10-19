@@ -1273,7 +1273,8 @@ class PrefsPage(Tippr):
         if c.user.name in g.admins:
             buttons += [NamedButton('security')]
 
-        buttons += [NamedButton('deactivate')]
+        # privacy: your data export, and deleting your account
+        buttons += [NamedButton('privacy')]
 
         return [PageNameNav('nomenu', title = _("preferences")),
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
@@ -1338,16 +1339,6 @@ class PrefApps(Templated):
         editable_developer_fn = base_template.get_def('editable_developer')
         res = editable_developer_fn.render(app, dev)
         return spaceCompress(res)
-
-
-class PrefDeactivate(Templated):
-    """Preference form for deactivating a user's own account."""
-    def __init__(self):
-        self.has_paypal_subscription = c.user.has_paypal_subscription
-        if self.has_paypal_subscription:
-            self.paypal_subscr_id = c.user.gold_subscr_id
-            self.paypal_url = paypal_subscription_url()
-        Templated.__init__(self)
 
 
 class MessagePage(Tippr):

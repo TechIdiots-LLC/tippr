@@ -98,10 +98,61 @@
     <p>${_("For more information, see our")}&#32;<a href="/help/privacypolicy">${_("Privacy Policy")}</a>.</p>
   </section>
 
-  <section class="privacy-section danger-zone">
+  <section class="privacy-section danger-zone" id="delete-account">
     <h2>${_("Delete Your Account")}</h2>
     <p>${_("You can permanently delete your account and all associated data. This action cannot be undone.")}</p>
-    <p><a class="btn btn-danger" href="/prefs/deactivate">${_("Delete My Account")}</a></p>
+    <ul>
+      <li>${_("Right away you're logged out everywhere, nobody can log in to the account, and the name can't be registered again.")}</li>
+      <li>${_("Your password, email address and moderator roles are removed 90 days later.")}</li>
+      <li>${_("Your posts and comments stay, by [deleted], unless you choose to delete them below.")}</li>
+    </ul>
+    <p class="details">${_("Having a problem? We may be able to help:")}&#32;<a href="/contact">${_("contact us")}</a>.</p>
+
+    %if thing.has_paypal_subscription:
+      <p class="status-message">
+        ${_("Please cancel your gold subscription first: it's billed by PayPal, which we can't stop for you.")}
+        <a href="${thing.paypal_url}">${_("Cancel it on PayPal")}</a> (${thing.paypal_subscr_id})
+      </p>
+    %endif
+
+    <form action="javascript:;" method="post" class="privacy-delete-form"
+          onsubmit="return post_form(this, 'deactivate_user')">
+      <fieldset>
+        <legend>${_("your posts and comments")}</legend>
+        <label><input type="radio" name="content" value="keep" checked> ${_("keep them (shown by [deleted])")}</label>
+        <label><input type="radio" name="content" value="delete"> ${_("delete them too")}</label>
+      </fieldset>
+
+      <label for="delete-message">${_("why are you leaving? (optional)")}</label>
+      <textarea name="deactivate_message" id="delete-message" rows="3" maxlength="500"></textarea>
+      ${error_field("TOO_LONG", "deactivate_message")}
+
+      <label for="delete-user">${_("username")}</label>
+      <input name="user" id="delete-user" type="text" autocomplete="username">
+      ${error_field("NOT_USER", "user")}
+
+      <label for="delete-password">${_("password")}</label>
+      <input name="passwd" id="delete-password" type="password" autocomplete="current-password">
+      ${error_field("WRONG_PASSWORD", "passwd")}
+
+      %if c.user.otp_secret:
+        <label for="delete-otp">${_("two-factor code")}</label>
+        <input name="otp" id="delete-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        ${error_field("WRONG_PASSWORD", "otp")}
+        ${error_field("RATELIMIT", "otp")}
+      %endif
+
+      <label class="privacy-confirm">
+        <input type="checkbox" name="confirm"> ${_("I understand my account can't be recovered.")}
+      </label>
+      ${error_field("CONFIRM", "confirm")}
+      ${error_field("RATELIMIT", "ratelimit")}
+
+      <p>
+        <button type="submit" class="btn btn-danger">${_("Delete My Account")}</button>
+        <span class="status"></span>
+      </p>
+    </form>
   </section>
 
   <section class="privacy-section">

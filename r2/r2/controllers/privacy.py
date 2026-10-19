@@ -31,7 +31,7 @@ from r2.controllers.tippr_base import TipprController
 from r2.lib import amqp
 from r2.lib.base import abort
 from r2.lib.errors import errors
-from r2.lib.pages import BoringPage, Templated
+from r2.lib.pages import PrefsPage, Templated
 from r2.lib.template_helpers import get_domain
 from r2.lib.validator import (
     VAdmin,
@@ -44,6 +44,7 @@ from r2.lib.validator import (
     validatedForm,
 )
 from r2.models import Account
+from r2.models.gold import paypal_subscription_url
 from r2.models.privacy import (
     DataExportFile,
     PrivacyRequest,
@@ -85,8 +86,7 @@ class PrivacyController(TipprController):
             recent_export=recent_export,
         )
         
-        return BoringPage(
-            pagename=_("Privacy Settings"),
+        return PrefsPage(
             content=content,
         ).render()
 
@@ -208,10 +208,16 @@ class PrivacySettings(Templated):
 
     def __init__(self, export_requests=None, deletion_requests=None,
                  has_pending_export=False, recent_export=None):
+        # the site can't cancel a PayPal subscription for them (Stripe ones
+        # end when the account is deleted)
+        paypal = c.user.has_paypal_subscription
         Templated.__init__(
             self,
             export_requests=export_requests or [],
             deletion_requests=deletion_requests or [],
             has_pending_export=has_pending_export,
             recent_export=recent_export,
+            has_paypal_subscription=paypal,
+            paypal_subscr_id=c.user.gold_subscr_id if paypal else None,
+            paypal_url=paypal_subscription_url() if paypal else None,
         )

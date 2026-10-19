@@ -3010,6 +3010,21 @@ class VOneTimePassword(Validator):
         # if we got this far, their password was wrong, invalid or already used
         self.set_error(errors.WRONG_PASSWORD)
 
+
+class VFreshOneTimePassword(VOneTimePassword):
+    """A two-factor code typed now, for things that can't be undone (deleting
+    your account): a browser that passed two-factor recently (the otp
+    cookie) still has to give one. Accounts without two-factor pass."""
+
+    def run(self, password):
+        cached = c.otp_cached
+        c.otp_cached = False
+        try:
+            return VOneTimePassword.run(self, password)
+        finally:
+            c.otp_cached = cached
+
+
 class VOAuth2ClientID(VRequired):
     default_param = "client_id"
     default_param_doc = _("an app")
