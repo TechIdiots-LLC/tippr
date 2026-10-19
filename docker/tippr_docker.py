@@ -495,10 +495,13 @@ def next_run(calendar, now):
         while (t.minute - start) % step:
             t += datetime.timedelta(minutes=1)
         return t
-    match = re.fullmatch(r"\*-\*-\* (\d\d):(\d\d):(\d\d)", calendar)
+    match = re.fullmatch(r"\*-\*-\* (\d\d):(\d\d)(?::(\d\d))?", calendar)
     if match:
-        t = now.replace(hour=int(match.group(1)), minute=int(match.group(2)),
-                        second=int(match.group(3)), microsecond=0)
+        hour = int(match.group(1))
+        minute = int(match.group(2))
+        second = int(match.group(3)) if match.group(3) is not None else 0
+        t = now.replace(hour=hour, minute=minute, second=second,
+                        microsecond=0)
         return t if t > now else t + datetime.timedelta(days=1)
     raise ValueError("unsupported OnCalendar %r" % calendar)
 
