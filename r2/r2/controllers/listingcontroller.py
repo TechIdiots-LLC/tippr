@@ -430,7 +430,10 @@ class ListingWithPromos(VaultListingController):
 
         show_promo = False
         keywords = []
-        can_show_promo = not c.user.pref_hide_ads or not c.user.gold and c.site.allow_ads
+        # not to gold members who chose to hide ads, nor where the vault's
+        # moderators turned ads off
+        can_show_promo = (c.site.allow_ads and
+                          not (c.user.gold and c.user.pref_hide_ads))
         try_show_promo = ((c.user_is_loggedin and random.random() > 0.5) or
                           not c.user_is_loggedin)
 

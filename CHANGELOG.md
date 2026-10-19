@@ -30,6 +30,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Sold ads** (promoted posts) could show in vaults whose moderators turned ads off: the check for "show ads here"
+  mixed up its and/or, so only gold members who hid ads were really left out. Now promoted posts show only where
+  ads are allowed, and never to gold members who chose to hide ads.
 - **The welcome bar** (`welcomebar_messages` on /admin/config) broke the front page for logged-out visitors when a
   message had no " / " (which splits it into a heading and a second line); one-part messages now show as just a
   heading. Saving messages with a quote missing is refused instead of making nonsense messages, and messages with
