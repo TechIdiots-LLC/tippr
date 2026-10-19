@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.8.0
+### ✨ Features and improvements
 - **Google Analytics** (optional): paste a Google Analytics 4 measurement ID (G-…, or the whole tag) on /admin/site,
   under analytics, to add Google's tag to every page. It isn't loaded for visitors whose browser sends Do Not Track or
   Global Privacy Control, and IP addresses are anonymized. reddit's old analytics code (Universal Analytics, which
@@ -61,7 +67,6 @@
   nothing promotes it any more.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Lookups with nothing to find** (an empty list of IDs) failed with an SQL error instead of finding nothing; among
   other things this broke the sponsor pages (/sponsor, /sponsor/promoted/…).
 - **Subscription counts** for the traffic pages couldn't be read back (their table is keyed by text, not dates).
