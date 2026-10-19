@@ -16,13 +16,16 @@
 
 # Start the compose stack (in this directory, with its .env), wait for the
 # setup container, and check that the site answers over HTTPS. Leaves the
-# stack running; "docker compose down -v" removes it.
+# stack running; "docker compose down -v" removes it. SMOKE_ADDRESS: the
+# address the published ports are on (default 127.0.0.1; under
+# Docker-in-Docker, the docker service's).
 set -euo pipefail
 cd "$(dirname "$0")"
 # (|| true: a setting left out of .env isn't an error)
 domain=$(grep -E '^TIPPR_DOMAIN=' .env | cut -d= -f2 || true)
 https_port=$(grep -E '^TIPPR_HTTPS_PORT=' .env | cut -d= -f2 || true)
 https_port=${https_port:-443}
+address=${SMOKE_ADDRESS:-127.0.0.1}
 
 docker compose up -d
 
@@ -39,7 +42,7 @@ done
 
 check() {
     curl -sk -o /dev/null -w '%{http_code}' \
-        --resolve "$domain:$https_port:127.0.0.1" "https://$domain:$https_port$1"
+        --resolve "$domain:$https_port:$address" "https://$domain:$https_port$1"
 }
 for i in $(seq 60); do
     code=$(check /) || true

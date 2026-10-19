@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **GitLab CI/CD**: `.gitlab-ci.yml` runs the unit tests and installer smoke test, and builds, tests and publishes
+  releases (Docker image, compose bundle, installer tarball, Proxmox template) on a GitLab server, as the GitHub
+  workflows do on GitHub, for a repository kept on GitLab and mirrored to GitHub. It also has the version bump merge
+  request. See docs/RELEASING.md.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

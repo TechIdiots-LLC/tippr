@@ -72,6 +72,42 @@ To push to a different Docker Hub repository, set the repository variable
 `DOCKERHUB_IMAGE` (e.g. `someone/tippr`), and change `TIPPR_IMAGE` in
 `docker/.env.example` to match.
 
+## On GitLab
+
+`.gitlab-ci.yml` does the same on a GitLab server (GitLab ignores
+`.github/`), for a repository kept on GitLab and mirrored to GitHub, where
+the workflows above keep running:
+
+- **CI:** merge requests and pushes to `master` run the unit tests and the
+  installer smoke test, each in an Ubuntu 24.04 container with systemd
+  (`.gitlab/scripts/systemd-box.sh`).
+- **Release:** a push to `master` whose `VERSION` has no GitLab release
+  builds and tests the same files as above. It creates the release, with
+  the files in the project's generic package registry and the image in its
+  container registry. **Build → Pipelines → New pipeline** with
+  `RELEASE_DRY_RUN` set to `true` builds and tests without publishing.
+- **Bump:** **Build → Pipelines → New pipeline** with `BUMP_VERSION` set
+  opens the merge request that "Create bump version PR" would.
+
+It needs:
+
+- a Linux runner tagged `linux` and `docker`, registered with
+  `--privileged` (for Docker-in-Docker and the systemd containers), with
+  the disk for a Proxmox template build (~20 GB);
+- a Windows runner tagged `windows` for the small jobs (the release check,
+  publishing and the bump), which need PowerShell and, for the bump, Python
+  and git;
+- a runner maximum job timeout of at least 5 hours, for the release build;
+- a generic package size limit that fits the Proxmox template
+  (**Admin → Settings → CI/CD**);
+- the protected variable `CI_PUSH_TOKEN` (a project access token with the
+  Maintainer role and the `api` and `write_repository` scopes) for the
+  bump, in the environment scope `release/master`.
+
+Docker Hub is optional there. The GitLab pipeline pushes to Docker Hub only
+when `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are set. Leave them unset
+while the GitHub mirror's **Release** still pushes the image, or both will.
+
 ## Building the image yourself
 
 From the repository root:
