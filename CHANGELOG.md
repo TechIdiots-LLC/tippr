@@ -19,6 +19,11 @@
   /v/podcasts, /v/videos (YouTube channels) and /v/marketing, none of them front page defaults, and about 80 more
   feeds for the existing vaults (from feeder.co's popular feeds, each checked). Run `create_default_vaults.py`, then
   `import_feeds.py` with `FEEDS_ADD=1`, to add them to an existing site.
+- **Explore** (/explore) recommends again: its "personalized" part needs to know which vaults are like which, which
+  reddit worked out with its own data pipeline, so it always said "Our robots have no suggestions". A new daily job,
+  `tippr-job-vault_similarity` (also run by the installer), works that out from the site's subscriptions ("people
+  who subscribe to X also subscribe to Y"), which also feeds the similar-vault suggestions for multivaults. Default
+  vaults are now only left out of a member's recommendations when they have no subscriptions of their own.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

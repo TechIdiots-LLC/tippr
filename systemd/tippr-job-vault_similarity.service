@@ -1,0 +1,15 @@
+[Unit]
+Description=work out which vaults are like which, for the explore page
+
+After=network.target
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+# run-locked: on one server at a time when several share the site
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked vault_similarity @TIPPR_VENV@/bin/paster --plugin=r2 run ${TIPPR_INI} -c 'from r2.lib import vault_similarity; vault_similarity.run()'
+
+Nice=10

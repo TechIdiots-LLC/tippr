@@ -1635,6 +1635,9 @@ TIPPR_TIMERS=(
     # gives members their X-Year Club trophies on their cake day
     # (r2.lib.year_club)
     tippr-job-year_clubs.timer
+    # works out which vaults are like which, for the explore page
+    # (r2.lib.vault_similarity)
+    tippr-job-vault_similarity.timer
 )
 
 ###############################################################################
@@ -1671,6 +1674,9 @@ tippr-run $TIPPR_SRC/tippr/scripts/create_default_vaults.py || echo "Note: start
 # starter awards (trophies); existing ones are left alone
 echo "Creating starter awards..."
 tippr-run $TIPPR_SRC/tippr/scripts/create_default_awards.py || echo "Note: starter awards skipped (run scripts/create_default_awards.py later)"
+# which vaults are like which, for the explore page (then daily, from
+# tippr-job-vault_similarity)
+tippr-run -c "from r2.lib import vault_similarity; vault_similarity.run()" || echo "Note: vault similarity skipped (tippr-job-vault_similarity runs it daily)"
 
 # print this out here. if vagrant's involved, it's gonna do more steps
 # afterwards and then re-run this script but that's ok.

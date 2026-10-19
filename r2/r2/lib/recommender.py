@@ -138,8 +138,14 @@ def get_recommended_content(prefs, src, settings):
     num_items = 20  # total items to return
     rising_items = discovery_items = comment_items = hot_items = []
 
-    # make a list of vaults that shouldn't be recommended
-    default_vault_id36s = [to36(vault_id) for vault_id in Vault.default_vaults()]
+    # make a list of vaults that shouldn't be recommended: the defaults only
+    # for someone without subscriptions of their own, whose front page is
+    # them (someone who chose their vaults may well like a default they
+    # left out, and on a small site most vaults are defaults)
+    if prefs.likes:
+        default_vault_id36s = []
+    else:
+        default_vault_id36s = [to36(vault_id) for vault_id in Vault.default_vaults()]
     omit_vault_id36s = list(prefs.likes.union(prefs.dislikes,
                                           prefs.recent_views,
                                           default_vault_id36s))
