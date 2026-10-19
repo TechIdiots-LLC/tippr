@@ -6504,6 +6504,30 @@ div #campaign-field {
     }
 }
 
+// vault settings (and creating a vault): the fields fill the space up to
+// the sidebar instead of stopping at 514px
+#vault-form {
+    .linefield {
+        width: auto;
+        box-sizing: border-box;
+    }
+
+    .linefield .usertext-edit,
+    .linefield textarea,
+    .linefield input[type=text],
+    .linefield input[type=password],
+    .linefield input[type=url] {
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+    }
+
+    // the markdown boxes (description, sidebar, submission text)
+    .linefield .usertext-edit .md {
+        max-width: none;
+    }
+}
+
 .form-group {
     display: block;
 
