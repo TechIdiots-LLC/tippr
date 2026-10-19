@@ -379,6 +379,7 @@ def setup(values):
     child_env = dict(os.environ, TIPPR_ADMIN_PASSWORD=values["TIPPR_ADMIN_PASSWORD"],
                      TIPPR_ADMIN_USER=env("TIPPR_ADMIN_USER", "tippr"))
     for script in ("create_default_user.py", "init_policy_wiki_pages.py",
+                   "create_default_awards.py",
                    "create_default_vaults.py"):
         log("running " + script)
         subprocess.run(paster_run(SRC + "/tippr/scripts/" + script),

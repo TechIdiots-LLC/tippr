@@ -7,6 +7,10 @@
   "deactivate" tab, whose old address redirects there. The form says plainly what happens and when, lets you delete
   your posts and comments too (before, it told you to delete them one by one), and asks for your two-factor code if
   you use two-factor sign-in.
+- **Starter awards** (the trophies on profiles), so /admin/awards isn't empty: "Verified Email" and "tippr gold",
+  which the site gives by itself (and now also to members who verified or got gold before), and Staff, Early Member,
+  Bug Hunter, Translator, Helpful Member and Best Comment for admins to give, each with an icon. The installer
+  creates them (`scripts/create_default_awards.py`, safe to re-run); existing awards are left alone.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

@@ -1665,6 +1665,9 @@ tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Poli
 # starter vaults and front page defaults (only sets defaults the first time)
 echo "Creating starter vaults..."
 tippr-run $TIPPR_SRC/tippr/scripts/create_default_vaults.py || echo "Note: starter vaults skipped (run scripts/create_default_vaults.py later)"
+# starter awards (trophies); existing ones are left alone
+echo "Creating starter awards..."
+tippr-run $TIPPR_SRC/tippr/scripts/create_default_awards.py || echo "Note: starter awards skipped (run scripts/create_default_awards.py later)"
 
 # print this out here. if vagrant's involved, it's gonna do more steps
 # afterwards and then re-run this script but that's ok.
