@@ -310,9 +310,7 @@ var CampaignCreator = React.createClass({
         } else if (auction.maxBidDollars < auction.minBidDollars) {
           formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
           cssClass = {className: 'error', minBid: formattedMinBidDollars};
-          message = r._('Your campaign must be capable of claiming at least \
-                         1,000 impressions per day. Please adjust your bid, \
-                         budget, or schedule in order to enable this.');
+          message = r._('Your campaign must be capable of claiming at least 1,000 impressions per day. Please adjust your bid, budget, or schedule in order to enable this.');
         } else if (auction.bidDollars < auction.minBidDollars) {
           formattedMinBidDollars = parseFloat(auction.minBidDollars).toFixed(2);
           cssClass = {className: 'error', minBid: formattedMinBidDollars};

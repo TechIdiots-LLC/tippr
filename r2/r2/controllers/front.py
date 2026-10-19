@@ -978,7 +978,7 @@ class FrontController(TipprController):
             "link": _("Posts only"),
             "comment": _("Comments only"),
         }
-        title_string = _("Rules for r/%(vault)s") % { "vault" : c.site.name }
+        title_string = _("Rules for /v/%(vault)s") % { "vault" : c.site.name }
         content = Rules(
             title=title_string,
             kind_labels=kind_labels,

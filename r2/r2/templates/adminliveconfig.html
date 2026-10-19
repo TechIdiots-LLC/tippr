@@ -78,7 +78,7 @@
 </table>
 
 <details class="live-config-other">
-  <summary>${_("other settings (%(n)d, mostly from reddit's own setup)") % dict(n=len(thing.other))}</summary>
+  <summary>${_("other settings (%(n)d, mostly carried over from the original code)") % dict(n=len(thing.other))}</summary>
   <table class="lined-table borderless live-config-table">
     %for s in thing.other:
       ${setting_row(s)}
