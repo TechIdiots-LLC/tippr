@@ -289,6 +289,26 @@ action = add_vault(action, vault_path=False)
         <span class="details">${_("(hold the mouse over a reply's \"parent\" link to read the comment it replies to)")}</span>
       </p>
       <p>
+        ${checkbox(_("count new comments"), "new_comment_count")}
+        &#32;
+        <span class="details">${_("(\"3 new\" by posts you've opened before, and the new comments highlighted when you go back; remembered in this browser)")}</span>
+      </p>
+      <p>
+        ${_("posts you've opened:")}
+        <select name="visited_posts">
+          %for value, label in (("show", _("show as usual")), ("fade", _("fade them")), ("hide", _("hide them"))):
+            <option value="${value}" ${"selected" if c.user.pref_visited_posts == value else ""}>${label}</option>
+          %endfor
+        </select>
+        &#32;
+        <span class="details">${_("(remembered in this browser)")}</span>
+      </p>
+      <p>
+        ${checkbox(_("comment navigator"), "comment_navigator")}
+        &#32;
+        <span class="details">${_("(on comments pages, buttons to jump between top-level comments, the submitter's, yours, new ones or ones with links)")}</span>
+      </p>
+      <p>
         ${checkbox(_("night mode"), "nightmode")}
         &#32;
         <span class="details">${_("(light text on a dark background)")}</span>

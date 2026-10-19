@@ -285,6 +285,9 @@ def js_config(extra_config=None):
         "user_tagger": logged and bool(c.user.pref_user_tagger),
         "user_info_hover": logged and bool(c.user.pref_user_info_hover),
         "parent_hover": logged and bool(c.user.pref_parent_hover),
+        "new_comment_count": logged and bool(c.user.pref_new_comment_count),
+        "visited_posts": logged and c.user.pref_visited_posts or "show",
+        "comment_navigator": logged and bool(c.user.pref_comment_navigator),
         "user_tags": (user_tags.for_page(c.user)
                       if logged and (c.user.pref_user_tagger or
                                      c.user.pref_user_info_hover)

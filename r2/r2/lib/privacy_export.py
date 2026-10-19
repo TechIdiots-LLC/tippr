@@ -142,7 +142,8 @@ class UserDataExporter:
                 'pref_hide_child_comments', 'pref_show_images', 'pref_auto_expand_images',
                 'pref_filter_keywords', 'pref_filter_domains', 'pref_filter_vaults',
                 'pref_filter_users', 'pref_user_tagger', 'pref_user_info_hover',
-                'pref_parent_hover',
+                'pref_parent_hover', 'pref_new_comment_count', 'pref_visited_posts',
+                'pref_comment_navigator',
                 'pref_email_messages', 'pref_email_digests', 'pref_email_unsubscribe_all',
             ]
             for attr in pref_attrs:

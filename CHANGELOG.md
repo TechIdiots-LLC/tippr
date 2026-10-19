@@ -17,6 +17,10 @@
   tag button by usernames to note who someone is in a colour (only you see your tags; they're kept on your account,
   so they follow you to every device and come with your data export), a card with a user's karma and account age when
   you hold the mouse over their name, and the comment a reply answers when you hold it over "parent".
+- **New comment counts, visited posts and a comment navigator**, also from RES: "(3 new)" by posts you've opened
+  before, with the new comments highlighted when you go back; posts you've opened faded or hidden in listings; and on
+  comments pages, buttons to jump between top-level comments, the submitter's, yours, new ones or ones with links.
+  What you've opened is remembered in your browser, as RES does.
 - **GitLab CI/CD**: `.gitlab-ci.yml` runs the unit tests and installer smoke test, and builds, tests and publishes
   releases (Docker image, compose bundle, installer tarball, Proxmox template) on a GitLab server, as the GitHub
   workflows do on GitHub, for a repository kept on GitLab and mirrored to GitHub. It also has the version bump merge

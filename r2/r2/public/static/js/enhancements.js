@@ -32,6 +32,11 @@
  *    the member's tags come in r.config.user_tags)
  *  - user info on hover: karma, account age and your tag
  *  - the parent comment on hover over a reply's "parent" link
+ *  - posts you've opened: "(3 new)" by them in listings, the new comments
+ *    highlighted when you go back, and fading or hiding them; remembered
+ *    in this browser (localStorage), as RES does
+ *  - comment navigator: jump between top-level comments, the submitter's,
+ *    yours, new ones or ones with links
  *
  * Filters (hiding posts by keyword, domain, vault or user) happen on the
  * server: r2.lib.listing_filters.
@@ -804,7 +809,209 @@ r.enhancements.parentHover = {
   },
 }
 
+/* posts you've opened: new comment counts, and fading or hiding them */
+
+r.enhancements.visits = {
+  MAX: 2000,
+  MAX_AGE: 60 * 86400,
+
+  key: function() {
+    return 'tippr.visits.' + r.config.user_id
+  },
+
+  // {fullname: [comment count when you last read them or null, time]}
+  load: function() {
+    try {
+      return JSON.parse(window.localStorage.getItem(this.key()) || '{}') || {}
+    } catch (e) {
+      return {}
+    }
+  },
+
+  store: function(visits) {
+    var now = Date.now() / 1000
+    var entries = _.pairs(visits).filter(_.bind(function(kv) {
+      return now - kv[1][1] < this.MAX_AGE
+    }, this))
+    if (entries.length > this.MAX) {
+      entries = _.sortBy(entries, function(kv) { return -kv[1][1] }).slice(0, this.MAX)
+    }
+    try {
+      window.localStorage.setItem(this.key(), JSON.stringify(_.object(entries)))
+    } catch (e) {}
+  },
+
+  count: function($thing) {
+    var text = $thing.children('.entry').find('a.comments').first().text()
+    var m = text.replace(/[,.  ]/g, '').match(/\d+/)
+    return m ? parseInt(m[0], 10) : 0
+  },
+
+  init: function() {
+    this.newCounts = r.config.new_comment_count
+    this.visited = r.config.visited_posts
+    var visits = this.load()
+    var $link = $('.commentarea').length &&
+      $('.sitetable.linklisting > .thing.link').first()
+
+    if ($link && $link.length) {
+      this.onCommentsPage($link, visits)
+    } else {
+      this.onListing(visits)
+      $(document).on('new_things_inserted', _.bind(function() {
+        this.onListing(this.load())
+      }, this))
+      // opening a post counts as visiting it (its comments aren't read yet)
+      $(document.body).on('click', '#siteTable .thing.link a.title', _.bind(function(e) {
+        var fullname = $(e.currentTarget).closest('.thing').data('fullname')
+        var v = this.load()
+        if (!v[fullname]) {
+          v[fullname] = [null, Date.now() / 1000]
+          this.store(v)
+        }
+      }, this))
+    }
+  },
+
+  onCommentsPage: function($link, visits) {
+    var fullname = $link.data('fullname')
+    var before = visits[fullname]
+    // highlight what's new since you last read them (gold members already
+    // get this from the server)
+    if (this.newCounts && before && before[0] !== null &&
+        !$('.comment-visits-box').length) {
+      var since = before[1] * 1000
+      $('.commentarea .thing.comment').each(function() {
+        var time = $(this).children('.entry').find('.tagline time').first().attr('datetime')
+        if (time && Date.parse(time) > since) {
+          $(this).addClass('new-comment')
+        }
+      })
+    }
+    visits[fullname] = [this.count($link), Date.now() / 1000]
+    this.store(visits)
+  },
+
+  onListing: function(visits) {
+    var self = this
+    var hideHere = !/^\/(user|u)\/|\/saved\/?$/.test(location.pathname)
+    $('#siteTable > .thing.link').each(function() {
+      var $thing = $(this)
+      var visit = visits[$thing.data('fullname')]
+      if (!visit || $thing.data('visit-marked')) {
+        return
+      }
+      $thing.data('visit-marked', true)
+      if (self.visited === 'fade' || (self.visited === 'hide' && !hideHere)) {
+        $thing.addClass('visited-post-faded')
+      } else if (self.visited === 'hide') {
+        $thing.addClass('visited-post-hidden')
+      }
+      if (self.newCounts && visit[0] !== null) {
+        var fresh = self.count($thing) - visit[0]
+        if (fresh > 0) {
+          $thing.children('.entry').find('a.comments').first().after(
+            $('<span class="new-comment-count"></span>').text(
+              r.P_('(%(num)s new)', '(%(num)s new)', fresh).format({num: fresh})))
+        }
+      }
+    })
+  },
+}
+
+/* comment navigator */
+
+r.enhancements.commentNavigator = {
+  init: function() {
+    if (!$('.commentarea .thing.comment').length) {
+      return
+    }
+    var me = (r.config.logged || '').toLowerCase()
+    this.categories = [
+      ['top', r._('top-level comments'), function() {
+        return $('.commentarea > .sitetable > .thing.comment')
+      }],
+      ['submitter', r._('the submitter\'s'), function() {
+        return $('.commentarea .thing.comment').filter(function() {
+          return $(this).children('.entry').find('.tagline a.author.submitter').length
+        })
+      }],
+      ['mine', r._('yours'), function() {
+        return $('.commentarea .thing.comment').filter(function() {
+          return $(this).children('.entry').find('.tagline a.author').first()
+            .text().toLowerCase() === me
+        })
+      }],
+      ['new', r._('new'), function() {
+        return $('.commentarea .thing.comment.new-comment')
+      }],
+      ['links', r._('with links'), function() {
+        return $('.commentarea .thing.comment').filter(function() {
+          return $(this).children('.entry').find('.usertext-body .md a[href]').length
+        })
+      }],
+    ]
+    this.index = -1
+    var $select = $('<select class="comment-navigator-category"></select>')
+      .attr('aria-label', r._('jump between'))
+    _.each(this.categories, function(cat) {
+      $select.append($('<option></option>').val(cat[0]).text(cat[1]))
+    })
+    this.$select = $select.on('change', _.bind(function() {
+      this.index = -1
+      this.update()
+    }, this))
+    this.$count = $('<span class="comment-navigator-count"></span>')
+    this.$box = $('<div class="comment-navigator" role="navigation"></div>')
+      .attr('aria-label', r._('comment navigator'))
+      .append(
+        $select,
+        $('<button type="button" class="comment-navigator-prev">▲</button>')
+          .attr('aria-label', r._('previous'))
+          .on('click', _.bind(function() { this.move(-1) }, this)),
+        $('<button type="button" class="comment-navigator-next">▼</button>')
+          .attr('aria-label', r._('next'))
+          .on('click', _.bind(function() { this.move(1) }, this)),
+        this.$count)
+      .appendTo(document.body)
+    this.update()
+  },
+
+  current: function() {
+    var key = this.$select.val()
+    var cat = _.find(this.categories, function(c) { return c[0] === key })
+    return cat[2]().filter(':visible')
+  },
+
+  update: function() {
+    var $all = this.current()
+    this.$count.text($all.length ?
+      ((this.index >= 0 ? this.index + 1 : '–') + ' / ' + $all.length) : '0')
+  },
+
+  move: function(step) {
+    var $all = this.current()
+    if (!$all.length) {
+      this.update()
+      return
+    }
+    this.index = (this.index + step + $all.length) % $all.length
+    if (this.index < 0) {
+      this.index = $all.length - 1
+    }
+    r.enhancements.keyboardNav.select($all.eq(this.index), true)
+    this.update()
+  },
+}
+
 $(function() {
+  if (r.config.new_comment_count || (r.config.visited_posts &&
+                                     r.config.visited_posts !== 'show')) {
+    r.enhancements.visits.init()
+  }
+  if (r.config.comment_navigator) {
+    r.enhancements.commentNavigator.init()
+  }
   if (r.config.user_tagger || r.config.user_info_hover) {
     r.enhancements.userTags.init(r.config.user_tagger)
   }

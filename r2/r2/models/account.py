@@ -127,6 +127,9 @@ class Account(Thing):
                      pref_user_tagger=False,
                      pref_user_info_hover=False,
                      pref_parent_hover=False,
+                     pref_new_comment_count=False,
+                     pref_visited_posts="show",
+                     pref_comment_navigator=False,
                      # listing filters (r2.lib.listing_filters)
                      pref_filter_keywords=(),
                      pref_filter_domains=(),
