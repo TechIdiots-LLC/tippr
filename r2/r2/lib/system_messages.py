@@ -222,7 +222,7 @@ def send_ban_message(vault, mod, user, note=None, days=None, new=True):
     message += "\n\n" + ("**Reminder from the Tippr staff**: If you use "
         "another account to circumvent this vault ban, that will be "
         "considered a violation of [the Content Policy](/help/contentpolicy#section_prohibited_behavior) "
-        "and can result in your account being [suspended](https://reddit.zendesk.com/hc/en-us/articles/205687686) "
+        "and can result in your account being [suspended](/help/suspensions) "
         "from the site as a whole.")
 
     item, inbox_rel = Message._new(

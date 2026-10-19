@@ -2344,7 +2344,7 @@ class ProfilePage(Tippr):
         rb = Tippr.rightbox(self)
 
         tc = TrophyCase(self.user)
-        helplink = HelpLink("/wiki/awards", _("what's this?"))
+        helplink = HelpLink("/help/trophies", _("what's this?"))
         scb = SideContentBox(title=_("trophy case"),
                  helplink=helplink, content=[tc],
                  extra_class="trophy-area")
@@ -4871,7 +4871,7 @@ class PromoteLinkEdit(PromoteLinkBase):
                     "Check out the [Help Center](%(help_center)s) "
                     "or [/v/selfserve](%(selfserve)s).")
         message %= {
-            'help_center': 'https://reddit.zendesk.com/hc/en-us/categories/200352595-Advertising',
+            'help_center': '/help/advertising',
             'selfserve': '/v/selfserve'
         }
         self.infobar = TipprInfoBar(message=message)
@@ -5945,17 +5945,35 @@ class PolicyView(Templated):
     pass
 
 
+class HelpIndex(Templated):
+    """/help: the help pages and the policies (PoliciesController)."""
+    pass
+
+
 class PolicyPage(BoringPage):
     css_class = 'policy-page'
     show_infobar = False
 
-    def __init__(self, pagename=None, content=None, **kw):
+    def __init__(self, pagename=None, content=None, help_page=False, **kw):
+        # help pages (/help, /help/faq …) get help tabs, not policy tabs
+        self.help_page = help_page
         BoringPage.__init__(self, pagename=pagename, show_sidebar=False,
             content=content, **kw)
         self.welcomebar = None
 
     def build_toolbars(self):
         toolbars = BoringPage.build_toolbars(self)
+        if self.help_page:
+            policies_buttons = [
+                NavButton(_('help'), '/', aliases=['/help']),
+                NavButton(_('faq'), '/faq'),
+                NavButton(_('formatting'), '/formatting'),
+                NavButton(_('search'), '/search'),
+                NavButton(_('API'), '/api'),
+            ]
+            toolbars.append(NavMenu(policies_buttons, type='tabmenu',
+                                    base_path='/help'))
+            return toolbars
         policies_buttons = [
             NavButton(_('privacy policy'), '/privacypolicy'),
             NavButton(_('user agreement'), '/useragreement'),
@@ -6138,7 +6156,7 @@ class GeotargetNotice(Templated):
             text = _("this promoted link uses country level targeting and may "
                      "have been shown to you because of your location. "
                      "([learn more](%(link)s))")
-        more_link = "/wiki/targetingbycountrycity"
+        more_link = "/help/advertising"
         self.text = text % {"link": more_link}
         Templated.__init__(self)
 

@@ -697,7 +697,7 @@ class AdsController(VaultListingController):
         if c.user.pref_show_promote or c.user_is_sponsor:
             return infotext % {'link': '/promoted'}
         else:
-            return infotext % {'link': '/advertising'}
+            return infotext % {'link': '/help/advertising'}
 
     def keep_fn(self):
         def keep(item):

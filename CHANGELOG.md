@@ -3,6 +3,13 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Help pages** (/help): a FAQ and pages on searching, formatting, RSS feeds, trophies, timeouts and suspensions,
+  quarantined vaults, muting, the API, advertising and translating, written for any site (they're in `docs/help/` and
+  use the site's name from /admin/site). The installer loads them into the site wiki like the policies; admins can
+  edit them at /wiki/help/<name>. The site's help links (search help, formatting help, the API rules, "what's this?" on
+  trophies, the timeout banner, quarantine notices, muting messages …) pointed at reddit's wiki, reddit's Zendesk or
+  /r/ pages; they now point here, and /faq goes to /help/faq. The unused "allow my data to be used for research"
+  preference is gone, and the timeout banner now says "timeout" rather than "suspended".
 - **Banned domains** (/admin/domains): admins can ban a domain (and its subdomains) so its links are either refused
   at the submit form, with a reason the member sees, or accepted and removed as spam without a word, for spammers who'd
   just try another address. Each domain has an admin page (/admin/domain/<domain>, the small "d" beside a post's

@@ -28,7 +28,7 @@
   <h1>${heading}</h1>
   %for award in awards:
     <div class="award-square mini">
-      <a href="/wiki/awards/#${award.codename}">
+      <a href="/help/trophies">
         <img src="${award.imgurl % 70}" />
         <br/>
         <span class="award-name mini">${award.title}</span>
@@ -47,7 +47,7 @@
   %for award, winner, trophy in thing.regular_winners:
 
     <div class="award-square">
-      <a href="/wiki/awards/#${award.codename}">
+      <a href="/help/trophies">
         <img src="${award.imgurl % 70}" />
         <span class="award-name">${award.title}</span>
       </a>

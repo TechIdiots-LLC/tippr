@@ -26,6 +26,7 @@
 <div class="doc-info">
   ${thing.toc_html}
 
+  %if thing.revs:
   <h4>${_('revisions')}</h4>
   <ul class="revisions">
     %for rev in thing.revs:
@@ -38,6 +39,7 @@
       </li>
     %endfor
   </ul>
+  %endif
 </div>
 
 ${thing.body_html}

@@ -44,7 +44,7 @@
     <div class="quarantine-notice">
       <div class="md-container">
         ${_mdf("This community is [quarantined](%(link)s) because of its shocking or highly offensive content.",
-               wrap=True, link='https://reddit.zendesk.com/hc/en-us/articles/205701245')}
+               wrap=True, link='/help/quarantine')}
       </div>
       <form method='post' action='/api/quarantine_optout'>
         <input type="hidden" name="uh" value="${c.modhash}"/>
@@ -185,7 +185,7 @@
         %if not thing.vault.quarantine:
           <%
             subject = "ATTN: Your vault has been quarantined"
-            body = "Your vault has been [quarantined](https://reddit.zendesk.com/hc/en-us/articles/205701245) due to offensive content."
+            body = "Your vault has been [quarantined](/help/quarantine) due to offensive content."
             button_label = "Quarantine and send modmail"
           %>
         %else:

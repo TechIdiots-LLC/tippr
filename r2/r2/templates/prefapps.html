@@ -341,7 +341,7 @@ ${utils.radio_type('app_type', "script", _("script"),
   <form method="post" action="/api/updateapp" class="pretty-form" id="create-app"
    onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % jssafe(_("creating..."))}">
     <h1>${_("create application")}</h1>
-    <p>${_md("Please [read the API usage guidelines](/wiki/api) before creating your application. After creating, you will be required to [register](/wiki/api) for production API use.")}
+    <p>${_md("Please [read the API usage guidelines](/help/api) before creating your application. After creating, you will be required to [register](/help/api) for production API use.")}
     <input type="hidden" name="uh" value="${c.modhash}" />
     <table class="content preftable">
       <tr>

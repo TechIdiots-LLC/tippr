@@ -1,0 +1,33 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /help: the help pages and the policies (PoliciesController.GET_help_index)
+<div class="md wiki help-index">
+  <h1>${_("Help")}</h1>
+  <ul>
+    %for name, title in thing.pages:
+      <li><a href="/help/${name}">${title}</a></li>
+    %endfor
+  </ul>
+
+  <h2>${_("Rules and policies")}</h2>
+  <ul>
+    %for name, title in thing.policies:
+      <li><a href="/help/${name}">${title}</a></li>
+    %endfor
+  </ul>
+
+  <p>${_("Can't find what you need?")}&#32;<a href="/contact">${_("Contact the admins.")}</a></p>
+</div>

@@ -114,7 +114,11 @@ r.ui.TOCScroller = Backbone.View.extend({
 })
 
 $(function() {
-    new r.ui.scrollFixed($('.policy-page .doc-info'))
+    // (the /help index has no side column)
+    var $docInfo = $('.policy-page .doc-info')
+    if ($docInfo.length) {
+      new r.ui.scrollFixed($docInfo)
+    }
     new r.ui.TOCScroller({
         el: $('.policy-page'),
         doc: $('.policy-page .md'),

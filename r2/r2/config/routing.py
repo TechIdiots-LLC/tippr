@@ -359,17 +359,23 @@ def make_map(config):
     # This unconditional mapping allows /help/<page> to reach the
     # PoliciesController even when domain/vault routing middleware sets
     # additional environ keys (see not_in_vault above).
+    # the help pages (docs/help/; PoliciesController.HELP_PAGES) and the
+    # index of them
+    mc('/help', controller='policies', action='help_index')
+    mc('/help/', controller='policies', action='help_index')
+    # reddit's mod help page
+    mc('/help/modhub', controller='redirect', action='redirect',
+       dest='/help/moderatorguidelines')
     mc('/help/:page', controller='policies', action='policy_page',
-       requirements={'page':'contentpolicy|privacypolicy|useragreement|moderatorguidelines'})
+       requirements={'page': 'contentpolicy|privacypolicy|useragreement|moderatorguidelines|faq|search|formatting|rss|trophies|suspensions|quarantine|muting|api|advertising|translate'})
 
     # original conditional mapping (kept for explicit non-vault cases)
     mc('/help/:page', controller='policies', action='policy_page',
        conditions={'function':not_in_vault},
-       requirements={'page':'contentpolicy|privacypolicy|useragreement|moderatorguidelines'})
+       requirements={'page': 'contentpolicy|privacypolicy|useragreement|moderatorguidelines|faq|search|formatting|rss|trophies|suspensions|quarantine|muting|api|advertising|translate'})
     mc('/rules', controller='redirect', action='redirect',
         dest='/help/contentpolicy')
-    mc('/faq', controller='redirect', action='redirect',
-       dest='https://reddit.zendesk.com/')
+    mc('/faq', controller='redirect', action='redirect', dest='/help/faq')
 
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')

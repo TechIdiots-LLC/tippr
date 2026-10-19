@@ -158,6 +158,18 @@ def main(root_dir=None):
         },
     ]
 
+    # the help pages (/help/<name>): every docs/help/<name>.md
+    help_dir = os.path.join(root_dir, 'docs', 'help')
+    if os.path.isdir(help_dir):
+        for fname in sorted(os.listdir(help_dir)):
+            if not fname.endswith('.md') or fname.lower() == 'readme.md':
+                continue
+            policies.append({
+                'wiki_name': 'help/' + fname[:-3],
+                'file_path': os.path.join(help_dir, fname),
+                'display_name': 'Help: ' + fname[:-3],
+            })
+
     print(f"Using user '{system_user.name}' to create wiki pages.\n")
 
     # Create each policy page

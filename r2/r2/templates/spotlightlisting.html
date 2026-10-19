@@ -65,13 +65,13 @@
         <p>
           ${text_with_links(
             _("This sponsored link is an advertisement generated with our %(self_serve_advertisement_tool)s."),
-              self_serve_advertisement_tool=dict(link_text=_("self-serve advertisement tool"), path="/wiki/selfserve")
+              self_serve_advertisement_tool=dict(link_text=_("self-serve advertisement tool"), path="/help/advertising")
           )}
         </p>
         <p>
           ${text_with_links(
             _("Use of this tool is open to all members of tippr.net, and for as little as %(price)s you can advertise in this area. %%(get_started)s") % dict(price=format_currency(g.min_total_budget_pennies / 100., 'USD', locale=c.locale)),
-              get_started=dict(link_text=format_html("%s &rsaquo;", _("Get started")), path="/advertising")
+              get_started=dict(link_text=format_html("%s &rsaquo;", _("Get started")), path="/help/advertising")
           )}
         </p>
       </div>

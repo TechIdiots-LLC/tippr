@@ -31,7 +31,7 @@
 
 <%def name="interstitial_title()">
   <%
-    suspended_link = format_html('&#32;<a href="https://reddit.zendesk.com/hc/en-us/articles/205687686">%s</a>',
+    suspended_link = format_html('&#32;<a href="/help/suspensions">%s</a>',
                                  _('suspended'))
   %>
   ${_wsf("This account has been %(suspended_link)s", suspended_link=suspended_link)}

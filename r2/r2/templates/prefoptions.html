@@ -125,7 +125,7 @@ action = add_vault(action, vault_path=False)
       ${language_tool(allow_blank = False, show_regions = True,
                       default_lang = c.user.pref_lang)}
       &#32;<span class="details hover">(*) ${_("incomplete")}
-      &#32;<a href="/r/i18n/wiki/getting_started">${_("volunteer to translate")}</a></span>
+      &#32;<a href="/help/translate">${_("volunteer to translate")}</a></span>
     </td>
   </tr>
 
@@ -372,21 +372,11 @@ action = add_vault(action, vault_path=False)
         (${_wsf("let everyone see %(link1)s and %(link2)s", link1=link1, link2=link2)})
       </span>
       <br/>
-      ${checkbox(_("allow my data to be used for research purposes"), "research")}
-      &#32;
-      <span class="details">
-       (
-         <a href="/r/redditdev/comments/dtg4j/want_to_help_reddit_build_a_recommender_a_public/">
-           ${_("details")}
-         </a>
-       )
-      </span>
-      <br />
       ${checkbox(_("don't allow search engines to index my user profile"), "hide_from_robots")}
       &#32;
       <span class="details">
         (
-        <a href="/wiki/noindex">${_("details")}</a>
+        <a href="/help/faq">${_("details")}</a>
         )
       </span>
     </td>

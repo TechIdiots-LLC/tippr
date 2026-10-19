@@ -3030,7 +3030,7 @@ class MutedAccountsByVault:
                 "from v/%(vaultname)s. You will not be able to message "
                 "the moderators of v/%(vaultname)s for %(num_hours)s hours.")
             message %= dict(
-                muting_link="https://reddit.zendesk.com/hc/en-us/articles/205269739",
+                muting_link="/help/muting",
                 vaultname=vault.name,
                 num_hours=NUM_HOURS,
             )

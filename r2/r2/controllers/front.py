@@ -1113,7 +1113,7 @@ class FrontController(TipprController):
                              simple=True).render()
         return res
 
-    search_help_page = "/wiki/search"
+    search_help_page = "/help/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
 
     @base_listing
