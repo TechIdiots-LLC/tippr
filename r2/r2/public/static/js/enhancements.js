@@ -1004,7 +1004,121 @@ r.enhancements.commentNavigator = {
   },
 }
 
+/* account switcher */
+
+r.enhancements.accountSwitcher = {
+  init: function() {
+    var $users = $('#header-bottom-right .user, .mobile-drawer .user').first()
+    if (!$users.length) {
+      return
+    }
+    this.$toggle = $('<a href="#" class="account-switcher-toggle"></a>')
+      .text(r._('switch account'))
+      .attr('aria-haspopup', 'true')
+      .on('click', _.bind(function(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        if ($('.account-switcher-menu').length) {
+          this.close()
+        } else {
+          this.open()
+        }
+      }, this))
+    $users.after($('<span class="separator">|</span>'), this.$toggle)
+  },
+
+  post: function(action, data) {
+    return $.ajax({url: '/api/' + action + '.json', type: 'POST', dataType: 'json',
+                   data: _.extend({uh: r.config.modhash}, data)})
+  },
+
+  open: function() {
+    var self = this
+    var $menu = $('<div class="account-switcher-menu" role="menu"></div>')
+    var names = r.config.switch_accounts || []
+    if (names.length) {
+      var $list = $('<ul></ul>')
+      _.each(names, function(name) {
+        $('<li></li>').append(
+          $('<a href="#" class="account-switcher-account" role="menuitem"></a>').text(name)
+            .on('click', function(e) {
+              e.preventDefault()
+              self.post('switch_account', {name: name}).done(function(res) {
+                if (res && res.ok) {
+                  window.location.reload()
+                } else {
+                  self.$status.text((res && res.error) || r._('couldn\'t switch; try again'))
+                }
+              })
+            }),
+          $('<button type="button" class="account-switcher-forget"></button>')
+            .text('×').attr({title: r._('forget this account'),
+                                  'aria-label': r._('forget %(user)s').format({user: name})})
+            .on('click', function(e) {
+              e.stopPropagation()
+              var $li = $(this).closest('li')
+              self.post('switch_forget', {name: name}).done(function(res) {
+                r.config.switch_accounts = (res && res.accounts) || []
+                $li.remove()
+              })
+            }))
+          .appendTo($list)
+      })
+      $menu.append($list)
+    } else {
+      $menu.append($('<p class="details"></p>').text(r._('no other accounts yet')))
+    }
+    var $form = $('<form class="account-switcher-add"></form>').append(
+      $('<div class="account-switcher-title"></div>').text(r._('add an account')),
+      $('<input type="text" name="user" autocomplete="username">')
+        .attr({placeholder: r._('username'), 'aria-label': r._('username')}),
+      $('<input type="password" name="passwd" autocomplete="current-password">')
+        .attr({placeholder: r._('password'), 'aria-label': r._('password')}),
+      $('<button type="submit" class="btn"></button>').text(r._('add and switch')))
+    this.$status = $('<p class="error"></p>')
+    $form.on('submit', function(e) {
+      e.preventDefault()
+      self.$status.text('')
+      self.post('switch_add', {user: $form.find('[name=user]').val(),
+                               passwd: $form.find('[name=passwd]').val()})
+        .done(function(res) {
+          if (res && res.ok) {
+            window.location.reload()
+          } else {
+            self.$status.text((res && res.error) || r._('couldn\'t add the account'))
+          }
+        })
+        .fail(function() { self.$status.text(r._('couldn\'t add the account')) })
+    })
+    $menu.append($form, this.$status,
+      $('<p class="details"></p>').text(
+        r._('logging out forgets these accounts')))
+      .on('click keydown', function(e) {
+        e.stopPropagation()
+        if (e.type === 'keydown' && e.key === 'Escape') {
+          self.close()
+        }
+      })
+      .appendTo(document.body)
+    var offset = this.$toggle.offset()
+    $menu.css({top: offset.top + this.$toggle.outerHeight() + 4,
+               left: Math.max(4, Math.min(offset.left, $(window).width() - $menu.outerWidth() - 8))})
+    this.$toggle.attr('aria-expanded', 'true')
+    $(document).one('click', _.bind(this.close, this))
+  },
+
+  close: function() {
+    $('.account-switcher-menu').remove()
+    if (this.$toggle) {
+      this.$toggle.attr('aria-expanded', 'false')
+    }
+  },
+}
+
 $(function() {
+  if (r.config.account_switcher) {
+    r.enhancements.accountSwitcher.init()
+  }
   if (r.config.new_comment_count || (r.config.visited_posts &&
                                      r.config.visited_posts !== 'show')) {
     r.enhancements.visits.init()

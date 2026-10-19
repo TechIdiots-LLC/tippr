@@ -143,6 +143,12 @@ def header_url(url, absolute=False):
         return make_url_protocol_relative(url)
 
 
+def _switch_account_names():
+    # imported here: account_switcher needs r2.models, which needs this
+    from r2.lib import account_switcher
+    return account_switcher.names()
+
+
 def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     user_id = c.user_is_loggedin and c.user._id
@@ -213,6 +219,8 @@ def js_config(extra_config=None):
         events_collector_url = g.events_collector_url
         events_collector_key = g.secrets['events_collector_js_key']
         events_collector_secret = g.secrets['events_collector_js_secret']
+
+    switch_accounts = _switch_account_names() if logged else []
 
     config = {
         # is the user logged in?
@@ -288,6 +296,11 @@ def js_config(extra_config=None):
         "new_comment_count": logged and bool(c.user.pref_new_comment_count),
         "visited_posts": logged and c.user.pref_visited_posts or "show",
         "comment_navigator": logged and bool(c.user.pref_comment_navigator),
+        # shown when it's turned on, or while this browser keeps other
+        # accounts (so switching to one without it still lets you back)
+        "switch_accounts": switch_accounts,
+        "account_switcher": bool(logged and (c.user.pref_account_switcher or
+                                             switch_accounts)),
         "user_tags": (user_tags.for_page(c.user)
                       if logged and (c.user.pref_user_tagger or
                                      c.user.pref_user_info_hover)

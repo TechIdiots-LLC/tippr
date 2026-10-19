@@ -116,6 +116,7 @@ PREFS_VALIDATORS = dict(
     pref_visited_posts=VOneOf("visited_posts", ("show", "fade", "hide"),
                               default="show"),
     pref_comment_navigator=VBoolean("comment_navigator"),
+    pref_account_switcher=VBoolean("account_switcher"),
     pref_filter_keywords=VFilterList("filter_keywords", "keywords"),
     pref_filter_domains=VFilterList("filter_domains", "domains"),
     pref_filter_vaults=VFilterList("filter_vaults", "vaults"),

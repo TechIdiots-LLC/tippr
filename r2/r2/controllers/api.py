@@ -46,6 +46,7 @@ from r2.controllers.tippr_base import (
     set_user_cookie,
 )
 from r2.lib import (
+    account_switcher,
     ai_content,
     amqp,
     antispam,
@@ -58,6 +59,7 @@ from r2.lib import (
     user_tags,
 )
 from r2.lib.captcha import get_iden
+from r2.lib.cookies import DELETE, Cookie
 from r2.lib.csrf import csrf_exempt
 from r2.lib.db import queries, tdb_cassandra
 from r2.lib.filters import (
@@ -274,6 +276,50 @@ class ApiController(TipprController):
             return {"tag": "", "background": ""}
         return {"tag": saved["tag"],
                 "background": user_tags.COLORS.get(saved["color"], "")}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        user=VThrottledLogin(["user", "passwd"]),
+    )
+    def POST_switch_add(self, responder, user):
+        """Add another account to the account switcher: log in to it, and
+        keep the current one to switch back to (r2.lib.account_switcher)."""
+        if (responder.has_errors("ratelimit", errors.RATELIMIT) or
+                responder.has_errors("passwd", errors.WRONG_PASSWORD) or
+                not user):
+            return {"error": _("wrong username or password")}
+        if user._id == c.user._id:
+            return {"error": _("that's the account you're using")}
+        if len(account_switcher.accounts()) >= account_switcher.MAX_ACCOUNTS:
+            return {"error": _("you can keep at most %(n)d other accounts") % {
+                "n": account_switcher.MAX_ACCOUNTS}}
+        account_switcher.remember_current()
+        self.login(user, rem=True)
+        c.cookies[g.admin_cookie] = Cookie(value="", expires=DELETE)
+        return {"ok": True, "name": user.name}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        name=nop("name"),
+    )
+    def POST_switch_account(self, responder, name):
+        """Switch to another account kept by the account switcher."""
+        account = account_switcher.switch_to(name)
+        if not account:
+            return {"error": _("that account isn't available to switch to; add it again")}
+        account.update_last_visit(c.start_time)
+        return {"ok": True, "name": account.name}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        name=nop("name"),
+    )
+    def POST_switch_forget(self, responder, name):
+        """Take an account out of the account switcher."""
+        return {"ok": True, "accounts": account_switcher.forget(name)}
 
     @json_validate(user=VUname(("user",)))
     @api_doc(api_section.users)

@@ -21,6 +21,10 @@
   before, with the new comments highlighted when you go back; posts you've opened faded or hidden in listings; and on
   comments pages, buttons to jump between top-level comments, the submitter's, yours, new ones or ones with links.
   What you've opened is remembered in your browser, as RES does.
+- **Account switcher**, also from RES: a "switch account" menu by your name to move between your accounts without
+  logging out. You add an account by logging in to it once; no passwords are kept, only the accounts' sessions, in an
+  HttpOnly cookie that scripts can't read. A session stops working when that account's password changes, and
+  logging out forgets the other accounts.
 - **GitLab CI/CD**: `.gitlab-ci.yml` runs the unit tests and installer smoke test, and builds, tests and publishes
   releases (Docker image, compose bundle, installer tarball, Proxmox template) on a GitLab server, as the GitHub
   workflows do on GitHub, for a repository kept on GitLab and mirrored to GitHub. It also has the version bump merge

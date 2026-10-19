@@ -394,6 +394,78 @@
     }
 }
 
+// account switcher
+
+.account-switcher-menu {
+    position: absolute;
+    z-index: @zindex-modal;
+    width: 240px;
+    padding: 10px;
+    background: @tp-surface;
+    color: @tp-text;
+    border: 1px solid @tp-border;
+    border-radius: 5px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+    font-size: @tp-font-xs;
+
+    ul {
+        margin: 0 0 8px;
+        padding: 0;
+        list-style: none;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 3px 0;
+        border-bottom: 1px solid @tp-border;
+    }
+
+    .account-switcher-account {
+        font-weight: bold;
+    }
+
+    .account-switcher-forget {
+        background: none;
+        border: 0;
+        color: @tp-text-muted;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .account-switcher-title {
+        font-weight: bold;
+        margin: 6px 0 4px;
+    }
+
+    input {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 5px;
+    }
+
+    .btn {
+        padding: 4px 10px;
+        border: 1px solid @tp-accent-strong;
+        border-radius: 3px;
+        background: @tp-accent;
+        color: @tp-on-accent;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .error {
+        color: @brand-danger;
+        margin: 4px 0 0;
+    }
+
+    .details {
+        margin: 6px 0 0;
+    }
+}
+
 // filters on /prefs
 
 .pref-filters .pref-filter {

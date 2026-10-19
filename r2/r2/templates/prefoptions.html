@@ -309,6 +309,11 @@ action = add_vault(action, vault_path=False)
         <span class="details">${_("(on comments pages, buttons to jump between top-level comments, the submitter's, yours, new ones or ones with links)")}</span>
       </p>
       <p>
+        ${checkbox(_("account switcher"), "account_switcher")}
+        &#32;
+        <span class="details">${_("(a \"switch account\" menu by your name, to move between your accounts without logging out; logging out forgets them)")}</span>
+      </p>
+      <p>
         ${checkbox(_("night mode"), "nightmode")}
         &#32;
         <span class="details">${_("(light text on a dark background)")}</span>

@@ -1238,6 +1238,9 @@ class TipprController(OAuth2ResourceController):
     def logout():
         c.cookies[g.login_cookie] = Cookie(value='', expires=DELETE)
         delete_secure_session_cookie()
+        # and the other accounts the account switcher kept
+        from r2.lib import account_switcher
+        account_switcher.clear()
 
     @staticmethod
     def enable_admin_mode(user, first_login=None):
