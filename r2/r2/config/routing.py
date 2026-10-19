@@ -458,7 +458,8 @@ def make_map(config):
     mc('/api/zendeskreply', controller='mailgunwebhook', action='zendeskreply')
     mc('/api/:action', controller='promoteapi',
        requirements=dict(action=("promote|unpromote|edit_promo|ad_s3_callback|"
-                                 "ad_s3_params|freebie|promote_note|update_pay|"
+                                 "ad_s3_params|ad_image_upload|ad_image_preview|"
+                                 "freebie|promote_note|update_pay|"
                                  "edit_campaign|delete_campaign|"
                                  "check_inventory|"
                                  "refund_campaign|terminate_campaign|"

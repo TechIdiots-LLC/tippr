@@ -232,11 +232,20 @@
     },
 
     _ajaxError: function(xhr) {
-      var $xml = $(xhr.responseXML);
+      var xml = xhr.responseXML;
       var message = this.options.errors.unknown;
 
-      if ($xml && $xml.length) {
-        message = $xml.find('Message').text();
+      // S3's error, or the site's own when it takes the upload (sent as XML,
+      // but possibly labelled as a page)
+      if (!xml && xhr.responseText) {
+        try {
+          xml = $.parseXML(xhr.responseText);
+        } catch (e) {
+          xml = null;
+        }
+      }
+      if (xml && $(xml).find('Message').length) {
+        message = $(xml).find('Message').text();
       }
 
       this._hideProgress();

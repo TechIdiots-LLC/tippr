@@ -10,6 +10,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Ad images** (the thumbnail and mobile image of an advertiser's sponsored post) couldn't be uploaded unless the
+  site had an S3 bucket for them; without one they're now uploaded to the site itself and stored like other
+  thumbnails when the ad is saved.
 - **Signing up on a phone**: the Turnstile, hCaptcha or reCAPTCHA box was wider than the sign-up form (on a
   computer too); it now uses the services' compact size when the form is narrow. The phone menu no longer repeats
   the sidebar's small log-in box next to its "log in or sign up" link, so there's one way in, and your name at the

@@ -22,6 +22,7 @@
 # Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
+import base64
 import hashlib
 import hmac
 import mimetypes
@@ -35,7 +36,7 @@ from datetime import datetime, timedelta
 from babel.dates import format_date
 from babel.numbers import format_number
 from pylons import app_globals as g
-from pylons import request
+from pylons import request, response
 from pylons import tmpl_context as c
 from pylons.i18n import N_, _
 
@@ -159,11 +160,13 @@ def _format_expires(expires):
 
 
 def _get_callback_hmac(username, key, expires):
-    secret = g.secrets["s3_direct_post_callback"]
+    secret = g.secrets["SECRET"]
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
     expires_str = _format_expires(expires)
-    data = "|".join([username, key, expires_str])
+    data = "|".join(["ad_image", username, key, expires_str])
 
-    return hmac.new(secret, data, hashlib.sha256).hexdigest()
+    return hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def _force_images(link, thumbnail, mobile):
@@ -253,10 +256,47 @@ def _uploads_bucket():
     return object_storage.uploads_bucket()
 
 
+# Without an uploads bucket (r2.lib.object_storage), ad images are posted to
+# the site itself (POST_ad_image_upload) and kept in the hardcache until the
+# ad is saved, when _force_images stores them with the media provider like
+# any thumbnail. The upload form gets a preview address signed for a day.
+STAGED_AD_IMAGE_TIME = 24 * 60 * 60
+# image-upload.js refuses bigger ones before uploading
+MAX_AD_IMAGE_SIZE = 1024 * 500
+AD_IMAGE_KINDS = ("mobile", "thumbnail")
+
+
+def _staged_ad_image_key(key):
+    return "ad_image-%s" % key
+
+
+def _ad_image_preview_url(key):
+    now = datetime.now(g.tz)
+    return add_vault("/api/ad_image_preview?%s" % urllib.parse.urlencode(dict(
+        key=key, ts=_format_expires(now),
+        hmac=_get_callback_hmac("", key, now))), vault_path=False)
+
+
+def _staged_ad_image(key, data=False):
+    staged = g.hardcache.get(_staged_ad_image_key(key))
+    if not staged:
+        return None
+    return {
+        "url": _ad_image_preview_url(key),
+        "data": base64.b64decode(staged["data"]) if data else None,
+        "ext": staged["ext"],
+    }
+
+
 def _get_ads_images(thing, data=False, **kwargs):
     images = {}
     bucket = _uploads_bucket()
     if not bucket:
+        keyspace = _get_ads_keyspace(thing)
+        for kind in AD_IMAGE_KINDS:
+            image = _staged_ad_image(keyspace + kind, data=data)
+            if image:
+                images[kind] = image
         return images
 
     timer = g.stats.get_timer("providers.s3.get_ads_image_keys")
@@ -285,6 +325,10 @@ def _clear_ads_images(thing):
     bucket = _uploads_bucket()
     if bucket:
         s3_helpers.delete_keys(bucket, prefix=_get_ads_keyspace(thing))
+    else:
+        for kind in AD_IMAGE_KINDS:
+            g.hardcache.delete(_staged_ad_image_key(
+                _get_ads_keyspace(thing) + kind))
 
     timer.stop()
 
@@ -1646,16 +1690,24 @@ class PromoteApiController(ApiController):
                 "message": _("image must be a jpg or png"),
             }
             abort(403)
-        if not _uploads_bucket():
-            request.environ["extra_error_data"] = {
-                "message": _("image uploads aren't set up on this site "
-                             "(s3_client_uploads_bucket)"),
-            }
-            abort(403)
-
         keyspace = _get_ads_keyspace(link if link else c.user)
         key = os.path.join(keyspace, kind)
         redirect = None
+
+        if not _uploads_bucket():
+            # posted to the site itself, signed for this account and key
+            now = datetime.now(g.tz)
+            return {
+                "action": add_vault("/api/ad_image_upload", vault_path=False),
+                "fields": [
+                    {"name": "key", "value": key},
+                    {"name": "ts", "value": _format_expires(now)},
+                    {"name": "hmac", "value": _get_callback_hmac(
+                        c.user.name, key, now)},
+                    {"name": "ext", "value": ext},
+                    {"name": "uh", "value": c.modhash},
+                ],
+            }
 
         if not ajax:
             now = datetime.now().replace(tzinfo=g.tz)
@@ -1687,6 +1739,8 @@ class PromoteApiController(ApiController):
         key=nop("key"),
     )
     def GET_ad_s3_callback(self, expires, signature, callback, key):
+        if not _uploads_bucket():
+            self.abort404()
         now = datetime.now(tz=g.tz)
         if (expires + timedelta(minutes=10) < now):
             self.abort404()
@@ -1709,3 +1763,82 @@ class PromoteApiController(ApiController):
         }
 
         return format_html(template, response)
+
+    @validate(
+        VSponsor(),
+        VModhash(),
+        expires=VDate("ts", format=EXPIRES_DATE_FORMAT),
+        signature=VPrintable("hmac", 255),
+        key=nop("key"),
+        ext=nop("ext"),
+    )
+    def POST_ad_image_upload(self, expires, signature, key, ext):
+        """An ad image posted to the site itself, when there's no uploads
+        bucket (POST_ad_s3_params gives the browser these fields). Answers
+        the way S3 does, so image-upload.js handles both: 201 and a
+        Location to show as the preview."""
+        from xml.sax.saxutils import escape
+
+        def answer(status, body):
+            body = '<?xml version="1.0" encoding="UTF-8"?>' + body
+            response.status = status
+            response.content_type = "application/xml"
+            # (the error page for a 400 is this, not the site's own)
+            request.environ["usable_error_content"] = body
+            return body
+
+        def refuse(message):
+            # S3's error shape, whose Message image-upload.js shows
+            return answer(400, "<Error><Message>%s</Message></Error>" %
+                          escape(message))
+
+        now = datetime.now(g.tz)
+        if not expires or not key or expires + timedelta(minutes=10) < now:
+            return refuse(_("the upload took too long; try again"))
+        expected = _get_callback_hmac(c.user.name, key, expires)
+        if not signature or not constant_time_compare(signature, expected):
+            return refuse(_("the upload took too long; try again"))
+        upload = request.POST.get("file")
+        contents = upload.file.read(MAX_AD_IMAGE_SIZE + 1) if hasattr(
+            upload, "file") else None
+        if not contents:
+            return refuse(_("choose an image"))
+        if len(contents) > MAX_AD_IMAGE_SIZE:
+            return refuse(_("too big. keep it under 500 KB"))
+        # only what an ad thumbnail can be
+        if contents.startswith(b"\x89PNG"):
+            ext = ".png"
+        elif contents.startswith(b"\xff\xd8"):
+            ext = ".jpg"
+        else:
+            return refuse(_("image must be a jpg or png"))
+        g.hardcache.set(_staged_ad_image_key(key), {
+            "data": base64.b64encode(contents).decode("ascii"),
+            "ext": ext,
+        }, STAGED_AD_IMAGE_TIME)
+        return answer(201, "<PostResponse><Location>%s</Location>"
+                      "<Key>%s</Key></PostResponse>" % (
+                          escape(_ad_image_preview_url(key)), escape(key)))
+
+    @validate(
+        expires=VDate("ts", format=EXPIRES_DATE_FORMAT),
+        signature=VPrintable("hmac", 255),
+        key=nop("key"),
+    )
+    def GET_ad_image_preview(self, expires, signature, key):
+        """A staged ad image (POST_ad_image_upload), for the upload form's
+        preview; the address is signed and good for a day."""
+        now = datetime.now(g.tz)
+        if (not expires or not key or
+                expires + timedelta(seconds=STAGED_AD_IMAGE_TIME) < now):
+            self.abort404()
+        expected = _get_callback_hmac("", key, expires)
+        if not signature or not constant_time_compare(signature, expected):
+            self.abort404()
+        image = _staged_ad_image(key, data=True)
+        if not image:
+            self.abort404()
+        response.content_type = ("image/png" if image["ext"] == ".png"
+                                 else "image/jpeg")
+        response.headers["Cache-Control"] = "private, max-age=3600"
+        return image["data"]
