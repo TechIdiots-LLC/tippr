@@ -123,7 +123,7 @@ def make_url_protocol_relative(url):
         return url
 
     scheme, netloc, path, query, fragment = urllib.parse.urlsplit(url)
-    return urllib.parse.urlunsplit((None, netloc, path, query, fragment))
+    return urllib.parse.urlunsplit(("", netloc, path, query, fragment))
 
 
 def make_url_https(url):

@@ -224,16 +224,17 @@ def _key_to_dict(key, data=False):
         ("data" if data else "no_data"))
     timer.start()
 
-    url = key.generate_url(expires_in=0, query_auth=False)
-    # Generating an S3 url without authentication fails for IAM roles.
-    # This removes the bad query params.
-    # see: https://github.com/boto/boto/issues/2043
-    url = promote.update_query(url, {"x-amz-security-token": None}, unset=True)
+    # key: a boto3 s3.Object (r2.lib.s3_helpers); its public address comes
+    # from r2.lib.object_storage (Amazon S3 or an S3-compatible service)
+    from r2.lib import object_storage
+    bucket_name = getattr(key, "bucket_name", None)
+    key_name = getattr(key, "key", None)
+    metadata = getattr(key, "metadata", None) or {}
 
     result = {
-        "url": url,
-        "data": key.get_contents_as_string() if data else None,
-        "ext": key.get_metadata("ext"),
+        "url": object_storage.public_url(bucket_name, key_name),
+        "data": key.get()["Body"].read() if data else None,
+        "ext": metadata.get("ext"),
     }
 
     timer.stop()
@@ -245,13 +246,23 @@ def _get_ads_keyspace(thing):
     return "ads/%s/" % thing._fullname
 
 
+def _uploads_bucket():
+    """The bucket ad images upload to (s3_client_uploads_bucket), or None
+    when there isn't one (r2.lib.object_storage)."""
+    from r2.lib import object_storage
+    return object_storage.uploads_bucket()
+
+
 def _get_ads_images(thing, data=False, **kwargs):
     images = {}
+    bucket = _uploads_bucket()
+    if not bucket:
+        return images
 
     timer = g.stats.get_timer("providers.s3.get_ads_image_keys")
     timer.start()
 
-    keys = s3_helpers.get_keys(g.s3_client_uploads_bucket, prefix=_get_ads_keyspace(thing), **kwargs)
+    keys = s3_helpers.get_keys(bucket, prefix=_get_ads_keyspace(thing), **kwargs)
 
     timer.stop()
 
@@ -271,7 +282,9 @@ def _clear_ads_images(thing):
     timer = g.stats.get_timer("providers.s3.delete_ads_image_keys")
     timer.start()
 
-    s3_helpers.delete_keys(g.s3_client_uploads_bucket, prefix=_get_ads_keyspace(thing))
+    bucket = _uploads_bucket()
+    if bucket:
+        s3_helpers.delete_keys(bucket, prefix=_get_ads_keyspace(thing))
 
     timer.stop()
 
@@ -1633,6 +1646,12 @@ class PromoteApiController(ApiController):
                 "message": _("image must be a jpg or png"),
             }
             abort(403)
+        if not _uploads_bucket():
+            request.environ["extra_error_data"] = {
+                "message": _("image uploads aren't set up on this site "
+                             "(s3_client_uploads_bucket)"),
+            }
+            abort(403)
 
         keyspace = _get_ads_keyspace(link if link else c.user)
         key = os.path.join(keyspace, kind)
@@ -1650,7 +1669,7 @@ class PromoteApiController(ApiController):
             redirect = add_vault(path, vault_path=False)
 
         return s3_helpers.get_post_args(
-            bucket=g.s3_client_uploads_bucket,
+            bucket=_uploads_bucket(),
             key=key,
             success_action_redirect=redirect,
             success_action_status="201",
@@ -1683,7 +1702,7 @@ class PromoteApiController(ApiController):
 
         template = "<script>parent.__s3_callbacks__[%(callback)s](%(data)s);</script>"
         image = _key_to_dict(
-            s3_helpers.get_key(g.s3_client_uploads_bucket, key))
+            s3_helpers.get_key(_uploads_bucket(), key))
         response = {
             "callback": scriptsafe_dumps(callback),
             "data": scriptsafe_dumps(image),

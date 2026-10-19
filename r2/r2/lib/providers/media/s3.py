@@ -28,10 +28,10 @@ import mimetypes
 import os
 import re
 
-import boto3
 from botocore.exceptions import ClientError
 from pylons import app_globals as g
 
+from r2.lib import object_storage
 from r2.lib.configparse import ConfigValue
 from r2.lib.providers.media import MediaProvider
 
@@ -39,7 +39,9 @@ _NEVER = "Thu, 31 Dec 2037 23:59:59 GMT"
 
 
 class S3MediaProvider(MediaProvider):
-    """A media provider using Amazon S3.
+    """A media provider using Amazon S3 or any S3-compatible service
+    (Garage, SeaweedFS, MinIO, Backblaze B2 …): see r2.lib.object_storage
+    for the endpoint, region and public URL settings.
 
     Credentials for uploading objects can be provided via `S3KEY_ID` and
     `S3SECRET_KEY`. If not provided, boto3 will search for credentials in
@@ -61,6 +63,14 @@ class S3MediaProvider(MediaProvider):
             "S3KEY_ID",
             "S3SECRET_KEY",
             "s3_media_domain",
+            # S3-compatible services (r2.lib.object_storage)
+            "s3_endpoint_url",
+            "s3_region",
+            "s3_addressing_style",
+            "s3_use_acls",
+            "s3_public_url",
+            "s3_browser_endpoint_url",
+            "s3_client_uploads_bucket",
         ],
         ConfigValue.bool: [
             "s3_media_direct",
@@ -79,20 +89,10 @@ class S3MediaProvider(MediaProvider):
     }
 
     def _get_s3_client(self):
-        """Get a boto3 S3 client with configured credentials."""
-        kwargs = {}
-        if g.S3KEY_ID and g.S3SECRET_KEY:
-            kwargs['aws_access_key_id'] = g.S3KEY_ID
-            kwargs['aws_secret_access_key'] = g.S3SECRET_KEY
-        return boto3.client('s3', **kwargs)
+        return object_storage.client()
 
     def _get_s3_resource(self):
-        """Get a boto3 S3 resource with configured credentials."""
-        kwargs = {}
-        if g.S3KEY_ID and g.S3SECRET_KEY:
-            kwargs['aws_access_key_id'] = g.S3KEY_ID
-            kwargs['aws_secret_access_key'] = g.S3SECRET_KEY
-        return boto3.resource('s3', **kwargs)
+        return object_storage.resource()
 
     def _get_bucket(self, bucket_name):
         """Get a bucket object."""
@@ -100,6 +100,10 @@ class S3MediaProvider(MediaProvider):
         return s3.Bucket(bucket_name)
 
     def _get_bucket_key_from_url(self, url):
+        bucket_name, key_name = object_storage.bucket_and_key(url)
+        if bucket_name:
+            return bucket_name, key_name
+        # URLs stored before s3_public_url / s3_endpoint_url were set
         if g.s3_media_domain in url:
             r_bucket = re.compile(r'.*\://(?:%s.)?([^\/]+)' % g.s3_media_domain)
         else:
@@ -119,12 +123,20 @@ class S3MediaProvider(MediaProvider):
 
         try:
             s3 = self._get_s3_client()
-            # Set the object ACL to private
-            s3.put_object_acl(
-                Bucket=bucket_name,
-                Key=key_name,
-                ACL='private'
-            )
+            if object_storage.use_acls():
+                # Set the object ACL to private
+                s3.put_object_acl(
+                    Bucket=bucket_name,
+                    Key=key_name,
+                    ACL='private'
+                )
+            else:
+                # services without ACLs (public buckets): set it aside
+                # under a private prefix instead
+                s3.copy_object(Bucket=bucket_name, Key="private/" + key_name,
+                               CopySource={"Bucket": bucket_name,
+                                           "Key": key_name})
+                s3.delete_object(Bucket=bucket_name, Key=key_name)
         except ClientError:
             # Object may not exist
             pass
@@ -134,7 +146,8 @@ class S3MediaProvider(MediaProvider):
         return True
 
     def put(self, category, name, contents, headers=None):
-        buckets = getattr(g, self.buckets[category])
+        # categories reddit didn't have (site logos …) go to the media buckets
+        buckets = getattr(g, self.buckets.get(category, "s3_media_buckets"))
         # choose a bucket based on the filename
         name_without_extension = os.path.splitext(name)[0]
         index = ord(name_without_extension[-1]) % len(buckets)
@@ -146,10 +159,12 @@ class S3MediaProvider(MediaProvider):
         # build up the extra args for S3
         extra_args = {
             'ContentType': mime_type or 'application/octet-stream',
-            'Expires': _NEVER,
-            'ACL': 'public-read',
-            'StorageClass': 'REDUCED_REDUNDANCY',
+            'CacheControl': 'public, max-age=31536000',
         }
+        if object_storage.use_acls():
+            # Amazon S3 (other services make the bucket public instead)
+            extra_args['ACL'] = 'public-read'
+            extra_args['Expires'] = _NEVER
         if headers:
             # Map common header names to boto3 extra args
             header_mapping = {
@@ -180,10 +195,7 @@ class S3MediaProvider(MediaProvider):
             ExtraArgs=extra_args,
         )
 
-        if g.s3_media_direct:
-            return "http://{}/{}/{}".format(g.s3_media_domain, bucket_name, name)
-        else:
-            return "http://{}/{}".format(bucket_name, name)
+        return object_storage.public_url(bucket_name, name)
 
     def purge(self, url):
         """Deletes the key as specified by the url"""

@@ -32,6 +32,10 @@ Files:
   `TIPPR_ALLOW_MUTATE=1`; an address can be a site's homepage if the page
   links to its feed. Run it with `tippr-run`.
 
+- `migrate_media_to_s3.py`: copies `/srv/www/media` into an S3-compatible
+  bucket before switching the site to it (docs/STORAGE.md). A dry run unless
+  `TIPPR_ALLOW_MUTATE=1`; skips files already copied. Run it with `tippr-run`.
+
 - `inspect_cassandra.py`: read-only inspection of app Cassandra pools.
 
 - `inspect_wikirevision_schema.py`: prints the `wikirevision` table schema.

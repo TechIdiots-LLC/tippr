@@ -92,29 +92,16 @@ def format_expires(expires):
 
 
 def get_s3_client():
-    """Get or create a boto3 S3 client."""
-    global _s3_client
-    if _s3_client is None:
-        kwargs = {}
-        if g.S3KEY_ID:
-            kwargs['aws_access_key_id'] = g.S3KEY_ID
-        if g.S3SECRET_KEY:
-            kwargs['aws_secret_access_key'] = g.S3SECRET_KEY
-        _s3_client = boto3.client('s3', **kwargs)
-    return _s3_client
+    """The shared boto3 S3 client (r2.lib.object_storage: Amazon S3 or an
+    S3-compatible service)."""
+    from r2.lib import object_storage
+    return object_storage.client()
 
 
 def get_s3_resource():
-    """Get or create a boto3 S3 resource."""
-    global _s3_resource
-    if _s3_resource is None:
-        kwargs = {}
-        if g.S3KEY_ID:
-            kwargs['aws_access_key_id'] = g.S3KEY_ID
-        if g.S3SECRET_KEY:
-            kwargs['aws_secret_access_key'] = g.S3SECRET_KEY
-        _s3_resource = boto3.resource('s3', **kwargs)
-    return _s3_resource
+    """The shared boto3 S3 resource (r2.lib.object_storage)."""
+    from r2.lib import object_storage
+    return object_storage.resource()
 
 
 def get_text_from_s3(s3_connection, path):
@@ -199,6 +186,20 @@ def delete_keys(bucket_name, prefix, connection=None):
     return objects
 
 
+def _signing_credentials():
+    """(access key, secret, session token) to sign uploads with: the ini's
+    keys (the ones the client uses), else whatever boto3 finds."""
+    from r2.lib import object_storage
+    configured = object_storage.credentials()
+    if configured:
+        return (configured["aws_access_key_id"],
+                configured["aws_secret_access_key"], None)
+    found = boto3.Session().get_credentials()
+    if found:
+        return found.access_key, found.secret_key, found.token
+    return g.S3KEY_ID, g.S3SECRET_KEY, None
+
+
 def _get_v4_credential(aws_access_key_id, date, service_name, region_name):
     return ("{aws_access_key_id}/{datestamp}/{region_name}/{service_name}/aws4_request".format(
         aws_access_key_id=aws_access_key_id,
@@ -233,18 +234,18 @@ def _get_upload_policy(
     else:
         conditions.append({"key": key})
 
-    conditions.append({"acl": acl})
-    conditions.append({"x-amz-storage-class": storage_class})
+    if acl:
+        conditions.append({"acl": acl})
+    if storage_class:
+        conditions.append({"x-amz-storage-class": storage_class})
 
     conditions.append({"x-amz-credential": credential})
     conditions.append({"x-amz-algorithm": SIGNATURE_V4_ALGORITHM})
     conditions.append({"x-amz-date": date.strftime("%Y%m%dT%H%M%SZ")})
 
-    # Get security token from session if available
-    session = boto3.Session()
-    credentials = session.get_credentials()
-    if credentials and credentials.token:
-        conditions.append({"x-amz-security-token": credentials.token})
+    token = _signing_credentials()[2]
+    if token:
+        conditions.append({"x-amz-security-token": token})
 
     if success_action_redirect:
         conditions.append([
@@ -292,12 +293,7 @@ def _get_upload_signature(
         connection=None,
     ):
 
-    session = boto3.Session()
-    credentials = session.get_credentials()
-    if credentials:
-        secret_key = credentials.secret_key
-    else:
-        secret_key = g.S3SECRET_KEY
+    secret_key = _signing_credentials()[1]
 
     key = secret_key.encode("utf-8") if isinstance(secret_key, str) else secret_key
     v4_key = _derive_v4_signature_key(
@@ -313,24 +309,27 @@ def get_post_args(
         success_action_status="201",
         content_type=None,
         storage_class="STANDARD",
-        region_name="us-east-1",
+        region_name=None,
         meta=None,
         connection=None,
         **kwargs
     ):
+    """The form a browser POSTs to upload straight to a bucket: the
+    bucket's address and the signed fields (r2.lib.object_storage decides
+    the address, region, and whether to send an ACL and storage class)."""
+    from r2.lib import object_storage
 
-    meta = meta or []
+    meta = meta or {}
     algorithm = "AWS4-HMAC-SHA256"
     date = datetime.datetime.now(pytz.utc)
+    region_name = region_name or object_storage.region()
+    if not object_storage.use_acls():
+        # services without ACLs serve public buckets; and storage classes
+        # are Amazon's
+        acl = None
+        storage_class = None
 
-    session = boto3.Session()
-    credentials = session.get_credentials()
-    if credentials:
-        access_key = credentials.access_key
-        security_token = credentials.token
-    else:
-        access_key = g.S3KEY_ID
-        security_token = None
+    access_key, _secret, security_token = _signing_credentials()
 
     credential = _get_v4_credential(
         aws_access_key_id=access_key,
@@ -361,10 +360,19 @@ def get_post_args(
 
     fields = []
 
-    fields.append({
-        "name": "acl",
-        "value": acl,
-    })
+    if object_storage.endpoint_url():
+        # S3-compatible services (Garage …) check the policy's bucket against
+        # a form field; Amazon takes it from the address
+        fields.append({
+            "name": "bucket",
+            "value": bucket,
+        })
+
+    if acl:
+        fields.append({
+            "name": "acl",
+            "value": acl,
+        })
 
     fields.append({
         "name": "key",
@@ -402,10 +410,11 @@ def get_post_args(
         "value": content_type,
     })
 
-    fields.append({
-        "name": "x-amz-storage-class",
-        "value": storage_class,
-    })
+    if storage_class:
+        fields.append({
+            "name": "x-amz-storage-class",
+            "value": storage_class,
+        })
 
     for k, value in meta.items():
         fields.append({
@@ -430,6 +439,6 @@ def get_post_args(
         })
 
     return {
-        "action": "//{}.{}".format(bucket, g.s3_media_domain),
+        "action": object_storage.bucket_url(bucket, browser=True),
         "fields": fields,
     }

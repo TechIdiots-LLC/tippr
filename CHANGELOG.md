@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Media in an S3-compatible bucket** (optional): uploaded media (thumbnails, vault images and stylesheets, the
+  site's images, ad images) can live in Garage, SeaweedFS, MinIO, Amazon S3 or a similar service instead of
+  `/srv/www/media`, for sites with more than one frontend server or more media than one disk. Set it up with the
+  installer's `TIPPR_MEDIA_STORAGE=s3` and `TIPPR_S3_*` settings; nginx still serves media at `/media/`, so links
+  don't change. `scripts/migrate_media_to_s3.py` copies existing media across. Without these settings nothing
+  changes. See docs/STORAGE.md, which includes setting up Garage on Proxmox.
 - **More starter feeds**: `scripts/starter_feeds.txt` now has about 80 public feeds for the default vaults (news,
   business, science, technology, security, gaming, webcomics, blogs, culture, art …). `FEEDS_SYNC=1` makes
   `scripts/import_feeds.py` bring the bot's feeds in line with the list after you reorganize it: feeds no longer
@@ -12,6 +18,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **S3 media**: uploading the site logo, favicon or share image failed with S3 storage, and the ad image list
+  failed to load; S3 uploads work without Amazon's ACLs and with other providers' addresses.
 - **/admin/site images**: choosing a logo, favicon or share image now uploads it straight away (it was easy to pick
   one and press the page's save button, which only saves the text settings), with a note saying so. The Google and
   Bing verification fields refuse an AdSense publisher ID (ca-pub-…), which belongs on /admin/ads.

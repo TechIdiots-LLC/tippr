@@ -214,6 +214,10 @@ sites. To spread a site over several containers later:
 - **The data stores** scale their own way: PostgreSQL with replicas,
   Cassandra and OpenSearch by adding nodes to their clusters.
   memcached, RabbitMQ and ZooKeeper are small and can share one container.
+- **Media** (uploaded images) lives on each app container's disk by
+  default, so with several app containers move it to shared S3-compatible
+  storage first, e.g. Garage in its own container:
+  [STORAGE.md](STORAGE.md).
 
 [ARCHITECTURE.md](ARCHITECTURE.md) has the full table of roles. To move
 the data, export from the all-in-one container with `--offline` and import
