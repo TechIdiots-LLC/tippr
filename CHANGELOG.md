@@ -10,6 +10,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Subscribing and unsubscribing** didn't last: after a reload a vault was back the way it was. Accounts always
+  looked as if they'd never subscribed, so pages showed the default vaults instead of your own, and each subscribe or
+  unsubscribe signed you up to every default vault again.
 - **Ad inventory**: /sponsor/inventory crashed, and the inventory an ad could book came from reddit's traffic
   pipeline, so it was always zero. The site now counts views of each vault's listings (and the front page's) and
   predicts each day's inventory from the last two weeks (`tippr-job-update_promo_metrics`, now on a daily timer).

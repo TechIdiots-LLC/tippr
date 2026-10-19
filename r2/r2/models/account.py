@@ -62,8 +62,6 @@ class AccountExists(Exception):
 
 
 class Account(Thing):
-    # Compatibility flag: whether the user has any subscriptions (legacy name)
-    has_subscribed = False
     _cache = g.thingcache
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
@@ -77,7 +75,11 @@ class Account(Thing):
                                               )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
-    _defaults = dict(pref_numsites = 25,
+    # has_subscribed must be a default, not a class attribute: a class
+    # attribute hides the stored value, so it always read False and
+    # every subscribe re-added the default vaults
+    _defaults = dict(has_subscribed = False,
+                     pref_numsites = 25,
                      pref_newwindow = False,
                      pref_clickgadget = 5,
                      pref_store_visits = False,
