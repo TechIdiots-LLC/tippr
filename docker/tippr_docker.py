@@ -482,9 +482,15 @@ def next_run(calendar, now):
     if calendar == "daily":
         return (now.replace(hour=0, minute=0, second=0, microsecond=0)
                 + datetime.timedelta(days=1))
-    match = re.fullmatch(r"\*:(\d+)/(\d+)", calendar)
+    match = re.fullmatch(r"\*:(\d+)(?:/(\d+))?", calendar)
     if match:
-        start, step = int(match.group(1)), int(match.group(2))
+        start = int(match.group(1))
+        step = match.group(2)
+        if step is None:
+            t = now.replace(minute=start, second=0, microsecond=0)
+            return t if t > now else t + datetime.timedelta(hours=1)
+
+        step = int(step)
         t = now.replace(second=0, microsecond=0) + datetime.timedelta(minutes=1)
         while (t.minute - start) % step:
             t += datetime.timedelta(minutes=1)
