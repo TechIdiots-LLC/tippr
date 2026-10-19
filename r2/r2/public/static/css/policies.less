@@ -196,6 +196,51 @@
     }
 }
 
+// night mode (an enhancement on /prefs): this stylesheet has its own fixed
+// colours, so set the dark ones here
+body.nightmode .policy-page {
+    .md {
+        h1, h1 a, h3, h3 a {
+            color: #e2ecee;
+        }
+
+        h1 em, h1 a:hover {
+            color: #8fa3a9;
+            border-bottom-color: #8fa3a9;
+        }
+
+        p, li {
+            color: #d7e2e5;
+        }
+
+        // the shaded boxes (the dates at the top)
+        p em {
+            background: #2b2615;
+            color: #e8dcb5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .5);
+        }
+
+        a.p-anchor {
+            color: #3a4a4f;
+        }
+
+        h1:hover > a.p-anchor,
+        h2:hover > a.p-anchor,
+        h3:hover > a.p-anchor,
+        p:hover > a.p-anchor {
+            color: #8fa3a9;
+        }
+
+        blockquote p {
+            color: #a9bcc1;
+        }
+    }
+
+    .doc-info h4 {
+        color: #a9bcc1;
+    }
+}
+
 @media (max-width: 835px) {
     .policy-page {
         padding-left: 0;
