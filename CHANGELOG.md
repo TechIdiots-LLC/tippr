@@ -9,6 +9,10 @@
   image shows it in the listing, and they can expand by themselves, except NSFW and spoiler posts), night mode and
   "hide child comments" links. All are off until a member turns them on. The old infinite scroll prototype, which
   ran for everyone and never found the next page, is gone.
+- **Filters**, like RES's filteReddit: under "filters" on /prefs, members list title keywords, domains, vaults and
+  users whose posts they don't want in listings (never their own posts; a filtered vault still shows when you visit
+  it). Filtering happens on the server, so it works with infinite scroll, on every device, and through the API's
+  preferences.
 - **GitLab CI/CD**: `.gitlab-ci.yml` runs the unit tests and installer smoke test, and builds, tests and publishes
   releases (Docker image, compose bundle, installer tarball, Proxmox template) on a GitLab server, as the GitHub
   workflows do on GitHub, for a repository kept on GitLab and mirrored to GitHub. It also has the version bump merge

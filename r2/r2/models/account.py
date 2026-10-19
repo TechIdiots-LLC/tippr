@@ -124,6 +124,11 @@ class Account(Thing):
                      pref_hide_child_comments=False,
                      pref_show_images=False,
                      pref_auto_expand_images=False,
+                     # listing filters (r2.lib.listing_filters)
+                     pref_filter_keywords=(),
+                     pref_filter_domains=(),
+                     pref_filter_vaults=(),
+                     pref_filter_users=(),
                      pref_highlight_new_comments = True,
                      pref_monitor_mentions=True,
                      pref_collapse_left_bar=False,

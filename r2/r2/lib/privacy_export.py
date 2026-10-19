@@ -138,6 +138,8 @@ class UserDataExporter:
                 'pref_highlight_new_comments', 'pref_show_trending', 'pref_show_multis',
                 'pref_infinite_scroll', 'pref_keyboard_nav', 'pref_nightmode',
                 'pref_hide_child_comments', 'pref_show_images', 'pref_auto_expand_images',
+                'pref_filter_keywords', 'pref_filter_domains', 'pref_filter_vaults',
+                'pref_filter_users',
                 'pref_email_messages', 'pref_email_digests', 'pref_email_unsubscribe_all',
             ]
             for attr in pref_attrs:

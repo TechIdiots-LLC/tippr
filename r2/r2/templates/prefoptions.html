@@ -286,6 +286,29 @@ action = add_vault(action, vault_path=False)
     </td>
   </tr>
   <tr>
+    <th>${_("filters")}</th>
+    <td class="prefright pref-filters">
+      <p class="details">
+        ${_("Posts that match are left out of listings (never your own). One per line, or separated by commas.")}
+      </p>
+      <%
+        filter_fields = [
+          ("filter_keywords", _("title keywords"), _("whole words or phrases, in any case")),
+          ("filter_domains", _("domains"), _("example.com also hides its subdomains")),
+          ("filter_vaults", _("vaults"), _("still shown when you visit the vault itself")),
+          ("filter_users", _("users"), _("only hides their posts; to stop seeing them altogether, block them")),
+        ]
+      %>
+      %for name, label, help in filter_fields:
+        <label class="pref-filter">
+          <span class="pref-filter-label">${label}</span>
+          <textarea name="${name}" rows="3" cols="40" spellcheck="false">${"\n".join(getattr(c.user, "pref_" + name) or ())}</textarea>
+          <span class="details">${help}</span>
+        </label>
+      %endfor
+    </td>
+  </tr>
+  <tr>
     <th>${_("comment options")}</th>
     <td class="prefright">
     <p>

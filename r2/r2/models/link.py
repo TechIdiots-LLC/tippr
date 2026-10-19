@@ -43,7 +43,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _
 
 from r2.config import extensions, feature
-from r2.lib import ai_content, hooks, utils
+from r2.lib import ai_content, hooks, listing_filters, utils
 from r2.lib.db import sorts, tdb_cassandra
 from r2.lib.db.tdb_cassandra import view_of
 from r2.lib.db.thing import CreationError, MultiRelation, NotFound, Relation, Thing
@@ -384,6 +384,11 @@ class Link(Thing, Printable):
                            c.site.ai_policy == ai_content.POLICY_AI_ONLY)
             if (self.author_id != user._id and not in_ai_vault and
                     ai_content.is_hidden(user, self)):
+                return False
+
+            # the user's filters (keywords, domains, vaults, users)
+            if (self.author_id != user._id and
+                    listing_filters.hides(user, self, wrapped)):
                 return False
 
         # show NSFW to API and RSS users unless obey_over18=true

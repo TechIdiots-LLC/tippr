@@ -30,14 +30,33 @@ from r2.config import feature
 from r2.lib import ai_content
 from r2.lib.errors import errors
 from r2.lib.menus import CommentSortMenu
+from r2.lib import listing_filters
 from r2.lib.validator.validator import (
     VBoolean,
+    Validator,
     VInt,
     VLang,
     VOneOf,
     VVaultByName,
 )
 from r2.models import NotFound, Vault
+
+
+class VFilterList(Validator):
+    """A listing filter typed on /prefs: entries one per line or separated
+    by commas, kept as a tidied tuple (r2.lib.listing_filters)."""
+
+    def __init__(self, param, kind, **kw):
+        self.kind = kind
+        Validator.__init__(self, param, **kw)
+
+    def run(self, val):
+        return tuple(listing_filters.clean_list(val, self.kind))
+
+    def param_docs(self):
+        return {self.param: "a list of up to %d %s" % (
+            listing_filters.MAX_ENTRIES, self.kind)}
+
 
 # Validators that map directly to Account._preference_attrs
 # The key MUST be the same string as the value in _preference_attrs
@@ -90,6 +109,10 @@ PREFS_VALIDATORS = dict(
     pref_hide_child_comments=VBoolean("hide_child_comments"),
     pref_show_images=VBoolean("show_images"),
     pref_auto_expand_images=VBoolean("auto_expand_images"),
+    pref_filter_keywords=VFilterList("filter_keywords", "keywords"),
+    pref_filter_domains=VFilterList("filter_domains", "domains"),
+    pref_filter_vaults=VFilterList("filter_vaults", "vaults"),
+    pref_filter_users=VFilterList("filter_users", "users"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
     pref_show_gold_expiration=VBoolean("show_gold_expiration"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),
