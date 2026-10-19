@@ -40,6 +40,15 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Pages that failed to load**, mostly leftovers from renaming reddit's subreddits to vaults: composing a message
+  (from the inbox, or "message the moderators"), /vaults/featured, the privacy settings page for anyone who hadn't made
+  a privacy request, and listings that suggest a random vault (which could break the front page). Also fixed: a vault's
+  related-vaults setting, wiki edit checks for vaults that use karma, and the "too many vaults" error not showing.
+- **Links**: a vault's about pages (moderators, settings, log …) gave search engines a canonical address without the
+  vault, which went nowhere; the admin tools menu linked through the current vault or filter, which broke under
+  /me/f/; "message the moderators" and the account deactivation page's "contact us" pointed at /r/ addresses; and the
+  "exclude custom vaults" link on /v/all showed to visitors who aren't logged in, for whom it 404s. reddit's 2016 ad
+  auction notice is gone from the ad pages.
 - **Deleting a multivault** left you on its page, which then gave a 404; it now goes to the front page.
 - **Deleting a post** failed in a vault that had never had a sticky post.
 - **The welcome panel** on an empty listing was squeezed into a narrow column; it's now as wide as the listing.

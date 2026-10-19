@@ -1596,7 +1596,7 @@ class VaultsController(ListingController):
             elif self.where == 'featured':
                 return [
                     vault._fullname
-                    for vault in Vault.featured_Vaults()
+                    for vault in Vault.featured_vaults()
                 ]
             else:
                 vaults = Vault._query( write_cache = True,

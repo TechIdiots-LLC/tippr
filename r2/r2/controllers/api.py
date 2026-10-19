@@ -2879,7 +2879,7 @@ class ApiController(TipprController):
         if feature.is_enabled('related_Vaults'):
             validator = VVaultList('related_Vaults', limit=20)
             value = request.params.get('related_Vaults')
-            kw['related_Vaults'] = validator.run(value)
+            kw['related_vaults'] = validator.run(value)
 
         if feature.is_enabled('autoexpand_media_previews'):
             validator = VBoolean('show_media_preview')
@@ -2925,7 +2925,7 @@ class ApiController(TipprController):
         if feature.is_enabled('mobile_settings'):
             keyword_fields.append('key_color')
         if vault and feature.is_enabled('related_Vaults'):
-            keyword_fields.append('related_Vaults')
+            keyword_fields.append('related_vaults')
 
         kw = {k: v for k, v in kw.items() if k in keyword_fields}
 

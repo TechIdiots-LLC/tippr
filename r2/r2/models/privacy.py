@@ -132,9 +132,9 @@ class PrivacyRequest(tdb_cassandra.Thing):
                     req = cls._byID(request_id)
                     if request_type is None or req.request_type == request_type:
                         requests.append(req)
-                except tdb_cassandra.NotFound:
+                except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
                     pass
-        except tdb_cassandra.NotFound:
+        except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             pass
         return requests
     
@@ -151,9 +151,9 @@ class PrivacyRequest(tdb_cassandra.Thing):
             for request_id in index.values():
                 try:
                     requests.append(cls._byID(request_id))
-                except tdb_cassandra.NotFound:
+                except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
                     pass
-        except tdb_cassandra.NotFound:
+        except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             pass
         return requests
     
@@ -267,7 +267,7 @@ class PrivacyRequestsByAccount(tdb_cassandra.View):
                 if req_id == request._id:
                     cls._cf.remove(account._id36, [col_id])
                     break
-        except tdb_cassandra.NotFound:
+        except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             pass
 
 
@@ -345,7 +345,7 @@ class DataExportFile(tdb_cassandra.Thing):
         """Get export file by download token."""
         try:
             return cls._byID(token)
-        except tdb_cassandra.NotFound:
+        except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             return None
     
     def can_download(self, account):

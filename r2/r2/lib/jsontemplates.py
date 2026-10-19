@@ -1486,7 +1486,7 @@ class VaultSettingsTemplate(ThingJsonTemplate):
             return getattr(thing.site, attr[5:])
         if attr == 'related_Vaults' and thing.site:
             # string used for form input
-            return '\n'.join(thing.site.related_Vaults)
+            return '\n'.join(thing.site.related_vaults)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):

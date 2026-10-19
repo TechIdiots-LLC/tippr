@@ -60,11 +60,11 @@ ${captcha_field()}
         ## On certain pages, it really only makes sense to send as a specific
         ## vault.
         %if thing.only_as_Vault:
-          <input type="text" name="from_vault" value="${thing.mod_srs[0].name}" readonly>
+          <input type="text" name="from_vault" value="${thing.mod_vaults[0].name}" readonly>
         %else:
           <select name="from_vault">
             <option value="">${"/u/%s" % c.user.name}</option>
-            %for vault in thing.mod_srs:
+            %for vault in thing.mod_vaults:
               <option value="${vault.name}">${"/v/%s" % vault.name}</option>
             %endfor
           </select>

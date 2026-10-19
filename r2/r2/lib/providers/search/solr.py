@@ -739,7 +739,7 @@ def _rebuild_link_index(start_at=None, sleeptime=1, cls=Link,
         time.sleep(sleeptime)
 
 
-rebuild_Vault_index = functools.partial(_rebuild_link_index,
+rebuild_vault_index = functools.partial(_rebuild_link_index,
                                             cls=Vault,
                                             uploader=SolrVaultUploader,
                                             estimate=200000,

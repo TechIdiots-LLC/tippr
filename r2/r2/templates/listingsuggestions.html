@@ -38,7 +38,7 @@
   %endfor
 %elif thing.suggestion_type == 'random':
   ${text_with_links(
-    _('or try a %(random_Vault)s'),
+    _('or try a %(random_vault)s'),
     random_vault=dict(link_text=_("random vault"), path="/v/random")
   )}
 %endif

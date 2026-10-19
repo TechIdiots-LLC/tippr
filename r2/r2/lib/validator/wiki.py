@@ -119,7 +119,7 @@ def may_revise(vault, user, page=None):
         return False
 
     # Use global karma for the frontpage wiki
-    karma_sr = vault if vault.wiki_use_Vault_karma else None
+    karma_sr = vault if vault.wiki_use_vault_karma else None
 
     # Use link or comment karma, whichever is greater
     karma = max(user.karma('link', karma_sr), user.karma('comment', karma_sr))

@@ -508,7 +508,7 @@ try participating in other communities on tippr for a little while first before 
           <a href=""></a>
           <button class="remove-vault" onclick="remove_related_vault(this.parentNode)">${_('remove')}</button>
         </li>
-        %for vault in thing.site.related_Vaults:
+        %for vault in thing.site.related_vaults:
           %if vault:
             <li data-name="${vault.lower()}">
               <a href="/v/${vault}">/v/${vault}</a>
@@ -523,10 +523,10 @@ try participating in other communities on tippr for a little while first before 
       </form>
       %endif
       <textarea id="related_Vaults" name="related_Vaults" style="display:none;">
-        ${keep_space('\n'.join(thing.site.related_Vaults))}
+        ${keep_space('\n'.join(thing.site.related_vaults))}
       </textarea>
       ${error_field("BAD_VAULT_NAME", "related_Vaults")}
-      ${error_field("TOO_MANY_VaultS", "related_Vaults")}
+      ${error_field("TOO_MANY_VAULTS", "related_Vaults")}
       ${error_field("VAULT_NOEXIST", "related_Vaults")}
       <script type="text/javascript">
         function add_related_vault(form) {

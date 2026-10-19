@@ -302,7 +302,11 @@ class Tippr(Templated):
             self.feature_expando_nsfw_flow = True
 
         # generate a canonical link for google
-        canonical_url = UrlParser(canonical_link or request.url)
+        # request.url has lost the vault's /v/name (the middleware strips
+        # it); fullurl is the address as requested
+        canonical_url = UrlParser(canonical_link or
+                                  getattr(request, "fullurl", None) or
+                                  request.url)
         canonical_url.canonicalize()
         self.canonical_link = canonical_url.unparse()
         if c.render_style != "html":
@@ -851,7 +855,7 @@ class Tippr(Templated):
                 wrapped_moderators = [WrappedUser(mod) for mod in moderators
                     if not mod._deleted]
                 helplink = HelpLink(
-                    "/message/compose?to=%%2Fr%%2F%s" % c.site.name,
+                    "/message/compose?to=%%2Fv%%2F%s" % c.site.name,
                     label,
                     access_required=not is_admin_sr,
                     data_attrs={
@@ -4667,7 +4671,8 @@ class PromotePage(Tippr):
             nav_menus = [menu]
 
         kw['show_sidebar'] = False
-        auction_announcement = not feature.is_enabled('ads_auction')
+        # (reddit's 2016 "ad auctions are launching" notice, gone)
+        auction_announcement = False
         Tippr.__init__(self, nav_menus=nav_menus,
             auction_announcement=auction_announcement, *a, **kw)
 

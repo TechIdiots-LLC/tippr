@@ -41,9 +41,11 @@
   </div>
 %endif
 
+%if c.user_is_loggedin:
 <div class="giftgold allminus-link">
     <a href="/me/f/all">${_("Exclude custom vaults")}</a>
 </div>
+%endif
 
 %if not thing.gilding_listing:
 <div class="gilded-link">
