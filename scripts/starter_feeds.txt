@@ -100,3 +100,142 @@
 /v/aiart	[AIArt]	https://medium.com/feed/tag/ai-art
 /v/aiart	[Maginative]	https://www.maginative.com/perspectives/rss/
 /v/aimusic	[MusicAlly]	https://musically.com/feed/
+
+# The feeds below came from feeder.co's list of popular feeds (2026-10),
+# checked to respond and to be RSS or Atom.
+
+# More technology
+/v/technology	[Engadget]	https://www.engadget.com/rss.xml
+/v/technology	[Gizmodo]	https://gizmodo.com/feed
+/v/technology	[TechRadar]	https://www.techradar.com/feeds.xml
+/v/technology	[Mashable]	https://mashable.com/feeds/rss/all
+/v/technology	[DigitalTrends]	https://www.digitaltrends.com/feed/
+/v/technology	[GeekWire]	https://www.geekwire.com/feed/
+/v/technology	[Techmeme]	https://www.techmeme.com/feed.xml
+/v/technology	[MITTechReview]	https://www.technologyreview.com/feed/
+/v/technology	[BBC]	https://feeds.bbci.co.uk/news/technology/rss.xml
+/v/technology	[DaringFireball]	https://daringfireball.net/feeds/main
+/v/technology	[9to5Mac]	https://9to5mac.com/feed/
+/v/technology	[MacRumors]	https://feeds.macrumors.com/MacRumors-All
+/v/technology	[Cloudflare]	https://blog.cloudflare.com/rss/
+
+# More security
+/v/cybersecurity	[TheHackerNews]	https://feeds.feedburner.com/TheHackersNews
+/v/cybersecurity	[DarkReading]	https://www.darkreading.com/rss.xml
+/v/cybersecurity	[Schneier]	https://www.schneier.com/feed/atom/
+
+# More programming
+/v/programming	[GitHub]	https://github.blog/feed/
+/v/programming	[Smashing]	https://www.smashingmagazine.com/feed/
+/v/programming	[MartinFowler]	https://martinfowler.com/feed.atom
+/v/programming	[CodingHorror]	https://blog.codinghorror.com/rss/
+/v/programming	[SimonWillison]	https://simonwillison.net/atom/everything/
+/v/programming	[PragmaticEngineer]	https://blog.pragmaticengineer.com/rss/
+/v/programming	[RealPython]	https://realpython.com/atom.xml
+/v/programming	[HackerNoon]	https://hackernoon.com/feed
+
+# Cloud, containers and infrastructure (/v/devops)
+/v/devops	[AWS]	https://aws.amazon.com/blogs/aws/feed/
+/v/devops	[Kubernetes]	https://kubernetes.io/feed.xml
+/v/devops	[.NET]	https://devblogs.microsoft.com/dotnet/feed/
+/v/devops	[Docker]	https://www.docker.com/feed/
+
+# AI news and research (/v/ainews)
+/v/ainews	[OpenAI]	https://openai.com/news/rss.xml
+/v/ainews	[DeepMind]	https://deepmind.google/blog/rss.xml
+/v/ainews	[HuggingFace]	https://huggingface.co/blog/feed.xml
+/v/ainews	[ImportAI]	https://importai.substack.com/feed
+/v/ainews	[OneUsefulThing]	https://www.oneusefulthing.org/feed
+
+# More science
+/v/science	[SciAm]	https://www.scientificamerican.com/platform/syndication/rss/
+/v/science	[ScienceNews]	https://www.sciencenews.org/feed
+/v/science	[Phys.org]	https://phys.org/rss-feed/
+/v/science	[Nautilus]	https://nautil.us/feed
+/v/science	[Science]	https://www.science.org/rss/news_current.xml
+
+# More business
+/v/business	[Fortune]	https://fortune.com/feed/fortune-feeds/?id=3230629
+/v/business	[BusinessInsider]	https://feeds.businessinsider.com/custom/all
+/v/business	[FastCompany]	https://www.fastcompany.com/latest/rss
+/v/business	[Entrepreneur]	https://www.entrepreneur.com/rss-feed/latest
+/v/business	[SethGodin]	https://seths.blog/feed/
+
+# Marketing and SEO (/v/marketing)
+/v/marketing	[HubSpot]	https://blog.hubspot.com/marketing/rss.xml
+/v/marketing	[SocialMediaToday]	https://www.socialmediatoday.com/feeds/news/
+/v/marketing	[SearchEngineJournal]	https://www.searchenginejournal.com/feed/
+
+# More news
+/v/news	[CBC]	https://www.cbc.ca/webfeed/rss/rss-topstories
+
+# More world news
+/v/worldnews	[DW]	https://rss.dw.com/rdf/rss-en-all
+/v/worldnews	[SkyNews]	https://feeds.skynews.com/feeds/rss/world.xml
+/v/worldnews	[SCMP]	https://www.scmp.com/rss/91/feed/
+/v/worldnews	[TimesOfIndia]	https://timesofindia.indiatimes.com/rssfeedstopstories.cms
+
+# More gaming
+/v/gaming	[PCGamer]	https://www.pcgamer.com/rss/
+/v/gaming	[NintendoLife]	https://www.nintendolife.com/feeds/latest
+
+# More comics
+/v/comics	[Oatmeal]	https://theoatmeal.com/feed/rss
+/v/comics	[OOTS]	https://www.giantitp.com/comics/oots.rss
+/v/comics	[Gunnerkrigg]	https://www.gunnerkrigg.com/rss.xml
+/v/comics	[ExistentialComics]	https://existentialcomics.com/rss.xml
+
+# More design
+/v/design	[DesignMilk]	https://design-milk.com/feed/
+/v/design	[ItsNiceThat]	https://feeds2.feedburner.com/itsnicethat/SlXC
+/v/design	[UXCollective]	https://uxdesign.cc/feed
+
+# More food
+/v/food	[BonAppetit]	https://www.bonappetit.com/feed/rss
+/v/food	[SmittenKitchen]	https://smittenkitchen.com/feed/
+/v/food	[BudgetBytes]	https://www.budgetbytes.com/feed/
+/v/food	[MinimalistBaker]	https://minimalistbaker.com/feed/
+
+# More pop culture
+/v/popculture	[Variety]	https://variety.com/feed/
+
+# More curiosities
+/v/curated	[AtlasObscura]	https://www.atlasobscura.com/feeds/latest
+/v/curated	[OpenCulture]	https://www.openculture.com/feed
+
+# Sports (/v/sports)
+/v/sports	[BBCSport]	https://feeds.bbci.co.uk/sport/rss.xml
+/v/sports	[ESPN]	https://www.espn.com/espn/rss/news
+/v/sports	[TheAthletic]	https://www.nytimes.com/athletic/rss/news/
+/v/sports	[YahooSports]	https://sports.yahoo.com/rss/
+/v/sports	[GuardianFootball]	https://www.theguardian.com/football/rss
+/v/sports	[F1]	https://www.formula1.com/en/latest/all.xml
+
+# Podcasts: new episodes (/v/podcasts)
+/v/podcasts	[TheDaily]	https://feeds.simplecast.com/54nAGcIl
+/v/podcasts	[Radiolab]	https://feeds.simplecast.com/EmVW7VGp
+/v/podcasts	[99PI]	https://feeds.simplecast.com/BqbsxVfO
+/v/podcasts	[Freakonomics]	https://feeds.simplecast.com/Y8lFbOT4
+
+# YouTube channels (/v/videos)
+/v/videos	[Kurzgesagt]	https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q
+/v/videos	[Veritasium]	https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA
+/v/videos	[3Blue1Brown]	https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw
+/v/videos	[MKBHD]	https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ
+
+# Maps, geospatial data and Earth observation (/v/gis): NASA Earthdata and
+# Earth Observatory, open mapping projects and GIS news
+/v/gis	[Earthdata]	https://www.earthdata.nasa.gov/rss.xml
+/v/gis	[EarthObservatory]	https://science.nasa.gov/feed/?science_org=19791%2C22453
+/v/gis	[NaturalHazards]	https://science.nasa.gov/feed/?science_org=22414%2C19791
+/v/gis	[PO.DAAC]	https://podaac.jpl.nasa.gov/rss.xml
+/v/gis	[USGS]	https://www.usgs.gov/news/all/feed
+/v/gis	[Copernicus]	https://www.copernicus.eu/en/news/rss
+/v/gis	[EarthEngine]	https://medium.com/feed/google-earth
+/v/gis	[OpenStreetMap]	https://blog.openstreetmap.org/feed/
+/v/gis	[OSGeo]	https://planet.osgeo.org/rss20.xml
+/v/gis	[QGIS]	https://blog.qgis.org/feed/
+/v/gis	[MapLibre]	https://maplibre.org/news/index.xml
+/v/gis	[Mapbox]	https://blog.mapbox.com/feed
+/v/gis	[GeographyRealm]	https://www.geographyrealm.com/feed/
+/v/gis	[SpatialSource]	https://www.spatialsource.com.au/feed/

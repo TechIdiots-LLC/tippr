@@ -55,6 +55,9 @@ VAULTS = [
     ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, True),
     ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, True),
     ("cybersecurity", "Cybersecurity", "Security news, breaches, vulnerabilities, and defending your systems.", ANY, True),
+    ("devops", "DevOps", "Cloud, containers, infrastructure and keeping services running.", ANY, False),
+    ("ainews", "AI News", "News and research about artificial intelligence.", ANY, False),
+    ("gis", "GIS & Maps", "Maps, geospatial data, remote sensing and Earth observation.", ANY, False),
     
     # science & space
     ("science", "Science", "Research, discoveries and how the world works.", NO_GEN, True),
@@ -109,6 +112,10 @@ VAULTS = [
     ("worldnews", "World News", "International news.", ANY, False),
     ("politics", "Politics", "Political news and discussion.", ANY, False),
     ("business", "Business", "Markets, companies, the economy and personal finance.", ANY, False),
+    ("marketing", "Marketing", "Marketing, SEO and social media.", ANY, False),
+    ("sports", "Sports", "Sports news, results and discussion.", ANY, False),
+    ("podcasts", "Podcasts", "New episodes and podcast recommendations.", ANY, False),
+    ("videos", "Videos", "Videos worth watching: science, tech, explainers and more.", ANY, False),
 ]
 
 def owner_account():

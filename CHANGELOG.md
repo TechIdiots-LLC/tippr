@@ -14,6 +14,11 @@
 - **X-Year Club trophies**, as on reddit: on their cake day members get the 1-Year Club, 2-Year Club and so on (only
   the latest), from a new daily job, `tippr-job-year_clubs` (the installer and Docker run it; the starter awards
   script gives everyone theirs the first time).
+- **More starter vaults and feeds**: /v/gis (maps, geospatial data and Earth observation: NASA Earthdata and Earth
+  Observatory, USGS, Copernicus, OpenStreetMap, OSGeo, QGIS, MapLibre and more), /v/ainews, /v/devops, /v/sports,
+  /v/podcasts, /v/videos (YouTube channels) and /v/marketing, none of them front page defaults, and about 80 more
+  feeds for the existing vaults (from feeder.co's popular feeds, each checked). Run `create_default_vaults.py`, then
+  `import_feeds.py` with `FEEDS_ADD=1`, to add them to an existing site.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
