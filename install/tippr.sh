@@ -1131,6 +1131,9 @@ TIPPRFLUSH
 install -d -m 0755 /var/lib/tippr
 install -d -m 0700 -o $TIPPR_USER /var/lib/tippr/backups
 install -d -m 0700 -o $TIPPR_USER /var/lib/tippr/backup-queue
+# members' own data exports (/prefs/privacy), written by the
+# privacy_export_q consumer
+install -d -m 0700 -o $TIPPR_USER /var/lib/tippr/privacy_exports
 helper-script /usr/local/bin/tippr-backup <<TIPPRBACKUP
 #!/bin/bash
 # usage: sudo tippr-backup export|list|import|restore ... (--help)

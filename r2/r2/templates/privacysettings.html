@@ -1,0 +1,112 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /prefs/privacy: members download their data or delete their account
+## themselves (GDPR and similar laws), and see their past requests.
+
+<%!
+   from r2.lib import site_info
+   from r2.models.privacy import PrivacyRequestStatus as S
+%>
+<%namespace file="utils.html" import="error_field"/>
+
+<%
+  status_names = {
+    S.PENDING: _("pending"),
+    S.PROCESSING: _("processing"),
+    S.COMPLETED: _("completed"),
+    S.FAILED: _("failed"),
+    S.CANCELLED: _("cancelled"),
+    S.EXPIRED: _("expired"),
+  }
+%>
+
+<div class="privacy-settings">
+  <section class="privacy-section">
+    <h2>${_("Download Your Data")}</h2>
+    <p>${_("You can request a copy of your personal data. This includes your posts, comments, messages, preferences, and other account information.")}</p>
+
+    %if thing.has_pending_export:
+      <p class="status-message">${_("A data export is currently being prepared. You will be notified when it is ready.")}</p>
+    %elif thing.recent_export:
+      <div class="status-message success">
+        <p>${_("Your data export is ready for download.")}</p>
+        <p><a class="btn" href="/prefs/privacy/download?token=${thing.recent_export.download_url}">${_("Download Export")}</a></p>
+        <p class="details">${_("This download will expire in 7 days. Downloads are limited to 5 times.")}</p>
+      </div>
+    %else:
+      <form action="/api/privacy/request_export" method="post" class="privacy-form"
+            onsubmit="return post_form(this, 'privacy/request_export')">
+        <button type="submit" class="btn">${_("Request Data Export")}</button>
+        <span class="status"></span>
+        ${error_field("RATELIMIT", "ratelimit")}
+        <p class="details">${_("Data exports are processed within 24-48 hours. You can request one export per day.")}</p>
+      </form>
+    %endif
+
+    %if thing.export_requests:
+      <h3>${_("Export History")}</h3>
+      <table class="privacy-requests-table">
+        <thead>
+          <tr><th>${_("Date")}</th><th>${_("Status")}</th><th>${_("Action")}</th></tr>
+        </thead>
+        <tbody>
+        %for req in thing.export_requests[:5]:
+          <tr>
+            <td>${req.created_date[:10] if req.created_date else "-"}</td>
+            <td class="status-${req.status}">${status_names.get(req.status, req.status)}</td>
+            <td>
+            %if req.status == S.COMPLETED and req.download_url and not req.is_expired:
+              <a href="/prefs/privacy/download?token=${req.download_url}">${_("Download")}</a>
+            %elif req.status == S.PENDING:
+              <form action="/api/privacy/cancel_request" method="post" class="privacy-cancel"
+                    onsubmit="return post_form(this, 'privacy/cancel_request')">
+                <input type="hidden" name="request_id" value="${req._id}"/>
+                <button type="submit" class="link-button">${_("Cancel")}</button>
+                <span class="status"></span>
+              </form>
+            %endif
+            </td>
+          </tr>
+        %endfor
+        </tbody>
+      </table>
+    %endif
+  </section>
+
+  <section class="privacy-section">
+    <h2>${_("Your Privacy Rights")}</h2>
+    <p>${_("Under privacy laws like GDPR and CCPA, you have the following rights:")}</p>
+    <ul>
+      <li><strong>${_("Right to Access")}</strong>&#32;-&#32;${_("Request a copy of your personal data")}</li>
+      <li><strong>${_("Right to Deletion")}</strong>&#32;-&#32;${_("Delete your account and personal data")}</li>
+      <li><strong>${_("Right to Portability")}</strong>&#32;-&#32;${_("Download your data in a portable format")}</li>
+      <li><strong>${_("Right to Rectification")}</strong>&#32;-&#32;${_("Correct inaccurate personal data")}</li>
+    </ul>
+    <p>${_("For more information, see our")}&#32;<a href="/help/privacypolicy">${_("Privacy Policy")}</a>.</p>
+  </section>
+
+  <section class="privacy-section danger-zone">
+    <h2>${_("Delete Your Account")}</h2>
+    <p>${_("You can permanently delete your account and all associated data. This action cannot be undone.")}</p>
+    <p><a class="btn btn-danger" href="/prefs/deactivate">${_("Delete My Account")}</a></p>
+  </section>
+
+  <section class="privacy-section">
+    <h2>${_("Contact Us")}</h2>
+    <p>${_("For privacy-related inquiries or to exercise your rights, contact us at:")}</p>
+    <p>${unsafe(site_info.contact_link_html('privacy', _("Send a privacy request")))}</p>
+  </section>
+</div>

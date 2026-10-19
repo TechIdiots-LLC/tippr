@@ -114,6 +114,9 @@ class PrivacyRequest(tdb_cassandra.Thing):
             request_ip=request_ip,
         )
         request._commit()
+        # the indexes the member's privacy page and the admins' queue read
+        PrivacyRequestsByAccount.add(account, request)
+        PrivacyRequestsByStatus.add(request.status, request)
         return request
     
     @classmethod
@@ -150,9 +153,11 @@ class PrivacyRequest(tdb_cassandra.Thing):
             )
             for request_id in index.values():
                 try:
-                    requests.append(cls._byID(request_id))
+                    req = cls._byID(request_id)
                 except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
-                    pass
+                    continue
+                if req.status == PrivacyRequestStatus.PENDING:
+                    requests.append(req)
         except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             pass
         return requests
@@ -194,17 +199,16 @@ class PrivacyRequest(tdb_cassandra.Thing):
     
     def _update_status_index(self, old_status, new_status):
         """Update the status index when status changes."""
+        # the index's columns are time UUIDs whose values are request ids
         try:
-            # Remove from old status index
-            PrivacyRequestsByStatus._cf.remove(old_status, [self._id])
+            index = PrivacyRequestsByStatus._cf.get(old_status, column_count=10000)
+            columns = [col for col, req_id in index.items() if req_id == self._id]
+            if columns:
+                PrivacyRequestsByStatus._cf.remove(old_status, columns)
         except Exception:
             pass
-        
-        # Add to new status index
-        PrivacyRequestsByStatus._cf.insert(
-            new_status,
-            {uuid.uuid1(): self._id},
-        )
+
+        PrivacyRequestsByStatus.add(new_status, self)
     
     @property
     def is_expired(self):

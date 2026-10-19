@@ -136,6 +136,8 @@ class UserDataExporter:
                 'pref_compress', 'pref_domain_details', 'pref_newwindow',
                 'pref_media', 'pref_media_preview', 'pref_default_comment_sort',
                 'pref_highlight_new_comments', 'pref_show_trending', 'pref_show_multis',
+                'pref_infinite_scroll', 'pref_keyboard_nav', 'pref_nightmode',
+                'pref_hide_child_comments', 'pref_show_images', 'pref_auto_expand_images',
                 'pref_email_messages', 'pref_email_digests', 'pref_email_unsubscribe_all',
             ]
             for attr in pref_attrs:
@@ -361,8 +363,8 @@ class UserDataExporter:
         """Collect vault subscriptions."""
         try:
             subscriptions = []
-            if hasattr(self.account, 'has_vault_subscriptions') and self.account.has_vault_subscriptions:
-                vault_ids = Vault.reverse_subscriber_ids(self.account)
+            vault_ids = Vault.subscribed_ids_by_user(self.account)
+            if vault_ids:
                 vaults = Vault._byID(vault_ids, data=True, return_dict=False)
                 for vault in vaults:
                     subscriptions.append({

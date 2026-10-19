@@ -31,7 +31,7 @@ from r2.controllers.tippr_base import TipprController
 from r2.lib import amqp
 from r2.lib.base import abort
 from r2.lib.errors import errors
-from r2.lib.pages import BoringPage
+from r2.lib.pages import BoringPage, Templated
 from r2.lib.template_helpers import get_domain
 from r2.lib.validator import (
     VAdmin,
@@ -78,7 +78,7 @@ class PrivacyController(TipprController):
                 recent_export = r
                 break
         
-        content = PrivacySettingsPage(
+        content = PrivacySettings(
             export_requests=export_requests[:10],  # Show last 10
             deletion_requests=deletion_requests[:10],
             has_pending_export=has_pending_export,
@@ -203,138 +203,15 @@ class PrivacyController(TipprController):
         }
 
 
-class PrivacySettingsPage:
-    """Page content for privacy settings."""
-    
+class PrivacySettings(Templated):
+    """The member's privacy page (privacysettings.html)."""
+
     def __init__(self, export_requests=None, deletion_requests=None,
                  has_pending_export=False, recent_export=None):
-        self.export_requests = export_requests or []
-        self.deletion_requests = deletion_requests or []
-        self.has_pending_export = has_pending_export
-        self.recent_export = recent_export
-    
-    def render(self):
-        from r2.lib.pages import Templated
-        # This will use the privacysettings.html template
-        return PrivacySettingsContent(
-            export_requests=self.export_requests,
-            deletion_requests=self.deletion_requests,
-            has_pending_export=self.has_pending_export,
-            recent_export=self.recent_export,
-        ).render()
-
-
-class PrivacySettingsContent:
-    """Templated content for privacy settings page."""
-    
-    cacheable = False
-    
-    def __init__(self, **kw):
-        self.__dict__.update(kw)
-    
-    def render(self):
-        from r2.lib.filters import unsafe
-        from r2.lib.template_helpers import format_html
-        
-        html = []
-        html.append('<div class="privacy-settings">')
-        
-        # Data Export Section
-        html.append('<div class="privacy-section">')
-        html.append('<h2>%s</h2>' % _('Download Your Data'))
-        html.append('<p>%s</p>' % _(
-            'You can request a copy of your personal data. This includes your posts, '
-            'comments, messages, preferences, and other account information.'
-        ))
-        
-        if self.has_pending_export:
-            html.append('<div class="status-message">')
-            html.append('<p>%s</p>' % _('A data export is currently being prepared. '
-                                        'You will be notified when it is ready.'))
-            html.append('</div>')
-        elif self.recent_export:
-            html.append('<div class="status-message success">')
-            html.append('<p>%s</p>' % _('Your data export is ready for download.'))
-            html.append('<a href="/prefs/privacy/download?token=%s" class="btn">%s</a>' % (
-                self.recent_export.download_url, _('Download Export')))
-            html.append('<p class="note">%s</p>' % _(
-                'This download will expire in 7 days. Downloads are limited to 5 times.'))
-            html.append('</div>')
-        else:
-            html.append('<form method="post" action="/api/privacy/request_export" '
-                       'class="privacy-form">')
-            html.append('<input type="hidden" name="uh" value="%s">' % c.modhash)
-            html.append('<button type="submit" class="btn">%s</button>' % _('Request Data Export'))
-            html.append('<p class="note">%s</p>' % _(
-                'Data exports are processed within 24-48 hours. You can request one export per day.'))
-            html.append('</form>')
-        
-        # Export History
-        if self.export_requests:
-            html.append('<h3>%s</h3>' % _('Export History'))
-            html.append('<table class="privacy-requests-table">')
-            html.append('<thead><tr><th>%s</th><th>%s</th><th>%s</th></tr></thead>' % (
-                _('Date'), _('Status'), _('Action')))
-            html.append('<tbody>')
-            for req in self.export_requests[:5]:
-                status_class = 'status-' + req.status
-                html.append('<tr>')
-                html.append('<td>%s</td>' % req.created_date[:10] if req.created_date else '-')
-                html.append('<td class="%s">%s</td>' % (status_class, req.status))
-                action = ''
-                if req.status == PrivacyRequestStatus.COMPLETED and req.download_url and not req.is_expired:
-                    action = '<a href="/prefs/privacy/download?token=%s">%s</a>' % (
-                        req.download_url, _('Download'))
-                elif req.status == PrivacyRequestStatus.PENDING:
-                    action = '<a href="#" onclick="cancelRequest(\'%s\')">%s</a>' % (
-                        req._id, _('Cancel'))
-                html.append('<td>%s</td>' % action)
-                html.append('</tr>')
-            html.append('</tbody></table>')
-        
-        html.append('</div>')  # End data export section
-        
-        # Privacy Rights Section
-        html.append('<div class="privacy-section">')
-        html.append('<h2>%s</h2>' % _('Your Privacy Rights'))
-        html.append('<p>%s</p>' % _(
-            'Under privacy laws like GDPR and CCPA, you have the following rights:'
-        ))
-        html.append('<ul>')
-        html.append('<li><strong>%s</strong> - %s</li>' % (
-            _('Right to Access'), _('Request a copy of your personal data')))
-        html.append('<li><strong>%s</strong> - %s</li>' % (
-            _('Right to Deletion'), _('Delete your account and personal data')))
-        html.append('<li><strong>%s</strong> - %s</li>' % (
-            _('Right to Portability'), _('Download your data in a portable format')))
-        html.append('<li><strong>%s</strong> - %s</li>' % (
-            _('Right to Rectification'), _('Correct inaccurate personal data')))
-        html.append('</ul>')
-        html.append('<p>%s <a href="/help/privacypolicy">%s</a>.</p>' % (
-            _('For more information, see our'), _('Privacy Policy')))
-        html.append('</div>')
-        
-        # Delete Account Section
-        html.append('<div class="privacy-section danger-zone">')
-        html.append('<h2>%s</h2>' % _('Delete Your Account'))
-        html.append('<p>%s</p>' % _(
-            'You can permanently delete your account and all associated data. '
-            'This action cannot be undone.'
-        ))
-        html.append('<a href="/prefs/deactivate" class="btn btn-danger">%s</a>' % _(
-            'Delete My Account'))
-        html.append('</div>')
-        
-        # Contact Section
-        html.append('<div class="privacy-section">')
-        html.append('<h2>%s</h2>' % _('Contact Us'))
-        html.append('<p>%s</p>' % _(
-            'For privacy-related inquiries or to exercise your rights, contact us at:'))
-        from r2.lib import site_info
-        html.append('<p>%s</p>' % site_info.contact_link_html(
-            'privacy', _('Send a privacy request')))
-        html.append('</div>')
-        
-        html.append('</div>')  # End privacy-settings
-        
-        return unsafe('\n'.join(html))
+        Templated.__init__(
+            self,
+            export_requests=export_requests or [],
+            deletion_requests=deletion_requests or [],
+            has_pending_export=has_pending_export,
+            recent_export=recent_export,
+        )
