@@ -22,7 +22,8 @@
   failed to load; S3 uploads work without Amazon's ACLs and with other providers' addresses.
 - **/admin/site images**: choosing a logo, favicon or share image now uploads it straight away (it was easy to pick
   one and press the page's save button, which only saves the text settings), with a note saying so. The Google and
-  Bing verification fields refuse an AdSense publisher ID (ca-pub-…), which belongs on /admin/ads.
+  Bing verification fields refuse an AdSense publisher ID (ca-pub-…), which belongs on /admin/ads. The fields on
+  /admin/site, /admin/ads and the other settings pages are no longer cramped against each other.
 - **On phones**: the vault search on /vaults (and the search page's box) was squeezed into a narrow column; the
   subscribe buttons on /vaults took a wide column of their own; and the subscribed/explore/multivaults menu had moved
   into the menu drawer. It stays on the left again, collapsed to its edge, and opens over the page when tapped
