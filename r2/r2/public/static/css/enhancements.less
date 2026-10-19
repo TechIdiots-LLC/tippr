@@ -512,6 +512,13 @@ body.nightmode {
     background-color: #12191c;
     color: #d7e2e5;
 
+    // the default logo with a light wordmark (the normal one is in a sprite,
+    // so set the position too); a site's own logo from /admin/site is left
+    // as it is
+    #header-img.default-header {
+        background: url(../tippr.net.header-night.png) 0 0 no-repeat;
+    }
+
     // the parts of the old stylesheet that use fixed colours
     #header, .side, .content, .thing, .entry, .md, .commentarea,
     .menuarea, .infobar, .linkinfo, .titlebox, .sidecontentbox .content,
