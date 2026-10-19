@@ -394,6 +394,10 @@ class Account(Thing):
         if can_create is not None:
             return can_create
 
+        # the age and karma limits are for everyone but the admins
+        if self.name in g.admins:
+            return True
+
         min_age = timedelta(days=g.live_config["create_vault_account_age_days"])
         if self._age < min_age:
             return False

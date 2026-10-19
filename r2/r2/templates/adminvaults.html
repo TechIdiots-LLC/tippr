@@ -1,0 +1,80 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/vaults: vault search, newest and banned vaults (r2.lib.vault_admin)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<div class="admin-users admin-vaults">
+<h1>${_("vaults")}</h1>
+
+<p>
+  <a class="btn" href="/vaults/create">${_("create a vault")}</a>
+  <small>${_("Admins can create vaults whatever their karma and account age; the limits on /admin/config are for everyone else. You'll be its moderator; add others (and take yourself off) on the vault's page here.")}</small>
+</p>
+
+<form action="/admin/vaults" method="get" class="pretty-form admin-users-search">
+  <input type="text" name="q" value="${thing.query}" size="40"
+         placeholder="${_('vault name, or the start of one')}" autofocus>
+  <button class="btn" type="submit">${_("search")}</button>
+</form>
+
+<p>
+  %if thing.query:
+    <a href="/admin/vaults">${_("newest")}</a>&#32;&middot;&#32;
+    <a href="/admin/vaults?show=banned">${_("banned")}</a>
+  %elif thing.show == "banned":
+    <a href="/admin/vaults">${_("newest")}</a>&#32;&middot;&#32;<b>${_("banned")}</b>
+  %else:
+    <b>${_("newest")}</b>&#32;&middot;&#32;<a href="/admin/vaults?show=banned">${_("banned")}</a>
+  %endif
+</p>
+
+%if thing.results:
+  <table class="lined-table admin-users-results">
+    <tr>
+      <th>${_("vault")}</th><th>${_("title")}</th><th>${_("created")}</th>
+      <th>${_("subscribers")}</th><th>${_("status")}</th>
+    </tr>
+    %for r in thing.results:
+      <% v = r['vault'] %>
+      <tr>
+        <td><a href="/admin/vaults/${v.name}">${v.name}</a></td>
+        <td>${v.title}</td>
+        <td>${timesince(v._date)} ${_("ago")}</td>
+        <td>${v._ups}</td>
+        <td>${", ".join(_(s) for s in r['status'])}</td>
+      </tr>
+    %endfor
+  </table>
+%elif thing.query:
+  <p>${_("No vaults found.")}</p>
+%else:
+  <p>${_("None.")}</p>
+%endif
+
+<h2>${_("front page defaults")}</h2>
+<p><small>${_("What people who haven't subscribed to anything see, and what new accounts are subscribed to. Change them on each vault's page here.")}</small></p>
+%if thing.defaults:
+  <p>
+    %for v in thing.defaults:
+      <a href="/admin/vaults/${v.name}">/v/${v.name}</a>&#32;
+    %endfor
+  </p>
+%else:
+  <p>${_("None.")}</p>
+%endif
+</div>

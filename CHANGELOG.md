@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Vaults for admins** (/admin/vaults): admins can now create vaults whatever their karma and account age (the
+  limits on /admin/config are for everyone else). The new page finds any vault and lists the newest and banned
+  ones; on a vault's page admins can make it a front page default or featured (until now only
+  `scripts/create_default_vaults.py` could), add or remove moderators without an invitation, and ban it, which is
+  how a vault is removed: everyone but the admins sees a "banned" page (with an optional message) until it's
+  unbanned. Each action is logged on the vault's page.
 - **Media in an S3-compatible bucket** (optional): uploaded media (thumbnails, vault images and stylesheets, the
   site's images, ad images) can live in Garage, SeaweedFS, MinIO, Amazon S3 or a similar service instead of
   `/srv/www/media`, for sites with more than one frontend server or more media than one disk. Set it up with the

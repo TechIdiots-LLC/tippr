@@ -3817,6 +3817,51 @@ class AdminUser(Templated):
         Templated.__init__(self)
 
 
+class AdminVaults(Templated):
+    """Vault search, and the newest and banned vaults
+    (r2.lib.vault_admin)."""
+    def __init__(self, query, show):
+        from r2.lib import vault_admin
+        self.query = (query or "").strip()
+        self.show = "banned" if show == "banned" else "new"
+        if self.query:
+            vaults = vault_admin.search(self.query)
+        elif self.show == "banned":
+            vaults = vault_admin.banned()
+        else:
+            vaults = vault_admin.newest()
+        defaults = vault_admin.default_ids()
+        featured = vault_admin.featured_ids()
+        self.results = [dict(vault=v, status=vault_admin.status(
+            v, defaults, featured)) for v in vaults]
+        self.defaults = vault_admin._vaults(vault_admin.listed_ids("default"))
+        self.can_create = c.user.can_create_Vault
+        Templated.__init__(self)
+
+
+class AdminVault(Templated):
+    """One vault, as admins see it (r2.lib.vault_admin)."""
+    def __init__(self, vault):
+        from r2.lib import vault_admin
+        self.vault = vault
+        self.status = vault_admin.status(vault)
+        self.is_default = "default" in self.status
+        self.is_featured = "featured" in self.status
+        self.creator = vault.author_id and Account._byID(
+            vault.author_id, data=True, ignore_missing=True)
+        mods = vault.moderators_with_perms()
+        accounts = Account._byID(list(mods), data=True, return_dict=True,
+                                 ignore_missing=True) if mods else {}
+        self.moderators = [accounts[i] for i in mods if i in accounts]
+        self.ban_info = getattr(vault, "ban_info", {}) or {}
+        self.actions = vault_admin.action_log(vault)
+        self.action_names = vault_admin.ACTION_NAMES
+        actor_ids = {a["admin_id"] for a in self.actions if a["admin_id"]}
+        self.actors = (Account._byID(actor_ids, data=True, return_dict=True,
+                                     ignore_missing=True) if actor_ids else {})
+        Templated.__init__(self)
+
+
 class AdminDomains(Templated):
     """Banned domains (r2.lib.domain_bans)."""
     def __init__(self):

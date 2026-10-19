@@ -162,6 +162,8 @@ def make_map(config):
     mc('/admin/domain/:domain', controller='admintool', action='domain')
     mc('/admin/users', controller='admintool', action='users')
     mc('/admin/users/:username', controller='admintool', action='user')
+    mc('/admin/vaults', controller='admintool', action='vaults')
+    mc('/admin/vaults/:vaultname', controller='admintool', action='vault')
     mc('/admin/support', controller='admintool', action='support')
     mc('/admin/support/staff', controller='admintool', action='support_staff')
     mc('/admin/support/activity', controller='admintool',

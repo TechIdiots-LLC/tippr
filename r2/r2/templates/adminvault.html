@@ -1,0 +1,141 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/vaults/<name>: one vault, as admins see it (r2.lib.vault_admin)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<% v = thing.vault %>
+<div class="admin-users admin-vault">
+<p><a href="/admin/vaults">&laquo; ${_("vaults")}</a></p>
+<h1>/v/${v.name}
+  %if thing.status:
+    <small>(${", ".join(_(s) for s in thing.status)})</small>
+  %endif
+</h1>
+
+<p>
+  <a href="/v/${v.name}">${_("view")}</a>&#32;&middot;&#32;
+  <a href="/v/${v.name}/about/edit">${_("edit settings")}</a>&#32;&middot;&#32;
+  <a href="/v/${v.name}/about/moderators">${_("moderators")}</a>&#32;&middot;&#32;
+  <a href="/v/${v.name}/about/log">${_("moderation log")}</a>&#32;&middot;&#32;
+  <a href="/v/${v.name}/about/traffic">${_("traffic")}</a>
+</p>
+
+<table class="lined-table borderless">
+  <tr><td>${_("title")}</td><td>${v.title}</td></tr>
+  <tr><td>${_("created")}</td><td>${v._date.strftime('%Y-%m-%d')} (${timesince(v._date)} ${_("ago")})
+    %if thing.creator:
+      ${_("by")} <a href="/admin/users/${thing.creator.name}">${thing.creator.name}</a>
+    %endif
+  </td></tr>
+  <tr><td>${_("subscribers")}</td><td>${v._ups}</td></tr>
+  <tr><td>${_("type")}</td><td>${v.type.replace("_", " ")}</td></tr>
+  %if v._spam:
+    <tr><td>${_("banned")}</td><td>
+      %if thing.ban_info.get('banned_at'):
+        ${thing.ban_info['banned_at'].strftime('%Y-%m-%d')} (${timesince(thing.ban_info['banned_at'])} ${_("ago")})
+      %endif
+      %if thing.ban_info.get('banner'):
+        ${_("by")} ${thing.ban_info['banner']}
+      %endif
+      %if thing.ban_info.get('message'):
+        <br>${_("message:")} ${thing.ban_info['message']}
+      %endif
+    </td></tr>
+  %endif
+</table>
+
+<%def name="act(what, label, message=None, username=False, confirm=None)">
+  <form action="/api/admin_vault" method="post" class="pretty-form admin-user-action"
+        onsubmit="return post_form(this, 'admin_vault');">
+    <input type="hidden" name="vaultname" value="${thing.vault.name}">
+    <input type="hidden" name="do" value="${what}">
+    %if username:
+      <input type="text" name="username" size="20" placeholder="${_('username')}">
+    %endif
+    %if message:
+      <input type="text" name="message" size="40" placeholder="${message}">
+    %endif
+    %if confirm:
+      <label><input type="checkbox" name="confirm" value="yes"> ${confirm}</label>
+    %endif
+    <button class="btn" type="submit">${label}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<h2>${_("actions")}</h2>
+<table class="lined-table borderless admin-user-actions">
+  %if not v._spam:
+    <tr><td>${_("front page default")}</td><td>
+      %if thing.is_default:
+        ${_("Yes.")} ${act("undefault", _("remove from the defaults"))}
+      %else:
+        ${act("default", _("make a default"))}
+      %endif
+      <small>${_("Defaults make up the front page for people who haven't subscribed to anything, and new accounts are subscribed to them.")}</small>
+    </td></tr>
+    <tr><td>${_("featured")}</td><td>
+      %if thing.is_featured:
+        ${_("Yes.")} ${act("unfeature", _("stop featuring"))}
+      %else:
+        ${act("feature", _("feature"))}
+      %endif
+      <small>${_("Featured vaults are suggested to new members.")}</small>
+    </td></tr>
+  %endif
+  <tr><td>${_("moderators")}</td><td>
+    %if thing.moderators:
+      <p>
+        %for m in thing.moderators:
+          <a href="/admin/users/${m.name}">${m.name}</a>&#32;
+        %endfor
+      </p>
+    %else:
+      <p>${_("None.")}</p>
+    %endif
+    ${act("add_moderator", _("add a moderator"), username=True)}
+    ${act("remove_moderator", _("remove a moderator"), username=True)}
+    <small>${_("Added moderators have every permission straight away, with no invitation to accept. To change a moderator's permissions, use the vault's moderators page.")}</small>
+  </td></tr>
+  <tr><td>${_("ban")}</td><td>
+    %if v._spam:
+      ${act("unban", _("unban"), message=_("note (optional, logged)"))}
+    %else:
+      ${act("ban", _("ban the vault"), message=_("message shown on its page (optional)"), confirm=_("only admins will be able to open it"))}
+      <small>${_("This is how a vault is removed: it shows a \"banned\" page to everyone but the admins, and comes off the defaults and featured vaults. Its posts and settings are kept, so unbanning brings it back as it was.")}</small>
+    %endif
+  </td></tr>
+</table>
+
+<h2>${_("admin actions")}</h2>
+%if thing.actions:
+  <table class="lined-table">
+    %for e in thing.actions:
+      <% actor = thing.actors.get(e['admin_id']) if e['admin_id'] else None %>
+      <tr>
+        <td>${e['time'].strftime('%Y-%m-%d %H:%M UTC')}</td>
+        <td>${actor.name if actor else _("the system")}</td>
+        <td>${_(thing.action_names.get(e['action'], e['action']))}</td>
+        <td>${e['detail'] or ''}</td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("None.")}</p>
+%endif
+</div>

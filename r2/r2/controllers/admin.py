@@ -47,6 +47,8 @@ from r2.lib.pages import (
     AdminSupportTicket,
     AdminUser,
     AdminUsers,
+    AdminVault,
+    AdminVaults,
 )
 from r2.lib.validator import (
     VAdmin,
@@ -146,6 +148,24 @@ class AdminToolController(TipprController):
         except NotFound:
             return self.abort404()
         return AdminPage(content=AdminUser(account)).render()
+
+    @validate(VAdmin(), q=nop("q"), show=nop("show"))
+    def GET_vaults(self, q, show):
+        """Find vaults by name; the newest or the banned ones
+        (r2.lib.vault_admin)."""
+        return AdminPage(content=AdminVaults(q, show)).render()
+
+    @validate(VAdmin())
+    def GET_vault(self, vaultname):
+        from r2.lib.db.thing import NotFound
+        from r2.models import Vault
+        try:
+            vault = Vault._by_name(vaultname, _update=True)
+        except NotFound:
+            return self.abort404()
+        if not isinstance(vault, Vault):
+            return self.abort404()
+        return AdminPage(content=AdminVault(vault)).render()
 
     @validate(VAdmin())
     def GET_domains(self):

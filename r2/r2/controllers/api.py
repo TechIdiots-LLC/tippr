@@ -4909,6 +4909,68 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        vaultname=nop("vaultname"),
+        do=VOneOf("do", ("ban", "unban", "default", "undefault", "feature",
+                         "unfeature", "add_moderator", "remove_moderator")),
+        username=nop("username"),
+        message=VLength("message", max_length=1000, empty_error=None),
+        confirm=nop("confirm"),
+    )
+    def POST_admin_vault(self, form, jquery, vaultname, do, username,
+                         message, confirm):
+        """Act on a vault from /admin/vaults (r2.lib.vault_admin)."""
+        from r2.lib import vault_admin
+        from r2.lib.db.thing import NotFound
+        try:
+            vault = Vault._by_name(vaultname or "", _update=True)
+        except NotFound:
+            vault = None
+        if not isinstance(vault, Vault):
+            form.set_text(".status", _("no such vault"))
+            return
+        if not do:
+            form.set_text(".status", _("unknown action"))
+            return
+        if form.has_errors("message", errors.TOO_LONG):
+            return
+        if do in ("add_moderator", "remove_moderator"):
+            try:
+                account = Account._by_name((username or "").strip())
+            except NotFound:
+                form.set_text(".status", _("no such account"))
+                return
+            if do == "add_moderator":
+                if vault.is_moderator(account):
+                    form.set_text(".status", _("they're already a moderator"))
+                    return
+                if vault.is_banned(account):
+                    form.set_text(".status", _("they're banned from the vault; unban them first"))
+                    return
+                vault_admin.add_moderator(vault, account, c.user)
+            else:
+                if not vault.is_moderator(account):
+                    form.set_text(".status", _("they aren't a moderator"))
+                    return
+                vault_admin.remove_moderator(vault, account, c.user)
+        elif do == "ban":
+            if confirm != "yes":
+                form.set_text(".status", _("tick the box to confirm"))
+                return
+            vault_admin.ban(vault, c.user, (message or "").strip())
+        elif do == "unban":
+            vault_admin.unban(vault, c.user, (message or "").strip())
+        elif do in ("default", "feature"):
+            if vault._spam:
+                form.set_text(".status", _("unban the vault first"))
+                return
+            vault_admin.set_listed(vault, do, True, c.user)
+        else:
+            vault_admin.set_listed(vault, do[2:], False, c.user)
+        form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         client_id=nop("client_id"),
         do=VOneOf("do", ("approve", "suspend", "unsuspend", "delete")),
         reason=VLength("reason", max_length=300, empty_error=None),

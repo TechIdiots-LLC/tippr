@@ -56,7 +56,8 @@ COMMON = [
     ("captcha_exempt_comment_karma", N_(
         "Accounts with at least this much comment karma skip the captcha.")),
     ("create_vault_account_age_days", N_(
-        "How old an account must be, in days, to create a vault.")),
+        "How old an account must be, in days, to create a vault (admins "
+        "can always create one).")),
     ("create_vault_link_karma", N_(
         "Post karma needed to create a vault (this, or the comment karma "
         "below).")),
