@@ -4995,6 +4995,36 @@ class ApiController(TipprController):
         g.log.info("admin_feed: %s %s %s", c.user.name, do, feed["url"])
         form.refresh()
 
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        domain=VLength("domain", max_length=255),
+        do=VOneOf("do", ("ban", "unban")),
+        action=VOneOf("action", ("block", "spam")),
+        reason=VLength("reason", max_length=500, empty_error=None),
+    )
+    def POST_admin_domain(self, form, jquery, domain, do, action, reason):
+        """Ban or unban a domain (/admin/domain/<domain>)."""
+        from r2.lib import domain_bans
+        if not domain or not do:
+            form.set_text(".status", _("give a domain"))
+            return
+        if do == "unban":
+            domain_bans.unban(domain, c.user)
+        else:
+            if not action:
+                form.set_text(".status", _("choose what the ban does"))
+                return
+            if action == "block" and not (reason or "").strip():
+                form.set_text(".status", _("give a reason (members see it when the link is refused)"))
+                return
+            try:
+                domain_bans.ban(domain, action, reason, c.user)
+            except ValueError:
+                form.set_text(".status", _("that's not a domain"))
+                return
+        form.redirect("/admin/domain/%s" % domain_bans.normalize(domain))
+
     def _support_ticket(self, ticket_id, reply=True):
         """The ticket if c.user may see (and, with reply, act on) it."""
         from r2.lib import support

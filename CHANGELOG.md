@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Banned domains** (/admin/domains): admins can ban a domain (and its subdomains) so its links are either refused
+  at the submit form, with a reason the member sees, or accepted and removed as spam without a word, for spammers who'd
+  just try another address. Each domain has an admin page (/admin/domain/<domain>, the small "d" beside a post's
+  domain) with the ban, who posts it and its recent links. Domain bans were part of reddit's private plugin and did
+  nothing here before.
 - **Staff notes and activity in the support queue**: staff can leave notes on a ticket for each other (what they
   checked, who should take it); notes show in the conversation, marked as internal, and are never sent to the
   member. Anyone who can see a ticket can leave one, including staff who can only read it. A ticket also lists the

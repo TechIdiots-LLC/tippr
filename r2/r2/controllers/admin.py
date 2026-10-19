@@ -33,6 +33,8 @@ from r2.lib.pages import (
     AdminBackups,
     AdminCoins,
     AdminEmailSettings,
+    AdminDomain,
+    AdminDomains,
     AdminErrors,
     AdminFeeds,
     AdminGold,
@@ -144,6 +146,20 @@ class AdminToolController(TipprController):
         except NotFound:
             return self.abort404()
         return AdminPage(content=AdminUser(account)).render()
+
+    @validate(VAdmin())
+    def GET_domains(self):
+        """Banned domains (r2.lib.domain_bans)."""
+        return AdminPage(content=AdminDomains()).render()
+
+    @validate(VAdmin())
+    def GET_domain(self, domain):
+        """A domain: its ban and its recent links (r2.lib.domain_bans)."""
+        from r2.lib import domain_bans
+        domain = domain_bans.normalize(domain)
+        if not domain:
+            return self.abort404()
+        return AdminPage(content=AdminDomain(domain)).render()
 
     @validate(VAdmin())
     def GET_feeds(self):

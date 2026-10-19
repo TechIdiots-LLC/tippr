@@ -1,0 +1,51 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/domains: banned domains (r2.lib.domain_bans)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<div class="admin-domains">
+<h1>${_("domains")}</h1>
+
+<p><small>
+  ${_("A ban covers the domain and its subdomains. \"Refuse\" stops the link at the submit form and tells the member why; \"remove as spam\" lets it through and removes it straight away, without saying so (for spammers who would just try another address).")}
+  ${_("Admins can also open any domain from the small \"d\" next to a post's domain.")}
+</small></p>
+
+<form method="get" class="pretty-form" onsubmit="var d = this.domain.value.trim(); if (d) { window.location = '/admin/domain/' + encodeURIComponent(d); } return false;">
+  <input type="text" name="domain" size="30" placeholder="example.com">
+  <button class="btn" type="submit">${_("look up a domain")}</button>
+</form>
+
+<h2>${_("banned")}</h2>
+%if thing.bans:
+  <table class="lined-table">
+    <tr><th>${_("domain")}</th><th>${_("ban")}</th><th>${_("reason")}</th><th>${_("by")}</th><th>${_("when")}</th></tr>
+    %for b in thing.bans:
+      <tr>
+        <td><a href="/admin/domain/${b.domain}">${b.domain}</a></td>
+        <td>${_("refuse") if b.action == 'block' else _("remove as spam")}</td>
+        <td>${b.reason}</td>
+        <td>${b.banned_by or ''}</td>
+        <td>${timesince(b.created)} ${_("ago")}</td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No banned domains.")}</p>
+%endif
+</div>

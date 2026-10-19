@@ -3817,6 +3817,39 @@ class AdminUser(Templated):
         Templated.__init__(self)
 
 
+class AdminDomains(Templated):
+    """Banned domains (r2.lib.domain_bans)."""
+    def __init__(self):
+        from r2.lib import domain_bans
+        self.bans = sorted(domain_bans.all_bans().values(),
+                           key=lambda b: b.created, reverse=True)
+        Templated.__init__(self)
+
+
+class AdminDomain(Templated):
+    """One domain: whether it's banned, and its recent links."""
+    def __init__(self, domain):
+        from collections import Counter
+        from r2.lib import domain_bans
+        self.domain = domain
+        self.ban = domain_bans.all_bans().get(domain)
+        # a ban on a parent domain covers this one
+        covering = domain_bans.ban_for(domain)
+        self.parent_ban = covering if covering and covering.domain != domain else None
+        self.links = domain_bans.recent_links(domain)
+        authors = Counter(l.author_id for l in self.links)
+        accounts = (Account._byID(list(authors), data=True, return_dict=True,
+                                  ignore_missing=True) if authors else {})
+        self.authors = [(accounts[a], n) for a, n in authors.most_common(20)
+                        if a in accounts]
+        vault_ids = {l.vault_id for l in self.links}
+        self.vaults = (Vault._byID(vault_ids, data=True, return_dict=True,
+                                   ignore_missing=True) if vault_ids else {})
+        self.accounts = accounts
+        self.removed = sum(1 for l in self.links if l._spam)
+        Templated.__init__(self)
+
+
 class AdminFeeds(Templated):
     """Feeds posted to vaults by bot accounts (r2.lib.feeds)."""
     def __init__(self):

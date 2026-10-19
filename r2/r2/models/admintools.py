@@ -333,14 +333,18 @@ def update_gold_users():
                                     distinguished='gold-auto')
 
 
+# banned domains (r2.lib.domain_bans, /admin/domains)
 def is_banned_domain(dom):
-    return None
+    from r2.lib import domain_bans
+    return domain_bans.is_banned_domain(dom)
 
 def is_shamed_domain(dom):
-    return False, None, None
+    from r2.lib import domain_bans
+    return domain_bans.is_shamed_domain(dom)
 
 def bans_for_domain_parts(dom):
-    return []
+    from r2.lib import domain_bans
+    return domain_bans.bans_for_domain_parts(dom)
 
 
 def apply_updates(user, timer):

@@ -1,0 +1,103 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/domain/<domain>: a domain's ban and recent links (r2.lib.domain_bans)
+<%!
+  from r2.lib.utils import timesince
+%>
+
+<div class="admin-domains">
+<p><a href="/admin/domains">&laquo; ${_("domains")}</a></p>
+<h1>${thing.domain}</h1>
+<p>
+  <a href="/domain/${thing.domain}/">${_("its public listing")}</a>&#32;&middot;&#32;
+  <a href="/search?q=${'site:' + thing.domain | u}">${_("search")}</a>
+</p>
+
+<h2>${_("ban")}</h2>
+%if thing.ban:
+  <p>
+    <strong>${_("Banned:")}</strong>&#32;
+    ${_("links are refused at the submit form") if thing.ban.action == 'block' else _("links are removed as spam when submitted")}
+    %if thing.ban.reason:
+      &#32;(${thing.ban.reason})
+    %endif
+    &#32;&mdash;&#32;${_("by %(name)s, %(when)s ago") % dict(name=thing.ban.banned_by or '?', when=timesince(thing.ban.created))}
+  </p>
+  <form action="/api/admin_domain" method="post" class="pretty-form"
+        onsubmit="return post_form(this, 'admin_domain');">
+    <input type="hidden" name="domain" value="${thing.domain}">
+    <input type="hidden" name="do" value="unban">
+    <button class="btn" type="submit">${_("lift the ban")}</button>
+    <span class="status"></span>
+  </form>
+%elif thing.parent_ban:
+  <p>${_("Covered by the ban on")}&#32;<a href="/admin/domain/${thing.parent_ban.domain}">${thing.parent_ban.domain}</a>.</p>
+%endif
+
+%if not thing.ban:
+  <form action="/api/admin_domain" method="post" class="pretty-form"
+        onsubmit="return post_form(this, 'admin_domain');">
+    <input type="hidden" name="domain" value="${thing.domain}">
+    <input type="hidden" name="do" value="ban">
+    <label><input type="radio" name="action" value="block" checked> ${_("refuse its links, telling the member why")}</label><br>
+    <label><input type="radio" name="action" value="spam"> ${_("accept its links and remove them as spam, silently")}</label><br>
+    <input type="text" name="reason" size="50" placeholder="${_('reason (members see it when a link is refused)')}">
+    <button class="btn" type="submit">${_("ban %(domain)s") % dict(domain=thing.domain)}</button>
+    <span class="status"></span>
+  </form>
+  <p><small>${_("Covers its subdomains too. Links already posted stay; remove them from the list below or each vault's moderators can.")}</small></p>
+%endif
+
+<h2>${_("who posts it")}</h2>
+%if thing.authors:
+  <p>
+    %for account, n in thing.authors:
+      <a href="/admin/users/${account.name}">${account.name}</a>&#32;(${n})&#32;
+    %endfor
+  </p>
+%else:
+  <p>${_("Nobody yet.")}</p>
+%endif
+
+<h2>${_("recent links")}
+  %if thing.links:
+    <small>(${_("%(n)d, %(removed)d removed") % dict(n=len(thing.links), removed=thing.removed)})</small>
+  %endif
+</h2>
+%if thing.links:
+  <table class="lined-table">
+    %for l in thing.links:
+      <% author = thing.accounts.get(l.author_id); vault = thing.vaults.get(l.vault_id) %>
+      <tr class="${'admin-domain-removed' if l._spam else ''}">
+        <td>${timesince(l._date)} ${_("ago")}</td>
+        <td><a href="${l.make_permalink_slow()}">${l.title}</a>
+          %if l._spam:
+            <small>(${_("removed")})</small>
+          %endif
+        </td>
+        <td>${('/v/' + vault.name) if vault else ''}</td>
+        <td>
+          %if author:
+            <a href="/admin/users/${author.name}">${author.name}</a>
+          %endif
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No links to it.")}</p>
+%endif
+</div>
