@@ -4730,6 +4730,12 @@ class ApiController(TipprController):
             match = re.search(r'content\s*=\s*["\']([^"\']+)["\']', values[name])
             if match:
                 values[name] = match.group(1)
+        # an AdSense publisher ID (ca-pub-…) isn't a verification code
+        for name in ("google_site_verification", "bing_site_verification"):
+            if re.match(r"^(ca-)?pub-\d+$", values[name]):
+                c.errors.add(errors.ADSENSE_ID_HERE, field=name)
+                form.has_errors(name, errors.ADSENSE_ID_HERE)
+                return
         # Google Analytics: the G-… measurement ID, from the ID or from the
         # snippet Google hands out
         if values["google_analytics_id"]:

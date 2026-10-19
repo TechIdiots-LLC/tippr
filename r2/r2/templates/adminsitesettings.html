@@ -26,6 +26,7 @@
       ${error_field("BAD_URL", name, "span")}
       ${error_field("BAD_TITLE_FORMAT", name, "span")}
       ${error_field("BAD_ANALYTICS_ID", name, "span")}
+      ${error_field("ADSENSE_ID_HERE", name, "span")}
       <br><small>${help}</small>
     </td>
   </tr>
@@ -44,7 +45,7 @@
         class="pretty-form medium-text">
     <input type="hidden" name="uh" value="${c.modhash}">
     <input type="hidden" name="kind" value="${kind}">
-    <input type="file" name="file">
+    <input type="file" name="file" onchange="if (this.value) { this.form.submit(); }">
     <button class="btn" type="submit">${_("upload")}</button>
     <br><small>${thing.image_formats[kind]}, ${_("up to 1 MB.")} ${help}</small>
     %if thing.image_errors.get(kind):
@@ -126,6 +127,9 @@
   <button class="btn" type="submit">${_("save")}</button>
   <span class="status"></span>
 </form>
+
+<h2>${_("images")}</h2>
+<p><small>${_("Each image is saved on its own as soon as you choose it (the save button above is only for the settings above it). Uploading one replaces the last.")}</small></p>
 
 ${image_section("site_logo", _("logo"), _("Shown at most 48 pixels high in the header; a transparent background works best. Vaults with their own header image show that instead."), _("The site uses the default tippr logo."), "site-logo-preview")}
 
