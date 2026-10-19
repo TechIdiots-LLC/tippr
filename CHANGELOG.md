@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/config** saves every setting with one "save changes" button (kept at the bottom of the window) instead of
+  a button per setting. Only the settings you changed are saved, so the ini's values don't become overrides; one
+  that isn't valid says so on its row while the rest are saved.
 - **Deleting your account** is on the privacy page (/prefs/privacy, now a tab in preferences) instead of a separate
   "deactivate" tab, whose old address redirects there. The form says plainly what happens and when, lets you delete
   your posts and comments too (before, it told you to delete them one by one), and asks for your two-factor code if
@@ -27,6 +30,10 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The welcome bar** (`welcomebar_messages` on /admin/config) broke the front page for logged-out visitors when a
+  message had no " / " (which splits it into a heading and a second line); one-part messages now show as just a
+  heading. Saving messages with a quote missing is refused instead of making nonsense messages, and messages with
+  accented letters or emoji no longer come out garbled.
 - **/v/frontpage** (the vault behind the front page, whose wiki holds the policy pages) showed up in /v/random and
   the vault lists as if it were a community. It's left out now, with the site's other working vaults; on a site at
   tippr.net the vault lists also showed /v/promos, which an old reddit check skipped hiding there.

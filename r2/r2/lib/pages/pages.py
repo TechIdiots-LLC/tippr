@@ -2574,7 +2574,11 @@ class WelcomeBar(InfoBar):
     def __init__(self):
         messages = g.live_config.get("welcomebar_messages")
         if messages:
-            message = random.choice(messages).split(" / ")
+            # "heading / smaller line", or just a heading
+            message = [part.strip() for part in
+                       random.choice(messages).split(" / ", 1)]
+            if len(message) == 1:
+                message.append("")
         else:
             message = (_("tippr is a platform for internet communities"),
                        _("where your votes shape what the world is talking about."))

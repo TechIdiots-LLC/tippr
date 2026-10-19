@@ -4862,6 +4862,36 @@ class ApiController(TipprController):
         else:
             form.set_text(".status", _("saved"))
 
+    @validatedForm(VAdmin(), VModhash())
+    def POST_live_config_all(self, form, jquery):
+        """Save every changed setting on /admin/config at once (the form's
+        fields are value:KEY)."""
+        from r2.lib import live_config_admin
+        if not live_config_admin.editable():
+            form.set_text(".save-all-status", _("this site's live config is managed in ZooKeeper"))
+            return
+        prefix = "value:"
+        values = {name[len(prefix):]: value
+                  for name, value in request.POST.items()
+                  if name.startswith(prefix)}
+        saved, errors = live_config_admin.save_many(values, c.user)
+        for key in values:
+            text = ""
+            if key in errors:
+                text = _("not saved: %(error)s") % dict(error=errors[key])
+            elif key in saved:
+                text = _("saved")
+            form.set_text("#setting-%s .status" % key, text)
+        if errors:
+            form.set_text(".save-all-status", _(
+                "%(saved)d saved; %(failed)d not saved (see below)") % dict(
+                    saved=len(saved), failed=len(errors)))
+        elif saved:
+            # reload, so the "changed here" notes and the log show them
+            form.refresh()
+        else:
+            form.set_text(".save-all-status", _("nothing changed"))
+
     @validatedForm(
         VAdmin(),
         VModhash(),

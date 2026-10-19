@@ -103,18 +103,17 @@ class ConfigValue:
         return timeinterval_fromstr(v)
 
     messages_re = re.compile(r'"([^"]+)"')
+    # the backslash escapes a message may use (Python 2's string_escape)
+    escape_re = re.compile(r'\\(?:u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|[nt\\\'"])')
     @staticmethod
     def messages(v, key=None):
-        # In Python 2 this was v.decode("string_escape")
-        # In Python 3, we use codecs.decode with unicode_escape
         import codecs
         if isinstance(v, bytes):
             v = v.decode('utf-8')
-        # Encode to bytes then decode with unicode_escape to handle escape sequences
-        try:
-            decoded = codecs.decode(v, 'unicode_escape')
-        except Exception:
-            decoded = v
+        # decode only the escape sequences: running the whole text through
+        # unicode_escape would garble any non-ASCII character (é, emoji)
+        decoded = ConfigValue.escape_re.sub(
+            lambda m: codecs.decode(m.group(0), 'unicode_escape'), v)
         return ConfigValue.messages_re.findall(decoded)
 
     @staticmethod

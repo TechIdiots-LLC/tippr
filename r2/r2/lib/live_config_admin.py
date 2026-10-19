@@ -68,7 +68,9 @@ COMMON = [
         "A notice in every page's sidebar. Blank: none.")),
     ("welcomebar_messages", N_(
         "Messages for the \"new here?\" bar shown to logged-out visitors, "
-        "each in double quotes.")),
+        "each in double quotes; one is picked at random. \" / \" splits a "
+        "message into a heading and a smaller second line, e.g. "
+        "\"Welcome! / Pick a few vaults to subscribe to.\"")),
     ("announcement_message", N_(
         "A message in the info bar at the top of listings. For a site-wide "
         "banner, use the announcement on /admin/site instead.")),
@@ -189,9 +191,13 @@ def check(key, raw, user):
         # e.g. an unknown permission level in employees
         return (str(e).replace(" for None", "") or
                 "not a valid %s" % type_name(key))
-    if _parsers.get(key) is ConfigValue.messages and raw.strip() and not value:
-        # text without quotes parses to no messages at all
-        return 'put each message in double quotes, e.g. "Welcome!"'
+    if type_name(key) == "quoted messages" and raw.strip():
+        # text without quotes parses to no messages at all, and a quote
+        # left off pairs up the wrong ones ("a." "b." makes '." "' a
+        # message): everything has to be inside a pair of quotes
+        outside = ConfigValue.messages_re.sub("", raw).strip()
+        if not value or outside or any(not m.strip() for m in value):
+            return 'put each message in double quotes, e.g. "Welcome!" "Hello again!"'
     if key == "employees":
         # whoever saves the admin list keeps their own place on it, so the
         # site can't be left without someone able to change it back
@@ -225,6 +231,28 @@ def save(key, raw, user):
     site_settings.save_settings(GROUP, data)
     _log(user, key, old, new, reset=raw is None)
     return None
+
+
+def save_many(values, user):
+    """Save every setting in values ({key: raw}) whose value changed (one
+    the form shows as it is, the ini's or a saved one, is left alone, so an
+    untouched ini value doesn't become an override). Valid ones are saved
+    even if others aren't. Returns ([saved keys], {key: error})."""
+    known = {k for k, _d, _i, _o in settings()}
+    saved, errors = [], {}
+    for key, raw in values.items():
+        if key not in known:
+            continue
+        raw = (raw or "").replace("\r\n", "\n").strip()
+        current = overrides().get(key, _base_raw.get(key))
+        if raw == (current or "").replace("\r\n", "\n").strip():
+            continue
+        error = save(key, raw, user)
+        if error:
+            errors[key] = error
+        else:
+            saved.append(key)
+    return saved, errors
 
 
 def _log(user, key, old, new, reset):

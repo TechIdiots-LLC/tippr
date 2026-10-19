@@ -26,23 +26,18 @@
         <p class="live-config-description">${_(s['description'])}</p>
       %endif
       %if thing.editable:
-        <form action="/api/live_config" method="post" class="pretty-form live-config-form"
-              onsubmit="return post_form(this, 'live_config');">
-          <input type="hidden" name="key" value="${s['key']}">
+        ## part of the one form round both tables (#live-config-all)
+        <div class="live-config-field">
           <% value = s['override'] if s['override'] is not None else (s['ini'] or '') %>
           %if len(value) > 60 or s['type'] in ('quoted messages', 'name:value pairs, comma-separated'):
-            <textarea name="value" rows="2" cols="70">${value}</textarea>
+            <textarea name="value:${s['key']}" rows="2" cols="70">${value}</textarea>
           %else:
-            <input type="text" name="value" value="${value}" size="40">
+            <input type="text" name="value:${s['key']}" value="${value}" size="40">
           %endif
-          <button class="btn" type="submit">${_("save")}</button>
           <span class="status"></span>
-        </form>
+        </div>
         %if s['override'] is not None:
-          <form action="/api/live_config" method="post" class="pretty-form live-config-reset"
-                onsubmit="return post_form(this, 'live_config');">
-            <input type="hidden" name="key" value="${s['key']}">
-            <input type="hidden" name="reset" value="1">
+          <div class="live-config-reset">
             <small>${_("Changed here.")}
               %if s['ini']:
                 ${_("The ini says:")} <code>${s['ini']}</code>
@@ -50,9 +45,9 @@
                 ${_("The ini leaves it empty.")}
               %endif
             </small>
-            <button class="btn" type="submit">${_("use the ini's value")}</button>
-            <span class="status"></span>
-          </form>
+            <button class="btn" type="button"
+                    onclick="return live_config_reset('${s['key']}');">${_("use the ini's value")}</button>
+          </div>
         %endif
       %else:
         <code>${s['ini'] or ''}</code>
@@ -70,6 +65,19 @@
   <p>${_("This site reads its live config from ZooKeeper (liveconfig_source = zookeeper), so it's managed with scripts/write_live_config rather than here. The values in use:")}</p>
 %endif
 
+<%def name="save_all_bar()">
+  %if thing.editable:
+    <div class="live-config-save-all">
+      <button class="btn" type="submit">${_("save changes")}</button>
+      <span class="status save-all-status"></span>
+    </div>
+  %endif
+</%def>
+
+<form action="/api/live_config_all" method="post" class="pretty-form" id="live-config-all"
+      onsubmit="return post_form(this, 'live_config_all');">
+${save_all_bar()}
+
 <h2>${_("common settings")}</h2>
 <table class="lined-table borderless live-config-table">
   %for s in thing.common:
@@ -85,6 +93,26 @@
     %endfor
   </table>
 </details>
+
+${save_all_bar()}
+</form>
+
+%if thing.editable:
+  ## "use the ini's value": one setting back to the ini, on its own
+  <form action="/api/live_config" method="post" id="live-config-reset" style="display: none"
+        onsubmit="return post_form(this, 'live_config');">
+    <input type="hidden" name="key" value="">
+    <input type="hidden" name="reset" value="1">
+    <span class="status"></span>
+  </form>
+  <script>
+    function live_config_reset(key) {
+      var form = document.getElementById('live-config-reset');
+      form.elements.key.value = key;
+      return post_form(form, 'live_config');
+    }
+  </script>
+%endif
 
 <h2>${_("changes")}</h2>
 %if thing.log:
