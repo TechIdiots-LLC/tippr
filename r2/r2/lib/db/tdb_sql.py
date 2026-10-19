@@ -792,7 +792,9 @@ def sa_op(op):
     rval = tup(op.rval)
 
     if not rval:
-        return '2+2=5'
+        # nothing can match (an empty list of values); SQLAlchemy 2 needs
+        # this as an expression, not a string
+        return sa.false()
     else:
         return sa.or_(*[fn(op.lval, v) for v in rval])
 

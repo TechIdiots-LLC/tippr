@@ -62,6 +62,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Lookups with nothing to find** (an empty list of IDs) failed with an SQL error instead of finding nothing; among
+  other things this broke the sponsor pages (/sponsor, /sponsor/promoted/…).
 - **Subscription counts** for the traffic pages couldn't be read back (their table is keyed by text, not dates).
 - **Pages that failed to load**, mostly leftovers from renaming reddit's subreddits to vaults: composing a message
   (from the inbox, or "message the moderators"), /vaults/featured, the privacy settings page for anyone who hadn't made
