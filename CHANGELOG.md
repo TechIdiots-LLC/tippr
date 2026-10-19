@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.9.0
+### ✨ Features and improvements
 - **Vaults for admins** (/admin/vaults): admins can now create vaults whatever their karma and account age (the
   limits on /admin/config are for everyone else). The new page finds any vault and lists the newest and banned
   ones; on a vault's page admins can make it a front page default or featured (until now only
@@ -23,7 +29,6 @@
   defaults); re-run `scripts/create_default_vaults.py` to make them.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **S3 media**: uploading the site logo, favicon or share image failed with S3 storage, and the ad image list
   failed to load; S3 uploads work without Amazon's ACLs and with other providers' addresses.
 - **/admin/site images**: choosing a logo, favicon or share image now uploads it straight away (it was easy to pick
