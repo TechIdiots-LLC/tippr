@@ -642,6 +642,11 @@ $.renderCaptchaWidgets = function(scope) {
         if ($el.data("captcha-rendered") || !$el.is(":visible")) {
             return;
         }
+        // the full-size widgets are about 300px wide, more than a form on a
+        // phone has; all three services have a compact size
+        if ($el.parent().width() < 304) {
+            options.size = "compact";
+        }
         try {
             if (window.turnstile && $el.hasClass("cf-turnstile")) {
                 id = window.turnstile.render(this, options);

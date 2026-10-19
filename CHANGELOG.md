@@ -10,6 +10,10 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Signing up on a phone**: the Turnstile, hCaptcha or reCAPTCHA box was wider than the sign-up form (on a
+  computer too); it now uses the services' compact size when the form is narrow. The phone menu no longer repeats
+  the sidebar's small log-in box next to its "log in or sign up" link, so there's one way in, and your name at the
+  top of the menu (a link to your profile) is easier to tap.
 
 ## 0.9.0
 ### ✨ Features and improvements

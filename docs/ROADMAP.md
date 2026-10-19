@@ -67,8 +67,17 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    first boot to point at separate data store containers), next to the
    all-in-one template, and an installer role setting (`TIPPR_ROLE`) for
    data store containers.
-2. **Admin security.** WebAuthn passkeys, and recovery codes instead of
-   email as the fallback (TOTP for admin mode is done).
+2. **More two-factor options** (for everyone; admin mode already requires
+   two-factor): passkeys (WebAuthn) as a second factor besides an
+   authenticator app, and recovery codes for someone who loses their
+   device. Today the only way back in is an admin resetting it on
+   /admin/users.
+3. **Explore: logging in with another account.** Members link a Google,
+   Microsoft or Facebook account in their preferences and can then log in
+   with it instead of their password (OpenID Connect / OAuth). Questions to
+   settle first: signing up with one (choosing a username, the captcha),
+   how it combines with two-factor, and unlinking. Instagram no longer
+   offers logins to other sites; Meta's is Facebook Login.
 
 ## Payments and gold
 
