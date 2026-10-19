@@ -272,6 +272,23 @@ action = add_vault(action, vault_path=False)
         <span class="details">${_("(except NSFW and spoiler posts)")}</span>
       </p>
       <p>
+        ${checkbox(_("user tags"), "user_tagger")}
+        &#32;
+        <span class="details">
+          ${_("(a tag button by usernames, to note who someone is; only you see your tags)")}
+        </span>
+      </p>
+      <p>
+        ${checkbox(_("user info on hover"), "user_info_hover")}
+        &#32;
+        <span class="details">${_("(hold the mouse over a username to see their karma, how long they've been here and your tag)")}</span>
+      </p>
+      <p>
+        ${checkbox(_("show the parent comment on hover"), "parent_hover")}
+        &#32;
+        <span class="details">${_("(hold the mouse over a reply's \"parent\" link to read the comment it replies to)")}</span>
+      </p>
+      <p>
         ${checkbox(_("night mode"), "nightmode")}
         &#32;
         <span class="details">${_("(light text on a dark background)")}</span>

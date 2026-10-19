@@ -55,6 +55,7 @@ from r2.lib import (
     newsletter,
     promote,
     recommender,
+    user_tags,
 )
 from r2.lib.captcha import get_iden
 from r2.lib.csrf import csrf_exempt
@@ -251,6 +252,28 @@ class ApiController(TipprController):
         if responder.has_errors("text", errors.TOO_LONG):
             return {"html": "", "error": _("this is too long")}
         return {"html": safemarkdown(text) or ""}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        user=VExistingUname("user"),
+        tag=VLength("tag", user_tags.MAX_LENGTH, empty_error=None),
+        color=VOneOf("color", list(user_tags.COLORS), default="none"),
+    )
+    def POST_user_tag(self, responder, user, tag, color):
+        """Set (or, with no tag and no colour, clear) the member's private
+        tag on another user (r2.lib.user_tags)."""
+        if not user:
+            return {"error": _("that user doesn't exist")}
+        try:
+            saved = user_tags.set_tag(c.user, user.name, tag, color)
+        except user_tags.TooManyTags:
+            return {"error": _("you can tag at most %(n)d users") % {
+                "n": user_tags.MAX_TAGS}}
+        if not saved:
+            return {"tag": "", "background": ""}
+        return {"tag": saved["tag"],
+                "background": user_tags.COLORS.get(saved["color"], "")}
 
     @json_validate(user=VUname(("user",)))
     @api_doc(api_section.users)

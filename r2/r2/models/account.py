@@ -124,6 +124,9 @@ class Account(Thing):
                      pref_hide_child_comments=False,
                      pref_show_images=False,
                      pref_auto_expand_images=False,
+                     pref_user_tagger=False,
+                     pref_user_info_hover=False,
+                     pref_parent_hover=False,
                      # listing filters (r2.lib.listing_filters)
                      pref_filter_keywords=(),
                      pref_filter_domains=(),

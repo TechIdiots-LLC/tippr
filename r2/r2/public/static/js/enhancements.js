@@ -28,6 +28,13 @@
  *  - show images: a button on posts that link straight to an image shows it
  *    in the listing, a "show images" tab shows them all, and they can open
  *    by themselves (not NSFW or spoiler posts)
+ *  - user tags: a private note and colour by a username (r2.lib.user_tags;
+ *    the member's tags come in r.config.user_tags)
+ *  - user info on hover: karma, account age and your tag
+ *  - the parent comment on hover over a reply's "parent" link
+ *
+ * Filters (hiding posts by keyword, domain, vault or user) happen on the
+ * server: r2.lib.listing_filters.
  */
 r.enhancements = {}
 
@@ -246,7 +253,7 @@ r.enhancements.keyboardNav = {
   },
 
   selected: function() {
-    if (!this.$selected.length || !$.contains(document, this.$selected[0])) {
+    if (!this.$selected.length || !$.contains(document.documentElement, this.$selected[0])) {
       this.$selected = $()
       this.move(1)
     }
@@ -512,7 +519,301 @@ r.enhancements.images = {
   },
 }
 
+/* user tags */
+
+r.enhancements.userTags = {
+  init: function(showButtons) {
+    this.tags = r.config.user_tags || {}
+    this.showButtons = showButtons
+    this.decorate()
+    $(document).on('new_things_inserted', _.bind(this.decorate, this))
+    $(document).on('click', '.user-tag-button, .user-tag', _.bind(function(e) {
+      e.preventDefault()
+      e.stopPropagation()
+      this.edit($(e.currentTarget).data('user'), $(e.currentTarget))
+    }, this))
+  },
+
+  nameOf: function($author) {
+    var href = $author.attr('href') || ''
+    var m = href.match(/\/u(?:ser)?\/([^\/?#]+)/)
+    return m ? decodeURIComponent(m[1]) : $author.text()
+  },
+
+  decorate: function() {
+    var self = this
+    $('a.author').each(function() {
+      var $author = $(this)
+      if ($author.data('user-tagged')) {
+        return
+      }
+      $author.data('user-tagged', true)
+      self.render($author, self.nameOf($author))
+    })
+  },
+
+  render: function($author, name) {
+    $author.nextAll('.user-tag, .user-tag-button').first()
+      .filter(function() { return $(this).data('user') === name }).remove()
+    var tag = this.tags[name.toLowerCase()]
+    var $after = $author
+    if (tag && (tag[0] || tag[1])) {
+      var $tag = $('<a href="#" class="user-tag"></a>').data('user', name)
+        .text(tag[0] || ' ')
+        .attr('title', r._('your tag; click to change it'))
+      if (tag[1]) {
+        $tag.css({backgroundColor: tag[1], color: '#fff', borderColor: tag[1]})
+      }
+      $author.after($tag)
+    } else if (this.showButtons) {
+      $author.after($('<a href="#" class="user-tag-button"></a>').data('user', name)
+        .attr({title: r._('tag this user'), 'aria-label': r._('tag this user')}))
+    }
+  },
+
+  refresh: function(name) {
+    var self = this
+    $('a.author').filter(function() {
+      return self.nameOf($(this)).toLowerCase() === name.toLowerCase()
+    }).each(function() {
+      var $author = $(this)
+      $author.nextAll('.user-tag, .user-tag-button').first().remove()
+      self.render($author, self.nameOf($author))
+    })
+  },
+
+  edit: function(name, $near) {
+    this.close()
+    var tag = this.tags[name.toLowerCase()] || ['', '']
+    var colors = r.config.user_tag_colors || {}
+    var chosen = 'none'
+    _.each(colors, function(bg, color) {
+      if (bg && bg === tag[1]) {
+        chosen = color
+      }
+    })
+    var $box = $('<form class="user-tag-editor"></form>')
+    var $input = $('<input type="text" maxlength="64">').val(tag[0])
+      .attr({placeholder: r._('tag'), 'aria-label': r._('tag for %(user)s').format({user: name})})
+    var $swatches = $('<div class="user-tag-colors"></div>')
+    _.each(colors, function(bg, color) {
+      $('<button type="button" class="user-tag-color"></button>')
+        .toggleClass('selected', color === chosen)
+        .css('background-color', bg || 'transparent')
+        .attr({'aria-label': color, title: color})
+        .data('color', color)
+        .on('click', function() {
+          chosen = color
+          $swatches.children().removeClass('selected')
+          $(this).addClass('selected')
+        })
+        .appendTo($swatches)
+    })
+    var $status = $('<span class="error"></span>')
+    $box.append(
+      $('<div class="user-tag-editor-title"></div>').text(
+        r._('tag %(user)s').format({user: name})),
+      $input, $swatches,
+      $('<div class="user-tag-editor-buttons"></div>').append(
+        $('<button type="submit" class="btn"></button>').text(r._('save')),
+        $('<button type="button" class="user-tag-clear"></button>').text(r._('remove tag'))
+          .on('click', _.bind(function() { this.save(name, '', 'none', $status) }, this)),
+        $status))
+    $box.on('submit', _.bind(function(e) {
+      e.preventDefault()
+      this.save(name, $input.val(), chosen, $status)
+    }, this))
+    $box.on('click keydown', function(e) {
+      e.stopPropagation()
+      if (e.type === 'keydown' && e.key === 'Escape') {
+        r.enhancements.userTags.close()
+      }
+    })
+    $box.appendTo(document.body)
+    var offset = $near.offset()
+    $box.css({top: offset.top + $near.outerHeight() + 4,
+              left: Math.max(4, Math.min(offset.left, $(window).width() - $box.outerWidth() - 8))})
+    $input.focus()
+    $(document).one('click', _.bind(this.close, this))
+  },
+
+  save: function(name, tag, color, $status) {
+    $.ajax({
+      url: '/api/user_tag.json',
+      type: 'POST',
+      dataType: 'json',
+      data: {user: name, tag: tag, color: color, uh: r.config.modhash},
+    }).done(_.bind(function(res) {
+      if (res && res.error) {
+        $status.text(res.error)
+        return
+      }
+      if (res && (res.tag || res.background)) {
+        this.tags[name.toLowerCase()] = [res.tag, res.background]
+      } else {
+        delete this.tags[name.toLowerCase()]
+      }
+      this.close()
+      this.refresh(name)
+    }, this)).fail(function() {
+      $status.text(r._('couldn\'t save the tag; try again'))
+    })
+  },
+
+  close: function() {
+    $('.user-tag-editor').remove()
+  },
+}
+
+/* user info on hover */
+
+r.enhancements.userInfo = {
+  cache: {},
+
+  init: function() {
+    if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) {
+      return
+    }
+    var self = this
+    $(document.body)
+      .on('mouseenter', 'a.author', function() {
+        var $author = $(this)
+        self.leave = clearTimeout(self.leave)
+        self.timer = setTimeout(function() { self.show($author) }, 500)
+      })
+      .on('mouseleave', 'a.author, .user-info-card', function() {
+        clearTimeout(self.timer)
+        self.leave = setTimeout(function() { self.hide() }, 300)
+      })
+      .on('mouseenter', '.user-info-card', function() {
+        clearTimeout(self.leave)
+      })
+  },
+
+  age: function(created) {
+    var days = Math.max(0, Math.floor((Date.now() / 1000 - created) / 86400))
+    if (days >= 365) {
+      var years = Math.floor(days / 365)
+      return r.P_('%(num)s year', '%(num)s years', years).format({num: years})
+    }
+    if (days >= 31) {
+      var months = Math.floor(days / 30.4)
+      return r.P_('%(num)s month', '%(num)s months', months).format({num: months})
+    }
+    return r.P_('%(num)s day', '%(num)s days', days).format({num: days})
+  },
+
+  show: function($author) {
+    var name = r.enhancements.userTags.nameOf($author)
+    var self = this
+    var load = this.cache[name] ||
+      (this.cache[name] = $.ajax({url: '/user/' + encodeURIComponent(name) + '/about.json',
+                                  dataType: 'json'}))
+    load.done(function(res) {
+      if (!res || !res.data || !$.contains(document.documentElement, $author[0])) {
+        return
+      }
+      self.render($author, res.data)
+    })
+  },
+
+  render: function($author, d) {
+    this.hide()
+    var $card = $('<div class="user-info-card"></div>')
+    var $title = $('<div class="user-info-name"></div>').append(
+      $('<a></a>').attr('href', '/user/' + encodeURIComponent(d.name)).text(d.name))
+    if (d.is_gold) {
+      $title.append(' ', $('<span class="user-info-badge gold"></span>').text(r._('gold')))
+    }
+    if (d.is_mod) {
+      $title.append(' ', $('<span class="user-info-badge"></span>').text(r._('moderator')))
+    }
+    var $facts = $('<dl></dl>').append(
+      $('<dt></dt>').text(r._('member for')), $('<dd></dd>').text(this.age(d.created_utc)),
+      $('<dt></dt>').text(r._('post karma')), $('<dd></dd>').text(d.link_karma),
+      $('<dt></dt>').text(r._('comment karma')), $('<dd></dd>').text(d.comment_karma))
+    var tags = r.enhancements.userTags
+    var tag = (tags.tags || {})[d.name.toLowerCase()]
+    var $tagRow = $('<div class="user-info-tag"></div>')
+    if (tag && tag[0]) {
+      $tagRow.append($('<span class="user-tag-label"></span>').text(tag[0])
+        .css(tag[1] ? {backgroundColor: tag[1], color: '#fff', borderColor: tag[1]} : {}))
+    }
+    $tagRow.append(' ', $('<a href="#"></a>').text(tag ? r._('change tag') : r._('tag this user'))
+      .on('click', function(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        tags.edit(d.name, $(this))
+      }))
+    var $links = $('<div class="user-info-links"></div>').append(
+      $('<a></a>').attr('href', '/user/' + encodeURIComponent(d.name)).text(r._('profile')),
+      ' | ',
+      $('<a></a>').attr('href', '/message/compose/?to=' + encodeURIComponent(d.name))
+        .text(r._('send a message')))
+    $card.append($title, $facts, $tagRow, $links).appendTo(document.body)
+    var offset = $author.offset()
+    $card.css({top: offset.top + $author.outerHeight() + 4,
+               left: Math.max(4, Math.min(offset.left, $(window).width() - $card.outerWidth() - 8))})
+  },
+
+  hide: function() {
+    $('.user-info-card').remove()
+  },
+}
+
+/* the parent comment on hover */
+
+r.enhancements.parentHover = {
+  init: function() {
+    if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) {
+      return
+    }
+    var self = this
+    $(document.body)
+      .on('mouseenter', 'a[data-event-action="parent"]', function() {
+        var $link = $(this)
+        self.timer = setTimeout(function() { self.show($link) }, 250)
+      })
+      .on('mouseleave', 'a[data-event-action="parent"]', function() {
+        clearTimeout(self.timer)
+        $('.parent-comment-preview').remove()
+      })
+  },
+
+  show: function($link) {
+    var id = ($link.attr('href') || '').replace(/^.*#/, '')
+    var $parent = $('#thing_t4_' + id).children('.entry')
+    if (!id || !$parent.length) {
+      return
+    }
+    // the tagline without what only makes sense in place (the collapse
+    // toggle, the reply count, and scores whose shown one depends on how
+    // you voted)
+    var $tagline = $parent.find('.tagline').first().clone()
+    $tagline.find('.user-tag-button, a.expand, .numchildren, .score').remove()
+    var $preview = $('<div class="parent-comment-preview"></div>').append(
+      $tagline, $parent.find('.usertext-body').first().clone())
+    $preview.appendTo(document.body)
+    var offset = $link.offset()
+    var top = offset.top - $preview.outerHeight() - 6
+    if (top < $(window).scrollTop()) {
+      top = offset.top + $link.outerHeight() + 6
+    }
+    $preview.css({top: top,
+                  left: Math.max(4, Math.min(offset.left, $(window).width() - $preview.outerWidth() - 8))})
+  },
+}
+
 $(function() {
+  if (r.config.user_tagger || r.config.user_info_hover) {
+    r.enhancements.userTags.init(r.config.user_tagger)
+  }
+  if (r.config.user_info_hover) {
+    r.enhancements.userInfo.init()
+  }
+  if (r.config.parent_hover) {
+    r.enhancements.parentHover.init()
+  }
   if (r.config.show_images || r.config.auto_expand_images) {
     r.enhancements.images.init(r.config.auto_expand_images)
   }

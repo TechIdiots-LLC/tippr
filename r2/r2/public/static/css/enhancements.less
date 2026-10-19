@@ -145,6 +145,195 @@
     font-weight: normal;
 }
 
+// user tags
+
+.user-tag, .user-tag-label {
+    display: inline-block;
+    margin: 0 3px;
+    padding: 0 5px;
+    border: 1px solid @tp-border;
+    border-radius: 3px;
+    background: @tp-panel;
+    color: @tp-text;
+    font-size: @tp-font-xxs;
+    line-height: 15px;
+    vertical-align: baseline;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: none;
+        opacity: .85;
+    }
+}
+
+// a small tag outline, drawn so it needs no image and follows the theme
+.user-tag-button {
+    display: inline-block;
+    width: 11px;
+    height: 9px;
+    margin: 0 3px 0 4px;
+    vertical-align: middle;
+    border: 1px solid @tp-text-muted;
+    border-radius: 2px 5px 5px 2px;
+    opacity: .45;
+    position: relative;
+
+    &::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        right: 2px;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: @tp-text-muted;
+    }
+
+    &:hover, &:focus {
+        opacity: 1;
+    }
+}
+
+.user-tag-editor, .user-info-card, .parent-comment-preview {
+    position: absolute;
+    z-index: @zindex-modal;
+    background: @tp-surface;
+    color: @tp-text;
+    border: 1px solid @tp-border;
+    border-radius: 5px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+}
+
+.user-tag-editor {
+    width: 240px;
+    padding: 10px;
+
+    .user-tag-editor-title {
+        font-weight: bold;
+        margin-bottom: 6px;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 6px;
+    }
+
+    .user-tag-colors {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .user-tag-color {
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: 1px solid @tp-border;
+        border-radius: 3px;
+        cursor: pointer;
+
+        &.selected {
+            outline: 2px solid @tp-accent;
+            outline-offset: 1px;
+        }
+    }
+
+    .user-tag-editor-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 3px 10px;
+        border: 1px solid @tp-accent-strong;
+        border-radius: 3px;
+        background: @tp-accent;
+        color: @tp-on-accent;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .user-tag-clear {
+        background: none;
+        border: 0;
+        padding: 0;
+        color: @tp-link;
+        cursor: pointer;
+    }
+
+    .error {
+        color: @brand-danger;
+    }
+}
+
+// user info on hover
+
+.user-info-card {
+    min-width: 200px;
+    max-width: 320px;
+    padding: 8px 12px;
+    font-size: @tp-font-xs;
+
+    .user-info-name {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .user-info-badge {
+        padding: 0 4px;
+        border-radius: 3px;
+        background: @tp-tint;
+        color: @tp-accent-strong;
+        font-size: @tp-font-xxs;
+        font-weight: normal;
+
+        &.gold {
+            background: #f4e3a1;
+            color: #6b5200;
+        }
+    }
+
+    dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 10px;
+        margin: 4px 0;
+    }
+
+    dt {
+        color: @tp-text-muted;
+    }
+
+    dd {
+        margin: 0;
+    }
+
+    .user-info-tag, .user-info-links {
+        margin-top: 4px;
+    }
+}
+
+// the parent comment on hover
+
+.parent-comment-preview {
+    max-width: 560px;
+    max-height: 50vh;
+    overflow: hidden;
+    padding: 6px 10px;
+    pointer-events: none;
+
+    .usertext-body {
+        background: none;
+        border: 0;
+        margin: 0;
+        padding: 0;
+    }
+}
+
 // filters on /prefs
 
 .pref-filters .pref-filter {

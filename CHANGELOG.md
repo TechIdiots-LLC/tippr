@@ -13,6 +13,10 @@
   users whose posts they don't want in listings (never their own posts; a filtered vault still shows when you visit
   it). Filtering happens on the server, so it works with infinite scroll, on every device, and through the API's
   preferences.
+- **User tags, user info on hover and parent comments on hover**, also from RES, in the "enhancements" section: a
+  tag button by usernames to note who someone is in a colour (only you see your tags; they're kept on your account,
+  so they follow you to every device and come with your data export), a card with a user's karma and account age when
+  you hold the mouse over their name, and the comment a reply answers when you hold it over "parent".
 - **GitLab CI/CD**: `.gitlab-ci.yml` runs the unit tests and installer smoke test, and builds, tests and publishes
   releases (Docker image, compose bundle, installer tarball, Proxmox template) on a GitLab server, as the GitHub
   workflows do on GitHub, for a repository kept on GitLab and mirrored to GitHub. It also has the version bump merge

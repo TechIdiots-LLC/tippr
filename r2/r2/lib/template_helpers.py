@@ -42,7 +42,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _, ungettext
 
 from r2.config import feature
-from r2.lib import hooks, js, tracking
+from r2.lib import hooks, js, tracking, user_tags
 from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.static import static_mtime
 from r2.lib.utils import UrlParser, is_subdomain, timeago, timesince
@@ -282,6 +282,17 @@ def js_config(extra_config=None):
         "hide_child_comments": logged and bool(c.user.pref_hide_child_comments),
         "show_images": logged and bool(c.user.pref_show_images),
         "auto_expand_images": logged and bool(c.user.pref_auto_expand_images),
+        "user_tagger": logged and bool(c.user.pref_user_tagger),
+        "user_info_hover": logged and bool(c.user.pref_user_info_hover),
+        "parent_hover": logged and bool(c.user.pref_parent_hover),
+        "user_tags": (user_tags.for_page(c.user)
+                      if logged and (c.user.pref_user_tagger or
+                                     c.user.pref_user_info_hover)
+                      else {}),
+        "user_tag_colors": (user_tags.COLORS
+                            if logged and (c.user.pref_user_tagger or
+                                           c.user.pref_user_info_hover)
+                            else {}),
         "mweb_blacklist_expressions": g.live_config['mweb_blacklist_expressions'],
         "gold": gold,
         "has_subscribed": logged and c.user.has_subscribed,

@@ -31,6 +31,7 @@ from datetime import datetime
 from pylons import app_globals as g
 
 from r2.lib.db.thing import Thing
+from r2.lib import user_tags
 from r2.lib.utils import tup
 
 
@@ -84,6 +85,7 @@ class UserDataExporter:
             'subscriptions': self._collect_subscriptions(),
             'friends': self._collect_friends(),
             'blocked': self._collect_blocked(),
+            'user_tags': user_tags.get(self.account),
             'ip_history': self._collect_ip_history(),
             'oauth_apps': self._collect_oauth_apps(),
         }
@@ -139,7 +141,8 @@ class UserDataExporter:
                 'pref_infinite_scroll', 'pref_keyboard_nav', 'pref_nightmode',
                 'pref_hide_child_comments', 'pref_show_images', 'pref_auto_expand_images',
                 'pref_filter_keywords', 'pref_filter_domains', 'pref_filter_vaults',
-                'pref_filter_users',
+                'pref_filter_users', 'pref_user_tagger', 'pref_user_info_hover',
+                'pref_parent_hover',
                 'pref_email_messages', 'pref_email_digests', 'pref_email_unsubscribe_all',
             ]
             for attr in pref_attrs:
