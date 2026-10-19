@@ -3768,11 +3768,20 @@ class AdminErrors(Templated):
 
 
 class AdminUsers(Templated):
-    """Account search (r2.lib.user_admin)."""
-    def __init__(self, query):
+    """Account search, or with no search every account, newest first, a page
+    at a time (r2.lib.user_admin)."""
+    def __init__(self, query, before=None, after=None):
         from r2.lib import user_admin
         self.query = (query or "").strip()
-        self.kind, accounts = user_admin.search(self.query)
+        self.newer = self.older = None
+        self.total = None
+        if self.query:
+            self.kind, accounts = user_admin.search(self.query)
+        else:
+            self.kind = None
+            accounts, self.newer, self.older = user_admin.listing(
+                before=before, after=after)
+            self.total = user_admin.count_accounts()
         self.results = [dict(account=a, status=user_admin.status(a))
                         for a in accounts]
         Templated.__init__(self)

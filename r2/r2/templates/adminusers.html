@@ -28,7 +28,29 @@
   <br><small>${_("A username finds that account and names starting with it; an email address finds every account that used it; an IP address finds the accounts that logged in from it (logins are kept for 100 days).")}</small>
 </form>
 
-%if thing.query:
+<%def name="pages()">
+  %if thing.newer or thing.older:
+    <p class="nextprev admin-users-pages">
+      %if thing.newer:
+        <a href="/admin/users?after=${thing.newer}">&lsaquo; ${_("newer")}</a>
+      %endif
+      %if thing.newer and thing.older:
+        &#32;|&#32;
+      %endif
+      %if thing.older:
+        <a href="/admin/users?before=${thing.older}">${_("older")} &rsaquo;</a>
+      %endif
+    </p>
+  %endif
+</%def>
+
+%if not thing.query and thing.total is not None:
+  <h2>${_("all accounts")} <small>(${thing.total})</small></h2>
+  <p><small>${_("Newest first, including deleted and suspended accounts.")}</small></p>
+  ${pages()}
+%endif
+
+%if thing.query or thing.total is not None:
   %if thing.results:
     <table class="lined-table admin-users-results">
       <tr>
@@ -55,6 +77,9 @@
         </tr>
       %endfor
     </table>
+    %if not thing.query:
+      ${pages()}
+    %endif
   %else:
     <p>${_("No accounts found.")}</p>
   %endif

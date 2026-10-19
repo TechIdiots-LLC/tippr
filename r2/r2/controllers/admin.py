@@ -134,10 +134,11 @@ class AdminToolController(TipprController):
     def GET_errors(self):
         return AdminPage(content=AdminErrors()).render()
 
-    @validate(VAdmin(), q=nop("q"))
-    def GET_users(self, q):
-        """Find accounts by name, email or IP (r2.lib.user_admin)."""
-        return AdminPage(content=AdminUsers(q)).render()
+    @validate(VAdmin(), q=nop("q"), before=nop("before"), after=nop("after"))
+    def GET_users(self, q, before, after):
+        """Find accounts by name, email or IP, or with no search list them
+        all a page at a time (r2.lib.user_admin)."""
+        return AdminPage(content=AdminUsers(q, before=before, after=after)).render()
 
     @validate(VAdmin())
     def GET_user(self, username):

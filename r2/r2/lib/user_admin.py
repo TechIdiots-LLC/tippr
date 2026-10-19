@@ -65,6 +65,59 @@ def kind_of(query):
         return "name"
 
 
+PAGE_SIZE = 50
+
+
+def listing(before=None, after=None, limit=PAGE_SIZE):
+    """Every account, newest first, a page at a time (deleted and suspended
+    ones too): ([Account], newer, older), where newer and older are the
+    id36s to pass back as `after` and `before` for the next page each way
+    (None at either end). `before`: accounts older than that one;
+    `after`: newer than it."""
+    from r2.lib.db.operators import asc, desc
+    from r2.models import Account
+    every = (Account.c._deleted == (True, False),
+             Account.c._spam == (True, False))
+
+    def page(anchor, newer):
+        rules = list(every)
+        if anchor is not None:
+            rules.append(Account.c._id > anchor if newer else
+                         Account.c._id < anchor)
+        query = Account._query(*rules, sort=asc("_id") if newer else desc("_id"),
+                               limit=limit + 1, data=True)
+        return list(query)
+
+    def id_of(id36):
+        try:
+            return int(id36, 36)
+        except (TypeError, ValueError):
+            return None
+
+    if after:
+        accounts = page(id_of(after), newer=True)
+        more_newer = len(accounts) > limit
+        accounts = list(reversed(accounts[:limit]))
+        more_older = True
+    else:
+        accounts = page(id_of(before), newer=False)
+        more_older = len(accounts) > limit
+        accounts = accounts[:limit]
+        more_newer = before is not None
+    newer = accounts[0]._id36 if accounts and more_newer else None
+    older = accounts[-1]._id36 if accounts and more_older else None
+    return accounts, newer, older
+
+
+def count_accounts():
+    """How many accounts there are (deleted and suspended ones too)."""
+    from r2.lib.db import tdb_sql
+    from r2.models import Account
+    table = tdb_sql.get_thing_table(Account._type_id)[0]
+    with tdb_sql.get_engine_from_table(table).connect() as conn:
+        return conn.execute(sa.select(sa.func.count()).select_from(table)).scalar()
+
+
 def search(query):
     """(kind, [Account]) for a search box query."""
     query = (query or "").strip()
