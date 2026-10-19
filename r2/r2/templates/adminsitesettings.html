@@ -25,6 +25,7 @@
       ${error_field("BAD_EMAIL", name, "span")}
       ${error_field("BAD_URL", name, "span")}
       ${error_field("BAD_TITLE_FORMAT", name, "span")}
+      ${error_field("BAD_ANALYTICS_ID", name, "span")}
       <br><small>${help}</small>
     </td>
   </tr>
@@ -88,6 +89,12 @@
   <table class="lined-table borderless">
     ${text_row("google_site_verification", _("Google verification"), _("The content of the google-site-verification tag."), 50, placeholder="")}
     ${text_row("bing_site_verification", _("Bing verification"), _("The content of the msvalidate.01 tag."), 50, placeholder="")}
+  </table>
+
+  <h2>${_("analytics")}</h2>
+  <p><small>${_("The site counts its own traffic for the traffic pages (/traffic, and each vault's traffic stats) without any outside service. To use Google Analytics as well, paste its measurement ID (G-…, or the whole tag Google gives you). It isn't loaded for visitors whose browser asks not to be tracked. In some places (the EU and UK, for example) you need visitors' consent before using it; the privacy policy already says the site may use analytics.")}</small></p>
+  <table class="lined-table borderless">
+    ${text_row("google_analytics_id", _("Google Analytics"), _("The measurement ID, e.g. G-ABC123XYZ. Blank: no Google Analytics."), 30, placeholder="G-")}
   </table>
 
   <h2>${_("announcement")}</h2>

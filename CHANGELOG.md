@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Google Analytics** (optional): paste a Google Analytics 4 measurement ID (G-…, or the whole tag) on /admin/site,
+  under analytics, to add Google's tag to every page. It isn't loaded for visitors whose browser sends Do Not Track or
+  Global Privacy Control, and IP addresses are anonymized. reddit's old analytics code (Universal Analytics, which
+  Google shut down) and its ini settings are gone; `google_analytics_id` in the ini works as a default.
 - **Traffic stats work**: the site now counts its own traffic, so /traffic (for admins) and each vault's traffic
   stats (for its moderators, or everyone if the vault allows) show real pageviews and unique visitors by hour, day and
   month, plus new subscriptions per day. reddit filled these pages from a separate data pipeline, so they were always

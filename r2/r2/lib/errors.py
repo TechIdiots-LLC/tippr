@@ -144,6 +144,7 @@ error_list = dict((
         ('CONFIRM', _("please confirm the form")),
         ('CONFLICT', _("conflict error while saving")),
         ('NO_API', _('cannot perform this action via the API')),
+        ('BAD_ANALYTICS_ID', _('that\'s not a Google Analytics 4 measurement ID (G-…)')),
         ('DOMAIN_BANNED', _('%(domain)s is not allowed on tippr: %(reason)s')),
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
         ('OTP_ALREADY_ENABLED', _('two-factor authentication is already enabled')),

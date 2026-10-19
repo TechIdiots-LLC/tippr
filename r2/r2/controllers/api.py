@@ -4730,6 +4730,16 @@ class ApiController(TipprController):
             match = re.search(r'content\s*=\s*["\']([^"\']+)["\']', values[name])
             if match:
                 values[name] = match.group(1)
+        # Google Analytics: the G-… measurement ID, from the ID or from the
+        # snippet Google hands out
+        if values["google_analytics_id"]:
+            match = re.search(r"\bG-[A-Z0-9]{4,20}\b",
+                              values["google_analytics_id"].upper())
+            if not match:
+                c.errors.add(errors.BAD_ANALYTICS_ID, field="google_analytics_id")
+                form.has_errors("google_analytics_id", errors.BAD_ANALYTICS_ID)
+                return
+            values["google_analytics_id"] = match.group(0)
         values["signups"] = "closed" if signups == "closed" else ""
         site_info.save(values)
         form.set_text(".status", _("saved"))

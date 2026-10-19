@@ -52,6 +52,8 @@ SETTINGS = {
     # meta tags search engines ask for to prove you own the site
     "google_site_verification": 120,
     "bing_site_verification": 120,
+    # Google Analytics 4's measurement ID (G-…; templates/utils.html)
+    "google_analytics_id": 40,
     # images (media store URLs)
     "site_favicon": 500,
     "share_image": 500,
@@ -71,6 +73,7 @@ SETTINGS = {
 TEXT_SETTINGS = (
     "site_name", "short_description", "contact_email", "front_page_title",
     "title_format", "google_site_verification", "bing_site_verification",
+    "google_analytics_id",
     "announcement", "announcement_link", "site_operator", "governing_law",
 )
 
