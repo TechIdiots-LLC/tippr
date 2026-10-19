@@ -1,42 +1,75 @@
 # Starter feeds for scripts/import_feeds.py: public RSS/Atom feeds for the
 # vaults scripts/create_default_vaults.py makes, so a new site has something
 # to read. One per line: vault, [title prefix], feed address.
-#
-# Business and finance feeds (no default vault for them; make one, e.g.
-# /v/business, and uncomment these):
-# /v/business	[WSJ]	https://feeds.content.dowjones.io/public/rss/RSSMarketsMain
-# /v/business	[MarketWatch]	https://feeds.content.dowjones.io/public/rss/mw_topstories
-# /v/business	[FT]	https://www.ft.com/rss/home/international
-# /v/business	[CNBC]	https://www.cnbc.com/id/100003114/device/rss/rss.html
 
-# news
+# Business and finance (/v/business isn't a front page default)
+/v/business	[WSJ]	https://feeds.content.dowjones.io/public/rss/RSSMarketsMain
+/v/business	[MarketWatch]	https://feeds.content.dowjones.io/public/rss/mw_topstories
+/v/business	[FT]	https://www.ft.com/rss/home/international
+/v/business	[CNBC]	https://www.cnbc.com/id/100003114/device/rss/rss.html
+/v/business	[Bloomberg]	https://feeds.bloomberg.com/markets/news.rss
+/v/business	[Economist]	https://www.economist.com/finance-and-economics/rss.xml
+
+# General and world news
 /v/news	[BBC]	https://feeds.bbci.co.uk/news/rss.xml
 /v/news	[NPR]	https://feeds.npr.org/1001/rss.xml
 /v/news	[NYT]	https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
 /v/news	[Atlantic]	https://www.theatlantic.com/feed/all/
+/v/news	[Vox]	https://www.vox.com/rss/index.xml
 /v/worldnews	[World]	https://feeds.bbci.co.uk/news/world/rss.xml
 /v/worldnews	[AlJazeera]	https://www.aljazeera.com/xml/rss/all.xml
 /v/worldnews	[Guardian]	https://www.theguardian.com/international/rss
 /v/politics	[NYT]	https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml
+/v/politics	[Politico]	https://rss.politico.com/politics-news.xml
 
-# technology and science
+# Science and space
+/v/science	[ScienceDaily]	https://www.sciencedaily.com/rss/all.xml
+/v/science	[Nature]	https://www.nature.com/nature.rss
+/v/space	[NASA]	https://www.nasa.gov/rss/dyn/breaking_news.rss
+/v/space	[Space.com]	https://www.space.com/feeds/all
+
+# Technology, security and development
 /v/technology	[TechCrunch]	https://techcrunch.com/feed/
 /v/technology	[Verge]	https://www.theverge.com/rss/index.xml
 /v/technology	[Ars]	https://feeds.arstechnica.com/arstechnica/index
 /v/technology	[Wired]	https://www.wired.com/feed/rss
 /v/technology	[Slashdot]	https://rss.slashdot.org/Slashdot/slashdotMain
 /v/technology	[Techdirt]	https://www.techdirt.com/feed/
-/v/programming	[HN]	https://news.ycombinator.com/rss
+/v/technology	[404Media]	https://www.404media.co/rss/
+/v/cybersecurity	[Krebs]	https://krebsonsecurity.com/feed/
+/v/cybersecurity	[Bleeping]	https://www.bleepingcomputer.com/feed/
+/v/programming	[HN]	https://hnrss.org/frontpage
+/v/programming	[Lobsters]	https://lobste.rs/rss
+/v/programming	[DevTo]	https://dev.to/feed
 /v/electronics	[Hackaday]	https://hackaday.com/blog/feed/
-/v/space	[NASA]	https://www.nasa.gov/rss/dyn/breaking_news.rss
+/v/electronics	[Adafruit]	https://blog.adafruit.com/feed/
 /v/3dprinting	[Industry]	https://3dprintingindustry.com/feed/
 /v/diy	[Lifehacker]	https://lifehacker.com/rss
+/v/diy	[Make]	https://makezine.com/feed/
 
-# culture and community
+# Gaming
+/v/gaming	[IGN]	https://feeds.feedburner.com/ign/news
+/v/gaming	[Polygon]	https://www.polygon.com/rss/index.xml
+/v/gaming	[Eurogamer]	https://www.eurogamer.net/feed
+/v/gaming	[RockPaperShotgun]	https://www.rockpapershotgun.com/feed
+
+# Webcomics
+/v/comics	[xkcd]	https://xkcd.com/rss.xml
+/v/comics	[SMBC]	https://www.smbc-comics.com/comic/rss
+/v/comics	[PBF]	https://pbfcomics.com/feed/
+/v/comics	[PennyArcade]	https://www.penny-arcade.com/feed
+
+# Independent weblogs and essays
+/v/blogs	[Kottke]	https://feeds.kottke.org/main
+/v/blogs	[Marginalian]	https://www.themarginalian.org/feed/
+/v/blogs	[Aeon]	https://aeon.co/feed.rss
+
+# Culture, entertainment and trivia
 /v/lgbtq	[LGBTQ+]	https://www.advocate.com/feeds/feed.rss
 /v/lgbtq	[PinkNews]	https://www.thepinknews.com/feed/
 /v/dragrace	[Drag]	https://www.dragvanti.com/blog-feed.xml
-/v/popculture	[Vox]	https://www.vox.com/rss/index.xml
+/v/popculture	[AVClub]	https://www.avclub.com/rss
+/v/popculture	[Vulture]	https://feeds.feedburner.com/nymag/vulture
 /v/movies	[Movies]	https://collider.com/feed/
 /v/movies	[Empire]	https://rss.onebauer.media/api/feed-aggregator?hostname=https://www.empireonline.com
 /v/books	[Books]	https://lithub.com/feed/
@@ -46,23 +79,24 @@
 /v/music	[Music]	https://pitchfork.com/feed/rss
 /v/music	[Stereogum]	https://stereogum.com/feed
 /v/memes	[Meme]	https://knowyourmeme.com/newsfeed.rss
-/v/memes	[xkcd]	https://xkcd.com/rss.xml
 /v/til	[Fact]	https://www.mentalfloss.com/feed
+/v/til	[FutilityCloset]	https://www.futilitycloset.com/feed/
 
-# making and living
+# Making, living and lifestyle (the [Food] feed is Serious Eats)
 /v/food	[Food]	https://feeds-api.dotdashmeredith.com/v1/rss/google/ad57d421-0ff5-41e7-a5da-f2167b6d7f7a
 /v/food	[Kitchen]	https://www.thekitchn.com/main.rss
 /v/skincare	[Wellness]	https://www.mindbodygreen.com/rss/featured.xml
 /v/skincare	[Beauty]	https://www.self.com/feed/rss
 /v/thrift	[Eco]	https://feeds-api.dotdashmeredith.com/v1/rss/google/c9053935-d1d7-49c7-b54c-11e651b69e28
 
-# art and pictures
+# Art, design and curation
 /v/art	[Art]	https://hifructose.com/feed/
 /v/art	[Juxtapoz]	https://www.juxtapoz.com/news/?format=feed&type=rss
-/v/aesthetics	[Mood]	https://www.thisiscolossal.com/feed/
+/v/design	[Colossal]	https://www.thisiscolossal.com/feed/
+/v/design	[Spoon&Tamago]	https://www.spoon-tamago.com/feed/
 /v/photography	[Photo]	https://petapixel.com/feed/
 /v/photography	[Review]	https://www.dpreview.com/feed/
-/v/pics	[Pic]	https://twistedsifter.com/feed/
+/v/curated	[TwistedSifter]	https://twistedsifter.com/feed/
 /v/aiart	[AIArt]	https://medium.com/feed/tag/ai-art
 /v/aiart	[Maginative]	https://www.maginative.com/perspectives/rss/
 /v/aimusic	[MusicAlly]	https://musically.com/feed/

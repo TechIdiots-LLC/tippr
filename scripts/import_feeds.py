@@ -36,6 +36,11 @@ Settings (environment variables):
     FEEDS_INTERVAL  minutes between checks of each feed (default: 60)
     FEEDS_ADD=1     add them (otherwise it's a dry run); TIPPR_ALLOW_MUTATE=1
                     works too, as for the other scripts here
+    FEEDS_SYNC=1    also remove FEEDS_BOT's feeds that aren't in the list (or
+                    are listed for another vault), so its feeds match the
+                    list after reorganizing it. Feeds still in the list are
+                    left alone, so they don't post their latest items again;
+                    removed feeds' posts stay.
 
 Safe to re-run: feeds already on a vault are left alone. Vaults must exist;
 missing ones are reported, so make them and run it again. Once added, the
@@ -116,6 +121,32 @@ def read_list(path):
     return entries
 
 
+def sync(bot, wanted, removing, counts):
+    """Remove bot's feeds that aren't in wanted ((vault id, address))."""
+    from r2.models import Account
+    try:
+        account = Account._by_name(bot)
+    except NotFound:
+        return
+    names = {}
+    for f in feeds.all_feeds():
+        if f["account_id"] != account._id:
+            continue
+        if (f["vault_id"], f["url"].rstrip("/").lower()) in wanted:
+            continue
+        if f["vault_id"] not in names:
+            try:
+                names[f["vault_id"]] = Vault._byID(f["vault_id"], data=True).name
+            except NotFound:
+                names[f["vault_id"]] = "?"
+        if removing:
+            feeds.remove(f["id"])
+        result = "removed" if removing else "to remove"
+        print("%-8s          /v/%-14s %s  (not in the list)"
+              % (result.upper(), names[f["vault_id"]], f["url"]))
+        counts[result] = counts.get(result, 0) + 1
+
+
 def main():
     path = os.environ.get("FEEDS_FILE") or DEFAULT_FILE
     bot = os.environ.get("FEEDS_BOT") or "news_bot"
@@ -123,6 +154,7 @@ def main():
                    feeds.DEFAULT_INTERVAL_MINUTES)
     adding = (os.environ.get("FEEDS_ADD") in ("1", "true", "yes") or
               os.environ.get("TIPPR_ALLOW_MUTATE") == "1")
+    syncing = os.environ.get("FEEDS_SYNC") in ("1", "true", "yes")
     print("%s %s as %s, every %d minutes\n" % (
         "Adding feeds from" if adding else "Dry run (FEEDS_ADD=1 to add):",
         path, bot, max(interval, feeds.MIN_INTERVAL_MINUTES)))
@@ -131,6 +163,8 @@ def main():
     existing = {(f["vault_id"], f["url"].rstrip("/").lower())
                 for f in feeds.all_feeds()}
     counts = {}
+    # (vault id, feed address) of everything in the list, for FEEDS_SYNC
+    wanted = set()
     for number, vault_name, url, prefix in read_list(path):
         try:
             vault = Vault._by_name(vault_name)
@@ -142,6 +176,9 @@ def main():
             print("FAILED   line %-3d /v/%-14s %s  (%s)"
                   % (number, vault_name, url, e))
             counts["failed"] = counts.get("failed", 0) + 1
+            # (an existing feed that's down today isn't removed)
+            if vault is not None:
+                wanted.add((vault._id, url.rstrip("/").lower()))
             continue
         found = "" if feed_url == url else "  (found from %s)" % url
         if vault is None:
@@ -150,6 +187,8 @@ def main():
             counts["no vault"] = counts.get("no vault", 0) + 1
             continue
         key = (vault._id, feed_url.rstrip("/").lower())
+        wanted.add(key)
+        wanted.add((vault._id, url.rstrip("/").lower()))
         if key in existing:
             print("EXISTS   line %-3d /v/%-14s %s"
                   % (number, vault.name, feed_url))
@@ -163,6 +202,10 @@ def main():
               % (result.upper(), number, vault.name, prefix or "", feed_url,
                  title, n, found))
         counts[result] = counts.get(result, 0) + 1
+
+    if syncing:
+        sync(bot, wanted, adding, counts)
+
     print("\n" + (", ".join("%d %s" % (n, what) for what, n in counts.items())
                   or "no feeds in the list"))
 

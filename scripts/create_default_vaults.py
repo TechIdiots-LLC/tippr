@@ -54,6 +54,7 @@ VAULTS = [
     ("electronics", "Electronics", "Circuits, components, repairs, and hardware projects.", NO_GEN, True),
     ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, True),
     ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, True),
+    ("cybersecurity", "Cybersecurity", "Security news, breaches, vulnerabilities, and defending your systems.", ANY, True),
     
     # science & space
     ("science", "Science", "Research, discoveries and how the world works.", NO_GEN, True),
@@ -80,6 +81,10 @@ VAULTS = [
     
     # internet culture & aesthetics
     ("memes", "Memes", "Shitposts, templates, and internet lore.", ANY, True),
+    ("comics", "Comics", "Webcomics, comic strips, and the people who make them.", NO_GEN, True),
+    ("design", "Design", "Graphic, product and interior design, architecture and visual craft.", NO_GEN, False),
+    ("curated", "Curated", "The best of the web: collections of remarkable pictures and finds.", ANY, False),
+    ("blogs", "Blogs", "Independent weblogs, essays, and long reads.", NO_GEN, False),
     ("aesthetics", "Aesthetics", "Liminal spaces, visual moods, and subculture curation.", NO_GEN, True),
     ("popculture", "Pop Culture", "Fandoms, internet drama, and modern media trends.", ANY, True),
     ("pics", "Pics", "Pictures worth sharing.", NO_GEN, True),
@@ -103,6 +108,7 @@ VAULTS = [
     ("news", "News", "News from around the world.", ANY, False),
     ("worldnews", "World News", "International news.", ANY, False),
     ("politics", "Politics", "Political news and discussion.", ANY, False),
+    ("business", "Business", "Markets, companies, the economy and personal finance.", ANY, False),
 ]
 
 def owner_account():

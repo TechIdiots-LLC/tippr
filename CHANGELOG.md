@@ -32,7 +32,11 @@
   /admin/support/activity shows who's been helping (replies, notes and closed tickets over 7 and 30 days) and the
   latest actions, for everyone or one person, in the categories you can see.
 - **Starter feeds**: `scripts/import_feeds.py` adds many feeds to /admin/feeds at once from a list, and
-  `scripts/starter_feeds.txt` has about 50 public news, technology, culture and art feeds for the default vaults.
+  `scripts/starter_feeds.txt` has about 80 public feeds for the default vaults (news, business, science, technology,
+  security, gaming, webcomics, blogs, culture, art …). `FEEDS_SYNC=1` makes the bot's feeds match the list after
+  you reorganize it: feeds no longer listed (or listed for another vault) are removed, and the rest are left alone
+  so they don't post again. New starter vaults: /v/comics and /v/cybersecurity (front page defaults), /v/business,
+  /v/design, /v/curated and /v/blogs (not defaults); re-run `scripts/create_default_vaults.py` to make them.
   It's a dry run until `FEEDS_ADD=1`; a line can give a site's homepage instead of its feed when the page links to
   one, and vaults that don't exist yet are reported. To use it:
   `sudo env FEEDS_ADD=1 tippr-run /home/tippr/src/tippr/scripts/import_feeds.py`.
