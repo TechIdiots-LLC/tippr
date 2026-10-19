@@ -78,6 +78,14 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    settle first: signing up with one (choosing a username, the captcha),
    how it combines with two-factor, and unlinking. Instagram no longer
    offers logins to other sites; Meta's is Facebook Login.
+4. **Policy pages that follow the site settings.** The user agreement,
+   privacy and content policies and help pages are filled in from
+   `docs/policies/` and `docs/help/` with the site's name, domain,
+   operator, contact address and governing law when
+   `scripts/init_policy_wiki_pages.py` runs. Re-fill them automatically
+   when those settings change on /admin/site (and after an upgrade brings
+   new versions), except pages an admin has edited by hand, which get a
+   note instead of being overwritten.
 
 ## Payments and gold
 

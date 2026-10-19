@@ -97,10 +97,12 @@ def _ensure_tables(engine):
     if _tables_ready:
         return
     from r2.models.traffic import (PageviewsByLanguage, PageviewsByVault,
+                                   PageviewsByVaultAndPath,
                                    SitewidePageviews)
     table = _visitors_table()
     for t in (table, SitewidePageviews.__table__, PageviewsByVault.__table__,
-              PageviewsByLanguage.__table__):
+              PageviewsByLanguage.__table__,
+              PageviewsByVaultAndPath.__table__):
         t.create(bind=engine, checkfirst=True)
     _tables_ready = True
 
@@ -196,6 +198,16 @@ def record_request(request, response, c):
             scopes.append(("vault", site.name))
         lang = (c.lang or "en").split("-")[0]
         scopes.append(("lang", lang))
+        # listing pages by vault ("" for the front page): what sponsored
+        # posts are shown on, so the ad inventory is predicted from these
+        # (r2.lib.inventory.update_prediction_data)
+        routes = request.environ.get("pylons.routes_dict") or {}
+        if routes.get("action_name", routes.get("action")) == "listing":
+            from r2.models.vault import DefaultVault
+            if isinstance(site, Vault) and not isinstance(site, FakeVault):
+                scopes.append(("srpath", site.name + "-GET_listing"))
+            elif isinstance(site, DefaultVault):
+                scopes.append(("srpath", "-GET_listing"))
         record(scopes, visitor)
     except Exception:
         g.log.exception("traffic: couldn't count a pageview")
@@ -231,6 +243,7 @@ _TARGETS = {
     "site": ("traffic_aggregate", None),
     "vault": ('"traffic_Vaults"', "vault"),
     "lang": ("traffic_lang", "lang"),
+    "srpath": ("traffic_srpaths", "srpath"),
 }
 
 

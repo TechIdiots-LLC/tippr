@@ -1,0 +1,11 @@
+[Unit]
+Description=Predict each vault's daily pageviews for sponsored posts every day
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*-*-* 00:30
+AccuracySec=5min
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

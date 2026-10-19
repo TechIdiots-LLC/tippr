@@ -4767,13 +4767,15 @@ class PromoteLinkBase(Templated):
     def get_locations(self):
         # geotargeting
         def location_sort(location_tuple):
+            # "none" first, then the US, then by name (Python 3 can't
+            # compare the numbers and names reddit mixed here)
             code, name, default = location_tuple
             if code == '':
-                return -2
+                return (0, '')
             elif code == 'US':
-                return -1
+                return (1, '')
             else:
-                return name
+                return (2, name)
 
         countries = [(code, country['name'], False) for code, country
                                                     in g.locations.items()]

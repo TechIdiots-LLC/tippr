@@ -1626,6 +1626,9 @@ TIPPR_TIMERS=(
     # counts new vault subscriptions for the traffic pages (pageviews are
     # counted as pages are served, r2.lib.traffic_counter)
     tippr-job-subscribers.timer
+    # predicts each vault's daily pageviews, the inventory sponsored posts
+    # are sold from (r2.lib.inventory)
+    tippr-job-update_promo_metrics.timer
 )
 
 ###############################################################################

@@ -85,6 +85,8 @@ DEFAULT_JOBS = (
     "tippr-job-update_popular_vaults", "tippr-job-update_trending_vaults",
     "tippr-job-compute_time_listings@link",
     "tippr-job-compute_time_listings@comment", "tippr-job-email",
+    "tippr-job-update_gold_users", "tippr-job-feeds",
+    "tippr-job-subscribers", "tippr-job-update_promo_metrics",
 )
 
 

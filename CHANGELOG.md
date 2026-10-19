@@ -10,6 +10,13 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Ad inventory**: /sponsor/inventory crashed, and the inventory an ad could book came from reddit's traffic
+  pipeline, so it was always zero. The site now counts views of each vault's listings (and the front page's) and
+  predicts each day's inventory from the last two weeks (`tippr-job-update_promo_metrics`, now on a daily timer).
+- **Docker**: the jobs container didn't run the gold expiry, feed bot or subscriber-count jobs; it now runs the same
+  timers as an installed site.
+- **The front page after renaming the site** on /admin/site wasn't found by its name in some places (ad targeting
+  among them) until the site restarted.
 - **Ad images** (the thumbnail and mobile image of an advertiser's sponsored post) couldn't be uploaded unless the
   site had an S3 bucket for them; without one they're now uploaded to the site itself and stored like other
   thumbnails when the ad is saved.

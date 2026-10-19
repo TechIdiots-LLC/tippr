@@ -35,7 +35,13 @@ from r2.lib.inventory_optimization import get_maximized_pageviews
 from r2.lib.utils import to_date, tup
 from r2.models.bidding import Bid, PromotionWeights
 from r2.models.promo import NO_TRANSACTION, Location, PromoCampaign
-from r2.models.vault import DefaultVault, FakeVault, LocalizedDefaultVaults, Vault
+from r2.models.vault import (
+    DefaultVault,
+    FakeVault,
+    Frontpage,
+    LocalizedDefaultVaults,
+    Vault,
+)
 from r2.models import traffic
 from r2.models.promo_metrics import LocationPromoMetrics, PromoMetrics
 
@@ -54,17 +60,23 @@ PERCENT_MOBILE = 0
 
 
 def update_prediction_data():
-    """Fetch prediction data and write it to cassandra."""
+    """Predict each vault's daily listing pageviews (the inventory sponsored
+    posts are sold from) from the last NDAYS_TO_QUERY days of traffic, and
+    write them to cassandra. The tippr-job-update_promo_metrics timer runs
+    it daily; the traffic is counted as pages are served
+    (r2.lib.traffic_counter)."""
     min_daily_by_sr = _min_daily_pageviews_by_sr(NDAYS_TO_QUERY)
 
-    # combine front page values (sometimes frontpage gets '' for its name)
+    # the front page is counted as '' (its name follows the site's name)
     if '' in min_daily_by_sr:
-        fp = DefaultVault.name.lower()
+        fp = Frontpage.name
         min_daily_by_sr[fp] = min_daily_by_sr.get(fp, 0) + min_daily_by_sr['']
         del min_daily_by_sr['']
 
+    # (reddit left out vaults under 100 pageviews a day; on a small site
+    # that would be all of them)
     filtered = {vault_name: num for vault_name, num in min_daily_by_sr.items()
-                if num > 100}
+                if num > 0}
     PromoMetrics.set(MIN_DAILY_CASS_KEY, filtered)
 
 

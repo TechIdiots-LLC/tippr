@@ -445,6 +445,10 @@ class Vault(Thing, Printable, BaseSite):
 
             if lname in cls._specials:
                 ret[name] = cls._specials[lname]
+            elif lname == Frontpage.name.lower():
+                # the front page is named after the site, which /admin/site
+                # can change while the app runs
+                ret[name] = Frontpage
             else:
                 valid_name = cls.is_valid_name(lname, allow_language_vaults=True,
                                                allow_time_vaults=True,
@@ -2787,7 +2791,6 @@ Vault._specials.update({
         Random,
         Contrib,
         All,
-        Frontpage,
     )
 })
 
