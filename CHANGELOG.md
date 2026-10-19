@@ -32,6 +32,10 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Rising** was nearly always empty: it divided votes by page views that only reddit's own infrastructure counted,
+  needed a second upvote within 12 hours, ignored comments, and looked at only 50 of the period's posts in no
+  particular order. Now it shows the posts other people have voted on or commented on, the most activity for their
+  age first, over the last day for new installs (`rising_period`).
 - **Comments pages with replies** crashed ("you broke tippr") as soon as a comment had a reply: the compiled comment
   tree code still sorted top-level comments the Python 2 way.
 - **Privacy settings** (/prefs/privacy, linked from the contact page) showed a line of Python instead of the page. It
