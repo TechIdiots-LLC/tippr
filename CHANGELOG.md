@@ -3,6 +3,27 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **More starter feeds**: `scripts/starter_feeds.txt` now has about 80 public feeds for the default vaults (news,
+  business, science, technology, security, gaming, webcomics, blogs, culture, art …). `FEEDS_SYNC=1` makes
+  `scripts/import_feeds.py` bring the bot's feeds in line with the list after you reorganize it: feeds no longer
+  listed (or listed for another vault) are removed, and the rest are left alone so they don't post again. New starter
+  vaults: /v/comics and /v/cybersecurity (front page defaults), /v/business, /v/design, /v/curated and /v/blogs (not
+  defaults); re-run `scripts/create_default_vaults.py` to make them.
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+- **/admin/site images**: choosing a logo, favicon or share image now uploads it straight away (it was easy to pick
+  one and press the page's save button, which only saves the text settings), with a note saying so. The Google and
+  Bing verification fields refuse an AdSense publisher ID (ca-pub-…), which belongs on /admin/ads.
+- **On phones**: the vault search on /vaults (and the search page's box) was squeezed into a narrow column; the
+  subscribe buttons on /vaults took a wide column of their own; and the subscribed/explore/multivaults menu had moved
+  into the menu drawer. It stays on the left again, collapsed to its edge, and opens over the page when tapped
+  (without changing whether it's collapsed on a computer).
+- **The welcome panel** showed on any empty list (an empty inbox, saved posts, top posts of the past hour …); it's now
+  only on an empty front page or vault (hot, new and rising).
+
+## 0.8.0
+### ✨ Features and improvements
 - **Google Analytics** (optional): paste a Google Analytics 4 measurement ID (G-…, or the whole tag) on /admin/site,
   under analytics, to add Google's tag to every page. It isn't loaded for visitors whose browser sends Do Not Track or
   Global Privacy Control, and IP addresses are anonymized. reddit's old analytics code (Universal Analytics, which
@@ -32,11 +53,7 @@
   /admin/support/activity shows who's been helping (replies, notes and closed tickets over 7 and 30 days) and the
   latest actions, for everyone or one person, in the categories you can see.
 - **Starter feeds**: `scripts/import_feeds.py` adds many feeds to /admin/feeds at once from a list, and
-  `scripts/starter_feeds.txt` has about 80 public feeds for the default vaults (news, business, science, technology,
-  security, gaming, webcomics, blogs, culture, art …). `FEEDS_SYNC=1` makes the bot's feeds match the list after
-  you reorganize it: feeds no longer listed (or listed for another vault) are removed, and the rest are left alone
-  so they don't post again. New starter vaults: /v/comics and /v/cybersecurity (front page defaults), /v/business,
-  /v/design, /v/curated and /v/blogs (not defaults); re-run `scripts/create_default_vaults.py` to make them.
+  `scripts/starter_feeds.txt` has about 50 public news, technology, culture and art feeds for the default vaults.
   It's a dry run until `FEEDS_ADD=1`; a line can give a site's homepage instead of its feed when the page links to
   one, and vaults that don't exist yet are reported. To use it:
   `sudo env FEEDS_ADD=1 tippr-run /home/tippr/src/tippr/scripts/import_feeds.py`.
@@ -65,16 +82,6 @@
   nothing promotes it any more.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
-- **/admin/site images**: choosing a logo, favicon or share image now uploads it straight away (it was easy to pick
-  one and press the page's save button, which only saves the text settings), with a note saying so. The Google and
-  Bing verification fields refuse an AdSense publisher ID (ca-pub-…), which belongs on /admin/ads.
-- **On phones**: the vault search on /vaults (and the search page's box) was squeezed into a narrow column; the
-  subscribe buttons on /vaults took a wide column of their own; and the subscribed/explore/multivaults menu had moved
-  into the menu drawer. It stays on the left again, collapsed to its edge, and opens over the page when tapped
-  (without changing whether it's collapsed on a computer).
-- **The welcome panel** showed on any empty list (an empty inbox, saved posts, top posts of the past hour …); it's now
-  only on an empty front page or vault (hot, new and rising).
 - **Lookups with nothing to find** (an empty list of IDs) failed with an SQL error instead of finding nothing; among
   other things this broke the sponsor pages (/sponsor, /sponsor/promoted/…).
 - **Subscription counts** for the traffic pages couldn't be read back (their table is keyed by text, not dates).
