@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Traffic stats work**: the site now counts its own traffic, so /traffic (for admins) and each vault's traffic
+  stats (for its moderators, or everyone if the vault allows) show real pageviews and unique visitors by hour, day and
+  month, plus new subscriptions per day. reddit filled these pages from a separate data pipeline, so they were always
+  empty here. Pages are counted as they're served (not bots, feeds, the API or errors) and written every 30 seconds in
+  the background; a visitor is counted by a hash of their account or, logged out, their address and browser, so no
+  addresses are stored. The installer now enables tippr-job-subscribers (hourly) for the subscription counts.
 - **Help pages** (/help): a FAQ and pages on searching, formatting, RSS feeds, trophies, timeouts and suspensions,
   quarantined vaults, muting, the API, advertising and translating, written for any site (they're in `docs/help/` and
   use the site's name from /admin/site). The installer loads them into the site wiki like the policies; admins can
@@ -52,6 +58,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Subscription counts** for the traffic pages couldn't be read back (their table is keyed by text, not dates).
 - **Pages that failed to load**, mostly leftovers from renaming reddit's subreddits to vaults: composing a message
   (from the inbox, or "message the moderators"), /vaults/featured, the privacy settings page for anyone who hadn't made
   a privacy request, and listings that suggest a random vault (which could break the front page). Also fixed: a vault's

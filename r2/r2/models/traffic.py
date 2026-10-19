@@ -370,16 +370,16 @@ def campaign_history(cls, codenames, start, stop):
             for r in q.all()]
 
 
-@memoize("traffic_last_modified", time=60 * 10)
 def get_traffic_last_modified():
-    """Guess how far behind the traffic processing system is."""
-    try:
-        return (Session.query(SitewidePageviews.date)
-                   .order_by(desc(SitewidePageviews.date))
-                   .limit(1)
-                   .one()).date
-    except NoResultFound:
-        return datetime.datetime.min
+    """How far the traffic tables are complete: now.
+
+    reddit's tables were filled by a batch pipeline running some hours
+    behind; here pages are counted as they're served (r2.lib.traffic_counter)
+    and written within a minute, so there's nothing to wait for. (Using the
+    newest row instead would call a quiet site "running slow".) Charts show
+    periods that start before this, so the current hour and day show too.
+    """
+    return datetime.datetime.utcnow()
 
 
 @memoize("missing_traffic", time=60 * 10)
@@ -406,7 +406,7 @@ class SitewidePageviews(Base):
     pageview_count = Column("total", BigInteger())
 
     @classmethod
-    @memoize_traffic(time=3600)
+    @memoize_traffic(time=300)
     def history(cls, interval):
         time_points, q = make_history_query(cls, interval)
         return fill_gaps(time_points, q, "unique_count", "pageview_count")
@@ -424,7 +424,7 @@ class PageviewsByVault(Base):
     pageview_count = Column("total", Integer())
 
     @classmethod
-    @memoize_traffic(time=3600)
+    @memoize_traffic(time=300)
     def history(cls, interval, vault):
         time_points, q = make_history_query(cls, interval)
         q = q.filter(cls.vault == vault)
@@ -473,7 +473,7 @@ class PageviewsByLanguage(Base):
     pageview_count = Column("total", BigInteger())
 
     @classmethod
-    @memoize_traffic(time=3600)
+    @memoize_traffic(time=300)
     def history(cls, interval, lang):
         time_points, q = make_history_query(cls, interval)
         q = q.filter(cls.lang == lang)

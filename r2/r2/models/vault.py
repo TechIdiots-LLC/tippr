@@ -1572,40 +1572,37 @@ class SubscriptionsByDay(tdb_cassandra.View):
         "key_validation_class": DATE_TYPE,
     }
 
+    # rows are keyed by the day as text ("2026-10-19"): the table's key is
+    # text, and a datetime key (as reddit used) can't be read back from it
+    @staticmethod
+    def _rowkey(date):
+        return date.astimezone(g.tz).strftime("%Y-%m-%d")
+
     @classmethod
     def create(cls, vaults, user):
-        rowkey = datetime.datetime.now(g.tz).replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
-        )
+        rowkey = cls._rowkey(datetime.datetime.now(g.tz))
         vaults = tup(vaults)
         columns = {(vault._id36, user._id36): "" for vault in vaults}
         cls._cf.insert(rowkey, columns)
 
     @classmethod
     def get_all_counts(cls, date):
-        date = date.replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
-            tzinfo=g.tz,
-        )
-
-        gen = cls._cf.xget(date)
-        (prev_vault_id36, user_id36), val = next(gen)
-
-        count = 1
-        for (vault_id36, user_id36), val in gen:
-            if vault_id36 == prev_vault_id36:
-                count += 1
-            else:
-                yield (prev_vault_id36, count)
-                prev_vault_id36 = vault_id36
-                count = 1
-        yield (prev_vault_id36, count)
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=g.tz)
+        import ast
+        counts = collections.Counter()
+        for name, val in cls._cf.xget(cls._rowkey(date)):
+            # the (vault, user) column names come back as their text,
+            # "('n', 'q')"
+            if isinstance(name, str):
+                try:
+                    name = ast.literal_eval(name)
+                except (ValueError, SyntaxError):
+                    continue
+            vault_id36, _user_id36 = name
+            counts[vault_id36] += 1
+        for vault_id36, count in sorted(counts.items()):
+            yield (vault_id36, count)
 
     @classmethod
     def write_counts(cls, days_ago=1):

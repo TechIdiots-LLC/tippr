@@ -1506,6 +1506,10 @@ class TipprController(OAuth2ResourceController):
             tracking_url = make_url_https(get_pageview_pixel_url())
             response.headers["X-tippr-Tracking"] = tracking_url
 
+        # the traffic pages' numbers (r2.lib.traffic_counter)
+        from r2.lib import traffic_counter
+        traffic_counter.record_request(request, response, c)
+
     def _embed_html_timing_data(self):
         timings = g.stats.end_logging_timings()
 

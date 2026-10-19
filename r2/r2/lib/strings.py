@@ -157,15 +157,15 @@ apps below.
 """),
 
     traffic_promoted_link_explanation = _("Below you will see your promotion's impression and click traffic per hour of promotion.  Please note that these traffic totals will lag behind by two to three hours, and that daily totals will be preliminary until 24 hours after the link has finished its run."),
-    traffic_processing_slow = _("Traffic processing is currently running slow. The latest data available is from %(date)s. This page will be updated as new data becomes available."),
-    traffic_processing_normal = _("Traffic processing occurs on an hourly basis. The latest data available is from %(date)s. This page will be updated as new data becomes available."),
+    traffic_processing_slow = _("Traffic is counted as pages are viewed, and these graphs update every few minutes."),
+    traffic_processing_normal = _("Traffic is counted as pages are viewed, and these graphs update every few minutes."),
     traffic_help_email = _("Questions? Email self serve support: %(email)s"),
 
     traffic_Vault_explanation = _("""
 Below are the traffic statistics for your vault. Each graph represents one of the following over the interval specified.
 
-* **pageviews** are all hits to %(vault)s, including both listing pages and comment pages.
-* **uniques** are the total number of unique visitors (determined by a combination of their IP address and User Agent string) that generate the above pageviews. This is independent of whether or not they are signed in.
+* **pageviews** are the pages people viewed in %(vault)s, including both listing pages and comment pages (not bots, feeds or the API).
+* **uniques** are how many different people made those pageviews: each logged-in member counts once, and each logged-out visitor once per address and browser.
 * **subscriptions** is the number of new subscriptions that have been generated in a given day. This number is less accurate than the first two metrics, as, though we can track new subscriptions, we have no way to track unsubscriptions.
 
 Note: there are a couple of places outside of your vault where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.

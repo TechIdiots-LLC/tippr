@@ -1,0 +1,10 @@
+[Unit]
+Description=Count new vault subscriptions for the traffic pages every hour
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:05
+AccuracySec=1min
+
+[Install]
+WantedBy=tippr.target
