@@ -21,7 +21,8 @@
 // - the sidebar, the account links and the multivault list move into a
 //   drawer that the menu button in the header opens (r.ui.mobileLayout in
 //   ui.js; without JS the sidebar shows below the content, as the grid in
-//   mobile-grid.less places it);
+//   mobile-grid.less places it). The multivault list (listing chooser) stays
+//   on the left, collapsed to its grippy, and opens over the page;
 // - posts, comments and forms use the full width, with bigger text and
 //   touch targets.
 //
@@ -356,30 +357,26 @@
 
     .side .spacer { margin: 8px 0 12px; }
 
-    // the multivault list, inside the drawer
-    .listing-chooser {
-        display: none;
-    }
-
-    .mobile-drawer .listing-chooser {
-        display: block;
-        position: static;
-        width: auto;
-        padding: 0 0 16px;
-        background: transparent;
-        overflow: visible;
-
-        .grippy { display: none; }
-        .intro { width: auto; }
-        h3 { text-align: left; padding: 8px 14px 4px; }
-        li a, .choice { display: block; padding: 8px 14px; }
-    }
-
+    // the multivault list (listing chooser): collapsed to its grippy on the
+    // left (r.ui.mobileLayout), and opened over the page rather than pushing
+    // it aside, which would leave no room on a phone
     body.with-listing-chooser > .content,
     body.with-listing-chooser .footer-parent,
     body.listing-chooser-collapsed > .content,
     body.listing-chooser-collapsed .footer-parent {
-        margin-left: 0;
+        margin-left: 16px;
+    }
+
+    body.with-listing-chooser:not(.listing-chooser-collapsed) .listing-chooser {
+        z-index: 60;
+        width: 200px;
+        max-width: 75vw;
+        background: var(--tp-panel, #e8eff1);
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.25);
+        overflow-y: auto;
+
+        .intro { width: auto; }
+        li a, .choice { padding-top: 6px; padding-bottom: 6px; }
     }
 
     // -------------------------------------------------------------------
@@ -452,6 +449,31 @@
     .menuarea .flat-list li {
         display: inline-block;
         line-height: 2;
+    }
+
+    // the search box on /vaults and search pages: the full width (the
+    // desktop pane keeps room for the sidebar and a big search icon)
+    .searchpane {
+        margin: 6px 0;
+        padding: 8px;
+        background-image: none;
+    }
+
+    .searchpane #search,
+    .searchpane form {
+        white-space: normal;
+    }
+
+    .searchpane #search input[type=text],
+    .searchpane input[type=text] {
+        width: 100%;
+    }
+
+    // /vaults: the subscribe button's column is only as wide as the button
+    .vault .midcol {
+        width: auto !important;
+        margin-right: 8px;
+        text-align: left;
     }
 
     // search: no 600px minimum

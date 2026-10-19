@@ -24,10 +24,21 @@ POPULAR_COUNT = 12
 CACHE_SECONDS = 600
 
 
+# the listings the welcome is for: a vault's (or the front page's) posts
+# by hot, new or rising. Empty elsewhere (the inbox, saved posts, a
+# profile, top of the past hour …) doesn't mean the site or vault is empty.
+WELCOME_CONTROLLERS = ("hot", "new", "rising")
+
+
 def kind():
     """"site" (front page, /v/all), "vault" or None (other listings keep
     the plain message)."""
+    from pylons import request
     from r2.models import AllSR, DefaultVault, Vault
+    routes = request.environ.get("pylons.routes_dict") or {}
+    if (routes.get("controller") not in WELCOME_CONTROLLERS or
+            routes.get("action_name", routes.get("action")) != "listing"):
+        return None
     if isinstance(c.site, (DefaultVault, AllSR)):
         return "site"
     if isinstance(c.site, Vault):

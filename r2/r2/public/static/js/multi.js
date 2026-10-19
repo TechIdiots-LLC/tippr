@@ -706,6 +706,11 @@ r.multi.ListingChooser = Backbone.View.extend({
 
     toggleCollapsed: function(value) {
         $('body').toggleClass('listing-chooser-collapsed', value)
+        // on phones it's opened and closed over the page; keep the saved
+        // (desktop) preference as it is
+        if (r.ui.mobileLayout && r.ui.mobileLayout.active) {
+            return
+        }
         Backbone.ajax({
             type: 'POST',
             url: '/api/set_left_bar_collapsed.json',

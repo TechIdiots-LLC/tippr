@@ -66,6 +66,12 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **On phones**: the vault search on /vaults (and the search page's box) was squeezed into a narrow column; the
+  subscribe buttons on /vaults took a wide column of their own; and the subscribed/explore/multivaults menu had moved
+  into the menu drawer. It stays on the left again, collapsed to its edge, and opens over the page when tapped
+  (without changing whether it's collapsed on a computer).
+- **The welcome panel** showed on any empty list (an empty inbox, saved posts, top posts of the past hour …); it's now
+  only on an empty front page or vault (hot, new and rising).
 - **Lookups with nothing to find** (an empty list of IDs) failed with an SQL error instead of finding nothing; among
   other things this broke the sponsor pages (/sponsor, /sponsor/promoted/…).
 - **Subscription counts** for the traffic pages couldn't be read back (their table is keyed by text, not dates).

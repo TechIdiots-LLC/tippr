@@ -65,8 +65,11 @@ r.ui.init = function() {
 }
 
 /* Phones and narrow windows (css/responsive.less): below the breakpoint the
- * sidebar, the account links and the multivault list move into a drawer that
- * a menu button in the header opens; above it they go back where they were.
+ * sidebar and the account links move into a drawer that a menu button in the
+ * header opens; above it they go back where they were. The listing chooser
+ * (subscribed / explore / multivaults) stays on the left, collapsed to its
+ * grippy; tapping that opens it over the page, without changing the saved
+ * desktop preference.
  */
 r.ui.mobileLayout = {
     query: '(max-width: 768px)',
@@ -160,20 +163,50 @@ r.ui.mobileLayout = {
             this.copyUserLinks();
             var $body = this.$drawer.find('.mobile-drawer-body');
             this.moved = [];
-            $('body > .side, body > .listing-chooser').each(_.bind(function(i, el) {
+            $('body > .side').each(_.bind(function(i, el) {
                 var placeholder = document.createComment('mobile-drawer');
                 el.parentNode.insertBefore(placeholder, el);
                 this.moved.push([el, placeholder]);
                 $body.append(el);
             }, this));
+            this.collapseListingChooser();
         } else {
             this.close();
+            this.restoreListingChooser();
             _.each(this.moved || [], function(pair) {
                 pair[1].parentNode.insertBefore(pair[0], pair[1]);
                 pair[1].parentNode.removeChild(pair[1]);
             });
             this.moved = [];
         }
+    },
+
+    collapseListingChooser: function() {
+        var $chooser = $('.listing-chooser');
+        if (!$chooser.length) {
+            return;
+        }
+        var $page = $(document.body);
+        this.chooserWasCollapsed = $page.hasClass('listing-chooser-collapsed');
+        $page.addClass('listing-chooser-collapsed');
+        // below the header, which is taller on phones than its desktop 67px
+        var place = function() {
+            var $header = $('#header');
+            $chooser.css('top', $header.offset().top + $header.outerHeight());
+        };
+        place();
+        $(window).on('resize.listingchooser', place);
+    },
+
+    restoreListingChooser: function() {
+        var $chooser = $('.listing-chooser');
+        if (!$chooser.length) {
+            return;
+        }
+        $(window).off('resize.listingchooser');
+        $chooser.css('top', '');
+        $(document.body).toggleClass('listing-chooser-collapsed',
+                                     !!this.chooserWasCollapsed);
     },
 
     isOpen: function() {
