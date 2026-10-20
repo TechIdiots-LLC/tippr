@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **More starter feeds**, so the starter vaults that had none are front page defaults again: linux, selfhosted,
+  privacy, mechanicalkeyboards, cozygaming, retrogaming, anime (Crunchyroll, Anime News Network, Otaku USA), fiberarts,
+  aesthetics, pics and aww (29 feeds, each checked). Add them to an existing site with
+  `FEEDS_ADD=1 tippr-run scripts/import_feeds.py` (before running `prune_default_vaults.py`, which would otherwise take
+  those vaults off the defaults). Only the site's own tippr and asktippr aren't starter defaults now.
 - **The gold and ads switches on /admin/payments** now close buying altogether: with gold off, /gold says gold isn't
   for sale and posts show no "give gold" link (except to members with gold already bought to give); with ads off,
   only sponsors can make promoted posts, and the sponsored link's help no longer invites people to advertise.

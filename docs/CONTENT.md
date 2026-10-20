@@ -7,18 +7,18 @@ starter set of vaults owned and moderated by the admin account, and makes
 some of them the front page defaults (what logged-out and new users see).
 
 - Only vaults with starter feeds are defaults, so a newcomer's front page
-  has no empty vaults: technology, programming, cybersecurity, electronics,
-  science, space, gaming, diy, thrift, 3dprinting, food, art, music,
-  photography, writing, books, comics, memes, popculture, movies, til,
-  skincare and lgbtq.
+  has no empty vaults: technology, programming, linux, selfhosted,
+  cybersecurity, privacy, electronics, mechanicalkeyboards, science, space,
+  gaming, cozygaming, retrogaming, anime, diy, fiberarts, thrift,
+  3dprinting, food, art, music, photography, writing, aesthetics, pics,
+  aww, books, comics, memes, popculture, movies, til, skincare and lgbtq.
 - lgbtq is a default on purpose: tippr is meant to be a welcoming site for
   LGBTQ+ people, and the content policy bans hate based on sexual
   orientation and gender identity. dragrace exists too, but isn't a
   default.
-- The rest exist without being defaults: community vaults without feeds
-  (tippr, asktippr, linux, selfhosted, privacy, mechanicalkeyboards,
-  cozygaming, retrogaming, anime, fiberarts, aesthetics, pics, aww), heavy
-  news (news, worldnews, politics, business), and more specialised ones
+- The rest exist without being defaults: the site's own community vaults,
+  which have no feeds (tippr, asktippr), heavy news (news, worldnews,
+  politics, business), and more specialised ones
   (devops, ainews, gis, marketing, sports, podcasts, videos, blogs,
   curated, design). aiart and aimusic are for AI-generated work, so art
   and music can stay human-made.

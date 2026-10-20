@@ -239,3 +239,35 @@
 /v/gis	[Mapbox]	https://blog.mapbox.com/feed
 /v/gis	[GeographyRealm]	https://www.geographyrealm.com/feed/
 /v/gis	[SpatialSource]	https://www.spatialsource.com.au/feed/
+
+# Community vaults (each checked)
+/v/anime	[Crunchyroll]	https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss
+/v/anime	[ANN]	https://www.animenewsnetwork.com/all/rss.xml?ann-edition=us
+/v/anime	[OtakuUSA]	https://otakuusamagazine.com/feed/
+/v/linux	[Phoronix]	https://www.phoronix.com/rss.php
+/v/linux	[OMGUbuntu]	https://www.omgubuntu.co.uk/feed
+/v/linux	[LWN]	https://lwn.net/headlines/rss
+/v/linux	[9to5Linux]	https://9to5linux.com/feed
+/v/linux	[ItsFOSS]	https://feed.itsfoss.com/
+/v/selfhosted	[selfh.st]	https://selfh.st/rss/
+/v/selfhosted	[NotedLol]	https://noted.lol/rss/
+/v/privacy	[EFF]	https://www.eff.org/rss/updates.xml
+/v/privacy	[PrivacyGuides]	https://www.privacyguides.org/articles/feed_rss_created.xml
+/v/privacy	[RestorePrivacy]	https://restoreprivacy.com/feed/
+/v/mechanicalkeyboards	[KeebTalk]	https://www.keebtalk.com/latest.rss
+/v/mechanicalkeyboards	[SwitchAndClick]	https://switchandclick.com/feed/
+/v/cozygaming	[PocketTactics]	https://www.pockettactics.com/mainrss.xml
+/v/cozygaming	[TouchArcade]	https://toucharcade.com/feed/
+/v/cozygaming	[StardewValley]	https://www.stardewvalley.net/feed/
+/v/retrogaming	[RetroDodo]	https://retrododo.com/rss/
+/v/retrogaming	[TimeExtension]	https://www.timeextension.com/feeds/latest
+/v/retrogaming	[RetroRGB]	https://retrorgb.com/feed
+/v/fiberarts	[Ravelry]	https://blog.ravelry.com/rss/
+/v/fiberarts	[Interweave]	https://www.interweave.com/feed/
+/v/fiberarts	[KnitPicks]	https://blog.knitpicks.com/feed/
+/v/aesthetics	[Designboom]	https://www.designboom.com/feed/
+/v/aesthetics	[MyModernMet]	https://mymodernmet.com/feed/
+/v/pics	[NASA]	https://www.nasa.gov/feeds/iotd-feed
+/v/pics	[WikimediaPOTD]	https://commons.wikimedia.org/w/api.php?action=featuredfeed&feed=potd&feedformat=rss&language=en
+/v/aww	[iHeartDogs]	https://iheartdogs.com/feed/
+/v/aww	[Catster]	https://www.catster.com/rss.xml

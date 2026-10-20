@@ -55,11 +55,11 @@ VAULTS = [
     # tech & geek core
     ("technology", "Technology", "News and discussion about technology.", ANY, True),
     ("programming", "Programming", "Code, languages, tools and the craft of programming.", ANY, True),
-    ("linux", "Linux", "Linux, its distributions and the software around it.", ANY, False),
-    ("selfhosted", "Self-hosted", "Homelabs, self-hosting services, and digital sovereignty.", ANY, False),
+    ("linux", "Linux", "Linux, its distributions and the software around it.", ANY, True),
+    ("selfhosted", "Self-hosted", "Homelabs, self-hosting services, and digital sovereignty.", ANY, True),
     ("electronics", "Electronics", "Circuits, components, repairs, and hardware projects.", NO_GEN, True),
-    ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, False),
-    ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, False),
+    ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, True),
+    ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, True),
     ("cybersecurity", "Cybersecurity", "Security news, breaches, vulnerabilities, and defending your systems.", ANY, True),
     ("devops", "DevOps", "Cloud, containers, infrastructure and keeping services running.", ANY, False),
     ("ainews", "AI News", "News and research about artificial intelligence.", ANY, False),
@@ -71,13 +71,13 @@ VAULTS = [
     
     # digital entertainment
     ("gaming", "Gaming", "Video games of every kind.", ANY, True),
-    ("cozygaming", "Cozy Gaming", "Relaxing games, farming sims, and low-stress gaming.", ANY, False),
-    ("retrogaming", "Retro Gaming", "Classic consoles, emulation, and arcade history.", ANY, False),
-    ("anime", "Anime & Manga", "Series, webtoons, fan art, and community discussion.", ANY, False),
+    ("cozygaming", "Cozy Gaming", "Relaxing games, farming sims, and low-stress gaming.", ANY, True),
+    ("retrogaming", "Retro Gaming", "Classic consoles, emulation, and arcade history.", ANY, True),
+    ("anime", "Anime & Manga", "Series, webtoons, fan art, and community discussion.", ANY, True),
     
     # physical making & lifestyle
     ("diy", "DIY & Making", "Things you built, fixed, or machined yourself.", NO_GEN, True),
-    ("fiberarts", "Fiber Arts", "Crochet, knitting, sewing, and textile crafts.", NO_GEN, False),
+    ("fiberarts", "Fiber Arts", "Crochet, knitting, sewing, and textile crafts.", NO_GEN, True),
     ("thrift", "Thrift & Upcycling", "Second-hand finds, vintage fashion, and sustainable flips.", NO_GEN, True),
     ("3dprinting", "3D Printing", "Printers, prints, models and troubleshooting.", NO_GEN, True),
     ("food", "Food & Baking", "Cooking, recipes, and culinary experiments.", ANY, True),
@@ -94,10 +94,10 @@ VAULTS = [
     ("design", "Design", "Graphic, product and interior design, architecture and visual craft.", NO_GEN, False),
     ("curated", "Curated", "The best of the web: collections of remarkable pictures and finds.", ANY, False),
     ("blogs", "Blogs", "Independent weblogs, essays, and long reads.", NO_GEN, False),
-    ("aesthetics", "Aesthetics", "Liminal spaces, visual moods, and subculture curation.", NO_GEN, False),
+    ("aesthetics", "Aesthetics", "Liminal spaces, visual moods, and subculture curation.", NO_GEN, True),
     ("popculture", "Pop Culture", "Fandoms, internet drama, and modern media trends.", ANY, True),
-    ("pics", "Pics", "Pictures worth sharing.", NO_GEN, False),
-    ("aww", "Aww", "Cute animals and wholesome content.", NO_GEN, False),
+    ("pics", "Pics", "Pictures worth sharing.", NO_GEN, True),
+    ("aww", "Aww", "Cute animals and wholesome content.", NO_GEN, True),
     
     # discussion & communities
     ("books", "Books", "Reading, recommendations, and literary discussion.", ANY, True),
