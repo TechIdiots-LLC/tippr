@@ -8,6 +8,9 @@
   a Google/Facebook sign-in also need a code (one code counts for 15 minutes in that session), turning it off needs
   the password and a fresh code, and logging in with a password to link an outside account asks for the code before
   linking. The security tab is shown to every member now.
+- **Two-factor recovery codes:** turning two-factor on shows ten one-use recovery codes (once) that work in place of
+  a code from the app, for a lost phone; preferences → security shows how many are left and makes a new set (the
+  old ones stop working). Turning two-factor off removes them.
 - **Sign in with Google or Facebook**, for accounts that linked one. An admin turns providers on at the new
   **/admin/logins** with the site's own OAuth app (client ID and secret; the page shows the redirect address to
   register). Members link an account under preferences → security, or

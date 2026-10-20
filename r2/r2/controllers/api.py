@@ -5889,8 +5889,9 @@ class ApiController(TipprController):
 
         c.user.otp_secret = secret
         c.user._commit()
+        self._show_recovery_codes(c.user)
 
-        form.redirect("/prefs/security")
+        form.redirect("/prefs/security#recovery-codes")
 
     @validatedForm(
         VUser(),
@@ -5908,8 +5909,32 @@ class ApiController(TipprController):
             return
 
         c.user.otp_secret = ""
+        c.user.otp_recovery_codes = []
         c.user._commit()
         form.redirect("/prefs/security")
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VFreshOneTimePassword("otp", required=True),
+    )
+    def POST_new_recovery_codes(self, form, jquery):
+        """A new set of two-factor recovery codes (the old ones stop
+        working), shown once on preferences, security."""
+        if form.has_errors("otp", errors.WRONG_PASSWORD,
+                                  errors.NO_OTP_SECRET,
+                                  errors.RATELIMIT):
+            return
+        self._show_recovery_codes(c.user)
+        form.redirect("/prefs/security#recovery-codes")
+
+    @staticmethod
+    def _show_recovery_codes(account):
+        """Make new recovery codes and keep them a few minutes for
+        preferences, security to show once."""
+        from r2.lib import two_factor
+        codes = two_factor.new_recovery_codes(account)
+        g.gencache.set(two_factor.new_codes_key(account), codes, time=600)
 
     @require_oauth2_scope("read")
     @json_validate(query=VLength("query", max_length=50))

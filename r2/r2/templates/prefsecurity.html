@@ -45,8 +45,34 @@
 % if thing.two_factor:
     ${_md("two-factor authentication is **on**. you're asked for a code from your authenticator app when changing your password or email address, and when linking or unlinking a sign-in. a code you enter counts for 15 minutes.", wrap=True)}
 
+    <div id="recovery-codes" class="recovery-codes">
+    <h2>${_("recovery codes")}</h2>
+    %if thing.new_codes:
+      <p><strong>${_("Save these recovery codes somewhere safe (print them, or keep them in a password manager). Each one works once in place of a code from your app, if you lose your phone. They won't be shown again.")}</strong></p>
+      <pre class="recovery-code-list">${"\n".join(thing.new_codes)}</pre>
+    %else:
+      <p>
+        ${_("Recovery codes work once each in place of a code from your app, if you lose your phone.")}
+        %if thing.codes_left:
+          ${_("You have %(count)s left.") % dict(count=thing.codes_left)}
+        %else:
+          <strong>${_("You have none left: make new ones now.")}</strong>
+        %endif
+      </p>
+    %endif
+    <form action="/post/new_recovery_codes" method="post" onsubmit="return post_form(this, 'new_recovery_codes')" class="pretty-form">
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" size="10" placeholder="${_('two-factor code')}">
+      <button class="btn" type="submit">${_("make new recovery codes")}</button>
+      ${error_field("WRONG_PASSWORD", "otp")}
+      ${error_field("RATELIMIT", "otp")}
+      <span class="status"></span>
+      <p><small>${_("Making new ones stops the old ones working.")}</small></p>
+    </form>
+    </div>
+
     <form action="/post/disable_otp" method="post" onsubmit="return post_form(this, 'disable_otp')" id="pref-otp">
 
+    <h2>${_("turn it off")}</h2>
     ${_md("to turn it off, enter your password and a code.", wrap=True)}
 
     <%utils:round_field title="${_('password')}" description="${_('(required)')}">

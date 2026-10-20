@@ -121,6 +121,19 @@ def new_recovery_codes(account):
     return codes
 
 
+def new_codes_key(account):
+    """Where new codes wait (a few minutes) to be shown once."""
+    return "otp:newcodes_" + account._id36
+
+
+def take_new_codes(account):
+    """The recovery codes just made, if any; shown only this once."""
+    codes = g.gencache.get(new_codes_key(account))
+    if codes:
+        g.gencache.delete(new_codes_key(account))
+    return codes
+
+
 def recovery_codes_left(account):
     return len(getattr(account, "otp_recovery_codes", None) or [])
 

@@ -1307,6 +1307,8 @@ class PrefSecurity(Templated):
     def __init__(self):
         from r2.lib import linked_logins, two_factor
         self.two_factor = two_factor.enabled(c.user)
+        self.new_codes = two_factor.take_new_codes(c.user)
+        self.codes_left = two_factor.recovery_codes_left(c.user)
         # a code is needed to link or unlink (unless one was entered just now)
         self.link_needs_code = two_factor.needs_code(c.user, "linked_logins")
         links = {l["provider"]: l for l in linked_logins.links_for(c.user)}
