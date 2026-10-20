@@ -95,6 +95,15 @@ NOTIFICATION_EMAIL_DELAY = timedelta(hours=1)
 class LinkExists(Exception): pass
 
 
+def _gilding_offered():
+    """Whether to offer "give gold": when gold is for sale (/admin/payments),
+    or to a member who has Give Gold to spend."""
+    from r2.lib import payments
+    if payments.gold_for_sale():
+        return True
+    return bool(c.user_is_loggedin and getattr(c.user, "gold_coins", 0) > 0)
+
+
 class Link(Thing, Printable):
     _cache = g.thingcache
     _data_int_props = Thing._data_int_props + (
@@ -768,6 +777,7 @@ class Link(Thing, Printable):
                 not item.author._deleted and
                 # some vaults can have gilding disabled
                 item.vault.allow_gilding and
+                _gilding_offered() and
                 not item._deleted
             )
 
@@ -1750,7 +1760,8 @@ class Comment(Thing, Printable):
                 # ick, if the author deleted their account we shouldn't waste gold
                 not item.author._deleted and
                 # some vaults can have gilding disabled
-                item.vault.allow_gilding
+                item.vault.allow_gilding and
+                _gilding_offered()
             )
 
             if c.user_is_loggedin and c.user.in_timeout:

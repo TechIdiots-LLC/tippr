@@ -1914,6 +1914,14 @@ class FormsController(TipprController):
     )
     def GET_gold(self, is_payment, goldtype, period, months, num_coins,
                  signed, recipient, giftmessage, thing, email, edit):
+        from r2.lib import payments
+        if not payments.gold_for_sale():
+            # turned off on /admin/payments
+            return BoringPage(
+                _("tippr gold"), show_sidebar=False,
+                content=PaymentStatus(
+                    _("tippr gold isn't for sale on this site right now."),
+                    "/gold/about", _("what gold gives you"))).render()
         VNotInTimeout().run(action_name="pageview", details_text="gold",
             target=thing)
         if thing:

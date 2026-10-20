@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **The gold and ads switches on /admin/payments** now close buying altogether: with gold off, /gold says gold isn't
+  for sale and posts show no "give gold" link (except to members with gold already bought to give); with ads off,
+  only sponsors can make promoted posts, and the sponsored link's help no longer invites people to advertise.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

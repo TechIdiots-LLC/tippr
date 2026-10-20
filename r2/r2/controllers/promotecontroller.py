@@ -323,9 +323,27 @@ def _clear_ads_images(thing):
     timer.stop()
 
 
+def _ads_closed():
+    """Ads are turned off on /admin/payments; sponsors (staff) can still
+    make promoted posts (house ads, freebies)."""
+    from r2.lib import payments
+    return not payments.ads_for_sale() and not c.user_is_sponsor
+
+
+ADS_CLOSED_MESSAGE = N_("Advertising isn't available on this site right now.")
+
+
+def _ads_closed_page():
+    from r2.lib.pages import BoringPage, PaymentStatus
+    return BoringPage(_("advertise"), show_sidebar=False,
+                      content=PaymentStatus(_(ADS_CLOSED_MESSAGE))).render()
+
+
 class PromoteController(TipprController):
     @validate(VSponsor())
     def GET_new_promo(self):
+        if _ads_closed():
+            return _ads_closed_page()
         ads_images = _get_ads_images(c.user)
         images = {k: v.get("url") for k, v in ads_images.items()}
 
@@ -362,6 +380,8 @@ class PromoteController(TipprController):
     def GET_pay(self, link, campaign):
         if link._id != campaign.link_id:
             return self.abort404()
+        if _ads_closed():
+            return _ads_closed_page()
 
         # no need for admins to play in the credit card area
         if c.user_is_loggedin and c.user._id != link.author_id:
@@ -909,6 +929,9 @@ class PromoteApiController(ApiController):
                           gifts_embed_url, media_url_type, domain_override,
                           third_party_tracking, third_party_tracking_2,
                           is_managed):
+        if _ads_closed():
+            form.set_text(".status", _(ADS_CLOSED_MESSAGE))
+            return
 
         images = _get_ads_images(c.user, data=True, meta=True)
 
@@ -1240,6 +1263,9 @@ class PromoteApiController(ApiController):
                            android_devices, android_versions,
                            total_budget_dollars, cost_basis, bid_dollars):
         if not link:
+            return
+        if _ads_closed():
+            form.set_text(".status", _(ADS_CLOSED_MESSAGE))
             return
 
         if (form.has_errors('frequency_cap', errors.INVALID_FREQUENCY_CAP) or

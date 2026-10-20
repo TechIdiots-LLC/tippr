@@ -158,6 +158,19 @@ def payment_settings():
     return settings
 
 
+def gold_for_sale(settings=None):
+    """Whether gold (and Give Gold, gifts, gift codes) can be bought: the
+    "gold" box on /admin/payments. Off, the gold pages say so and posts
+    show no "give gold" link (except to members with Give Gold to spend)."""
+    return (settings or payment_settings())["gold_enabled"]
+
+
+def ads_for_sale(settings=None):
+    """Whether ads can be bought: the "ads" box on /admin/payments. Off,
+    only sponsors (staff) can make promoted posts."""
+    return (settings or payment_settings())["ads_enabled"]
+
+
 def configured(provider, settings=None):
     settings = settings or payment_settings()
     return all(settings[name] for name in REQUIRED[provider])
