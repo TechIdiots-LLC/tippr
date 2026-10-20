@@ -38,6 +38,14 @@ __all__ = []
 FREEBIE_PAYMENT_METHOD_ID = -1
 
 
+def _paid_with_provider(bid):
+    """A campaign paid through r2.lib.payments (/admin/payments' providers):
+    paid in full up front, so voiding or refunding it is a refund with the
+    provider, and there's nothing to charge."""
+    from r2.lib.payments import ads
+    return ads.is_provider_bid(bid)
+
+
 @export
 def get_or_create_customer_profile(user):
     profile_id = CustomerID.get_id(user._id)
@@ -158,7 +166,7 @@ def charge_transaction(user, transaction_id, campaign_id):
     if bid.is_charged():
         return True, None
 
-    if transaction_id < 0:
+    if transaction_id < 0 or _paid_with_provider(bid):
         bid.charged()
         return True, None
 
@@ -190,6 +198,13 @@ def void_transaction(user, transaction_id, campaign_id):
         bid.void()
         return True, None
 
+    if _paid_with_provider(bid):
+        from r2.lib.payments import ads
+        success, message = ads.refund_bid(bid)
+        if success:
+            bid.void()
+        return success, message
+
     profile_id = CustomerID.get_id(user._id)
     try:
         api.void_authorization_hold(profile_id, bid.pay_id, transaction_id)
@@ -206,6 +221,14 @@ def refund_transaction(user, transaction_id, campaign_id, amount):
     if transaction_id < 0:
         bid.refund(amount)
         return True, None
+
+    if _paid_with_provider(bid):
+        from r2.lib.payments import ads
+        success, message = ads.refund_bid(
+            bid, pennies=int(round(float(amount) * 100)))
+        if success:
+            bid.refund(amount)
+        return success, message
 
     profile_id = CustomerID.get_id(user._id)
     try:

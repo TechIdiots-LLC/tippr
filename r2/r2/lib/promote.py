@@ -136,8 +136,12 @@ def view_live_url(link, campaign, vaultname):
     return '{}/?ad={}'.format(host, link._fullname)
 
 def payment_url(action, link_id36, campaign_id36):
+    # on the site itself: reddit took card details on a separate domain
+    # (payment_domain, pay.<domain> in the installer's ini), which nothing
+    # serves on a self-hosted site, and the providers on /admin/payments
+    # take payments on their own pages anyway
     path = '/promoted/{}/{}/{}'.format(action, link_id36, campaign_id36)
-    return urllib.parse.urljoin(g.payment_domain, path)
+    return urllib.parse.urljoin(g.https_endpoint, path)
 
 def pay_url(l, campaign):
     return payment_url('pay', l._id36, campaign._id36)
@@ -504,7 +508,16 @@ def void_campaign(link, campaign, reason):
     bid_record = transactions.get(campaign._id)
     if bid_record:
         a = Account._byID(link.author_id)
-        authorize.void_transaction(a, bid_record.transaction, campaign._id)
+        success, message = authorize.void_transaction(
+            a, bid_record.transaction, campaign._id)
+        if not success:
+            # for a campaign paid up front (r2.lib.payments) the refund
+            # failed: the payment is still "paid" on /admin/payments, to
+            # refund from there
+            text = ('voiding transaction for %s failed (trans_id: %d): %s'
+                    % (campaign, bid_record.transaction, message))
+            PromotionLog.add(link, text)
+            g.log.error("promote: %s", text)
         campaign.trans_id = NO_TRANSACTION
         campaign._commit()
         text = ('voided transaction for %s: (trans_id: %d)'
@@ -715,6 +728,22 @@ def reject_promotion(link, reason=None, notify_why=True):
 
     if was_live:
         all_live_promo_vaultnames(_update=True)
+
+    refund_unserved_campaigns(link)
+
+
+def refund_unserved_campaigns(link):
+    """Refund the campaigns of a rejected ad that were paid up front
+    (r2.lib.payments) and haven't started showing. One that has shown is
+    left for the refund page, which refunds what it didn't show."""
+    from r2.lib.payments import ads
+    campaigns = list(PromoCampaign._by_link(link._id))
+    bids = get_transactions(link, campaigns)
+    for campaign in campaigns:
+        bid = bids.get(campaign._id)
+        if (ads.is_provider_bid(bid) and not bid.is_void() and
+                not campaign.has_served):
+            void_campaign(link, campaign, reason="rejected")
 
 
 def unapprove_promotion(link):

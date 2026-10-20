@@ -93,6 +93,13 @@ indices = [index_str(gold_table, 'status', 'status'),
 create_table(gold_table, indices)
 
 
+def _execute(statement):
+    """Run a write on the gold table (SQLAlchemy 2 has no implicit
+    execution, so .execute() on a statement no longer works)."""
+    with ENGINE.begin() as conn:
+        return conn.execute(statement)
+
+
 class GoldRevenueGoalByDate(metaclass=tdb_cassandra.ThingMeta):
     _use_db = True
     _cf_name = "GoldRevenueGoalByDate"
@@ -237,21 +244,19 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
                            subscr_id = None):
 
     try:
-        gold_table.insert().execute(trans_id=str(trans_id),
-                                    subscr_id=subscr_id,
-                                    status="unclaimed",
-                                    payer_email=payer_email,
-                                    paying_id=paying_id,
-                                    pennies=pennies,
-                                    days=days,
-                                    secret=str(secret),
-                                    date=date
-                                    )
+        _execute(gold_table.insert().values(trans_id=str(trans_id),
+                                            subscr_id=subscr_id,
+                                            status="unclaimed",
+                                            payer_email=payer_email,
+                                            paying_id=paying_id,
+                                            pennies=pennies,
+                                            days=days,
+                                            secret=str(secret),
+                                            date=date))
     except IntegrityError:
-        rp = gold_table.update(
+        _execute(gold_table.update().where(
             sa.and_(gold_table.c.status == 'uncharged',
-                    gold_table.c.trans_id == str(trans_id)),
-            values = {
+                    gold_table.c.trans_id == str(trans_id))).values({
                 gold_table.c.status: "unclaimed",
                 gold_table.c.payer_email: payer_email,
                 gold_table.c.paying_id: paying_id,
@@ -259,40 +264,39 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
                 gold_table.c.days: days,
                 gold_table.c.secret:secret,
                 gold_table.c.subscr_id : subscr_id
-                },
-            ).execute()
+                }))
 
 
 def create_claimed_gold (trans_id, payer_email, paying_id,
                          pennies, days, secret, account_id, date,
                          subscr_id = None, status="claimed"):
-    gold_table.insert().execute(trans_id=trans_id,
-                                subscr_id=subscr_id,
-                                status=status,
-                                payer_email=payer_email,
-                                paying_id=paying_id,
-                                pennies=pennies,
-                                days=days,
-                                secret=secret,
-                                account_id=account_id,
-                                date=date)
+    _execute(gold_table.insert().values(trans_id=trans_id,
+                                        subscr_id=subscr_id,
+                                        status=status,
+                                        payer_email=payer_email,
+                                        paying_id=str(paying_id),
+                                        pennies=pennies,
+                                        days=days,
+                                        secret=secret,
+                                        account_id=str(account_id),
+                                        date=date))
 
 
 def create_gift_gold(giver_id, recipient_id, days, date,
             signed, note=None, gilding_type=None):
     trans_id = "X%d%s-%s" % (int(time()), randstr(2), 'S' if signed else 'A')
-    gold_table.insert().execute(
+    _execute(gold_table.insert().values(
         trans_id=trans_id,
         status="gift",
-        paying_id=giver_id,
+        paying_id=str(giver_id),
         payer_email='',
         pennies=0,
         days=days,
-        account_id=recipient_id,
+        account_id=str(recipient_id),
         date=date,
         secret=note,
         gilding_type=gilding_type,
-    )
+    ))
 
 
 def create_gold_code(trans_id, payer_email, paying_id, pennies, days, date):
@@ -310,15 +314,15 @@ def create_gold_code(trans_id, payer_email, paying_id, pennies, days, date):
         with ENGINE.connect() as conn:
             res = conn.execute(s).fetchall()
         if not res:
-            gold_table.insert().execute(
+            _execute(gold_table.insert().values(
                 trans_id=trans_id,
                 status='unclaimed',
                 payer_email=payer_email,
-                paying_id=paying_id,
+                paying_id=str(paying_id),
                 pennies=pennies,
                 days=days,
                 secret=code.lower(),
-                date=date)
+                date=date))
             return code
 
 
@@ -347,13 +351,12 @@ def claim_gold(secret, account_id):
     secret = secret.strip(". ")
     secret = secret.replace("-", "").lower()
 
-    rp = gold_table.update(sa.and_(gold_table.c.status == 'unclaimed',
-                                   gold_table.c.secret == secret),
-                           values = {
-                                      gold_table.c.status: 'claimed',
-                                      gold_table.c.account_id: account_id,
-                                    },
-                           ).execute()
+    rp = _execute(gold_table.update().where(
+        sa.and_(gold_table.c.status == 'unclaimed',
+                gold_table.c.secret == secret)).values({
+            gold_table.c.status: 'claimed',
+            gold_table.c.account_id: str(account_id),
+        }))
     if rp.rowcount == 0:
         just_claimed = False
     elif rp.rowcount == 1:
@@ -399,8 +402,9 @@ def retrieve_gold_transaction(transaction_id):
 
 
 def update_gold_transaction(transaction_id, status):
-    rp = gold_table.update(gold_table.c.trans_id == str(transaction_id),
-                           values={gold_table.c.status: status}).execute()
+    _execute(gold_table.update().where(
+        gold_table.c.trans_id == str(transaction_id)).values(
+            {gold_table.c.status: status}))
 
 
 def transactions_by_user(user):
@@ -462,13 +466,14 @@ def append_random_bottlecap_phrase(message):
 def gold_revenue_multi(dates):
     date_expr = sa.func.date_trunc('day',
                     sa.func.timezone(TIMEZONE.zone, gold_table.c.date))
-    query = (select([date_expr, sa_sum(gold_table.c.pennies)])
+    query = (select(date_expr, sa_sum(gold_table.c.pennies))
                 .where(~ gold_table.c.status.in_(NON_REVENUE_STATUSES))
                 .where(date_expr.in_(dates))
                 .group_by(date_expr)
             )
-    return {truncated_time.date(): pennies
-                for truncated_time, pennies in ENGINE.execute(query)}
+    with ENGINE.connect() as conn:
+        return {truncated_time.date(): pennies
+                for truncated_time, pennies in conn.execute(query)}
 
 
 @memoize("gold-revenue-volatile", time=600, stale=True)

@@ -63,6 +63,7 @@ def load_controllers():
         TipprGiftsController,
         StripeController,
     )
+    from .payments import PaymentsController
     from .listingcontroller import (
         AdsController,
         BrowseController,

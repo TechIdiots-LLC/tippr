@@ -19,6 +19,7 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/errors` — recent unhandled errors, grouped by error and code location, with counts and the last traceback (kept in the hardcache; full logs in `journalctl -u tippr-paster`).
 - `/admin/email` — outgoing email settings: SMTP or Gmail, and a test message ([EMAIL.md](EMAIL.md)).
 - `/admin/ads` — Google AdSense settings ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)).
+- `/admin/payments` — the payment providers for gold and sold ads (PayPal, Stripe, Coinbase, BitPay): turn them on, enter their API keys and test them, see their webhook addresses, and look up or refund the latest payments ([gold-payments.md](gold-payments.md)).
 - `/admin/backups` — export, import and restore the site, and transfer keys for moving servers ([BACKUP.md](BACKUP.md)).
 - `/admin/vaults` — find any vault (and the newest and banned ones); on a vault's page, make it a front page default or featured, add or remove moderators without an invitation, and ban it (how a vault is removed: everyone but the admins sees a "banned" page; unbanning restores it). Each action is logged there. Admins can create vaults whatever their karma and account age; the `create_vault_*` limits on `/admin/config` are for everyone else.
 - `/admin/privacy` — users' data export and deletion requests ([PRIVACY_FEATURES.md](PRIVACY_FEATURES.md)).

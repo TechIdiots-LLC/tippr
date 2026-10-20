@@ -40,6 +40,7 @@ from r2.lib.pages import (
     AdminGold,
     AdminLiveConfig,
     AdminPage,
+    AdminPaymentSettings,
     AdminSiteSettings,
     AdminSupport,
     AdminSupportActivity,
@@ -125,6 +126,10 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_ads(self):
         return AdminPage(content=AdminAdSettings()).render()
+
+    @validate(VAdmin())
+    def GET_payments(self):
+        return AdminPage(content=AdminPaymentSettings()).render()
 
     @validate(VAdmin())
     def GET_backups(self):

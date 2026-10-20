@@ -3,6 +3,18 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Payments** for gold and sold ads with your own PayPal, Stripe, Coinbase and BitPay accounts, set up on a new
+  admin page, **/admin/payments**: turn on the providers you use, enter their API keys (secrets are never shown
+  again), test them, and see each one's webhook address. Buyers choose on the payment page and pay on the provider's
+  own page: PayPal (also Venmo, Pay Later and cards), Stripe Checkout (cards, Google Pay, Apple Pay), Coinbase
+  (USDC; Coinbase Commerce, which the old Bitcoin button used, has shut down) or BitPay (Bitcoin and more). Prices
+  are worked out on the server, a purchase is delivered exactly once however often the provider calls back, and
+  webhooks are optional (payments complete when the buyer comes back; the site always asks the provider rather than
+  trusting a webhook). The page also lists the latest payments, to look one up or refund it. See
+  docs/gold-payments.md.
+- **Sold ads are paid when they're submitted** (with the providers above) and refunded if the ad is rejected before
+  it runs, its budget changes or the campaign is deleted; an ad that showed less than was paid for gets the unspent
+  part back through the provider. The emails advertisers get no longer talk about reddit.com or card holds.
 - **/admin/config** saves every setting with one "save changes" button (kept at the bottom of the window) instead of
   a button per setting. Only the settings you changed are saved, so the ini's values don't become overrides; one
   that isn't valid says so on its row while the rest are saved.
@@ -30,6 +42,12 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Gold purchases, gifts, gift codes and claiming them** failed after payment: the gold table was written in a way
+  SQLAlchemy 2 no longer supports, and months of gold were worked out as fractions under Python 3.
+- **Sold ads**: campaigns' payment records could be left uncommitted, and creating a second campaign in the same
+  server process failed (both from SQLAlchemy 2 keeping a transaction open); promoted posts' pages failed to show
+  their buttons; and the "pay" button went to `pay.<your domain>`, which nothing serves on a self-hosted site
+  (`payment_domain` is no longer used for it). The advertiser emails for payments and launches also failed to render.
 - **Sold ads** (promoted posts) could show in vaults whose moderators turned ads off: the check for "show ads here"
   mixed up its and/or, so only gold members who hid ads were really left out. Now promoted posts show only where
   ads are allowed, and never to gold members who chose to hide ads.

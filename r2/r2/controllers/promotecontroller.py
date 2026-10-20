@@ -69,6 +69,7 @@ from r2.lib.menus import NamedButton, NavButton, NavMenu, QueryButton
 from r2.lib.pages import (
     LinkInfoPage,
     PaymentForm,
+    PromotePayment,
     PromoteInventory,
     PromoteLinkEdit,
     PromoteLinkNew,
@@ -377,14 +378,17 @@ class PromoteController(TipprController):
         if c.user_is_loggedin and c.user._id != link.author_id:
             return self.abort404()
 
-        if g.authorizenetapi:
+        from r2.lib import payments
+        if payments.enabled_providers("ad") or not g.authorizenetapi:
+            # the providers on /admin/payments (r2.lib.payments.ads); or,
+            # with none, says payments aren't set up
+            content = PromotePayment(link, campaign)
+        else:
             data = get_or_create_customer_profile(c.user)
             content = PaymentForm(link, campaign,
                                   customer_id=data.customerProfileId,
                                   profiles=data.paymentProfiles,
                                   max_profiles=PROFILE_LIMIT)
-        else:
-            content = None
         res = LinkInfoPage(link=link,
                             content=content,
                             show_sidebar=False,

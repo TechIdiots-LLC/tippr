@@ -91,6 +91,10 @@
                 ${self.coins_button()}
               %endif:
 
+              %for provider, label in thing.checkout_providers:
+                ${self.checkout_button(provider, label)}
+              %endfor
+
               %if thing.paypal_buttonid:
                 ${self.paypal_button()}
               %endif
@@ -135,6 +139,18 @@
       <span class="remaining" data-current="${thing.months}" data-total="${thing.user_coins}" data-template="${websafe(_ws('(use %(current)s of your %(total)s coins)')) % dict(current='<%- current %>', total='<%- total %>')}">
       </span>
     </span>
+  </form>
+</%def>
+
+## a provider from /admin/payments: /payments/checkout sends the buyer to
+## its payment page (gold.js submits the form after saving the gift note)
+<%def name="checkout_button(provider, label)">
+  <form action="/payments/checkout" method="post"
+        class="gold-checkout payment-checkout"
+        data-vendor="${provider}" target="${'_blank' if thing.clone_template else '_top'}">
+    <input type="hidden" name="provider" value="${provider}">
+    <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
+    <button class="btn gold-button" type="button">${label}</button>
   </form>
 </%def>
 

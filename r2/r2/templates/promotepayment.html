@@ -1,0 +1,45 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<div class="payment-setup promote-payment">
+  <h1>${_("pay for this campaign")}</h1>
+  <p>
+    ${_("The duration of this campaign is %(duration)s (from %(start)s to %(end)s).") % dict(duration=thing.duration, start=thing.start_date, end=thing.end_date)}
+    &#32;${_("Its budget is %(budget)s.") % dict(budget=thing.budget)}
+  </p>
+
+  %if thing.paid:
+    <p>${_("This campaign is paid for.")}</p>
+    <p><a class="btn" href="${thing.edit_url}">${_("back to your ad")}</a></p>
+  %elif thing.providers:
+    <p>
+      ${_("You pay the whole budget now. Your ad is reviewed before it runs; if it isn't approved, or you delete the campaign or change its budget before it starts, the payment is refunded.")}
+    </p>
+    <div class="promote-payment-buttons">
+      %for provider, label in thing.providers:
+        <form action="/payments/checkout" method="post" class="payment-checkout">
+          <input type="hidden" name="purpose" value="ad">
+          <input type="hidden" name="provider" value="${provider}">
+          <input type="hidden" name="link" value="${thing.link._fullname}">
+          <input type="hidden" name="campaign" value="${thing.campaign_id36}">
+          <button class="btn" type="submit">${label}</button>
+        </form>
+      %endfor
+    </div>
+    <p><small>${_("You pay on the provider's own page: your card or wallet details never reach this site.")}</small></p>
+  %else:
+    <p>${_("This site isn't taking payments for ads yet. Please contact the site's admins.")}</p>
+  %endif
+</div>

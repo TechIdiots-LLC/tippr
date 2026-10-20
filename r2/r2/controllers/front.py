@@ -1486,7 +1486,7 @@ class FrontController(TipprController):
 
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-coins",
                                   "spent-coins", "paypal", "coinbase",
-                                  "stripe"),
+                                  "stripe", "paid"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
@@ -1499,6 +1499,13 @@ class FrontController(TipprController):
         elif vendor == "claimed-coins":
             claim_msg = _("Your gold coins have been claimed! Now go to "
                           "someone's userpage and give them a present!")
+        elif vendor == "paid":
+            # paid through r2.lib.payments, and already delivered
+            claim_msg = _("Thanks for buying tippr gold! Your payment has "
+                          "been received and your purchase delivered: check "
+                          "your inbox for the details.")
+            if g.lounge_vault:
+                lounge_md = strings.lounge_msg
         elif vendor == "spent-coins":
             claim_msg = _("Thanks for buying tippr gold! Your transaction "
                           "has been completed.")
@@ -1979,6 +1986,10 @@ class FormsController(TipprController):
 
             payment_blob = dict(goldtype=goldtype,
                                 status="initialized")
+            if months:
+                # what's being bought, so payments price it on the server
+                # (r2.lib.payments.gold)
+                payment_blob["months"] = months
             if c.user_is_loggedin:
                 payment_blob["account_id"] = c.user._id
                 payment_blob["account_name"] = c.user.name

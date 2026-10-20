@@ -44,7 +44,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql.base import PGInet as Inet
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from contextlib import contextmanager
+
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
 from r2.lib.db.thing import NotFound, Thing
@@ -54,7 +56,8 @@ from r2.models.account import Account
 
 engine = g.dbm.get_engine('authorize')
 # Allocate a session maker for communicating object changes with the back end
-Session = sessionmaker(autoflush=True, bind=engine)
+# (one session per thread: the web server runs requests in threads)
+Session = scoped_session(sessionmaker(autoflush=True, bind=engine))
 # allocate a SQLalchemy base class for auto-creation of tables based
 # on class fields.
 # NB: any class that inherits from this class will result in a table
@@ -69,7 +72,21 @@ class Sessionized:
     to have a "query" and "commit" method that doesn't require
     managing of the session.
     """
-    session = Session()
+    session = Session
+
+    @classmethod
+    @contextmanager
+    def _writing(cls):
+        """Make changes and commit them. SQLAlchemy 2 starts a transaction
+        on the first query and keeps it open, so a write can't begin() its
+        own (that raises) or nest in a savepoint (which would never be
+        committed): commit whatever is open instead."""
+        try:
+            yield cls.session
+            cls.session.commit()
+        except Exception:
+            cls.session.rollback()
+            raise
 
     def __init__(self, *a, **kw):
         """
@@ -94,25 +111,15 @@ class Sessionized:
         """
         Commits current object to the db.
         """
-        # Use begin_nested() for savepoint if transaction already active
-        if self.session.in_transaction():
-            with self.session.begin_nested():
-                self.session.add(self)
-        else:
-            with self.session.begin():
-                self.session.add(self)
+        with self._writing() as session:
+            session.add(self)
 
     def _delete(self):
         """
         Deletes current object from the db.
         """
-        # Use begin_nested() for savepoint if transaction already active
-        if self.session.in_transaction():
-            with self.session.begin_nested():
-                self.session.delete(self)
-        else:
-            with self.session.begin():
-                self.session.delete(self)
+        with self._writing() as session:
+            session.delete(self)
 
     @classmethod
     def query(cls, **kw):
@@ -406,7 +413,7 @@ class PromotionWeights(Sessionized, Base):
         vault_names = campaign.target.Vault_names
         vault_names = {cls.filter_vault_name(vault_name) for vault_name in vault_names}
 
-        with cls.session.begin():
+        with cls._writing():
             for vault_name in vault_names:
                 for date in dates:
                     obj = cls(
@@ -424,7 +431,7 @@ class PromotionWeights(Sessionized, Base):
     @classmethod
     def delete(cls, link, campaign):
         query = cls.query(thing_name=link._fullname, promo_idx=campaign._id)
-        with cls.session.begin():
+        with cls._writing():
             for item in query:
                 cls.session.delete(item)
 

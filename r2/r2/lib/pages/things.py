@@ -23,7 +23,9 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-from datetime import datetime
+# (not "datetime": the star import from r2.lib.promote below brings in
+# the datetime module under that name)
+from datetime import datetime as _datetime
 
 from pylons import app_globals as g
 from pylons import tmpl_context as c
@@ -159,7 +161,7 @@ class LinkButtons(PrintableButtons):
                     "campaign": thing.campaign,
                 })
 
-            now = datetime.now(g.tz)
+            now = _datetime.now(g.tz)
             kw = dict(promo_url = promo_edit_url(thing),
                       promote_status = getattr(thing, "promote_status", 0),
                       user_is_sponsor = c.user_is_sponsor,

@@ -155,6 +155,7 @@ def make_map(config):
     mc('/admin/site/image', controller='admintool', action='site_image')
     mc('/admin/email', controller='admintool', action='email')
     mc('/admin/ads', controller='admintool', action='ads')
+    mc('/admin/payments', controller='admintool', action='payments')
     mc('/admin/backups', controller='admintool', action='backups')
     mc('/admin/apps', controller='admintool', action='apps')
     mc('/admin/feeds', controller='admintool', action='feeds')
@@ -436,6 +437,15 @@ def make_map(config):
     mc('/api/privacy/requests', controller='privacy',
        action='privacy_requests_json')
     
+    # r2.lib.payments: the providers set up on /admin/payments
+    mc('/payments/checkout', controller='payments', action='checkout')
+    mc('/payments/return/:payment_id', controller='payments',
+       action='return')
+    mc('/payments/cancel/:payment_id', controller='payments',
+       action='cancel')
+    mc('/api/payments/webhook/:provider', controller='payments',
+       action='webhook')
+
     mc('/api/spendcoins', controller='ipn', action="spendcoins")
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
     mc('/api/modify_subscription', controller='stripe',

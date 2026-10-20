@@ -3117,6 +3117,15 @@ class GoldThanks(Templated):
     """An actual 'Thanks for buying gold!' landing page"""
     pass
 
+
+class PaymentStatus(Templated):
+    """Where a payment stands, after the buyer comes back from paying (or
+    when it couldn't start): r2.controllers.payments."""
+    def __init__(self, message, link=None, link_text=None, refresh=False):
+        Templated.__init__(self, message=message, link=link,
+                           link_text=link_text, refresh=refresh)
+
+
 class Gold(Templated):
     def __init__(self, goldtype, period, months, signed,
                  email, recipient, giftmessage, can_subscribe=True,
@@ -3158,7 +3167,7 @@ class GoldPayment(Templated):
             if period == 'yearly':
                 price = unit_price
             else:
-                years = months / 12
+                years = months // 12
                 price = unit_price * years
 
         if c.user.employee:
@@ -3198,7 +3207,7 @@ class GoldPayment(Templated):
                 coinbase_button_id = getattr(g, coinbase_name, None)
             else:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYYEAR
-                quantity = months / 12
+                quantity = months // 12
                 months = quantity * 12
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
@@ -3225,7 +3234,7 @@ class GoldPayment(Templated):
                     paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYYEAR
                 else:
                     paypal_buttonid = g.PAYPAL_BUTTONID_COINS_BYYEAR
-                quantity = months / 12
+                quantity = months // 12
                 months = quantity * 12
                 coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
                 coinbase_button_id = getattr(g, coinbase_name, None)
@@ -3273,7 +3282,24 @@ class GoldPayment(Templated):
 
             stripe_key = g.secrets['stripe_public_key']
 
+        # the providers set up on /admin/payments (r2.lib.payments), which
+        # replace the old buttons for the same provider; subscriptions
+        # still use the old ones
+        from r2.lib import payments
+        checkout_providers = []
+        if goldtype != "autorenew":
+            enabled = payments.enabled_providers("gold")
+            checkout_providers = [(p, _(payments.PROVIDERS[p][1]))
+                                  for p in enabled]
+            if "paypal" in enabled:
+                paypal_buttonid = None
+            if "stripe" in enabled:
+                stripe_key = None
+            if "coinbase" in enabled:
+                coinbase_button_id = None
+
         Templated.__init__(self, goldtype=goldtype, period=period,
+                           checkout_providers=checkout_providers,
                            months=months, quantity=quantity,
                            unit_price=unit_price, price=price,
                            summary=summary, giftmessage=giftmessage,
@@ -3743,6 +3769,41 @@ class AdminAdSettings(Templated):
         from r2.lib import ad_settings
         self.settings = ad_settings.ad_settings()
         self.modes = ad_settings.MODES
+        Templated.__init__(self)
+
+
+class AdminPaymentSettings(Templated):
+    """The admin interface for the payment providers (r2.lib.payments)
+    and the latest payments."""
+    def __init__(self):
+        from r2.lib import payments
+        settings = payments.payment_settings()
+        # never send saved secrets back to the browser, only whether they're set
+        self.settings = {name: value for name, value in settings.items()
+                         if name not in payments.SECRET_SETTINGS}
+        self.secret_is_set = {name: bool(settings[name])
+                              for name in payments.SECRET_SETTINGS}
+        self.providers = [
+            dict(name=p, title=_(payments.PROVIDERS[p][0]),
+                 configured=payments.configured(p, settings),
+                 webhook_url=payments.webhook_url(p),
+                 modes=payments.MODES.get(p, ()),
+                 can_check=payments.can_check(p))
+            for p in payments.PROVIDER_ORDER]
+        self.enabled = payments.enabled_providers(settings=settings)
+        self.payments = payments.recent(50)
+        buyer_ids = {p["account_id"] for p in self.payments if p["account_id"]}
+        buyers = Account._byID(list(buyer_ids), data=True, ignore_missing=True,
+                               return_dict=True) if buyer_ids else {}
+        self.buyer_names = {i: a.name for i, a in buyers.items()}
+        self.provider_names = {p: _(names[0]) for p, names
+                               in payments.PROVIDERS.items()}
+        self.status_names = {s: _(n) for s, n
+                             in payments.STATUS_NAMES.items()}
+        self.can_refund = {p: payments.can_refund(p)
+                           for p in payments.PROVIDER_ORDER}
+        self.month_price = g.gold_month_price
+        self.year_price = g.gold_year_price
         Templated.__init__(self)
 
 
@@ -5352,6 +5413,29 @@ class PaymentForm(Templated):
         self.budget = format_currency(campaign.total_budget_dollars, 'USD',
             locale=c.locale)
         Templated.__init__(self, **kw)
+
+
+class PromotePayment(Templated):
+    """Paying for an ad's campaign with the providers on /admin/payments
+    (r2.lib.payments.ads): the whole budget, when it's submitted."""
+    def __init__(self, link, campaign):
+        from r2.lib import payments
+        from r2.lib.payments import ads
+        self.link = link
+        self.campaign_id36 = campaign._id36
+        self.duration = strings.time_label % {
+            'num': campaign.ndays,
+            'time': ungettext("day", "days", campaign.ndays)}
+        self.start_date = campaign.start_date.strftime("%m/%d/%Y")
+        self.end_date = campaign.end_date.strftime("%m/%d/%Y")
+        self.budget = format_currency(campaign.total_budget_dollars, 'USD',
+                                      locale=c.locale)
+        bid = ads.campaign_bid(link, campaign)
+        self.paid = bool(bid and not bid.is_void() and bid.is_charged())
+        self.providers = [(p, _(payments.PROVIDERS[p][1]))
+                          for p in payments.enabled_providers("ad")]
+        self.edit_url = promote.promo_edit_url(link)
+        Templated.__init__(self)
 
 
 class Bookings:

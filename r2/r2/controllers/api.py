@@ -4779,6 +4779,111 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        gold_enabled=VBoolean("gold_enabled"),
+        ads_enabled=VBoolean("ads_enabled"),
+        paypal_enabled=VBoolean("paypal_enabled"),
+        paypal_mode=VOneOf("paypal_mode", ("sandbox", "live")),
+        paypal_client_id=VLength("paypal_client_id", max_length=200,
+                                 empty_error=None),
+        paypal_client_secret=VLength("paypal_client_secret", max_length=200,
+                                     empty_error=None),
+        stripe_enabled=VBoolean("stripe_enabled"),
+        stripe_secret_key=VLength("stripe_secret_key", max_length=300,
+                                  empty_error=None),
+        coinbase_enabled=VBoolean("coinbase_enabled"),
+        coinbase_mode=VOneOf("coinbase_mode", ("sandbox", "live")),
+        coinbase_key_id=VLength("coinbase_key_id", max_length=300,
+                                empty_error=None),
+        coinbase_key_secret=VLength("coinbase_key_secret", max_length=1000,
+                                    empty_error=None),
+        bitpay_enabled=VBoolean("bitpay_enabled"),
+        bitpay_mode=VOneOf("bitpay_mode", ("test", "live")),
+        bitpay_token=VLength("bitpay_token", max_length=200,
+                             empty_error=None),
+    )
+    def POST_payment_settings(self, form, jquery, **values):
+        """Save the payment provider settings (override the ini file)."""
+        from r2.lib import payments, site_settings
+        fields = [name for name in values
+                  if name.endswith(("_mode", "_id", "_secret", "_key",
+                                    "_token"))]
+        if form.has_errors(fields, errors.TOO_LONG, errors.INVALID_OPTION):
+            return
+
+        settings = site_settings.get_settings(payments.GROUP)
+        for name, value in values.items():
+            if name in payments.SECRET_SETTINGS:
+                # secrets are never shown in the form; a blank field keeps
+                # the saved value
+                if value and value.strip():
+                    settings[name] = value.strip()
+            elif isinstance(payments.SETTINGS[name], bool):
+                settings[name] = bool(value)
+            else:
+                settings[name] = (value or "").strip()
+
+        secret_key = settings.get("stripe_secret_key", "")
+        if values["stripe_secret_key"] and not secret_key.startswith(
+                ("sk_", "rk_")):
+            c.errors.add(errors.INVALID_OPTION, field="stripe_secret_key")
+            form.has_errors("stripe_secret_key", errors.INVALID_OPTION)
+            return
+
+        site_settings.save_settings(payments.GROUP, settings)
+        effective = payments.payment_settings()
+        missing = [_(payments.PROVIDERS[p][0])
+                   for p in payments.PROVIDER_ORDER
+                   if effective[p + "_enabled"] and
+                   not payments.configured(p, effective)]
+        if missing:
+            form.set_text(".status", _("saved, but these aren't on until "
+                                       "their keys are filled in: %(names)s")
+                          % {"names": ", ".join(missing)})
+        else:
+            form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        action=VOneOf("action", ("check", "sync", "refund", "mark_refunded")),
+        provider=VOneOf("provider", ("paypal", "stripe", "coinbase",
+                                     "bitpay")),
+        payment_id=VLength("payment_id", max_length=40, empty_error=None),
+    )
+    def POST_payment_action(self, form, jquery, action, provider, payment_id):
+        """On /admin/payments: test a provider's keys, or look up, refund or
+        mark refunded one payment."""
+        from r2.lib import payments
+        if action == "check":
+            if not provider:
+                return
+            error = payments.check_credentials(provider)
+            form.set_text(".status", _("the keys work") if not error
+                          else _("didn't work: %(error)s") % {"error": error})
+            return
+
+        payment = payments.get(payment_id)
+        if not payment or not action:
+            form.set_text(".status", _("no such payment"))
+            return
+        try:
+            if action == "sync":
+                payment = payments.sync(payment)
+            elif action == "refund":
+                payments.refund(payment, c.user)
+                payment = payments.get(payment_id)
+            elif action == "mark_refunded":
+                payments.mark_refunded(payment, c.user)
+                payment = payments.get(payment_id)
+        except payments.PaymentError as e:
+            form.set_text(".status", _("didn't work: %(error)s")
+                          % {"error": str(e)})
+            return
+        form.set_text(".status", _(payments.STATUS_NAMES[payment["status"]]))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         signups=VOneOf("signups", ("open", "closed")),
         **{name: VLength(name, max_length=length, empty_error=None)
            for name, length in site_info_text_lengths().items()}
@@ -5986,6 +6091,7 @@ class ApiController(TipprController):
             recipient=recipient.name,
             giftmessage=None,
             thing=thing._fullname,
+            months=1,
         ))
 
     @json_validate(

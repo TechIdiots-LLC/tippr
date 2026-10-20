@@ -238,11 +238,11 @@ def months_and_days_from_pennies(pennies, discount=False):
         month_pennies = g.gold_month_price.pennies
 
     if pennies >= year_pennies:
-        years = pennies / year_pennies
+        years = pennies // year_pennies
         months = 12 * years
         days  = 366 * years
     else:
-        months = pennies / month_pennies
+        months = pennies // month_pennies
         days   = 31 * months
     return (months, days)
 
@@ -1328,7 +1328,7 @@ def validate_blob(custom):
 def days_from_months(months):
     if months >= 12:
         assert months % 12 == 0
-        years = months / 12
+        years = months // 12
         days = years * 366
     else:
         days = months * 31
@@ -1355,7 +1355,7 @@ def reverse_gold_purchase(transaction_id):
     buyer = Account._byID(int(transaction.account_id), data=True)
     recipient = None
     days = transaction.days
-    months = days / 31
+    months = days // 31
 
     if transaction.subscr_id:
         goldtype = 'autorenew'

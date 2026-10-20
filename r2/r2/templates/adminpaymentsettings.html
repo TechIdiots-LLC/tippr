@@ -1,0 +1,279 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+<%!
+   from r2.lib.filters import scriptsafe_dumps
+   from r2.lib.payments import dollars
+%>
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="text_field(name, placeholder='')">
+  <input type="text" name="${name}" value="${thing.settings[name]}"
+         placeholder="${placeholder}" autocomplete="off" class="payment-field">
+  ${error_field("TOO_LONG", name, "span")}
+</%def>
+
+<%def name="secret_field(name, multiline=False)">
+  <% placeholder = _('saved; leave blank to keep') if thing.secret_is_set[name] else _('not set') %>
+  %if multiline:
+    <textarea name="${name}" rows="3" autocomplete="off" class="payment-field"
+              placeholder="${placeholder}"></textarea>
+  %else:
+    <input type="password" name="${name}" autocomplete="new-password"
+           class="payment-field" placeholder="${placeholder}">
+  %endif
+  ${error_field("TOO_LONG", name, "span")}
+  ${error_field("INVALID_OPTION", name, "span")}
+</%def>
+
+<%def name="enabled_box(provider)">
+  <% name = provider + "_enabled" %>
+  <input type="checkbox" name="${name}" id="${name}"
+         ${'checked' if thing.settings[name] else ''}>
+  <label for="${name}">${_("take payments with %(provider)s") % dict(provider=thing.provider_names[provider])}</label>
+</%def>
+
+<%def name="mode_select(provider, labels)">
+  <% name = provider + "_mode" %>
+  <select name="${name}">
+    %for mode, label in labels:
+      <option value="${mode}" ${'selected' if thing.settings[name] == mode else ''}>${label}</option>
+    %endfor
+  </select>
+</%def>
+
+## one action on one payment (each its own form: post_form doesn't send
+## which button was clicked)
+<%def name="row_action(payment, action, label, confirm=None)">
+  <form action="/api/payment_action" method="post" class="pretty-form payment-row-action"
+        %if confirm:
+          onsubmit="return confirm(${scriptsafe_dumps(confirm)}) && post_form(this, 'payment_action');"
+        %else:
+          onsubmit="return post_form(this, 'payment_action');"
+        %endif
+        >
+    <input type="hidden" name="payment_id" value="${payment['id']}">
+    <input type="hidden" name="action" value="${action}">
+    <button class="btn" type="submit">${label}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+<%def name="webhook_row(provider, note)">
+  <tr>
+    <td>${_("webhook address")}</td>
+    <td>
+      <code>${thing.webhook_urls[provider]}</code>
+      <br><small>${note}</small>
+    </td>
+  </tr>
+</%def>
+
+<%
+   thing.webhook_urls = dict((p["name"], p["webhook_url"]) for p in thing.providers)
+%>
+
+<h1>${_("payments")}</h1>
+
+<p>
+  ${_("Take payments for gold (and coins, gifts and gift codes) and for sold ads with your own accounts at these providers. Turn on the ones you use and enter their API keys; buyers pick one on the payment page and pay on the provider's own page, so card details never reach this site. Settings saved here override the ini file and apply immediately.")}
+</p>
+<p>
+  ${_("Prices are in US dollars: gold is %(month)s a month and %(year)s a year (gold_month_price and gold_year_price in the ini).") % dict(month="$" + dollars(thing.month_price.pennies), year="$" + dollars(thing.year_price.pennies))}
+  &#32;
+  ${_("Webhooks are optional: payments complete when the buyer comes back from paying either way, but with webhooks they also complete if the buyer closes the window first, and refunds made in the provider's dashboard reach the site. Webhooks are only a cue: the site always asks the provider what happened.")}
+</p>
+
+%if not thing.enabled:
+  <p class="payment-notice">${_("No provider is on yet, so the payment page only offers coins (and the old ini-configured buttons, if any).")}</p>
+%endif
+
+<form id="payment-settings" action="/api/payment_settings" method="post"
+      class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'payment_settings');">
+  <table class="lined-table borderless payment-settings">
+    <tr><th colspan="2">${_("what can be bought")}</th></tr>
+    <tr>
+      <td>${_("gold")}</td>
+      <td>
+        <input type="checkbox" name="gold_enabled" id="gold_enabled"
+               ${'checked' if thing.settings['gold_enabled'] else ''}>
+        <label for="gold_enabled">${_("gold, coins, gifts and gift codes")}</label>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("ads")}</td>
+      <td>
+        <input type="checkbox" name="ads_enabled" id="ads_enabled"
+               ${'checked' if thing.settings['ads_enabled'] else ''}>
+        <label for="ads_enabled">${_("sold ads (promoted posts), paid when submitted and refunded if rejected")}</label>
+      </td>
+    </tr>
+
+    <tr><th colspan="2">${_("PayPal")}</th></tr>
+    <tr>
+      <td></td>
+      <td>
+        ${enabled_box("paypal")}
+        <br><small>${_("Buyers pay with PayPal, Venmo (US), Pay Later, or a debit or credit card without a PayPal account.")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("environment")}</td>
+      <td>${mode_select("paypal", [("sandbox", _("sandbox (testing)")), ("live", _("live"))])}</td>
+    </tr>
+    <tr>
+      <td>${_("client ID")}</td>
+      <td>
+        ${text_field("paypal_client_id")}
+        <br><small>${_("From developer.paypal.com: Apps & Credentials, create a REST API app (sandbox and live have separate apps).")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("secret")}</td>
+      <td>${secret_field("paypal_client_secret")}</td>
+    </tr>
+    ${webhook_row("paypal", _("In the app's settings, add a webhook for Checkout order approved, Payment capture completed, denied and refunded."))}
+
+    <tr><th colspan="2">${_("Stripe")}</th></tr>
+    <tr>
+      <td></td>
+      <td>
+        ${enabled_box("stripe")}
+        <br><small>${_("Buyers pay on Stripe Checkout with a card, Google Pay, Apple Pay, Link and any other method turned on in the Stripe dashboard (Settings > Payment methods).")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("secret key")}</td>
+      <td>
+        ${secret_field("stripe_secret_key")}
+        <br><small>${_("From the Stripe dashboard: Developers > API keys. sk_test_… for testing, sk_live_… for real payments.")}</small>
+      </td>
+    </tr>
+    ${webhook_row("stripe", _("Under Developers > Webhooks, add an endpoint for checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired and charge.refunded."))}
+
+    <tr><th colspan="2">${_("Coinbase")}</th></tr>
+    <tr>
+      <td></td>
+      <td>
+        ${enabled_box("coinbase")}
+        <br><small>${_("Buyers pay in USDC (a dollar stablecoin) from Coinbase or any crypto wallet, through Coinbase Business checkouts. Coinbase Commerce, the old service, has shut down.")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("environment")}</td>
+      <td>${mode_select("coinbase", [("sandbox", _("sandbox (testing)")), ("live", _("live"))])}</td>
+    </tr>
+    <tr>
+      <td>${_("API key ID")}</td>
+      <td>
+        ${text_field("coinbase_key_id")}
+        <br><small>${_("A secret API key from portal.cdp.coinbase.com (API keys), for the project linked to your Coinbase Business account.")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("API key secret")}</td>
+      <td>${secret_field("coinbase_key_secret", multiline=True)}</td>
+    </tr>
+    ${webhook_row("coinbase", _("Webhooks are added with the CDP command line tool, subscribed to the checkout.payment events."))}
+
+    <tr><th colspan="2">${_("BitPay")}</th></tr>
+    <tr>
+      <td></td>
+      <td>
+        ${enabled_box("bitpay")}
+        <br><small>${_("Buyers pay with Bitcoin and the other coins BitPay accepts. Refunds are made in the BitPay dashboard, then marked refunded below.")}</small>
+      </td>
+    </tr>
+    <tr>
+      <td>${_("environment")}</td>
+      <td>${mode_select("bitpay", [("test", _("test (test.bitpay.com)")), ("live", _("live"))])}</td>
+    </tr>
+    <tr>
+      <td>${_("API token")}</td>
+      <td>
+        ${secret_field("bitpay_token")}
+        <br><small>${_("From the BitPay dashboard: Payment Tools > API Tokens, a point-of-sale token without \"require authentication\". The test site needs its own account and token.")}</small>
+      </td>
+    </tr>
+    ${webhook_row("bitpay", _("Nothing to set up: each invoice tells BitPay where to send its notifications."))}
+  </table>
+
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+</form>
+
+<h2>${_("test the keys")}</h2>
+<p>${_("Asks each provider whether the saved keys work (save first). BitPay's can only be tested with a purchase.")}</p>
+<div class="payment-checks">
+  %for p in thing.providers:
+    %if p["can_check"]:
+      <form action="/api/payment_action" method="post" class="pretty-form payment-check"
+            onsubmit="return post_form(this, 'payment_action');">
+        <input type="hidden" name="action" value="check">
+        <input type="hidden" name="provider" value="${p['name']}">
+        <button class="btn" type="submit" ${'' if p['configured'] else 'disabled'}>${p["title"]}</button>
+        <span class="status">${'' if p['configured'] else _('not set up')}</span>
+      </form>
+    %endif
+  %endfor
+</div>
+
+<h2>${_("latest payments")}</h2>
+%if not thing.payments:
+  <p>${_("No payments yet.")}</p>
+%else:
+  <table class="lined-table payment-list">
+    <tr>
+      <th>${_("date")}</th>
+      <th>${_("what")}</th>
+      <th>${_("buyer")}</th>
+      <th>${_("amount")}</th>
+      <th>${_("provider")}</th>
+      <th>${_("status")}</th>
+      <th></th>
+    </tr>
+    %for payment in thing.payments:
+      <tr>
+        <td>${payment["created"].strftime("%Y-%m-%d %H:%M")}</td>
+        <td>${payment["description"]}</td>
+        <td>
+          %if payment["account_id"] in thing.buyer_names:
+            <% name = thing.buyer_names[payment["account_id"]] %>
+            <a href="/admin/users/${name}">${name}</a>
+          %elif payment["account_id"]:
+            #${payment["account_id"]}
+          %else:
+            ${payment["email"] or ""}
+          %endif
+        </td>
+        <td>$${dollars(payment["pennies"])}</td>
+        <td>${thing.provider_names.get(payment["provider"], payment["provider"])}</td>
+        <td>${thing.status_names.get(payment["status"], payment["status"])}</td>
+        <td class="payment-row-actions">
+          ${row_action(payment, "sync", _("check"))}
+          %if payment["status"] == "paid":
+            %if thing.can_refund.get(payment["provider"]):
+              ${row_action(payment, "refund", _("refund"),
+                           _("Refund this payment in full and take back what it bought?"))}
+            %else:
+              ${row_action(payment, "mark_refunded", _("mark refunded"),
+                           _("Mark this payment refunded (after refunding it in the provider's dashboard) and take back what it bought?"))}
+            %endif
+          %endif
+        </td>
+      </tr>
+    %endfor
+  </table>
+%endif
