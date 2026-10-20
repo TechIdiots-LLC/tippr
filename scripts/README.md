@@ -12,6 +12,31 @@ Safety rules before using any script that mutates data:
 - Use `--dry-run` where available to preview actions.
 - Review the script source before running; do not run as root unless necessary.
 
+## Site setup and maintenance
+
+Run these with `tippr-run` (e.g. `tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py`).
+The installer runs the first four on every install; they're safe to re-run.
+
+- `create_default_user.py`: the admin account.
+- `create_default_vaults.py`: the starter vaults, and the front page
+  defaults if the site has none (docs/CONTENT.md).
+- `create_default_awards.py`: the starter awards (trophies).
+- `init_policy_wiki_pages.py`: the policy and help pages from docs/policies
+  and docs/help, kept up to date on every install except pages an admin
+  edited on the site (`FORCE_POLICY_IMPORT=1` replaces those too).
+- `import_feeds.py`: see below; adds the starter feeds.
+- `prune_default_vaults.py`: takes front page defaults without an enabled
+  feed off the list (`PRUNE_DRY_RUN=1` to preview, `PRUNE_KEEP=a,b` to keep
+  some).
+- `fix_feed_titles.py`: decodes HTML codes (`&#8216;`) left in feed posts'
+  titles (`FIX_DRY_RUN=1` to preview).
+- `backfill_thumbnails.py`: queues recent link posts without a thumbnail
+  for the thumbnail finder (`THUMB_DAYS`, default 3).
+- `gmail_oauth_setup.py`: connects a Google account for sending email
+  (docs/EMAIL.md).
+
+## Maintenance and diagnostics
+
 Files:
 
 - `import_policy_cqlsh.py`: imports policy pages into Cassandra via `cqlsh`.

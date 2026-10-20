@@ -57,13 +57,14 @@ The Moderator Guidelines cover:
 
 ### Initializing Wiki Pages
 
-After setting up your Tippr instance, run the initialization script to populate the wiki pages:
+The installer runs `scripts/init_policy_wiki_pages.py`, which creates the
+wiki pages (and keeps them up to date, below). To run it yourself:
 
 ```bash
-python scripts/init_policy_wiki_pages.py
+sudo tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py
 ```
 
-This will create wiki pages at:
+The pages are at:
 - `/help/useragreement`
 - `/help/privacypolicy`
 - `/help/contentpolicy`
@@ -84,8 +85,10 @@ wiki_page_moderator_guidelines = moderatorguidelines
 
 After initialization, you can edit the policies through:
 
-1. **Wiki Interface**: Navigate to `/wiki/edit/[pagename]`
-2. **Direct File Edit**: Modify the files in `docs/policies/` and re-run the init script
+1. **Wiki Interface**: Navigate to `/wiki/edit/[pagename]`. A page edited
+   there is yours: upgrades leave it alone.
+2. **Direct File Edit**: Modify the files in `docs/policies/` and re-run the
+   init script (every install and upgrade does).
 
 ## Moderator Welcome Message
 
@@ -117,15 +120,17 @@ section of the site's contact page (`/contact#privacy`, `#legal`, `#appeals`,
 where one is set, an email address. That works on any domain, and nobody's
 address is built into the text.
 
-Set those before the pages are created, or rebuild the pages afterwards
-(this replaces edits made on the wiki):
+Every install or upgrade brings the pages up to date with these files
+(and their current /admin/site settings), and sets a page's "Last Revised"
+date to the day its text changed; a page whose text is the same keeps its
+date. A page an admin edited on the wiki (`/wiki/useragreement` and so on)
+is left alone, so editing them there is safe. To replace those too:
 
 ```bash
 sudo env FORCE_POLICY_IMPORT=1 tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py
 ```
 
-Existing pages are never changed otherwise, so editing them on the wiki
-(`/wiki/useragreement` and so on) is safe. Still:
+Still:
 
 1. **Review the jurisdiction**: the policies are written with US law in
    mind; adapt them if you're elsewhere.

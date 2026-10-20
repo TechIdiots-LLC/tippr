@@ -54,7 +54,8 @@ Set these as environment variables when running the installer:
 | `TIPPR_EXTERNAL_PROXY` | | behind another proxy that does TLS (e.g. HAProxy on OPNsense or pfSense): its address(es), e.g. `192.168.1.1`. nginx then serves plain HTTP on port 80 and trusts `X-Forwarded-For` from those addresses only ([below](#behind-another-proxy)) |
 | `TIPPR_FIREWALL`, `TIPPR_SSH_PORT` | `0`, `22` | `1`: ufw allowing only SSH, HTTP and HTTPS |
 | `TIPPR_DB_PASSWORD`, ... | generated | override a generated password |
-| `TIPPR_PLUGINS` | `about gold` | plugins to install |
+| `TIPPR_MEDIA_STORAGE` | disk | `s3`: keep uploads in an S3-compatible bucket ([STORAGE.md](STORAGE.md)) |
+| `TIPPR_PLUGINS` | `about gold` | reddit-style plugins, used only if their checkout is in `$TIPPR_HOME/src` (none is by default; tippr's own features don't need them) |
 | `TIPPR_BUILD_MCROUTER` | `0` | `1`: build mcrouter from source (20+ minutes; not used by default) |
 | `TIPPR_BRANCH`, `TIPPR_COPY_LOCAL` | | install a branch, or copy a local checkout instead of cloning |
 | `TIPPR_YES` | | `1`: don't ask before starting (also skipped when there's no terminal) |
@@ -86,6 +87,13 @@ the admin account, plus the site's signing secrets. It keeps them in
    - `/admin/email`: outgoing email ([EMAIL.md](EMAIL.md)). Without it,
      verification and password-reset emails aren't sent.
    - `/admin/ads`: Google AdSense, if you want ads ([below](#google-adsense)).
+   - `/admin/payments`: PayPal, Stripe, Coinbase or BitPay, to sell gold
+     and ads ([gold-payments.md](gold-payments.md)).
+   - `/admin/feeds`: the feeds that post into vaults. A new site has
+     none; `FEEDS_ADD=1 tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py` adds
+     the starter feeds for the starter vaults ([CONTENT.md](CONTENT.md)).
+   - `/admin/config`: the live settings (who's staff, captcha and vault
+     creation thresholds, sidebar and welcome messages).
    - `/admin/backups`: backups ([BACKUP.md](BACKUP.md)).
 4. **Starter vaults** and front page defaults are created by
    `scripts/create_default_vaults.py`, which the installer runs
@@ -109,8 +117,11 @@ tippr.target`) cover them all.
   `$TIPPR_HOME/consumer-count.d`; apply a change with
   `systemctl reload tippr-consumers`.
 - `tippr-job-*.timer`: scheduled maintenance jobs. List them with
-  `systemctl list-timers 'tippr-job-*'`. `tippr-job-update_gold_users.timer`
-  is installed but not enabled.
+  `systemctl list-timers 'tippr-job-*'`. Among them: `tippr-job-feeds`
+  (posts new feed items), `tippr-job-email` (sends queued email),
+  `tippr-job-update_gold_users` (ends gold when it runs out),
+  `tippr-job-vault_similarity` (Explore's recommendations) and
+  `tippr-job-year_clubs` (the X-Year Club trophies).
 
 Not part of `tippr.target`:
 

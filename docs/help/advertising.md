@@ -6,7 +6,7 @@ Businesses and members can promote a post: it shows, marked as sponsored, at the
 
 1. **Make the post.** A promoted post is a link or text post like any other, with a title and an optional thumbnail. People can vote and comment on it.
 2. **Plan a campaign.** Choose where it shows (the front page, or particular vaults), the dates, and either a budget or how many impressions you want. The planner tells you how much room there is in the places and dates you chose.
-3. **Pay.** Payment is taken when the campaign is approved.
+3. **Pay.** You pay the whole budget when you submit the campaign, with one of the payment methods the site offers. If the campaign isn't approved, or you change its budget or delete it before it starts, the payment is refunded; if it shows less than you paid for, the unspent part is refunded.
 4. **Review.** The site's staff check each campaign before it runs. They may ask for changes, or turn it down if it breaks these rules.
 5. **Watch it run.** Your campaign's traffic page shows impressions and clicks as it goes.
 

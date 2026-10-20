@@ -7,12 +7,11 @@ they're loaded into the site wiki by `scripts/init_policy_wiki_pages.py`
 `{{DOMAIN}}`, `{{SITE_URL}}`, `{{OPERATOR}}` and `{{GOVERNING_LAW}}`,
 filled in from /admin/site.
 
-Existing pages aren't overwritten on a re-run. After changing these files,
-reload them with:
+Every install or upgrade brings the pages up to date with these files,
+except a page an admin edited on the site (at /wiki/help/<name>), which is
+left alone. To replace those too:
 
     sudo env FORCE_POLICY_IMPORT=1 tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py
-
-or edit a page on the site at /wiki/help/<name> (as an admin).
 
 To add a page, add a `.md` file here (its first `# heading` is its title)
 and its name to `HELP_PAGES` in `r2/r2/controllers/policies.py`.

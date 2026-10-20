@@ -23,8 +23,17 @@ What's different:
   technology, science, making things and fun, including LGBTQ+. The
   content policy explicitly bans hate based on sexual orientation and
   gender identity.
-- **Admin pages** for email, Google AdSense and backups, without editing
-  config files.
+- **Feeds:** vaults can fill themselves from RSS and Atom feeds, so a new
+  site has posts from day one (starter feeds included).
+- **Gold and sold ads with your own payment accounts:** PayPal, Stripe
+  (cards, Google Pay, Apple Pay), Coinbase and BitPay, set up on an admin
+  page.
+- **Built-in reading features** that used to need a browser extension:
+  night mode, infinite scroll, keyboard navigation, expanding images,
+  filters, user tags, new-comment counts and an account switcher.
+- **Admin pages** for site settings, email, spam protection, AdSense,
+  payments, feeds, backups, users and vaults, and a support queue for
+  messages to the admins, without editing config files.
 - **Backups and server moves:** export the whole site, copy it to another
   server over HTTPS, and restore it there.
 - A new look: teal theme, Noto Sans, the tippr bot.
@@ -88,11 +97,14 @@ sudo tippr-backup export --offline           # back up the site
 | [docs/RELEASING.md](docs/RELEASING.md) | how releases (Docker image, bundles) are built |
 | [docs/ADMIN_FEATURES.md](docs/ADMIN_FEATURES.md) | admin mode and admin pages |
 | [docs/EMAIL.md](docs/EMAIL.md) | outgoing email (SMTP or Gmail) |
+| [docs/gold-payments.md](docs/gold-payments.md) | payments for gold and sold ads |
+| [docs/STORAGE.md](docs/STORAGE.md) | where uploads are kept (disk or S3) |
 | [docs/SEARCH.md](docs/SEARCH.md) | OpenSearch |
 | [docs/CONTENT.md](docs/CONTENT.md) | starter vaults and AI content labels |
 | [docs/PRIVACY_FEATURES.md](docs/PRIVACY_FEATURES.md) | data export and account deletion |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | what's planned |
 | [docs/policies/](docs/policies/) | content policy, terms, privacy policy, moderator guidelines |
+| [docs/help/](docs/help/) | the site's help pages (/help) |
 
 ## Contributing
 

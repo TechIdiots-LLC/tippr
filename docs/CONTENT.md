@@ -4,26 +4,48 @@
 
 The installer runs `scripts/create_default_vaults.py`, which creates a
 starter set of vaults owned and moderated by the admin account, and makes
-most of them the front page defaults (what logged-out and new users see).
+some of them the front page defaults (what logged-out and new users see).
 
-- Defaults lean toward technology, science, making things and fun:
-  technology, programming, linux, selfhosted, electronics,
-  mechanicalkeyboards, privacy, science, space, gaming, cozygaming,
-  retrogaming, anime, diy, fiberarts, thrift, 3dprinting, food, art, music,
-  photography, writing, memes, aesthetics, popculture, pics, aww, books,
-  movies, til, asktippr, lgbtq, skincare and tippr.
+- Only vaults with starter feeds are defaults, so a newcomer's front page
+  has no empty vaults: technology, programming, cybersecurity, electronics,
+  science, space, gaming, diy, thrift, 3dprinting, food, art, music,
+  photography, writing, books, comics, memes, popculture, movies, til,
+  skincare and lgbtq.
 - lgbtq is a default on purpose: tippr is meant to be a welcoming site for
   LGBTQ+ people, and the content policy bans hate based on sexual
   orientation and gender identity. dragrace exists too, but isn't a
   default.
-- news, worldnews and politics exist but aren't defaults. They don't fill
-  the front page unless people subscribe.
-- aiart and aimusic are for AI-generated work, so art and music can stay
-  human-made. They aren't defaults either.
+- The rest exist without being defaults: community vaults without feeds
+  (tippr, asktippr, linux, selfhosted, privacy, mechanicalkeyboards,
+  cozygaming, retrogaming, anime, fiberarts, aesthetics, pics, aww), heavy
+  news (news, worldnews, politics, business), and more specialised ones
+  (devops, ainews, gis, marketing, sports, podcasts, videos, blogs,
+  curated, design). aiart and aimusic are for AI-generated work, so art
+  and music can stay human-made.
 
 The script is safe to re-run: existing vaults are left as their moderators
 set them, and the default list is only set when the site has none yet. Edit
-the `VAULTS` list in the script to change what a new install gets.
+the `VAULTS` list in the script to change what a new install gets. Admins
+can add or remove defaults on /admin/vaults; `scripts/prune_default_vaults.py`
+takes every default without a feed off the list (`PRUNE_DRY_RUN=1` to
+preview).
+
+## Feeds
+
+Vaults can fill themselves from RSS and Atom feeds (/admin/feeds): every
+15 minutes `tippr-job-feeds` checks the feeds that are due and posts their
+new items into each feed's vault, from a bot account, with an optional
+title prefix such as `[NASA]`. A new
+site has no feeds; `scripts/starter_feeds.txt` lists public feeds for the
+starter vaults, and
+
+```bash
+FEEDS_ADD=1 tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py
+```
+
+adds them (without `FEEDS_ADD=1` it only lists what it would add). It's
+safe to re-run: feeds already on a vault are skipped. Feed posts get
+thumbnails like any link post.
 
 ## AI content labels
 

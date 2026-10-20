@@ -42,7 +42,8 @@ on port 80 and takes client addresses from that proxy's `X-Forwarded-For`.
   - `development.secrets`, the passwords and signing secrets the installer
     generates from `/etc/tippr/secrets.env`.
 
-  Settings saved on admin pages (site details, email, ads) are kept in
+  Settings saved on admin pages (site details, email, ads, payments, live
+  config) are kept in
   ZooKeeper and override the ini without a restart
   (`r2/lib/site_settings.py`).
 
@@ -50,7 +51,7 @@ on port 80 and takes client addresses from that proxy's `X-Forwarded-For`.
 
 | Store | Holds | Rebuildable? |
 |---|---|---|
-| **PostgreSQL** (database `tippr`) | "things" and their relations: accounts, posts, comments, vaults, messages, subscriptions, moderators; the hardcache | no: back it up |
+| **PostgreSQL** (database `tippr`) | "things" and their relations: accounts, posts, comments, vaults, messages, subscriptions, moderators; the hardcache; gold purchases, payments, sold ads' bids, feeds, support tickets | no: back it up |
 | **Cassandra** (keyspace `tippr`) | votes, saved and hidden items, wiki pages and revisions, mod logs, OAuth tokens, permacache, listing caches. Each table is `key text, columns map<text, blob>` through `r2/lib/db/cassandra_compat.py` | no: back it up |
 | **ZooKeeper** | saved site settings (`/tippr/settings/*`), IP throttles; live config and secrets when `liveconfig_source` / `secrets_source` are `zookeeper` | no: back it up |
 | **Media files** (`/srv/www/media`) | uploaded images and thumbnails (filesystem media provider) | no: back it up |
@@ -77,8 +78,10 @@ rebuilt.
   Some of them poll their queue instead of subscribing, so RabbitMQ can
   show them as having no consumer.
 - **Scheduled jobs** are systemd timers (`tippr-job-*.timer`): rising, time
-  listings, popular and trending vaults, broken things, hardcache cleanup,
-  trylater and the email queue.
+  listings, popular and trending vaults, vault names, broken things,
+  hardcache cleanup, trylater, the email queue, feeds (posting new items),
+  gold expiry, subscriber counts, vault similarity (Explore), the X-Year
+  Club trophies, and sold ads (promos and their metrics).
 - **Services**: `tippr-websockets` (live updates), `tippr-activity` (who's
   here counts), click/pixel trackers and geoip on gunicorn.
 - **Backups**: `tippr-backup.path` starts `tippr-backup.service` for
@@ -94,6 +97,12 @@ With admin mode on (`/adminon`, which requires TOTP in production):
 | Page | For |
 |---|---|
 | `/admin/site` | site name, description, contact address and logo |
+| `/admin/config` | the live settings: staff, thresholds, messages |
+| `/admin/users`, `/admin/vaults` | find and manage accounts and vaults |
+| `/admin/feeds` | the feeds that post into vaults |
+| `/admin/payments` | payment providers for gold and ads ([gold-payments.md](gold-payments.md)) |
+| `/admin/support` | the support queue (messages to the admins) |
+| `/admin/apps`, `/admin/domains` | API apps, banned domains |
 | `/admin/antispam` | the captcha (built-in, Turnstile, hCaptcha, reCAPTCHA) and CleanTalk |
 | `/admin/errors` | recent unhandled errors with tracebacks |
 | `/admin/email` | outgoing email (SMTP or Gmail) |
@@ -114,6 +123,13 @@ See [ADMIN_FEATURES.md](ADMIN_FEATURES.md).
 - **Starter vaults** and front page defaults
   (`scripts/create_default_vaults.py`, [CONTENT.md](CONTENT.md)).
 - **Comments:** a formatting toolbar, previews and `:shortcode:` emoji.
+- **Feeds:** RSS and Atom feeds posting into vaults (`r2/lib/feeds.py`,
+  [CONTENT.md](CONTENT.md#feeds)).
+- **Payments:** gold and sold ads through PayPal, Stripe, Coinbase or BitPay
+  (`r2/lib/payments/`, [gold-payments.md](gold-payments.md)).
+- **Reading features** (preferences): night mode, infinite scroll, keyboard
+  navigation, expanding images, filters, user tags, new-comment counts and
+  an account switcher (`public/static/js/enhancements.js`).
 
 ## Splitting it up
 

@@ -3,7 +3,7 @@
 This document describes the admin features exposed by the local `r2` instance, where to find the handlers, and how to access them for testing.
 
 ## Quick: enable admin mode
-- Turn on admin mode in your browser/session: GET `/adminon` (controller `forms`, action `adminon`).
+- Turn on admin mode in your browser/session: GET `/adminon` (controller `forms`, action `adminon`). In production it asks for your two-factor code, so set up two-factor sign-in (preferences → security) first.
 - Turn off admin mode: GET `/adminoff`.
 
 Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — enabling admin mode typically sets the session cookie used by the validators.
@@ -23,6 +23,12 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/backups` — export, import and restore the site, and transfer keys for moving servers ([BACKUP.md](BACKUP.md)).
 - `/admin/vaults` — find any vault (and the newest and banned ones); on a vault's page, make it a front page default or featured, add or remove moderators without an invitation, and ban it (how a vault is removed: everyone but the admins sees a "banned" page; unbanning restores it). Each action is logged there. Admins can create vaults whatever their karma and account age; the `create_vault_*` limits on `/admin/config` are for everyone else.
 - `/admin/privacy` — users' data export and deletion requests ([PRIVACY_FEATURES.md](PRIVACY_FEATURES.md)).
+- `/admin/config` — the live settings (staff list, captcha and vault-creation thresholds, sidebar, welcome bar and announcement messages, API app rules and more), saved with one button and applied without a restart; every change is logged.
+- `/admin/users` — every account, newest first a page at a time, or search by name, email or IP; an account's page shows its status, IPs, related accounts and support tickets, and lets admins put it in a timeout or suspend it (gold is given on `/admin/gold`).
+- `/admin/feeds` — the RSS and Atom feeds that post into vaults, with their bot accounts, intervals and last errors ([CONTENT.md](CONTENT.md#feeds)).
+- `/admin/apps` — registered API apps: approve, suspend or delete them (new apps can need approval, `apps_require_approval` on /admin/config).
+- `/admin/domains` — banned domains: links to them can't be posted.
+- `/admin/support` — the support queue: messages to the admins (the contact page) become tickets with a category, status and assignee; `/admin/support/staff` grants employees categories to read or answer.
 - `/traffic` and related routes — promoted link and traffic analytics (sitewide, language, advert traffic pages). Requires `VEmployee()`.
 - `/about/log` — moderation/audit log pages.
 - `/health` — JSON versions and service info.
@@ -68,7 +74,7 @@ Files under `r2/r2/templates/` used by admin pages include:
 ## Quick test steps
 1. Start the app locally and your memcached (if you want real fragment caching).
 2. In a browser or curl, enable admin: `GET /adminon`.
-3. Open an admin page, e.g.: `GET /admin/coins` or `GET /admin/gold`.
+3. Open an admin page, e.g.: `GET /admin/site` or `GET /admin/users`.
 4. Check `/health` and `/health/caches` for quick system checks.
 
 ## Next improvements
@@ -76,4 +82,4 @@ Files under `r2/r2/templates/` used by admin pages include:
 - Add a debug helper page that lists rendercache stub keys and recent misses for local development.
 
 ---
-Updated: October 17, 2026
+Updated: October 19, 2026
