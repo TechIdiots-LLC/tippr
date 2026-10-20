@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.12.0
+### ✨ Features and improvements
 - **No more "coins"**: buying gold ahead to give away later is "Give Gold", and what you've bought is just gold
   ("Give Gold: 3 months" on your profile, "use 1 of your 3 months of gold" when paying), on the gold, payment and
   gilding pages, your profile, preferences, the API app permission and /admin/coins. Addresses and the code's names
@@ -33,7 +39,6 @@
   and /gold now offers them only when its keys and plans are set (`stripe_*` secrets, `STRIPE_*_GOLD_PLAN`).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Thumbnails** were never made: the thumbnail finder (`tippr-consumer-scraper_q`) failed on every post under
   Python 3 (in its cache key, URL cleaning, gzip handling, and saving the result, whose keys came out as bytes). They
   are made for new posts now, and `scripts/backfill_thumbnails.py` finds them for the last few days' posts
