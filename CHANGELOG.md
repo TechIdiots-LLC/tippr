@@ -17,6 +17,8 @@
 - **Ads in listings:** the in-feed ad showed once, after the Nth post, although the setting reads as how many posts
   between ads; it now repeats every N posts. Ads on pages infinite scroll adds stayed empty (their start-up script was
   dropped); they load now.
+- **`tippr-run` as root** wrote files the site couldn't use afterwards (compiled templates, media); it now runs as the
+  site's user, keeping the environment (`FEEDS_ADD=1` and the like).
 
 ## 0.12.0
 ### ✨ Features and improvements

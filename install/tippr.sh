@@ -1088,7 +1088,13 @@ chmod +x $TIPPR_VENV/bin/tippr-run-cmd
 
 helper-script /usr/local/bin/tippr-run <<TIPPRRUN
 #!/bin/bash
-# Direct invocation of r2 RunCommand
+# Direct invocation of r2 RunCommand. Run as root, it switches to
+# $TIPPR_USER (keeping the environment, e.g. FEEDS_ADD=1): files it writes,
+# such as compiled templates and media, must belong to the user the site
+# runs as.
+if [ "\$(id -u)" = 0 ] && [ "$TIPPR_USER" != root ]; then
+    exec sudo -E -u $TIPPR_USER -- "\$0" "\$@"
+fi
 cd $TIPPR_SRC/tippr/r2
 exec $TIPPR_VENV/bin/python $TIPPR_VENV/bin/tippr-run-cmd run.ini "\$@"
 TIPPRRUN
