@@ -1309,8 +1309,7 @@ class PrefSecurity(Templated):
         self.two_factor = two_factor.enabled(c.user)
         self.new_codes = two_factor.take_new_codes(c.user)
         self.codes_left = two_factor.recovery_codes_left(c.user)
-        # a code is needed to link or unlink (unless one was entered just now)
-        self.link_needs_code = two_factor.needs_code(c.user, "linked_logins")
+        self.device_days = two_factor.DEVICE_DAYS
         links = {l["provider"]: l for l in linked_logins.links_for(c.user)}
         enabled = linked_logins.enabled_providers()
         self.linked = [
@@ -1330,9 +1329,12 @@ class LinkedLoginLink(Templated):
 
 
 class LinkedLoginOtp(Templated):
-    """The two-factor code, after signing in with a linked account."""
+    """The two-factor code at login (after the password, or after signing
+    in with a linked account)."""
     def __init__(self, token, wrong=False):
-        Templated.__init__(self, token=token, wrong=wrong)
+        from r2.lib import two_factor
+        Templated.__init__(self, token=token, wrong=wrong,
+                           device_days=two_factor.DEVICE_DAYS)
 
 
 class AdminLoginSettings(Templated):

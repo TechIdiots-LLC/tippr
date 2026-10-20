@@ -335,14 +335,19 @@ def unlinked_done(token):
     g.gencache.delete(_unlinked_key(token))
 
 
+# a password login waiting for its two-factor code (r2.controllers.login)
+OTP_COOKIE = "tippr_otp_pending"
+
+
 def _pending_key(token):
     return "linked_login_pending:" + token
 
 
 def hold_for_otp(account, record, provider, subject, link_identity=None):
-    """Signed in at the provider; the account has two-factor sign-in, so
-    keep the sign-in until the code is entered. With link_identity, that
-    outside account is linked once the code is right. Returns the token."""
+    """Signed in at the provider (or with a password: no provider), and
+    the account wants its two-factor code, so keep the sign-in until the
+    code is entered. With link_identity, that outside account is linked
+    once the code is right. Returns the token."""
     token = secrets.token_urlsafe(24)
     g.gencache.set(_pending_key(token), {
         "account_id": account._id, "dest": record["dest"],
@@ -355,12 +360,16 @@ def pending(token):
     return g.gencache.get(_pending_key(token)) if token else None
 
 
+def pending_update(token, held):
+    g.gencache.set(_pending_key(token), held, time=PENDING_TTL)
+
+
 def pending_failed(token, held):
     held["tries"] = held.get("tries", 0) + 1
     if held["tries"] >= 5:
         g.gencache.delete(_pending_key(token))
     else:
-        g.gencache.set(_pending_key(token), held, time=PENDING_TTL)
+        pending_update(token, held)
 
 
 def pending_done(token):

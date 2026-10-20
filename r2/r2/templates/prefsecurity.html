@@ -45,6 +45,18 @@
 % if thing.two_factor:
     ${_md("two-factor authentication is **on**. you're asked for a code from your authenticator app when changing your password or email address, and when linking or unlinking a sign-in. a code you enter counts for 15 minutes.", wrap=True)}
 
+    <form action="/post/two_factor_prefs" method="post" onsubmit="return post_form(this, 'two_factor_prefs')" class="two-factor-prefs">
+    <h2>${_("also ask for a code")}</h2>
+      <p>
+        <input type="checkbox" name="otp_login" id="otp_login" ${"checked" if c.user.pref_otp_login else ""}>
+        <label for="otp_login">${_("when logging in, with your password or a linked Google/Facebook account")}</label>
+        <br><small>${_("you can choose to skip it for %(days)s days on a device you trust") % dict(days=thing.device_days)}</small>
+      </p>
+      ${otp_field()}
+      <button class="btn" type="submit">${_("save")}</button>
+      <span class="status"></span>
+    </form>
+
     <div id="recovery-codes" class="recovery-codes">
     <h2>${_("recovery codes")}</h2>
     %if thing.new_codes:
@@ -131,8 +143,8 @@
   %if thing.just_linked:
     <p class="linked-logins-done">${_("Linked. You can now sign in with it on the login page.")}</p>
   %endif
-  %if thing.link_needs_code:
-    <p>${_("Linking or unlinking needs your two-factor code.")}</p>
+  %if thing.two_factor:
+    <p>${_("Linking or unlinking needs your two-factor code (one you entered in the last 15 minutes counts).")}</p>
   %endif
   <table class="linked-logins-table">
   %for p in thing.linked:
@@ -149,7 +161,7 @@
           <form action="/post/unlink_login" method="post" class="pretty-form"
                 onsubmit="return post_form(this, 'unlink_login')">
             <input type="hidden" name="provider" value="${p['provider']}">
-            %if thing.link_needs_code:
+            %if thing.two_factor:
               ${otp_field()}
             %endif
             <button class="btn" type="submit">${_("unlink")}</button>
@@ -159,7 +171,7 @@
       %elif p["enabled"]:
         <td>${_("not linked")}</td>
         <td>
-        %if thing.link_needs_code:
+        %if thing.two_factor:
           <form action="/post/start_link_login" method="post" class="pretty-form"
                 onsubmit="return post_form(this, 'start_link_login')">
             <input type="hidden" name="provider" value="${p['provider']}">

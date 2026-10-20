@@ -183,6 +183,10 @@ class PostController(ApiController):
         c.render_style = "html"
         response.content_type = "text/html"
 
+        if getattr(c, "two_factor_pending", False):
+            # the password was right; the two-factor code next
+            return self.redirect("/logins/otp" + query_string(dict(dest=dest)))
+
         if not c.user_is_loggedin:
             return LoginPage(user_login = request.POST.get('user'),
                              dest = dest).render()

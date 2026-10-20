@@ -294,6 +294,11 @@ class ApiController(TipprController):
         if len(account_switcher.accounts()) >= account_switcher.MAX_ACCOUNTS:
             return {"error": _("you can keep at most %(n)d other accounts") % {
                 "n": account_switcher.MAX_ACCOUNTS}}
+        from r2.lib import two_factor
+        if (two_factor.login_needs_code(user) and
+                not two_factor.check_code(user, request.params.get("otp"))):
+            return {"error": _("enter that account's two-factor code"),
+                    "need_otp": True}
         account_switcher.remember_current()
         self.login(user, rem=True)
         c.cookies[g.admin_cookie] = Cookie(value="", expires=DELETE)
@@ -5912,6 +5917,25 @@ class ApiController(TipprController):
         c.user.otp_recovery_codes = []
         c.user._commit()
         form.redirect("/prefs/security")
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VTwoFactor("otp", "two_factor_prefs"),
+        login=VBoolean("otp_login"),
+    )
+    def POST_two_factor_prefs(self, form, jquery, login):
+        """Where two-factor sign-in asks for a code besides the always-asked
+        changes (preferences, security)."""
+        from r2.lib import two_factor
+        if not two_factor.enabled(c.user):
+            return
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
+            return
+        c.user.pref_otp_login = login
+        c.user._commit()
+        form.set_inputs(otp="")
+        form.set_text(".status", _("saved"))
 
     @validatedForm(
         VUser(),

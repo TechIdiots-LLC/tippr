@@ -128,7 +128,7 @@ class LinkedLoginsController(TipprController):
         if not account or account._deleted or account._banned:
             return _message(_("That account can't be logged into."))
 
-        if account.otp_secret:
+        if two_factor.login_needs_code(account):
             token = linked_logins.hold_for_otp(account, record, provider,
                                                identity["subject"])
             return BoringPage(_("sign in"), show_sidebar=False,
@@ -140,10 +140,25 @@ class LinkedLoginsController(TipprController):
         c.user = account
         c.user_is_loggedin = True
         self.login(account, rem=rem)
-        linked_logins.touch(provider, subject)
-        g.log.info("linked logins: %s signed in with %s", account.name,
-                   provider)
+        if provider:
+            linked_logins.touch(provider, subject)
+            g.log.info("linked logins: %s signed in with %s", account.name,
+                       provider)
         return self.redirect(_safe_dest(dest))
+
+    @validate(dest=nop("dest"))
+    def GET_otp(self, dest):
+        """A password login waiting for the two-factor code (the login
+        form sends the browser here; r2.controllers.login)."""
+        token = request.cookies.get(linked_logins.OTP_COOKIE)
+        held = linked_logins.pending(token)
+        if not held or c.user_is_loggedin:
+            return self.redirect("/login")
+        if not held.get("dest") and dest:
+            held["dest"] = _safe_dest(dest)
+            linked_logins.pending_update(token, held)
+        return BoringPage(_("sign in"), show_sidebar=False,
+                          content=LinkedLoginOtp(token)).render()
 
     @csrf_exempt
     @validate(token=VLength("token", 200, empty_error=None),
@@ -189,8 +204,9 @@ class LinkedLoginsController(TipprController):
 
     @csrf_exempt
     @validate(token=VLength("token", 200, empty_error=None),
-              otp=nop("otp"))
-    def POST_otp(self, token, otp):
+              otp=nop("otp"),
+              remember=VBoolean("remember"))
+    def POST_otp(self, token, otp, remember):
         """The two-factor code, for an account that has it. (No modhash:
         the sign-in token is the secret.)"""
         held = linked_logins.pending(token)
@@ -206,6 +222,9 @@ class LinkedLoginsController(TipprController):
             return BoringPage(_("sign in"), show_sidebar=False,
                               content=LinkedLoginOtp(token, wrong=True)).render()
         linked_logins.pending_done(token)
+        c.cookies[linked_logins.OTP_COOKIE] = Cookie(value="", expires=DELETE)
+        if remember:
+            two_factor.remember_device(account)
         if held.get("link_identity"):
             return self._link_and_login(account, held["rem"], held["dest"],
                                         held["provider"],

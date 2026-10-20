@@ -78,9 +78,44 @@ def handle_login(
     elif responder.has_errors("passwd", errors.WRONG_PASSWORD):
         _event(error='WRONG_PASSWORD')
 
+    elif not _two_factor_ok(responder, user, rem):
+        _event(error='TWO_FACTOR_REQUIRED')
+
     else:
         controller._login(responder, user, rem)
         _event(error=None)
+
+
+def _two_factor_ok(responder, user, rem):
+    """Whether logging in can go ahead, for an account that wants its
+    two-factor code at login (r2.lib.two_factor.login_needs_code). The code
+    can come with the password (the `otp` parameter, for scripts); the
+    website instead holds the sign-in and asks for it next, on /logins/otp
+    (c.two_factor_pending)."""
+    from datetime import datetime, timedelta
+
+    from r2.lib import linked_logins, two_factor
+    from r2.lib.cookies import Cookie
+
+    if two_factor.from_app() or not two_factor.login_needs_code(user):
+        return True
+    code = request.params.get("otp")
+    if code:
+        if two_factor.check_code(user, code):
+            return True
+    else:
+        token = linked_logins.hold_for_otp(
+            user, {"dest": request.params.get("dest"), "rem": rem},
+            None, None)
+        c.cookies[linked_logins.OTP_COOKIE] = Cookie(
+            value=token, httponly=True, secure=True,
+            expires=datetime.utcnow() + timedelta(
+                seconds=linked_logins.PENDING_TTL))
+        c.two_factor_pending = True
+        responder._send_data(two_factor="/logins/otp")
+    c.errors.add(errors.TWO_FACTOR_REQUIRED, field="otp")
+    responder.has_errors("otp", errors.TWO_FACTOR_REQUIRED)
+    return False
 
 
 def handle_register(

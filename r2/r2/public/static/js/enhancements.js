@@ -1088,11 +1088,19 @@ r.enhancements.accountSwitcher = {
       e.preventDefault()
       self.$status.text('')
       self.post('switch_add', {user: $form.find('[name=user]').val(),
-                               passwd: $form.find('[name=passwd]').val()})
+                               passwd: $form.find('[name=passwd]').val(),
+                               otp: $form.find('[name=otp]').val() || ''})
         .done(function(res) {
           if (res && res.ok) {
             window.location.reload()
           } else {
+            if (res && res.need_otp && !$form.find('[name=otp]').length) {
+              // that account wants its two-factor code at login
+              $('<input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12">')
+                .attr({placeholder: r._('two-factor code'), 'aria-label': r._('two-factor code')})
+                .insertBefore($form.find('button[type=submit]'))
+                .focus()
+            }
             self.$status.text((res && res.error) || r._('couldn\'t add the account'))
           }
         })

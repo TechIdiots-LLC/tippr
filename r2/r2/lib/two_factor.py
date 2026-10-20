@@ -36,6 +36,7 @@ app's access was granted by the member.
 import hashlib
 import hmac
 import secrets
+import time
 from datetime import datetime, timedelta
 
 from pylons import app_globals as g
@@ -47,13 +48,13 @@ DEVICE_DAYS = 30
 DEVICE_COOKIE = "tippr_otp_device"
 RECOVERY_CODES = 10
 MAX_TRIES = 10  # codes checked per account per 10 minutes
-TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 # actions -> the preference that makes them ask (None: always)
 ACTIONS = {
     "password": None,
     "email": None,
     "linked_logins": None,
+    "two_factor_prefs": None,  # where it asks (below)
     "login": "pref_otp_login",
     "settings": "pref_otp_settings",
     "post": "pref_otp_post",
@@ -204,22 +205,21 @@ def device_cookie_name(account):
 
 
 def remember_device(account):
+    """Don't ask for the code at login on this browser for DEVICE_DAYS."""
     from r2.lib.cookies import Cookie
-    timestamp = datetime.utcnow().strftime(TIMESTAMP_FORMAT)
+    timestamp = str(int(time.time()))
     c.cookies[device_cookie_name(account)] = Cookie(
-        value="%s,%s" % (timestamp, _device_signature(account, timestamp)),
+        value="%s.%s" % (timestamp, _device_signature(account, timestamp)),
         expires=datetime.utcnow() + timedelta(days=DEVICE_DAYS),
         httponly=True, secure=True)
 
 
 def device_remembered(account):
     value = request.cookies.get(device_cookie_name(account), "")
-    try:
-        timestamp, signature = value.split(",")
-        when = datetime.strptime(timestamp, TIMESTAMP_FORMAT)
-    except ValueError:
+    timestamp, _, signature = value.partition(".")
+    if not timestamp.isdigit() or not signature:
         return False
-    if datetime.utcnow() - when > timedelta(days=DEVICE_DAYS):
+    if time.time() - int(timestamp) > DEVICE_DAYS * 86400:
         return False
     return hmac.compare_digest(signature, _device_signature(account, timestamp))
 

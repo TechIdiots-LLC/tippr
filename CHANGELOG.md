@@ -11,12 +11,17 @@
 - **Two-factor recovery codes:** turning two-factor on shows ten one-use recovery codes (once) that work in place of
   a code from the app, for a lost phone; preferences → security shows how many are left and makes a new set (the
   old ones stop working). Turning two-factor off removes them.
+- **Two-factor at login (optional):** a member with two-factor on can have it asked for at every login, with the
+  password or a linked Google/Facebook account (preferences → security, "also ask for a code"). After the password
+  the site asks for the code on its own page, with "don't ask again on this device for 30 days"; scripts can send
+  it as `otp` with the password, and adding an account to the account switcher asks too. Signing in with a linked
+  account now asks for the code only when this is on (it always did before).
 - **Sign in with Google or Facebook**, for accounts that linked one. An admin turns providers on at the new
   **/admin/logins** with the site's own OAuth app (client ID and secret; the page shows the redirect address to
   register). Members link an account under preferences → security, or
   by logging in with their password the first time they sign in with an unlinked one; the login page and sidebar
   offer "sign in with Google". It only ever signs in to the account that linked it (nothing is matched by email, and
-  no accounts are created this way), two-factor sign-in still asks for its code, links can be removed at any time,
+  no accounts are created this way), links can be removed at any time,
   and deleting an account removes them. Instagram no longer offers sign-in for other sites.
 - **More starter feeds**, so the starter vaults that had none are front page defaults again: linux, selfhosted,
   privacy, mechanicalkeyboards, cozygaming, retrogaming, anime (Crunchyroll, Anime News Network, Otaku USA), fiberarts,

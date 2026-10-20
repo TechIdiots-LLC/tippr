@@ -248,6 +248,15 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     _handleResult: function(result) {
+        var data = result.json.data || {}
+        if (data.two_factor) {
+            // the password was right; the two-factor code next
+            var here = /\/login\/?$/.test($.url().attr('path')) ? '/' : window.location.pathname + window.location.search,
+                dest = this.$el.find('input[name="dest"]').val() || here
+            this.$el.addClass('working')
+            window.location = data.two_factor + '?dest=' + encodeURIComponent(dest)
+            return
+        }
         if (!result.json.errors.length) {
             // Success. Load the destination page with the new session cookie.
             if (this.successCallback) {

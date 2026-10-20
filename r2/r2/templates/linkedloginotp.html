@@ -13,7 +13,8 @@
 ## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-## after signing in with a linked account that has two-factor sign-in
+## the two-factor code at login: after the password, or after signing in
+## with a linked account (r2.controllers.linked_logins)
 <div class="payment-status linked-login-otp">
   <p>${_("Your account uses two-factor sign-in: enter the code from your authenticator app (or one of your recovery codes).")}</p>
   %if thing.wrong:
@@ -23,6 +24,10 @@
     <input type="hidden" name="token" value="${thing.token}">
     <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
            maxlength="12" autofocus placeholder="${_('two-factor code')}">
+    <label class="two-factor-remember">
+      <input type="checkbox" name="remember">
+      ${_("don't ask again on this device for %(days)s days") % dict(days=thing.device_days)}
+    </label>
     <button class="btn" type="submit">${_("sign in")}</button>
   </form>
 </div>
