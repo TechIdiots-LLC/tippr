@@ -78,11 +78,10 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    first boot to point at separate data store containers), next to the
    all-in-one template, and an installer role setting (`TIPPR_ROLE`) for
    data store containers.
-2. **More two-factor options** (for everyone; admin mode already requires
-   two-factor): passkeys (WebAuthn) as a second factor besides an
-   authenticator app, and recovery codes for someone who loses their
-   device. Today the only way back in is an admin resetting it on
-   /admin/users.
+2. **Passkeys for two-factor.** Two-factor sign-in works for everyone with
+   an authenticator app and recovery codes (and can be required for
+   moderators and staff); passkeys (WebAuthn) would be another way to give
+   the second factor.
 3. **More sign-in providers and signing up with one.** Signing in with a
    linked Google or Facebook account is done (/admin/logins); more
    providers (Microsoft, Apple, GitHub, Discord) are a table entry each in

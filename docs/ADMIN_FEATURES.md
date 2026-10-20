@@ -8,6 +8,11 @@ This document describes the admin features exposed by the local `r2` instance, w
 
 Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — enabling admin mode typically sets the session cookie used by the validators.
 
+## Members' two-factor sign-in
+- Any member can turn on two-factor sign-in under preferences → security (an authenticator app, plus ten one-use recovery codes). It then always asks for a code to change the password or email address, link or unlink a Google/Facebook sign-in, or turn it off; and, if the member chooses, at login (with "don't ask again on this device for 30 days"), when saving preferences and when submitting a post. A code counts for 15 minutes in that session; OAuth apps are never asked. Code: `r2/lib/two_factor.py`.
+- `require_two_factor_staff` on `/admin/config` (off by default) makes moderators, employees and admins turn it on before their tools work (they see a notice until then).
+- Someone locked out without their phone or recovery codes: reset their two-factor on `/admin/users`.
+
 ## Common admin endpoints
 - `/admin/` — admin landing (controller=`awards`).
 - `/admin/awards` — manage awards (list/edit awards).
@@ -20,11 +25,11 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/email` — outgoing email settings: SMTP or Gmail, and a test message ([EMAIL.md](EMAIL.md)).
 - `/admin/ads` — Google AdSense settings ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)).
 - `/admin/payments` — the payment providers for gold and sold ads (PayPal, Stripe, Coinbase, BitPay): turn them on, enter their API keys and test them, see their webhook addresses, and look up or refund the latest payments ([gold-payments.md](gold-payments.md)).
-- `/admin/logins` — sign-in providers: turn on "sign in with Google" or Facebook with the site's own OAuth app (client ID and secret), and see the redirect address to register with the provider. Members link an account under preferences → security, or by logging in with their password the first time they sign in with it; it only ever signs in to an account that linked it, and two-factor sign-in still asks for its code.
+- `/admin/logins` — sign-in providers: turn on "sign in with Google" or Facebook with the site's own OAuth app (client ID and secret), and see the redirect address to register with the provider. Members link an account under preferences → security, or by logging in with their password the first time they sign in with it; it only ever signs in to an account that linked it, and members who chose to be asked for their two-factor code at login are asked here too.
 - `/admin/backups` — export, import and restore the site, and transfer keys for moving servers ([BACKUP.md](BACKUP.md)).
 - `/admin/vaults` — find any vault (and the newest and banned ones); on a vault's page, make it a front page default or featured, add or remove moderators without an invitation, and ban it (how a vault is removed: everyone but the admins sees a "banned" page; unbanning restores it). Each action is logged there. Admins can create vaults whatever their karma and account age; the `create_vault_*` limits on `/admin/config` are for everyone else.
 - `/admin/privacy` — users' data export and deletion requests ([PRIVACY_FEATURES.md](PRIVACY_FEATURES.md)).
-- `/admin/config` — the live settings (staff list, captcha and vault-creation thresholds, sidebar, welcome bar and announcement messages, API app rules and more), saved with one button and applied without a restart; every change is logged.
+- `/admin/config` — the live settings (staff list, captcha and vault-creation thresholds, sidebar, welcome bar and announcement messages, API app rules, requiring two-factor sign-in for moderators and staff and more), saved with one button and applied without a restart; every change is logged.
 - `/admin/users` — every account, newest first a page at a time, or search by name, email or IP; an account's page shows its status, IPs, related accounts and support tickets, and lets admins put it in a timeout or suspend it (gold is given on `/admin/gold`).
 - `/admin/feeds` — the RSS and Atom feeds that post into vaults, with their bot accounts, intervals and last errors ([CONTENT.md](CONTENT.md#feeds)).
 - `/admin/apps` — registered API apps: approve, suspend or delete them (new apps can need approval, `apps_require_approval` on /admin/config).
