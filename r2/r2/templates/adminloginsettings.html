@@ -1,0 +1,77 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="secret_field(name)">
+  <input type="password" name="${name}" autocomplete="new-password" class="payment-field"
+         placeholder="${_('saved; leave blank to keep') if thing.secret_is_set[name] else _('not set')}">
+</%def>
+
+<h1>${_("sign-in providers")}</h1>
+
+<p>
+  ${_("Members can link a Google or Facebook account to theirs (preferences, security) and then sign in with it instead of their password. It only signs in to accounts that linked it: nothing is matched by email address, and no new accounts are made this way. A member with two-factor sign-in still enters their code. Settings saved here override the ini file and apply immediately.")}
+</p>
+<p>
+  ${_("Each provider needs an OAuth app of this site's own: create one in the provider's console, add the redirect address shown below to it, and enter its client ID and secret here.")}
+</p>
+
+<form id="login-settings" action="/api/login_settings" method="post"
+      class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'login_settings');">
+  <table class="lined-table borderless payment-settings">
+    %for p in thing.providers:
+      <tr><th colspan="2">${p["title"]}</th></tr>
+      <tr>
+        <td></td>
+        <td>
+          <input type="checkbox" name="${p['name']}_enabled" id="${p['name']}_enabled"
+                 ${'checked' if thing.settings[p['name'] + '_enabled'] else ''}>
+          <label for="${p['name']}_enabled">${_("offer sign in with %(provider)s") % dict(provider=p["title"])}</label>
+        </td>
+      </tr>
+      <tr>
+        <td>${_("client ID")}</td>
+        <td>
+          <input type="text" name="${p['name']}_client_id" value="${thing.settings[p['name'] + '_client_id']}"
+                 autocomplete="off" class="payment-field">
+          ${error_field("TOO_LONG", p['name'] + "_client_id", "span")}
+        </td>
+      </tr>
+      <tr>
+        <td>${_("client secret")}</td>
+        <td>${secret_field(p['name'] + "_client_secret")}</td>
+      </tr>
+      <tr>
+        <td>${_("redirect address")}</td>
+        <td>
+          <code>${p["callback"]}</code>
+          <br><small>
+          %if p["name"] == "google":
+            ${_("Google Cloud console: APIs & Services, Credentials, create an OAuth client ID (web application) and add this as an authorized redirect URI. Set up the OAuth consent screen first (scopes: email, profile, openid).")}
+          %else:
+            ${_("Meta for Developers: create an app with Facebook Login, and add this under Facebook Login, Settings, Valid OAuth Redirect URIs. The app ID is the client ID; the app secret is under App settings, Basic.")}
+          %endif
+          &#32;<a href="${p['console']}" target="_blank" rel="noopener">${_("open the console")}</a>
+          </small>
+        </td>
+      </tr>
+    %endfor
+  </table>
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+</form>
+
+<p><small>${_("Instagram no longer offers sign-in for other sites; Facebook Login is Meta's.")}</small></p>

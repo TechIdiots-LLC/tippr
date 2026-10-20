@@ -83,12 +83,12 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    authenticator app, and recovery codes for someone who loses their
    device. Today the only way back in is an admin resetting it on
    /admin/users.
-3. **Explore: logging in with another account.** Members link a Google,
-   Microsoft or Facebook account in their preferences and can then log in
-   with it instead of their password (OpenID Connect / OAuth). Questions to
-   settle first: signing up with one (choosing a username, the captcha),
-   how it combines with two-factor, and unlinking. Instagram no longer
-   offers logins to other sites; Meta's is Facebook Login.
+3. **More sign-in providers and signing up with one.** Signing in with a
+   linked Google or Facebook account is done (/admin/logins); more
+   providers (Microsoft, Apple, GitHub, Discord) are a table entry each in
+   `r2/lib/linked_logins.py`. Still to settle: creating a new account by
+   signing in with one (choosing a username, the captcha). Instagram no
+   longer offers logins to other sites; Meta's is Facebook Login.
 4. **Policy pages that follow the site settings.** The user agreement,
    privacy and content policies and help pages are filled in from
    `docs/policies/` and `docs/help/` with the site's name, domain,

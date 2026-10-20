@@ -63,6 +63,7 @@ def load_controllers():
         StripeController,
     )
     from .payments import PaymentsController
+    from .linked_logins import LinkedLoginsController
     from .listingcontroller import (
         AdsController,
         BrowseController,

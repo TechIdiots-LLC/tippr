@@ -570,6 +570,14 @@ class Account(Thing):
         except NotFound:
             pass
 
+        # its linked Google/Facebook sign-ins go now: they mustn't sign in
+        # to a deleted account (r2.lib.linked_logins)
+        try:
+            from r2.lib import linked_logins
+            linked_logins.unlink_all(self)
+        except Exception:
+            g.log.exception("couldn't unlink %s's sign-ins", self.name)
+
         # Mark this account for immediate cleanup tasks
         amqp.add_item('account_deleted', self._fullname)
 

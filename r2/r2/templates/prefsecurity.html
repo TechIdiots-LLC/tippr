@@ -32,6 +32,43 @@
 <%namespace name="utils" file="utils.html"/>
 
 
+## linked sign-ins (r2.lib.linked_logins)
+%if thing.linked:
+<h1>${_("sign in with another account")}</h1>
+<div class="linked-logins">
+  <p>${_("Link a Google or Facebook account to sign in with it instead of your password. It only signs in to this account, and you can unlink it at any time. Your password keeps working.")}</p>
+  %if thing.just_linked:
+    <p class="linked-logins-done">${_("Linked. You can now sign in with it on the login page.")}</p>
+  %endif
+  <table class="linked-logins-table">
+  %for p in thing.linked:
+    <tr>
+      <td class="linked-login-name">${p["name"]}</td>
+      %if p["link"]:
+        <td>
+          ${_("linked")}
+          %if p["link"]["email"] or p["link"]["display_name"]:
+            (${p["link"]["email"] or p["link"]["display_name"]})
+          %endif
+        </td>
+        <td>
+          <form action="/post/unlink_login" method="post" class="pretty-form"
+                onsubmit="return post_form(this, 'unlink_login')">
+            <input type="hidden" name="provider" value="${p['provider']}">
+            <button class="btn" type="submit">${_("unlink")}</button>
+            <span class="status"></span>
+          </form>
+        </td>
+      %elif p["enabled"]:
+        <td>${_("not linked")}</td>
+        <td><a class="btn" href="/logins/start/${p['provider']}?purpose=link">${_("link %(provider)s") % dict(provider=p["name"])}</a></td>
+      %endif
+    </tr>
+  %endfor
+  </table>
+</div>
+%endif
+
 % if c.user_is_loggedin and c.user.name in g.admins:
 <h1>${_("two-factor authentication")}</h1>
 

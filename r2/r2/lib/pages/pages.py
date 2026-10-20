@@ -1269,7 +1269,9 @@ class PrefsPage(Tippr):
             NamedButton('update'),
         ])
 
-        if c.user.name in g.admins:
+        # two-factor (admins), and linked sign-ins (r2.lib.linked_logins)
+        from r2.lib import linked_logins
+        if c.user.name in g.admins or linked_logins.enabled_providers():
             buttons += [NamedButton('security')]
 
         # privacy: your data export, and deleting your account
@@ -1303,7 +1305,49 @@ class PrefFeeds(Templated):
     pass
 
 class PrefSecurity(Templated):
-    pass
+    """Two-factor sign-in (admins) and linked sign-ins."""
+    def __init__(self):
+        from r2.lib import linked_logins
+        links = {l["provider"]: l for l in linked_logins.links_for(c.user)}
+        enabled = linked_logins.enabled_providers()
+        self.linked = [
+            dict(provider=p, name=_(linked_logins.PROVIDERS[p]["name"]),
+                 link=links.get(p), enabled=p in enabled)
+            for p in linked_logins.PROVIDER_ORDER if p in enabled or p in links]
+        self.just_linked = request.GET.get("linked")
+        Templated.__init__(self)
+
+
+class LinkedLoginLink(Templated):
+    """Signed in with an outside account nobody linked: log in with a
+    password to link it."""
+    def __init__(self, token, provider_name, email=None, wrong=False):
+        Templated.__init__(self, token=token, provider_name=provider_name,
+                           email=email, wrong=wrong)
+
+
+class LinkedLoginOtp(Templated):
+    """The two-factor code, after signing in with a linked account."""
+    def __init__(self, token, wrong=False):
+        Templated.__init__(self, token=token, wrong=wrong)
+
+
+class AdminLoginSettings(Templated):
+    """/admin/logins: the providers for linked sign-ins."""
+    def __init__(self):
+        from r2.lib import linked_logins
+        settings = linked_logins.login_settings()
+        self.settings = {k: v for k, v in settings.items()
+                         if k not in linked_logins.SECRET_SETTINGS}
+        self.secret_is_set = {k: bool(settings[k])
+                              for k in linked_logins.SECRET_SETTINGS}
+        self.providers = [
+            dict(name=p, title=_(linked_logins.PROVIDERS[p]["name"]),
+                 callback=linked_logins.callback_url(p),
+                 console=linked_logins.PROVIDERS[p]["console"],
+                 configured=linked_logins.configured(p, settings))
+            for p in linked_logins.PROVIDER_ORDER]
+        Templated.__init__(self)
 
 
 re_promoted = re.compile(r"/promoted.*", re.I)

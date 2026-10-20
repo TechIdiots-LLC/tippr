@@ -49,6 +49,7 @@ def admin_menu(**kwargs):
         NavButton(menu.email_settings, "email", vault_path=False),
         NavButton(menu.ad_settings, "ads", vault_path=False),
         NavButton(menu.payment_settings, "payments", vault_path=False),
+        NavButton(menu.login_settings, "logins", vault_path=False),
         NavButton(menu.backups, "backups", vault_path=False),
         NavButton(menu.support_queue, "support", vault_path=False),
         NavButton(menu.admin_users, "users", vault_path=False),

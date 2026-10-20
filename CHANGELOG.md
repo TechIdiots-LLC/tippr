@@ -3,6 +3,13 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Sign in with Google or Facebook**, for accounts that linked one. An admin turns providers on at the new
+  **/admin/logins** with the site's own OAuth app (client ID and secret; the page shows the redirect address to
+  register). Members link an account under preferences → security (now shown to everyone when a provider is on), or
+  by logging in with their password the first time they sign in with an unlinked one; the login page and sidebar
+  offer "sign in with Google". It only ever signs in to the account that linked it (nothing is matched by email, and
+  no accounts are created this way), two-factor sign-in still asks for its code, links can be removed at any time,
+  and deleting an account removes them. Instagram no longer offers sign-in for other sites.
 - **More starter feeds**, so the starter vaults that had none are front page defaults again: linux, selfhosted,
   privacy, mechanicalkeyboards, cozygaming, retrogaming, anime (Crunchyroll, Anime News Network, Otaku USA), fiberarts,
   aesthetics, pics and aww (29 feeds, each checked). Add them to an existing site with

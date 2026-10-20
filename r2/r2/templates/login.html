@@ -34,6 +34,7 @@
    import random
  %>
 <%namespace file="captcha.html" import="captchagen"/>
+<%namespace file="linkedsignin.html" import="linked_signin"/>
 <%namespace file="utils.html" import="error_field, img_link, form_group, text_with_links"/>
 
 ## default content 
@@ -169,6 +170,9 @@
         %endif
       </div>
     </form>
+    %if not register:
+      ${linked_signin(dest)}
+    %endif
   %else:
     <%
       op = "reg" if register else "login"

@@ -92,6 +92,8 @@ the admin account, plus the site's signing secrets. It keeps them in
    - `/admin/feeds`: the feeds that post into vaults. A new site has
      none; `FEEDS_ADD=1 tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py` adds
      the starter feeds for the starter vaults ([CONTENT.md](CONTENT.md)).
+   - `/admin/logins`: "sign in with Google" or Facebook, with your own
+     OAuth app from each (optional).
    - `/admin/config`: the live settings (who's staff, captcha and vault
      creation thresholds, sidebar and welcome messages).
    - `/admin/backups`: backups ([BACKUP.md](BACKUP.md)).

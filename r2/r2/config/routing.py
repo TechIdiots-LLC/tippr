@@ -156,6 +156,7 @@ def make_map(config):
     mc('/admin/email', controller='admintool', action='email')
     mc('/admin/ads', controller='admintool', action='ads')
     mc('/admin/payments', controller='admintool', action='payments')
+    mc('/admin/logins', controller='admintool', action='logins')
     mc('/admin/backups', controller='admintool', action='backups')
     mc('/admin/apps', controller='admintool', action='apps')
     mc('/admin/feeds', controller='admintool', action='feeds')
@@ -436,6 +437,14 @@ def make_map(config):
     mc('/api/privacy/requests', controller='privacy',
        action='privacy_requests_json')
     
+    # r2.lib.linked_logins: signing in with a linked Google/Facebook account
+    mc('/logins/start/:provider', controller='linkedlogins', action='start')
+    mc('/logins/callback/:provider', controller='linkedlogins',
+       action='callback')
+    mc('/logins/otp', controller='linkedlogins', action='otp')
+    mc('/logins/link_existing', controller='linkedlogins',
+       action='link_existing')
+
     # r2.lib.payments: the providers set up on /admin/payments
     mc('/payments/checkout', controller='payments', action='checkout')
     mc('/payments/return/:payment_id', controller='payments',

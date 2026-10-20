@@ -1,0 +1,39 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## signed in with a Google/Facebook account that isn't linked to anyone:
+## log in with a password to link it (r2.controllers.linked_logins)
+<div class="payment-status linked-login-link">
+  <p>
+    %if thing.email:
+      ${_("Your %(provider)s account (%(email)s) isn't linked to an account here yet.") % dict(provider=thing.provider_name, email=thing.email)}
+    %else:
+      ${_("That %(provider)s account isn't linked to an account here yet.") % dict(provider=thing.provider_name)}
+    %endif
+  </p>
+  <p>${_("Log in with your username and password to link it: next time, signing in with %(provider)s is enough.") % dict(provider=thing.provider_name)}</p>
+  %if thing.wrong:
+    <p class="error">${_("Wrong username or password, or too many tries: wait a while and try again.")}</p>
+  %endif
+  <form action="/logins/link_existing" method="post" class="linked-login-link-form">
+    <input type="hidden" name="token" value="${thing.token}">
+    <input type="text" name="user" placeholder="${_('username')}" maxlength="20" autofocus autocomplete="username">
+    <input type="password" name="passwd" placeholder="${_('password')}" autocomplete="current-password">
+    <button class="btn" type="submit">${_("log in and link")}</button>
+  </form>
+  <p><small>
+    ${_("No account here yet?")}&#32;<a href="/register">${_("sign up")}</a>${_(", then link it under preferences, security.")}
+  </small></p>
+</div>

@@ -1,0 +1,35 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+<%!
+   from urllib.parse import quote
+   from r2.lib import linked_logins
+%>
+
+## "sign in with Google" and the like, for the providers on /admin/logins
+<%def name="linked_signin(dest='')">
+  <% providers = linked_logins.enabled_providers() %>
+  %if providers:
+    <div class="linked-signin">
+      <div class="linked-signin-or"><span>${_("or")}</span></div>
+      %for p in providers:
+        <a class="c-btn linked-signin-${p}"
+           href="/logins/start/${p}?purpose=login${'&dest=' + quote(dest, safe='') if dest else ''}">
+          ${_("sign in with %(provider)s") % dict(provider=_(linked_logins.PROVIDERS[p]["name"]))}
+        </a>
+      %endfor
+      <p class="linked-signin-note">${_("for accounts that linked one (preferences, security)")}</p>
+    </div>
+  %endif
+</%def>

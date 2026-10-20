@@ -30,6 +30,7 @@
 %>
 
 <%namespace file="utils.html" import="error_field"/>
+<%namespace file="linkedsignin.html" import="linked_signin"/>
 
 <%
   op = "login-main"
@@ -58,4 +59,5 @@
   
   <div class="clear"></div>
 </form>
+${linked_signin()}
 

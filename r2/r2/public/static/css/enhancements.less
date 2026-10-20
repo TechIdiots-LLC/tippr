@@ -722,3 +722,65 @@ body.nightmode.gold-page.gold-about .gold-banner {
     margin: 10px 0 14px;
     font-size: 1.1em;
 }
+
+// "sign in with Google" on the login forms, and the linked accounts on
+// preferences, security (r2.lib.linked_logins)
+.linked-signin {
+    margin: 12px 0;
+    .c-btn, a {
+        display: block;
+        text-align: center;
+        margin: 6px 0;
+        padding: 7px 10px;
+        border: 1px solid var(--tp-line, #ccc);
+        border-radius: 4px;
+        background: @tp-surface;
+        color: @tp-text;
+        font-weight: bold;
+        text-decoration: none;
+    }
+    .c-btn:hover, a:hover {
+        border-color: @tp-accent;
+    }
+}
+.linked-signin-or {
+    text-align: center;
+    color: @tp-text-muted;
+    margin: 8px 0;
+}
+.linked-signin-note {
+    font-size: @tp-font-xs;
+    color: @tp-text-muted;
+    text-align: center;
+}
+.login-form-side + .linked-signin {
+    margin: 4px 10px 10px;
+}
+.linked-logins {
+    max-width: 50em;
+    margin-bottom: 20px;
+    p {
+        margin-bottom: 10px;
+    }
+    .linked-logins-done {
+        font-weight: bold;
+    }
+    td {
+        padding: 6px 12px 6px 0;
+        vertical-align: middle;
+    }
+    form {
+        display: inline;
+    }
+}
+.linked-login-name {
+    font-weight: bold;
+}
+.linked-login-link-form, .linked-login-otp form {
+    input {
+        display: block;
+        margin: 6px 0;
+        padding: 6px 8px;
+        width: 18em;
+    }
+}

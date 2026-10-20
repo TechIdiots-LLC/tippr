@@ -4901,6 +4901,63 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        google_enabled=VBoolean("google_enabled"),
+        google_client_id=VLength("google_client_id", max_length=300,
+                                 empty_error=None),
+        google_client_secret=VLength("google_client_secret", max_length=300,
+                                     empty_error=None),
+        facebook_enabled=VBoolean("facebook_enabled"),
+        facebook_client_id=VLength("facebook_client_id", max_length=300,
+                                   empty_error=None),
+        facebook_client_secret=VLength("facebook_client_secret",
+                                       max_length=300, empty_error=None),
+    )
+    def POST_login_settings(self, form, jquery, **values):
+        """Save the sign-in providers on /admin/logins (r2.lib.linked_logins;
+        override the ini)."""
+        from r2.lib import linked_logins, site_settings
+        if form.has_errors(tuple(values), errors.TOO_LONG):
+            return
+        settings = site_settings.get_settings(linked_logins.GROUP)
+        for name, value in values.items():
+            if name in linked_logins.SECRET_SETTINGS:
+                # never shown again; blank keeps the saved one
+                if value and value.strip():
+                    settings[name] = value.strip()
+            elif name.endswith("_enabled"):
+                settings[name] = bool(value)
+            else:
+                settings[name] = (value or "").strip()
+        site_settings.save_settings(linked_logins.GROUP, settings)
+        effective = linked_logins.login_settings()
+        missing = [_(linked_logins.PROVIDERS[p]["name"])
+                   for p in linked_logins.PROVIDER_ORDER
+                   if effective[p + "_enabled"] and
+                   not linked_logins.configured(p, effective)]
+        if missing:
+            form.set_text(".status", _("saved, but these aren't on until "
+                                       "their ID and secret are filled in: "
+                                       "%(names)s") % {"names": ", ".join(missing)})
+        else:
+            form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        provider=VOneOf("provider", ("google", "facebook")),
+    )
+    def POST_unlink_login(self, form, jquery, provider):
+        """Unlink a Google or Facebook account from yours (preferences,
+        security)."""
+        from r2.lib import linked_logins
+        if not provider:
+            return
+        linked_logins.unlink(c.user, provider)
+        form.redirect("/prefs/security")
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         signups=VOneOf("signups", ("open", "closed")),
         **{name: VLength(name, max_length=length, empty_error=None)
            for name, length in site_info_text_lengths().items()}
