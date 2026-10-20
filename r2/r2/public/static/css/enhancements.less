@@ -816,3 +816,34 @@ body.nightmode.gold-page.gold-about .gold-banner {
         padding: 0;
     }
 }
+// two-factor sign-in (preferences, security)
+.two-factor {
+    max-width: 50em;
+    margin-bottom: 20px;
+    > p, .md p {
+        margin-bottom: 10px;
+    }
+    h2 {
+        margin: 18px 0 6px;
+    }
+    .two-factor-prefs p {
+        margin: 6px 0;
+        small {
+            margin-left: 20px;
+            color: @tp-text-muted;
+        }
+    }
+    .two-factor-prefs > p:last-of-type small {
+        margin-left: 0;
+    }
+    input[name=otp] {
+        width: 10em;
+        padding: 4px 6px;
+        margin-right: 6px;
+    }
+}
+.linked-logins input[name=otp] {
+    width: 10em;
+    padding: 4px 6px;
+    margin-right: 6px;
+}

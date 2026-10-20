@@ -73,7 +73,7 @@
       <pre class="recovery-code-list">${"\n".join(thing.new_codes)}</pre>
     %else:
       <p>
-        ${_("Recovery codes work once each in place of a code from your app, if you lose your phone.")}
+        ${_("Recovery codes work once each in place of a code from your app, if you lose your phone.")}&#32;
         %if thing.codes_left:
           ${_("You have %(count)s left.") % dict(count=thing.codes_left)}
         %else:
