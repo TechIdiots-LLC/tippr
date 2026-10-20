@@ -87,7 +87,7 @@
 <h1>${_("payments")}</h1>
 
 <p>
-  ${_("Take payments for gold (and gold to give, gifts and gift codes) and for sold ads with your own accounts at these providers. Turn on the ones you use and enter their API keys; buyers pick one on the payment page and pay on the provider's own page, so card details never reach this site. Settings saved here override the ini file and apply immediately.")}
+  ${_("Take payments for gold (and Give Gold, gifts and gift codes) and for sold ads with your own accounts at these providers. Turn on the ones you use and enter their API keys; buyers pick one on the payment page and pay on the provider's own page, so card details never reach this site. Settings saved here override the ini file and apply immediately.")}
 </p>
 <p>
   ${_("Prices are in US dollars: gold is %(month)s a month and %(year)s a year (gold_month_price and gold_year_price in the ini).") % dict(month="$" + dollars(thing.month_price.pennies), year="$" + dollars(thing.year_price.pennies))}
@@ -96,7 +96,7 @@
 </p>
 
 %if not thing.enabled:
-  <p class="payment-notice">${_("No provider is on yet, so the payment page only offers paying with gold to give already bought.")}</p>
+  <p class="payment-notice">${_("No provider is on yet, so the payment page only offers paying with Give Gold already bought.")}</p>
 %endif
 
 <form id="payment-settings" action="/api/payment_settings" method="post"
@@ -109,7 +109,7 @@
       <td>
         <input type="checkbox" name="gold_enabled" id="gold_enabled"
                ${'checked' if thing.settings['gold_enabled'] else ''}>
-        <label for="gold_enabled">${_("gold, gold to give, gifts and gift codes")}</label>
+        <label for="gold_enabled">${_("gold, Give Gold, gifts and gift codes")}</label>
       </td>
     </tr>
     <tr>

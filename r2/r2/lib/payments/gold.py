@@ -12,7 +12,7 @@
 # The Initial Developer of the Original Code is TechIdiots LLC.
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""Buying gold, gold to give, gifts and gift codes through r2.lib.payments.
+"""Buying gold, Give Gold, gifts and gift codes through r2.lib.payments.
 
 The /gold payment page makes a payment blob (what's being bought, by whom,
 for whom: r2.controllers.ipn) and shows a button for each provider. Paying
@@ -35,7 +35,7 @@ def transaction_id(payment):
 
 def describe(goldtype, months, recipient=None):
     if goldtype == "coins":
-        what = _("%(count)d months of gold to give") % {"count": months}
+        what = _("%(count)d months of Give Gold") % {"count": months}
     elif months % 12 == 0:
         what = _("%(count)d year(s) of gold") % {"count": months // 12}
     else:

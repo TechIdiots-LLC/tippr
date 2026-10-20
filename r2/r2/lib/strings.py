@@ -262,7 +262,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("comment",     "comments"),
                          P_("message",     "messages"),
                          P_("vault",   "vaults"),
-                         P_("month of gold to give", "months of gold to give"),
+                         P_("month of Give Gold", "months of Give Gold"),
 
                          # people
                          P_("reader",  "readers"),

@@ -2452,8 +2452,8 @@ class ProfileBar(Templated):
                     self.stripe_customer_id = user.gold_subscr_id
 
             if user.gold_coins > 0 and self.show_private_info:
-                msg = ungettext("%(coins)s month of gold to give",
-                                "%(coins)s months of gold to give",
+                msg = ungettext("%(coins)s month of Give Gold",
+                                "%(coins)s months of Give Gold",
                                 user.gold_coins)
                 msg = msg % dict(coins=user.gold_coins)
                 self.gold_coin_message = msg
@@ -3211,7 +3211,7 @@ class GoldPayment(Templated):
 
             if goldtype == "coins":
                 summary = strings.gold_summary_coins % dict(
-                    amount=Score.somethings(months, "month of gold to give"),
+                    amount=Score.somethings(months, "month of Give Gold"),
                     price=price,
                 )
             elif goldtype == "gift":
@@ -3708,7 +3708,7 @@ class AdminAwardWinners(Templated):
 
 
 class AdminCoins(Templated):
-    """The admin interface for giving a user gold to give (prepaid months
+    """The admin interface for giving a user Give Gold (prepaid months
     of gold they can gift: Account.gold_coins)."""
     def __init__(self, recipient):
         self.recipient = recipient

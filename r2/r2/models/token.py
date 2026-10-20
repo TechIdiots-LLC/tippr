@@ -123,8 +123,8 @@ class OAuth2Scope:
         },
         "coins": {
             "id": "coins",
-            "name": _("Spend your tippr gold to give"),
-            "description": _("Spend my tippr gold to give on giving "
+            "name": _("Spend your Give Gold"),
+            "description": _("Spend my Give Gold on giving "
                 "gold to other users."),
         },
         "edit": {

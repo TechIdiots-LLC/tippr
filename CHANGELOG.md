@@ -3,9 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
-- **"Coins" are now "gold to give"** everywhere members see them (the gold page, payment page, gilding page, your
+- **"Coins" are now "Give Gold"** everywhere members see them (the gold page, payment page, gilding page, your
   profile, preferences, the API app permission and /admin/coins): one name, gold, for everything bought on /gold.
-  Each month of gold to give gives someone a month of gold. Addresses and the code's names (`/coins`,
+  Each month of Give Gold gives someone a month of gold. Addresses and the code's names (`/coins`,
   `goldtype=coins`, `Account.gold_coins`) are unchanged.
 - **Front page defaults are only vaults with feeds**, so a newcomer's front page has no empty vaults: the starter
   list no longer makes linux, selfhosted, mechanicalkeyboards, privacy, cozygaming, retrogaming, anime, fiberarts,
