@@ -1506,7 +1506,7 @@ class FrontController(TipprController):
             if g.lounge_vault:
                 lounge_md = strings.lounge_msg
         elif vendor == "claimed-coins":
-            claim_msg = _("Your Give Gold has been claimed! Now go to "
+            claim_msg = _("Your gold has been claimed! Now go to "
                           "someone's userpage and give them a present!")
         elif vendor == "paid":
             # paid through r2.lib.payments, and already delivered
@@ -2033,7 +2033,7 @@ class FormsController(TipprController):
                               ).render()
 
     def GET_coins(self):
-        return BoringPage(_("buy Give Gold"),
+        return BoringPage(_("Give Gold"),
                           show_sidebar=False,
                           content=coins(),
                           page_classes=["gold-page", "coins-purchase", "gold-page-ga-tracking"],

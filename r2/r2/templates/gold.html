@@ -116,10 +116,10 @@
 
       <section id="coins" class="tab ${'active' if active_tab == 'coins' else ''}">
         <h3>${_('How many months of gold would you like to have to give?')}</h3>
-        ${gold_dropdown("num_coins", thing.months, somethings="months of Give Gold")}
+        ${gold_dropdown("num_coins", thing.months, somethings="months of gold")}
 
         <section class="coins-explained">
-          ${_('Kept as a balance on your account, Give Gold lets you give gold without entering payment information each time. Each month of it gives someone one month of tippr gold.')}
+          ${_('Kept as a balance on your account, gold you buy lets you give it without entering payment information each time. Each month of it gives someone one month of tippr gold.')}
           &#32;<a href="/gilding#what-are-coins">${_('Learn more about Give Gold')}</a>.
         </section>
       </section>
@@ -138,7 +138,7 @@
         <%
           append_or_somethings = None
           if c.user_is_loggedin and c.user.gold_coins > 0:
-              append_or_somethings = "months of Give Gold"
+              append_or_somethings = "months of gold"
         %>
         ${gold_dropdown("months", thing.months, append_or_somethings=append_or_somethings)}
 

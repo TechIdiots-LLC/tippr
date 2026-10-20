@@ -35,7 +35,7 @@ def transaction_id(payment):
 
 def describe(goldtype, months, recipient=None):
     if goldtype == "coins":
-        what = _("%(count)d months of Give Gold") % {"count": months}
+        what = _("Give Gold: %(count)d months") % {"count": months}
     elif months % 12 == 0:
         what = _("%(count)d year(s) of gold") % {"count": months // 12}
     else:

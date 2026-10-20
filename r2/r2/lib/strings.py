@@ -138,7 +138,7 @@ string_dict = dict(
     gold_summary_autorenew_monthly = _("You're about to set up an ongoing, autorenewing subscription to tippr gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **monthly**. \n\n>This subscription will renew automatically each month until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional months of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
     gold_summary_autorenew_yearly = _("You're about to set up an ongoing, autorenewing subscription to tippr gold for yourself (%(user)s). \n\nYou'll pay **%(price)s** for this, **yearly**. \n\n>This subscription will renew automatically each year until you cancel. You may cancel at any time. If you cancel, you will not be billed for any additional years of service, and service will continue until the end of the billing period. If you cancel, you will not receive a refund for any service already paid for. Receipts will be delivered via private message in your account."),
     gold_summary_onetime = _("You're about to make a one-time purchase of %(amount)s of tippr gold for yourself (%(user)s). You'll pay a total of %(price)s for this."),
-    gold_summary_coins = _("You're about to purchase %(amount)s. It works like a gift certificate: each month you have lets you give one month of tippr gold to someone else. You'll pay a total of %(price)s for this."),
+    gold_summary_coins = _("You're about to purchase %(amount)s for Give Gold. It works like a gift certificate: each month of it gives someone one month of tippr gold. You'll pay a total of %(price)s for this."),
     gold_summary_gift_code = _("You're about to purchase %(amount)s of tippr gold in the form of a gift code. The recipient (or you) will be able to claim the code to redeem that gold to their account. You'll pay a total of %(price)s for this."),
     gold_summary_signed_gift = _("You're about to give %(amount)s of tippr gold to %(recipient)s, who will be told that it came from you. You'll pay a total of %(price)s for this."),
     gold_summary_anonymous_gift = _("You're about to give %(amount)s of tippr gold to %(recipient)s. It will be an anonymous gift. You'll pay a total of %(price)s for this."),
@@ -262,7 +262,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("comment",     "comments"),
                          P_("message",     "messages"),
                          P_("vault",   "vaults"),
-                         P_("month of Give Gold", "months of Give Gold"),
+                         P_("month of gold", "months of gold"),
 
                          # people
                          P_("reader",  "readers"),

@@ -106,7 +106,7 @@
               %if thing.clone_template:
                 <div class="note">
                   %if not thing.user_coins:
-                    ${_md("Give gold often? Consider [buying Give Gold](/coins): it's 40% cheaper bought as a year's worth.")}
+                    ${_md("Give gold often? Consider [buying gold ahead](/coins) to give later: it's 40% cheaper bought as a year's worth.")}
                   %endif
                   ${_md("Would you like to [learn more about giving gold](/gilding)?")}
                 </div>
@@ -126,9 +126,9 @@
         data-vendor="coins">
     <input type="hidden" name="months" value="${thing.months}">
     <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-    <button class="btn gold-button" type="button"><span class="tippr-head"></span>${_("your Give Gold")}</button>
+    <button class="btn gold-button" type="button"><span class="tippr-head"></span>${_("your gold")}</button>
     <span class="status">
-      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_coins}" data-template="${websafe(_ws('(use %(current)s of your %(total)s months of Give Gold)')) % dict(current='<%- current %>', total='<%- total %>')}">
+      <span class="remaining" data-current="${thing.months}" data-total="${thing.user_coins}" data-template="${websafe(_ws('(use %(current)s of your %(total)s months of gold)')) % dict(current='<%- current %>', total='<%- total %>')}">
       </span>
     </span>
   </form>

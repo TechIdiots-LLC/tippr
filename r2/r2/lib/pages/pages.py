@@ -2452,8 +2452,8 @@ class ProfileBar(Templated):
                     self.stripe_customer_id = user.gold_subscr_id
 
             if user.gold_coins > 0 and self.show_private_info:
-                msg = ungettext("%(coins)s month of Give Gold",
-                                "%(coins)s months of Give Gold",
+                msg = ungettext("Give Gold: %(coins)s month",
+                                "Give Gold: %(coins)s months",
                                 user.gold_coins)
                 msg = msg % dict(coins=user.gold_coins)
                 self.gold_coin_message = msg
@@ -3211,7 +3211,7 @@ class GoldPayment(Templated):
 
             if goldtype == "coins":
                 summary = strings.gold_summary_coins % dict(
-                    amount=Score.somethings(months, "month of Give Gold"),
+                    amount=Score.somethings(months, "month of gold"),
                     price=price,
                 )
             elif goldtype == "gift":

@@ -3,7 +3,7 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
-- **"Coins" are now "Give Gold"** everywhere members see them (the gold page, payment page, gilding page, your
+- **"Coins" are gone: buying gold to give away is "Give Gold"**, and the balance is just gold, (the gold page, payment page, gilding page, your
   profile, preferences, the API app permission and /admin/coins): one name, gold, for everything bought on /gold.
   Each month of Give Gold gives someone a month of gold. Addresses and the code's names (`/coins`,
   `goldtype=coins`, `Account.gold_coins`) are unchanged.
