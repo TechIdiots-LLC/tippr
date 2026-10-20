@@ -192,13 +192,13 @@ $(function() {
     }
 
     // temp fix for broken vault-report-form
-    $('div.content').on('submit', '.vault-report-form', function(e) {
+    $('main.content').on('submit', '.vault-report-form', function(e) {
       var $actionForm = $(e.target);
       return post_pseudo_form($actionForm, 'report');
     });
 
-    $("div.content").on("click", ".tagline .reportbtn, .thing .reportbtn", openReportForm);
-    $("div.content").on("click", ".btn.report-cancel", toggleReportForm);
-    $("div.content").on("change", "input[name='reason']", toggleOther);
+    $("main.content").on("click", ".tagline .reportbtn, .thing .reportbtn", openReportForm);
+    $("main.content").on("click", ".btn.report-cancel", toggleReportForm);
+    $("main.content").on("change", "input[name='reason']", toggleOther);
   });
 });

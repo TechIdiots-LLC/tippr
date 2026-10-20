@@ -3,13 +3,13 @@ r.gold = {
     _inlineGilding: false,
 
     init: function () {
-        $('div.content').on(
+        $('main.content').on(
             'click',
             '[name="message"]',
             this._toggleGiftMessage.bind(this)
         );
 
-        $('div.content').on(
+        $('main.content').on(
             'click',
             'a.give-gold, .gold-payment .close-button',
             this._toggleThingGoldForm.bind(this)
@@ -18,7 +18,7 @@ r.gold = {
         // this fires when any of the checkout buttons are clicked
         // updates the signed and giftmessage properties in the payment_blob
         // failures should be rare and it's probably safe for any updates to be lost
-        $('div.content').on(
+        $('main.content').on(
             'click',
             '.gold-button',
             this._setGildingProperties.bind(this)

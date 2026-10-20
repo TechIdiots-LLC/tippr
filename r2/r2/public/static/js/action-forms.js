@@ -1,12 +1,12 @@
 r.actionForm = {
   init: function() {
-    $('div.content').on(
+    $('main.content').on(
       'click',
       '.action-thing, .cancel-action-thing',
       this.toggleActionForm.bind(this)
     );
 
-    $('div.content').on(
+    $('main.content').on(
       'submit',
       '.action-form',
       this.submitAction.bind(this)
@@ -59,13 +59,13 @@ r.actionForm = {
 r.fraud = {
 
   init: function() {
-    $('div.content').on(
+    $('main.content').on(
       'click',
       '.action-thing',
       this.showReason.bind(this)
     );
 
-    $('div.content').on(
+    $('main.content').on(
       'change',
       '.fraud-action-form input',
       this.validate.bind(this)
@@ -108,13 +108,13 @@ r.fraud = {
 r.report = {
 
   init: function() {
-    $('div.content').on(
+    $('main.content').on(
       'change',
       '.report-action-form input',
       this.validate.bind(this)
     );
 
-    $('div.content').on(
+    $('main.content').on(
       'click',
       '.reported-stamp.has-reasons',
       this.toggleReasons.bind(this)

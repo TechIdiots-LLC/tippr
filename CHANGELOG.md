@@ -6,6 +6,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Buttons that did nothing:** the gold payment page's buttons (PayPal and the rest, and paying with your gold), the
+  "report" buttons, and the moderator action forms (ban, mute and the like). Their scripts looked for the page's
+  `div.content`, which is now a `<main>`.
 
 ## 0.12.0
 ### ✨ Features and improvements
