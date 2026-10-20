@@ -26,6 +26,16 @@ Users can access their privacy settings to:
 - View status of pending requests
 - Download completed data exports
 
+### Deleting an account
+
+Also on `/prefs/privacy` (the old `/prefs/deactivate` address redirects
+there). The member chooses whether to keep their posts and comments (shown
+by [deleted]) or delete them too, and confirms with their password, plus
+their two-factor code if they use two-factor sign-in. Right away they're
+logged out everywhere, nobody can log in to the account, and the name can't
+be registered again; the password, email address and moderator roles are
+removed 90 days later.
+
 ### Data Export
 
 Users can request a complete export of their personal data, which includes:
@@ -36,19 +46,16 @@ Users can request a complete export of their personal data, which includes:
 - **Private Messages**: Sent and received messages
 - **Votes**: History of upvotes and downvotes
 - **Subscriptions**: List of subscribed communities
+- **Saved and hidden items, friends and blocked users**
 - **OAuth Applications**: Connected third-party applications
 - **IP History**: Login IP addresses and timestamps (for verification purposes)
 
-The export is provided as a ZIP file containing:
-- `README.txt` - Explanation of the export contents
-- `account_info.json` - Account and profile data
-- `posts.json` - Submitted content
-- `comments.json` - Comment history
-- `messages.json` - Private messages
-- `votes.json` - Voting history
-- `subscriptions.json` - Community subscriptions
-- `oauth_apps.json` - Connected applications
-- `ip_history.json` - IP address log
+The export is a ZIP file with two files:
+- `README.txt` - what's in the export and how to read it
+- `tippr_data_export_<name>_<date>.json` - everything, in sections:
+  `account`, `preferences`, `posts`, `comments`, `messages`, `saved`,
+  `hidden`, `votes`, `subscriptions`, `friends`, `blocked`, `ip_history`,
+  `oauth_apps` (and `export_info` about the export itself)
 
 ### Request Lifecycle
 
@@ -110,20 +117,9 @@ The privacy export consumer runs as a systemd service:
 systemctl start tippr-consumer-privacy_export_q@1.service
 ```
 
-Configuration in `/etc/default/tippr`:
-- `PRIVACY_EXPORT_DIR`: Directory for storing export files
-- `PRIVACY_EXPORT_RETENTION_DAYS`: Days to retain exports (default: 7)
-
-## Configuration
-
-Add to your INI file:
-
-```ini
-# Privacy settings
-privacy_export_enabled = true
-privacy_export_retention_days = 7
-privacy_export_dir = /var/lib/tippr/exports
-```
+Exports are written to `/var/lib/tippr/privacy_exports` (the installer
+creates it, readable by the tippr user only) and kept for 7 days. There's
+nothing to configure.
 
 ## Data Models
 
@@ -184,10 +180,10 @@ Exports may have expired. Check retention settings and file system permissions.
 
 ### Permission Denied Errors
 
-Ensure the export directory exists and is writable:
+Ensure the export directory exists and is writable (re-running the
+installer creates it):
 ```bash
-mkdir -p /var/lib/tippr/exports
-chown tippr:tippr /var/lib/tippr/exports
+install -d -m 0700 -o tippr /var/lib/tippr/privacy_exports
 ```
 
 ## See Also

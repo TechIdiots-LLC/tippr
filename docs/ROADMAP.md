@@ -52,6 +52,18 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
 - **Optional S3-compatible media storage** (Garage, MinIO, Amazon S3 …;
   [STORAGE.md](STORAGE.md)).
 - **GitLab CI/CD** alongside the GitHub workflows ([RELEASING.md](RELEASING.md)).
+- **Payments** for gold and sold ads with the site's own PayPal, Stripe,
+  Coinbase or BitPay accounts (/admin/payments,
+  [gold-payments.md](gold-payments.md)); reddit's PayPal, Coinbase Commerce
+  and authorize.net code is gone.
+- **Feeds** posting into vaults, with starter feeds for the starter vaults
+  ([CONTENT.md](CONTENT.md#feeds)), and thumbnails for link posts.
+- **Reading features** built in (preferences): night mode, infinite
+  scroll, keyboard navigation, expanding images, filters, user tags,
+  new-comment counts, an account switcher.
+- **Support queue** (/admin/support), **Explore** recommendations from the
+  site's own subscriptions, X-Year Club trophies, and policy pages kept up
+  to date on upgrades.
 
 ## Next
 
@@ -59,7 +71,6 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    private services: ad images stored on the server when there's no
    bucket, inventory from the site's own traffic counts, and impressions
    and clicks counted by the site.
-2. **Payments** for gold and ads; see [Payments and gold](#payments-and-gold).
 
 ## Then
 
