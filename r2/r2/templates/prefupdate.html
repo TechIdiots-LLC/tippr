@@ -26,6 +26,18 @@
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 
+## the two-factor code, when the account has it (r2.lib.two_factor)
+<%def name="otp_field()">
+  %if thing.two_factor:
+  <div class="spacer">
+    <%utils:round_field title="${_('two-factor code')}" description="${_('(required)') if thing.needs_code else _('(entered a moment ago)')}">
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12">
+      ${error_field("TWO_FACTOR_REQUIRED", "otp")}
+    </%utils:round_field>
+  </div>
+  %endif
+</%def>
+
 
 %if thing.email:
 <form action="/post/update_email" method="post" 
@@ -45,6 +57,7 @@
       ${error_field("WRONG_PASSWORD", "curpass")}
     </%utils:round_field>
   </div>
+  ${otp_field()}
 
   <%
      if not c.user.email:
@@ -105,6 +118,7 @@
       ${error_field("WRONG_PASSWORD", "curpass")}
     </%utils:round_field>
   </div>
+  ${otp_field()}
 
   <div class="spacer">
     <%utils:round_field title="${_('new password')}">

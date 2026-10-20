@@ -339,14 +339,15 @@ def _pending_key(token):
     return "linked_login_pending:" + token
 
 
-def hold_for_otp(account, record, provider, subject):
+def hold_for_otp(account, record, provider, subject, link_identity=None):
     """Signed in at the provider; the account has two-factor sign-in, so
-    keep the sign-in until the code is entered. Returns the token."""
+    keep the sign-in until the code is entered. With link_identity, that
+    outside account is linked once the code is right. Returns the token."""
     token = secrets.token_urlsafe(24)
     g.gencache.set(_pending_key(token), {
         "account_id": account._id, "dest": record["dest"],
         "rem": record["rem"], "provider": provider, "subject": subject,
-        "tries": 0}, time=PENDING_TTL)
+        "link_identity": link_identity, "tries": 0}, time=PENDING_TTL)
     return token
 
 

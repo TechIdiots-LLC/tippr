@@ -166,6 +166,13 @@ class Account(Thing):
                      num_gildings=0,
                      cake_expiration=None,
                      otp_secret=None,
+                     # two-factor (r2.lib.two_factor): hashes of the unused
+                     # recovery codes, and where the member wants the code
+                     # asked for besides the always-asked actions
+                     otp_recovery_codes=(),
+                     pref_otp_login=False,
+                     pref_otp_settings=False,
+                     pref_otp_post=False,
                      state=0,
                      modmsgtime=None,
                      inbox_count=0,

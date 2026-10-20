@@ -1739,10 +1739,6 @@ class FormsController(TipprController):
             # deleting your account is on the privacy page now
             return self.redirect('/prefs/privacy#delete-account', code=301)
         elif location == 'security':
-            from r2.lib import linked_logins
-            if (c.user.name not in g.admins and
-                    not linked_logins.enabled_providers()):
-                return self.redirect('/prefs/')
             content = PrefSecurity()
         else:
             return self.abort404()

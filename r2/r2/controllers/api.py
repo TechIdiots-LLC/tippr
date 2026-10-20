@@ -1388,6 +1388,7 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VVerifyPassword("curpass", fatal=False),
+        VTwoFactor("otp", "email"),
         email=ValidEmails("email", num=1),
         verify=VBoolean("verify"),
         dest=VDestination(),
@@ -1400,6 +1401,8 @@ class ApiController(TipprController):
         """
 
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
+            return
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
             return
 
         if not form.has_errors("email", errors.BAD_EMAILS) and email:
@@ -1440,6 +1443,7 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VVerifyPassword("curpass", fatal=False),
+        VTwoFactor("otp", "password"),
         password=VPasswordChange(['newpass', 'verpass']),
         invalidate_oauth=VBoolean("invalidate_oauth"),
     )
@@ -1454,6 +1458,8 @@ class ApiController(TipprController):
 
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
+            return
 
         if (password and
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
@@ -1467,7 +1473,7 @@ class ApiController(TipprController):
                 emailer.password_change_email(c.user)
 
             form.set_text('.status', _('your password has been updated'))
-            form.set_inputs(curpass="", newpass="", verpass="")
+            form.set_inputs(curpass="", newpass="", verpass="", otp="")
 
             # the password has changed, so the user's cookie has been
             # invalidated.  drop a new cookie.
@@ -4944,16 +4950,34 @@ class ApiController(TipprController):
     @validatedForm(
         VUser(),
         VModhash(),
+        VTwoFactor("otp", "linked_logins"),
         provider=VOneOf("provider", ("google", "facebook")),
     )
     def POST_unlink_login(self, form, jquery, provider):
         """Unlink a Google or Facebook account from yours (preferences,
         security)."""
         from r2.lib import linked_logins
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
+            return
         if not provider:
             return
         linked_logins.unlink(c.user, provider)
         form.redirect("/prefs/security")
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VTwoFactor("otp", "linked_logins"),
+        provider=VOneOf("provider", ("google", "facebook")),
+    )
+    def POST_start_link_login(self, form, jquery, provider):
+        """Link a Google or Facebook account, for a member with two-factor
+        sign-in: the code first, then off to the provider."""
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
+            return
+        if not provider:
+            return
+        form.redirect("/logins/start/%s?purpose=link" % provider)
 
     @validatedForm(
         VAdmin(),
@@ -5872,7 +5896,7 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VVerifyPassword("password", fatal=False),
-        VOneTimePassword("otp", required=True),
+        VFreshOneTimePassword("otp", required=True),
     )
     def POST_disable_otp(self, form, jquery):
         if form.has_errors("password", errors.WRONG_PASSWORD):

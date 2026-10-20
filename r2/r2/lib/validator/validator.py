@@ -2913,8 +2913,13 @@ class VOneTimePassword(Validator):
                 self.set_error(errors.RATELIMIT, dict(time="30 seconds"))
                 return
 
-        # check the password
+        # check the password (or a recovery code, r2.lib.two_factor)
+        from r2.lib import two_factor
         if self.validate_otp(secret, password):
+            two_factor.mark_recent(c.user)
+            return
+        if two_factor.use_recovery_code(c.user, password):
+            two_factor.mark_recent(c.user)
             return
 
         # if we got this far, their password was wrong, invalid or already used
@@ -2933,6 +2938,29 @@ class VFreshOneTimePassword(VOneTimePassword):
             return VOneTimePassword.run(self, password)
         finally:
             c.otp_cached = cached
+
+
+class VTwoFactor(Validator):
+    """The two-factor code, where the member's settings (or the action)
+    call for one now (r2.lib.two_factor.needs_code); otherwise passes.
+    Error TWO_FACTOR_REQUIRED on the field when it's missing or wrong."""
+
+    def __init__(self, param, action, **kw):
+        self.action = action
+        Validator.__init__(self, param, **kw)
+
+    def run(self, code):
+        from r2.lib import two_factor
+        if not c.user_is_loggedin:
+            return
+        if not two_factor.needs_code(c.user, self.action):
+            return
+        if not two_factor.check_code(c.user, code):
+            self.set_error(errors.TWO_FACTOR_REQUIRED)
+
+    def param_docs(self):
+        return {self.param: "the two-factor code, when the account asks for "
+                            "one (not for OAuth apps)"}
 
 
 class VOAuth2ClientID(VRequired):

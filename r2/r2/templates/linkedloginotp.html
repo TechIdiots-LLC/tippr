@@ -15,14 +15,14 @@
 
 ## after signing in with a linked account that has two-factor sign-in
 <div class="payment-status linked-login-otp">
-  <p>${_("Your account uses two-factor sign-in: enter the code from your authenticator app.")}</p>
+  <p>${_("Your account uses two-factor sign-in: enter the code from your authenticator app (or one of your recovery codes).")}</p>
   %if thing.wrong:
     <p class="error">${_("That code isn't right. Try again.")}</p>
   %endif
   <form action="/logins/otp" method="post">
     <input type="hidden" name="token" value="${thing.token}">
     <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
-           maxlength="6" autofocus placeholder="${_('two-factor code')}">
+           maxlength="12" autofocus placeholder="${_('two-factor code')}">
     <button class="btn" type="submit">${_("sign in")}</button>
   </form>
 </div>

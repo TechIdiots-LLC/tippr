@@ -23,7 +23,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _
 
 from r2.controllers.tippr_base import TipprController
-from r2.lib import linked_logins
+from r2.lib import linked_logins, two_factor
 from r2.lib.cookies import Cookie, DELETE
 from r2.lib.csrf import csrf_exempt
 from r2.lib.pages import BoringPage, LinkedLoginLink, LinkedLoginOtp, PaymentStatus
@@ -31,7 +31,6 @@ from r2.lib.validator import (
     VBoolean,
     VLength,
     VOneOf,
-    VOneTimePassword,
     VThrottledLogin,
     nop,
     validate,
@@ -65,6 +64,10 @@ class LinkedLoginsController(TipprController):
             return self.redirect("/login?dest=/prefs/security")
         if purpose == "login" and c.user_is_loggedin:
             return self.redirect(_safe_dest(dest))
+        if purpose == "link" and two_factor.needs_code(c.user,
+                                                       "linked_logins"):
+            # the code first (preferences, security)
+            return self.redirect("/prefs/security")
         try:
             url, token = linked_logins.start(
                 provider, purpose,
@@ -161,17 +164,28 @@ class LinkedLoginsController(TipprController):
                               content=LinkedLoginLink(
                                   token, name, held["identity"].get("email"),
                                   wrong=True)).render()
-        try:
-            linked_logins.link(user, provider, held["identity"])
-        except linked_logins.LoginError as e:
-            return _message(str(e), "/login", _("log in"))
         linked_logins.unlinked_done(token)
         c.cookies[linked_logins.LINK_COOKIE] = Cookie(value="",
                                                       expires=DELETE)
+        if two_factor.enabled(user):
+            # the code before linking (and signing in)
+            otp_token = linked_logins.hold_for_otp(
+                user, held, provider, held["identity"]["subject"],
+                link_identity=held["identity"])
+            return BoringPage(_("sign in"), show_sidebar=False,
+                              content=LinkedLoginOtp(otp_token)).render()
+        return self._link_and_login(user, held["rem"], held["dest"],
+                                    provider, held["identity"])
+
+    def _link_and_login(self, account, rem, dest, provider, identity):
+        try:
+            linked_logins.link(account, provider, identity)
+        except linked_logins.LoginError as e:
+            return _message(str(e), "/login", _("log in"))
         g.log.info("linked logins: %s linked %s while signing in",
-                   user.name, provider)
-        return self._finish_login(user, held["rem"], held["dest"], provider,
-                                  held["identity"]["subject"])
+                   account.name, provider)
+        return self._finish_login(account, rem, dest, provider,
+                                  identity["subject"])
 
     @csrf_exempt
     @validate(token=VLength("token", 200, empty_error=None),
@@ -184,12 +198,7 @@ class LinkedLoginsController(TipprController):
             return _message(_("That sign-in took too long. Please start "
                               "again."), "/login", _("log in"))
         account = Account._byID(held["account_id"], data=True)
-        # validate_otp remembers used codes per account (c.user)
-        logged_out_user, c.user = c.user, account
-        valid = bool(otp) and VOneTimePassword.validate_otp(
-            account.otp_secret, otp)
-        if not valid:
-            c.user = logged_out_user
+        if not two_factor.check_code(account, otp):
             linked_logins.pending_failed(token, held)
             if not linked_logins.pending(token):
                 return _message(_("Too many wrong codes. Please start "
@@ -197,5 +206,9 @@ class LinkedLoginsController(TipprController):
             return BoringPage(_("sign in"), show_sidebar=False,
                               content=LinkedLoginOtp(token, wrong=True)).render()
         linked_logins.pending_done(token)
+        if held.get("link_identity"):
+            return self._link_and_login(account, held["rem"], held["dest"],
+                                        held["provider"],
+                                        held["link_identity"])
         return self._finish_login(account, held["rem"], held["dest"],
                                   held["provider"], held["subject"])

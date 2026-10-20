@@ -1269,10 +1269,8 @@ class PrefsPage(Tippr):
             NamedButton('update'),
         ])
 
-        # two-factor (admins), and linked sign-ins (r2.lib.linked_logins)
-        from r2.lib import linked_logins
-        if c.user.name in g.admins or linked_logins.enabled_providers():
-            buttons += [NamedButton('security')]
+        # two-factor sign-in, and linked sign-ins (r2.lib.linked_logins)
+        buttons += [NamedButton('security')]
 
         # privacy: your data export, and deleting your account
         buttons += [NamedButton('privacy')]
@@ -1305,9 +1303,12 @@ class PrefFeeds(Templated):
     pass
 
 class PrefSecurity(Templated):
-    """Two-factor sign-in (admins) and linked sign-ins."""
+    """Two-factor sign-in and linked sign-ins."""
     def __init__(self):
-        from r2.lib import linked_logins
+        from r2.lib import linked_logins, two_factor
+        self.two_factor = two_factor.enabled(c.user)
+        # a code is needed to link or unlink (unless one was entered just now)
+        self.link_needs_code = two_factor.needs_code(c.user, "linked_logins")
         links = {l["provider"]: l for l in linked_logins.links_for(c.user)}
         enabled = linked_logins.enabled_providers()
         self.linked = [
@@ -1361,6 +1362,10 @@ class PrefUpdate(Templated):
         self.verify = verify
         self.dest = dest
         self.subscribe = subscribe or is_promoted
+        # changing either needs the two-factor code (r2.lib.two_factor)
+        from r2.lib import two_factor
+        self.two_factor = two_factor.enabled(c.user)
+        self.needs_code = two_factor.needs_code(c.user, "password")
         Templated.__init__(self)
 
 class PrefApps(Templated):

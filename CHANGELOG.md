@@ -3,9 +3,14 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Two-factor sign-in for everyone** (it was admins only): any member can turn it on under preferences →
+  security with an authenticator app. With it on, changing the password or email address and linking or unlinking
+  a Google/Facebook sign-in also need a code (one code counts for 15 minutes in that session), turning it off needs
+  the password and a fresh code, and logging in with a password to link an outside account asks for the code before
+  linking. The security tab is shown to every member now.
 - **Sign in with Google or Facebook**, for accounts that linked one. An admin turns providers on at the new
   **/admin/logins** with the site's own OAuth app (client ID and secret; the page shows the redirect address to
-  register). Members link an account under preferences → security (now shown to everyone when a provider is on), or
+  register). Members link an account under preferences → security, or
   by logging in with their password the first time they sign in with an unlinked one; the login page and sidebar
   offer "sign in with Google". It only ever signs in to the account that linked it (nothing is matched by email, and
   no accounts are created this way), two-factor sign-in still asks for its code, links can be removed at any time,

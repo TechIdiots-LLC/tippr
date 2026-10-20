@@ -149,6 +149,8 @@ error_list = dict((
         ('DOMAIN_BANNED', _('%(domain)s is not allowed on tippr: %(reason)s')),
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
         ('OTP_ALREADY_ENABLED', _('two-factor authentication is already enabled')),
+        ('TWO_FACTOR_REQUIRED', _('enter the code from your authenticator app (or a recovery code)')),
+        ('TWO_FACTOR_NEEDED_FOR_STAFF', _('turn on two-factor authentication (preferences, security) to use these tools')),
         ('BAD_IMAGE', _('image problem')),
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
         ('TOO_MANY_DEVELOPERS', _('too many developers')),

@@ -18,7 +18,7 @@
 ##
 ## All portions of the code written by reddit are Copyright (c) 2006-2015
 ## reddit Inc. All Rights Reserved.
-## 
+##
 ## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 ## TechIdiots LLC. All Rights Reserved.
 ###############################################################################
@@ -31,51 +31,23 @@
 <%namespace file="utils.html" import="error_field, _md"/>
 <%namespace name="utils" file="utils.html"/>
 
+## the two-factor code, on forms that need one (r2.lib.two_factor)
+<%def name="otp_field()">
+  <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
+         maxlength="12" size="10" placeholder="${_('two-factor code')}">
+  ${error_field("TWO_FACTOR_REQUIRED", "otp")}
+</%def>
 
-## linked sign-ins (r2.lib.linked_logins)
-%if thing.linked:
-<h1>${_("sign in with another account")}</h1>
-<div class="linked-logins">
-  <p>${_("Link a Google or Facebook account to sign in with it instead of your password. It only signs in to this account, and you can unlink it at any time. Your password keeps working.")}</p>
-  %if thing.just_linked:
-    <p class="linked-logins-done">${_("Linked. You can now sign in with it on the login page.")}</p>
-  %endif
-  <table class="linked-logins-table">
-  %for p in thing.linked:
-    <tr>
-      <td class="linked-login-name">${p["name"]}</td>
-      %if p["link"]:
-        <td>
-          ${_("linked")}
-          %if p["link"]["email"] or p["link"]["display_name"]:
-            (${p["link"]["email"] or p["link"]["display_name"]})
-          %endif
-        </td>
-        <td>
-          <form action="/post/unlink_login" method="post" class="pretty-form"
-                onsubmit="return post_form(this, 'unlink_login')">
-            <input type="hidden" name="provider" value="${p['provider']}">
-            <button class="btn" type="submit">${_("unlink")}</button>
-            <span class="status"></span>
-          </form>
-        </td>
-      %elif p["enabled"]:
-        <td>${_("not linked")}</td>
-        <td><a class="btn" href="/logins/start/${p['provider']}?purpose=link">${_("link %(provider)s") % dict(provider=p["name"])}</a></td>
-      %endif
-    </tr>
-  %endfor
-  </table>
-</div>
-%endif
 
-% if c.user_is_loggedin and c.user.name in g.admins:
+## two-factor sign-in (r2.lib.two_factor)
 <h1>${_("two-factor authentication")}</h1>
+<div class="two-factor">
+% if thing.two_factor:
+    ${_md("two-factor authentication is **on**. you're asked for a code from your authenticator app when changing your password or email address, and when linking or unlinking a sign-in. a code you enter counts for 15 minutes.", wrap=True)}
 
-    % if c.user.otp_secret:
     <form action="/post/disable_otp" method="post" onsubmit="return post_form(this, 'disable_otp')" id="pref-otp">
 
-    ${_md("two-factor authentication is currently **enabled**. fill out the form below if you would like to disable it.", wrap=True)}
+    ${_md("to turn it off, enter your password and a code.", wrap=True)}
 
     <%utils:round_field title="${_('password')}" description="${_('(required)')}">
       <input type="password" name="password" />
@@ -83,7 +55,7 @@
     </%utils:round_field>
 
     <%utils:round_field title="${_('one-time password')}" description="${_('(required)')}">
-      <input type="number" name="otp" maxlength="6" />
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" />
       ${error_field("WRONG_PASSWORD", "otp")}
       ${error_field("NO_OTP_SECRET", "otp")}
       ${error_field("RATELIMIT", "otp")}
@@ -91,7 +63,9 @@
 
     <input type="submit" value="${_("disable")}">
     </form>
-    % else:
+% else:
+    ${_md("with two-factor authentication on, changing your password or email address, and linking or unlinking a sign-in, also need a code from an authenticator app on your phone (Google Authenticator, Authy, 1Password and the like). someone who learns your password, or gets into a linked Google or Facebook account, can't take over your account here.", wrap=True)}
+
     <form action="/post/generate_otp_secret" method="post" onsubmit="return post_form(this, 'generate_otp_secret')" id="pref-otp">
 
     ${_md("enter your current password below to start the activation process for two-factor authentication.", wrap=True)}
@@ -108,11 +82,11 @@
     <form action="/post/enable_otp" method="post" onsubmit="return post_form(this, 'enable_otp')" id="pref-otp-qr">
 
     <div id="otp-secret-info">
-        ${_md("below is your two-factor authentication secret. you can scan the QR code with Google Authenticator or enter the key below manually. you WILL NOT have another chance to see this secret.")}
+        ${_md("below is your two-factor authentication secret. you can scan the QR code with an authenticator app or enter the key below manually. you WILL NOT have another chance to see this secret.")}
     </div>
 
     <%utils:round_field title="${_('one-time password')}" description="${_('(required)')}">
-      <input type="number" name="otp" maxlength="6" />
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" />
       ${error_field("WRONG_PASSWORD", "otp")}
       ${error_field("EXPIRED", "otp")}
     </%utils:round_field>
@@ -120,7 +94,62 @@
     <input type="submit" value="${_("enable")}">
 
     </form>
-    % endif
 % endif
+</div>
+
+## linked sign-ins (r2.lib.linked_logins)
+%if thing.linked:
+<h1>${_("sign in with another account")}</h1>
+<div class="linked-logins">
+  <p>${_("Link a Google or Facebook account to sign in with it instead of your password. It only signs in to this account, and you can unlink it at any time. Your password keeps working.")}</p>
+  %if thing.just_linked:
+    <p class="linked-logins-done">${_("Linked. You can now sign in with it on the login page.")}</p>
+  %endif
+  %if thing.link_needs_code:
+    <p>${_("Linking or unlinking needs your two-factor code.")}</p>
+  %endif
+  <table class="linked-logins-table">
+  %for p in thing.linked:
+    <tr>
+      <td class="linked-login-name">${p["name"]}</td>
+      %if p["link"]:
+        <td>
+          ${_("linked")}
+          %if p["link"]["email"] or p["link"]["display_name"]:
+            (${p["link"]["email"] or p["link"]["display_name"]})
+          %endif
+        </td>
+        <td>
+          <form action="/post/unlink_login" method="post" class="pretty-form"
+                onsubmit="return post_form(this, 'unlink_login')">
+            <input type="hidden" name="provider" value="${p['provider']}">
+            %if thing.link_needs_code:
+              ${otp_field()}
+            %endif
+            <button class="btn" type="submit">${_("unlink")}</button>
+            <span class="status"></span>
+          </form>
+        </td>
+      %elif p["enabled"]:
+        <td>${_("not linked")}</td>
+        <td>
+        %if thing.link_needs_code:
+          <form action="/post/start_link_login" method="post" class="pretty-form"
+                onsubmit="return post_form(this, 'start_link_login')">
+            <input type="hidden" name="provider" value="${p['provider']}">
+            ${otp_field()}
+            <button class="btn" type="submit">${_("link %(provider)s") % dict(provider=p["name"])}</button>
+            <span class="status"></span>
+          </form>
+        %else:
+          <a class="btn" href="/logins/start/${p['provider']}?purpose=link">${_("link %(provider)s") % dict(provider=p["name"])}</a>
+        %endif
+        </td>
+      %endif
+    </tr>
+  %endfor
+  </table>
+</div>
+%endif
 
 ${unsafe(js.use("qrcode"))}
