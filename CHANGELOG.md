@@ -24,6 +24,8 @@
   dropped); they load now.
 - **`tippr-run` as root** wrote files the site couldn't use afterwards (compiled templates, media); it now runs as the
   site's user, keeping the environment (`FEEDS_ADD=1` and the like).
+- A few texts still named tippr.net: the sponsored link's help bubble, the friends page and the vault custom-domain
+  hint now use the site's own name and domain.
 
 ## 0.12.0
 ### ✨ Features and improvements

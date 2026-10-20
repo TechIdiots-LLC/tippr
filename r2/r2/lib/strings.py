@@ -81,7 +81,7 @@ string_dict = dict(
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
-    friends = _('to view tippr with only submissions from your friends, use [tippr.net/v/friends](%s)'),
+    friends = _('to view only submissions from your friends, use [/v/friends](%s)'),
 
     vault_created = _('your vault has been created'),
 

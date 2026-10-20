@@ -202,12 +202,6 @@
 
   %if not c.user_is_loggedin and not g.read_only_mode:
     %if thing.enable_login_cover:
-      <script>
-        var BETA_HOST = 'beta.tippr.net';
-        if (location.host === BETA_HOST) {
-          r.config.https_endpoint = 'https://' + BETA_HOST;
-        }
-      </script>
       <script id="login-popup" type="text/template">
         ${Login(is_popup=True)}
       </script>

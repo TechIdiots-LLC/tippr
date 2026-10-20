@@ -447,7 +447,7 @@ try participating in other communities on tippr for a little while first before 
             "helpon", "helpoff")}
       </div>
       <div class="infobar markhelp md" style="display: none">
-        ${_("Own a domain?  Enter it here and then go to your DNS provider and add a CNAME record aliasing your domain to rhs.tippr.net. You will be able to access your tippr through your domain.")}
+        ${_("Own a domain?  Enter it here and then go to your DNS provider and add a CNAME record aliasing your domain to %(domain)s. You will be able to reach your vault through your domain.") % dict(domain=g.domain)}
       </div>
     </div>
   </%utils:line_field>
