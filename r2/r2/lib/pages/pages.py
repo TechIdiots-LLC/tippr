@@ -1293,7 +1293,11 @@ class PrefOptions(Templated):
                     theme.checked = True
 
         feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_previews")
-        Templated.__init__(self, done=done,
+        # saving asks for the two-factor code, if the member chose that
+        from r2.lib import two_factor
+        ask_code = (c.user_is_loggedin and two_factor.enabled(c.user) and
+                    getattr(c.user, "pref_otp_settings", False))
+        Templated.__init__(self, done=done, ask_code=ask_code,
                 error_style_override=error_style_override,
                 feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                 generic_error=generic_error, themes=themes, use_other_theme=use_other_theme)
@@ -3644,6 +3648,10 @@ class NewLink(Templated):
         self.resubmit = resubmit
         self.default_vault = default_vault
         self.extra_Vaults = extra_Vaults
+        # posting asks for the two-factor code, if the member chose that
+        from r2.lib import two_factor
+        self.ask_code = (two_factor.enabled(c.user) and
+                         getattr(c.user, "pref_otp_post", False))
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text)

@@ -524,6 +524,7 @@ class ApiController(TipprController):
         VModhash(),
         VCaptcha(),
         VRatelimit(rate_user=True, rate_ip=True, prefix="rate_submit_"),
+        VTwoFactor("otp", "post"),
         VShamedDomain('url'),
         vault=VSubmitVault('vault', 'kind'),
         url=VUrl('url'),
@@ -568,6 +569,9 @@ class ApiController(TipprController):
         is_self = (kind == "self")
 
         if not kind or form.has_errors('vault', errors.INVALID_OPTION):
+            return
+
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
             return
 
         if form.has_errors('captcha', errors.BAD_CAPTCHA):
@@ -5923,8 +5927,10 @@ class ApiController(TipprController):
         VModhash(),
         VTwoFactor("otp", "two_factor_prefs"),
         login=VBoolean("otp_login"),
+        settings=VBoolean("otp_settings"),
+        post=VBoolean("otp_post"),
     )
-    def POST_two_factor_prefs(self, form, jquery, login):
+    def POST_two_factor_prefs(self, form, jquery, login, settings, post):
         """Where two-factor sign-in asks for a code besides the always-asked
         changes (preferences, security)."""
         from r2.lib import two_factor
@@ -5933,6 +5939,8 @@ class ApiController(TipprController):
         if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
             return
         c.user.pref_otp_login = login
+        c.user.pref_otp_settings = settings
+        c.user.pref_otp_post = post
         c.user._commit()
         form.set_inputs(otp="")
         form.set_text(".status", _("saved"))

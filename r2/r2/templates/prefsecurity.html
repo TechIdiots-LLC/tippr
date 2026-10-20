@@ -52,6 +52,15 @@
         <label for="otp_login">${_("when logging in, with your password or a linked Google/Facebook account")}</label>
         <br><small>${_("you can choose to skip it for %(days)s days on a device you trust") % dict(days=thing.device_days)}</small>
       </p>
+      <p>
+        <input type="checkbox" name="otp_settings" id="otp_settings" ${"checked" if c.user.pref_otp_settings else ""}>
+        <label for="otp_settings">${_("when saving your preferences")}</label>
+      </p>
+      <p>
+        <input type="checkbox" name="otp_post" id="otp_post" ${"checked" if c.user.pref_otp_post else ""}>
+        <label for="otp_post">${_("when submitting a post")}</label>
+      </p>
+      <p><small>${_("a code you enter counts for 15 minutes, so you aren't asked again and again. apps you've allowed (OAuth) aren't asked.")}</small></p>
       ${otp_field()}
       <button class="btn" type="submit">${_("save")}</button>
       <span class="status"></span>

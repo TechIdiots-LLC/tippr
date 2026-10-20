@@ -16,6 +16,9 @@
   the site asks for the code on its own page, with "don't ask again on this device for 30 days"; scripts can send
   it as `otp` with the password, and adding an account to the account switcher asks too. Signing in with a linked
   account now asks for the code only when this is on (it always did before).
+- **Two-factor when saving preferences or posting (optional):** the same "also ask for a code" choices can ask for
+  it when saving preferences and when submitting a post (a code counts for 15 minutes; apps using OAuth aren't
+  asked).
 - **Sign in with Google or Facebook**, for accounts that linked one. An admin turns providers on at the new
   **/admin/logins** with the site's own OAuth app (client ID and secret; the page shows the redirect address to
   register). Members link an account under preferences → security, or

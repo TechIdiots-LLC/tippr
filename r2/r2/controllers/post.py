@@ -31,6 +31,7 @@ from pylons.i18n import _
 from r2.config import feature
 from r2.lib.csrf import csrf_exempt
 from r2.lib.emailer import opt_in, opt_out
+from r2.lib.errors import errors
 from r2.lib.pages import *
 from r2.lib.utils import UrlParser, query_string
 from r2.lib.validator import *
@@ -56,7 +57,7 @@ class PostController(ApiController):
         c.user._commit()
         return self.redirect(request.referer)
 
-    @validate(VUser(), VModhash(),
+    @validate(VUser(), VModhash(), VTwoFactor("otp", "settings"),
               all_langs=VOneOf('all-langs', ('all', 'some'), default='all'),
               **PREFS_VALIDATORS)
     def POST_options(self, all_langs, **prefs):
@@ -66,6 +67,10 @@ class PostController(ApiController):
             prefs["pref_media_preview"] = validator.run(value)
 
         u = UrlParser(c.site.path + "prefs")
+
+        if (errors.TWO_FACTOR_REQUIRED, "otp") in c.errors:
+            u.update_query(generic_error=errors.TWO_FACTOR_REQUIRED)
+            return self.redirect(u.unparse())
 
         filter_prefs(prefs, c.user)
         if c.errors.errors:
