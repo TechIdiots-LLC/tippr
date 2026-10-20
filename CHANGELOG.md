@@ -3,10 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
-- **"Coins" are gone: buying gold to give away is "Give Gold"**, and the balance is just gold, (the gold page, payment page, gilding page, your
-  profile, preferences, the API app permission and /admin/coins): one name, gold, for everything bought on /gold.
-  Each month of Give Gold gives someone a month of gold. Addresses and the code's names (`/coins`,
-  `goldtype=coins`, `Account.gold_coins`) are unchanged.
+- **No more "coins"**: buying gold ahead to give away later is "Give Gold", and what you've bought is just gold
+  ("Give Gold: 3 months" on your profile, "use 1 of your 3 months of gold" when paying), on the gold, payment and
+  gilding pages, your profile, preferences, the API app permission and /admin/coins. Addresses and the code's names
+  (`/coins`, `goldtype=coins`, `Account.gold_coins`) are unchanged.
 - **Front page defaults are only vaults with feeds**, so a newcomer's front page has no empty vaults: the starter
   list no longer makes linux, selfhosted, mechanicalkeyboards, privacy, cozygaming, retrogaming, anime, fiberarts,
   aesthetics, pics, aww, asktippr and tippr defaults (they have no starter feeds; the vaults are still created). On an
