@@ -861,7 +861,7 @@ plugins = $plugin_str
 
 media_provider = filesystem
 media_fs_root = /srv/www/media
-media_fs_base_url_http = http://%(domain)s/media/
+media_fs_base_url_http = https://%(domain)s/media/
 
 [server:main]
 port = 8001
@@ -873,6 +873,9 @@ else
     sed -i "s/^oauth_domain = .*$/oauth_domain = $TIPPR_DOMAIN/" $TIPPR_SRC/tippr/r2/development.update
     sed -i "s@^https_endpoint = .*@https_endpoint = https://$TIPPR_DOMAIN@" $TIPPR_SRC/tippr/r2/development.update
     sed -i "s@^payment_domain = .*@payment_domain = https://pay.$TIPPR_DOMAIN/@" $TIPPR_SRC/tippr/r2/development.update
+    # uploaded media (thumbnails, previews) over https, as the site is: an
+    # http address is mixed content on its https pages
+    sed -i "s@^media_fs_base_url_http = http://@media_fs_base_url_http = https://@" $TIPPR_SRC/tippr/r2/development.update
 fi
 
 # Generated passwords and signing secrets. "make ini" merges this file over

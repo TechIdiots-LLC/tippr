@@ -1157,8 +1157,10 @@ class Link(Thing, Printable):
     @classmethod
     def _utf8_encode(cls, value):
         """
-        Returns a deep copy of the parameter, UTF-8-encoding any strings
-        encountered.
+        Returns a deep copy of the parameter, with any bytes decoded to
+        text. (Under Python 2 this UTF-8-encoded strings to work around a
+        pickling bug; Python 3 pickles text fine, and encoding made the
+        keys bytes, so media_object['type'] and the like were missing.)
         """
         if isinstance(value, dict):
             return {cls._utf8_encode(key): cls._utf8_encode(value)
@@ -1166,8 +1168,8 @@ class Link(Thing, Printable):
         elif isinstance(value, list):
             return [cls._utf8_encode(item)
                     for item in value]
-        elif isinstance(value, str):
-            return value.encode('utf-8')
+        elif isinstance(value, bytes):
+            return value.decode('utf-8', 'replace')
         else:
             return value
 

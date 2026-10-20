@@ -80,7 +80,6 @@ class MediaByURL(tdb_cassandra.View):
             json.dumps(
                 kwargs,
                 ensure_ascii=True,
-                encoding="ascii",
                 indent=None,
                 separators=(",", ":"),
                 sort_keys=True,

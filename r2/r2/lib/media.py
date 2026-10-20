@@ -190,10 +190,10 @@ def _prepare_image(image):
 
 
 def _clean_url(url):
-    """url quotes str data out of urls"""
-    url = url.encode('utf8')
-    url = ''.join(urllib.parse.quote(c) if ord(c) >= 127 else c for c in url)
-    return url
+    """url quotes non-ASCII characters in urls"""
+    if isinstance(url, bytes):
+        url = url.decode('utf-8', 'replace')
+    return ''.join(urllib.parse.quote(c) if ord(c) >= 127 else c for c in url)
 
 
 def _initialize_request(url, referer, gzip=False):
@@ -220,7 +220,7 @@ def _fetch_url(url, referer=None):
     response_data = response.read()
     content_encoding = response.info().get("Content-Encoding")
     if content_encoding and content_encoding.lower() in ["gzip", "x-gzip"]:
-        buf = io.StringIO(response_data)
+        buf = io.BytesIO(response_data)
         f = gzip.GzipFile(fileobj=buf)
         response_data = f.read()
     return response.headers.get("Content-Type"), response_data
@@ -255,6 +255,8 @@ def _fetch_image_size(url, referer):
 
 
 def optimize_jpeg(filename):
+    if not os.path.exists("/usr/bin/jpegoptim"):
+        return    # optional (apt install jpegoptim): just a smaller file
     with open(os.path.devnull, 'w') as devnull:
         subprocess.check_call(("/usr/bin/jpegoptim", filename), stdout=devnull)
 

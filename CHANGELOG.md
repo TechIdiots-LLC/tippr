@@ -58,6 +58,13 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Thumbnails** were never made: the thumbnail finder (`tippr-consumer-scraper_q`) failed on every post under
+  Python 3 (in its cache key, URL cleaning, gzip handling, and saving the result, whose keys came out as bytes). They
+  are made for new posts now, and `scripts/backfill_thumbnails.py` finds them for the last few days' posts
+  (`THUMB_DAYS=7` to go further back). Vaults now show thumbnails unless their moderators turn them off (the default
+  was off, and with the "show thumbnails" preference at its default nobody saw any), new vaults start with the box
+  ticked, and the installer serves uploaded media over https (it wrote an `http://` address, mixed content on the
+  site's https pages; upgrades fix it in development.update).
 - **Night mode**: the vault list's description boxes, the vault search box, the selected tab of the side menu,
   quotes, code, buttons' borders, the submit page's notice, the gold page and the AI labels stayed white or light grey.
   The stylesheets' fixed light greys are now theme colours (`--tp-subtle`, `--tp-gray`, `--tp-gray-strong`,

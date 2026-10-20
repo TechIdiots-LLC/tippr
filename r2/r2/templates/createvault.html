@@ -341,7 +341,8 @@ try participating in other communities on tippr for a little while first before 
         <li>
           <input class="nomargin" type="checkbox"
                  name="show_media" id="show_media"
-                 %if thing.site and thing.site.show_media:
+                 ## on for new vaults: most posts here are links (feeds)
+                 %if not thing.site or thing.site.show_media:
                    checked="checked"
                  %endif
           >
