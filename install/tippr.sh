@@ -1,3 +1,6 @@
+# starter feeds for them (TIPPR_STARTER_FEEDS; only ones new since the last run)
+echo "Adding starter feeds (TIPPR_STARTER_FEEDS=$TIPPR_STARTER_FEEDS)..."
+FEEDS_STARTER="$TIPPR_STARTER_FEEDS" tippr-run $TIPPR_SRC/tippr/scripts/import_feeds.py || echo "Note: starter feeds skipped (FEEDS_STARTER=1 tippr-run scripts/import_feeds.py later)"
 #!/bin/bash
 ###############################################################################
 # tippr dev environment installer
@@ -1677,9 +1680,14 @@ echo "Ensuring application account exists..."
 tippr-run $TIPPR_SRC/tippr/scripts/create_default_user.py || echo "Note: create_default_user.py skipped"
 echo "Initializing policy wiki pages..."
 tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Policy wiki pages initialization skipped (can be run manually later)"
-# starter vaults and front page defaults (only sets defaults the first time)
+# starter vaults and front page defaults (then only defaults new since the
+# last run, so ones an admin took off stay off)
 echo "Creating starter vaults..."
 tippr-run $TIPPR_SRC/tippr/scripts/create_default_vaults.py || echo "Note: starter vaults skipped (run scripts/create_default_vaults.py later)"
+# starter feeds for them (TIPPR_STARTER_FEEDS; then only feeds new since the
+# last run, so ones an admin removed stay removed)
+echo "Adding starter feeds (TIPPR_STARTER_FEEDS=$TIPPR_STARTER_FEEDS)..."
+FEEDS_STARTER="$TIPPR_STARTER_FEEDS" tippr-run $TIPPR_SRC/tippr/scripts/import_feeds.py || echo "Note: starter feeds skipped (FEEDS_STARTER=1 tippr-run scripts/import_feeds.py later)"
 # starter awards (trophies); existing ones are left alone
 echo "Creating starter awards..."
 tippr-run $TIPPR_SRC/tippr/scripts/create_default_awards.py || echo "Note: starter awards skipped (run scripts/create_default_awards.py later)"

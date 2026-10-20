@@ -47,6 +47,7 @@ Set these as environment variables when running the installer:
 | `TIPPR_SITE_NAME`, `TIPPR_SITE_DESCRIPTION`, `TIPPR_CONTACT_EMAIL` | | site name, front page title and description, contact address |
 | `TIPPR_WEB_WORKERS` | CPU count, at most 8 | gunicorn workers |
 | `TIPPR_SEARCH` | `opensearch` | `none` skips OpenSearch ([SEARCH.md](SEARCH.md)) |
+| `TIPPR_STARTER_FEEDS` | `auto` | starter feeds for the starter vaults: `auto` adds them on a new site and keeps the site's choice after that, `1` on, `0` off; upgrades add only feeds new to the list ([CONTENT.md](CONTENT.md#feeds)) |
 | `TIPPR_OPENSEARCH_HEAP` | `1g` | OpenSearch's Java heap |
 | `TIPPR_TLS_CERT`, `TIPPR_TLS_KEY` | | certificate and key to use, e.g. a Cloudflare Origin Certificate |
 | `TIPPR_LETSENCRYPT_EMAIL` | | get a Let's Encrypt certificate (the domain must point here) |
@@ -89,9 +90,9 @@ the admin account, plus the site's signing secrets. It keeps them in
    - `/admin/ads`: Google AdSense, if you want ads ([below](#google-adsense)).
    - `/admin/payments`: PayPal, Stripe, Coinbase or BitPay, to sell gold
      and ads ([gold-payments.md](gold-payments.md)).
-   - `/admin/feeds`: the feeds that post into vaults. A new site has
-     none; `FEEDS_ADD=1 tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py` adds
-     the starter feeds for the starter vaults ([CONTENT.md](CONTENT.md)).
+   - `/admin/feeds`: the feeds that post into vaults. The installer adds
+     the starter feeds for the starter vaults on a new site
+     (`TIPPR_STARTER_FEEDS`, [CONTENT.md](CONTENT.md#feeds)).
    - `/admin/logins`: "sign in with Google" or Facebook, with your own
      OAuth app from each (optional).
    - `/admin/config`: the live settings (who's staff, captcha and vault

@@ -24,9 +24,11 @@ and politics vaults exist but aren't defaults, so they don't fill the front
 page unless people subscribe. Creative vaults take human-made and AI-assisted
 posts, with separate vaults for AI-generated art and music.
 
-Safe to re-run: existing vaults are left as their moderators set them, and
-the default list is only set when the site doesn't have one yet. To replace
-an existing site's defaults with this list (after changing it):
+Safe to re-run: existing vaults are left as their moderators set them. The
+default list is set when the site doesn't have one yet; after that, a run
+adds only the defaults new to this list since the last run (r2.lib.
+starter_content remembers what was offered), so a default an admin took
+off stays off. To replace an existing site's defaults with this list:
 
     TIPPR_RESET_DEFAULTS=1 tippr-run scripts/create_default_vaults.py
 """
@@ -35,7 +37,7 @@ import os
 
 from pylons import app_globals as g
 
-from r2.lib import ai_content
+from r2.lib import ai_content, starter_content, vault_admin
 from r2.lib.db import queries
 from r2.models import Account, NotFound, Vault
 from r2.models.vault import LocalizedDefaultVaults
@@ -179,13 +181,32 @@ vaults = {}
 for name, title, description, policy, is_default in VAULTS:
     vaults[name] = ensure_vault(owner, name, title, description, policy)
 
-if (LocalizedDefaultVaults.get_global_defaults()
-        and os.environ.get("TIPPR_RESET_DEFAULTS") != "1"):
-    print("front page defaults are already set; not changing them "
-          "(TIPPR_RESET_DEFAULTS=1 replaces them with this list)")
+starter_defaults = [name for name, _, _, _, is_default in VAULTS
+                    if is_default]
+current = LocalizedDefaultVaults.get_global_defaults()
+offered = starter_content.offered_defaults()
+if not current or os.environ.get("TIPPR_RESET_DEFAULTS") == "1":
+    set_defaults([vaults[name] for name in starter_defaults])
+    starter_content.record_defaults(starter_defaults, new_site=not current)
+elif offered is None:
+    # a site from before starter defaults were remembered: its defaults
+    # are the admin's choice, so only remember the list from now on
+    starter_content.record_defaults(starter_defaults)
+    print("front page defaults are already set; leaving them (new starter "
+          "defaults in later versions will be added)")
 else:
-    set_defaults([vaults[name] for name, _, _, _, is_default in VAULTS
-                  if is_default])
+    # defaults new in this version; ones offered before and taken off by
+    # an admin stay off
+    new = [name for name in starter_defaults if name.lower() not in offered]
+    ids = set(current)
+    for name in new:
+        if vaults[name]._id not in ids:
+            vault_admin.set_listed(vaults[name], "default", True, owner)
+            print(f"  new front page default: /v/{name}")
+    starter_content.record_defaults(new)
+    if not new:
+        print("front page defaults: no new starter defaults (ones taken off "
+              "aren't added back; TIPPR_RESET_DEFAULTS=1 resets them all)")
 
 # the private vault "message the admins" goes to (admin_message_acct), whose
 # messages become tickets in the support queue (/admin/support)

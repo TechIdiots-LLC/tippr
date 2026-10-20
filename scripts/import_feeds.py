@@ -36,6 +36,12 @@ Settings (environment variables):
     FEEDS_INTERVAL  minutes between checks of each feed (default: 60)
     FEEDS_ADD=1     add them (otherwise it's a dry run); TIPPR_ALLOW_MUTATE=1
                     works too, as for the other scripts here
+    FEEDS_STARTER   the installer's starter feeds (TIPPR_STARTER_FEEDS):
+                    1 or 0 turns them on or off for the site (remembered),
+                    auto keeps the remembered choice (first time: yes on a
+                    new site, or one that has them already). Adds only the
+                    feeds new to the list since the last run, so a feed an
+                    admin removed isn't added back (r2.lib.starter_content).
     FEEDS_SYNC=1    also remove FEEDS_BOT's feeds that aren't in the list (or
                     are listed for another vault), so its feeds match the
                     list after reorganizing it. Feeds still in the list are
@@ -56,7 +62,7 @@ import requests
 from lxml import html
 
 import r2
-from r2.lib import feeds
+from r2.lib import feeds, starter_content
 from r2.lib.db.thing import NotFound
 from r2.models import Vault
 
@@ -147,14 +153,74 @@ def sync(bot, wanted, removing, counts):
         counts[result] = counts.get(result, 0) + 1
 
 
+def bot_feeds(bot):
+    from r2.models import Account
+    try:
+        account = Account._by_name(bot)
+    except NotFound:
+        return []
+    return [f for f in feeds.all_feeds() if f["account_id"] == account._id]
+
+
+def starter_entries(choice, bot, entries):
+    """The installer's starter feeds (FEEDS_STARTER): whether to add them
+    (1, 0, or auto: remembered, else yes on a new site or one that has
+    them already), and the list entries not offered to this site before
+    (r2.lib.starter_content), so a feed an admin removed isn't added back.
+    None: don't add any."""
+    if choice in ("1", "0"):
+        on = choice == "1"
+        starter_content.set_feeds_on(on)
+    else:
+        on = starter_content.feeds_on()
+        if on is None:
+            on = starter_content.new_site() or bool(bot_feeds(bot))
+            starter_content.set_feeds_on(on)
+    if not on:
+        print("Starter feeds are off for this site (TIPPR_STARTER_FEEDS=1 "
+              "turns them on)")
+        return None
+    offered = starter_content.offered_feeds()
+    if offered is None:
+        # a site from before this was remembered: what its vaults with
+        # starter feeds have is the admin's choice; vaults without any
+        # get theirs
+        have = {f["vault_id"] for f in bot_feeds(bot)}
+        names = {}
+        for _number, vault_name, url, _prefix in entries:
+            if vault_name not in names:
+                try:
+                    names[vault_name] = Vault._by_name(vault_name)._id
+                except NotFound:
+                    names[vault_name] = None
+        offered = {starter_content.feed_key(vault_name, url)
+                   for _number, vault_name, url, _prefix in entries
+                   if names[vault_name] in have}
+        starter_content.record_feeds(offered)
+    new = [e for e in entries
+           if starter_content.feed_key(e[1], e[2]) not in offered]
+    print("Starter feeds: %d in the list, %d not offered to this site before\n"
+          % (len(entries), len(new)))
+    return new
+
+
 def main():
     path = os.environ.get("FEEDS_FILE") or DEFAULT_FILE
     bot = os.environ.get("FEEDS_BOT") or "news_bot"
+    starter = os.environ.get("FEEDS_STARTER")
     interval = int(os.environ.get("FEEDS_INTERVAL") or
                    feeds.DEFAULT_INTERVAL_MINUTES)
     adding = (os.environ.get("FEEDS_ADD") in ("1", "true", "yes") or
-              os.environ.get("TIPPR_ALLOW_MUTATE") == "1")
-    syncing = os.environ.get("FEEDS_SYNC") in ("1", "true", "yes")
+              os.environ.get("TIPPR_ALLOW_MUTATE") == "1" or bool(starter))
+    syncing = (os.environ.get("FEEDS_SYNC") in ("1", "true", "yes") and
+               not starter)
+    entries = read_list(path)
+    if starter:
+        entries = starter_entries(starter, bot, entries)
+        if entries is None:
+            return
+    # starter feeds handled this run (added, or there already)
+    done = []
     print("%s %s as %s, every %d minutes\n" % (
         "Adding feeds from" if adding else "Dry run (FEEDS_ADD=1 to add):",
         path, bot, max(interval, feeds.MIN_INTERVAL_MINUTES)))
@@ -165,11 +231,18 @@ def main():
     counts = {}
     # (vault id, feed address) of everything in the list, for FEEDS_SYNC
     wanted = set()
-    for number, vault_name, url, prefix in read_list(path):
+    for number, vault_name, url, prefix in entries:
         try:
             vault = Vault._by_name(vault_name)
         except NotFound:
             vault = None
+        if vault is not None and (vault._id, url.rstrip("/").lower()) in existing:
+            # there already: no need to fetch it
+            print("EXISTS   line %-3d /v/%-14s %s" % (number, vault.name, url))
+            counts["already there"] = counts.get("already there", 0) + 1
+            wanted.add((vault._id, url.rstrip("/").lower()))
+            done.append(starter_content.feed_key(vault_name, url))
+            continue
         try:
             feed_url, title, n = resolve(url)
         except Exception as e:
@@ -193,10 +266,12 @@ def main():
             print("EXISTS   line %-3d /v/%-14s %s"
                   % (number, vault.name, feed_url))
             counts["already there"] = counts.get("already there", 0) + 1
+            done.append(starter_content.feed_key(vault_name, url))
             continue
         if adding:
             feeds.add(feed_url, vault, account, interval, prefix)
             existing.add(key)
+            done.append(starter_content.feed_key(vault_name, url))
         result = "added" if adding else "to add"
         print("%-8s line %-3d /v/%-14s %-12s %s  \"%s\", %d items%s"
               % (result.upper(), number, vault.name, prefix or "", feed_url,
@@ -205,6 +280,8 @@ def main():
 
     if syncing:
         sync(bot, wanted, adding, counts)
+    if starter:
+        starter_content.record_feeds(done)
 
     print("\n" + (", ".join("%d %s" % (n, what) for what, n in counts.items())
                   or "no feeds in the list"))

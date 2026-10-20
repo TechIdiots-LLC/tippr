@@ -23,8 +23,11 @@ some of them the front page defaults (what logged-out and new users see).
   curated, design). aiart and aimusic are for AI-generated work, so art
   and music can stay human-made.
 
-The script is safe to re-run: existing vaults are left as their moderators
-set them, and the default list is only set when the site has none yet. Edit
+The script is safe to re-run (the installer runs it on every install and
+upgrade): existing vaults are left as their moderators set them, the default
+list is set when the site has none yet, and after that only defaults new to
+the list are added, so a default an admin took off stays off
+(`TIPPR_RESET_DEFAULTS=1` replaces the defaults with the list). Edit
 the `VAULTS` list in the script to change what a new install gets. Admins
 can add or remove defaults on /admin/vaults; `scripts/prune_default_vaults.py`
 takes every default without a feed off the list (`PRUNE_DRY_RUN=1` to
@@ -35,9 +38,12 @@ preview).
 Vaults can fill themselves from RSS and Atom feeds (/admin/feeds): every
 15 minutes `tippr-job-feeds` checks the feeds that are due and posts their
 new items into each feed's vault, from a bot account, with an optional
-title prefix such as `[NASA]`. A new
-site has no feeds; `scripts/starter_feeds.txt` lists public feeds for the
-starter vaults, and
+title prefix such as `[NASA]`. `scripts/starter_feeds.txt` lists public
+feeds for the starter vaults. The installer adds them on a new site
+(`TIPPR_STARTER_FEEDS`: `auto`, the default, adds them on a new site and
+keeps the site's choice after that; `1` turns them on, `0` off), and on
+upgrades adds the feeds new to the list since the last run. Feeds an admin
+removed from /admin/feeds aren't added back. To add from a list yourself,
 
 ```bash
 FEEDS_ADD=1 tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py

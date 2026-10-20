@@ -55,7 +55,9 @@ Files:
   (`FEEDS_FILE`, default `starter_feeds.txt`: public feeds for the vaults
   `create_default_vaults.py` makes). A dry run unless `FEEDS_ADD=1` or
   `TIPPR_ALLOW_MUTATE=1`; an address can be a site's homepage if the page
-  links to its feed. Run it with `tippr-run`.
+  links to its feed. The installer runs it with `FEEDS_STARTER=auto|1|0`
+  (`TIPPR_STARTER_FEEDS`), which adds only feeds not offered to the site
+  before, so feeds an admin removed stay removed. Run it with `tippr-run`.
 
 - `migrate_media_to_s3.py`: copies `/srv/www/media` into an S3-compatible
   bucket before switching the site to it (docs/STORAGE.md). A dry run unless
