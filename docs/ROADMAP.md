@@ -82,10 +82,9 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    privacy and content policies and help pages are filled in from
    `docs/policies/` and `docs/help/` with the site's name, domain,
    operator, contact address and governing law when
-   `scripts/init_policy_wiki_pages.py` runs. Re-fill them automatically
-   when those settings change on /admin/site (and after an upgrade brings
-   new versions), except pages an admin has edited by hand, which get a
-   note instead of being overwritten.
+   `scripts/init_policy_wiki_pages.py` runs, and an upgrade brings new
+   versions (except to pages an admin edited by hand). Still to do: re-fill
+   them when those settings change on /admin/site.
 
 ## Payments and gold
 

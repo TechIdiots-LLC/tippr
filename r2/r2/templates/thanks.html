@@ -32,14 +32,14 @@
       class="content"
       onsubmit="return post_form(this, 'claimgold');">
 %if thing.status == "coins":
-  <h1>${_("thanks for buying coins!")}</h1>
+  <h1>${_("thanks for buying gold to give!")}</h1>
 %else:
   <h1>${_("thanks for subscribing!")}</h1>
 %endif
 
 <p class="blurb">
 %if thing.status == "coins":
-  ${_("enter your confirmation code below to claim your gift coins")}
+  ${_("enter your confirmation code below to claim your gold to give")}
 %elif thing.status == "mundane":
   ${_("enter your confirmation code below to activate tippr gold")}
 %else:

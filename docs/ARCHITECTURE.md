@@ -99,7 +99,7 @@ With admin mode on (`/adminon`, which requires TOTP in production):
 | `/admin/email` | outgoing email (SMTP or Gmail) |
 | `/admin/ads` | Google AdSense ([INSTALL_tippr.md](INSTALL_tippr.md#google-adsense)) |
 | `/admin/backups` | export, import, restore, transfer keys ([BACKUP.md](BACKUP.md)) |
-| `/admin/awards`, `/admin/coins`, `/admin/gold` | trophies, coins and gold |
+| `/admin/awards`, `/admin/coins`, `/admin/gold` | trophies, gold to give and gold |
 | `/admin/privacy` | data export and deletion requests |
 
 See [ADMIN_FEATURES.md](ADMIN_FEATURES.md).

@@ -12,7 +12,7 @@
 # The Initial Developer of the Original Code is TechIdiots LLC.
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""Taking payments (gold, coins, gift codes and sold ads).
+"""Taking payments (gold, gold to give, gift codes and sold ads).
 
 Nothing is built in: the site owner turns on the payment providers they
 have accounts with on /admin/payments and enters their own API keys there
@@ -225,9 +225,9 @@ def dollars(pennies):
 ###############################################################################
 
 def gold_price(months):
-    """(months, pennies) for buying months of gold, coins or a gift: by the
-    month up to 11, then whole years at the yearly price (as the payment
-    page shows it)."""
+    """(months, pennies) for buying months of gold, gold to give or a
+    gift: by the month up to 11, then whole years at the yearly price (as
+    the payment page shows it)."""
     months = int(months)
     if months < 1:
         raise ValueError("months must be at least 1")

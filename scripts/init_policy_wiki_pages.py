@@ -212,26 +212,41 @@ def main(root_dir=None):
             page_exists = False
 
         if page_exists:
-            if force:
-                print(f"  Wiki page exists; --force given, attempting update...")
-                # "Last Revised" becomes today if the text changed
-                content, changed = site_info.stamp_revised(
-                    content, existing_page.content)
-                if not changed:
-                    print(f"  Unchanged, leaving it as it is.
-")
-                    continue
+            # pages the scripts wrote follow docs/policies (so an upgrade
+            # brings their new versions); one an admin edited on the site
+            # is left alone unless forced. The scripts' revisions say
+            # "...docs/policies" (the author can't tell: an admin may be
+            # the system account)
+            by_script = True
+            revision_id = getattr(existing_page, "revision", None)
+            if revision_id:
                 try:
-                    existing_page.revise(content, author=system_user._id36, reason="Updated from docs/policies/")
-                    print(f"  SUCCESS: Updated {display_name}\n")
-                except Exception as e:
-                    print(f"  ERROR: Failed to revise existing page '{wiki_name}': {e}")
-                    import traceback
-                    traceback.print_exc()
-                    print()
-                    continue
-            else:
-                print(f"  Wiki page already exists; skipping (use --force to overwrite).\n")
+                    from r2.models.wiki import WikiRevision
+                    revision = WikiRevision.get(revision_id,
+                                                pageid=existing_page._id)
+                    by_script = "docs/policies" in (
+                        getattr(revision, "reason", None) or "")
+                except Exception:
+                    pass
+            if not by_script and not force:
+                print("  Edited on the site by an admin; leaving it "
+                      "(FORCE_POLICY_IMPORT=1 replaces it).\n")
+                continue
+            # "Last Revised" becomes today if the text changed
+            content, changed = site_info.stamp_revised(
+                content, existing_page.content)
+            if not changed:
+                print("  Unchanged, leaving it as it is.\n")
+                continue
+            try:
+                existing_page.revise(content, author=system_user._id36,
+                                     reason="Updated from docs/policies/")
+                print(f"  SUCCESS: Updated {display_name}\n")
+            except Exception as e:
+                print(f"  ERROR: Failed to revise existing page '{wiki_name}': {e}")
+                import traceback
+                traceback.print_exc()
+                print()
                 continue
         else:
             try:

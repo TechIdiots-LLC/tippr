@@ -548,7 +548,7 @@ class GoldPaymentController(TipprController):
 
             elif goldtype == 'coins':
                 buyer._incr('gold_coins', months)
-                subject = "thanks for buying coins!"
+                subject = "thanks for buying gold to give!"
                 message = ("To spend them, visit %s://%s/gold or your "
                            "favorite person's userpage." % (g.default_scheme,
                                                             g.domain))

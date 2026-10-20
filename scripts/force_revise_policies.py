@@ -75,7 +75,7 @@ def main():
             print('DRY-RUN: would revise', wiki_name)
             continue
         try:
-            wr = wp.revise(content, author=system_user, force=True, reason='Re-import from docs/policies')
+            wr = wp.revise(content, author=system_user._id36, force=True, reason='Re-import from docs/policies')
             print('Created revision', getattr(wr, '_id', None))
         except Exception as e:
             print('Failed revise', wiki_name, e)

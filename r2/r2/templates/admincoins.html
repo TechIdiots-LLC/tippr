@@ -25,7 +25,7 @@
 
 <%namespace file="utils.html" import="error_field"/>
 
-<h1>${_("give coins to a user")}</h1>
+<h1>${_("give a user gold to give")}</h1>
 
 <form id="coins" action="/api/givecoins" method="post" class="pretty-form medium-text"
       onsubmit="return post_form(this, 'givecoins');">
@@ -40,7 +40,7 @@
       </td>
     </tr>
     <tr>
-        <td>${_("coins")}</td>
+        <td>${_("months of gold to give")}</td>
       <td>
         <input type="number" name="num_coins">
         ${_("(negative to take away)")}

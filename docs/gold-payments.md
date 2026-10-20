@@ -64,7 +64,7 @@ and acts on that answer, so webhooks need no signing secret and a forged one can
    "confirming" until the network confirms them.
 4. Once the provider says it's paid, the status changes to `paid` with a conditional update, so the purchase is
    delivered exactly once however many times the return page and webhooks ask. Delivery is the same code every gold
-   purchase uses (`GoldPaymentController.complete_gold_purchase` in `r2/r2/controllers/ipn.py`): gold days, coins, a
+   purchase uses (`GoldPaymentController.complete_gold_purchase` in `r2/r2/controllers/ipn.py`): gold days, gold to give, a
    gift (with its message, and the gilding), or a gift code sent by message or email.
 5. A refund (from /admin/payments, or one the provider reports) takes the purchase back with `reverse_gold_purchase`
    and tells the buyer. A gift code that's already out can't be taken back.
@@ -104,4 +104,5 @@ Gold subscriptions (autorenew) still use reddit's Stripe card form: the `stripe_
 subscriptions. For everything else a Stripe provider on /admin/payments replaces that form. (reddit's PayPal
 subscription buttons and IPNs, and its Coinbase Commerce buttons, are removed.)
 
-Coins (spent on /gold) need no provider: `/api/spendcoins` applies them at once.
+Gold to give (bought on /gold, and still called "coins" in the code: `Account.gold_coins`, `goldtype=coins`, `/coins`) needs no
+provider to spend: `/api/spendcoins` applies it at once.

@@ -2452,8 +2452,8 @@ class ProfileBar(Templated):
                     self.stripe_customer_id = user.gold_subscr_id
 
             if user.gold_coins > 0 and self.show_private_info:
-                msg = ungettext("%(coins)s gold coin to give",
-                                "%(coins)s gold coins to give",
+                msg = ungettext("%(coins)s month of gold to give",
+                                "%(coins)s months of gold to give",
                                 user.gold_coins)
                 msg = msg % dict(coins=user.gold_coins)
                 self.gold_coin_message = msg
@@ -3211,7 +3211,7 @@ class GoldPayment(Templated):
 
             if goldtype == "coins":
                 summary = strings.gold_summary_coins % dict(
-                    amount=Score.somethings(months, "coin"),
+                    amount=Score.somethings(months, "month of gold to give"),
                     price=price,
                 )
             elif goldtype == "gift":
@@ -3314,6 +3314,16 @@ class GoldGiftCodeEmail(Templated):
     """Email sent to a logged-out person that purchases a tippr
     gold gift code."""
     pass
+
+
+class GoldAbout(Templated):
+    """/gold/about: what gold gives you."""
+    def __init__(self):
+        Templated.__init__(self, month_price=g.gold_month_price,
+                           year_price=g.gold_year_price,
+                           gold_limit=Vault.gold_limit,
+                           vault_limit=Vault.vault_limit,
+                           lounge=g.lounge_vault or None)
 
 
 class Gilding(Templated):
@@ -3698,7 +3708,8 @@ class AdminAwardWinners(Templated):
 
 
 class AdminCoins(Templated):
-    """The admin interface for giving coins to a user."""
+    """The admin interface for giving a user gold to give (prepaid months
+    of gold they can gift: Account.gold_coins)."""
     def __init__(self, recipient):
         self.recipient = recipient
         Templated.__init__(self)

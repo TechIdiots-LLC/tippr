@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **"Coins" are now "gold to give"** everywhere members see them (the gold page, payment page, gilding page, your
+  profile, preferences, the API app permission and /admin/coins): one name, gold, for everything bought on /gold.
+  Each month of gold to give gives someone a month of gold. Addresses and the code's names (`/coins`,
+  `goldtype=coins`, `Account.gold_coins`) are unchanged.
 - **Front page defaults are only vaults with feeds**, so a newcomer's front page has no empty vaults: the starter
   list no longer makes linux, selfhosted, mechanicalkeyboards, privacy, cozygaming, retrogaming, anime, fiberarts,
   aesthetics, pics, aww, asktippr and tippr defaults (they have no starter feeds; the vaults are still created). On an
@@ -62,6 +66,13 @@
 - **Policy pages' "Last Revised" date** stayed at the date in docs/policies when the installer (or
   `force_revise_policies.py`) updated the pages; it's now the day a page's text changes, and an unchanged page keeps
   its date (and isn't revised again).
+- **Policy pages kept their first version**: the installer only created missing pages, so a site never got newer
+  versions of docs/policies (an older site's pages still list email addresses instead of the contact page). It now
+  brings policy and help pages up to date on every install or upgrade, except a page an admin edited on the site,
+  which is left alone (`FORCE_POLICY_IMPORT=1` replaces those too).
+- **"Learn more" about gold** (/gold/about) led back to /gold. It's now a page listing what gold gives you: no ads,
+  more front page vaults, new comments highlighted, save categories, filtering /v/all, /v/myrandom, notes on friends,
+  visited links remembered, gold-only vaults, the lounge if the site has one, and the trophy.
 - **Feed posts' titles** showed HTML codes ("&#8216;Trump Accounts&#8217;") when a feed escaped its titles twice, and
   sometimes HTML tags; the importer now decodes them. `scripts/fix_feed_titles.py` fixes the posts already made
   (`FIX_DRY_RUN=1` to preview).

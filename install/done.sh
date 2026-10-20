@@ -86,7 +86,8 @@ steps:
 
     tippr-run $TIPPR_SRC/tippr/scripts/inject_test_data.py -c 'inject_test_data()'
 
-* To update or re-initialize policy wiki pages (Terms of Use, Privacy Policy, etc.):
+* Policy wiki pages (Terms of Use, Privacy Policy, etc.) are brought up to date on
+  every install, except pages an admin edited on the site. To replace those too:
 
     sudo env FORCE_POLICY_IMPORT=1 tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py
 

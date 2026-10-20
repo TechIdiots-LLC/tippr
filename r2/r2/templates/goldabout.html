@@ -1,0 +1,75 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%namespace file="utils.html" import="_md, _mdf"/>
+
+## /gold/about: what tippr gold gives you
+<div class="gold-wrap">
+  <h1 class="gold-banner"><a href="/gold">${_('tippr gold')}</a></h1>
+
+  <div class="fancy">
+    <div class="fancy-inner">
+        <div class="fancy-content">
+            <div class="container">
+                <p class="gold-about-intro">
+                  ${_mdf("tippr gold is our premium membership: %(month)s a month or %(year)s a year. It keeps the site running, and gives you these extras for as long as you have it.", month=thing.month_price, year=thing.year_price)}
+                </p>
+                <dl class="gilding-faq">
+                  <dt class="toggle toggled" id="no-ads">${_('No ads')}</dt>
+                  <dd>${_("Gold members don't see ads. If you'd like to see them anyway, turn off \"hide ads\" in your preferences.")}</dd>
+
+                  <dt class="toggle toggled" id="more-vaults">${_('More vaults on your front page')}</dt>
+                  <dd>${_mdf("Your front page shows posts from up to %(gold)s of the vaults you subscribe to, instead of %(normal)s.", gold=thing.gold_limit, normal=thing.vault_limit)}</dd>
+
+                  <dt class="toggle toggled" id="new-comments">${_('New comments highlighted')}</dt>
+                  <dd>${_("When you come back to a post, the comments made since your last visit are highlighted, so you can catch up quickly.")}</dd>
+
+                  <dt class="toggle toggled" id="save-categories">${_('Save categories')}</dt>
+                  <dd>${_("Sort the posts and comments you save into your own categories, and browse your saved items one category at a time.")}</dd>
+
+                  <dt class="toggle toggled" id="filter-all">${_('Filter /v/all')}</dt>
+                  <dd>${_md("Leave vaults you're not interested in out of /v/all by adding them to the address with a minus sign, e.g. [/v/all-funny-pics](/v/all-funny-pics).")}</dd>
+
+                  <dt class="toggle toggled" id="myrandom">${_('/v/myrandom')}</dt>
+                  <dd>${_md("[/v/myrandom](/v/myrandom) takes you to a random vault from your own subscriptions.")}</dd>
+
+                  <dt class="toggle toggled" id="friend-notes">${_('Notes on friends')}</dt>
+                  <dd>${_("Add a private note to each person on your friends list, to remember who they are.")}</dd>
+
+                  <dt class="toggle toggled" id="visited-links">${_('Visited links remembered')}</dt>
+                  <dd>${_("Have the site remember which links you've visited, on every device you use (turn on \"remember what links I've visited\" in your preferences).")}</dd>
+
+                  <dt class="toggle toggled" id="gold-only-vaults">${_('Gold-only vaults')}</dt>
+                  <dd>${_("Create vaults that only gold members can see and take part in: choose \"gold only\" as the vault's type when you create it.")}</dd>
+
+                  %if thing.lounge:
+                    <dt class="toggle toggled" id="lounge">${_('The members-only lounge')}</dt>
+                    <dd>${_mdf("Join the other gold members in [/v/%(lounge)s](/v/%(lounge)s), a vault just for them.", lounge=thing.lounge)}</dd>
+                  %endif
+
+                  <dt class="toggle toggled" id="trophy">${_('A trophy on your profile')}</dt>
+                  <dd>${_("Your profile shows the tippr gold trophy.")}</dd>
+
+                  <dt class="toggle toggled" id="giving">${_('Giving gold')}</dt>
+                  <dd>${_md("You can also give gold to other members, or gild a post or comment you liked: see [gilding](/gilding).")}</dd>
+                </dl>
+            </div>
+            <div class="buttons">
+                <a class="btn gold-button" href="/gold">${_('get tippr gold')}</a>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
