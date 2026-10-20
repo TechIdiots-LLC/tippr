@@ -31,30 +31,6 @@
   `COINBASE_BUTTONID_*`, `BTC_DISCOUNT`, `goldpayment_email`, `authorizenetapi` and the `paypal_webhook`,
   `coinbase_webhook` and `authorizenet*` secrets) can be deleted. Gold subscriptions still use the Stripe card form,
   and /gold now offers them only when its keys and plans are set (`stripe_*` secrets, `STRIPE_*_GOLD_PLAN`).
-- **/admin/config** saves every setting with one "save changes" button (kept at the bottom of the window) instead of
-  a button per setting. Only the settings you changed are saved, so the ini's values don't become overrides; one
-  that isn't valid says so on its row while the rest are saved.
-- **Deleting your account** is on the privacy page (/prefs/privacy, now a tab in preferences) instead of a separate
-  "deactivate" tab, whose old address redirects there. The form says plainly what happens and when, lets you delete
-  your posts and comments too (before, it told you to delete them one by one), and asks for your two-factor code if
-  you use two-factor sign-in.
-- **Starter awards** (the trophies on profiles), so /admin/awards isn't empty: "Verified Email" and "tippr gold",
-  which the site gives by itself (and now also to members who verified or got gold before), and Staff, Early Member,
-  Bug Hunter, Translator, Helpful Member and Best Comment for admins to give, each with an icon. The installer
-  creates them (`scripts/create_default_awards.py`, safe to re-run); existing awards are left alone.
-- **X-Year Club trophies**, as on reddit: on their cake day members get the 1-Year Club, 2-Year Club and so on (only
-  the latest), from a new daily job, `tippr-job-year_clubs` (the installer and Docker run it; the starter awards
-  script gives everyone theirs the first time).
-- **More starter vaults and feeds**: /v/gis (maps, geospatial data and Earth observation: NASA Earthdata and Earth
-  Observatory, USGS, Copernicus, OpenStreetMap, OSGeo, QGIS, MapLibre and more), /v/ainews, /v/devops, /v/sports,
-  /v/podcasts, /v/videos (YouTube channels) and /v/marketing, none of them front page defaults, and about 80 more
-  feeds for the existing vaults (from feeder.co's popular feeds, each checked). Run `create_default_vaults.py`, then
-  `import_feeds.py` with `FEEDS_ADD=1`, to add them to an existing site.
-- **Explore** (/explore) recommends again: its "personalized" part needs to know which vaults are like which, which
-  reddit worked out with its own data pipeline, so it always said "Our robots have no suggestions". A new daily job,
-  `tippr-job-vault_similarity` (also run by the installer), works that out from the site's subscriptions ("people
-  who subscribe to X also subscribe to Y"), which also feeds the similar-vault suggestions for multivaults. Default
-  vaults are now only left out of a member's recommendations when they have no subscriptions of their own.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
@@ -96,6 +72,35 @@
 - **Sold ads** (promoted posts) could show in vaults whose moderators turned ads off: the check for "show ads here"
   mixed up its and/or, so only gold members who hid ads were really left out. Now promoted posts show only where
   ads are allowed, and never to gold members who chose to hide ads.
+
+## 0.11.0
+### ✨ Features and improvements
+- **/admin/config** saves every setting with one "save changes" button (kept at the bottom of the window) instead of
+  a button per setting. Only the settings you changed are saved, so the ini's values don't become overrides; one
+  that isn't valid says so on its row while the rest are saved.
+- **Deleting your account** is on the privacy page (/prefs/privacy, now a tab in preferences) instead of a separate
+  "deactivate" tab, whose old address redirects there. The form says plainly what happens and when, lets you delete
+  your posts and comments too (before, it told you to delete them one by one), and asks for your two-factor code if
+  you use two-factor sign-in.
+- **Starter awards** (the trophies on profiles), so /admin/awards isn't empty: "Verified Email" and "tippr gold",
+  which the site gives by itself (and now also to members who verified or got gold before), and Staff, Early Member,
+  Bug Hunter, Translator, Helpful Member and Best Comment for admins to give, each with an icon. The installer
+  creates them (`scripts/create_default_awards.py`, safe to re-run); existing awards are left alone.
+- **X-Year Club trophies**, as on reddit: on their cake day members get the 1-Year Club, 2-Year Club and so on (only
+  the latest), from a new daily job, `tippr-job-year_clubs` (the installer and Docker run it; the starter awards
+  script gives everyone theirs the first time).
+- **More starter vaults and feeds**: /v/gis (maps, geospatial data and Earth observation: NASA Earthdata and Earth
+  Observatory, USGS, Copernicus, OpenStreetMap, OSGeo, QGIS, MapLibre and more), /v/ainews, /v/devops, /v/sports,
+  /v/podcasts, /v/videos (YouTube channels) and /v/marketing, none of them front page defaults, and about 80 more
+  feeds for the existing vaults (from feeder.co's popular feeds, each checked). Run `create_default_vaults.py`, then
+  `import_feeds.py` with `FEEDS_ADD=1`, to add them to an existing site.
+- **Explore** (/explore) recommends again: its "personalized" part needs to know which vaults are like which, which
+  reddit worked out with its own data pipeline, so it always said "Our robots have no suggestions". A new daily job,
+  `tippr-job-vault_similarity` (also run by the installer), works that out from the site's subscriptions ("people
+  who subscribe to X also subscribe to Y"), which also feeds the similar-vault suggestions for multivaults. Default
+  vaults are now only left out of a member's recommendations when they have no subscriptions of their own.
+
+### 🐞 Bug fixes
 - **The welcome bar** (`welcomebar_messages` on /admin/config) broke the front page for logged-out visitors when a
   message had no " / " (which splits it into a heading and a second line); one-part messages now show as just a
   heading. Saving messages with a quote missing is refused instead of making nonsense messages, and messages with
