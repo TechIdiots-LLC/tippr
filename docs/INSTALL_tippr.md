@@ -214,6 +214,8 @@ are built in, and ads are off until you set them up.
 3. On **/admin/ads**, enable ads, enter the publisher ID, choose the
    placement, enter the ad unit IDs (and the in-feed unit's layout key),
    and save. Changes apply immediately. Use **test mode** while setting up.
+   The in-feed ad repeats every "posts between in-feed ads" posts, on
+   pages infinite scroll adds too.
 4. `/ads.txt` is served automatically once a publisher ID is saved.
 5. In the EU, UK and Switzerland, Google requires a consent message. Create
    one in AdSense under **Privacy & messaging**. Also mention advertising

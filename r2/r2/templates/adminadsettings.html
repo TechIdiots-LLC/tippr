@@ -85,11 +85,12 @@
       </td>
     </tr>
     <tr>
-      <td>${_("in-feed ad after post")}</td>
+      <td>${_("posts between in-feed ads")}</td>
       <td>
         <input type="number" name="adsense_listing_position" min="1" max="25"
                value="${thing.settings['adsense_listing_position']}">
         ${error_field("BAD_NUMBER", "adsense_listing_position", "span")}
+        <br><small>${_("An in-feed ad after every this many posts in a listing (and on each page infinite scroll adds).")}</small>
       </td>
     </tr>
 

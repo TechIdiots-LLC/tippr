@@ -39,8 +39,9 @@
        cls = 'linklisting'
  %>
 <%
-   # an in-feed AdSense unit after the Nth post of a post listing
-   # (r2.lib.ad_settings), but not among NSFW posts
+   # an in-feed AdSense unit after every Nth post of a post listing
+   # (r2.lib.ad_settings), but not among NSFW posts. Infinite scroll adds
+   # the next page's (enhancements.js starts them).
    infeed_ads, infeed_after = None, None
    if cls == 'linklisting':
        infeed_ads = ad_settings.page_ads()
@@ -54,7 +55,7 @@
 <div id="siteTable${_id}" class="sitetable ${cls}">
   %for i, a in enumerate(thing.things):
       ${a}
-      %if infeed_after and i + 1 == infeed_after:
+      %if infeed_after and (i + 1) % infeed_after == 0 and i + 1 < len(thing.things):
         <div class="infeed-ad adsense-ad">
           ${adsense_unit(infeed_ads, infeed_ads['adsense_listing_slot'], infeed_ads['adsense_listing_layout_key'] or None)}
         </div>

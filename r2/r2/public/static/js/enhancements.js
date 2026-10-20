@@ -129,6 +129,14 @@ r.enhancements.infiniteScroll = {
         r._('page %(num)s').format({num: this.page})))
 
     $oldNav.before($divider, $items)
+
+    // jQuery drops the new page's scripts, so start its AdSense units here
+    var $ads = $items.find('ins.adsbygoogle').add($items.filter('ins.adsbygoogle'))
+    $ads.each(function() {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({})
+      } catch (e) {}
+    })
     if ($newNav.length) {
       $oldNav.replaceWith($newNav)
     } else {

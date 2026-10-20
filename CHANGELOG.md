@@ -12,6 +12,9 @@
 - **Buttons that did nothing:** the gold payment page's buttons (PayPal and the rest, and paying with your gold), the
   "report" buttons, and the moderator action forms (ban, mute and the like). Their scripts looked for the page's
   `div.content`, which is now a `<main>`.
+- **Ads in listings:** the in-feed ad showed once, after the Nth post, although the setting reads as how many posts
+  between ads; it now repeats every N posts. Ads on pages infinite scroll adds stayed empty (their start-up script was
+  dropped); they load now.
 
 ## 0.12.0
 ### ✨ Features and improvements

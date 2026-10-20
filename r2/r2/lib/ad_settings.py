@@ -21,7 +21,7 @@ without a restart). Ads are off until enabled with a publisher ID.
 Two ways to place ads:
 
 - "units": tippr's slots, each an ad unit created in AdSense: one in the
-  sidebar, and one in listings after the Nth post (an in-feed unit, which
+  sidebar, and one in listings after every Nth post (an in-feed unit, which
   is what phones see, since the sidebar is hidden on narrow screens).
 - "auto": Google's Auto ads; AdSense decides where ads go.
 
