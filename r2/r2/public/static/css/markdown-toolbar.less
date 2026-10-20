@@ -30,16 +30,16 @@
         min-width: 26px;
         height: 24px;
         padding: 0 6px;
-        border: 1px solid #ccc;
+        border: 1px solid @tp-line;
         border-radius: 3px;
-        background: #f8f8f8;
+        background: @tp-subtle;
         color: #333;
         font-size: 12px;
         line-height: 22px;
         cursor: pointer;
 
         &:hover, &:focus {
-            background: #eef3fa;
+            background: @tp-gray;
             border-color: #a9c3e6;
         }
 
@@ -65,7 +65,7 @@
         width: 1px;
         height: 18px;
         margin: 0 3px;
-        background: #ddd;
+        background: @tp-gray-strong;
     }
 }
 
@@ -81,9 +81,9 @@
     width: 320px;
     max-width: calc(~"100vw - 32px");
     padding: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid @tp-line;
     border-radius: 4px;
-    background: white;
+    background: @tp-surface;
     box-shadow: 0 3px 10px rgba(0, 0, 0, .15);
 
     .md-emoji-search {
@@ -125,7 +125,7 @@
         cursor: pointer;
 
         &:hover, &:focus {
-            background: #eef3fa;
+            background: @tp-gray;
         }
     }
 }
@@ -135,9 +135,9 @@
     max-width: 500px;
     margin-top: 5px;
     padding: 6px 8px;
-    border: 1px dashed #ccc;
+    border: 1px dashed @tp-line;
     border-radius: 3px;
-    background: #fcfcfc;
+    background: @tp-subtle;
 }
 
 // >!spoilers!< stay hidden until hovered, focused or tapped
@@ -152,7 +152,7 @@
     }
 
     &:hover, &:focus, &.revealed {
-        background: #e6e6de;
+        background: @tp-gray-strong;
         color: inherit;
 
         a {

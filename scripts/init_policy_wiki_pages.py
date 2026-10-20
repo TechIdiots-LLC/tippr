@@ -214,6 +214,13 @@ def main(root_dir=None):
         if page_exists:
             if force:
                 print(f"  Wiki page exists; --force given, attempting update...")
+                # "Last Revised" becomes today if the text changed
+                content, changed = site_info.stamp_revised(
+                    content, existing_page.content)
+                if not changed:
+                    print(f"  Unchanged, leaving it as it is.
+")
+                    continue
                 try:
                     existing_page.revise(content, author=system_user._id36, reason="Updated from docs/policies/")
                     print(f"  SUCCESS: Updated {display_name}\n")
@@ -237,6 +244,7 @@ def main(root_dir=None):
                 print(f"  DEBUG: Frontpage name: '{getattr(Frontpage, 'name', 'N/A')}'")
 
                 wp = WikiPage.create(Frontpage, wiki_name)
+                content, _ = site_info.stamp_revised(content)
                 wp.revise(content, author=system_user._id36, reason="Initial creation from docs/policies/")
                 print(f"  SUCCESS: Created {display_name}\n")
             except Exception as e:

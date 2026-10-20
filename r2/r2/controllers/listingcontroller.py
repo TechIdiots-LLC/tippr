@@ -1690,7 +1690,13 @@ class MyvaultsController(ListingController):
             return []
 
         if self.where == "subscriber":
-            vault_ids = Vault.subscribed_ids_by_user(c.user)
+            if not c.user.has_subscribed:
+                # never chosen any: their front page is the defaults, so
+                # that's what they're subscribed to (the first subscribe or
+                # unsubscribe stores them as real subscriptions)
+                vault_ids = Vault.default_vaults()
+            else:
+                vault_ids = Vault.subscribed_ids_by_user(c.user)
         else:
             q = VaultMember._simple_query(
                 ["_thing1_id"],
@@ -1709,7 +1715,10 @@ class MyvaultsController(ListingController):
     def content(self):
         user = c.user if c.user_is_loggedin else None
         num_subscriptions = len(Vault.subscribed_ids_by_user(user))
-        if self.where == 'subscriber' and num_subscriptions == 0:
+        if (self.where == 'subscriber' and user and
+                not user.has_subscribed):
+            message = strings.vault_messages['defaults']
+        elif self.where == 'subscriber' and num_subscriptions == 0:
             message = strings.vault_messages['empty']
         else:
             message = strings.vault_messages.get(self.where)

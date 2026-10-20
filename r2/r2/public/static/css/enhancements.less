@@ -507,6 +507,11 @@ body.nightmode {
     --tp-title-visited: #8fa3a9;
     --tp-upvote: #22b5c6;
     --tp-downvote: #a48ce3;
+    --tp-subtle: #1f292d;
+    --tp-gray: #253136;
+    --tp-gray-strong: #2b383d;
+    --tp-line: #3a4a50;
+    --tp-line-soft: #2f3d42;
 
     color-scheme: dark;
     background-color: #12191c;
@@ -649,5 +654,59 @@ body.nightmode {
     .expando .md, .expando .usertext-body {
         background-color: #1b2428;
         border-color: #2c3a3f;
+    }
+}
+
+// night mode: the few light colours that aren't on theme variables (tints,
+// and colours LESS works out at build time)
+body.nightmode {
+    .listing-chooser li.selected {
+        background: var(--tp-tint);
+        border-color: var(--tp-border-accent);
+        // the light theme fades it with a white inner shadow
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, .4);
+    }
+    button, input.btn, .btn, .expand-summary {
+        border-color: var(--tp-line);
+    }
+    .content.submit .info-notice {
+        background-color: var(--tp-tint-soft);
+        border-color: var(--tp-border-accent);
+    }
+    .gold-wrap .fancy, .gold-wrap .fancy-inner {
+        background-color: var(--tp-surface);
+        border-color: var(--tp-line);
+    }
+    .ai-label.ai-assisted, .link .title .ai-label.ai-assisted {
+        background: #1d2b3a;
+        color: #9cc4ee;
+    }
+    .ai-label.ai-generated, .link .title .ai-label.ai-generated {
+        background: #2a2238;
+        color: #c3aef0;
+    }
+}
+
+// the gold banners: "tippr" in a light colour (the light theme's is black)
+body.nightmode {
+    .gold-wrap .gold-banner {
+        background-image: url(../gold/tippr-golds-night.png);
+    }
+    &.gold-page.gilding .gold-banner {
+        background-image: url(../gold/tippr-gilding-night.png);
+    }
+    // the explanations on /gilding and /gold/about
+    .gold-wrap .gold-dropdown {
+        background-color: var(--tp-surface);
+        color: var(--tp-text);
+        border-color: var(--tp-line);
+    }
+    .gold-wrap .container {
+        background-color: var(--tp-surface);
+        border-color: var(--tp-line);
+        color: var(--tp-text);
+        a {
+            color: var(--tp-link);
+        }
     }
 }

@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Front page defaults are only vaults with feeds**, so a newcomer's front page has no empty vaults: the starter
+  list no longer makes linux, selfhosted, mechanicalkeyboards, privacy, cozygaming, retrogaming, anime, fiberarts,
+  aesthetics, pics, aww, asktippr and tippr defaults (they have no starter feeds; the vaults are still created). On an
+  existing site, `scripts/prune_default_vaults.py` takes every default without an enabled feed off the list
+  (`PRUNE_DRY_RUN=1` to preview, `PRUNE_KEEP=tippr,asktippr` to keep some); a vault can be made a default again on
+  /admin/vaults.
 - **Payments** for gold and sold ads with your own PayPal, Stripe, Coinbase and BitPay accounts, set up on a new
   admin page, **/admin/payments**: turn on the providers you use, enter their API keys (secrets are never shown
   again), test them, and see each one's webhook address. Buyers choose on the payment page and pay on the provider's
@@ -48,6 +54,19 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Night mode**: the vault list's description boxes, the vault search box, the selected tab of the side menu,
+  quotes, code, buttons' borders, the submit page's notice, the gold page and the AI labels stayed white or light grey.
+  The stylesheets' fixed light greys are now theme colours (`--tp-subtle`, `--tp-gray`, `--tp-gray-strong`,
+  `--tp-line`, `--tp-line-soft`), which night mode darkens. The "tippr gold" and "tippr gilding" banners have a
+  light "tippr" in night mode.
+- **Policy pages' "Last Revised" date** stayed at the date in docs/policies when the installer (or
+  `force_revise_policies.py`) updated the pages; it's now the day a page's text changes, and an unchanged page keeps
+  its date (and isn't revised again).
+- **Feed posts' titles** showed HTML codes ("&#8216;Trump Accounts&#8217;") when a feed escaped its titles twice, and
+  sometimes HTML tags; the importer now decodes them. `scripts/fix_feed_titles.py` fixes the posts already made
+  (`FIX_DRY_RUN=1` to preview).
+- **/vaults/mine** said you were subscribed to nothing until you'd subscribed or unsubscribed once, though your front
+  page shows the default vaults; it now lists those, and says so.
 - **An advertiser's ad page** (/promoted/edit_promo/…) failed to open once the ad had any history (its log's entries
   came back from the database as text, not times).
 - **Gold purchases, gifts, gift codes and claiming them** failed after payment: the gold table was written in a way

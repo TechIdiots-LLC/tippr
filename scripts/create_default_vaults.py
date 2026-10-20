@@ -45,15 +45,21 @@ NO_GEN = ai_content.POLICY_NO_GENERATED
 AI_ONLY = ai_content.POLICY_AI_ONLY
 
 # (name, title, description, AI policy, front page default)
+#
+# Only vaults with feeds in starter_feeds.txt are front page defaults: on a
+# new site the posts come from feeds, so a default without any would only
+# add an empty vault to every newcomer's front page. (On a site whose
+# defaults are already set, scripts/prune_default_vaults.py takes the ones
+# without feeds off.)
 VAULTS = [
     # tech & geek core
     ("technology", "Technology", "News and discussion about technology.", ANY, True),
     ("programming", "Programming", "Code, languages, tools and the craft of programming.", ANY, True),
-    ("linux", "Linux", "Linux, its distributions and the software around it.", ANY, True),
-    ("selfhosted", "Self-hosted", "Homelabs, self-hosting services, and digital sovereignty.", ANY, True),
+    ("linux", "Linux", "Linux, its distributions and the software around it.", ANY, False),
+    ("selfhosted", "Self-hosted", "Homelabs, self-hosting services, and digital sovereignty.", ANY, False),
     ("electronics", "Electronics", "Circuits, components, repairs, and hardware projects.", NO_GEN, True),
-    ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, True),
-    ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, True),
+    ("mechanicalkeyboards", "Mechanical Keyboards", "Switches, keycaps, and custom keyboard builds.", NO_GEN, False),
+    ("privacy", "Privacy", "Digital rights, encryption, and navigating the panopticon.", ANY, False),
     ("cybersecurity", "Cybersecurity", "Security news, breaches, vulnerabilities, and defending your systems.", ANY, True),
     ("devops", "DevOps", "Cloud, containers, infrastructure and keeping services running.", ANY, False),
     ("ainews", "AI News", "News and research about artificial intelligence.", ANY, False),
@@ -65,13 +71,13 @@ VAULTS = [
     
     # digital entertainment
     ("gaming", "Gaming", "Video games of every kind.", ANY, True),
-    ("cozygaming", "Cozy Gaming", "Relaxing games, farming sims, and low-stress gaming.", ANY, True),
-    ("retrogaming", "Retro Gaming", "Classic consoles, emulation, and arcade history.", ANY, True),
-    ("anime", "Anime & Manga", "Series, webtoons, fan art, and community discussion.", ANY, True),
+    ("cozygaming", "Cozy Gaming", "Relaxing games, farming sims, and low-stress gaming.", ANY, False),
+    ("retrogaming", "Retro Gaming", "Classic consoles, emulation, and arcade history.", ANY, False),
+    ("anime", "Anime & Manga", "Series, webtoons, fan art, and community discussion.", ANY, False),
     
     # physical making & lifestyle
     ("diy", "DIY & Making", "Things you built, fixed, or machined yourself.", NO_GEN, True),
-    ("fiberarts", "Fiber Arts", "Crochet, knitting, sewing, and textile crafts.", NO_GEN, True),
+    ("fiberarts", "Fiber Arts", "Crochet, knitting, sewing, and textile crafts.", NO_GEN, False),
     ("thrift", "Thrift & Upcycling", "Second-hand finds, vintage fashion, and sustainable flips.", NO_GEN, True),
     ("3dprinting", "3D Printing", "Printers, prints, models and troubleshooting.", NO_GEN, True),
     ("food", "Food & Baking", "Cooking, recipes, and culinary experiments.", ANY, True),
@@ -88,16 +94,16 @@ VAULTS = [
     ("design", "Design", "Graphic, product and interior design, architecture and visual craft.", NO_GEN, False),
     ("curated", "Curated", "The best of the web: collections of remarkable pictures and finds.", ANY, False),
     ("blogs", "Blogs", "Independent weblogs, essays, and long reads.", NO_GEN, False),
-    ("aesthetics", "Aesthetics", "Liminal spaces, visual moods, and subculture curation.", NO_GEN, True),
+    ("aesthetics", "Aesthetics", "Liminal spaces, visual moods, and subculture curation.", NO_GEN, False),
     ("popculture", "Pop Culture", "Fandoms, internet drama, and modern media trends.", ANY, True),
-    ("pics", "Pics", "Pictures worth sharing.", NO_GEN, True),
-    ("aww", "Aww", "Cute animals and wholesome content.", NO_GEN, True),
+    ("pics", "Pics", "Pictures worth sharing.", NO_GEN, False),
+    ("aww", "Aww", "Cute animals and wholesome content.", NO_GEN, False),
     
     # discussion & communities
     ("books", "Books", "Reading, recommendations, and literary discussion.", ANY, True),
     ("movies", "Movies & TV", "Films and television, old and new.", ANY, True),
     ("til", "Today I Learned", "Interesting facts with verified sources.", ANY, True),
-    ("asktippr", "Ask Tippr", "Ask the community a question.", ANY, True),
+    ("asktippr", "Ask Tippr", "Ask the community a question.", ANY, False),
     ("lgbtq", "LGBTQ+", "A welcoming place for LGBTQ+ people and allies.", ANY, True),
     ("skincare", "Skincare & Wellness", "Routine advice, self-care, and mental well-being.", ANY, True),
 
@@ -106,7 +112,7 @@ VAULTS = [
     ("aimusic", "AI Music", "Music made with AI tools.", AI_ONLY, False),
     
     # sitewide meta & heavy news (not default)
-    ("tippr", "Tippr Meta", "News, feedback, and questions about the site.", ANY, True),
+    ("tippr", "Tippr Meta", "News, feedback, and questions about the site.", ANY, False),
     ("dragrace", "Drag Race", "Drag culture, episodes, and looks.", ANY, False),
     ("news", "News", "News from around the world.", ANY, False),
     ("worldnews", "World News", "International news.", ANY, False),

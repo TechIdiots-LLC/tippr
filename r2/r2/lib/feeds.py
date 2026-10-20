@@ -25,6 +25,7 @@ the rest are marked as seen and never posted. An item is posted once: by its id 
 or failing that its link.
 """
 
+import html
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -95,6 +96,23 @@ def _text(el):
     return (el.text or "").strip() if el is not None else ""
 
 
+_TAG_RE = re.compile(r"</?[a-zA-Z][^<>]{0,200}>")
+
+
+def _title(el):
+    """An item's title as plain text. Feeds often escape their titles
+    twice (The Verge's say "&amp;#8216;", which is "&#8216;" once read),
+    and some put HTML in them (Atom's type="html"): decode what's left and
+    drop the tags."""
+    title = _text(el)
+    for _ in range(3):
+        decoded = html.unescape(_TAG_RE.sub("", title))
+        if decoded == title:
+            break
+        title = decoded
+    return re.sub(r"\s+", " ", title).strip()
+
+
 def _local(tag):
     return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
 
@@ -131,7 +149,7 @@ def parse(content):
                     break
             key = _text(_child(entry, "id")) or url
             items.append({"key": key, "url": url,
-                          "title": _text(_child(entry, "title"))})
+                          "title": _title(_child(entry, "title"))})
     elif kind in ("rss", "RDF"):                      # RSS 2.0 / 1.0
         channel = _child(root, "channel")
         title = _text(_child(channel, "title")) if channel is not None else ""
@@ -140,7 +158,7 @@ def parse(content):
             url = _text(_child(item, "link")) or None
             key = _text(_child(item, "guid")) or url
             items.append({"key": key, "url": url,
-                          "title": _text(_child(item, "title"))})
+                          "title": _title(_child(item, "title"))})
     else:
         raise FeedError("not an RSS or Atom feed")
     items = [i for i in items if i["key"] and i["url"] and i["title"]]

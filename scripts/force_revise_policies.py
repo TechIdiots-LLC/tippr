@@ -64,6 +64,12 @@ def main():
         # this site's details in place of the templates' placeholders
         from r2.lib import site_info
         content = site_info.fill_policy(content)
+        # "Last Revised" becomes today if the text changed (an unchanged
+        # policy keeps its date, and isn't revised again)
+        content, changed = site_info.stamp_revised(content, wp.content)
+        if not changed:
+            print('Unchanged:', wiki_name)
+            continue
         print('Revising', wiki_name)
         if args.dry_run:
             print('DRY-RUN: would revise', wiki_name)

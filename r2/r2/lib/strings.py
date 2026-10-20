@@ -89,6 +89,7 @@ string_dict = dict(
 
     vault_messages = dict(
         empty =  _('you have not subscribed to any vaults.'),
+        defaults = _("you haven't chosen any vaults yet, so your front page shows the site's default vaults, below. subscribe or unsubscribe to make the list your own."),
         subscriber =  _('below are the vaults you have subscribed to.'),
         contributor =  _('below are the vaults that you are an approved submitter on.'),
         moderator = _('below are the vaults that you have moderator access to.')

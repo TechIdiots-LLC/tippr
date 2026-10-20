@@ -27,8 +27,10 @@ The domain isn't here: it is also in the nginx config, the TLS certificate
 and cookies, so it's changed by re-running the installer.
 """
 
+import datetime
 import hashlib
 import io
+import re
 import threading
 
 from PIL import Image
@@ -229,6 +231,33 @@ def fill_policy(text):
     for name, value in policy_values().items():
         text = text.replace("{{%s}}" % name, value)
     return text
+
+
+_REVISED_RE = re.compile(r"^(\*?Last Revised:[ \t]*)([^*\n]*?)([ \t]*\*?)[ \t]*$",
+                         re.MULTILINE | re.IGNORECASE)
+
+
+def _revised_date(day):
+    return "%s %d, %d" % (day.strftime("%B"), day.day, day.year)
+
+
+def stamp_revised(text, current=None, today=None):
+    """Policy text with its "Last Revised" line dated: today if it says
+    something different from current (the page as the site has it now;
+    None for a new page), or else current's date, so re-importing
+    unchanged policies doesn't move the date. Returns (text, changed)."""
+    def without_date(t):
+        return _REVISED_RE.sub("", t or "").strip()
+    changed = current is None or without_date(text) != without_date(current)
+    if changed:
+        date = _revised_date(today or datetime.date.today())
+    else:
+        found = _REVISED_RE.search(current or "")
+        if not found:
+            return text, False
+        date = found.group(2)
+    return (_REVISED_RE.sub(lambda m: m.group(1) + date + m.group(3), text,
+                            count=1), changed)
 
 
 def signups_open():

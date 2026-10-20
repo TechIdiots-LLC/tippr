@@ -1,3 +1,6 @@
+// the theme colours (@tp-surface and friends)
+@import "components/theme.less";
+
 .transition (@property, @duration, @function: ease, @delay: 0s) {
     -webkit-transition: @arguments;
     -moz-transition: @arguments;
@@ -84,7 +87,7 @@
         line-height: 14px;
         padding: 2px 5px;
         border-bottom: 1px solid gray;
-        background: white;
+        background: @tp-surface;
         z-index: 9999;
         white-space: nowrap;
         overflow: hidden;
@@ -163,7 +166,7 @@
             right: 0;
 
             & > span {
-                border-left: 1px solid #ccc;
+                border-left: 1px solid @tp-line;
                 padding: 0 7px;
                 color: var(--tp-link, #0b7a87);
                 cursor: default;
@@ -188,7 +191,7 @@
     .timings-bar {
         position: relative;
         display: block;
-        background: #eee;
+        background: @tp-gray;
         border-bottom: 1px solid gray;
         box-shadow: 0 -5px 15px #ddd inset;
 
@@ -197,7 +200,7 @@
             width: 11px;
             line-height: 11px;
             margin: 1px 4px;
-            background: #f4f4f4;
+            background: @tp-subtle;
             border: 1px solid #bbb;
             border-bottom-width: 2px;
             border-radius: 2px;
