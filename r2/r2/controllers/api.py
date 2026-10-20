@@ -4728,6 +4728,13 @@ class ApiController(TipprController):
                                      empty_error=None),
         adsense_listing_layout_key=VLength("adsense_listing_layout_key",
                                            max_length=40, empty_error=None),
+        adsense_sidebar_slot_night=VLength("adsense_sidebar_slot_night",
+                                           max_length=20, empty_error=None),
+        adsense_listing_slot_night=VLength("adsense_listing_slot_night",
+                                           max_length=20, empty_error=None),
+        adsense_listing_layout_key_night=VLength(
+            "adsense_listing_layout_key_night", max_length=40,
+            empty_error=None),
         adsense_listing_position=VInt("adsense_listing_position", min=1,
                                       max=25, num_default=5),
         adsense_test_mode=VBoolean("adsense_test_mode"),
@@ -4735,6 +4742,9 @@ class ApiController(TipprController):
     def POST_ads_settings(self, form, jquery, adsense_enabled, adsense_client,
                           adsense_mode, adsense_sidebar_slot,
                           adsense_listing_slot, adsense_listing_layout_key,
+                          adsense_sidebar_slot_night,
+                          adsense_listing_slot_night,
+                          adsense_listing_layout_key_night,
                           adsense_listing_position, adsense_test_mode):
         """Save the Google AdSense settings (overrides the ini file)."""
         from r2.lib import ad_settings, site_settings
@@ -4768,6 +4778,13 @@ class ApiController(TipprController):
                 ("adsense_listing_slot", adsense_listing_slot,
                  ad_settings.valid_slot),
                 ("adsense_listing_layout_key", adsense_listing_layout_key,
+                 ad_settings.valid_layout_key),
+                ("adsense_sidebar_slot_night", adsense_sidebar_slot_night,
+                 ad_settings.valid_slot),
+                ("adsense_listing_slot_night", adsense_listing_slot_night,
+                 ad_settings.valid_slot),
+                ("adsense_listing_layout_key_night",
+                 adsense_listing_layout_key_night,
                  ad_settings.valid_layout_key)):
             value = (value or "").strip()
             if value and not valid(value):

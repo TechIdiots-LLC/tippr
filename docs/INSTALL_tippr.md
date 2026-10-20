@@ -217,7 +217,12 @@ are built in, and ads are off until you set them up.
    The in-feed ad repeats every "posts between in-feed ads" posts, on
    pages infinite scroll adds too.
 4. `/ads.txt` is served automatically once a publisher ID is saved.
-5. In the EU, UK and Switzerland, Google requires a consent message. Create
+5. **Night mode** (optional): ads are drawn by Google and can't be restyled
+   by the site, so on night mode's dark pages they keep their AdSense
+   colours. Create units with dark colours in AdSense (an in-feed unit's
+   colours are chosen when you create it) and enter them under "night mode
+   ad units"; members with night mode on get those.
+6. In the EU, UK and Switzerland, Google requires a consent message. Create
    one in AdSense under **Privacy & messaging**. Also mention advertising
    cookies in your privacy policy.
 

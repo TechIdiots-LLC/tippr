@@ -48,6 +48,11 @@ SETTINGS = {
     "adsense_sidebar_slot": "adsense_sidebar_slot",
     "adsense_listing_slot": "adsense_listing_slot",
     "adsense_listing_layout_key": "adsense_listing_layout_key",
+    # night mode's own units (dark colours, set up in AdSense), used instead
+    # for members with night mode on; blank: the units above
+    "adsense_sidebar_slot_night": "adsense_sidebar_slot_night",
+    "adsense_listing_slot_night": "adsense_listing_slot_night",
+    "adsense_listing_layout_key_night": "adsense_listing_layout_key_night",
     "adsense_listing_position": "adsense_listing_position",
     "adsense_test_mode": "adsense_test_mode",
 }
@@ -99,6 +104,12 @@ def ad_settings():
         "adsense_listing_slot": (raw["adsense_listing_slot"] or "").strip(),
         "adsense_listing_layout_key":
             (raw["adsense_listing_layout_key"] or "").strip(),
+        "adsense_sidebar_slot_night":
+            (raw["adsense_sidebar_slot_night"] or "").strip(),
+        "adsense_listing_slot_night":
+            (raw["adsense_listing_slot_night"] or "").strip(),
+        "adsense_listing_layout_key_night":
+            (raw["adsense_listing_layout_key_night"] or "").strip(),
         "adsense_listing_position": position if position > 0
             else DEFAULT_LISTING_POSITION,
         "adsense_test_mode": _bool(raw["adsense_test_mode"] or False),
@@ -139,6 +150,15 @@ def _page_ads(nsfw_content=False):
     if not adsense_configured() or not ads_allowed_here(nsfw_content):
         return None
     settings = ad_settings()
+    if c.user_is_loggedin and getattr(c.user, "pref_nightmode", False):
+        # Google draws the ads, and they can't be restyled, but AdSense
+        # units can have their own colours: night mode's, where set
+        if valid_slot(settings["adsense_sidebar_slot_night"]):
+            settings["adsense_sidebar_slot"] = settings["adsense_sidebar_slot_night"]
+        if valid_slot(settings["adsense_listing_slot_night"]):
+            settings["adsense_listing_slot"] = settings["adsense_listing_slot_night"]
+            settings["adsense_listing_layout_key"] = (
+                settings["adsense_listing_layout_key_night"])
     units = settings["adsense_mode"] == "units"
     settings["sidebar"] = units and valid_slot(settings["adsense_sidebar_slot"])
     settings["listing"] = units and valid_slot(settings["adsense_listing_slot"])
