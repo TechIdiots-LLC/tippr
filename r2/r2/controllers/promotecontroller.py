@@ -33,7 +33,6 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from babel.dates import format_date
 from babel.numbers import format_number
 from pylons import app_globals as g
 from pylons import request, response
@@ -51,12 +50,6 @@ from r2.lib import (
     promote,
     s3_helpers,
 )
-from r2.lib.authorize import (
-    PROFILE_LIMIT,
-    add_or_update_payment_method,
-    get_or_create_customer_profile,
-)
-from r2.lib.authorize.api import AuthorizeNetException
 from r2.lib.base import abort
 from r2.lib.db import queries
 from r2.lib.errors import errors
@@ -68,7 +61,6 @@ from r2.lib.memoize import memoize
 from r2.lib.menus import NamedButton, NavButton, NavMenu, QueryButton
 from r2.lib.pages import (
     LinkInfoPage,
-    PaymentForm,
     PromotePayment,
     PromoteInventory,
     PromoteLinkEdit,
@@ -94,8 +86,6 @@ from r2.lib.utils import (
 )
 from r2.lib.validator import (
     VAccountByName,
-    ValidAddress,
-    ValidCard,
     ValidEmail,
     VBoolean,
     VByName,
@@ -103,7 +93,6 @@ from r2.lib.validator import (
     VDate,
     VFloat,
     VFrequencyCap,
-    VInt,
     VLength,
     VLink,
     VList,
@@ -378,17 +367,9 @@ class PromoteController(TipprController):
         if c.user_is_loggedin and c.user._id != link.author_id:
             return self.abort404()
 
-        from r2.lib import payments
-        if payments.enabled_providers("ad") or not g.authorizenetapi:
-            # the providers on /admin/payments (r2.lib.payments.ads); or,
-            # with none, says payments aren't set up
-            content = PromotePayment(link, campaign)
-        else:
-            data = get_or_create_customer_profile(c.user)
-            content = PaymentForm(link, campaign,
-                                  customer_id=data.customerProfileId,
-                                  profiles=data.paymentProfiles,
-                                  max_profiles=PROFILE_LIMIT)
+        # the providers on /admin/payments (r2.lib.payments.ads); with
+        # none, it says payments aren't set up
+        content = PromotePayment(link, campaign)
         res = LinkInfoPage(link=link,
                             content=content,
                             show_sidebar=False,
@@ -1575,107 +1556,6 @@ class PromoteApiController(ApiController):
         promote.terminate_campaign(link, campaign)
         rc = RenderableCampaign.from_campaigns(link, campaign)
         jquery.update_campaign(campaign._fullname, rc.render_html())
-
-    @validatedForm(
-        VVerifiedSponsor('link'),
-        VModhash(),
-        link=VByName("link"),
-        campaign=VPromoCampaign("campaign"),
-        customer_id=VInt("customer_id", min=0),
-        pay_id=VInt("account", min=0),
-        edit=VBoolean("edit"),
-        address=ValidAddress(
-            ["firstName", "lastName", "company", "address", "city", "state",
-             "zip", "country", "phoneNumber"]
-        ),
-        creditcard=ValidCard(["cardNumber", "expirationDate", "cardCode"]),
-    )
-    def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
-                        edit, address, creditcard):
-
-        def _handle_failed_payment(reason=None):
-            promote.failed_payment_method(c.user, link)
-            msg = reason or _("failed to authenticate card. sorry.")
-            form.set_text(".status", msg)
-
-        if not g.authorizenetapi:
-            return
-
-        if not link or not campaign or link._id != campaign.link_id:
-            return abort(404, 'not found')
-
-        # Check inventory
-        if not campaign.is_auction:
-            if campaign_has_oversold_error(form, campaign):
-                return
-
-        # check the campaign dates are still valid (user may have created
-        # the campaign a few days ago)
-        min_start, max_start, max_end = promote.get_date_limits(
-            link, c.user_is_sponsor)
-
-        if campaign.start_date.date() > max_start:
-            msg = _("please change campaign start date to %(date)s or earlier")
-            date = format_date(max_start, format="short", locale=c.locale)
-            msg %= {'date': date}
-            form.set_text(".status", msg)
-            return
-
-        if campaign.start_date.date() < min_start:
-            msg = _("please change campaign start date to %(date)s or later")
-            date = format_date(min_start, format="short", locale=c.locale)
-            msg %= {'date': date}
-            form.set_text(".status", msg)
-            return
-
-        new_payment = not pay_id
-
-        address_modified = new_payment or edit
-        if address_modified:
-            address_fields = ["firstName", "lastName", "company", "address",
-                              "city", "state", "zip", "country", "phoneNumber"]
-            card_fields = ["cardNumber", "expirationDate", "cardCode"]
-
-            if (form.has_errors(address_fields, errors.BAD_ADDRESS) or
-                    form.has_errors(card_fields, errors.BAD_CARD)):
-                return
-
-            try:
-                pay_id = add_or_update_payment_method(
-                    c.user, address, creditcard, pay_id)
-
-                if pay_id:
-                    promote.new_payment_method(user=c.user,
-                                               ip=request.ip,
-                                               address=address,
-                                               link=link)
-
-            except AuthorizeNetException:
-                _handle_failed_payment()
-                return
-
-        if pay_id:
-            success, reason = promote.auth_campaign(link, campaign, c.user,
-                                                    pay_id)
-
-            if success:
-                hooks.get_hook("promote.campaign_paid").call(link=link, campaign=campaign)
-                if not address and g.authorizenetapi:
-                    profiles = get_or_create_customer_profile(c.user).paymentProfiles
-                    profile = {p.customerPaymentProfileId: p for p in profiles}[pay_id]
-
-                    address = profile.billTo
-
-                promote.successful_payment(link, campaign, request.ip, address)
-
-                jquery.payment_redirect(promote.promo_edit_url(link),
-                        new_payment, campaign.total_budget_pennies)
-                return
-            else:
-                _handle_failed_payment(reason)
-
-        else:
-            _handle_failed_payment()
 
     @json_validate(
         VSponsor("link"),

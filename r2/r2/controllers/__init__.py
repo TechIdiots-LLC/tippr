@@ -58,7 +58,6 @@ def load_controllers():
     from .googletagmanager import GoogleTagManagerController
     from .health import HealthController
     from .ipn import (
-        CoinbaseController,
         IpnController,
         TipprGiftsController,
         StripeController,

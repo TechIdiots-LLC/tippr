@@ -15,6 +15,12 @@
 - **Sold ads are paid when they're submitted** (with the providers above) and refunded if the ad is rejected before
   it runs, its budget changes or the campaign is deleted; an ad that showed less than was paid for gets the unspent
   part back through the provider. The emails advertisers get no longer talk about reddit.com or card holds.
+- **reddit's old payment code is removed**: PayPal hosted buttons and IPNs (`/ipn`), the Coinbase Commerce "Bitcoin"
+  button (Coinbase Commerce has shut down), Google Checkout's script, and the authorize.net card form for ads (the
+  `lib/authorize` package). /admin/payments replaces them. Their ini settings (`PAYPAL_BUTTONID_*`,
+  `COINBASE_BUTTONID_*`, `BTC_DISCOUNT`, `goldpayment_email`, `authorizenetapi` and the `paypal_webhook`,
+  `coinbase_webhook` and `authorizenet*` secrets) can be deleted. Gold subscriptions still use the Stripe card form,
+  and /gold now offers them only when its keys and plans are set (`stripe_*` secrets, `STRIPE_*_GOLD_PLAN`).
 - **/admin/config** saves every setting with one "save changes" button (kept at the bottom of the window) instead of
   a button per setting. Only the settings you changed are saved, so the ini's values don't become overrides; one
   that isn't valid says so on its row while the rest are saved.
@@ -42,6 +48,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **An advertiser's ad page** (/promoted/edit_promo/…) failed to open once the ad had any history (its log's entries
+  came back from the database as text, not times).
 - **Gold purchases, gifts, gift codes and claiming them** failed after payment: the gold table was written in a way
   SQLAlchemy 2 no longer supports, and months of gold were worked out as fractions under Python 3.
 - **Sold ads**: campaigns' payment records could be left uncommitted, and creating a second campaign in the same

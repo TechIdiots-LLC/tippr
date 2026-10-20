@@ -43,7 +43,6 @@ from pylons.i18n import _
 from r2.config import feature
 from r2.config.extensions import api_type, is_api
 from r2.lib import captcha, ratelimit, signing, totp, utils
-from r2.lib.authorize import Address, CreditCard
 from r2.lib.db import tdb_cassandra
 from r2.lib.errors import (
     TipprError,
@@ -2776,95 +2775,6 @@ class VDestination(Validator):
         return {
             self.param: 'destination url (must be same-domain)',
         }
-
-class ValidAddress(Validator):
-    def set_error(self, msg, field):
-        Validator.set_error(self, errors.BAD_ADDRESS,
-                            dict(message=msg), field = field)
-
-    def run(self, firstName, lastName, company, address,
-            city, state, zipCode, country, phoneNumber):
-        if not firstName:
-            self.set_error(_("please provide a first name"), "firstName")
-        elif not lastName:
-            self.set_error(_("please provide a last name"), "lastName")
-        elif not address:
-            self.set_error(_("please provide an address"), "address")
-        elif not city:
-            self.set_error(_("please provide your city"), "city")
-        elif not state:
-            self.set_error(_("please provide your state"), "state")
-        elif not zipCode:
-            self.set_error(_("please provide your zip or post code"), "zip")
-        elif not country:
-            self.set_error(_("please provide your country"), "country")
-
-        # Make sure values don't exceed max length defined in the authorize.net
-        # xml schema: https://api.authorize.net/xml/v1/schema/AnetApiSchema.xsd
-        max_lengths = [
-            (firstName, 50, 'firstName'), # (argument, max len, form field name)
-            (lastName, 50, 'lastName'),
-            (company, 50, 'company'),
-            (address, 60, 'address'),
-            (city, 40, 'city'),
-            (state, 40, 'state'),
-            (zipCode, 20, 'zip'),
-            (country, 60, 'country'),
-            (phoneNumber, 255, 'phoneNumber')
-        ]
-        for (arg, max_length, form_field_name) in max_lengths:
-            if arg and len(arg) > max_length:
-                self.set_error(_("max length %d characters" % max_length), form_field_name)
-
-        if not self.has_errors:
-            return Address(firstName = firstName,
-                           lastName = lastName,
-                           company = company or "",
-                           address = address,
-                           city = city, state = state,
-                           zip = zipCode, country = country,
-                           phoneNumber = phoneNumber or "")
-
-class ValidCard(Validator):
-    valid_date = re.compile(r"\d\d\d\d-\d\d")
-    def set_error(self, msg, field):
-        Validator.set_error(self, errors.BAD_CARD,
-                            dict(message=msg), field = field)
-
-    def run(self, cardNumber, expirationDate, cardCode):
-        has_errors = False
-
-        cardNumber = cardNumber or ""
-        if not (cardNumber.isdigit() and 13 <= len(cardNumber) <= 16):
-            self.set_error(_("credit card numbers should be 13 to 16 digits"),
-                           "cardNumber")
-            has_errors = True
-
-        if not self.valid_date.match(expirationDate or ""):
-            self.set_error(_("dates should be YYYY-MM"), "expirationDate")
-            has_errors = True
-        else:
-            now = datetime.now(g.tz)
-            yyyy, mm = expirationDate.split("-")
-            year = int(yyyy)
-            month = int(mm)
-            if month < 1 or month > 12:
-                self.set_error(_("month must be in the range 01..12"), "expirationDate")
-                has_errors = True
-            elif datetime(year, month, 1) < datetime(now.year, now.month, 1):
-                self.set_error(_("expiration date must be in the future"), "expirationDate")
-                has_errors = True
-
-        cardCode = cardCode or ""
-        if not (cardCode.isdigit() and 3 <= len(cardCode) <= 4):
-            self.set_error(_("card verification codes should be 3 or 4 digits"),
-                           "cardCode")
-            has_errors = True
-
-        if not has_errors:
-            return CreditCard(cardNumber = cardNumber,
-                              expirationDate = expirationDate,
-                              cardCode = cardCode)
 
 class VTarget(Validator):
     target_re = re.compile(r"\A[\w_-]{3,20}\Z")

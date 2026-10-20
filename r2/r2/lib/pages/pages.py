@@ -163,7 +163,6 @@ from r2.models.gold import (
     gold_received_by_user,
     gold_revenue_steady,
     gold_revenue_volatile,
-    paypal_subscription_url,
 )
 from r2.models.promo import (
     PROMOTE_COST_BASIS,
@@ -2449,9 +2448,6 @@ class ProfileBar(Templated):
 
         if c.user_is_loggedin:
             if user.gold and self.show_private_info:
-                if user.has_paypal_subscription:
-                    self.paypal_subscr_id = user.gold_subscr_id
-                    self.paypal_url = paypal_subscription_url()
                 if user.has_stripe_subscription:
                     self.stripe_customer_id = user.gold_subscr_id
 
@@ -3183,34 +3179,22 @@ class GoldPayment(Templated):
 
         if goldtype == "autorenew":
             if period == "monthly":
-                paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYMONTH
                 summary = strings.gold_summary_autorenew_monthly % dict(
                     user=c.user.name,
                     price=price,
                 )
             elif period == "yearly":
-                paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
                 summary = strings.gold_summary_autorenew_yearly % dict(
                     user=c.user.name,
                     price=price,
                 )
 
-            quantity = None
             stripe_key = g.secrets['stripe_public_key']
-            coinbase_button_id = None
 
         elif goldtype == "onetime":
-            if months < 12:
-                paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
-                quantity = months
-                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
-                coinbase_button_id = getattr(g, coinbase_name, None)
-            else:
-                paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYYEAR
-                quantity = months // 12
-                months = quantity * 12
-                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
-                coinbase_button_id = getattr(g, coinbase_name, None)
+            if months >= 12:
+                # whole years
+                months = (months // 12) * 12
 
             summary = strings.gold_summary_onetime % dict(
                 amount=Score.somethings(months, "month"),
@@ -3221,23 +3205,9 @@ class GoldPayment(Templated):
             stripe_key = g.secrets['stripe_public_key']
 
         else:
-            if months < 12:
-                if goldtype == "code":
-                    paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYMONTH
-                else:
-                    paypal_buttonid = g.PAYPAL_BUTTONID_COINS_BYMONTH
-                quantity = months
-                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
-                coinbase_button_id = getattr(g, coinbase_name, None)
-            else:
-                if goldtype == "code":
-                    paypal_buttonid = g.PAYPAL_BUTTONID_GIFTCODE_BYYEAR
-                else:
-                    paypal_buttonid = g.PAYPAL_BUTTONID_COINS_BYYEAR
-                quantity = months // 12
-                months = quantity * 12
-                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
-                coinbase_button_id = getattr(g, coinbase_name, None)
+            if months >= 12:
+                # whole years
+                months = (months // 12) * 12
 
             if goldtype == "coins":
                 summary = strings.gold_summary_coins % dict(
@@ -3282,34 +3252,28 @@ class GoldPayment(Templated):
 
             stripe_key = g.secrets['stripe_public_key']
 
-        # the providers set up on /admin/payments (r2.lib.payments), which
-        # replace the old buttons for the same provider; subscriptions
-        # still use the old ones
+        # the providers set up on /admin/payments (r2.lib.payments);
+        # subscriptions still use the old Stripe card form, which a Stripe
+        # provider replaces for everything else
         from r2.lib import payments
         checkout_providers = []
         if goldtype != "autorenew":
             enabled = payments.enabled_providers("gold")
             checkout_providers = [(p, _(payments.PROVIDERS[p][1]))
                                   for p in enabled]
-            if "paypal" in enabled:
-                paypal_buttonid = None
             if "stripe" in enabled:
                 stripe_key = None
-            if "coinbase" in enabled:
-                coinbase_button_id = None
 
         Templated.__init__(self, goldtype=goldtype, period=period,
                            checkout_providers=checkout_providers,
-                           months=months, quantity=quantity,
+                           months=months,
                            unit_price=unit_price, price=price,
                            summary=summary, giftmessage=giftmessage,
                            can_use_coins=can_use_coins,
                            passthrough=passthrough,
                            thing=thing, clone_template=clone_template,
                            description=desc, thing_type=thing_type,
-                           paypal_buttonid=paypal_buttonid,
                            stripe_key=stripe_key,
-                           coinbase_button_id=coinbase_button_id,
                            user_coins=user_coins,
                            )
 
@@ -3338,13 +3302,6 @@ class GoldSubscription(Templated):
             self.user_fullname = user._fullname
         else:
             self.has_stripe_subscription = False
-
-        if user.has_paypal_subscription:
-            self.has_paypal_subscription = True
-            self.paypal_subscr_id = user.gold_subscr_id
-            self.paypal_url = paypal_subscription_url()
-        else:
-            self.has_paypal_subscription = False
 
         self.stripe_key = g.secrets['stripe_public_key']
         Templated.__init__(self)
@@ -5395,24 +5352,6 @@ class MediaEmbedBody(CachedTemplate):
     def render(self, *a, **kw):
         res = CachedTemplate.render(self, *a, **kw)
         return responsive(res, True)
-
-
-class PaymentForm(Templated):
-    countries = sorted({c['name'] for c in list(g.locations.values())})
-
-    default_country = g.locations.get("US").get("name")
-
-    def __init__(self, link, campaign, **kw):
-        self.link = link
-        self.duration = strings.time_label
-        self.duration %= {'num': campaign.ndays,
-                          'time': ungettext("day", "days", campaign.ndays)}
-        self.start_date = campaign.start_date.strftime("%m/%d/%Y")
-        self.end_date = campaign.end_date.strftime("%m/%d/%Y")
-        self.campaign_id36 = campaign._id36
-        self.budget = format_currency(campaign.total_budget_dollars, 'USD',
-            locale=c.locale)
-        Templated.__init__(self, **kw)
 
 
 class PromotePayment(Templated):

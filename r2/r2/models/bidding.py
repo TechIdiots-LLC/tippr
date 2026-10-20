@@ -237,53 +237,12 @@ class Sessionized:
         except NotFound:
             return []
 
-class CustomerID(Sessionized, Base):
-    __tablename__  = "authorize_account_id"
-
-    account_id    = Column(BigInteger, primary_key = True,
-                           autoincrement = False)
-    authorize_id  = Column(BigInteger)
-
-    def __repr__(self):
-        return "<AuthNetID(%s)>" % self.authorize_id
-
-    @classmethod
-    def set(cls, user, _id):
-        try:
-            existing = cls.one(user)
-            existing.authorize_id = _id
-            existing._commit()
-        except NotFound:
-            cls(user, _id)._commit()
-    
-    @classmethod
-    def get_id(cls, user):
-        try:
-            return cls.one(user).authorize_id
-        except NotFound:
-            return
-
-class PayID(Sessionized, Base):
-    __tablename__ = "authorize_pay_id"
-
-    account_id    = Column(BigInteger, primary_key = True,
-                           autoincrement = False)
-    pay_id        = Column(BigInteger, primary_key = True,
-                           autoincrement = False)
-
-    def __repr__(self):
-        return "<%s(%d)>" % (self.__class__.__name__, self.authorize_id)
-
-    @classmethod
-    def get_ids(cls, key):
-        return [int(x.pay_id) for x in cls.get(key)]
-
 class Bid(Sessionized, Base):
     __tablename__ = "bids"
 
     STATUS        = Enum("AUTH", "CHARGE", "REFUND", "VOID")
 
-    # will be unique from authorize
+    # a freebie's (negative) or a payment's (r2.lib.payments.ads) id
     transaction   = Column(BigInteger, primary_key = True,
                            autoincrement = False)
 
@@ -349,8 +308,8 @@ class Bid(Sessionized, Base):
 
     def is_charged(self):
         """
-        Returns True if transaction has been charged with authorize.net or is
-        a freebie with "charged" status.
+        Returns True if the campaign has been paid (r2.lib.payments.ads) or
+        is a freebie with "charged" status.
         """
         return (self.status == self.STATUS.CHARGE)
 

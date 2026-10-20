@@ -454,12 +454,8 @@ def make_map(config):
        action='cancel_subscription')
     mc('/api/stripewebhook/gold/:secret', controller='stripe',
        action='goldwebhook')
-    mc('/api/coinbasewebhook/gold/:secret', controller='coinbase',
-       action='goldwebhook')
     mc('/api/rgwebhook/gold/:secret', controller='tipprgifts',
        action='goldwebhook')
-    mc('/api/ipn/:secret', controller='ipn', action='ipn')
-    mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller='api', action='gadget',
@@ -469,7 +465,7 @@ def make_map(config):
     mc('/api/:action', controller='promoteapi',
        requirements=dict(action=("promote|unpromote|edit_promo|ad_s3_callback|"
                                  "ad_s3_params|ad_image_upload|ad_image_preview|"
-                                 "freebie|promote_note|update_pay|"
+                                 "freebie|promote_note|"
                                  "edit_campaign|delete_campaign|"
                                  "check_inventory|"
                                  "refund_campaign|terminate_campaign|"

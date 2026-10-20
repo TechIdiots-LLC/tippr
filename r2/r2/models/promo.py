@@ -25,7 +25,7 @@
 
 from collections import OrderedDict
 from datetime import datetime
-from uuid import uuid1
+from uuid import UUID, uuid1
 
 from r2.lib.db.cassandra_compat import INT_TYPE, TIME_UUID_TYPE, UTF8_TYPE
 from pylons import app_globals as g
@@ -698,7 +698,13 @@ class PromotionLog(tdb_cassandra.View):
             row = cls._byID(rowkey)
         except tdb_cassandra.NotFound:
             return []
-        tuples = sorted(list(row._values().items()), key=lambda t: t[0].time)
+        def when(item):
+            # the column names are time UUIDs, which come back as strings
+            key = item[0]
+            if not isinstance(key, UUID):
+                key = UUID(str(key))
+            return key.time
+        tuples = sorted(row._values().items(), key=when)
         return [t[1] for t in tuples]
 
 

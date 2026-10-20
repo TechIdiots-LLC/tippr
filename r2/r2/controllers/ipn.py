@@ -45,7 +45,6 @@ from r2.lib.strings import strings
 from r2.lib.utils import constant_time_compare, timeago
 from r2.lib.validator import (
     VByName,
-    VDecimal,
     VInt,
     VModhash,
     VOneOf,
@@ -61,9 +60,7 @@ from r2.models import (
     Email,
     NotFound,
     Thing,
-    account_by_payingid,
     account_from_stripe_customer_id,
-    accountid_from_subscription,
     admintools,
     append_random_bottlecap_phrase,
     cancel_subscription,
@@ -72,7 +69,6 @@ from r2.models import (
     create_gold_code,
     coins_lock,
     generate_token,
-    get_discounted_price,
     has_prev_subscr_payments,
     make_gold_message,
     retrieve_gold_transaction,
@@ -126,116 +122,9 @@ def update_blob(code, updates=None):
     g.hardcache.set("payment_blob-%s" % code, blob, BLOB_TTL)
 
 
-def has_blob(custom):
-    if not custom:
-        return False
-
-    blob = g.hardcache.get('payment_blob-%s' % custom)
-    return bool(blob)
-
-def dump_parameters(parameters):
-    for k, v in parameters.items():
-        g.log.info("IPN: {!r} = {!r}".format(k, v))
-
-def check_payment_status(payment_status):
-    if payment_status is None:
-        payment_status = ''
-
-    psl = payment_status.lower()
-
-    if psl == 'completed':
-        return (None, psl)
-    elif psl == 'refunded':
-        return ("Ok", psl)
-    elif psl == 'pending':
-        return ("Ok", psl)
-    elif psl == 'reversed':
-        return ("Ok", psl)
-    elif psl == 'canceled_reversal':
-        return ("Ok", psl)
-    elif psl == 'failed':
-        return ("Ok", psl)
-    elif psl == 'denied':
-        return ("Ok", psl)
-    elif psl == '':
-        return (None, psl)
-    else:
-        raise ValueError("Unknown IPN status: %r" % payment_status)
-
-def check_txn_type(txn_type, psl):
-    if txn_type == 'subscr_signup':
-        return ("Ok", None)
-    elif txn_type == 'subscr_cancel':
-        return ("Ok", "cancel")
-    elif txn_type == 'subscr_eot':
-        return ("Ok", None)
-    elif txn_type == 'subscr_failed':
-        return ("Ok", None)
-    elif txn_type == 'subscr_modify':
-        return ("Ok", None)
-    elif txn_type == 'send_money':
-        return ("Ok", None)
-    elif txn_type in ('new_case',
-        'recurring_payment_suspended_due_to_max_failed_payment'):
-        return ("Ok", None)
-    elif txn_type == 'subscr_payment' and psl == 'completed':
-        return (None, "new")
-    elif txn_type == 'web_accept' and psl == 'completed':
-        return (None, None)
-    elif txn_type == "paypal_here":
-        return ("Ok", None)
-    else:
-        raise ValueError("Unknown IPN txn_type / psl %r" %
-                         ((txn_type, psl),))
-
-
-def existing_subscription(subscr_id, paying_id, custom):
-    if subscr_id is None:
-        return None
-
-    account_id = accountid_from_subscription(subscr_id)
-
-    if not account_id and has_blob(custom):
-        # New subscription contains the user info in hardcache
-        return None
-
-    should_set_subscriber = False
-    if account_id is None:
-        # Payment from legacy subscription (subscr_id not set), fall back
-        # to guessing the user from the paying_id
-        account_id = account_by_payingid(paying_id)
-        should_set_subscriber = True
-        if account_id is None:
-            return None
-
-    try:
-        account = Account._byID(account_id, data=True)
-
-        if account._deleted:
-            g.log.info("IPN renewal for deleted account %d (%s)", account_id,
-                       subscr_id)
-            return "deleted account"
-
-        if should_set_subscriber:
-            if hasattr(account, "gold_subscr_id") and account.gold_subscr_id:
-                g.log.warning("Attempted to set subscr_id (%s) for account (%d) "
-                              "that already has one." % (subscr_id, account_id))
-                return None
-
-            account.gold_subscr_id = subscr_id
-            account._commit()
-    except NotFound:
-        g.log.info("Just got IPN renewal for non-existent account #%d" % account_id)
-
-    return account
-
-def months_and_days_from_pennies(pennies, discount=False):
-    if discount:
-        year_pennies = get_discounted_price(g.gold_year_price).pennies
-        month_pennies = get_discounted_price(g.gold_month_price).pennies
-    else:
-        year_pennies = g.gold_year_price.pennies
-        month_pennies = g.gold_month_price.pennies
+def months_and_days_from_pennies(pennies):
+    year_pennies = g.gold_year_price.pennies
+    month_pennies = g.gold_month_price.pennies
 
     if pennies >= year_pennies:
         years = pennies // year_pennies
@@ -455,200 +344,6 @@ class IpnController(TipprController):
         elif redirect_to_spent:
             form.redirect("/gold/thanks?v=spent-coins")
 
-    @csrf_exempt
-    @textresponse(paypal_secret = VPrintable('secret', 50),
-                  payment_status = VPrintable('payment_status', 20),
-                  txn_id = VPrintable('txn_id', 20),
-                  paying_id = VPrintable('payer_id', 50),
-                  payer_email = VPrintable('payer_email', 250),
-                  mc_currency = VPrintable('mc_currency', 20),
-                  mc_gross = VDecimal('mc_gross'),
-                  custom = VPrintable('custom', 50))
-    def POST_ipn(self, paypal_secret, payment_status, txn_id, paying_id,
-                 payer_email, mc_currency, mc_gross, custom):
-
-        parameters = request.POST.copy()
-
-        # Make sure it's really PayPal
-        if not constant_time_compare(paypal_secret,
-                                     g.secrets['paypal_webhook']):
-            raise ValueError
-
-        # Return early if it's an IPN class we don't care about
-        response, psl = check_payment_status(payment_status)
-        if response:
-            return response
-
-        # Return early if it's a txn_type we don't care about
-        response, subscription = check_txn_type(parameters['txn_type'], psl)
-        if subscription is None:
-            subscr_id = None
-        elif subscription == "new":
-            subscr_id = parameters['subscr_id']
-        elif subscription == "cancel":
-            cancel_subscription(parameters['subscr_id'])
-        else:
-            raise ValueError("Weird subscription: %r" % subscription)
-
-        if response:
-            return response
-
-        if mc_currency != 'USD':
-            raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
-
-        if not (txn_id and paying_id and payer_email and mc_gross):
-            dump_parameters(parameters)
-            raise ValueError("Got incomplete IPN")
-
-        pennies = int(mc_gross * 100)
-        months, days = months_and_days_from_pennies(pennies)
-
-        # Special case: autorenewal payment
-        existing = existing_subscription(subscr_id, paying_id, custom)
-        if existing:
-            if existing != "deleted account":
-                try:
-                    create_claimed_gold ("P" + txn_id, payer_email, paying_id,
-                                         pennies, days, None, existing._id,
-                                         c.start_time, subscr_id)
-                except IntegrityError:
-                    return "Ok"
-                admintools.adjust_gold_expiration(existing, days=days)
-
-                subject, message = subscr_pm(pennies, months, new_subscr=False)
-                message = append_random_bottlecap_phrase(message)
-                send_system_message(existing.name, subject, message,
-                                    distinguished='gold-auto')
-
-                g.log.info("Just applied IPN renewal for %s, %d days" %
-                           (existing.name, days))
-            return "Ok"
-
-        # More sanity checks that all non-autorenewals should pass:
-
-        if not custom:
-            dump_parameters(parameters)
-            raise ValueError("Got IPN with txn_id=%s and no custom"
-                             % txn_id)
-
-        self.finish(parameters, "P" + txn_id,
-                    payer_email, paying_id, subscr_id,
-                    custom, pennies, months, days)
-
-    def finish(self, parameters, txn_id,
-               payer_email, paying_id, subscr_id,
-               custom, pennies, months, days):
-
-        try:
-            blob_key, payment_blob = get_blob(custom)
-        except ValueError:
-            g.log.error("whoops, %s was locked", custom)
-            return
-
-        buyer = None
-        buyer_email = None
-        buyer_id = payment_blob.get('account_id', None)
-        if buyer_id:
-            try:
-                buyer = Account._byID(buyer_id, data=True)
-            except NotFound:
-                dump_parameters(parameters)
-                raise ValueError("Invalid buyer_id %d in IPN with custom='%s'"
-                                 % (buyer_id, custom))
-        else:
-            buyer_email = payment_blob.get('email')
-            if not buyer_email:
-                dump_parameters(parameters)
-                error = "No buyer_id or email in IPN with custom='%s'" % custom
-                raise ValueError(error)
-
-        if subscr_id:
-            buyer.gold_subscr_id = subscr_id
-
-        instagift = False
-        if payment_blob['goldtype'] == 'onetime':
-            admintools.adjust_gold_expiration(buyer, days=days)
-
-            subject = _("Eureka! Thank you for investing in tippr gold!")
-            message = _("Thank you for buying tippr gold. Your patronage "
-                        "supports the site and makes future development "
-                        "possible. For example, one month of tippr gold "
-                        "pays for 5 instance hours of tippr's servers.")
-            message += "\n\n" + strings.gold_benefits_msg
-            if g.lounge_vault:
-                message += "\n\n" + strings.lounge_msg
-        elif payment_blob['goldtype'] == 'autorenew':
-            admintools.adjust_gold_expiration(buyer, days=days)
-            subject, message = subscr_pm(pennies, months, new_subscr=True)
-        elif payment_blob['goldtype'] == 'coins':
-            buyer._incr("gold_coins", months)
-            buyer._commit()
-            subject = _("Eureka! Thank you for investing in tippr gold "
-                        "coins!")
-
-            message = _("Thank you for buying coins. Your patronage "
-                        "supports the site and makes future development "
-                        "possible. To spend your coins and spread tippr "
-                        "gold, visit [/gold](/gold) or your favorite "
-                        "person's user page.")
-            message += "\n\n" + strings.gold_benefits_msg + "\n\n"
-            message += _("Thank you again for your support, and have fun "
-                         "spreading gold!")
-        elif payment_blob['goldtype'] == 'gift':
-            recipient_name = payment_blob.get('recipient', None)
-            try:
-                recipient = Account._by_name(recipient_name)
-            except NotFound:
-                dump_parameters(parameters)
-                raise ValueError("Invalid recipient_name %s in IPN/GC with custom='%s'"
-                                 % (recipient_name, custom))
-            signed = payment_blob.get("signed", False)
-            giftmessage = _force_unicode(payment_blob.get("giftmessage", ""))
-            thing_fullname = payment_blob.get("thing")
-            send_gift(buyer, recipient, months, days, signed, giftmessage,
-                      thing_fullname)
-            instagift = True
-            subject = _("Thanks for giving the gift of tippr gold!")
-            message = _("Your classy gift to %s has been delivered.\n\n"
-                        "Thank you for gifting tippr gold. Your patronage "
-                        "supports the site and makes future development "
-                        "possible.") % recipient.name
-            message += "\n\n" + strings.gold_benefits_msg + "\n\n"
-            message += _("Thank you again for your support, and have fun "
-                         "spreading gold!")
-        elif payment_blob['goldtype'] == 'code':
-            pass
-        else:
-            dump_parameters(parameters)
-            raise ValueError("Got status '%s' in IPN/GC" % payment_blob['status'])
-
-        if payment_blob['goldtype'] == 'code':
-            send_gold_code(buyer, months, days, txn_id, payer_email,
-                           pennies, buyer_email)
-        else:
-            # Reuse the old "secret" column as a place to record the goldtype
-            # and "custom", just in case we need to debug it later or something
-            secret = payment_blob['goldtype'] + "-" + custom
-
-            if instagift:
-                status="instagift"
-            else:
-                status="processed"
-
-            create_claimed_gold(txn_id, payer_email, paying_id, pennies, days,
-                                secret, buyer_id, c.start_time,
-                                subscr_id, status=status)
-
-            message = append_random_bottlecap_phrase(message)
-
-            try:
-                send_system_message(buyer, subject, message,
-                                    distinguished='gold-auto')
-            except MessageError:
-                g.log.error('finish: could not send system message')
-
-        payment_blob["status"] = "processed"
-        g.hardcache.set(blob_key, payment_blob, BLOB_TTL)
 
 
 class Webhook:
@@ -1187,37 +882,6 @@ class StripeController(GoldPaymentController):
             return
 
         form.set_text(".status", _("your subscription has been cancelled"))
-
-class CoinbaseController(GoldPaymentController):
-    name = 'coinbase'
-    webhook_secret = g.secrets['coinbase_webhook']
-    event_type_mappings = {
-        'completed': 'succeeded',
-        'cancelled': 'cancelled',
-        'mispaid': 'noop',
-        'expired': 'noop',
-        'payout': 'noop',
-    }
-    abort_on_error = False
-
-    @classmethod
-    def process_response(cls):
-        event_dict = json.loads(request.body)
-
-        # handle non-payment events we can ignore
-        if 'payout' in event_dict:
-            return 'payout', None
-
-        order = event_dict['order']
-        transaction_id = 'C%s' % order['id']
-        status = order['status']    # new/completed/cancelled
-        pennies = int(order['total_native']['cents'])
-        months, days = months_and_days_from_pennies(pennies, discount=True)
-        passthrough = order['custom']
-        webhook = Webhook(passthrough=passthrough,
-            transaction_id=transaction_id, pennies=pennies, months=months)
-        return status, webhook
-
 
 class TipprGiftsController(GoldPaymentController):
     """Handle notifications of gold purchases from tippr gifts.

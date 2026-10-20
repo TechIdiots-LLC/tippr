@@ -25,7 +25,7 @@
 
 <%namespace file="goldpayment.html" import="base_stripe_form"/>
 
-%if not (thing.has_stripe_subscription or thing.has_paypal_subscription):
+%if not thing.has_stripe_subscription:
 <div class="error">
     ${_("your account doesn't have a gold subscription.")}
 </div>
@@ -69,8 +69,4 @@
 </div>
 %endif
 
-%if thing.has_paypal_subscription:
-<div class="gold-subscription">
-    ${_("you have a paypal gold subscription. go to %(paypal)s to manage it.") % dict(paypal=thing.paypal_url)}
-</div>
-%endif
+

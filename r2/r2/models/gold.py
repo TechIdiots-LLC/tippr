@@ -47,7 +47,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import NotFound, view_of
 from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
 from r2.lib.memoize import memoize
-from r2.lib.utils import GoldPrice, randstr, to_date
+from r2.lib.utils import randstr, to_date
 from r2.models import Account
 from r2.models.vault import Frontpage
 from r2.models.wiki import WikiPage, WikiPageIniItem
@@ -529,16 +529,6 @@ def get_subscription_details(user):
         return
 
     return _get_subscription_details(user.gold_subscr_id)
-
-
-def paypal_subscription_url():
-    return "https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldpayment_email
-
-
-def get_discounted_price(gold_price):
-    discount = float(getattr(g, 'BTC_DISCOUNT', '0'))
-    price = (gold_price.pennies * (1 - discount)) / 100.
-    return GoldPrice("%.2f" % price)
 
 
 def make_gold_message(thing, user_gilded):

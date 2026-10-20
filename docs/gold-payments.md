@@ -91,16 +91,17 @@ campaign list, `/promoted/pay/<ad>/<campaign>`). The ad is reviewed as before, a
 BitPay payments can't be refunded from the site: the campaign's log says which payment needs a refund, which is made
 in BitPay's dashboard and then marked refunded on /admin/payments.
 
-How it fits reddit's ad code: reddit put an authorization hold on a card (authorize.net) and charged it the day
-before the campaign ran. A campaign paid here gets a `Bid` that's already charged (payment method
+How it fits reddit's ad code: reddit put an authorization hold on a card (authorize.net, now removed) and charged it
+the day before the campaign ran. A campaign paid here gets a `Bid` that's already charged (payment method
 `PROVIDER_PAYMENT_METHOD_ID`, in `r2/r2/lib/payments/ads.py`), so the daily charge step leaves it alone, and voiding or
-refunding that bid (`r2/r2/lib/authorize/interaction.py`) refunds the payment through the provider instead. If no
-provider is set up for ads, an authorize.net site (`authorizenetapi`) keeps its card form.
+refunding that bid (`r2/r2/lib/bids.py`) refunds the payment through the provider instead. Freebies (campaigns a
+sponsor gives away) are bids too.
 
-## Subscriptions and the old buttons
+## Subscriptions
 
-Gold subscriptions (autorenew) still go through the old flows: PayPal hosted subscription buttons (the
-`PAYPAL_BUTTONID_*` ini settings and IPNs) and Stripe's card form (the `stripe_*` secrets). For one-time purchases, a
-provider turned on at /admin/payments replaces the old button for the same provider.
+Gold subscriptions (autorenew) still use reddit's Stripe card form: the `stripe_*` secrets and the
+`STRIPE_MONTHLY_GOLD_PLAN`/`STRIPE_YEARLY_GOLD_PLAN` price plans in the ini. Without those, /gold doesn't offer
+subscriptions. For everything else a Stripe provider on /admin/payments replaces that form. (reddit's PayPal
+subscription buttons and IPNs, and its Coinbase Commerce buttons, are removed.)
 
 Coins (spent on /gold) need no provider: `/api/spendcoins` applies them at once.

@@ -2,8 +2,6 @@ r.gold = {
 
     _inlineGilding: false,
 
-    _googleCheckoutAnalyticsLoaded: false,
-
     init: function () {
         $('div.content').on(
             'click',
@@ -97,14 +95,6 @@ r.gold = {
           tracker: 'goldTracker'
         });
 
-        if (!this._googleCheckoutAnalyticsLoaded) {
-            // we're just gonna hope this loads fast enough since there's no
-            // way to know if it failed and we'd rather the form is still
-            // usable if things don't go well with the analytics stuff.
-            $.getScript('//checkout.google.com/files/digital/ga_post.js');
-            this._googleCheckoutAnalyticsLoaded = true
-        }
-
         if ($thing.hasClass('link')) {
             cloneClass = 'cloneable-link'
         } else {
@@ -115,7 +105,6 @@ r.gold = {
         var form = goldwrap.find('.gold-form');
         var authorName = $link.thing().find('.entry .author:first').text();
         var passthroughs = form.find('.passthrough');
-        var cbBaseUrl = form.find('[name="cbbaseurl"]').val();
         var signed = !(form.find('[name="signed"]')).is(':checked');
 
         goldwrap
@@ -140,7 +129,6 @@ r.gold = {
             form.removeClass('working');
             passthroughs.val(token);
             form.find('.stripe-gold').on('click', function() { window.open('/gold/creditgild/' + token) });
-            form.find('.coinbase-gold').on('click', function() { window.open(cbBaseUrl + "?c=" + token) });
             form.find('button').removeAttr('disabled').removeClass('disabled')
         });
 

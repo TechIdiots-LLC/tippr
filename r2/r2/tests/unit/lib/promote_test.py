@@ -145,7 +145,7 @@ class TestPromoteRefunds(unittest.TestCase):
         self.billable_amount = 100.
         self.billable_impressions = 1000
 
-    @patch('r2.lib.promote.authorize.refund_transaction')
+    @patch('r2.lib.promote.bids.refund_transaction')
     @patch('r2.lib.promote.PromotionLog.add')
     @patch('r2.lib.promote.queries.unset_underdelivered_campaigns')
     @patch('r2.lib.promote.emailer.refunded_promo')
@@ -171,7 +171,7 @@ class TestPromoteRefunds(unittest.TestCase):
         emailer_refunded_promo.assert_called_once_with(self.link)
         self.assertTrue(success)
 
-    @patch('r2.lib.promote.authorize.refund_transaction')
+    @patch('r2.lib.promote.bids.refund_transaction')
     @patch('r2.lib.promote.PromotionLog.add')
     def test_refund_campaign_failed(self, promotion_log_add,
             refund_transaction):

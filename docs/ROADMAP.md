@@ -102,10 +102,10 @@ worth it for a site this size.
   for another member, or gild a post or comment they like (both are
   already in the code), so members can get gold for free when people value
   what they write. The money goes to the site; the recipient gets gold.
-- **Payment providers,** shared by gold and ads: PayPal first, then
-  BitPay or Coinbase Commerce for cryptocurrency. The gold and ad checkout
-  code is reddit's (PayPal IPN and Stripe, set up for reddit's accounts)
-  and gets one payment layer with a provider per service.
+- **Payment providers,** shared by gold and ads: done (PayPal, Stripe,
+  Coinbase and BitPay on /admin/payments, docs/gold-payments.md). Still
+  to do: gold subscriptions through them (they use reddit's Stripe card
+  form).
 
 ## Search
 

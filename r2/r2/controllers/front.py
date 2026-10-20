@@ -71,6 +71,16 @@ from .listingcontroller import ListingController
 from .oauth2 import require_oauth2_scope
 
 
+def subscriptions_available():
+    """Whether gold subscriptions can be bought: they still use the Stripe
+    card form (r2.controllers.ipn.StripeController), which needs its keys
+    and price plans in the ini."""
+    return bool(g.secrets.get('stripe_public_key') and
+                g.secrets.get('stripe_secret_key') and
+                getattr(g, 'STRIPE_MONTHLY_GOLD_PLAN', None) and
+                getattr(g, 'STRIPE_YEARLY_GOLD_PLAN', None))
+
+
 class FrontController(TipprController):
 
     allow_stylesheets = True
@@ -1485,8 +1495,7 @@ class FrontController(TipprController):
                           ).render()
 
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-coins",
-                                  "spent-coins", "paypal", "coinbase",
-                                  "stripe", "paid"),
+                                  "spent-coins", "stripe", "paid"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
@@ -1509,13 +1518,7 @@ class FrontController(TipprController):
         elif vendor == "spent-coins":
             claim_msg = _("Thanks for buying tippr gold! Your transaction "
                           "has been completed.")
-        elif vendor == "paypal":
-            claim_msg = _("Thanks for buying tippr gold! Your transaction "
-                          "has been completed and emailed to you. You can "
-                          "check the details by signing into your account "
-                          "at:")
-            vendor_url = "https://www.paypal.com/us"
-        elif vendor in {"coinbase", "stripe"}:  # Pending vendors
+        elif vendor == "stripe":  # the card form: delivered by webhook
             claim_msg = _("Thanks for buying tippr gold! Your transaction is "
                           "being processed. If you have any questions please "
                           "contact us at %(gold_email)s")
@@ -1924,7 +1927,7 @@ class FormsController(TipprController):
             elif not email:
                 start_over = True
         elif goldtype == "autorenew":
-            if period is None:
+            if period is None or not subscriptions_available():
                 start_over = True
             elif c.user.has_gold_subscription:
                 return self.redirect("/gold/subscription")
@@ -1962,6 +1965,7 @@ class FormsController(TipprController):
                 return self.redirect('/gold' + qs)
 
             can_subscribe = (c.user_is_loggedin and
+                             subscriptions_available() and
                              not c.user.has_gold_subscription)
             if not can_subscribe and goldtype == "autorenew":
                 self.redirect("/coins", code=302)

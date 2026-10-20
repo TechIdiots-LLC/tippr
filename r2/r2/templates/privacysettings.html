@@ -108,13 +108,6 @@
     </ul>
     <p class="details">${_("Having a problem? We may be able to help:")}&#32;<a href="/contact">${_("contact us")}</a>.</p>
 
-    %if thing.has_paypal_subscription:
-      <p class="status-message">
-        ${_("Please cancel your gold subscription first: it's billed by PayPal, which we can't stop for you.")}
-        <a href="${thing.paypal_url}">${_("Cancel it on PayPal")}</a> (${thing.paypal_subscr_id})
-      </p>
-    %endif
-
     <form action="javascript:;" method="post" class="privacy-delete-form"
           onsubmit="return post_form(this, 'deactivate_user')">
       <fieldset>

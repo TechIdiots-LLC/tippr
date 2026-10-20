@@ -127,16 +127,6 @@
           <a href="/gold/about">${_("view gold features/benefits")}</a>
         </div>
         %if thing.show_private_info:
-          %if hasattr(thing, "paypal_subscr_id"):
-             <div>
-              <a href="${thing.paypal_url}">
-                ${_("Recurring Paypal subscription")}
-              </a>
-              &#32;
-              ${thing.paypal_subscr_id}
-            </div>
-          %endif
-
           %if hasattr(thing, "stripe_customer_id"):
              <div>
               <a href="/gold/subscription">

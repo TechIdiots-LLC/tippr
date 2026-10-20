@@ -41,14 +41,13 @@ from pylons import tmpl_context as c
 from pytz import timezone
 
 from r2.lib import (
-    authorize,
+    bids,
     emailer,
     hooks,
 )
 from r2.lib.db import queries
 from r2.lib.db.operators import not_
 from r2.lib.filters import _force_utf8
-from r2.lib.geoip import location_by_ips
 from r2.lib.memoize import memoize
 from r2.lib.sgm import sgm
 from r2.lib.utils import (
@@ -508,7 +507,7 @@ def void_campaign(link, campaign, reason):
     bid_record = transactions.get(campaign._id)
     if bid_record:
         a = Account._byID(link.author_id)
-        success, message = authorize.void_transaction(
+        success, message = bids.void_transaction(
             a, bid_record.transaction, campaign._id)
         if not success:
             # for a campaign paid up front (r2.lib.payments) the refund
@@ -535,28 +534,17 @@ def void_campaign(link, campaign, reason):
             )
 
 
-def auth_campaign(link, campaign, user, pay_id=None, freebie=False):
+def auth_campaign(link, campaign, user, freebie=True):
     """
-    Authorizes (but doesn't charge) a budget with authorize.net.
-    Args:
-    - link: promoted link
-    - campaign: campaign to be authorized
-    - user: Account obj of the user doing the auth (usually the currently
-        logged in user)
-    - pay_id: customer payment profile id to use for this transaction. (One
-        user can have more than one payment profile if, for instance, they have
-        more than one credit card on file.) Set pay_id to -1 for freebies.
+    Records a freebie (a sponsor giving the campaign away) as its payment.
+    Paid campaigns are paid through r2.lib.payments.ads instead.
 
-    Returns: (True, "") if successful or (False, error_msg) if not. 
+    Returns: (True, "") if successful or (False, error_msg) if not.
     """
     void_campaign(link, campaign, reason='changed_payment')
 
-    if freebie:
-        trans_id, reason = authorize.auth_freebie_transaction(
-            campaign.total_budget_dollars, user, link, campaign._id)
-    else:
-        trans_id, reason = authorize.auth_transaction(
-            campaign.total_budget_dollars, user, pay_id, link, campaign._id)
+    trans_id, reason = bids.auth_freebie_transaction(
+        campaign.total_budget_dollars, user, link, campaign._id)
 
     if trans_id and not reason:
         text = ('updated payment and/or budget for campaign %s: '
@@ -676,7 +664,7 @@ def accept_promotion(link):
     is_live = False
     for camp in campaigns:
         if is_accepted_promo(now, link, camp):
-            # if link was edited live, do not check against Authorize.net
+            # if link was edited live, it was charged already
             if not was_edited_live:
                 charge_campaign(link, camp)
             if charged_or_not_needed(camp):
@@ -738,9 +726,9 @@ def refund_unserved_campaigns(link):
     left for the refund page, which refunds what it didn't show."""
     from r2.lib.payments import ads
     campaigns = list(PromoCampaign._by_link(link._id))
-    bids = get_transactions(link, campaigns)
+    bid_by_campaign = get_transactions(link, campaigns)
     for campaign in campaigns:
-        bid = bids.get(campaign._id)
+        bid = bid_by_campaign.get(campaign._id)
         if (ads.is_provider_bid(bid) and not bid.is_void() and
                 not campaign.has_served):
             void_campaign(link, campaign, reason="rejected")
@@ -771,7 +759,7 @@ def authed_or_not_needed(campaign):
 
 def charged_or_not_needed(campaign):
     # True if a campaign has a charged transaction or doesn't need one
-    charged = authorize.is_charged_transaction(campaign.trans_id, campaign._id)
+    charged = bids.is_charged_transaction(campaign.trans_id, campaign._id)
     needs_charge = not campaign.is_house
     return charged or not needs_charge
 
@@ -856,18 +844,9 @@ def charge_campaign(link, campaign):
         return
 
     user = Account._byID(link.author_id)
-    success, reason = authorize.charge_transaction(user, campaign.trans_id,
-                                                   campaign._id)
-
+    success, reason = bids.charge_transaction(user, campaign.trans_id,
+                                              campaign._id)
     if not success:
-        if reason == authorize.TRANSACTION_NOT_FOUND:
-            # authorization hold has expired
-            original_trans_id = campaign.trans_id
-            campaign.trans_id = NO_TRANSACTION
-            campaign._commit()
-            text = ('voided expired transaction for %s: (trans_id: %d)'
-                    % (campaign, original_trans_id))
-            PromotionLog.add(link, text)
         return
 
     hooks.get_hook('promote.edit_campaign').call(link=link, campaign=campaign)
@@ -1003,7 +982,7 @@ def get_refund_amount(camp, billable):
 def refund_campaign(link, camp, refund_amount, billable_amount,
         billable_impressions):
     owner = Account._byID(camp.owner_id, data=True)
-    success, reason = authorize.refund_transaction(
+    success, reason = bids.refund_transaction(
         owner, camp.trans_id, camp._id, refund_amount)
     if not success:
         text = ('{} ${} refund failed'.format(camp, refund_amount))
@@ -1300,35 +1279,6 @@ def get_spent_amount(campaign):
         billable_impressions = get_billable_impressions(campaign)
         spent = get_billable_amount(campaign, billable_impressions)
     return spent
-
-
-def successful_payment(link, campaign, ip, address):
-    if not address:
-        return
-
-    campaign.trans_ip = ip
-    campaign.trans_billing_country = address.country
-
-    location = location_by_ips(ip)
-
-    if location:
-        campaign.trans_ip_country = location.get("country_name")
-
-        countries_match = (campaign.trans_billing_country.lower() ==
-            campaign.trans_ip_country.lower())
-        campaign.trans_country_match = countries_match
-
-    campaign._commit()
-
-
-def new_payment_method(user, ip, address, link):
-    user._incr('num_payment_methods')
-    hooks.get_hook('promote.new_payment_method').call(user=user, ip=ip, address=address, link=link)
-
-
-def failed_payment_method(user, link):
-    user._incr('num_failed_payments')
-    hooks.get_hook('promote.failed_payment').call(user=user, link=link)
 
 
 def Run(verbose=True):

@@ -14,8 +14,9 @@
 ###############################################################################
 """Paying for sold ads (promoted posts' campaigns) through r2.lib.payments.
 
-reddit's ads put an authorization hold on a card (authorize.net) when the
-advertiser paid, and charged it the day before the campaign started. With
+reddit's ads put an authorization hold on a card (authorize.net, removed)
+when the advertiser paid, and charged it the day before the campaign
+started. With
 these providers the advertiser pays the whole budget when they submit the
 campaign, and is refunded if the ad isn't approved:
 
@@ -25,7 +26,7 @@ campaign, and is refunded if the ad isn't approved:
   daily charge step finds it charged and leaves it alone.
 - Anything that voids the campaign's payment (rejecting the ad, changing
   the budget, deleting the campaign, paying again) refunds it in full
-  (r2.lib.authorize.interaction.void_transaction calls refund_bid()).
+  (r2.lib.bids.void_transaction calls refund_bid()).
 - The partial refund for an ad that showed less than was paid for goes
   back through the provider too.
 - A refund made in the provider's dashboard unpays the campaign.
@@ -38,12 +39,12 @@ from pylons import app_globals as g
 
 from r2.lib import payments
 
-# the Bid.pay_id of a campaign paid through r2.lib.payments (authorize.net
-# payment profile ids are positive; freebies are -1)
+# the Bid.pay_id of a campaign paid through r2.lib.payments (freebies are
+# -1; reddit's authorize.net payment profiles were positive)
 PROVIDER_PAYMENT_METHOD_ID = -2
 
-# Bid.transaction ids for these payments: above anything authorize.net
-# uses, and positive (negative ones are freebies)
+# Bid.transaction ids for these payments: above any authorize.net one an
+# old database may have, and positive (negative ones are freebies)
 TRANSACTION_BASE = 10 ** 15
 
 
