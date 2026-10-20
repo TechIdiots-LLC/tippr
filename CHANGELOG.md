@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.13.0
+### ✨ Features and improvements
 - **Two-factor sign-in for everyone** (it was admins only): any member can turn it on under preferences →
   security with an authenticator app. With it on, changing the password or email address and linking or unlinking
   a Google/Facebook sign-in also need a code (one code counts for 15 minutes in that session), turning it off needs
@@ -44,7 +50,6 @@
   docs describe the current site (payments, feeds, the newer admin pages, policy updates on upgrade, account deletion).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Buttons that did nothing:** the gold payment page's buttons (PayPal and the rest, and paying with your gold), the
   "report" buttons, and the moderator action forms (ban, mute and the like). Their scripts looked for the page's
   `div.content`, which is now a `<main>`.
