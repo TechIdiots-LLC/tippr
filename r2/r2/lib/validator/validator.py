@@ -1319,7 +1319,8 @@ class VSupportStaff(Validator):
 class VEmployee(VVerifiedUser):
     """Validate that user is an employee."""
     def run(self):
-        if not c.user.employee:
+        from r2.lib import two_factor
+        if not c.user.employee or two_factor.staff_tools_closed(c.user):
             abort(403, 'forbidden')
         VVerifiedUser.run(self)
 

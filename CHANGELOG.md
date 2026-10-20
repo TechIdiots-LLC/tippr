@@ -19,6 +19,10 @@
 - **Two-factor when saving preferences or posting (optional):** the same "also ask for a code" choices can ask for
   it when saving preferences and when submitting a post (a code counts for 15 minutes; apps using OAuth aren't
   asked).
+- **Require two-factor for moderators and staff** (`require_two_factor_staff` on /admin/config, off by default):
+  moderators, employees and admins (for admin mode) need two-factor sign-in on to use their tools; until then their
+  moderator powers are paused and every page shows a notice linking to preferences → security. Others see them as
+  moderators as before, and members who aren't staff are unaffected.
 - **Sign in with Google or Facebook**, for accounts that linked one. An admin turns providers on at the new
   **/admin/logins** with the site's own OAuth app (client ID and secret; the page shows the redirect address to
   register). Members link an account under preferences → security, or

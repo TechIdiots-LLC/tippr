@@ -326,6 +326,15 @@ class Tippr(Templated):
                     infotext = strings.read_only_msg
                 elif g.live_config.get("announcement_message"):
                     infotext = g.live_config["announcement_message"]
+            if not infotext and c.user_is_loggedin:
+                # moderator and staff tools wait for two-factor sign-in
+                from r2.lib import two_factor
+                if (two_factor.staff_tools_closed(c.user) and
+                        two_factor.is_staff_or_moderator(c.user)):
+                    infotext = _("This site asks moderators and staff to "
+                                 "use two-factor sign-in. Turn it on under "
+                                 "[preferences, security](/prefs/security) "
+                                 "to use your moderator tools.")
             if c.user_is_loggedin and c.user.in_timeout:
                 timeout_days_remaining = c.user.days_remaining_in_timeout
 
@@ -1314,6 +1323,8 @@ class PrefSecurity(Templated):
         self.new_codes = two_factor.take_new_codes(c.user)
         self.codes_left = two_factor.recovery_codes_left(c.user)
         self.device_days = two_factor.DEVICE_DAYS
+        self.required_for_tools = (two_factor.staff_required() and
+                                   two_factor.is_staff_or_moderator(c.user))
         links = {l["provider"]: l for l in linked_logins.links_for(c.user)}
         enabled = linked_logins.enabled_providers()
         self.linked = [

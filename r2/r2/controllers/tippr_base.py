@@ -1348,6 +1348,11 @@ class TipprController(OAuth2ResourceController):
             self.set_up_user_context()
             c.modhash = generate_modhash()
             c.user_is_admin = maybe_admin and c.user.name in g.admins
+            if c.user_is_admin:
+                # admin mode needs two-factor, if the site requires it for
+                # staff (r2.lib.two_factor)
+                from r2.lib import two_factor
+                c.user_is_admin = not two_factor.staff_tools_closed(c.user)
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid
 

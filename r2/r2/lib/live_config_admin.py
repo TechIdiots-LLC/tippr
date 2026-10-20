@@ -51,6 +51,11 @@ COMMON = [
         "Who has staff permissions: name:level pairs, comma-separated, where "
         "the level is admin, sponsor or employee. Admins can turn on admin "
         "mode. You can't remove your own admin permission here.")),
+    ("require_two_factor_staff", N_(
+        "Moderators and staff (employees, and admins for admin mode) need "
+        "two-factor sign-in turned on (preferences, security) to use their "
+        "tools; until then they see a notice asking them to. Members "
+        "without it are unaffected.")),
     ("captcha_exempt_link_karma", N_(
         "Accounts with at least this much post karma skip the captcha.")),
     ("captcha_exempt_comment_karma", N_(

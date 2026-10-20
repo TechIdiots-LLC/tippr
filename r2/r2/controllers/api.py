@@ -5844,6 +5844,13 @@ class ApiController(TipprController):
         if form.has_errors('password', errors.WRONG_PASSWORD):
             return
 
+        # the site requires two-factor for staff (r2.lib.two_factor)
+        from r2.lib import two_factor
+        if two_factor.staff_tools_closed(c.user):
+            c.errors.add(errors.TWO_FACTOR_NEEDED_FOR_STAFF, field="password")
+            form.has_errors("password", errors.TWO_FACTOR_NEEDED_FOR_STAFF)
+            return
+
         if form.has_errors("otp", errors.WRONG_PASSWORD,
                                   errors.NO_OTP_SECRET,
                                   errors.RATELIMIT):

@@ -366,6 +366,8 @@ class Globals:
             # registering API apps (/prefs/apps; overseen on /admin/apps)
             'app_create_require_verified_email',
             'apps_require_approval',
+            # moderators and staff need two-factor sign-in (r2.lib.two_factor)
+            'require_two_factor_staff',
             'mobile_gild_first_login',
             'precomputed_comment_suggested_sort',
         ],

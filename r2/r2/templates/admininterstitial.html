@@ -54,6 +54,7 @@
       % endif
       <input type="password" name="password" tabindex="1" autofocus />
       ${error_field("WRONG_PASSWORD", "password")}
+      ${error_field("TWO_FACTOR_NEEDED_FOR_STAFF", "password")}
       </%utils:round_field>
 
       % if not g.disable_require_admin_otp or c.user.otp_secret:

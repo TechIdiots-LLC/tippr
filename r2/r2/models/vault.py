@@ -140,17 +140,27 @@ class BaseSite:
     def allows_referrers(self):
         return True
 
-    def is_moderator_with_perms(self, user, *perms):
+    def _moderating_rel(self, user):
+        """The moderator relation that gives user moderator powers here:
+        none while the site requires two-factor for moderators and the
+        member using the site hasn't turned it on (r2.lib.two_factor)."""
+        from r2.lib import two_factor
         rel = self.is_moderator(user)
+        if rel and two_factor.closed_for_current_user(user):
+            return None
+        return rel
+
+    def is_moderator_with_perms(self, user, *perms):
+        rel = self._moderating_rel(user)
         if rel:
             return all(rel.has_permission(perm) for perm in perms)
 
     def is_limited_moderator(self, user):
-        rel = self.is_moderator(user)
+        rel = self._moderating_rel(user)
         return bool(rel and not rel.is_superuser())
 
     def is_unlimited_moderator(self, user):
-        rel = self.is_moderator(user)
+        rel = self._moderating_rel(user)
         return bool(rel and rel.is_superuser())
 
     def get_links(self, sort, time):

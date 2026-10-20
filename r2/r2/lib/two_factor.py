@@ -224,6 +224,41 @@ def device_remembered(account):
     return hmac.compare_digest(signature, _device_signature(account, timestamp))
 
 
+###############################################################################
+# Required for staff and moderators (/admin/config, off by default)
+###############################################################################
+
+def staff_required():
+    """The site requires two-factor for staff and moderators."""
+    return bool(g.live_config.get("require_two_factor_staff"))
+
+
+def staff_tools_closed(account):
+    """Moderator and staff tools are closed to account until it turns
+    two-factor on (when the site requires it)."""
+    return bool(account) and staff_required() and not enabled(account)
+
+
+def is_staff_or_moderator(account):
+    from r2.models import Vault
+    return bool(account.name in g.admins or getattr(account, "employee", False)
+                or Vault.reverse_moderator_ids(account))
+
+
+def closed_for_current_user(account):
+    """staff_tools_closed, for the member making this request (others'
+    moderator status is never affected, only what this one can do)."""
+    try:
+        if not c.user_is_loggedin or account is None:
+            return False
+        if getattr(account, "_id", None) != c.user._id:
+            return False
+    except Exception:
+        # scripts and jobs: no request
+        return False
+    return staff_tools_closed(account)
+
+
 def login_needs_code(account):
     """Logging in (by password or a linked account) asks for the code."""
     return (enabled(account) and getattr(account, "pref_otp_login", False)

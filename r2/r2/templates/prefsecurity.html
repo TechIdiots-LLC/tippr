@@ -111,6 +111,9 @@
     <input type="submit" value="${_("disable")}">
     </form>
 % else:
+    %if thing.required_for_tools:
+      <p class="error">${_("This site asks moderators and staff to use two-factor sign-in: your moderator tools work again once it's on.")}</p>
+    %endif
     ${_md("with two-factor authentication on, changing your password or email address, and linking or unlinking a sign-in, also need a code from an authenticator app on your phone (Google Authenticator, Authy, 1Password and the like). someone who learns your password, or gets into a linked Google or Facebook account, can't take over your account here.", wrap=True)}
 
     <form action="/post/generate_otp_secret" method="post" onsubmit="return post_form(this, 'generate_otp_secret')" id="pref-otp">
