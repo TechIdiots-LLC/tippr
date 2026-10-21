@@ -20,11 +20,6 @@
   Removing without spam sends nothing. It's sent in the background, so moderating doesn't wait on CleanTalk.
 - **In-article ad units** for the in-feed ad (/admin/ads): enter `in-article` as the layout key. AdSense lets an
   in-article unit's colours be set, so it's the way to have night mode ads that match the dark pages.
-- **Starter feeds and defaults on upgrades** (`TIPPR_STARTER_FEEDS`): the installer adds the starter feeds on a new
-  site (`auto`, the default; `1` turns them on for an existing site, `0` off, and the choice is remembered), and each
-  install or upgrade adds the starter feeds and front page defaults new since the last run. What it offered before
-  isn't offered again, so a default vault an admin took off, or a feed removed from /admin/feeds, stays that way. On
-  a site from before this, vaults that already have starter feeds keep what they have, and ones without get theirs.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
@@ -37,6 +32,16 @@
   can see (listings, posts, profiles, help, search) and goes to the front page from anywhere else.
 - **Formatting buttons in night mode:** the comment and post formatting toolbar (bold, italic, link, spoiler,
   preview…) had dark text on its dark buttons. Its colours, and the emoji picker's headings, follow the theme now.
+
+## 0.14.0
+### ✨ Features and improvements
+- **Starter feeds and defaults on upgrades** (`TIPPR_STARTER_FEEDS`): the installer adds the starter feeds on a new
+  site (`auto`, the default; `1` turns them on for an existing site, `0` off, and the choice is remembered), and each
+  install or upgrade adds the starter feeds and front page defaults new since the last run. What it offered before
+  isn't offered again, so a default vault an admin took off, or a feed removed from /admin/feeds, stays that way. On
+  a site from before this, vaults that already have starter feeds keep what they have, and ones without get theirs.
+
+### 🐞 Bug fixes
 - **Pages wider than the window after zooming in (or narrowing the window):** Google gives an ad a fixed width
   from the space it had when it loaded, and the content column wouldn't get narrower than that, pushing the
   sidebar and the header's right end off the screen. The column and the ad boxes now ignore the ads' own width.
