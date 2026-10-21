@@ -388,6 +388,11 @@ def remove_content(account, admin, as_spam=False, limit=MAX_CONTENT):
     if things:
         admintools.spam(things, auto=False, moderator_banned=True,
                         banner=admin.name, train_spam=as_spam)
+        if as_spam:
+            # what CleanTalk checked and let through (r2.lib.antispam)
+            from r2.lib import antispam
+            for t in things:
+                antispam.feedback(t, spam=True)
     _log(account, admin, "spam_content" if as_spam else "remove_content",
          "%d removed" % len(things))
     return len(things)

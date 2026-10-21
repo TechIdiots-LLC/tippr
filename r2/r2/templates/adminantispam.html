@@ -94,6 +94,13 @@
         ${checkbox("cleantalk_check_content", _("posts, comments and messages from untrusted users"))}
       </td>
     </tr>
+    <tr>
+      <td>${_("feedback")}</td>
+      <td>
+        ${checkbox("cleantalk_feedback", _("tell CleanTalk what moderators decide"))}
+        <br><small>${_("For what CleanTalk checked: marking it spam (the spam button, or removing a user's posts as spam on /admin/users) reports spam CleanTalk missed or confirms its call; approving something it flagged reports a mistake. Removing without spam, and anything CleanTalk didn't check (trusted users' posts), sends nothing.")}</small>
+      </td>
+    </tr>
   </table>
 
   <button class="btn" type="submit">${_("save")}</button>

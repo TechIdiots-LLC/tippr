@@ -490,8 +490,7 @@ class ApiController(TipprController):
 
         allowed, reason = antispam.check_content(c.user, body, "message",
                                                  title=subject)
-        if not allowed:
-            antispam.mark_spam(m, reason)
+        antispam.after_check(m, allowed, reason)
 
         form.set_text(".status", _("your message has been delivered"))
         form.set_inputs(to = "", subject = "", text = "", captcha="")
@@ -669,8 +668,7 @@ class ApiController(TipprController):
             sendreplies=sendreplies,
             ai_content=ai_label,
         )
-        if not spam_check[0]:
-            antispam.mark_spam(l, spam_check[1])
+        antispam.after_check(l, *spam_check)
 
         if not is_self:
             ban = is_banned_domain(url)
@@ -2344,8 +2342,7 @@ class ApiController(TipprController):
 
         allowed, reason = antispam.check_content(
             c.user, comment, "message" if is_message else "comment")
-        if not allowed:
-            antispam.mark_spam(item, reason)
+        antispam.after_check(item, allowed, reason)
 
         if is_message:
             queries.new_message(item, inbox_rel)
@@ -3264,6 +3261,9 @@ class ApiController(TipprController):
                         moderator_banned=not c.user_is_admin,
                         banner=c.user.name,
                         train_spam=train_spam)
+        if spam:
+            # tell CleanTalk, if it checked this (r2.lib.antispam)
+            antispam.feedback(thing, spam=True)
 
         if isinstance(thing, (Link, Comment)):
             vault = thing.vault_slow
@@ -3312,6 +3312,8 @@ class ApiController(TipprController):
         admintools.unspam(thing, moderator_unbanned=not c.user_is_admin,
                           unbanner=c.user.name, train_spam=train_spam,
                           insert=insert)
+        # CleanTalk flagged it, the moderator says it's fine: tell CleanTalk
+        antispam.feedback(thing, spam=False)
 
         if isinstance(thing, (Link, Comment)):
             vault = thing.vault_slow
@@ -5561,12 +5563,13 @@ class ApiController(TipprController):
                                    empty_error=None),
         cleantalk_check_register=VBoolean("cleantalk_check_register"),
         cleantalk_check_content=VBoolean("cleantalk_check_content"),
+        cleantalk_feedback=VBoolean("cleantalk_feedback"),
     )
     def POST_antispam_settings(self, form, jquery, captcha_provider,
                                captcha_site_key, captcha_secret_key,
                                captcha_on_register, cleantalk_enabled,
                                cleantalk_auth_key, cleantalk_check_register,
-                               cleantalk_check_content):
+                               cleantalk_check_content, cleantalk_feedback):
         """Save the captcha and CleanTalk settings (/admin/antispam)."""
         from r2.lib import antispam
         if form.has_errors("captcha_provider", errors.INVALID_OPTION):
@@ -5580,6 +5583,7 @@ class ApiController(TipprController):
             "cleantalk_auth_key": (cleantalk_auth_key or "").strip(),
             "cleantalk_check_register": bool(cleantalk_check_register),
             "cleantalk_check_content": bool(cleantalk_check_content),
+            "cleantalk_feedback": bool(cleantalk_feedback),
         })
         status = _("saved")
         settings = antispam.settings()

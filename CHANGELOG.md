@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **CleanTalk learns from moderators** (/admin/antispam, "tell CleanTalk what moderators decide", on by default):
+  for posts, comments and messages CleanTalk checked, the spam button (or removing a user's posts as spam on
+  /admin/users) reports them to CleanTalk as spam, and approving something CleanTalk flagged reports its mistake.
+  Removing without spam sends nothing. It's sent in the background, so moderating doesn't wait on CleanTalk.
 - **In-article ad units** for the in-feed ad (/admin/ads): enter `in-article` as the layout key. AdSense lets an
   in-article unit's colours be set, so it's the way to have night mode ads that match the dark pages.
 - **Starter feeds and defaults on upgrades** (`TIPPR_STARTER_FEEDS`): the installer adds the starter feeds on a new

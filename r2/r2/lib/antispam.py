@@ -81,6 +81,9 @@ DEFAULTS = {
     "cleantalk_auth_key": "",
     "cleantalk_check_register": True,
     "cleantalk_check_content": True,
+    # tell CleanTalk when moderators mark what it checked as spam, or
+    # approve what it flagged (send_feedback)
+    "cleantalk_feedback": True,
 }
 SECRET_SETTINGS = ("captcha_secret_key", "cleantalk_auth_key")
 
@@ -253,6 +256,8 @@ def _cleantalk(method, **fields):
                "allow" if allowed else "spam", seconds,
                result.get("comment", ""))
     _record(method, "allow" if allowed else "spam", seconds)
+    # the check's id, for feedback later (remember_check)
+    c.cleantalk_request_id = result.get("id")
     return allowed, result.get("comment")
 
 
@@ -288,6 +293,7 @@ def should_check_content(user):
 def check_content(user, text, kind, title=None):
     """(allowed, reason) for a post, comment or message (kind: "link",
     "comment" or "message")."""
+    c.cleantalk_request_id = None
     if not should_check_content(user):
         return True, None
     post_info = {"comment_type": {"link": "general_post",
@@ -308,6 +314,59 @@ def mark_spam(thing, reason):
     g.stats.simple_event("spam.cleantalk")
     admintools.spam(thing, auto=True, moderator_banned=False,
                     banner="CleanTalk" + (": %s" % reason if reason else ""))
+
+
+def after_check(thing, allowed, reason):
+    """After check_content, with the thing it was for: keep the check's id
+    (for feedback), and hide the thing if CleanTalk said spam."""
+    request_id = getattr(c, "cleantalk_request_id", None)
+    if request_id:
+        thing.cleantalk_id = request_id
+        thing.cleantalk_spam = not allowed
+        thing._commit()
+    if not allowed:
+        mark_spam(thing, reason)
+
+
+def feedback(thing, spam):
+    """A moderator's verdict on something CleanTalk checked, sent back so
+    it learns: spam (the "spam" button) or not spam (approving what it
+    flagged). Sent in the background; nothing happens without the check's
+    id, or with feedback off on /admin/antispam."""
+    request_id = getattr(thing, "cleantalk_id", None)
+    if not request_id or not cleantalk_enabled():
+        return
+    if not settings()["cleantalk_feedback"]:
+        return
+    if not spam and not getattr(thing, "cleantalk_spam", False):
+        return  # approving what CleanTalk allowed tells it nothing new
+    if getattr(thing, "cleantalk_feedback_sent", None) == spam:
+        return  # already told it this
+    thing.cleantalk_feedback_sent = spam
+    thing._commit()
+    body = {"method_name": "send_feedback",
+            "auth_key": settings()["cleantalk_auth_key"],
+            # 0: it was spam, 1: it was fine
+            "feedback": "%s:%d" % (request_id, 0 if spam else 1)}
+    log = g.log
+
+    def send():
+        try:
+            resp = requests.post(CLEANTALK_URL, json=body, timeout=TIMEOUT)
+            result = resp.json()
+        except (requests.RequestException, ValueError) as e:
+            log.warning("antispam: CleanTalk feedback failed: %s", e)
+            return
+        if result.get("error_message") or result.get("error_no"):
+            log.warning("antispam: CleanTalk feedback error %s: %s",
+                        result.get("error_no"), result.get("error_message"))
+        else:
+            log.info("antispam: told CleanTalk %s was %s", request_id,
+                     "spam" if spam else "not spam")
+
+    # a moderator's click shouldn't wait on CleanTalk
+    import threading
+    threading.Thread(target=send, daemon=True).start()
 
 
 CLEANTALK_KEY_URL = "https://api.cleantalk.org/"
