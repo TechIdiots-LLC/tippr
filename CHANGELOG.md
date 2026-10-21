@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Starter feeds and defaults on upgrades** (`TIPPR_STARTER_FEEDS`): the installer adds the starter feeds on a new
+  site (`auto`, the default; `1` turns them on for an existing site, `0` off, and the choice is remembered), and each
+  install or upgrade adds the starter feeds and front page defaults new since the last run. What it offered before
+  isn't offered again, so a default vault an admin took off, or a feed removed from /admin/feeds, stays that way. On
+  a site from before this, vaults that already have starter feeds keep what they have, and ones without get theirs.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
