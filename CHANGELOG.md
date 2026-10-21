@@ -13,6 +13,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Logging out on a page only members or staff can see** (moderator tools, preferences, messages, submitting, saved
+  posts, a private vault…) showed "forbidden" or the full-page login. Logging out now stays only on pages anyone
+  can see (listings, posts, profiles, help, search) and goes to the front page from anywhere else.
 - **Formatting buttons in night mode:** the comment and post formatting toolbar (bold, italic, link, spoiler,
   preview…) had dark text on its dark buttons. Its colours, and the emoji picker's headings, follow the theme now.
 - **Pages wider than the window after zooming in (or narrowing the window):** Google gives an ad a fixed width

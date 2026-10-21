@@ -81,6 +81,42 @@ def subscriptions_available():
                 getattr(g, 'STRIPE_YEARLY_GOLD_PLAN', None))
 
 
+# Pages anyone can see, so logging out can stay on them. Anything else
+# (admin and moderator pages, preferences, messages, submitting, saved
+# posts…) would show "forbidden" or the login page once logged out.
+_PUBLIC_PAGE_RE = re.compile(r"""^/(?:
+    (?:hot|new|rising|controversial|top|gilded)?
+  | v/(?P<vault>\w+)(?:/(?:hot|new|rising|controversial|top|gilded
+                          |comments/.*|wiki(?:/(?!edit|settings|create)[^?]*)?
+                          |about/(?:rules|moderators|sidebar)))?
+  | user/[\w-]+(?:/(?:overview|submitted|comments|gilded|trophies|about))?
+  | (?:help|wiki)(?:/(?!edit|settings|create)[^?]*)?
+  | (?:search|domain)(?:/.*)?
+  | vaults(?:/(?:popular|new|default|search))?
+)/?$""", re.X)
+
+
+def _public_page(dest):
+    """Whether a logged-out visitor can see dest (where logging out goes
+    back to; otherwise it goes to the front page)."""
+    path = urlparse(dest or "/").path or "/"
+    match = _PUBLIC_PAGE_RE.match(path)
+    if not match:
+        return False
+    if match.group("vault"):
+        try:
+            vault = Vault._by_name(match.group("vault"))
+        except NotFound:
+            return False
+        # private and banned vaults, and quarantined ones, aren't open to
+        # visitors
+        if (vault.type not in ("public", "restricted", "archived",
+                               "gold_restricted")
+                or vault._spam or getattr(vault, "quarantine", False)):
+            return False
+    return True
+
+
 class FrontController(TipprController):
 
     allow_stylesheets = True
@@ -1777,11 +1813,7 @@ class FormsController(TipprController):
     def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
         self.logout()
-        # admin pages 404 for everyone else, so don't send the user back there
-        path = urlparse(dest).path
-        if path == "/admin" or path.startswith("/admin/"):
-            dest = "/"
-        self.redirect(dest)
+        self.redirect(dest if _public_page(dest) else "/")
 
     @validate(VUser(),
               dest=VDestination())
