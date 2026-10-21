@@ -1,6 +1,3 @@
-# starter feeds for them (TIPPR_STARTER_FEEDS; only ones new since the last run)
-echo "Adding starter feeds (TIPPR_STARTER_FEEDS=$TIPPR_STARTER_FEEDS)..."
-FEEDS_STARTER="$TIPPR_STARTER_FEEDS" tippr-run $TIPPR_SRC/tippr/scripts/import_feeds.py || echo "Note: starter feeds skipped (FEEDS_STARTER=1 tippr-run scripts/import_feeds.py later)"
 #!/bin/bash
 ###############################################################################
 # tippr dev environment installer

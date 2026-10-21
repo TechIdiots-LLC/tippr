@@ -6,6 +6,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The installer (and the Proxmox template's first boot) failed** in 0.13.0: three lines meant for the end of
+  `install/tippr.sh` were at its top, so the starter feeds step ran before anything was set up. On a Proxmox first
+  boot that created ZooKeeper nodes with the template's password, locking the site out of them (`NoAuthError`).
 
 ## 0.13.0
 ### ✨ Features and improvements
