@@ -22,6 +22,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Forms that send you back to the page you're on, at a section** ("…#recovery-codes") didn't reload it, so
+  what they changed didn't show until you reloaded.
 - **Logging out on a page only members or staff can see** (moderator tools, preferences, messages, submitting, saved
   posts, a private vault…) showed "forbidden" or the full-page login. Logging out now stays only on pages anyone
   can see (listings, posts, profiles, help, search) and goes to the front page from anywhere else.

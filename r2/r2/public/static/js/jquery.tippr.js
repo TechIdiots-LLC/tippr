@@ -31,7 +31,17 @@ $.fn.debug = function() {
 }
 
 $.redirect = function(dest) {
+    /* a form on this page sending us back here, at one of its #parts, has
+       to reload: changing only the #part doesn't load the page again */
+    var a = document.createElement('a');
+    a.href = dest;
+    var samePage = a.host === window.location.host &&
+                   a.pathname === window.location.pathname &&
+                   a.search === window.location.search;
     window.location = dest;
+    if (samePage && a.hash) {
+        window.location.reload();
+    }
 };
 
 $.fn.redirect = function(dest) {
