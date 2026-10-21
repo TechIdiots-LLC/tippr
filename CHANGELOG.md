@@ -11,6 +11,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Pages wider than the window after zooming in (or narrowing the window):** Google gives an ad a fixed width
+  from the space it had when it loaded, and the content column wouldn't get narrower than that, pushing the
+  sidebar and the header's right end off the screen. The column and the ad boxes now ignore the ads' own width.
 - **Placeholder thumbnails on phones** (no image, text post, NSFW) were cut off: they're 70px pictures and the
   phone layout's thumbnails are 60px; they keep their 70px.
 - **Doubled vote arrows on phones:** the bigger tap targets showed a strip of the neighbouring (voted) arrows from

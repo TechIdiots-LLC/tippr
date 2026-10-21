@@ -19,6 +19,11 @@
 .adsense-ad {
     position: relative;
     overflow: hidden;
+    // Google sets the ad a fixed width (e.g. 1200px) from the space it had
+    // when it loaded; after zooming in or resizing, that width mustn't
+    // widen the page, so the box's own width ignores what's inside it
+    max-width: 100%;
+    contain: inline-size;
 
     &:before {
         content: "advertisement";

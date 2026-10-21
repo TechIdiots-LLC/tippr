@@ -38,6 +38,10 @@ body {
 div.content, main.content {
     grid-area: content;
     margin: 0;
+    /* a grid item is otherwise at least as wide as its widest content: an
+       ad Google gave a fixed width when the page loaded (e.g. before
+       zooming in) would push the sidebar and header off the screen */
+    min-width: 0;
 }
 
 /* on phones the sidebar is in the menu drawer (responsive.less, and
@@ -57,7 +61,7 @@ div.content, main.content {
             "header header"
             "content sidebar"
             "footer footer";
-        grid-template-columns: 1fr 310px;
+        grid-template-columns: minmax(0, 1fr) 310px;
     }
 
     /* Reset margins that might interfere with grid */
