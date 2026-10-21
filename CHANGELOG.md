@@ -11,6 +11,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Formatting buttons in night mode:** the comment and post formatting toolbar (bold, italic, link, spoiler,
+  preview…) had dark text on its dark buttons. Its colours, and the emoji picker's headings, follow the theme now.
 - **Pages wider than the window after zooming in (or narrowing the window):** Google gives an ad a fixed width
   from the space it had when it loaded, and the content column wouldn't get narrower than that, pushing the
   sidebar and the header's right end off the screen. The column and the ad boxes now ignore the ads' own width.

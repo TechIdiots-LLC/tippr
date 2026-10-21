@@ -33,19 +33,19 @@
         border: 1px solid @tp-line;
         border-radius: 3px;
         background: @tp-subtle;
-        color: #333;
+        color: @tp-text;
         font-size: 12px;
         line-height: 22px;
         cursor: pointer;
 
         &:hover, &:focus {
             background: @tp-gray;
-            border-color: #a9c3e6;
+            border-color: @tp-border-accent;
         }
 
         &[aria-pressed="true"], &[aria-expanded="true"] {
-            background: #dbe7f7;
-            border-color: #7fa2d1;
+            background: @tp-tint;
+            border-color: @tp-accent;
         }
 
         sup {
@@ -84,7 +84,7 @@
     border: 1px solid @tp-line;
     border-radius: 4px;
     background: @tp-surface;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, .15);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
 
     .md-emoji-search {
         box-sizing: border-box;
@@ -101,7 +101,7 @@
 
     .md-emoji-heading {
         margin: 4px 2px 2px;
-        color: #888;
+        color: @tp-text-muted;
         font-size: 10px;
         font-weight: bold;
         text-transform: uppercase;
