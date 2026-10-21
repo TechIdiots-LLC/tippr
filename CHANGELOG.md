@@ -28,6 +28,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Preferences pages' text sat against the edge of the page** (only the privacy tab had a margin); they all have
+  one now. On phones, the two-factor methods list and the apps on /prefs/apps fit the screen.
 - **Forms that send you back to the page you're on, at a section** ("…#recovery-codes") didn't reload it, so
   what they changed didn't show until you reloaded.
 - **Logging out on a page only members or staff can see** (moderator tools, preferences, messages, submitting, saved

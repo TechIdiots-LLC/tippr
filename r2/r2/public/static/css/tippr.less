@@ -9528,6 +9528,9 @@ form#banned textarea {
     padding: 7px;
     position: relative;
     width: 880px;
+    // no wider than the page (phones)
+    max-width: calc(~"100% - 20px");
+    box-sizing: border-box;
     font-size: @tp-font-xs;
 }
 

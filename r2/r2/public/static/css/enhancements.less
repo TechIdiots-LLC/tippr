@@ -896,3 +896,60 @@ body.nightmode.gold-page.gold-about .gold-banner {
     padding: 4px 6px;
     margin-right: 6px;
 }
+// the preferences pages (PrefsPage): their content away from the edge, as
+// on the rest of the site
+body.prefs-page > main.content {
+    padding: 4px 20px 0;
+    box-sizing: border-box;
+
+    // the privacy page had its own margin for this
+    .privacy-settings {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+@media (max-width: 768px) {
+    body.prefs-page > main.content {
+        padding: 4px 12px 0;
+    }
+}
+// phones: each two-factor method on its own lines instead of a wide row
+@media (max-width: 768px) {
+    .two-factor-method-table {
+        &, tbody, tr, td {
+            display: block;
+        }
+        tr {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid @tp-border;
+        }
+        td {
+            padding: 2px 0;
+        }
+    }
+}
+// phones: the boxes for apps on /prefs/apps are laid out in fixed pixels;
+// stack their parts instead
+@media (max-width: 768px) {
+    .developed-app, .authorized-app {
+        margin-left: 0;
+        max-width: 100%;
+        .app-description {
+            display: block;
+            width: auto;
+            height: auto;
+            max-height: 8em;
+        }
+        .app-developers {
+            position: static;
+            width: auto;
+            margin-top: 6px;
+        }
+        .edit-app-button, .revoke-app-button {
+            position: static;
+            display: inline-block;
+            margin-top: 6px;
+        }
+    }
+}

@@ -1258,6 +1258,8 @@ class PrefsPage(Tippr):
     """container for pages accessible via /prefs.  No extension handling."""
 
     extension_handling = False
+    # (their content gets a margin: enhancements.less)
+    extra_page_classes = ['prefs-page']
 
     def __init__(self, show_sidebar = False, title=None, *a, **kw):
         title = title or "{} ({})".format(_("preferences"), c.site.name.strip(' '))
