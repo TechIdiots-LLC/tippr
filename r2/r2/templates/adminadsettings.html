@@ -81,14 +81,14 @@
       <td>${_("in-feed layout key")}</td>
       <td>
         ${text_field("adsense_listing_layout_key", "-fb+5w+4e-db+86")}
-        <br><small>${_("For an in-feed unit, its data-ad-layout-key. Leave blank for a display unit.")}</small>
+        <br><small>${_("For an in-feed unit, its data-ad-layout-key; for an in-article unit, in-article. Leave blank for a display unit.")}</small>
       </td>
     </tr>
 
     <tr><th colspan="2">${_("night mode ad units (optional)")}</th></tr>
     <tr>
       <td></td>
-      <td><small>${_("Ads are drawn by Google and can't be restyled by the site, so on night mode's dark pages they keep the colours set in AdSense. To match night mode, create units with dark colours in AdSense (an in-feed unit's colours and fonts are set when you create it) and enter them here: members with night mode on get these instead. Blank: the units above.")}</small></td>
+      <td><small>${_("Ads are drawn by Google and can't be restyled by the site, so on night mode's dark pages they keep the colours set in AdSense. To match night mode, create an in-article (or in-feed) unit with dark colours in AdSense (its style is set when you create it; display units can't be coloured) and enter it here: members with night mode on get these instead. Blank: the units above.")}</small></td>
     </tr>
     <tr>
       <td>${_("sidebar ad unit ID")}</td>
@@ -100,7 +100,8 @@
     </tr>
     <tr>
       <td>${_("in-feed layout key")}</td>
-      <td>${text_field("adsense_listing_layout_key_night", "-fb+5w+4e-db+86")}</td>
+      <td>${text_field("adsense_listing_layout_key_night", "-fb+5w+4e-db+86")}
+        <br><small>${_("in-article for an in-article unit.")}</small></td>
     </tr>
     <tr>
       <td>${_("posts between in-feed ads")}</td>

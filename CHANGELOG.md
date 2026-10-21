@@ -3,6 +3,8 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **In-article ad units** for the in-feed ad (/admin/ads): enter `in-article` as the layout key. AdSense lets an
+  in-article unit's colours be set, so it's the way to have night mode ads that match the dark pages.
 - **Starter feeds and defaults on upgrades** (`TIPPR_STARTER_FEEDS`): the installer adds the starter feeds on a new
   site (`auto`, the default; `1` turns them on for an existing site, `0` off, and the choice is remembered), and each
   install or upgrade adds the starter feeds and front page defaults new since the last run. What it offered before
