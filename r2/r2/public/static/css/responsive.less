@@ -550,6 +550,14 @@
         height: auto;
     }
 
+    // the placeholders (no image, text post, nsfw) are 70px pictures cut
+    // from a sprite sheet: a narrower box would cut them off
+    .thumbnail.default,
+    .thumbnail.self,
+    .thumbnail.nsfw {
+        width: 70px;
+    }
+
     .domain a { max-width: 12em; }
 
     .tagline {

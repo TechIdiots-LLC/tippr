@@ -11,6 +11,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Placeholder thumbnails on phones** (no image, text post, NSFW) were cut off: they're 70px pictures and the
+  phone layout's thumbnails are 60px; they keep their 70px.
 - **Doubled vote arrows on phones:** the bigger tap targets showed a strip of the neighbouring (voted) arrows from
   the image sheet beside each arrow. The arrow images keep their size, and padding makes the target.
 - **The installer (and the Proxmox template's first boot) failed** in 0.13.0: three lines meant for the end of
