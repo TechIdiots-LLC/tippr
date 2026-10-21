@@ -520,10 +520,15 @@
         min-width: 28px;
     }
 
-    // bigger targets for voting; the arrow images stay the same size
+    // bigger targets for voting (28 by 22). The arrows are cut from a
+    // sprite sheet, so the image box stays 15 by 14 and padding makes the
+    // target: a bigger box would show the next arrows in the sheet.
     .arrow {
-        width: 28px;
-        height: 22px;
+        width: 15px;
+        height: 14px;
+        padding: 4px 6px 4px 7px;
+        background-origin: content-box;
+        background-clip: content-box;
     }
 
     body > .content .link.compressed .midcol {

@@ -11,6 +11,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Doubled vote arrows on phones:** the bigger tap targets showed a strip of the neighbouring (voted) arrows from
+  the image sheet beside each arrow. The arrow images keep their size, and padding makes the target.
 - **The installer (and the Proxmox template's first boot) failed** in 0.13.0: three lines meant for the end of
   `install/tippr.sh` were at its top, so the starter feeds step ran before anything was set up. On a Proxmox first
   boot that created ZooKeeper nodes with the template's password, locking the site out of them (`NoAuthError`).
