@@ -78,17 +78,14 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    first boot to point at separate data store containers), next to the
    all-in-one template, and an installer role setting (`TIPPR_ROLE`) for
    data store containers.
-2. **Passkeys for two-factor.** Two-factor sign-in works for everyone with
-   an authenticator app and recovery codes (and can be required for
-   moderators and staff); passkeys (WebAuthn) would be another way to give
-   the second factor.
-3. **More sign-in providers and signing up with one.** Signing in with a
-   linked Google or Facebook account is done (/admin/logins); more
-   providers (Microsoft, Apple, GitHub, Discord) are a table entry each in
+2. **More sign-in providers and signing up with one.** Signing in with a
+   linked Google or Facebook account is done (/admin/logins); next are
+   GitHub and Discord, and a generic OpenID Connect provider for a site's
+   own sign-in service (Microsoft and Apple later), a table entry each in
    `r2/lib/linked_logins.py`. Still to settle: creating a new account by
    signing in with one (choosing a username, the captcha). Instagram no
    longer offers logins to other sites; Meta's is Facebook Login.
-4. **Policy pages that follow the site settings.** The user agreement,
+3. **Policy pages that follow the site settings.** The user agreement,
    privacy and content policies and help pages are filled in from
    `docs/policies/` and `docs/help/` with the site's name, domain,
    operator, contact address and governing law when
