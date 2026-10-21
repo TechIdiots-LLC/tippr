@@ -38,14 +38,6 @@ from r2.lib.validator import (
 from r2.models import Account, NotFound
 
 
-def _safe_dest(dest):
-    """Only addresses on this site (no //other.host)."""
-    dest = (dest or "").strip()
-    if not dest.startswith("/") or dest.startswith("//") or "\\" in dest:
-        return "/"
-    return dest
-
-
 def _message(text, link=None, link_text=None):
     return BoringPage(_("sign in"), show_sidebar=False,
                       content=PaymentStatus(text, link, link_text)).render()
@@ -63,7 +55,7 @@ class LinkedLoginsController(TipprController):
         if purpose == "link" and not c.user_is_loggedin:
             return self.redirect("/login?dest=/prefs/security")
         if purpose == "login" and c.user_is_loggedin:
-            return self.redirect(_safe_dest(dest))
+            return self.redirect(linked_logins.safe_dest(dest))
         if purpose == "link" and two_factor.needs_code(c.user,
                                                        "linked_logins"):
             # the code first (preferences, security)
@@ -72,7 +64,7 @@ class LinkedLoginsController(TipprController):
             url, token = linked_logins.start(
                 provider, purpose,
                 account=c.user if purpose == "link" else None,
-                dest=_safe_dest(dest), rem=rem)
+                dest=linked_logins.safe_dest(dest), rem=rem)
         except linked_logins.LoginError as e:
             return _message(str(e), "/login", _("log in"))
         c.cookies[linked_logins.STATE_COOKIE] = Cookie(
@@ -144,7 +136,7 @@ class LinkedLoginsController(TipprController):
             linked_logins.touch(provider, subject)
             g.log.info("linked logins: %s signed in with %s", account.name,
                        provider)
-        return self.redirect(_safe_dest(dest))
+        return self.redirect(linked_logins.safe_dest(dest))
 
     @validate(dest=nop("dest"))
     def GET_otp(self, dest):
@@ -155,7 +147,7 @@ class LinkedLoginsController(TipprController):
         if not held or c.user_is_loggedin:
             return self.redirect("/login")
         if not held.get("dest") and dest:
-            held["dest"] = _safe_dest(dest)
+            held["dest"] = linked_logins.safe_dest(dest)
             linked_logins.pending_update(token, held)
         return BoringPage(_("sign in"), show_sidebar=False,
                           content=LinkedLoginOtp(token)).render()

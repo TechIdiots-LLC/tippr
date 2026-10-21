@@ -10,7 +10,6 @@ import hashlib
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
-from r2.controllers.linked_logins import _safe_dest
 from r2.lib import linked_logins
 from r2.tests import TipprTestCase
 
@@ -105,9 +104,9 @@ class TestLinkedLogins(TipprTestCase):
             linked_logins.finish("google", None, token, token)
 
     def test_only_local_destinations(self):
-        self.assertEqual(_safe_dest("/v/books"), "/v/books")
+        self.assertEqual(linked_logins.safe_dest("/v/books"), "/v/books")
         for bad in ("https://evil.example/", "//evil.example/", "/\\evil", "", None):
-            self.assertEqual(_safe_dest(bad), "/")
+            self.assertEqual(linked_logins.safe_dest(bad), "/")
 
     def test_link_refuses_someone_elses_account(self):
         account = MagicMock(_id=1)

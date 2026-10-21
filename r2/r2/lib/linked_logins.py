@@ -155,6 +155,15 @@ create_table(links_table, [
 ])
 
 
+def safe_dest(dest):
+    """Only addresses on this site (no //other.host), for where to go
+    after signing in."""
+    dest = (dest or "").strip()
+    if not dest.startswith("/") or dest.startswith("//") or "\\" in dest:
+        return "/"
+    return dest
+
+
 def _now():
     return datetime.now(g.tz)
 
