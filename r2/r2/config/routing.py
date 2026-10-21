@@ -444,6 +444,11 @@ def make_map(config):
     mc('/logins/otp', controller='linkedlogins', action='otp')
     mc('/logins/link_existing', controller='linkedlogins',
        action='link_existing')
+    # passkeys on the code page (r2.lib.passkeys)
+    mc('/logins/passkey_options', controller='linkedlogins',
+       action='passkey_options')
+    mc('/logins/passkey_auth', controller='linkedlogins',
+       action='passkey_auth')
 
     # r2.lib.payments: the providers set up on /admin/payments
     mc('/payments/checkout', controller='payments', action='checkout')

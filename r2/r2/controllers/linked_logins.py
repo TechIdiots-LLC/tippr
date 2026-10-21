@@ -15,10 +15,11 @@
 """Signing in with, and linking, Google and Facebook accounts
 (r2.lib.linked_logins)."""
 
+import json
 from datetime import datetime, timedelta
 
 from pylons import app_globals as g
-from pylons import request
+from pylons import request, response
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
@@ -193,6 +194,47 @@ class LinkedLoginsController(TipprController):
                    account.name, provider)
         return self._finish_login(account, rem, dest, provider,
                                   identity["subject"])
+
+    def _passkey_json(self, data):
+        response.content_type = "application/json"
+        return json.dumps(data)
+
+    @csrf_exempt
+    @validate(token=VLength("token", 200, empty_error=None))
+    def POST_passkey_options(self, token):
+        """"Use a passkey" on the code page: the options for the browser,
+        for the account whose sign-in is waiting (the token is the secret)."""
+        from r2.lib import passkeys
+        held = linked_logins.pending(token)
+        if not held:
+            return self._passkey_json({"error": _(
+                "That sign-in took too long. Please start again.")})
+        account = Account._byID(held["account_id"], data=True)
+        try:
+            options, challenge = passkeys.authentication_options(account)
+        except passkeys.PasskeyError as e:
+            return self._passkey_json({"error": _(str(e))})
+        return self._passkey_json({"options": json.loads(options),
+                                   "token": challenge})
+
+    @csrf_exempt
+    @validate(token=VLength("token", 200, empty_error=None),
+              challenge=VLength("challenge", 100, empty_error=None),
+              credential=VLength("credential", 20000, empty_error=None))
+    def POST_passkey_auth(self, token, challenge, credential):
+        """The browser's passkey answer on the code page; returns a token
+        the form then sends as its code (POST_otp)."""
+        from r2.lib import passkeys
+        held = linked_logins.pending(token)
+        if not held or not credential:
+            return self._passkey_json({"error": _(
+                "That sign-in took too long. Please start again.")})
+        account = Account._byID(held["account_id"], data=True)
+        try:
+            code = passkeys.authenticate(account, challenge, credential)
+        except passkeys.PasskeyError as e:
+            return self._passkey_json({"error": _(str(e))})
+        return self._passkey_json({"code": code})
 
     @csrf_exempt
     @validate(token=VLength("token", 200, empty_error=None),

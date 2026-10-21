@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Passkeys for two-factor sign-in:** add passkeys (your phone, computer or a security key, unlocked with a
+  fingerprint, face or PIN) on preferences → security, alongside or instead of authenticator apps; several of each.
+  Anywhere a two-factor code is asked for (the login code page, changing your password or email, admin mode,
+  deleting your account…), "use a passkey" works instead of typing one. Adding or removing a passkey needs a code
+  from a method you have, as for apps. Needs the `webauthn` Python package (installed by the installer and in the
+  Docker image).
 - **Several two-factor methods:** preferences → security lists your authenticator apps, each with a name, when it
   was added and last used, and a remove button; add more (up to 10). Adding or removing one needs a code typed then
   from a method you have (the password for the first one; removing the last one, which turns two-factor off,

@@ -20,10 +20,14 @@
   %if thing.wrong:
     <p class="error">${_("That code isn't right. Try again.")}</p>
   %endif
-  <form action="/logins/otp" method="post">
+  <form action="/logins/otp" method="post"
+        %if thing.passkeys:
+        data-passkey-login="${thing.token}"
+        %endif
+        >
     <input type="hidden" name="token" value="${thing.token}">
     <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
-           maxlength="12" autofocus placeholder="${_('two-factor code')}">
+           maxlength="40" autofocus placeholder="${_('two-factor code')}">
     <label class="two-factor-remember">
       <input type="checkbox" name="remember">
       ${_("don't ask again on this device for %(days)s days") % dict(days=thing.device_days)}

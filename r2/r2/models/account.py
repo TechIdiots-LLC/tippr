@@ -173,6 +173,7 @@ class Account(Thing):
                      # a value that changes with them (signs the cookies
                      # that skip the code)
                      two_factor_methods=0,
+                     two_factor_passkeys=0,
                      two_factor_stamp="",
                      otp_recovery_codes=(),
                      pref_otp_login=False,

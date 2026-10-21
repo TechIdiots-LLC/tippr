@@ -1321,12 +1321,16 @@ class PrefSecurity(Templated):
         from r2.lib import linked_logins, two_factor
         from r2.lib.utils import timesince
         # (reading them also moves an older single app into the list)
+        def ago(when):
+            if not when:
+                return None
+            if (datetime.datetime.now(g.tz) - when).total_seconds() < 60:
+                return _("just now")
+            return _("%(time)s ago") % dict(time=timesince(when))
         self.methods = [
             dict(id=m["id"], name=m["name"],
                  kind_name=two_factor.KIND_NAMES[m["kind"]],
-                 added=_("%(time)s ago") % dict(time=timesince(m["created"])),
-                 used=m["last_used"] and _("%(time)s ago") % dict(
-                     time=timesince(m["last_used"])))
+                 added=ago(m["created"]), used=ago(m["last_used"]))
             for m in two_factor.methods(c.user)]
         self.two_factor = two_factor.enabled(c.user)
         self.new_codes = two_factor.take_new_codes(c.user)
@@ -1356,8 +1360,15 @@ class LinkedLoginOtp(Templated):
     """The two-factor code at login (after the password, or after signing
     in with a linked account)."""
     def __init__(self, token, wrong=False):
-        from r2.lib import two_factor
-        Templated.__init__(self, token=token, wrong=wrong,
+        from r2.lib import linked_logins, two_factor
+        # "use a passkey" if the account waiting to sign in has one
+        held = linked_logins.pending(token) or {}
+        try:
+            account = Account._byID(held["account_id"], data=True)
+            passkeys = two_factor.has_passkeys(account)
+        except (KeyError, NotFound):
+            passkeys = False
+        Templated.__init__(self, token=token, wrong=wrong, passkeys=passkeys,
                            device_days=two_factor.DEVICE_DAYS)
 
 

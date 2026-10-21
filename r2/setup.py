@@ -89,6 +89,8 @@ setup(
         # pycrypto is deprecated and doesn't build on modern systems
         # pycryptodome is a drop-in replacement with the same API
         "pycryptodome",
+        # passkeys (WebAuthn) for two-factor sign-in (r2.lib.passkeys)
+        "webauthn",
         "Babel>=1.0",
         "cython>=0.14",
         "SQLAlchemy",

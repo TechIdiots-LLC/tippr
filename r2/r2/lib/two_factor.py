@@ -158,10 +158,12 @@ def _changed(account):
     new stamp, which signs the cookies that skip the code (remembered
     devices, admin mode), so they stop working."""
     with _engine().connect() as conn:
-        count = conn.execute(
-            sa.select(sa.func.count()).select_from(_table())
-            .where(_table().c.account_id == account._id)).scalar()
+        kinds = [r[0] for r in conn.execute(
+            sa.select(_table().c.kind)
+            .where(_table().c.account_id == account._id))]
+    count = len(kinds)
     account.two_factor_methods = count
+    account.two_factor_passkeys = kinds.count("passkey")
     account.two_factor_stamp = secrets.token_hex(8)
     if not count:
         # two-factor is off: nothing to recover
@@ -207,6 +209,29 @@ def add_totp(account, secret, name=None):
     """Add an authenticator app. Returns whether it's the first method
     (so two-factor just turned on)."""
     return _add(account, "totp", name, secret=secret)
+
+
+def add_passkey(account, credential_id, public_key, sign_count,
+                transports="", name=None):
+    """Add a passkey (r2.lib.passkeys). Returns whether it's the first
+    method."""
+    return _add(account, "passkey", name, credential_id=credential_id,
+                public_key=public_key, sign_count=sign_count or 0,
+                transports=transports or None)
+
+
+def has_passkeys(account):
+    """Whether "use a passkey" can be offered (no database query)."""
+    return bool(getattr(account, "two_factor_passkeys", 0))
+
+
+def passkey_used(method_id, sign_count):
+    """After a passkey signed: its counter (a lower one later would mean a
+    copied key) and when it was used."""
+    with _engine().begin() as conn:
+        conn.execute(_table().update()
+                     .where(_table().c.id == method_id)
+                     .values(sign_count=sign_count or 0, last_used=_now()))
 
 
 def remove_method(account, method_id):

@@ -23,6 +23,7 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 import csv
+import json
 import re
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
@@ -5943,6 +5944,77 @@ class ApiController(TipprController):
             return
         two_factor.remove_method(c.user, method)
         form.redirect("/prefs/security#two-factor-methods")
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        VTwoFactorProof(),
+    )
+    def POST_passkey_register_options(self, responder):
+        """Start adding a passkey (preferences, security): the options for
+        the browser. Needs the same proof as adding an authenticator app."""
+        from r2.lib import passkeys
+        if (errors.TWO_FACTOR_REQUIRED, "otp") in c.errors:
+            return {"error": _("enter a code from one of your methods first")}
+        if (errors.WRONG_PASSWORD, "password") in c.errors:
+            return {"error": _("enter your password first")}
+        try:
+            options, token = passkeys.registration_options(c.user)
+        except passkeys.PasskeyError as e:
+            return {"error": _(str(e))}
+        return {"options": json.loads(options), "token": token}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        token=VLength("token", 100, empty_error=None),
+        credential=VLength("credential", 20000, empty_error=None),
+        name=VLength("name", 40, empty_error=None),
+    )
+    def POST_passkey_register(self, responder, token, credential, name):
+        """Finish adding a passkey: the browser's new credential."""
+        from r2.lib import passkeys
+        if not (token and credential):
+            return {"error": _("that passkey couldn't be added")}
+        try:
+            first = passkeys.register(c.user, token, credential, name)
+        except passkeys.PasskeyError as e:
+            return {"error": _(str(e))}
+        if first:
+            # two-factor just turned on: codes for a lost device
+            self._show_recovery_codes(c.user)
+        return {"ok": True, "first": first}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+    )
+    def POST_passkey_auth_options(self, responder):
+        """"Use a passkey" where a two-factor code is asked for: the
+        options for the browser."""
+        from r2.lib import passkeys
+        try:
+            options, token = passkeys.authentication_options(c.user)
+        except passkeys.PasskeyError as e:
+            return {"error": _(str(e))}
+        return {"options": json.loads(options), "token": token}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        token=VLength("token", 100, empty_error=None),
+        credential=VLength("credential", 20000, empty_error=None),
+    )
+    def POST_passkey_auth(self, responder, token, credential):
+        """The browser's passkey answer; returns a token the form sends as
+        its two-factor code."""
+        from r2.lib import passkeys
+        if not (token and credential):
+            return {"error": _("that passkey wasn't accepted")}
+        try:
+            return {"code": passkeys.authenticate(c.user, token, credential)}
+        except passkeys.PasskeyError as e:
+            return {"error": _(str(e))}
 
     @validatedForm(
         VUser(),

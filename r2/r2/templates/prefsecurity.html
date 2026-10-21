@@ -107,7 +107,11 @@
     <h2>${_("recovery codes")}</h2>
     %if thing.new_codes:
       <p><strong>${_("Save these recovery codes somewhere safe (print them, or keep them in a password manager). Each one works once in place of a code from your app, if you lose your phone. They won't be shown again.")}</strong></p>
-      <pre class="recovery-code-list">${"\n".join(thing.new_codes)}</pre>
+      <div class="recovery-code-list">
+        %for code in thing.new_codes:
+          <span class="recovery-code">${code}</span>
+        %endfor
+      </div>
     %else:
       <p>
         ${_("Recovery codes work once each in place of a code from your app, if you lose your phone.")}&#32;
@@ -173,6 +177,26 @@
         ${error_field("WRONG_PASSWORD", "password")}
       %endif
       <button class="btn" type="submit">${_("add an authenticator app")}</button>
+      <span class="status"></span>
+    </form>
+
+    ## a passkey (passkey.js): on this device, a phone or a security key
+    <form class="pretty-form two-factor-add passkey-add" onsubmit="return false">
+      <p>
+        ${_("Or add a passkey: your phone, computer or security key confirms it's you with a fingerprint, face or PIN.")}
+        %if thing.two_factor:
+          ${_("Enter a code from one of your methods first.")}
+        %else:
+          ${_("Enter your password first.")}
+        %endif
+      </p>
+      %if thing.two_factor:
+        ${otp_field()}
+      %else:
+        <input type="password" name="password" placeholder="${_('password')}" autocomplete="current-password">
+      %endif
+      <input type="text" name="passkey_name" maxlength="40" placeholder="${_('name (optional)')}">
+      <button class="btn passkey-add-button" type="button">${_("add a passkey")}</button>
       <span class="status"></span>
     </form>
 
