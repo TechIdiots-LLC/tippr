@@ -15,6 +15,7 @@
 
 ## /admin/users/<name>: one account, as admins see it (r2.lib.user_admin)
 <%!
+  from r2.lib import two_factor
   from r2.lib.utils import timesince
 %>
 
@@ -69,7 +70,7 @@
       ${_("none")}
     %endif
   </td></tr>
-  <tr><td>${_("two-factor")}</td><td>${_("on") if a.otp_secret else _("off")}</td></tr>
+  <tr><td>${_("two-factor")}</td><td>${_("on") if two_factor.enabled(a) else _("off")}</td></tr>
   <tr><td>${_("gold")}</td><td>
     %if getattr(a, 'gold', False):
       ${_("yes")}
@@ -145,7 +146,7 @@
       </form>
       <small>${_("Removed posts and comments stay in each vault's spam queue, where moderators can approve them; \"as spam\" also teaches the spam filter. Deleted ones show as [deleted], as when someone deletes their own. Each acts on their newest %(n)d posts and newest %(n)d comments; run it again for more.") % dict(n=thing.max_content)}</small>
     </td></tr>
-    %if a.otp_secret:
+    %if two_factor.enabled(a):
       <tr><td>${_("two-factor")}</td><td>
         ${act("reset_2fa", _("reset two-factor"), reason=_("why (logged)"))}
         <small>${_("For someone locked out: they can log in with their password and set it up again.")}</small>

@@ -5869,15 +5869,20 @@ class ApiController(TipprController):
     @validatedForm(
         VUser(),
         VModhash(),
-        VVerifyPassword("password", fatal=False),
+        VTwoFactorProof(),
     )
     def POST_generate_otp_secret(self, form, jquery):
+        """Start adding an authenticator app (preferences, security): a new
+        secret for its QR code. Needs a code from a method the member has,
+        or their password for the first one."""
+        from r2.lib import two_factor
         if form.has_errors("password", errors.WRONG_PASSWORD):
             return
-
-        if c.user.otp_secret:
-            c.errors.add(errors.OTP_ALREADY_ENABLED, field="password")
-            form.has_errors("password", errors.OTP_ALREADY_ENABLED)
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
+            return
+        if len(two_factor.methods(c.user, "totp")) >= two_factor.MAX_METHODS:
+            form.set_text(".status", _("that's as many authenticator apps "
+                                       "as an account can have"))
             return
 
         secret = totp.generate_secret()
@@ -5886,16 +5891,11 @@ class ApiController(TipprController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   otp=nop("otp"))
-    def POST_enable_otp(self, form, jquery, otp):
-        if form.has_errors("password", errors.WRONG_PASSWORD):
-            return
-
-        if c.user.otp_secret:
-            c.errors.add(errors.OTP_ALREADY_ENABLED, field="otp")
-            form.has_errors("otp", errors.OTP_ALREADY_ENABLED)
-            return
-
+                   otp=nop("otp"),
+                   name=VLength("name", 40, empty_error=None))
+    def POST_enable_otp(self, form, jquery, otp, name):
+        """Finish adding an authenticator app: a code from it."""
+        from r2.lib import two_factor
         secret = g.gencache.get("otp:secret_" + c.user._id36)
         if not secret:
             c.errors.add(errors.EXPIRED, field="otp")
@@ -5907,11 +5907,42 @@ class ApiController(TipprController):
             form.has_errors("otp", errors.WRONG_PASSWORD)
             return
 
-        c.user.otp_secret = secret
-        c.user._commit()
-        self._show_recovery_codes(c.user)
+        g.gencache.delete("otp:secret_" + c.user._id36)
+        try:
+            first = two_factor.add_totp(c.user, secret, name)
+        except two_factor.TooManyMethods:
+            form.set_text(".status", _("that's as many authenticator apps "
+                                       "as an account can have"))
+            return
+        if first:
+            # two-factor just turned on: codes for a lost phone
+            self._show_recovery_codes(c.user)
+            form.redirect("/prefs/security#recovery-codes")
+        else:
+            form.redirect("/prefs/security#two-factor-methods")
 
-        form.redirect("/prefs/security#recovery-codes")
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        VTwoFactorProof(),
+        method=VLength("method", 40),
+    )
+    def POST_remove_two_factor_method(self, form, jquery, method):
+        """Remove an authenticator app or passkey: needs a code from one of
+        the member's methods (it can be the one being removed), and the
+        password too when it's the last one (two-factor then turns off)."""
+        from r2.lib import two_factor
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
+            return
+        if not method:
+            return
+        if (len(two_factor.methods(c.user)) == 1 and
+                not valid_password(c.user, request.POST.get("password"))):
+            c.errors.add(errors.WRONG_PASSWORD, field="password")
+            form.has_errors("password", errors.WRONG_PASSWORD)
+            return
+        two_factor.remove_method(c.user, method)
+        form.redirect("/prefs/security#two-factor-methods")
 
     @validatedForm(
         VUser(),
@@ -5920,6 +5951,8 @@ class ApiController(TipprController):
         VFreshOneTimePassword("otp", required=True),
     )
     def POST_disable_otp(self, form, jquery):
+        """Turn two-factor off: every method goes (and the recovery codes)."""
+        from r2.lib import two_factor
         if form.has_errors("password", errors.WRONG_PASSWORD):
             return
 
@@ -5928,9 +5961,7 @@ class ApiController(TipprController):
                                   errors.RATELIMIT):
             return
 
-        c.user.otp_secret = ""
-        c.user.otp_recovery_codes = []
-        c.user._commit()
+        two_factor.remove_all(c.user)
         form.redirect("/prefs/security")
 
     @validatedForm(

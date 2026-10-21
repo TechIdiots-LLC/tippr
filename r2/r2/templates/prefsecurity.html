@@ -34,7 +34,7 @@
 ## the two-factor code, on forms that need one (r2.lib.two_factor)
 <%def name="otp_field()">
   <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
-         maxlength="12" size="10" placeholder="${_('two-factor code')}">
+         maxlength="40" size="10" placeholder="${_('two-factor code')}">
   ${error_field("TWO_FACTOR_REQUIRED", "otp")}
 </%def>
 
@@ -43,7 +43,44 @@
 <h1>${_("two-factor authentication")}</h1>
 <div class="two-factor">
 % if thing.two_factor:
-    ${_md("two-factor authentication is **on**. you're asked for a code from your authenticator app when changing your password or email address, and when linking or unlinking a sign-in. a code you enter counts for 15 minutes.", wrap=True)}
+    ${_md("two-factor authentication is **on**. you're asked for a code from one of your methods below when changing your password or email address, and when linking or unlinking a sign-in. a code you enter counts for 15 minutes.", wrap=True)}
+
+    ## the methods: authenticator apps (and passkeys), each removable
+    <div id="two-factor-methods" class="two-factor-methods">
+    <h2>${_("your methods")}</h2>
+    <table class="two-factor-method-table">
+    %for m in thing.methods:
+      <tr>
+        <td class="two-factor-method-name">${m["name"]}</td>
+        <td><small>${_(m["kind_name"])}</small></td>
+        <td><small>${_("added %(when)s") % dict(when=m["added"])}
+          %if m["used"]:
+            &#32;&middot; ${_("last used %(when)s") % dict(when=m["used"])}
+          %endif
+        </small></td>
+        <td>
+          <form action="/post/remove_two_factor_method" method="post" class="pretty-form"
+                onsubmit="return post_form(this, 'remove_two_factor_method')">
+            <input type="hidden" name="method" value="${m['id']}">
+            ${otp_field()}
+            %if len(thing.methods) == 1:
+              <input type="password" name="password" placeholder="${_('password')}" autocomplete="current-password">
+              ${error_field("WRONG_PASSWORD", "password")}
+            %endif
+            <button class="btn" type="submit">${_("remove")}</button>
+            <span class="status"></span>
+          </form>
+        </td>
+      </tr>
+    %endfor
+    </table>
+    %if len(thing.methods) == 1:
+      <p><small>${_("Removing your only method turns two-factor off, so it needs your password too.")}</small></p>
+    %endif
+    </div>
+
+    <h2>${_("add a method")}</h2>
+    ${add_methods()}
 
     <form action="/post/two_factor_prefs" method="post" onsubmit="return post_form(this, 'two_factor_prefs')" class="two-factor-prefs">
     <h2>${_("also ask for a code")}</h2>
@@ -82,7 +119,7 @@
       </p>
     %endif
     <form action="/post/new_recovery_codes" method="post" onsubmit="return post_form(this, 'new_recovery_codes')" class="pretty-form">
-      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" size="10" placeholder="${_('two-factor code')}">
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="40" size="10" placeholder="${_('two-factor code')}">
       <button class="btn" type="submit">${_("make new recovery codes")}</button>
       ${error_field("WRONG_PASSWORD", "otp")}
       ${error_field("RATELIMIT", "otp")}
@@ -91,61 +128,75 @@
     </form>
     </div>
 
-    <form action="/post/disable_otp" method="post" onsubmit="return post_form(this, 'disable_otp')" id="pref-otp">
+    <form action="/post/disable_otp" method="post" onsubmit="return post_form(this, 'disable_otp')" id="pref-otp-off">
 
     <h2>${_("turn it off")}</h2>
-    ${_md("to turn it off, enter your password and a code.", wrap=True)}
+    ${_md("to turn it off (removing every method and the recovery codes), enter your password and a code.", wrap=True)}
 
     <%utils:round_field title="${_('password')}" description="${_('(required)')}">
       <input type="password" name="password" />
       ${error_field("WRONG_PASSWORD", "password")}
     </%utils:round_field>
 
-    <%utils:round_field title="${_('one-time password')}" description="${_('(required)')}">
-      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" />
+    <%utils:round_field title="${_('two-factor code')}" description="${_('(required)')}">
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="40" />
       ${error_field("WRONG_PASSWORD", "otp")}
       ${error_field("NO_OTP_SECRET", "otp")}
       ${error_field("RATELIMIT", "otp")}
     </%utils:round_field>
 
-    <input type="submit" value="${_("disable")}">
+    <input type="submit" value="${_("turn off")}">
     </form>
 % else:
     %if thing.required_for_tools:
       <p class="error">${_("This site asks moderators and staff to use two-factor sign-in: your moderator tools work again once it's on.")}</p>
     %endif
-    ${_md("with two-factor authentication on, changing your password or email address, and linking or unlinking a sign-in, also need a code from an authenticator app on your phone (Google Authenticator, Authy, 1Password and the like). someone who learns your password, or gets into a linked Google or Facebook account, can't take over your account here.", wrap=True)}
+    ${_md("with two-factor authentication on, changing your password or email address, and linking or unlinking a sign-in, also need a second step: a code from an authenticator app on your phone (Google Authenticator, Authy, 1Password and the like). someone who learns your password, or gets into a linked Google or Facebook account, can't take over your account here. you can add more than one method, and remove them later.", wrap=True)}
+    ${add_methods()}
+% endif
+</div>
 
-    <form action="/post/generate_otp_secret" method="post" onsubmit="return post_form(this, 'generate_otp_secret')" id="pref-otp">
-
-    ${_md("enter your current password below to start the activation process for two-factor authentication.", wrap=True)}
-
-    <%utils:round_field title="${_('password')}" description="${_('(required)')}">
-      <input type="password" name="password" />
-      ${error_field("WRONG_PASSWORD", "password")}
-    </%utils:round_field>
-
-    <input type="submit" value="${_("activate")}">
-
+## adding a method: an authenticator app (its QR code, then a code from it)
+<%def name="add_methods()">
+    <form action="/post/generate_otp_secret" method="post" onsubmit="return post_form(this, 'generate_otp_secret')" id="pref-otp" class="pretty-form two-factor-add">
+      <p>
+      %if thing.two_factor:
+        ${_("To add an authenticator app, enter a code from one of your methods first.")}
+      %else:
+        ${_("To start, enter your password.")}
+      %endif
+      </p>
+      %if thing.two_factor:
+        ${otp_field()}
+      %else:
+        <input type="password" name="password" placeholder="${_('password')}" autocomplete="current-password">
+        ${error_field("WRONG_PASSWORD", "password")}
+      %endif
+      <button class="btn" type="submit">${_("add an authenticator app")}</button>
+      <span class="status"></span>
     </form>
 
     <form action="/post/enable_otp" method="post" onsubmit="return post_form(this, 'enable_otp')" id="pref-otp-qr">
 
     <div id="otp-secret-info">
-        ${_md("below is your two-factor authentication secret. you can scan the QR code with an authenticator app or enter the key below manually. you WILL NOT have another chance to see this secret.")}
+        ${_md("scan the QR code with your authenticator app, or enter the key below in it. you WILL NOT have another chance to see this key.")}
     </div>
 
-    <%utils:round_field title="${_('one-time password')}" description="${_('(required)')}">
+    <%utils:round_field title="${_('name')}" description="${_('(optional, like phone or work)')}">
+      <input type="text" name="name" maxlength="40" />
+    </%utils:round_field>
+
+    <%utils:round_field title="${_('code from the app')}" description="${_('(required)')}">
       <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" />
       ${error_field("WRONG_PASSWORD", "otp")}
       ${error_field("EXPIRED", "otp")}
     </%utils:round_field>
 
-    <input type="submit" value="${_("enable")}">
+    <input type="submit" value="${_("add")}">
+    <span class="status"></span>
 
     </form>
-% endif
-</div>
+</%def>
 
 ## linked sign-ins (r2.lib.linked_logins)
 %if thing.linked:

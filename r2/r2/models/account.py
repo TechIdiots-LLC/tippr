@@ -169,6 +169,11 @@ class Account(Thing):
                      # two-factor (r2.lib.two_factor): hashes of the unused
                      # recovery codes, and where the member wants the code
                      # asked for besides the always-asked actions
+                     # how many two-factor methods (r2.lib.two_factor), and
+                     # a value that changes with them (signs the cookies
+                     # that skip the code)
+                     two_factor_methods=0,
+                     two_factor_stamp="",
                      otp_recovery_codes=(),
                      pref_otp_login=False,
                      pref_otp_settings=False,
@@ -385,7 +390,8 @@ class Account(Thing):
 
     def make_otp_cookie(self, timestamp=None):
         timestamp = timestamp or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
-        secrets = [request.user_agent, self.otp_secret, self.password]
+        from r2.lib import two_factor
+        secrets = [request.user_agent, two_factor.stamp(self), self.password]
         parts = [timestamp] + secrets
         parts_b = [p.encode('utf-8') if isinstance(p, str) else p for p in parts]
         signature_bytes = b','.join(parts_b)

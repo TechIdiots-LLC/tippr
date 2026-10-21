@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Several two-factor methods:** preferences → security lists your authenticator apps, each with a name, when it
+  was added and last used, and a remove button; add more (up to 10). Adding or removing one needs a code typed then
+  from a method you have (the password for the first one; removing the last one, which turns two-factor off,
+  needs the password too). A code from any of them works everywhere. An existing setup becomes the first method
+  the first time it's used.
 - **CleanTalk learns from moderators** (/admin/antispam, "tell CleanTalk what moderators decide", on by default):
   for posts, comments and messages CleanTalk checked, the spam button (or removing a user's posts as spam on
   /admin/users) reports them to CleanTalk as spam, and approving something CleanTalk flagged reports its mistake.

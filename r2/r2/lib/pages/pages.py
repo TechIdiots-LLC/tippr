@@ -1319,6 +1319,15 @@ class PrefSecurity(Templated):
     """Two-factor sign-in and linked sign-ins."""
     def __init__(self):
         from r2.lib import linked_logins, two_factor
+        from r2.lib.utils import timesince
+        # (reading them also moves an older single app into the list)
+        self.methods = [
+            dict(id=m["id"], name=m["name"],
+                 kind_name=two_factor.KIND_NAMES[m["kind"]],
+                 added=_("%(time)s ago") % dict(time=timesince(m["created"])),
+                 used=m["last_used"] and _("%(time)s ago") % dict(
+                     time=timesince(m["last_used"])))
+            for m in two_factor.methods(c.user)]
         self.two_factor = two_factor.enabled(c.user)
         self.new_codes = two_factor.take_new_codes(c.user)
         self.codes_left = two_factor.recovery_codes_left(c.user)

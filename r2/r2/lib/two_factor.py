@@ -12,10 +12,13 @@
 # The Initial Developer of the Original Code is TechIdiots LLC.
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""Two-factor sign-in for members (an authenticator app's codes).
+"""Two-factor sign-in for members.
 
-Anyone can turn it on under preferences, security. With it on, the code is
-asked for:
+Anyone can turn it on under preferences, security, with one or more
+methods (the two_factor_methods table): authenticator apps (TOTP codes)
+and passkeys (r2.lib.passkeys). Adding or removing a method needs one the
+member has already (or the password, for the first one). With it on, a
+code (or a passkey) is asked for:
 
 - always, for what matters most: changing the password or email address,
   linking or unlinking a Google/Facebook sign-in, turning two-factor off
@@ -39,6 +42,7 @@ import secrets
 import time
 from datetime import datetime, timedelta
 
+import sqlalchemy as sa
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c
@@ -61,8 +65,178 @@ ACTIONS = {
 }
 
 
+MAX_METHODS = 10  # per account, of each kind
+PASSKEY_TOKEN_SECONDS = 120  # a passkey check counts as a code this long
+
+
+###############################################################################
+# The methods: authenticator apps and passkeys
+###############################################################################
+
+_db = {}
+
+
+def _engine():
+    """The database, and the methods table (made on first use, so
+    importing this needs no database)."""
+    if "engine" not in _db:
+        from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
+        engine = g.dbm.get_engine("main")
+        table = _methods_table(make_metadata(engine))
+        create_table(table, [
+            index_str(table, "account_id", "account_id"),
+            index_str(table, "credential_id", "credential_id"),
+        ])
+        _db.update(engine=engine, table=table)
+    return _db["engine"]
+
+
+def _table():
+    _engine()
+    return _db["table"]
+
+
+def _methods_table(metadata):
+    return sa.Table(
+    "two_factor_methods", metadata,
+    sa.Column("id", sa.String, primary_key=True),
+    sa.Column("account_id", sa.BigInteger, nullable=False),
+    sa.Column("kind", sa.String, nullable=False),  # "totp" or "passkey"
+    sa.Column("name", sa.String, nullable=False),  # what the member calls it
+    sa.Column("secret", sa.String, nullable=True),  # totp: the shared secret
+    # passkey (base64url): the credential's id and public key (COSE)
+    sa.Column("credential_id", sa.String, nullable=True),
+    sa.Column("public_key", sa.Text, nullable=True),
+    sa.Column("sign_count", sa.BigInteger, nullable=True),
+    sa.Column("transports", sa.String, nullable=True),
+    sa.Column("created", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("last_used", sa.DateTime(timezone=True), nullable=True),
+    )
+
+KIND_NAMES = {"totp": "authenticator app", "passkey": "passkey"}
+
+
+def _now():
+    return datetime.now(g.tz)
+
+
 def enabled(account):
-    return bool(getattr(account, "otp_secret", None))
+    """Whether account has two-factor sign-in on (no database query: the
+    account keeps how many methods it has)."""
+    return bool(getattr(account, "two_factor_methods", 0) or
+                getattr(account, "otp_secret", None))
+
+
+def _migrate(account):
+    """Before several methods, an account had one authenticator app's
+    secret (otp_secret): make it the first method."""
+    secret = getattr(account, "otp_secret", None)
+    if not secret:
+        return
+    with _engine().begin() as conn:
+        conn.execute(_table().insert().values(
+            id=secrets.token_hex(8), account_id=account._id, kind="totp",
+            name=KIND_NAMES["totp"], secret=secret, created=_now()))
+    account.otp_secret = ""
+    _changed(account)
+
+
+def methods(account, kind=None):
+    """account's methods (dicts), oldest first."""
+    _migrate(account)
+    query = (sa.select(_table())
+             .where(_table().c.account_id == account._id)
+             .order_by(_table().c.created))
+    if kind:
+        query = query.where(_table().c.kind == kind)
+    with _engine().connect() as conn:
+        return [dict(r) for r in conn.execute(query).mappings()]
+
+
+def _changed(account):
+    """After adding or removing a method: the count enabled() reads, and a
+    new stamp, which signs the cookies that skip the code (remembered
+    devices, admin mode), so they stop working."""
+    with _engine().connect() as conn:
+        count = conn.execute(
+            sa.select(sa.func.count()).select_from(_table())
+            .where(_table().c.account_id == account._id)).scalar()
+    account.two_factor_methods = count
+    account.two_factor_stamp = secrets.token_hex(8)
+    if not count:
+        # two-factor is off: nothing to recover
+        account.otp_recovery_codes = []
+    account._commit()
+
+
+def stamp(account):
+    """What changes whenever the methods do (for signing cookies)."""
+    return (getattr(account, "two_factor_stamp", "") or
+            getattr(account, "otp_secret", "") or "")
+
+
+def _name(name, kind, account):
+    name = " ".join((name or "").split())[:40]
+    if name:
+        return name
+    taken = {m["name"] for m in methods(account)}
+    base, n = KIND_NAMES[kind], 1
+    while (base if n == 1 else "%s %d" % (base, n)) in taken:
+        n += 1
+    return base if n == 1 else "%s %d" % (base, n)
+
+
+class TooManyMethods(Exception):
+    pass
+
+
+def _add(account, kind, name, **values):
+    if len(methods(account, kind)) >= MAX_METHODS:
+        raise TooManyMethods
+    first = not enabled(account)
+    with _engine().begin() as conn:
+        conn.execute(_table().insert().values(
+            id=secrets.token_hex(8), account_id=account._id, kind=kind,
+            name=_name(name, kind, account), created=_now(), **values))
+    _changed(account)
+    g.log.info("two-factor: %s added a %s", account.name, kind)
+    return first
+
+
+def add_totp(account, secret, name=None):
+    """Add an authenticator app. Returns whether it's the first method
+    (so two-factor just turned on)."""
+    return _add(account, "totp", name, secret=secret)
+
+
+def remove_method(account, method_id):
+    """Remove one method; True if it was there."""
+    _migrate(account)
+    with _engine().begin() as conn:
+        result = conn.execute(_table().delete().where(
+            (_table().c.account_id == account._id) &
+            (_table().c.id == method_id)))
+    if result.rowcount:
+        _changed(account)
+        g.log.info("two-factor: %s removed a method", account.name)
+    return result.rowcount > 0
+
+
+def remove_all(account):
+    """Turn two-factor off (the member, or an admin's reset)."""
+    _migrate(account)
+    with _engine().begin() as conn:
+        conn.execute(_table().delete().where(
+            _table().c.account_id == account._id))
+    account.otp_secret = ""
+    _changed(account)
+
+
+def touch(method_id):
+    with _engine().begin() as conn:
+        conn.execute(_table().update()
+                     .where(_table().c.id == method_id)
+                     .values(last_used=_now()))
 
 
 def from_app():
@@ -157,10 +331,48 @@ def use_recovery_code(account, code):
     return False
 
 
-def check_code(account, code):
-    """An authenticator code or a recovery code for account; marks the
-    session as recently checked when it's right."""
+def _check_totp(account, code):
+    """A code from any of account's authenticator apps, each code good
+    once. (Which app it's from is found first: marking a code used while
+    trying a wrong app would keep the right one from taking it.)"""
+    from r2.lib import totp
+    from r2.lib.utils import constant_time_compare
     from r2.lib.validator import VOneTimePassword
+    if not code.isdigit() or len(code) != 6:
+        return False
+    for method in methods(account, "totp"):
+        if any(constant_time_compare(code, totp.make_totp(method["secret"],
+                                                         skew=skew))
+               for skew in VOneTimePassword.allowed_skew):
+            # used up (kept a little longer than codes are accepted)
+            used = g.gencache.add(
+                "otp:used_%s_%s" % (account._id36, code), True,
+                time=totp.PERIOD * (len(VOneTimePassword.allowed_skew) + 1))
+            if used:
+                touch(method["id"])
+            return bool(used)
+    return False
+
+
+def passkey_token(account):
+    """After a passkey check (r2.lib.passkeys): a one-use token that counts
+    as a code for account, for the form that asked for one."""
+    token = "pk-" + secrets.token_urlsafe(18)
+    g.gencache.set("otp:pk_" + token, account._id, time=PASSKEY_TOKEN_SECONDS)
+    return token
+
+
+def _use_passkey_token(account, token):
+    key = "otp:pk_" + token
+    if g.gencache.get(key) != account._id:
+        return False
+    g.gencache.delete(key)
+    return True
+
+
+def check_code(account, code):
+    """A code for account (from an authenticator app), a passkey token or a
+    recovery code; marks the session as recently checked when it's right."""
     code = (code or "").strip()
     if not enabled(account) or not code:
         return False
@@ -176,8 +388,11 @@ def check_code(account, code):
     previous = c.user
     c.user = account
     try:
-        ok = (VOneTimePassword.validate_otp(account.otp_secret, code) or
-              use_recovery_code(account, code))
+        if code.startswith("pk-"):
+            ok = _use_passkey_token(account, code)
+        else:
+            ok = (_check_totp(account, code) or
+                  use_recovery_code(account, code))
     finally:
         c.user = previous
     if ok:
@@ -190,7 +405,7 @@ def check_code(account, code):
 ###############################################################################
 
 def _device_signature(account, timestamp):
-    parts = [timestamp, request.user_agent or "", account.otp_secret or "",
+    parts = [timestamp, request.user_agent or "", stamp(account),
              account.password or ""]
     data = ",".join(p if isinstance(p, str) else p.decode("utf-8", "replace")
                     for p in parts).encode("utf-8")

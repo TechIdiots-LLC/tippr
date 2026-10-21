@@ -2891,9 +2891,10 @@ class VOneTimePassword(Validator):
         return False
 
     def run(self, password):
+        from r2.lib import two_factor
+
         # does the user have 2FA configured?
-        secret = c.user.otp_secret
-        if not secret:
+        if not two_factor.enabled(c.user):
             if self.required:
                 self.set_error(errors.NO_OTP_SECRET)
             return
@@ -2902,25 +2903,9 @@ class VOneTimePassword(Validator):
         if c.otp_cached:
             return
 
-        # make sure they're not trying this too much
-        if not g.disable_ratelimit:
-            current_password = totp.make_totp(secret)
-            otp_ratelimit = ratelimit.SimpleRateLimit(
-                name="otp_tries_{}_{}".format(c.user._id36, current_password),
-                seconds=600,
-                limit=self.ratelimit,
-            )
-            if not otp_ratelimit.record_and_check():
-                self.set_error(errors.RATELIMIT, dict(time="30 seconds"))
-                return
-
-        # check the password (or a recovery code, r2.lib.two_factor)
-        from r2.lib import two_factor
-        if self.validate_otp(secret, password):
-            two_factor.mark_recent(c.user)
-            return
-        if two_factor.use_recovery_code(c.user, password):
-            two_factor.mark_recent(c.user)
+        # a code from any of their authenticator apps, a passkey token or a
+        # recovery code (r2.lib.two_factor, which limits the tries)
+        if two_factor.check_code(c.user, password):
             return
 
         # if we got this far, their password was wrong, invalid or already used
@@ -2962,6 +2947,30 @@ class VTwoFactor(Validator):
     def param_docs(self):
         return {self.param: "the two-factor code, when the account asks for "
                             "one (not for OAuth apps)"}
+
+
+class VTwoFactorProof(Validator):
+    """Proof it's the member, for adding or removing a two-factor method:
+    with two-factor on, a code typed now from a method they have (an
+    authenticator app, a passkey or a recovery code); for the first
+    method, their password. Errors: TWO_FACTOR_REQUIRED on otp,
+    WRONG_PASSWORD on password."""
+
+    def __init__(self, password="password", otp="otp", **kw):
+        Validator.__init__(self, (password, otp), **kw)
+
+    def run(self, password, otp):
+        from r2.lib import two_factor
+        VUser().run()
+        if two_factor.enabled(c.user):
+            if not two_factor.check_code(c.user, otp):
+                self.set_error(errors.TWO_FACTOR_REQUIRED, field="otp")
+        elif not (password and valid_password(c.user, password)):
+            self.set_error(errors.WRONG_PASSWORD, field="password")
+
+    def param_docs(self):
+        return {"password": "the password (to add the first method)",
+                "otp": "a two-factor code (when the account has a method)"}
 
 
 class VOAuth2ClientID(VRequired):

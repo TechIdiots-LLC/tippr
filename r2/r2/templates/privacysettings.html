@@ -17,6 +17,7 @@
 ## themselves (GDPR and similar laws), and see their past requests.
 
 <%!
+   from r2.lib import two_factor
    from r2.lib import site_info
    from r2.models.privacy import PrivacyRequestStatus as S
 %>
@@ -128,9 +129,9 @@
       <input name="passwd" id="delete-password" type="password" autocomplete="current-password">
       ${error_field("WRONG_PASSWORD", "passwd")}
 
-      %if c.user.otp_secret:
+      %if two_factor.enabled(c.user):
         <label for="delete-otp">${_("two-factor code")}</label>
-        <input name="otp" id="delete-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <input name="otp" id="delete-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="40">
         ${error_field("WRONG_PASSWORD", "otp")}
         ${error_field("RATELIMIT", "otp")}
       %endif

@@ -279,7 +279,8 @@ def is_employee(user):
 
 
 def has_two_factor(user):
-    return bool(getattr(user, "otp_secret", None))
+    from r2.lib import two_factor
+    return bool(user) and two_factor.enabled(user)
 
 
 def employees():

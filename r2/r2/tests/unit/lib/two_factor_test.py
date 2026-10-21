@@ -38,7 +38,8 @@ class TestTwoFactor(TipprTestCase):
         self.account = MagicMock(_id=7, _id36="7", otp_secret="SECRET",
                                  password="hash", otp_recovery_codes=[],
                                  pref_otp_login=False, pref_otp_settings=False,
-                                 pref_otp_post=False)
+                                 pref_otp_post=False, two_factor_methods=0,
+                                 two_factor_stamp="")
         self.account.name = "member"
 
     def test_always_asked_actions(self):

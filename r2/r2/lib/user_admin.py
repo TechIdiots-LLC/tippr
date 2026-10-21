@@ -479,9 +479,8 @@ def delete_account(account, admin, delete_posts, reason):
 
 def reset_two_factor(account, admin, reason=None):
     """Turn off two-factor sign-in, for someone locked out of it."""
-    account.otp_secret = None
-    account.otp_recovery_codes = []
-    account._commit()
+    from r2.lib import two_factor
+    two_factor.remove_all(account)
     _log(account, admin, "reset_2fa", reason)
 
 

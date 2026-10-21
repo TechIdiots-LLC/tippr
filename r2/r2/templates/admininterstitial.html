@@ -24,6 +24,7 @@
 ###############################################################################
 
 <%!
+  from r2.lib import two_factor
   from r2.lib.template_helpers import static
 %>
 
@@ -57,9 +58,9 @@
       ${error_field("TWO_FACTOR_NEEDED_FOR_STAFF", "password")}
       </%utils:round_field>
 
-      % if not g.disable_require_admin_otp or c.user.otp_secret:
+      % if not g.disable_require_admin_otp or two_factor.enabled(c.user):
       <%utils:round_field title="${_('one-time verification code')}" description="${_('(required)')}" css_class="adminpasswordform">
-      <input type="text" name="otp" maxlength="6" tabindex="1" required pattern="[0-9]{6}" autocomplete="off"
+      <input type="text" name="otp" maxlength="40" tabindex="1" required autocomplete="one-time-code"
       % if c.otp_cached:
       disabled
       % endif
