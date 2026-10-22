@@ -1017,7 +1017,8 @@ class MinimalController(BaseController):
 
         # (a new loid cookie is written below, after this: a response that
         # sets one isn't for sharing either)
-        if c.user_is_loggedin or would_poison or (c.loid and c.loid.new):
+        if (c.user_is_loggedin or would_poison or c.no_page_cache or
+                (c.loid and c.loid.new)):
             # Based off logged in <https://en.wikipedia.org/>,
             # must-revalidate might not be necessary, but should force
             # similar behaviour to no-cache (in theory.)

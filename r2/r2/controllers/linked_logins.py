@@ -45,6 +45,12 @@ def _message(text, link=None, link_text=None):
 
 
 class LinkedLoginsController(TipprController):
+    def pre(self):
+        TipprController.pre(self)
+        # these pages carry the sign-in's own token: never for a shared
+        # cache, even with no cookie set (/logins/otp)
+        c.no_page_cache = True
+
     @validate(provider=VOneOf("provider", linked_logins.PROVIDER_ORDER),
               purpose=VOneOf("purpose", ("login", "link"), default="login"),
               dest=nop("dest"),

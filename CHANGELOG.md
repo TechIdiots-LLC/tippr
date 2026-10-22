@@ -68,6 +68,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The two-factor code page after signing in was kept by the logged-out page cache:** for up to the cache time,
+  another visitor opening /logins/otp could get the page with someone else's half-done sign-in on it. They would
+  still have needed that person's code. The sign-in pages are never cached now.
 - **Analytics events piled up with nowhere to go:** every login, vote, post, report, moderator action and new
   visitor made an event (with the member's id, IP address, browser and a location lookup) for reddit's analytics
   pipeline, but nothing ever sent them anywhere, so they grew in RabbitMQ without end. They're counted for the traffic
