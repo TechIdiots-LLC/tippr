@@ -56,6 +56,13 @@ COMMON = [
         "two-factor sign-in turned on (preferences, security) to use their "
         "tools; until then they see a notice asking them to. Members "
         "without it are unaffected.")),
+    ("logged_out_page_cache_seconds", N_(
+        "How long a page for logged-out visitors may be kept and served "
+        "again, in seconds, by nginx's page cache or a CDN in front of the "
+        "site (logged-in visitors always get fresh pages). Lower it to "
+        "show changes sooner, or 0 to stop caching pages at once. nginx's "
+        "page cache has to be on (the installer's TIPPR_PAGE_CACHE_SECONDS) "
+        "for a value here to do anything there.")),
     ("captcha_exempt_link_karma", N_(
         "Accounts with at least this much post karma skip the captcha.")),
     ("captcha_exempt_comment_karma", N_(

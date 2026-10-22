@@ -174,9 +174,6 @@ class Globals:
     spec = {
 
         ConfigValue.int: [
-            # logged-out pages a shared cache (nginx, a CDN) may keep, in
-            # seconds (0: none); TipprController.post
-            'logged_out_page_cache_seconds',
             'db_pool_size',
             'db_pool_overflow_size',
             'commentpane_cache_time',
@@ -375,6 +372,9 @@ class Globals:
             'precomputed_comment_suggested_sort',
         ],
         ConfigValue.int: [
+            # logged-out pages a shared cache (nginx, a CDN) may keep, in
+            # seconds (0: none); TipprController.post
+            'logged_out_page_cache_seconds',
             'app_create_min_account_age_days',
             'app_create_min_karma',
             'captcha_exempt_comment_karma',

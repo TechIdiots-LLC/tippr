@@ -133,10 +133,12 @@ CACHEABLE_COOKIES = ()
 
 
 def _page_cache_seconds():
-    """logged_out_page_cache_seconds (0 if the ini has none: an install
-    from before it)."""
+    """logged_out_page_cache_seconds, a live setting (/admin/config; the
+    installer's TIPPR_PAGE_CACHE_SECONDS, or 0 for an install from before
+    it)."""
     try:
-        return int(g.config.get("logged_out_page_cache_seconds") or 0)
+        return max(0, int(g.live_config.get("logged_out_page_cache_seconds")
+                          or 0))
     except (TypeError, ValueError):
         return 0
 

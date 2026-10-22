@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **The page cache time is a live setting** (`logged_out_page_cache_seconds` on /admin/config): lower it to show
+  changes sooner, or set 0 to stop caching logged-out pages at once, without re-running the installer (whose
+  `TIPPR_PAGE_CACHE_SECONDS` is the starting value).
 - **nginx caches logged-out pages** (`TIPPR_PAGE_CACHE_SECONDS`, 30 by default, 0 off): the ones the app marks
   cacheable are built at most once every 30 seconds instead of for every visitor, the old copy is served while a
   new one is built or if the app is down, and logged-in visitors and apps always go to the app.
