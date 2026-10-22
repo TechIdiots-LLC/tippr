@@ -54,6 +54,10 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Analytics events piled up with nowhere to go:** every login, vote, post, report, moderator action and new
+  visitor made an event (with the member's id, IP address, browser and a location lookup) for reddit's analytics
+  pipeline, but nothing ever sent them anywhere, so they grew in RabbitMQ without end. Without an event collector
+  (`events_collector_url`, empty by default) none are made now, and the installer empties what was queued.
 - **AutoModerator never ran:** the installer gave its queue no processor (reddit's setting) and no account to act
   as, so vaults' rules (their wiki page config/automoderator) were never applied and new posts piled up in its
   queue. It runs now, as an `AutoModerator` account the installer makes with no password anyone knows

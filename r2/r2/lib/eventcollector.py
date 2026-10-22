@@ -80,6 +80,24 @@ def parse_agent(ua):
     return agent_summary
 
 
+def _no_event(*args, **kwargs):
+    return None
+
+
+class DisabledEventQueue:
+    """g.events when there's no event collector to send events to
+    (events_collector_url, empty by default): every event call does
+    nothing. Reddit sent these (logins, votes, posts, new visitors and the
+    like, each with the member's id, IP address, browser and country,
+    looked up per event) to its analytics pipeline; with nowhere to send
+    them they only piled up in RabbitMQ."""
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return _no_event
+
+
 class EventQueue:
     def __init__(self, queue=amqp):
         self.queue = queue

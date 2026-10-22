@@ -1761,6 +1761,18 @@ else
     echo 0 > $CONSUMER_CONFIG_ROOT/automoderator_q
 fi
 set_consumer_count butler_q 1
+# analytics events (r2.lib.eventcollector) only go somewhere with an event
+# collector service (events_collector_url in the ini). Without one the site
+# makes none, and what older versions queued for nothing is emptied: it
+# held members' ids, IP addresses and browsers.
+if grep -qE '^events_collector_url *= *[^ ]' "$TIPPR_SRC/tippr/r2/run.ini" 2>/dev/null; then
+    set_consumer_count event_collector_q 1
+else
+    echo 0 > $CONSUMER_CONFIG_ROOT/event_collector_q
+    for queue in event_collector event_collector_test event_collector_failed; do
+        rabbitmqctl -q purge_queue -p / "$queue" >/dev/null 2>&1 || true
+    done
+fi
 set_consumer_count author_query_q 1
 set_consumer_count vault_query_q 1
 set_consumer_count domain_query_q 1
