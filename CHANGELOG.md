@@ -3,6 +3,8 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/servers shows when an update is out:** the newest release on GitHub (`release_repo`, checked hourly),
+  whether each server runs an older one, and a link to the release notes. Pre-releases are mentioned, not counted.
 - **Sign up with Google, GitHub and the rest:** signing in with an outside account nobody linked now also offers
   to make a new account for it: a username (suggested from that account's name), a password and an optional email.
   The sign-up form's checks all apply (sign-ups open, the captcha, the spam check, rate limits), and the new account

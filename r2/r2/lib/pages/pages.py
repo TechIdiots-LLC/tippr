@@ -4257,7 +4257,28 @@ class AdminServerStatus(Templated):
                                 if s.get("uptime") else "")
         self.servers = servers
         self.queues = self._queues()
+        self._releases()
         Templated.__init__(self)
+
+    def _releases(self):
+        """The newest release on GitHub (r2.lib.releases), and which
+        servers run an older one."""
+        from r2.lib import releases
+        self.release_repo = releases.repo()
+        self.release_error = releases.releases()["error"]
+        self.latest_release = releases.latest()
+        prerelease = releases.latest(prerelease=True)
+        self.latest_prerelease = (
+            prerelease if prerelease and self.latest_release is not prerelease
+            and (not self.latest_release or releases.newer(
+                prerelease["version"], self.latest_release["version"]))
+            else None)
+        for s in self.servers:
+            s["update_available"] = bool(
+                self.latest_release and releases.newer(
+                    self.latest_release["version"], s.get("version")))
+        self.outdated = [s for s in self.servers
+                         if s["update_available"] and not s["stale"]]
 
     @staticmethod
     def _duration(seconds):

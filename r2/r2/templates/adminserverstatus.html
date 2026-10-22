@@ -28,6 +28,35 @@
   <p class="error">${_("No server has reported yet. Reports start within a minute of installing or upgrading (the tippr-job-server_status timer).")}</p>
 %endif
 
+## the newest release (r2.lib.releases)
+<div class="server-updates">
+  <h2>${_("updates")}</h2>
+  %if thing.release_error:
+    <p class="error">${_("GitHub couldn't be asked about releases (%(error)s); trying again in a few minutes.") % dict(error=thing.release_error)}</p>
+  %elif not thing.latest_release:
+    <p>${_("No release of %(repo)s has an installer yet.") % dict(repo=thing.release_repo)}</p>
+  %else:
+    <p>
+      ${_("The newest release is")}
+      <a href="${thing.latest_release['url']}" target="_blank" rel="noopener"><strong>${thing.latest_release['version']}</strong></a>
+      %if thing.latest_release['published']:
+        <small>(${thing.latest_release['published'][:10]})</small>
+      %endif
+      &middot;
+      %if thing.outdated:
+        <strong>${_("an update is available for %(n)s of your servers") % dict(n=len(thing.outdated))}</strong>
+      %else:
+        ${_("every server runs it, or a newer one.")}
+      %endif
+    </p>
+    %if thing.latest_prerelease:
+      <p><small>${_("A pre-release is out too:")}
+        <a href="${thing.latest_prerelease['url']}" target="_blank" rel="noopener">${thing.latest_prerelease['version']}</a></small></p>
+    %endif
+    <p><small>${_("Read the release's notes before updating: anything that needs doing by hand is in them.")}</small></p>
+  %endif
+</div>
+
 %for s in thing.servers:
   <div class="server-card ${'server-stale' if s['stale'] else ''} ${'server-warn' if s['warnings'] else ''}">
     <h2>
@@ -50,6 +79,9 @@
           <td>${s.get('version') or '?'}
             %if s.get('commit'):
               <small>(<code>${s['commit']}</code>)</small>
+            %endif
+            %if s['update_available']:
+              <span class="server-update-available">${_("%(version)s is out") % dict(version=thing.latest_release['version'])}</span>
             %endif
           </td></tr>
       <tr><td>${_("reported")}</td>
