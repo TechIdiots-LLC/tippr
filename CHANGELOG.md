@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **memcached settings in the installer:** it had Ubuntu's 64 MB; `TIPPR_MEMCACHED_MB` sets it (`auto`, the default,
+  is a quarter of the RAM, 64 to 1024 MB). For several frontends, `TIPPR_MEMCACHED_SERVER` points the site at a
+  shared cache server, which `TIPPR_MEMCACHED_LISTEN` and `TIPPR_MEMCACHED_ALLOW` (the frontends' address range, let
+  through the firewall) set up; memcached has no password, so it's refused without a range.
 - **nginx serves the static files** (CSS, JS, images) in production, from `/srv/www/static`, instead of the app:
   files whose name has a content hash are kept by browsers (and a CDN) for a year, others for a day, and they're
   gzipped. Each install adds the new build's files and keeps the old ones for 60 days, so with several frontends
