@@ -48,6 +48,10 @@ Set these as environment variables when running the installer:
 | `TIPPR_WEB_WORKERS` | CPU count, at most 8 | gunicorn workers |
 | `TIPPR_SEARCH` | `opensearch` | `none` skips OpenSearch ([SEARCH.md](SEARCH.md)) |
 | `TIPPR_STARTER_FEEDS` | `auto` | starter feeds for the starter vaults: `auto` adds them on a new site and keeps the site's choice after that, `1` on, `0` off; upgrades add only feeds new to the list ([CONTENT.md](CONTENT.md#feeds)) |
+| `TIPPR_PAGE_CACHE_SECONDS` | `30` | how long nginx keeps a page for logged-out visitors ([below](#caching)); `0` off |
+| `TIPPR_MEMCACHED_MB` | `auto` | memcached's memory: `auto` is a quarter of the RAM, 64 to 1024 MB |
+| `TIPPR_MEMCACHED_SERVER` | `127.0.0.1:11211` | the memcached the site uses; with several frontends, a shared one ([below](#several-servers)) |
+| `TIPPR_MEMCACHED_LISTEN`, `TIPPR_MEMCACHED_ALLOW` | `127.0.0.1` | on a shared cache server: its private address, and the frontends' range (let through the firewall) |
 | `TIPPR_OPENSEARCH_HEAP` | `1g` | OpenSearch's Java heap |
 | `TIPPR_TLS_CERT`, `TIPPR_TLS_KEY` | | certificate and key to use, e.g. a Cloudflare Origin Certificate |
 | `TIPPR_LETSENCRYPT_EMAIL` | | get a Let's Encrypt certificate (the domain must point here) |
@@ -202,7 +206,45 @@ reaching it would get plain HTTP.
 | `/etc/tippr/tls` | TLS certificate and key |
 | `/etc/default/tippr` | environment for the systemd units |
 | `/srv/www/media` | uploaded media |
+| `/srv/www/static` | the CSS, JS and images nginx serves (production) |
+| `/var/cache/nginx/tippr-pages` | logged-out pages nginx keeps a while |
 | `/var/lib/tippr/backups` | backups |
+
+## Caching
+
+- **Inside the app** (unchanged from reddit): posts, comments, listings
+  and the rendered pieces of pages are kept in memcached and reused for
+  everyone. Size it with `TIPPR_MEMCACHED_MB`.
+- **Static files**: in production nginx serves `/static/` from
+  `/srv/www/static`. Files whose name carries a content hash
+  (`tippr.cDFoRR5NTrs.css`) are cached by browsers and CDNs for a year,
+  others for a day.
+- **Logged-out pages**: the app marks a logged-out page cacheable for
+  `logged_out_page_cache_seconds` (30) when nothing on it is for that
+  visitor only, and nginx serves it again until then
+  (`TIPPR_PAGE_CACHE_SECONDS`). Logged-in visitors, pages that set
+  cookies and errors always come from the app. A CDN in front (for
+  example Cloudflare, with `TIPPR_BEHIND_CLOUDFLARE=1`) can do the same:
+  cache `/static/` and, for requests without the `tippr_session` cookie,
+  HTML as the `Cache-Control: public, s-maxage=…` header says.
+
+## Several servers
+
+Run the installer on each, with the same settings and data store
+addresses. For caching:
+
+- **One memcached for all the frontends.** The caches are cleared when
+  things change, and two-factor sign-ins, passkey checks and rate limits
+  are kept there, so every frontend must use the same one. On the cache
+  server: `TIPPR_MEMCACHED_LISTEN=<its private address>` and
+  `TIPPR_MEMCACHED_ALLOW=<the frontends' range>` (memcached has no
+  password: never expose it beyond a private network). On each frontend:
+  `TIPPR_MEMCACHED_SERVER=<cache server>:11211`. Beyond one cache server,
+  mcrouter (`TIPPR_BUILD_MCROUTER=1`) spreads keys over several.
+- **Static files** stay on each frontend; upgrades add the new build's
+  files and keep the old ones, so upgrading frontends one at a time works.
+- **Logged-out pages**: each frontend's nginx keeps its own copies; a CDN
+  or a caching proxy in front of all of them shares one copy instead.
 
 ## Google AdSense
 
