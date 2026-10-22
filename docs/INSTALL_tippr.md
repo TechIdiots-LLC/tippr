@@ -56,6 +56,7 @@ Set these as environment variables when running the installer:
 | `TIPPR_MEMCACHED_SERVER` | `127.0.0.1:11211` | the memcached the site uses; with several frontends, a shared one ([below](#several-servers)) |
 | `TIPPR_MEMCACHED_LISTEN`, `TIPPR_MEMCACHED_ALLOW` | `127.0.0.1` | on a shared cache server: its private address, and the frontends' range (let through the firewall) |
 | `TIPPR_OPENSEARCH_HEAP` | `1g` | OpenSearch's Java heap |
+| `TIPPR_OPENSEARCH_START_TIMEOUT` | `10min` | How long systemd waits for OpenSearch to start (it grows with the index) |
 | `TIPPR_TLS_CERT`, `TIPPR_TLS_KEY` | | certificate and key to use, e.g. a Cloudflare Origin Certificate |
 | `TIPPR_LETSENCRYPT_EMAIL` | | get a Let's Encrypt certificate (the domain must point here) |
 | `TIPPR_BEHIND_CLOUDFLARE` | `0` | `1`: take client IPs from `CF-Connecting-IP`, from Cloudflare's ranges only |

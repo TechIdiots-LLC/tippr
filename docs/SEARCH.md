@@ -9,7 +9,11 @@ Tippr searches posts and vaults with [OpenSearch](https://opensearch.org/)
   apt repository as a single node listening on `127.0.0.1:9200`, with the
   security plugin off (nothing outside the machine can reach it) and a
   `TIPPR_OPENSEARCH_HEAP` Java heap (default `1g`). Its config is
-  `/etc/opensearch/opensearch.yml`, rewritten on every install.
+  `/etc/opensearch/opensearch.yml`, rewritten on every install; the installer
+  restarts OpenSearch only when that, the heap or the start timeout changed (or
+  it isn't running). systemd waits `TIPPR_OPENSEARCH_START_TIMEOUT` (default
+  `10min`, set in `/etc/systemd/system/opensearch.service.d/tippr.conf`) for
+  it to start, since it reloads its indexes first and that grows with the data.
 - r2 writes to two indexes, `tippr_links` and `tippr_vaults`
   (`opensearch_index_prefix`).
 - New and changed posts and vaults (submissions, edits, deletions, votes,
