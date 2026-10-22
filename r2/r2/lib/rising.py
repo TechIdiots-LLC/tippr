@@ -33,7 +33,7 @@ from r2.lib.db.operators import desc
 from r2.lib.sgm import sgm
 from r2.models.link import Link
 
-# how many of the period's newest posts are looked at
+# at most how many voted-on posts, and comments, of the period are looked at
 MAX_LINKS = 2000
 # how quickly a post sinks as it gets older (as on Hacker News)
 GRAVITY = 1.5
@@ -59,16 +59,41 @@ def rising_score(link, now=None):
     return activity(link) / (age_hours + 2) ** GRAVITY
 
 
+def _active_links(since):
+    """The posts since `since` that someone voted on or commented on.
+
+    Found by their votes and by the period's comments, not by looking
+    through the newest posts: feed bots can post more in a day than
+    MAX_LINKS, which pushed the ones people were voting on out of reach."""
+    from r2.models import Comment
+    found = {}
+    for votes in (Link.c._ups > 1, Link.c._downs > 0):
+        for link in Link._query(Link.c._date >= since, votes,
+                                Link.c._spam == False,
+                                Link.c._deleted == False,
+                                sort=desc('_date'), limit=MAX_LINKS,
+                                data=True):
+            found[link._id] = link
+    comments = Comment._query(Comment.c._date >= since,
+                              Comment.c._spam == False,
+                              sort=desc('_date'), limit=MAX_LINKS, data=True)
+    commented = {comment.link_id for comment in comments} - set(found)
+    if commented:
+        for link in Link._byID(list(commented), data=True,
+                               return_dict=False, ignore_missing=True):
+            if (link._date >= since and not link._spam and
+                    not link._deleted):
+                found[link._id] = link
+    return list(found.values())
+
+
 def calc_rising():
     """The posts of the last rising_period that people have voted on or
     commented on, best first: [(fullname, score, vault id)]."""
-    links = Link._query(Link.c._date >= utils.timeago(g.rising_period),
-                        Link.c._spam == False,
-                        Link.c._deleted == False,
-                        sort=desc('_date'), limit=MAX_LINKS, data=True)
+    since = utils.timeago(g.rising_period)
     now = datetime.datetime.now(g.tz)
     rising = []
-    for link in links:
+    for link in _active_links(since):
         if getattr(link, "promoted", None) or not activity(link):
             continue
         rising.append((link._fullname, rising_score(link, now), link.vault_id))

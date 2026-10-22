@@ -72,6 +72,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Rising missed most voted-on posts:** it looked only at the newest 2,000 posts of the last 12–24 hours, and feed
+  bots can post more than that. It now finds posts by their votes and comments, over the last 3 days
+  (`rising_period`). Older posts still sink below newer ones.
 - **nginx could serve an old logged-out page indefinitely:** while it built a new copy, nginx served the old one. When
   the new one couldn't be cached, the old copy was never replaced. nginx now builds the new copy first (one request
   at a time), and the installer empties the page cache when it writes the setting.
