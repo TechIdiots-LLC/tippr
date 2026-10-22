@@ -27,7 +27,8 @@ class ImageResizingProvider:
     """Provider for generating resizable image urls.
 
     """
-    def resize_image(self, image, width=None, censor_nsfw=False, max_ratio=None):
+    def resize_image(self, image, width=None, file_type=None, censor_nsfw=False,
+                     max_ratio=None):
         """Turn a url of an image in storage into one that will produce a
         resized image.
 
@@ -38,6 +39,9 @@ class ImageResizingProvider:
 
         `width` is optionally a number of pixels wide for the resultant image;
         if not specified, the dimensions will be the same as the source image.
+
+        `file_type` is optionally the format wanted ("jpg", "png", "gif" or
+        "mp4"); providers that can't convert ignore it.
 
         `censor_nsfw` is a boolean indicating whether the resizer should
         attempt to censor the image (e.g. by blurring it) due to it being NSFW.

@@ -72,6 +72,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **JSON listings failed for posts with preview images** (/new.json, /hot.json, a vault's .json…): the image
+  resizers didn't take the format the API asks for, so the listing failed with an error. imgix now also gets the
+  format.
 - **The two-factor code page after signing in was kept by the logged-out page cache:** for up to the cache time,
   another visitor opening /logins/otp could get the page with someone else's half-done sign-in on it. They would
   still have needed that person's code. The sign-in pages are never cached now.
