@@ -25,9 +25,9 @@ CACHE_SECONDS = 600
 
 
 # the listings the welcome is for: a vault's (or the front page's) posts
-# by hot, new or rising. Empty elsewhere (the inbox, saved posts, a
+# by hot or new. Empty elsewhere (rising, gilded, the inbox, saved posts, a
 # profile, top of the past hour …) doesn't mean the site or vault is empty.
-WELCOME_CONTROLLERS = ("hot", "new", "rising")
+WELCOME_CONTROLLERS = ("hot", "new")
 
 
 def kind():

@@ -82,6 +82,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **An empty rising page said the vault had nothing in it:** rising is often empty in a vault that has posts, so it
+  now shows the plain "nothing here" message, as gilded does. The "Nothing in /v/… yet" welcome is for hot and new.
 - **Explore was empty on a small site:** recommendations come from many members' subscriptions, no discovery vaults
   are set by default, and rising skipped the vaults you're in. With no discovery vaults set, explore now picks
   popular vaults you haven't joined, and when nothing is rising elsewhere it shows what's rising in your own vaults.
