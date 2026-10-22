@@ -72,6 +72,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **nginx could serve an old logged-out page indefinitely:** while it built a new copy, nginx served the old one. When
+  the new one couldn't be cached, the old copy was never replaced. nginx now builds the new copy first (one request
+  at a time), and the installer empties the page cache when it writes the setting.
 - **Error pages could be kept by the logged-out page cache:** an error page is rendered as a request of its own,
   so it was marked cacheable, and nginx served the error again for that address.
 - **JSON listings failed for posts with preview images** (/new.json, /hot.json, a vault's .json…): the image
