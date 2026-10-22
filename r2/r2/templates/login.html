@@ -127,9 +127,11 @@
       ## the captcha (r2.lib.antispam)
       <div class="c-form-group signup-captcha">
         %if antispam.captcha_provider() == "builtin":
-          <% signup_iden = get_iden() %>
+          ## (on a page a shared cache may keep, the browser fetches its own)
+          <% signup_iden = "" if c.defer_captcha else get_iden() %>
           <input name="iden" value="${signup_iden}" type="hidden"/>
-          <img class="capimage" alt="visual CAPTCHA" src="/captcha/${signup_iden}.png"/>
+          <img class="capimage" alt="visual CAPTCHA"
+               src="${"/captcha/%s.png" % signup_iden if signup_iden else static("kill.png")}"/>
           <input name="captcha" class="c-form-control" type="text"
                  placeholder="${_('type the letters from the image')}"
                  autocomplete="off" tabindex="${tabindex}">

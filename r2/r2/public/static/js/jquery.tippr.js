@@ -626,6 +626,20 @@ $.fn.insert_table_rows = function(rows, index) {
 };
 
 
+/* tippr's own captcha on a logged-out page that a shared cache may keep is
+   left out (an iden would be shared by everyone who gets the cached page):
+   ask for one when its form is on screen. new_captcha fills every captcha
+   on the page. */
+$.fillDeferredCaptchas = function($root) {
+    var $empty = $($root || document).find('input[name="iden"]').filter(function() {
+        return !this.value && $(this).siblings('.capimage').length;
+    });
+    if ($empty.length) {
+        $.request("new_captcha", {id: $empty.first().closest('form').attr('id') || 'body'});
+    }
+};
+$(function() { $.fillDeferredCaptchas(document); });
+
 $.fn.captcha = function(iden) {
     /* a new captcha after a failed submit: a new image for tippr's own,
        or a reset widget for a captcha service (r2.lib.antispam), whose

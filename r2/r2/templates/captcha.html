@@ -48,8 +48,9 @@ ${rounded_captcha()}
 
   <img class="capimage"
        alt="visual CAPTCHA"
-       %if hasattr(thing, "iden"):
-       src="/captcha/${thing.iden}.png" 
+       ## (none on a page a shared cache may keep: the browser fetches one)
+       %if getattr(thing, "iden", None):
+       src="/captcha/${thing.iden}.png"
        %else:
        src="${static('kill.png')}" 
        %endif

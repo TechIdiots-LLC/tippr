@@ -132,6 +132,15 @@ from r2.models import (
 CACHEABLE_COOKIES = ()
 
 
+def _page_cache_seconds():
+    """logged_out_page_cache_seconds (0 if the ini has none: an install
+    from before it)."""
+    try:
+        return int(g.config.get("logged_out_page_cache_seconds") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 class UnloggedUser(FakeAccount):
     COOKIE_NAME = "_options"
     allowed_prefs = {
@@ -980,10 +989,33 @@ class MinimalController(BaseController):
             upgrade_cookie_security()
 
         # Don't poison the cache with uncacheable cookies
-        dirty_cookies = (k for k, v in c.cookies.items() if v.dirty)
+        dirty_cookies = [k for k, v in c.cookies.items() if v.dirty]
         would_poison = any((k not in CACHEABLE_COOKIES) for k in dirty_cookies)
 
-        if c.user_is_loggedin or would_poison:
+        if (c.page_cache_candidate and not would_poison and
+                not c.is_exception_response and
+                response.status_int == 200 and
+                not c.no_page_cache and
+                not c.used_localized_defaults and
+                not c.ratelimit_headers):
+            # the same for every logged-out visitor: a shared cache (nginx's
+            # page cache, a CDN) may keep it a little while. A new visitor's
+            # loid cookie would be shared too, so it waits for a page that
+            # isn't cached; the language can come from the browser's.
+            seconds = _page_cache_seconds()
+            if c.loid and c.loid.new:
+                c.loid = None
+            response.headers['Cache-Control'] = (
+                'public, max-age=0, s-maxage=%d' % seconds)
+            # nginx's own (it doesn't read s-maxage); it isn't passed on
+            response.headers['X-Accel-Expires'] = str(seconds)
+            vary = response.headers.get('Vary')
+            response.headers['Vary'] = (
+                vary + ', Accept-Language' if vary else 'Accept-Language')
+
+        # (a new loid cookie is written below, after this: a response that
+        # sets one isn't for sharing either)
+        if c.user_is_loggedin or would_poison or (c.loid and c.loid.new):
             # Based off logged in <https://en.wikipedia.org/>,
             # must-revalidate might not be necessary, but should force
             # similar behaviour to no-cache (in theory.)
@@ -1355,6 +1387,14 @@ class TipprController(OAuth2ResourceController):
                 c.user_is_admin = not two_factor.staff_tools_closed(c.user)
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid
+
+        # a logged-out page that a shared cache may keep (post() decides):
+        # nothing on it may be for this visitor only, so its captcha (the
+        # login popup's) is fetched by the browser instead (c.defer_captcha)
+        c.page_cache_candidate = bool(
+            _page_cache_seconds() and not c.user_is_loggedin and
+            request.method in ("GET", "HEAD"))
+        c.defer_captcha = c.page_cache_candidate
 
         enforce_https()
 

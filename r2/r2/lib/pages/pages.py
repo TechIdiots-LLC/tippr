@@ -181,6 +181,10 @@ MAX_DESCRIPTION_LENGTH = 150
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
+        # on a page a shared cache may keep, the browser fetches its own
+        # (captcha.js: r.captcha.fill)
+        if c.defer_captcha:
+            return ""
         return get_iden()
 
 def responsive(res, space_compress=None):

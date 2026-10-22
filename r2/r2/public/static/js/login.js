@@ -440,6 +440,8 @@ r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
         // once the opening animation is done, in case it wasn't visible yet)
         var $popup = this.$;
         $.renderCaptchaWidgets($popup);
+        // tippr's own captcha, which a cacheable page leaves out
+        $.fillDeferredCaptchas($popup);
         this.once('opened.r.popup', function() {
             $.renderCaptchaWidgets($popup);
         });

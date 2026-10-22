@@ -174,6 +174,9 @@ class Globals:
     spec = {
 
         ConfigValue.int: [
+            # logged-out pages a shared cache (nginx, a CDN) may keep, in
+            # seconds (0: none); TipprController.post
+            'logged_out_page_cache_seconds',
             'db_pool_size',
             'db_pool_overflow_size',
             'commentpane_cache_time',

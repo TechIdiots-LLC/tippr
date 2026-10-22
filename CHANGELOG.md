@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Logged-out pages can be cached** by nginx or a CDN in front of the site: they're marked cacheable for
+  `logged_out_page_cache_seconds` (30 by default; 0 off) when nothing on them is for that visitor only. Logged-in
+  visitors, pages that set cookies and errors never are. The login popup's captcha is fetched by the browser on
+  those pages instead of being part of them, and a new visitor's tracking cookie (`loid`) waits for a page that
+  isn't cached.
 - **memcached settings in the installer:** it had Ubuntu's 64 MB; `TIPPR_MEMCACHED_MB` sets it (`auto`, the default,
   is a quarter of the RAM, 64 to 1024 MB). For several frontends, `TIPPR_MEMCACHED_SERVER` points the site at a
   shared cache server, which `TIPPR_MEMCACHED_LISTEN` and `TIPPR_MEMCACHED_ALLOW` (the frontends' address range, let
@@ -31,6 +36,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **A new logged-out visitor's first page** set the `loid` cookie without being marked private, so a cache in front
+  of the site could have handed that cookie to others; it's marked private now.
 - **Preferences pages' text sat against the edge of the page** (only the privacy tab had a margin); they all have
   one now. On phones, the two-factor methods list and the apps on /prefs/apps fit the screen.
 - **Forms that send you back to the page you're on, at a section** ("…#recovery-codes") didn't reload it, so

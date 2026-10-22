@@ -155,6 +155,13 @@ class BaseController(WSGIController):
             c.show_signing_body = False
         if not hasattr(c, 'loid'):
             c.loid = None
+        # logged-out page caching (TipprController.pre and post)
+        if not hasattr(c, 'page_cache_candidate'):
+            c.page_cache_candidate = False
+        if not hasattr(c, 'defer_captcha'):
+            c.defer_captcha = False
+        if not hasattr(c, 'no_page_cache'):
+            c.no_page_cache = False
         if not hasattr(c, 'location'):
             c.location = ''
         if not hasattr(c, 'oauth_user'):
