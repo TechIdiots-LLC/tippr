@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **nginx serves the static files** (CSS, JS, images) in production, from `/srv/www/static`, instead of the app:
+  files whose name has a content hash are kept by browsers (and a CDN) for a year, others for a day, and they're
+  gzipped. Each install adds the new build's files and keeps the old ones for 60 days, so with several frontends
+  upgraded one at a time, pages from one not yet upgraded still find theirs.
 - **Passkeys for two-factor sign-in:** add passkeys (your phone, computer or a security key, unlocked with a
   fingerprint, face or PIN) on preferences → security, alongside or instead of authenticator apps; several of each.
   Anywhere a two-factor code is asked for (the login code page, changing your password or email, admin mode,
