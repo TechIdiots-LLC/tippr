@@ -52,6 +52,7 @@ HELP_PAGES = OrderedDict([
     ("suspensions", N_("timeouts and suspensions")),
     ("quarantine", N_("quarantined vaults")),
     ("muting", N_("muting in moderator mail")),
+    ("automoderator", N_("AutoModerator")),
     ("api", N_("using the API")),
     ("advertising", N_("advertising")),
     ("translate", N_("translating")),

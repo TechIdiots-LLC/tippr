@@ -14,7 +14,8 @@ left alone. To replace those too:
     sudo env FORCE_POLICY_IMPORT=1 tippr-run /home/tippr/src/tippr/scripts/init_policy_wiki_pages.py
 
 To add a page, add a `.md` file here (its first `# heading` is its title)
-and its name to `HELP_PAGES` in `r2/r2/controllers/policies.py`.
+and its name to `HELP_PAGES` in `r2/r2/controllers/policies.py` and to the two
+`/help/:page` routes in `r2/r2/config/routing.py`.
 
 Keep them generic: no site names, addresses or email addresses (link to
 `/contact#<section>` for anything people should send to the admins).

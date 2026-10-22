@@ -371,12 +371,12 @@ def make_map(config):
     mc('/help/modhub', controller='redirect', action='redirect',
        dest='/help/moderatorguidelines')
     mc('/help/:page', controller='policies', action='policy_page',
-       requirements={'page': 'contentpolicy|privacypolicy|useragreement|moderatorguidelines|faq|search|formatting|rss|trophies|suspensions|quarantine|muting|api|advertising|translate'})
+       requirements={'page': 'contentpolicy|privacypolicy|useragreement|moderatorguidelines|faq|search|formatting|rss|trophies|suspensions|quarantine|muting|automoderator|api|advertising|translate'})
 
     # original conditional mapping (kept for explicit non-vault cases)
     mc('/help/:page', controller='policies', action='policy_page',
        conditions={'function':not_in_vault},
-       requirements={'page': 'contentpolicy|privacypolicy|useragreement|moderatorguidelines|faq|search|formatting|rss|trophies|suspensions|quarantine|muting|api|advertising|translate'})
+       requirements={'page': 'contentpolicy|privacypolicy|useragreement|moderatorguidelines|faq|search|formatting|rss|trophies|suspensions|quarantine|muting|automoderator|api|advertising|translate'})
     mc('/rules', controller='redirect', action='redirect',
         dest='/help/contentpolicy')
     mc('/faq', controller='redirect', action='redirect', dest='/help/faq')

@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **AutoModerator help page** (/help/automoderator): where a vault's rules go, what they can check (title, body,
+  links, domains, reports, the author's karma and account age…), what they can do (remove, filter for review,
+  report, approve, flair, NSFW, lock, sticky, reply, message), placeholders and examples. The rules page on a
+  vault's wiki links to it instead of reddit's documentation.
 - **/admin/servers:** every server's version, load, memory, disks and services, reported by each once a minute
   (`tippr-job-server_status`, a small script that doesn't load the app), with warnings for one that went quiet, is
   short of disk or memory, is busy, has a service down or runs a different version from the others; plus the

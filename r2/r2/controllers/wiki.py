@@ -94,7 +94,7 @@ page_descriptions = {
     "config/submit_text": _("The contents of this page appear on the submit page"),
     "config/sidebar": _("The contents of this page appear on the vault sidebar"),
     "config/description": _("The contents of this page appear in the public vault description and when the user does not have access to the vault"),
-    "config/automoderator": _("This page is used to configure AutoModerator for the vault, please see [the full documentation](/wiki/automoderator/full-documentation) for information"),
+    "config/automoderator": _("This page is used to configure AutoModerator for the vault, see [the AutoModerator help page](/help/automoderator) for how to write rules"),
 }
 
 ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
