@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **nginx caches logged-out pages** (`TIPPR_PAGE_CACHE_SECONDS`, 30 by default, 0 off): the ones the app marks
+  cacheable are built at most once every 30 seconds instead of for every visitor, the old copy is served while a
+  new one is built or if the app is down, and logged-in visitors and apps always go to the app.
 - **Logged-out pages can be cached** by nginx or a CDN in front of the site: they're marked cacheable for
   `logged_out_page_cache_seconds` (30 by default; 0 off) when nothing on them is for that visitor only. Logged-in
   visitors, pages that set cookies and errors never are. The login popup's captcha is fetched by the browser on
