@@ -72,6 +72,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Explore was empty on a small site:** recommendations come from many members' subscriptions, no discovery vaults
+  are set by default, and rising skipped the vaults you're in. With no discovery vaults set, explore now picks
+  popular vaults you haven't joined, and when nothing is rising elsewhere it shows what's rising in your own vaults.
 - **Rising missed most voted-on posts:** it looked only at the newest 2,000 posts of the last 12–24 hours, and feed
   bots can post more than that. It now finds posts by their votes and comments, over the last 3 days
   (`rising_period`). Older posts still sink below newer ones.

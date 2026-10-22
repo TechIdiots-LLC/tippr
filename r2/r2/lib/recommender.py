@@ -151,8 +151,14 @@ def get_recommended_content(prefs, src, settings):
                                           default_vault_id36s))
     # pick random subset of the user's liked vaults
     liked_vault_id36s = random_sample(prefs.likes, num_liked) if settings.personalized else []
-    # pick random subset of discovery vaults
+    # pick random subset of discovery vaults; with none set (discovery_vaults),
+    # popular vaults the user isn't in, so a small site's explore page still
+    # has something: its recommendations need many members' subscriptions
     candidates = set(get_discovery_vault_id36s()).difference(prefs.dislikes)
+    if not candidates:
+        candidates = set(popular_vault_id36s(settings.nsfw)).difference(
+            omit_vault_id36s)
+        num_discovery = 4
     discovery_vault_id36s = random_sample(candidates, num_discovery)
     # multiget vaults
     to_fetch = liked_vault_id36s + discovery_vault_id36s
@@ -183,6 +189,11 @@ def get_recommended_content(prefs, src, settings):
         # grab some (non-personalized) rising items
         omit_sr_ids = {int(id36, 36) for id36 in omit_vault_id36s}
         rising_items = get_rising_items(omit_sr_ids, count=num_rising)
+        if not rising_items:
+            # nothing rising outside the user's vaults: what's rising in them
+            # (not in the ones they dismissed)
+            rising_items = get_rising_items(
+                {int(id36, 36) for id36 in prefs.dislikes}, count=num_rising)
     # combine all items and randomize order to get a mix of types
     all_recs = list(chain(rising_items,
                           comment_items,
@@ -258,6 +269,16 @@ def get_discovery_vault_id36s():
     """Get list of vaults that help people discover other vaults."""
     vaults = Vault._by_name(g.live_config['discovery_vaults'])
     return [vault._id36 for vault in vaults.values()]
+
+
+def popular_vault_id36s(over18=False):
+    """The site's popular public vaults (Vault.update_popular_vaults), with
+    the adult ones too if over18."""
+    from r2.models.keyvalue import NamedGlobals
+    vault_ids = list(NamedGlobals.get("popular_vault_ids", default=[]))
+    if over18:
+        vault_ids += NamedGlobals.get("popular_over_18_vault_ids", default=[])
+    return [to36(vault_id) for vault_id in vault_ids]
 
 
 def random_sample(items, count):
