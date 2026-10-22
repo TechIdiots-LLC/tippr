@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Activity on the traffic pages:** /traffic (staff) shows what people did, for the last 24 hours, 7 days and 30
+  days and by day: new visitors, sign-ups and logins (and failed ones), password resets, posts, comments, upvotes and
+  downvotes, reports, moderator actions (also by type), messages and modmail. A vault's /about/traffic shows its own
+  posts, comments, votes, reports, moderator actions and modmail to its moderators; with public traffic on, everyone
+  else sees only posts, comments and votes. Counted as things happen, without keeping who did them.
 - **AutoModerator help page** (/help/automoderator): where a vault's rules go, what they can check (title, body,
   links, domains, reports, the author's karma and account age…), what they can do (remove, filter for review,
   report, approve, flair, NSFW, lock, sticky, reply, message), placeholders and examples. The rules page on a
@@ -56,8 +61,9 @@
 - _...Add new stuff here..._
 - **Analytics events piled up with nowhere to go:** every login, vote, post, report, moderator action and new
   visitor made an event (with the member's id, IP address, browser and a location lookup) for reddit's analytics
-  pipeline, but nothing ever sent them anywhere, so they grew in RabbitMQ without end. Without an event collector
-  (`events_collector_url`, empty by default) none are made now, and the installer empties what was queued.
+  pipeline, but nothing ever sent them anywhere, so they grew in RabbitMQ without end. They're counted for the traffic
+  pages now instead (only the counts are kept), go to an event collector only if one is set up
+  (`events_collector_url`), and the installer empties what was queued.
 - **AutoModerator never ran:** the installer gave its queue no processor (reddit's setting) and no account to act
   as, so vaults' rules (their wiki page config/automoderator) were never applied and new posts piled up in its
   queue. It runs now, as an `AutoModerator` account the installer makes with no password anyone knows

@@ -238,11 +238,71 @@ def make_Vault_traffic_report(vaults=None, num=None):
     return report
 
 
+# charted on the traffic pages (the others are in the table only)
+_CHARTED_ACTIVITY = {
+    "signups": COLORS.MISCELLANEOUS,
+    "logins": COLORS.DOWNVOTE_BLUE,
+    "posts": COLORS.UPVOTE_ORANGE,
+    "comments": COLORS.DOWNVOTE_BLUE,
+    "upvotes": COLORS.UPVOTE_ORANGE,
+}
+
+
+def add_activity(pane, kind, key="", public=False):
+    """What people did (r2.lib.activity_counter), on a traffic pane: a
+    summary for the last day, week and month (pane.activity_summary), a
+    daily chart and table (in pane.tables) and moderator actions by type
+    (pane.activity_mod_actions). public: only what anyone may see on a
+    vault with public traffic (not reports or moderation)."""
+    from r2.lib import activity_counter as ac
+    metrics = [(name, label) for name, label, scope in ac.METRICS
+               if kind == "site" or scope == "both"]
+    if public:
+        metrics = [m for m in metrics if m[0] in ac.PUBLIC_VAULT_METRICS]
+    names = [name for name, _label in metrics]
+    now = datetime.datetime.utcnow()
+    try:
+        spans = [ac.totals(kind, key, now - span, names)
+                 for span in (datetime.timedelta(days=1),
+                              datetime.timedelta(days=7),
+                              datetime.timedelta(days=30))]
+        history = ac.history(kind, key, "day", 30, names)
+        mod_actions = ({} if public else ac.totals(
+            kind, key, now - datetime.timedelta(days=30)))
+    except Exception:
+        g.log.exception("activity: couldn't read the counts")
+        pane.activity_summary, pane.activity_mod_actions = [], []
+        return
+    pane.activity_summary = [
+        (_(label), [span.get(name, 0) for span in spans])
+        for name, label in metrics]
+    pane.activity_mod_actions = sorted(
+        ((name[len(ac.MOD_ACTION_PREFIX):], n)
+         for name, n in mod_actions.items()
+         if name.startswith(ac.MOD_ACTION_PREFIX)),
+        key=lambda item: -item[1])
+    columns = []
+    for name, label in metrics:
+        column = dict(title=_(label), shortname=_(label))
+        if name in _CHARTED_ACTIVITY:
+            column["color"] = _CHARTED_ACTIVITY[name]
+        columns.append(column)
+    rows = [(period, [counts.get(name, 0) for name in names])
+            for period, counts in reversed(history)]
+    pane.tables.append(TimeSeriesChart(
+        "activity-day", _("activity by day"), "day", columns, rows,
+        now + datetime.timedelta(days=1), classes=["traffic-table"]))
+
+
 class SitewideTraffic(TipprTraffic):
     """An overview of all traffic to the site."""
     def __init__(self):
         self.Vault_summary = make_Vault_traffic_report(num=250)
         TipprTraffic.__init__(self, g.domain)
+
+    def make_tables(self):
+        TipprTraffic.make_tables(self)
+        add_activity(self, "site")
 
     def get_dow_summary(self):
         return traffic.SitewidePageviews.history("day")
@@ -421,6 +481,15 @@ class AdvertTraffic(TipprTraffic):
 class VaultTraffic(TipprTraffic):
     def __init__(self):
         TipprTraffic.__init__(self, "/v/" + c.site.name)
+
+    def make_tables(self):
+        TipprTraffic.make_tables(self)
+        # the vault's moderators (and staff) see all of it; anyone else,
+        # on a vault with public traffic, not reports or moderation
+        full = c.user_is_loggedin and (
+            c.user_is_admin or c.user.employee or
+            c.site.is_moderator(c.user))
+        add_activity(self, "vault", c.site.name, public=not full)
 
         if c.user_is_sponsor:
             fullname = c.site._fullname

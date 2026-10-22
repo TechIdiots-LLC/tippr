@@ -123,6 +123,43 @@ ${self.tables()}
   % endif
 </%def>
 
+## what people did (r2.lib.activity_counter; trafficpages.add_activity)
+<%def name="activity_tables()">
+  % if getattr(thing, 'activity_summary', None):
+  <table class="traffic-table activity-summary">
+  <caption>${_("activity")}</caption>
+  <thead>
+  <tr>
+    <th scope="col"></th>
+    <th scope="col">${_("24 hours")}</th>
+    <th scope="col">${_("7 days")}</th>
+    <th scope="col">${_("30 days")}</th>
+  </tr>
+  </thead>
+  <tbody>
+  % for label, counts in thing.activity_summary:
+  <tr>
+    <th scope="row">${label}</th>
+    % for n in counts:
+    <td>${format_number(n)}</td>
+    % endfor
+  </tr>
+  % endfor
+  </tbody>
+  </table>
+  % endif
+  % if getattr(thing, 'activity_mod_actions', None):
+  <table class="traffic-table activity-mod-actions">
+  <caption>${_("moderator actions, 30 days")}</caption>
+  <tbody>
+  % for action, n in thing.activity_mod_actions:
+  <tr><th scope="row">${action}</th><td>${format_number(n)}</td></tr>
+  % endfor
+  </tbody>
+  </table>
+  % endif
+</%def>
+
 <%def name="tables()">
   % for table in thing.tables:
   ${table}

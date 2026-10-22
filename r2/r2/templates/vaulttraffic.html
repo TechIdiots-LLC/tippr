@@ -38,3 +38,8 @@
 
   ${load_timeseries_js()}
 </%def>
+
+<%def name="sidetables()">
+  ${parent.sidetables()}
+  ${parent.activity_tables()}
+</%def>

@@ -68,7 +68,7 @@ from r2.lib.cache import (
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib.activity_thrift import ActivityService
 from r2.lib.contrib.activity_thrift.ttypes import ActivityInfo
-from r2.lib.eventcollector import DisabledEventQueue, EventQueue
+from r2.lib.eventcollector import EventQueue
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.plugin import PluginLoader
@@ -1048,10 +1048,12 @@ class Globals:
         # Initialize the amqp module globals, start the worker, etc.
         r2.lib.amqp.initialize(self)
 
-        # analytics events go to an event collector service; without one
-        # (events_collector_url) none are made (r2.lib.eventcollector)
-        self.events = (EventQueue() if self.events_collector_url
-                       else DisabledEventQueue())
+        # the site's events (logins, votes, posts...) are counted for the
+        # traffic pages (r2.lib.activity_counter), and also go to an event
+        # collector service if there is one (events_collector_url)
+        from r2.lib.activity_counter import CountingEventQueue
+        self.events = CountingEventQueue(
+            EventQueue() if self.events_collector_url else None)
 
         self.startup_timer.intermediate("revisions")
 
