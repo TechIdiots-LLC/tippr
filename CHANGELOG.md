@@ -72,6 +72,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Error pages could be kept by the logged-out page cache:** an error page is rendered as a request of its own,
+  so it was marked cacheable, and nginx served the error again for that address.
 - **JSON listings failed for posts with preview images** (/new.json, /hot.json, a vault's .json…): the image
   resizers didn't take the format the API asks for, so the listing failed with an error. imgix now also gets the
   format.

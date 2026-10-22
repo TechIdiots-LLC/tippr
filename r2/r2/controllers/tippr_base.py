@@ -998,6 +998,8 @@ class MinimalController(BaseController):
                 not c.is_exception_response and
                 response.status_int == 200 and
                 not c.no_page_cache and
+                # (an error page: rendered as its own request, a 200 here)
+                not getattr(c, "error_page", False) and
                 not c.used_localized_defaults and
                 not c.ratelimit_headers):
             # the same for every logged-out visitor: a shared cache (nginx's
