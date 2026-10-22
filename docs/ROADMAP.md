@@ -82,8 +82,8 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    linked Google, Facebook, GitHub or Discord account is done
    (/admin/logins); next is a generic OpenID Connect provider for a site's
    own sign-in service (Microsoft and Apple later), a table entry each in
-   `r2/lib/linked_logins.py`. Still to settle: creating a new account by
-   signing in with one (choosing a username, the captcha). Instagram no
+   `r2/lib/linked_logins.py`. Signing up with one is done too (a username,
+   a password and the sign-up form's checks). Instagram no
    longer offers logins to other sites; Meta's is Facebook Login.
 3. **Policy pages that follow the site settings.** The user agreement,
    privacy and content policies and help pages are filled in from

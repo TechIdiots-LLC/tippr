@@ -804,6 +804,53 @@ class ApiController(TipprController):
         ))
         return handle_register(**kwargs)
 
+    @csrf_exempt
+    @validatedForm(
+        VLoggedOut(),
+        VRatelimit(rate_ip=True, prefix="rate_register_"),
+        VCaptcha(signup=True),
+        token=VLength("token", 200, empty_error=None),
+        name=VUname(['user']),
+        email=ValidEmail("email"),
+        password=VPasswordChange(['passwd', 'passwd2']),
+        rem=VBoolean('rem'),
+    )
+    def POST_register_linked(self, form, responder, token, name, email,
+                             password, rem):
+        """Make a new account for an outside sign-in (Google, GitHub...)
+        nobody linked, and link it (r2.lib.linked_logins): the sign-up
+        form's checks, then the link. The token and its cookie are from
+        the sign-in, a few minutes ago in this browser."""
+        from r2.lib import linked_logins
+        held = linked_logins.unlinked(
+            token, request.cookies.get(linked_logins.LINK_COOKIE))
+        if not held:
+            form.set_text(".status", _("That sign-in took too long. Please "
+                                       "start again."))
+            return
+        provider, identity = held["provider"], held["identity"]
+        if linked_logins.account_id_for(provider, identity["subject"]):
+            form.set_text(".status", _("That account is linked already: "
+                                       "sign in with it."))
+            return
+        handle_register(self, form, responder, name, email, password, rem=rem)
+        if not c.user_is_loggedin or c.user.name.lower() != (name or "").lower():
+            # the sign-up didn't go through: its errors are on the form
+            return
+        linked_logins.unlinked_done(token)
+        c.cookies[linked_logins.LINK_COOKIE] = Cookie(value="", expires=DELETE)
+        try:
+            linked_logins.link(c.user, provider, identity)
+        except linked_logins.LoginError as e:
+            # (made, but someone linked it in the meantime)
+            g.log.warning("register_linked: %s made, not linked: %s",
+                          c.user.name, e)
+        else:
+            linked_logins.touch(provider, identity["subject"])
+            g.log.info("linked logins: %s signed up with %s", c.user.name,
+                       provider)
+        form.redirect(linked_logins.safe_dest(held["dest"]))
+
     @require_oauth2_scope("modself")
     @noresponse(VUser(),
                 VModhash(),

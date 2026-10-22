@@ -776,12 +776,21 @@ body.nightmode.gold-page.gold-about .gold-banner {
 .linked-login-name {
     font-weight: bold;
 }
-.linked-login-link-form, .linked-login-otp form {
+.linked-login-link-form, .linked-login-register-form, .linked-login-otp form {
     input {
         display: block;
         margin: 6px 0;
         padding: 6px 8px;
         width: 18em;
+        max-width: 100%;
+    }
+    input[type=checkbox] {
+        display: inline;
+        width: auto;
+    }
+    label {
+        display: block;
+        margin: 6px 0 10px;
     }
 }
 // two-factor recovery codes (preferences, security)

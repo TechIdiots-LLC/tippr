@@ -14,7 +14,14 @@
 ###############################################################################
 
 ## signed in with a Google/Facebook/GitHub/Discord account that isn't linked to anyone:
-## log in with a password to link it (r2.controllers.linked_logins)
+## log in with a password to link it, or make a new account with it
+## (r2.controllers.linked_logins, ApiController.POST_register_linked)
+<%!
+   from r2.lib import antispam
+   from r2.lib.captcha import get_iden
+%>
+<%namespace file="utils.html" import="error_field"/>
+
 <div class="payment-status linked-login-link">
   <p>
     %if thing.email:
@@ -33,7 +40,44 @@
     <input type="password" name="passwd" placeholder="${_('password')}" autocomplete="current-password">
     <button class="btn" type="submit">${_("log in and link")}</button>
   </form>
-  <p><small>
-    ${_("No account here yet?")}&#32;<a href="/register">${_("sign up")}</a>${_(", then link it under preferences, security.")}
-  </small></p>
+  %if thing.signups_open:
+    <h3>${_("New here? Make an account")}</h3>
+    <p>${_("It's linked to your %(provider)s account, so signing in with %(provider)s is enough from now on. The password lets you log in without it too.") % dict(provider=thing.provider_name)}</p>
+    <form action="/post/register_linked" method="post"
+          class="pretty-form linked-login-register-form"
+          onsubmit="return post_form(this, 'register_linked');">
+      <input type="hidden" name="token" value="${thing.token}">
+      <input type="text" name="user" placeholder="${_('choose a username')}" maxlength="20"
+             value="${thing.suggested_name}" autocomplete="off">
+      ${error_field("USERNAME_TOO_SHORT", "user")}
+      ${error_field("USERNAME_INVALID_CHARACTERS", "user")}
+      ${error_field("USERNAME_TAKEN", "user")}
+      ${error_field("USERNAME_TAKEN_DEL", "user")}
+      ${error_field("SIGNUPS_CLOSED", "user")}
+      ${error_field("SPAM_SIGNUP", "user")}
+      <input type="password" name="passwd" placeholder="${_('password')}" autocomplete="new-password">
+      ${error_field("BAD_PASSWORD", "passwd")}
+      <input type="password" name="passwd2" placeholder="${_('verify password')}" autocomplete="new-password">
+      ${error_field("BAD_PASSWORD_MATCH", "passwd2")}
+      <input type="text" name="email" placeholder="${_('email (optional)')}" value="${thing.email or ''}">
+      ${error_field("BAD_EMAIL", "email")}
+      %if antispam.captcha_on_register() and c.user.needs_captcha():
+        <div class="signup-captcha">
+          %if antispam.captcha_provider() == "builtin":
+            <% iden = get_iden() %>
+            <input name="iden" value="${iden}" type="hidden"/>
+            <img class="capimage" alt="visual CAPTCHA" src="/captcha/${iden}.png"/>
+            <input name="captcha" type="text" placeholder="${_('type the letters from the image')}" autocomplete="off">
+          %else:
+            ${unsafe(antispam.widget_html())}
+          %endif
+          ${error_field("BAD_CAPTCHA", "captcha")}
+        </div>
+      %endif
+      <label><input type="checkbox" name="rem"> ${_("remember me")}</label>
+      <button class="btn" type="submit">${_("make the account")}</button>
+      ${error_field("RATELIMIT", "ratelimit")}
+      <span class="status"></span>
+    </form>
+  %endif
 </div>

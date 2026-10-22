@@ -1356,10 +1356,18 @@ class PrefSecurity(Templated):
 
 class LinkedLoginLink(Templated):
     """Signed in with an outside account nobody linked: log in with a
-    password to link it."""
-    def __init__(self, token, provider_name, email=None, wrong=False):
+    password to link it, or make a new account with it."""
+    def __init__(self, token, provider_name, email=None, wrong=False,
+                 person_name=None):
+        from r2.lib import site_info
+        # a username to start from: the outside account's, as far as it
+        # fits the rules (3-20 letters, digits, _ or -)
+        suggested = re.sub(r"[^A-Za-z0-9_-]", "",
+                           (person_name or "").replace(" ", "_"))[:20]
         Templated.__init__(self, token=token, provider_name=provider_name,
-                           email=email, wrong=wrong)
+                           email=email, wrong=wrong,
+                           suggested_name=suggested if len(suggested) >= 3 else "",
+                           signups_open=site_info.signups_open())
 
 
 class LinkedLoginOtp(Templated):

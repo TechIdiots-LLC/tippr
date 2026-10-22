@@ -119,7 +119,8 @@ class LinkedLoginsController(TipprController):
                     seconds=linked_logins.STATE_TTL))
             return BoringPage(_("sign in"), show_sidebar=False,
                               content=LinkedLoginLink(
-                                  token, name, identity.get("email"))).render()
+                                  token, name, identity.get("email"),
+                                  person_name=identity.get("name"))).render()
         try:
             account = Account._byID(account_id, data=True)
         except NotFound:
@@ -177,7 +178,8 @@ class LinkedLoginsController(TipprController):
             return BoringPage(_("sign in"), show_sidebar=False,
                               content=LinkedLoginLink(
                                   token, name, held["identity"].get("email"),
-                                  wrong=True)).render()
+                                  wrong=True,
+                                  person_name=held["identity"].get("name"))).render()
         linked_logins.unlinked_done(token)
         c.cookies[linked_logins.LINK_COOKIE] = Cookie(value="",
                                                       expires=DELETE)

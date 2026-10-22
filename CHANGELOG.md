@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Sign up with Google, GitHub and the rest:** signing in with an outside account nobody linked now also offers
+  to make a new account for it: a username (suggested from that account's name), a password and an optional email.
+  The sign-up form's checks all apply (sign-ups open, the captcha, the spam check, rate limits), and the new account
+  is linked straight away.
 - **Empty memcached** from /admin/config's caching panel, for when pages show something out of date. It asks first,
   since the site is slower while the caches fill again, and rate limits and half-done sign-ins start over. Nothing is
   lost: everything kept there is a copy.

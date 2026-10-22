@@ -18,9 +18,12 @@ A member links an outside account to theirs under preferences (security);
 from then on the login page's "sign in with Google" (or Facebook) logs them
 in without their password. Linking is the only way an outside account
 reaches a tippr account: nothing is matched by email address (that would
-let whoever controls an address take over an account), and no new accounts
-are made this way. A member with two-factor sign-in on still enters their
-code after signing in this way.
+let whoever controls an address take over an account). Signing in with an
+outside account nobody linked offers to log in with a password and link
+it, or to make a new account for it (the sign-up form's checks: open
+sign-ups, the captcha, the spam check, a username and password). A member
+with two-factor sign-in on still enters their code after signing in this
+way.
 
 Nothing is built in: an admin turns providers on at /admin/logins with the
 site's own OAuth client ID and secret from each provider (settings saved
