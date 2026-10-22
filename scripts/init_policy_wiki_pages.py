@@ -119,9 +119,23 @@ def main(root_dir=None):
     print("Ensuring required system objects exist...")
     system_user = ensure_account(g.system_user)
     
-    # Ensure automoderator account exists
-    if hasattr(g, 'automoderator_account') and g.automoderator_account:
-        ensure_account(g.automoderator_account)
+    # The account AutoModerator acts as (r2.lib.automoderator): the site's
+    # own, with a password nobody knows, marked so a member's account of the
+    # same name is never used instead
+    if getattr(g, 'automoderator_account', None):
+        import secrets
+        try:
+            automod = Account._by_name(g.automoderator_account)
+        except NotFound:
+            print(f">> Creating the AutoModerator account: {g.automoderator_account}")
+            automod = register(g.automoderator_account,
+                               secrets.token_urlsafe(32), "127.0.0.1")
+            automod.system_account = True
+            automod._commit()
+        if not getattr(automod, "system_account", False):
+            print(f"WARNING: {g.automoderator_account} is a member's account, "
+                  "so AutoModerator stays off; choose another name "
+                  "(TIPPR_AUTOMODERATOR_NAME) and run the installer again")
     
     # Ensure required vaults exist
     ensure_vault(g.default_vault, system_user)

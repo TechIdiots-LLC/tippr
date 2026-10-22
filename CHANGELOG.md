@@ -50,6 +50,10 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **AutoModerator never ran:** the installer gave its queue no processor (reddit's setting) and no account to act
+  as, so vaults' rules (their wiki page config/automoderator) were never applied and new posts piled up in its
+  queue. It runs now, as an `AutoModerator` account the installer makes with no password anyone knows
+  (`TIPPR_AUTOMODERATOR_NAME`, `off` to turn it off). It won't act as a member's account of the same name.
 - **A new logged-out visitor's first page** set the `loid` cookie without being marked private, so a cache in front
   of the site could have handed that cookie to others; it's marked private now.
 - **Preferences pages' text sat against the edge of the page** (only the privacy tab had a margin); they all have

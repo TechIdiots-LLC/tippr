@@ -368,6 +368,9 @@ tippr_secret TIPPR_MEMCACHED_LISTEN default_memcached_listen
 tippr_secret TIPPR_MEMCACHED_ALLOW true
 # this server's name on /admin/servers (its host name unless set)
 tippr_secret TIPPR_SERVER_NAME true
+# the account AutoModerator acts as ("off": no AutoModerator)
+function default_automoderator_name { echo AutoModerator; }
+tippr_secret TIPPR_AUTOMODERATOR_NAME default_automoderator_name
 function default_page_cache_seconds { echo 30; }
 tippr_secret TIPPR_PAGE_CACHE_SECONDS default_page_cache_seconds
 if ! [[ "$TIPPR_PAGE_CACHE_SECONDS" =~ ^[0-9]+$ ]]; then
@@ -1023,6 +1026,12 @@ function cache_settings {
     echo "permacache_memcaches = $TIPPR_MEMCACHED_SERVER"
     echo "hardcache_memcaches = $TIPPR_MEMCACHED_SERVER"
     echo "mcrouter_addr = $TIPPR_MEMCACHED_SERVER"
+    # the account AutoModerator acts as (r2.lib.automoderator)
+    if [ "$TIPPR_AUTOMODERATOR_NAME" != "off" ]; then
+        echo "automoderator_account = $TIPPR_AUTOMODERATOR_NAME"
+    else
+        echo "automoderator_account ="
+    fi
     # this server's name on /admin/servers (r2.lib.server_status)
     if [ -n "$TIPPR_SERVER_NAME" ]; then
         echo "server_name = $TIPPR_SERVER_NAME"
@@ -1741,7 +1750,16 @@ set_consumer_count commentstree_q 1
 set_consumer_count newcomments_q 1
 set_consumer_count vote_link_q 1
 set_consumer_count vote_comment_q 1
-set_consumer_count automoderator_q 0
+# applies each vault's AutoModerator rules (its wiki page
+# config/automoderator) to new posts and comments. Older installs
+# had it at 0 (reddit's default), so 0 becomes 1; another count is kept.
+if [ "$TIPPR_AUTOMODERATOR_NAME" != "off" ]; then
+    if [ "$(cat $CONSUMER_CONFIG_ROOT/automoderator_q 2>/dev/null || echo 0)" = "0" ]; then
+        echo 1 > $CONSUMER_CONFIG_ROOT/automoderator_q
+    fi
+else
+    echo 0 > $CONSUMER_CONFIG_ROOT/automoderator_q
+fi
 set_consumer_count butler_q 1
 set_consumer_count author_query_q 1
 set_consumer_count vault_query_q 1

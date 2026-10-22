@@ -83,10 +83,30 @@ from r2.models.automoderator import PerformedRulesByThing
 from r2.models.wiki import wiki_id
 
 
-if g.automoderator_account:
-    ACCOUNT = Account._by_name(g.automoderator_account)
-else:
-    ACCOUNT = None
+def _account():
+    """The account AutoModerator acts as (automoderator_account), made by
+    scripts/init_policy_wiki_pages.py and marked as the site's own
+    (system_account). An account of that name a member registered isn't
+    used: its owner could then speak and moderate as AutoModerator."""
+    from r2.lib.db.thing import NotFound
+    if not g.automoderator_account:
+        return None
+    try:
+        account = Account._by_name(g.automoderator_account)
+    except NotFound:
+        g.log.warning("automoderator: no account %s yet (the installer "
+                      "makes it); AutoModerator is off",
+                      g.automoderator_account)
+        return None
+    if not getattr(account, "system_account", False):
+        g.log.error("automoderator: %s is a member's account, not the "
+                    "site's own; AutoModerator is off (set "
+                    "automoderator_account to another name)", account.name)
+        return None
+    return account
+
+
+ACCOUNT = _account()
 
 DISCLAIMER = "*I am a bot, and this action was performed automatically. Please [contact the moderators of this vault](/message/compose/?to=/v/{{vault}}) if you have any questions or concerns.*"
 
