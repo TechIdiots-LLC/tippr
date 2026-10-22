@@ -3,6 +3,14 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Update the servers from /admin/servers:** choose a release and each server updates itself within a minute, one
+  at a time, as in the Proxmox upgrade steps. Each server downloads the release's installer from GitHub, checks it
+  against the release's checksums, and makes a site backup first if asked. It then keeps the old code, re-runs the
+  installer and checks the site answers. If it doesn't, the old version goes back. Each server's card shows how it's
+  going.
+  - The web app only asks, through ZooKeeper. A root-owned updater (`tippr-update.timer`) does the work, and
+    downloads only from the repository in root's `/etc/tippr/updates.conf`.
+  - For installs with `tippr-firstboot` (Proxmox containers). `TIPPR_WEB_UPDATES=0` turns it off.
 - **/admin/servers shows when an update is out:** the newest release on GitHub (`release_repo`, checked hourly),
   whether each server runs an older one, and a link to the release notes. Pre-releases are mentioned, not counted.
 - **Sign up with Google, GitHub and the rest:** signing in with an outside account nobody linked now also offers

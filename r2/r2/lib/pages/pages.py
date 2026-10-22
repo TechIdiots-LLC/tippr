@@ -4279,6 +4279,27 @@ class AdminServerStatus(Templated):
                     self.latest_release["version"], s.get("version")))
         self.outdated = [s for s in self.servers
                          if s["update_available"] and not s["stale"]]
+        self.all_releases = releases.releases()["releases"][:15]
+
+        # updating from here (r2.lib.server_update)
+        from r2.lib import server_update
+        self.web_updates = str(g.config.get("web_updates", "")).lower() == "true"
+        self.update_request = server_update.request(g.zookeeper)
+        statuses = server_update.statuses(g.zookeeper)
+        self.update_states = server_update.STATES
+        self.update_active = False
+        for s in self.servers:
+            status = statuses.get(s["id"])
+            if (status and self.update_request and
+                    status.get("request_id") != self.update_request.get("id")):
+                status = dict(status, old=True)
+            s["update_status"] = status
+            if (status and not status.get("old") and
+                    status.get("state") in server_update.ACTIVE_STATES):
+                self.update_active = True
+        if self.update_request:
+            self.update_request["age"] = self._duration(
+                time.time() - self.update_request.get("requested", 0))
 
     @staticmethod
     def _duration(seconds):

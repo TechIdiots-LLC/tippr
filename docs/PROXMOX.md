@@ -201,6 +201,37 @@ copy. To go back to the old code only, keeping data written since, put
 Read the release's CHANGELOG entry before upgrading: anything that needs
 doing by hand is noted there.
 
+### Updating from /admin/servers
+
+The same steps can be started from the site: /admin/servers shows the
+newest release and which servers run an older one. Choose a release and
+**update the servers**. On each server, within a minute, `tippr-update`
+(run by `tippr-update.timer`, as root):
+
+1. waits while another server is updating (one at a time);
+2. downloads the release's installer tarball and `SHA256SUMS` from GitHub
+   and checks the tarball against them;
+3. makes a site backup (`tippr-backup export`), if the box was ticked;
+4. stops the site, keeps the old code as `/home/tippr/src.old`, unpacks the
+   new code and runs `tippr-firstboot <domain>`, as in step 3 above;
+5. checks that the site answers. If it doesn't, it puts the old code back
+   and runs the installer again (the new code is left in
+   `/home/tippr/src.failed`).
+
+Each server's card shows how it's going, with the end of
+`/var/log/tippr-update.log`. Take a snapshot first (step 1 above) all the
+same: going back to it is quicker than anything the updater can do.
+
+The web app only asks (through ZooKeeper); it can't run anything as root.
+The updater is root's own copy (`/usr/local/sbin/tippr-update`, with the
+system Python), and the repository it downloads from is in root's
+`/etc/tippr/updates.conf` (the installer's `TIPPR_RELEASE_REPO`). To turn
+updating from the page off, re-run the installer with
+`TIPPR_WEB_UPDATES=0`. Only installs with `tippr-firstboot` can be updated
+this way; others say so on their card and are upgraded by hand.
+
+`sudo tippr-update --status` shows the request and this server's state.
+
 ## Moving to more containers
 
 A container made from the template holds everything, which suits most

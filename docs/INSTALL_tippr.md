@@ -50,6 +50,8 @@ Set these as environment variables when running the installer:
 | `TIPPR_STARTER_FEEDS` | `auto` | starter feeds for the starter vaults: `auto` adds them on a new site and keeps the site's choice after that, `1` on, `0` off; upgrades add only feeds new to the list ([CONTENT.md](CONTENT.md#feeds)) |
 | `TIPPR_PAGE_CACHE_SECONDS` | `30` | how long nginx keeps a page for logged-out visitors ([below](#caching)); `0` off |
 | `TIPPR_SERVER_NAME` | the host name | this server's name on /admin/servers (servers are also told apart by machine id) |
+| `TIPPR_WEB_UPDATES` | `1` | `1` lets an admin update this server to a new release from /admin/servers (`tippr-update.timer`, as root; only installs with `tippr-firstboot`, a Proxmox container's), `0` turns it off ([PROXMOX.md](PROXMOX.md#updating-from-adminservers)) |
+| `TIPPR_RELEASE_REPO` | `TechIdiots-LLC/tippr` | the GitHub repository releases and updates come from (owner/name) |
 | `TIPPR_MEMCACHED_MB` | `auto` | memcached's memory: `auto` is a quarter of the RAM, 64 to 1024 MB |
 | `TIPPR_MEMCACHED_SERVER` | `127.0.0.1:11211` | the memcached the site uses; with several frontends, a shared one ([below](#several-servers)) |
 | `TIPPR_MEMCACHED_LISTEN`, `TIPPR_MEMCACHED_ALLOW` | `127.0.0.1` | on a shared cache server: its private address, and the frontends' range (let through the firewall) |

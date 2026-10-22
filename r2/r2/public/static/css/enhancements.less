@@ -1062,6 +1062,24 @@ body.prefs-page > main.content {
         p {
             margin-bottom: 8px;
         }
+        select, label {
+            margin-right: 8px;
+        }
+    }
+    .server-update-failed strong, .server-update-rolled_back strong {
+        color: #c0392b;
+    }
+    .server-update-done strong {
+        color: #2e7d32;
+    }
+    .server-update-log {
+        max-height: 20em;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-size: @tp-font-xs;
+        background: @tp-bg;
+        border: 1px solid @tp-border;
+        padding: 6px;
     }
     .server-queues td, .server-queues th {
         padding: 2px 14px 2px 0;

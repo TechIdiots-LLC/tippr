@@ -1,0 +1,16 @@
+[Unit]
+Description=update this server to the release asked for on /admin/servers
+Documentation=file://@TIPPR_SRC@/tippr/docs/PROXMOX.md
+# Not part of tippr.target: it stops and starts it.
+After=network-online.target zookeeper.service
+
+[Service]
+Type=oneshot
+# root: it replaces the code and runs the installer. Root's own copy of
+# scripts/tippr_update.py, with the system Python (not the site user's
+# source tree or virtualenv), and settings from root's
+# /etc/tippr/updates.conf.
+User=root
+ExecStart=/usr/bin/python3 /usr/local/sbin/tippr-update
+# an update re-runs the installer, which can take a while
+TimeoutStartSec=infinity

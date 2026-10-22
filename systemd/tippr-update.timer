@@ -1,0 +1,10 @@
+[Unit]
+Description=Look for an update asked for on /admin/servers every minute
+# Not part of tippr.target: an update stops and starts that.
+
+[Timer]
+OnCalendar=*:0/1
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

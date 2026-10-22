@@ -55,6 +55,42 @@
     %endif
     <p><small>${_("Read the release's notes before updating: anything that needs doing by hand is in them.")}</small></p>
   %endif
+
+  ## updating from here (r2.lib.server_update, tippr-update on each server)
+  %if thing.update_request:
+    <% req = thing.update_request %>
+    <p class="server-update-request">
+      ${_("%(user)s asked for %(version)s %(time)s ago%(backup)s.") % dict(user=req.get('requested_by'), version=req.get('version'), time=req['age'], backup=_(", with a backup first") if req.get('backup') else "")}
+      ${_("Each server updates within a minute or so of its turn, one at a time; the site is down on each for 5-10 minutes while it does. Its state is on its card below.")}
+    </p>
+    %if not thing.update_active:
+      <form action="/post/server_update" method="post" class="pretty-form"
+            onsubmit="return post_form(this, 'server_update')">
+        <input type="hidden" name="do" value="cancel">
+        <button class="btn" type="submit">${_("clear this")}</button>
+        <small>${_("(servers that haven't started don't; this doesn't undo an update)")}</small>
+        <span class="status"></span>
+      </form>
+    %endif
+  %elif thing.web_updates and thing.all_releases:
+    <form action="/post/server_update" method="post" class="pretty-form server-update-form"
+          data-confirm="${_('Update the servers to this release? Each one goes down for 5-10 minutes while it updates, one at a time. Make a Proxmox snapshot first if you can.')}"
+          onsubmit="return confirm(this.getAttribute('data-confirm')) &amp;&amp; post_form(this, 'server_update')">
+      <input type="hidden" name="do" value="update">
+      <select name="version">
+        %for r in thing.all_releases:
+          <option value="${r['version']}" ${'selected' if thing.latest_release and r['version'] == thing.latest_release['version'] else ''}>
+            ${r['version']}${_(" (pre-release)") if r['prerelease'] else ''}</option>
+        %endfor
+      </select>
+      <label><input type="checkbox" name="backup" checked> ${_("make a site backup first")}</label>
+      <button class="btn" type="submit">${_("update the servers")}</button>
+      <span class="status"></span>
+      <br><small>${_("Each server downloads the release's installer from GitHub, checks it against the release's checksums, and re-runs the installer, as in the Proxmox upgrade steps. If the site doesn't come back, it puts the old version back. Only Proxmox containers (with tippr-firstboot) can update this way. A snapshot of the container first is still the surest way back.")}</small>
+    </form>
+  %elif not thing.web_updates:
+    <p><small>${_("Updating from this page is off (TIPPR_WEB_UPDATES=0 in the installer).")}</small></p>
+  %endif
 </div>
 
 %for s in thing.servers:
@@ -84,6 +120,24 @@
               <span class="server-update-available">${_("%(version)s is out") % dict(version=thing.latest_release['version'])}</span>
             %endif
           </td></tr>
+      <% u = s.get('update_status') %>
+      %if u and not u.get('old'):
+        <tr><td>${_("update")}</td>
+            <td class="server-update-state server-update-${u.get('state')}">
+              <strong>${_(thing.update_states.get(u.get('state'), u.get('state') or '?'))}</strong>
+              ${_("to %(version)s") % dict(version=u.get('version'))}
+              %if u.get('from_version'):
+                <small>${_("(from %(version)s)") % dict(version=u['from_version'])}</small>
+              %endif
+              %if u.get('message'):
+                <br><small>${u['message']}</small>
+              %endif
+              %if u.get('log'):
+                <details><summary><small>${_("log")}</small></summary>
+                  <pre class="server-update-log">${"\n".join(u['log'])}</pre></details>
+              %endif
+            </td></tr>
+      %endif
       <tr><td>${_("reported")}</td>
           <td>${_("%(time)s ago") % dict(time=thing._duration(s['age']))}
             %if s['uptime_text']:

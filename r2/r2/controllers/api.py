@@ -5701,6 +5701,38 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        do=VOneOf("do", ("update", "cancel")),
+        version=VLength("version", 40, empty_error=None),
+        backup=VBoolean("backup"),
+    )
+    def POST_server_update(self, form, jquery, do, version, backup):
+        """Ask the servers to update to a release, or take the ask back
+        (/admin/servers; r2.lib.server_update, done by tippr-update on
+        each server)."""
+        from r2.lib import releases, server_update
+        if do == "cancel":
+            server_update.cancel(g.zookeeper)
+            g.log.info("server_update: %s took back the update", c.user.name)
+            form.redirect("/admin/servers")
+            return
+        if do != "update":
+            return
+        release = releases.get((version or "").strip())
+        if not release:
+            form.set_text(".status", _("that isn't a release with an installer"))
+            return
+        if server_update.in_progress(g.zookeeper):
+            form.set_text(".status", _("a server is updating now; wait for it to finish"))
+            return
+        server_update.ask(g.zookeeper, release["version"], c.user.name,
+                          backup=backup)
+        g.log.info("server_update: %s asked for %s (backup: %s)", c.user.name,
+                   release["version"], backup)
+        form.redirect("/admin/servers")
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
     )
     def POST_clear_errors(self, form, jquery):
         """Empty the list on /admin/errors."""
