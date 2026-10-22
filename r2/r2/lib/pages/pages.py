@@ -4192,6 +4192,12 @@ class AdminLiveConfig(Templated):
         self.common = [s for s in self.settings if s["description"]]
         self.other = [s for s in self.settings if not s["description"]]
         self.log = live_config_admin.log_entries()[:50]
+        # how the caches are doing (r2.lib.cache_status)
+        from r2.lib import cache_status
+        self.memcached = cache_status.memcached()
+        self.nginx = cache_status.nginx()
+        self.page_cache_seconds = g.live_config.get(
+            "logged_out_page_cache_seconds") or 0
         Templated.__init__(self)
 
 

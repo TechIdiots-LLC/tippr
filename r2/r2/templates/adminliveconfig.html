@@ -65,6 +65,62 @@
   <p>${_("This site reads its live config from ZooKeeper (liveconfig_source = zookeeper), so it's managed with scripts/write_live_config rather than here. The values in use:")}</p>
 %endif
 
+## how the caches are doing (r2.lib.cache_status); read-only
+<div class="cache-status">
+  <h2>${_("caching")}</h2>
+  <table class="lined-table borderless">
+    %for m in thing.memcached:
+      <tr>
+        <td>${_("memcached")} <code>${m['address']}</code></td>
+        %if m.get('error'):
+          <td class="error">${_("not reachable: %(error)s") % dict(error=m['error'])}</td>
+        %else:
+          <td>
+            ${_("%(used)s MB of %(limit)s MB used (%(percent)s%%), %(items)s items") % dict(used=m['used_mb'], limit=m['limit_mb'], percent=m['used_percent'], items=m['items'])}
+            %if m['hit_percent'] is not None:
+              &middot; ${_("%(hits)s%% of lookups found") % dict(hits=m['hit_percent'])}
+            %endif
+            &middot; ${_("%(evictions)s evicted") % dict(evictions=m['evictions'])}
+            &middot; ${_("up %(hours)s hours") % dict(hours=m['uptime_hours'])}
+            %if m['evictions']:
+              <br><small class="error">${_("It's full and throwing things out to make room: give it more memory (TIPPR_MEMCACHED_MB, re-running the installer on the server it runs on).")}</small>
+            %endif
+          </td>
+        %endif
+      </tr>
+    %endfor
+    <tr>
+      <td>${_("logged-out pages")}</td>
+      <td>
+        %if thing.nginx['page_cache'] is False:
+          ${_("nginx doesn't keep them (TIPPR_PAGE_CACHE_SECONDS=0).")}
+        %elif not thing.page_cache_seconds:
+          ${_("not cached: logged_out_page_cache_seconds below is 0.")}
+        %else:
+          ${_("kept %(seconds)s seconds (logged_out_page_cache_seconds below)") % dict(seconds=thing.page_cache_seconds)}
+          %if thing.nginx['page_cache']:
+            ${_("by nginx, and a CDN in front if there is one.")}
+          %else:
+            ${_("by a cache in front of the site, if it has one.")}
+          %endif
+        %endif
+      </td>
+    </tr>
+    <tr>
+      <td>${_("static files")}</td>
+      <td>
+        %if thing.nginx['static']:
+          ${_("served by nginx, kept by browsers for a year (a day for files without a content hash in the name).")}
+        %elif thing.nginx['static'] is False:
+          ${_("served by the app (development: they change as you edit them).")}
+        %else:
+          ${_("served by the app (re-run the installer to have nginx serve them).")}
+        %endif
+      </td>
+    </tr>
+  </table>
+</div>
+
 <%def name="save_all_bar()">
   %if thing.editable:
     <div class="live-config-save-all">

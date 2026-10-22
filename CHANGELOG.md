@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **How the caches are doing, on /admin/config:** each memcached the site uses (memory used of its size, items,
+  how many lookups find something, and evictions, with a hint to give it more memory when it's full), whether
+  nginx keeps logged-out pages and for how long, and who serves the static files.
 - **The page cache time is a live setting** (`logged_out_page_cache_seconds` on /admin/config): lower it to show
   changes sooner, or set 0 to stop caching logged-out pages at once, without re-running the installer (whose
   `TIPPR_PAGE_CACHE_SECONDS` is the starting value).
