@@ -85,6 +85,28 @@ def memcached():
     return result
 
 
+def flush(address, timeout=2.0):
+    """Empty one memcached (flush_all); raises OSError if it can't.
+
+    Everything kept there is a copy (of Postgres, Cassandra or a page
+    rendered from them), so nothing is lost, but the site is slower until
+    it fills again, and what lives only there starts over: rate limits,
+    sign-ins half done, captchas being answered."""
+    host, _, port = address.rpartition(":")
+    with socket.create_connection((host or "127.0.0.1", int(port)),
+                                  timeout=timeout) as conn:
+        conn.sendall(b"flush_all\r\n")
+        reply = b""
+        while not reply.endswith(b"\r\n"):
+            chunk = conn.recv(256)
+            if not chunk:
+                break
+            reply += chunk
+    reply = reply.decode("ascii", "replace").strip()
+    if reply != "OK":
+        raise OSError(reply or "no reply")
+
+
 def nginx():
     """What the installer set nginx up to cache (it says so in the ini)."""
     page_cache = str(g.config.get("nginx_page_cache", "")).lower()

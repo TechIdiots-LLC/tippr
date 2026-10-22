@@ -65,7 +65,7 @@
   <p>${_("This site reads its live config from ZooKeeper (liveconfig_source = zookeeper), so it's managed with scripts/write_live_config rather than here. The values in use:")}</p>
 %endif
 
-## how the caches are doing (r2.lib.cache_status); read-only
+## how the caches are doing (r2.lib.cache_status), and emptying memcached
 <div class="cache-status">
   <h2>${_("caching")}</h2>
   <table class="lined-table borderless">
@@ -119,6 +119,15 @@
       </td>
     </tr>
   </table>
+  %if thing.memcached:
+    <form action="/post/flush_memcached" method="post" class="pretty-form cache-flush"
+          data-confirm="${_('Empty memcached? The site is slower for a while as it fills again, and rate limits and half-done sign-ins start over.')}"
+          onsubmit="return confirm(this.getAttribute('data-confirm')) && post_form(this, 'flush_memcached');">
+      <button class="btn" type="submit">${_("empty memcached")}</button>
+      <span class="status"></span>
+      <br><small>${_("For when pages show something out of date. Nothing is lost: everything there is a copy and comes back as it's used.")}</small>
+    </form>
+  %endif
 </div>
 
 <%def name="save_all_bar()">

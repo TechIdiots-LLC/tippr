@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Empty memcached** from /admin/config's caching panel, for when pages show something out of date. It asks first,
+  since the site is slower while the caches fill again, and rate limits and half-done sign-ins start over. Nothing is
+  lost: everything kept there is a copy.
 - **Sign in with GitHub or Discord:** /admin/logins offers both next to Google and Facebook, with the site's own OAuth
   app from each. Members link them under preferences → security, as with the others. Neither shares an email address
   with the site: the linked account shows its GitHub or Discord username.

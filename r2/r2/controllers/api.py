@@ -5114,6 +5114,25 @@ class ApiController(TipprController):
         else:
             form.set_text(".save-all-status", _("nothing changed"))
 
+    @validatedForm(VAdmin(), VModhash())
+    def POST_flush_memcached(self, form, jquery):
+        """Empty every memcached the site uses (/admin/config's caching
+        panel; r2.lib.cache_status.flush)."""
+        from r2.lib import cache_status
+        failed = []
+        for address in cache_status.servers():
+            try:
+                cache_status.flush(address)
+            except (OSError, ValueError) as e:
+                failed.append("%s (%s)" % (address, e))
+        g.log.info("flush_memcached: %s emptied memcached%s", c.user.name,
+                   ", except " + ", ".join(failed) if failed else "")
+        if failed:
+            form.set_text(".status", _("couldn't empty: %(servers)s")
+                          % dict(servers=", ".join(failed)))
+        else:
+            form.refresh()
+
     @validatedForm(
         VAdmin(),
         VModhash(),
