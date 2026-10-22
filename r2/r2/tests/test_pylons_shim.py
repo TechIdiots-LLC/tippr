@@ -48,3 +48,47 @@ def test_translator_push_and_get():
     pylons.translator._push_object(trans)
     assert hasattr(pylons.translator._stack[-1], 'gettext')
     pylons.translator._pop_object()
+
+
+def test_request_locals_are_per_thread():
+    # paster serves requests from a thread pool: what one request pushes
+    # (c, the translator, ...) must not be seen or popped by another.
+    import threading
+    from types import SimpleNamespace
+
+    shared = pylons.tmpl_context._current_obj()
+    first_pushed = threading.Event()
+    second_done = threading.Event()
+    seen = {}
+
+    def first():
+        pylons._begin_request()
+        pylons.tmpl_context._push_object(SimpleNamespace(user='first'))
+        first_pushed.set()
+        second_done.wait(5)
+        seen['first'] = pylons.tmpl_context.user
+        pylons.tmpl_context._pop_object()
+        pylons._end_request()
+
+    def second():
+        first_pushed.wait(5)
+        pylons._begin_request()
+        # sees the shared default, not the first request's object
+        seen['second_start'] = pylons.tmpl_context._current_obj()
+        pylons.tmpl_context._push_object(SimpleNamespace(user='second'))
+        seen['second'] = pylons.tmpl_context.user
+        pylons.tmpl_context._pop_object()
+        # an extra pop must not remove the shared default
+        pylons.tmpl_context._pop_object()
+        pylons._end_request()
+        second_done.set()
+
+    threads = [threading.Thread(target=first), threading.Thread(target=second)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(10)
+
+    assert seen == {'first': 'first', 'second_start': shared,
+                    'second': 'second'}
+    assert pylons.tmpl_context._current_obj() is shared

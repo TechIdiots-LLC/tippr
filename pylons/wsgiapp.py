@@ -104,6 +104,40 @@ class _AttribSafeTmplContext(_DefaultTmplContext):
         return ''
 
 
+class _ClosingIterator:
+    """Wraps a response iterator; when it runs out or is closed (WSGI servers
+    close it even if they never iterated), pops the request's pylons locals
+    and ends the request."""
+
+    def __init__(self, app_iter):
+        self._app_iter = app_iter
+        self._closed = False
+
+    def __iter__(self):
+        try:
+            for chunk in self._app_iter:
+                yield chunk
+        finally:
+            self.close()
+
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            close = getattr(self._app_iter, 'close', None)
+            if close is not None:
+                close()
+        finally:
+            for local in (pylons.request, pylons.response, pylons.tmpl_context,
+                          pylons.translator, pylons.app_globals):
+                try:
+                    local._pop_object()
+                except Exception:
+                    pass
+            pylons._end_request()
+
+
 class PylonsApp:
     """A very small PylonsApp polyfill.
 
@@ -152,10 +186,24 @@ class PylonsApp:
         environ['pylons.environ_config'] = self.environ_config
 
     def __call__(self, environ, start_response):
+        # Everything pushed from here on belongs to this thread's request; the
+        # request ends when the response has been sent (closing_iterator) or
+        # on one of the early returns below.
+        pylons._begin_request()
+        try:
+            return self._handle(environ, start_response)
+        except BaseException:
+            pylons._end_request()
+            raise
+
+    def _handle(self, environ, start_response):
+        """Run the request; returns the response iterator. Every return path
+        that doesn't hand back closing_iterator() ends the request itself."""
         # Ensure environment is prepared (push request/response, tmpl context)
         try:
             self.setup_app_env(environ, start_response)
         except Exception as e:
+            pylons._end_request()
             tb = traceback.format_exc()
             start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
             return [f"Setup error: {e}\n\n{tb}".encode('utf-8')]
@@ -169,6 +217,7 @@ class PylonsApp:
         controller_name = routes_dict.get('controller')
 
         if not controller_name:
+            pylons._end_request()
             start_response('404 Not Found', [('Content-Type', 'text/plain')])
             return [b'Not Found']
 
@@ -190,6 +239,7 @@ class PylonsApp:
                 controller_cls = None
 
         if controller_cls is None:
+            pylons._end_request()
             start_response('404 Not Found', [('Content-Type', 'text/plain')])
             return [b'Not Found']
 
@@ -198,36 +248,11 @@ class PylonsApp:
             controller = controller_cls()
             resp_iter = controller(environ, start_response)
 
-            # Ensure pushed pylons locals are popped when the response is
-            # finished or the iterator is closed.
-            def closing_iterator(it):
-                try:
-                    for chunk in it:
-                        yield chunk
-                finally:
-                    try:
-                        pylons.request._pop_object()
-                    except Exception:
-                        pass
-                    try:
-                        pylons.response._pop_object()
-                    except Exception:
-                        pass
-                    try:
-                        pylons.tmpl_context._pop_object()
-                    except Exception:
-                        pass
-                    try:
-                        pylons.translator._pop_object()
-                    except Exception:
-                        pass
-                    try:
-                        pylons.app_globals._pop_object()
-                    except Exception:
-                        pass
-
-            return closing_iterator(resp_iter)
+            # Pop the pylons locals and end the request once the response
+            # is finished or the iterator is closed.
+            return _ClosingIterator(resp_iter)
         except Exception as e:
+            pylons._end_request()
             tb = traceback.format_exc()
             start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
             return [f"Error: {e}\n\n{tb}".encode('utf-8')]

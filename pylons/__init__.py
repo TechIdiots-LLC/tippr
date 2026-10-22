@@ -19,67 +19,153 @@ Provides simple LocalStack objects for `config`, `app_globals`, `tmpl_context`, 
 `translator`, and a small url pushable object. This is intentionally lightweight
 and intended to be replaced by Pyramid-specific code during migration.
 """
+import threading
 from typing import Any, List
 from types import SimpleNamespace
 
 from .configuration import PylonsConfig
 
 
-class LocalStack:
+# Per-thread request bookkeeping. paster serves requests from a thread pool,
+# so anything pushed while handling a request (request, response, c, the
+# translator, ...) must only be visible to that thread. Objects pushed outside
+# a request (config, app_globals and the defaults below, at startup) are shared
+# by every thread.
+_request_state = threading.local()
+
+
+def _begin_request():
+    """Start a request on this thread: pushes from now on are thread-local.
+
+    Nested calls (an app re-entered for an include or an error page while a
+    request is running) keep the outer request's objects.
+    """
+    depth = getattr(_request_state, 'depth', 0)
+    if depth == 0:
+        # a new generation makes every stack start this request empty
+        _request_state.generation = getattr(_request_state, 'generation', 0) + 1
+    _request_state.depth = depth + 1
+
+
+def _end_request():
+    """End the request started by the matching _begin_request()."""
+    depth = getattr(_request_state, 'depth', 0)
+    if depth > 0:
+        _request_state.depth = depth - 1
+
+
+class _ThreadAwareStack:
+    """Storage shared by LocalStack and UrlPushable.
+
+    Outside a request, pushes and pops act on a process-wide base stack. During
+    a request (see _begin_request) they act on a per-thread layer above it,
+    which starts empty each request, so concurrent requests can't see or pop
+    each other's objects.
+    """
+
+    def __init__(self):
+        object.__setattr__(self, '_base', [])
+        object.__setattr__(self, '_local', threading.local())
+
+    def _layer(self):
+        """This request's thread-local list, or None outside a request."""
+        if getattr(_request_state, 'depth', 0) <= 0:
+            return None
+        local = self._local
+        if getattr(local, 'generation', None) != _request_state.generation:
+            local.items = []
+            local.generation = _request_state.generation
+        return local.items
+
+    @property
+    def _stack(self) -> List[Any]:
+        """The objects visible to this thread, bottom to top.
+
+        Outside a request this is the shared base list itself; during a request
+        it is a copy (base plus this request's objects), so read it, don't
+        modify it.
+        """
+        layer = self._layer()
+        if layer is None:
+            return self._base
+        return self._base + layer
+
+    @_stack.setter
+    def _stack(self, value) -> None:
+        object.__setattr__(self, '_base', list(value))
+
+    def _top(self):
+        layer = self._layer()
+        if layer:
+            return True, layer[-1]
+        if self._base:
+            return True, self._base[-1]
+        return False, None
+
+    def _push_object(self, obj: Any) -> None:
+        layer = self._layer()
+        (self._base if layer is None else layer).append(obj)
+
+    # Accept an optional `obj` argument for compatibility with some
+    # Paste versions that call `_pop_object(obj)`.
+    def _pop_object(self, obj: Any = None) -> Any:
+        layer = self._layer()
+        if layer is None:
+            return self._base.pop()
+        # never let a request pop the shared objects underneath it
+        return layer.pop() if layer else None
+
+
+class LocalStack(_ThreadAwareStack):
     """A tiny stack-like holder that forwards attribute and item access to the
     currently pushed object.
     """
 
-    def __init__(self):
-        self._stack: List[Any] = []
-
-    def _push_object(self, obj: Any) -> None:
-        self._stack.append(obj)
-    # Accept an optional `obj` argument for compatibility with some
-    # Paste versions that call `_pop_object(obj)`.
-    def _pop_object(self, obj: Any = None) -> Any:
-        return self._stack.pop()
-
     def _current_obj(self) -> Any:
         """The object currently pushed (Pylons' StackedObjectProxy API)."""
-        if not self._stack:
+        found, top = self._top()
+        if not found:
             raise TypeError("no object pushed to LocalStack")
-        return self._stack[-1]
+        return top
 
     def __getattr__(self, name: str) -> Any:
-        if not self._stack:
+        found, top = self._top()
+        if not found:
             raise AttributeError(f"no object pushed to LocalStack (requested {name})")
-        return getattr(self._stack[-1], name)
+        return getattr(top, name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name == '_stack':
-            # Allow setting the internal _stack attribute
+        if name in ('_stack', '_base', '_local'):
+            # internal attributes (``_stack`` goes through its property)
             object.__setattr__(self, name, value)
-        elif self._stack:
+            return
+        found, top = self._top()
+        if found:
             # Forward attribute setting to the top of the stack
-            setattr(self._stack[-1], name, value)
+            setattr(top, name, value)
         else:
             raise AttributeError(f"no object pushed to LocalStack (cannot set {name})")
 
     def get(self, key, default=None):
-        if not self._stack:
+        found, top = self._top()
+        if not found:
             return default
-        top = self._stack[-1]
         try:
             return top.get(key, default)
         except Exception:
             return getattr(top, key, default)
 
     def __getitem__(self, key):
-        if not self._stack:
+        found, top = self._top()
+        if not found:
             raise KeyError(key)
-        return self._stack[-1][key]
+        return top[key]
 
     def __bool__(self):
-        return bool(self._stack)
+        return self._top()[0]
 
 
-class UrlPushable:
+class UrlPushable(_ThreadAwareStack):
     """Holds a pushed URL generator (e.g. routes.util.URLGenerator).
 
     Only minimal API is implemented (_push_object/_pop_object). If code calls
@@ -87,20 +173,8 @@ class UrlPushable:
     underlying generator.
     """
 
-    def __init__(self):
-        self._stack: List[Any] = []
-
-    def _push_object(self, obj: Any) -> None:
-        self._stack.append(obj)
-    # Accept an optional `obj` argument for compatibility with some
-    # Paste versions that call `_pop_object(obj)`.
-    def _pop_object(self, obj: Any = None) -> Any:
-        return self._stack.pop()
-
     def _get_current(self):
-        if not self._stack:
-            return None
-        return self._stack[-1]
+        return self._top()[1]
 
     def url_for(self, *args, **kwargs):
         gen = self._get_current()
