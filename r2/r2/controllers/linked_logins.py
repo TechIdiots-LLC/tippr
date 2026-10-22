@@ -12,7 +12,7 @@
 # The Initial Developer of the Original Code is TechIdiots LLC.
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""Signing in with, and linking, Google and Facebook accounts
+"""Signing in with, and linking, Google, Facebook, GitHub and Discord accounts
 (r2.lib.linked_logins)."""
 
 import json

@@ -438,7 +438,7 @@ def make_map(config):
     mc('/api/privacy/requests', controller='privacy',
        action='privacy_requests_json')
     
-    # r2.lib.linked_logins: signing in with a linked Google/Facebook account
+    # r2.lib.linked_logins: signing in with a linked Google/Facebook/GitHub/Discord account
     mc('/logins/start/:provider', controller='linkedlogins', action='start')
     mc('/logins/callback/:provider', controller='linkedlogins',
        action='callback')

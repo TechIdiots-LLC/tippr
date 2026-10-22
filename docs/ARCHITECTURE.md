@@ -101,7 +101,7 @@ With admin mode on (`/adminon`, which requires TOTP in production):
 | `/admin/users`, `/admin/vaults` | find and manage accounts and vaults |
 | `/admin/feeds` | the feeds that post into vaults |
 | `/admin/payments` | payment providers for gold and ads ([gold-payments.md](gold-payments.md)) |
-| `/admin/logins` | "sign in with Google / Facebook" (linked sign-ins) |
+| `/admin/logins` | "sign in with Google / Facebook / GitHub / Discord" (linked sign-ins) |
 | `/admin/support` | the support queue (messages to the admins) |
 | `/admin/apps`, `/admin/domains` | API apps, banned domains |
 | `/admin/antispam` | the captcha (built-in, Turnstile, hCaptcha, reCAPTCHA) and CleanTalk |

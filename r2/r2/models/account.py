@@ -584,7 +584,7 @@ class Account(Thing):
         except NotFound:
             pass
 
-        # its linked Google/Facebook sign-ins go now: they mustn't sign in
+        # its linked sign-ins (Google, GitHub...) go now: they mustn't sign in
         # to a deleted account (r2.lib.linked_logins)
         try:
             from r2.lib import linked_logins

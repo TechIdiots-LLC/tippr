@@ -22,7 +22,7 @@
 <h1>${_("sign-in providers")}</h1>
 
 <p>
-  ${_("Members can link a Google or Facebook account to theirs (preferences, security) and then sign in with it instead of their password. It only signs in to accounts that linked it: nothing is matched by email address, and no new accounts are made this way. A member with two-factor sign-in still enters their code. Settings saved here override the ini file and apply immediately.")}
+  ${_("Members can link a Google, Facebook, GitHub or Discord account to theirs (preferences, security) and then sign in with it instead of their password. It only signs in to accounts that linked it: nothing is matched by email address, and no new accounts are made this way. A member with two-factor sign-in still enters their code. Settings saved here override the ini file and apply immediately.")}
 </p>
 <p>
   ${_("Each provider needs an OAuth app of this site's own: create one in the provider's console, add the redirect address shown below to it, and enter its client ID and secret here.")}
@@ -61,8 +61,12 @@
           <br><small>
           %if p["name"] == "google":
             ${_("Google Cloud console: APIs & Services, Credentials, create an OAuth client ID (web application) and add this as an authorized redirect URI. Set up the OAuth consent screen first (scopes: email, profile, openid).")}
-          %else:
+          %elif p["name"] == "facebook":
             ${_("Meta for Developers: create an app with Facebook Login, and add this under Facebook Login, Settings, Valid OAuth Redirect URIs. The app ID is the client ID; the app secret is under App settings, Basic.")}
+          %elif p["name"] == "github":
+            ${_("GitHub, Settings, Developer settings, OAuth Apps: register a new OAuth app (not a GitHub App) with this as its authorization callback URL. Its client ID is shown there; generate a client secret on the same page.")}
+          %elif p["name"] == "discord":
+            ${_("Discord Developer Portal: create an application, then under OAuth2 add this as a redirect. The client ID and client secret (reset it to see one) are on the same page.")}
           %endif
           &#32;<a href="${p['console']}" target="_blank" rel="noopener">${_("open the console")}</a>
           </small>

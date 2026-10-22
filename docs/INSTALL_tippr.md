@@ -98,7 +98,7 @@ the admin account, plus the site's signing secrets. It keeps them in
    - `/admin/feeds`: the feeds that post into vaults. The installer adds
      the starter feeds for the starter vaults on a new site
      (`TIPPR_STARTER_FEEDS`, [CONTENT.md](CONTENT.md#feeds)).
-   - `/admin/logins`: "sign in with Google" or Facebook, with your own
+   - `/admin/logins`: "sign in with" Google, Facebook, GitHub or Discord, with your own
      OAuth app from each (optional).
    - `/admin/config`: the live settings (who's staff, captcha and vault
      creation thresholds, sidebar and welcome messages).

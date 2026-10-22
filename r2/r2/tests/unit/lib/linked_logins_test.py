@@ -113,3 +113,39 @@ class TestLinkedLogins(TipprTestCase):
         with patch("r2.lib.linked_logins.account_id_for", lambda p, s: 2):
             with self.assertRaises(linked_logins.LoginError):
                 linked_logins.link(account, "google", {"subject": "x"})
+
+    @patch("r2.lib.linked_logins.requests")
+    def test_github_and_discord_names(self, requests_mock):
+        requests_mock.RequestException = Exception
+        requests_mock.post.return_value = response({"access_token": "tok"})
+        for provider, person, name in (
+                ("github", {"id": 583231, "login": "octocat",
+                            "name": "The Octocat", "email": None}, "octocat"),
+                ("discord", {"id": "80351110224678912", "username": "nelly",
+                             "global_name": "Nelly"}, "nelly")):
+            requests_mock.get.return_value = response(person)
+            with patch("r2.lib.linked_logins.login_settings",
+                       lambda: dict(SETTINGS, **{
+                           provider + "_enabled": True,
+                           provider + "_client_id": "id",
+                           provider + "_client_secret": "secret"})):
+                _, token = linked_logins.start(provider, "login")
+                _, identity = linked_logins.finish(provider, "code", token,
+                                                   token)
+            self.assertEqual(identity, {"subject": str(person["id"]),
+                                        "email": None, "name": name})
+
+    def test_the_api_lists_every_provider(self):
+        # r2.controllers.api.LOGIN_PROVIDERS (read from the source: the
+        # controllers aren't imported in the unit tests)
+        import ast
+        import os
+        import r2
+        path = os.path.join(os.path.dirname(r2.__file__), "controllers",
+                            "api.py")
+        with open(path, encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+        listed = [ast.literal_eval(node.value) for node in tree.body
+                  if isinstance(node, ast.Assign) and
+                  getattr(node.targets[0], "id", None) == "LOGIN_PROVIDERS"]
+        self.assertEqual(listed, [tuple(linked_logins.PROVIDER_ORDER)])

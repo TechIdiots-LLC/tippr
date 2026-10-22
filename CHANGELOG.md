@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Sign in with GitHub or Discord:** /admin/logins offers both next to Google and Facebook, with the site's own OAuth
+  app from each. Members link them under preferences → security, as with the others. Neither shares an email address
+  with the site: the linked account shows its GitHub or Discord username.
 - **Feed flags:** a feed on /admin/feeds can mark every post it makes NSFW and give them an AI label (human-made,
   AI-assisted or AI-generated). A label the vault doesn't accept is refused when the feed is saved. Lists for
   `scripts/import_feeds.py` take `nsfw` and `ai:human` / `ai:assisted` / `ai:generated` on a feed's line.

@@ -21,7 +21,7 @@ member has already (or the password, for the first one). With it on, a
 code (or a passkey) is asked for:
 
 - always, for what matters most: changing the password or email address,
-  linking or unlinking a Google/Facebook sign-in, turning two-factor off
+  linking or unlinking a Google/GitHub/etc. sign-in, turning two-factor off
   and deleting the account (the last two want a code typed then and there);
 - and where the member chooses (preferences, security): when logging in
   (by password or a linked account), when saving preferences, and when

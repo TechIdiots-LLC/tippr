@@ -86,7 +86,7 @@
     <h2>${_("also ask for a code")}</h2>
       <p>
         <input type="checkbox" name="otp_login" id="otp_login" ${"checked" if c.user.pref_otp_login else ""}>
-        <label for="otp_login">${_("when logging in, with your password or a linked Google/Facebook account")}</label>
+        <label for="otp_login">${_("when logging in, with your password or a linked account (Google, GitHub...)")}</label>
         <br><small>${_("you can choose to skip it for %(days)s days on a device you trust") % dict(days=thing.device_days)}</small>
       </p>
       <p>
@@ -226,7 +226,7 @@
 %if thing.linked:
 <h1>${_("sign in with another account")}</h1>
 <div class="linked-logins">
-  <p>${_("Link a Google or Facebook account to sign in with it instead of your password. It only signs in to this account, and you can unlink it at any time. Your password keeps working.")}</p>
+  <p>${_("Link a Google, Facebook, GitHub or Discord account to sign in with it instead of your password. It only signs in to this account, and you can unlink it at any time. Your password keeps working.")}</p>
   %if thing.just_linked:
     <p class="linked-logins-done">${_("Linked. You can now sign in with it on the login page.")}</p>
   %endif

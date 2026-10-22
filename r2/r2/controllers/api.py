@@ -171,6 +171,22 @@ def site_info_text_lengths():
             for name in site_info.TEXT_SETTINGS}
 
 
+# r2.lib.linked_logins.PROVIDER_ORDER (that module opens the database when
+# it's imported, so not here; linked_logins_test checks they match)
+LOGIN_PROVIDERS = ("google", "facebook", "github", "discord")
+
+
+def login_settings_validators():
+    """/admin/logins' fields, for each provider."""
+    validators = {}
+    for p in LOGIN_PROVIDERS:
+        validators[p + "_enabled"] = VBoolean(p + "_enabled")
+        for field in ("_client_id", "_client_secret"):
+            validators[p + field] = VLength(p + field, max_length=300,
+                                            empty_error=None)
+    return validators
+
+
 class ApiController(TipprController):
     """
     Controller which deals with almost all AJAX site interaction.  
@@ -4919,16 +4935,7 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
-        google_enabled=VBoolean("google_enabled"),
-        google_client_id=VLength("google_client_id", max_length=300,
-                                 empty_error=None),
-        google_client_secret=VLength("google_client_secret", max_length=300,
-                                     empty_error=None),
-        facebook_enabled=VBoolean("facebook_enabled"),
-        facebook_client_id=VLength("facebook_client_id", max_length=300,
-                                   empty_error=None),
-        facebook_client_secret=VLength("facebook_client_secret",
-                                       max_length=300, empty_error=None),
+        **login_settings_validators()
     )
     def POST_login_settings(self, form, jquery, **values):
         """Save the sign-in providers on /admin/logins (r2.lib.linked_logins;
@@ -4963,10 +4970,10 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VTwoFactor("otp", "linked_logins"),
-        provider=VOneOf("provider", ("google", "facebook")),
+        provider=VOneOf("provider", LOGIN_PROVIDERS),
     )
     def POST_unlink_login(self, form, jquery, provider):
-        """Unlink a Google or Facebook account from yours (preferences,
+        """Unlink a linked sign-in (Google, GitHub...) from yours (preferences,
         security)."""
         from r2.lib import linked_logins
         if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
@@ -4980,10 +4987,10 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VTwoFactor("otp", "linked_logins"),
-        provider=VOneOf("provider", ("google", "facebook")),
+        provider=VOneOf("provider", LOGIN_PROVIDERS),
     )
     def POST_start_link_login(self, form, jquery, provider):
-        """Link a Google or Facebook account, for a member with two-factor
+        """Link a sign-in (Google, GitHub...), for a member with two-factor
         sign-in: the code first, then off to the provider."""
         if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
             return

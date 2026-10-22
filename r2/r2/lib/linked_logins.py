@@ -12,7 +12,7 @@
 # The Initial Developer of the Original Code is TechIdiots LLC.
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""Signing in with a linked Google or Facebook account.
+"""Signing in with a linked Google, Facebook, GitHub or Discord account.
 
 A member links an outside account to theirs under preferences (security);
 from then on the login page's "sign in with Google" (or Facebook) logs them
@@ -73,8 +73,30 @@ PROVIDERS = {
         "pkce": False,
         "console": "https://developers.facebook.com/apps/",
     },
+    # (GitHub's and Discord's say only who it is, not an email address)
+    "github": {
+        "name": N_("GitHub"),
+        "authorize": "https://github.com/login/oauth/authorize",
+        "token": "https://github.com/login/oauth/access_token",
+        "userinfo": "https://api.github.com/user",
+        "scope": "read:user",
+        "pkce": False,
+        "console": "https://github.com/settings/developers",
+        # what to show the member as the account's name, first found
+        "name_keys": ("login", "name"),
+    },
+    "discord": {
+        "name": N_("Discord"),
+        "authorize": "https://discord.com/oauth2/authorize",
+        "token": "https://discord.com/api/oauth2/token",
+        "userinfo": "https://discord.com/api/users/@me",
+        "scope": "identify",
+        "pkce": False,
+        "console": "https://discord.com/developers/applications",
+        "name_keys": ("username", "global_name"),
+    },
 }
-PROVIDER_ORDER = ["google", "facebook"]
+PROVIDER_ORDER = ["google", "facebook", "github", "discord"]
 
 SETTINGS = {}
 for _p in PROVIDER_ORDER:
@@ -140,7 +162,7 @@ METADATA = make_metadata(ENGINE)
 links_table = sa.Table(
     "account_logins", METADATA,
     sa.Column("provider", sa.String, primary_key=True),
-    # the provider's id for the person (Google's "sub", Facebook's "id")
+    # the provider's id for the person (Google's "sub", the others' "id")
     sa.Column("subject", sa.String, primary_key=True),
     sa.Column("account_id", sa.BigInteger, nullable=False),
     # what the provider said when it was linked, to show the member which
@@ -309,8 +331,13 @@ def finish(provider, code, state, cookie_state):
     subject = person.get("sub") or person.get("id")
     if not subject:
         raise LoginError("%s didn't say who signed in." % info["name"])
+    name = None
+    for key in info.get("name_keys", ("name",)):
+        if person.get(key):
+            name = str(person[key])
+            break
     identity = {"subject": str(subject), "email": person.get("email"),
-                "name": person.get("name")}
+                "name": name}
     return record, identity
 
 
