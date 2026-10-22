@@ -366,6 +366,8 @@ tippr_secret TIPPR_MEMCACHED_MB default_memcached_mb
 tippr_secret TIPPR_MEMCACHED_SERVER default_memcached_server
 tippr_secret TIPPR_MEMCACHED_LISTEN default_memcached_listen
 tippr_secret TIPPR_MEMCACHED_ALLOW true
+# this server's name on /admin/servers (its host name unless set)
+tippr_secret TIPPR_SERVER_NAME true
 function default_page_cache_seconds { echo 30; }
 tippr_secret TIPPR_PAGE_CACHE_SECONDS default_page_cache_seconds
 if ! [[ "$TIPPR_PAGE_CACHE_SECONDS" =~ ^[0-9]+$ ]]; then
@@ -1021,6 +1023,10 @@ function cache_settings {
     echo "permacache_memcaches = $TIPPR_MEMCACHED_SERVER"
     echo "hardcache_memcaches = $TIPPR_MEMCACHED_SERVER"
     echo "mcrouter_addr = $TIPPR_MEMCACHED_SERVER"
+    # this server's name on /admin/servers (r2.lib.server_status)
+    if [ -n "$TIPPR_SERVER_NAME" ]; then
+        echo "server_name = $TIPPR_SERVER_NAME"
+    fi
     # what nginx caches, for /admin/config to show (r2.lib.cache_status)
     if [ "$TIPPR_PAGE_CACHE_SECONDS" != "0" ]; then
         echo "nginx_page_cache = true"
@@ -1810,6 +1816,8 @@ TIPPR_TIMERS=(
     # works out which vaults are like which, for the explore page
     # (r2.lib.vault_similarity)
     tippr-job-vault_similarity.timer
+    # this server's state for /admin/servers, every minute (on every server)
+    tippr-job-server_status.timer
 )
 
 ###############################################################################

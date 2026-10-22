@@ -5601,6 +5601,19 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        server=VLength("server", 40),
+    )
+    def POST_forget_server(self, form, jquery, server):
+        """Take a server off /admin/servers (one out of service); it comes
+        back if it reports again."""
+        from r2.lib import server_status
+        if server:
+            server_status.forget(g.zookeeper, server)
+        form.redirect("/admin/servers")
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
     )
     def POST_clear_errors(self, form, jquery):
         """Empty the list on /admin/errors."""

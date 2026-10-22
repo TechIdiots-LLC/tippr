@@ -4201,6 +4201,84 @@ class AdminLiveConfig(Templated):
         Templated.__init__(self)
 
 
+class AdminServerStatus(Templated):
+    """/admin/servers: each server's last report (r2.lib.server_status),
+    with what to look at flagged, and the site's queues."""
+    DISK_WARN = 85      # percent full
+    MEMORY_WARN = 90    # percent used
+    LOAD_WARN = 1.5     # 5-minute load per CPU
+
+    def __init__(self):
+        from r2.lib import server_status
+        servers = server_status.read_all(g.zookeeper)
+        versions = {(s.get("version"), s.get("commit")) for s in servers
+                    if not s["stale"]}
+        names = [s.get("name") for s in servers]
+        for s in servers:
+            warnings = []
+            if s["stale"]:
+                warnings.append(_("not heard from for %(time)s") % dict(
+                    time=self._duration(s["age"])))
+            mem = s.get("memory") or {}
+            s["memory_percent"] = (round(100.0 * mem["used"] / mem["total"])
+                                   if mem.get("total") else None)
+            if (s["memory_percent"] or 0) >= self.MEMORY_WARN:
+                warnings.append(_("memory %(p)s%% used") % dict(p=s["memory_percent"]))
+            load5 = (s.get("load") or [0, 0, 0])[1]
+            s["load_per_cpu"] = round(load5 / (s.get("cpus") or 1), 2)
+            if s["load_per_cpu"] >= self.LOAD_WARN:
+                warnings.append(_("busy: load %(l)s on %(n)s CPUs") % dict(
+                    l=load5, n=s.get("cpus")))
+            for d in s.get("disks") or []:
+                d["percent"] = (round(100.0 * d["used"] / d["total"])
+                                if d.get("total") else 0)
+                if d["percent"] >= self.DISK_WARN:
+                    warnings.append(_("disk %(path)s %(p)s%% full") % dict(
+                        path=d["path"], p=d["percent"]))
+            for svc in s.get("services") or []:
+                if svc["state"] != "active":
+                    warnings.append(_("%(service)s is %(state)s") % dict(
+                        service=svc["label"], state=svc["state"]))
+            if len(versions) > 1 and not s["stale"]:
+                warnings.append(_("a different version from the others"))
+            if names.count(s.get("name")) > 1:
+                warnings.append(_("another server has the same name: set "
+                                  "TIPPR_SERVER_NAME on one of them"))
+            s["warnings"] = warnings
+            s["uptime_text"] = (self._duration(s["uptime"])
+                                if s.get("uptime") else "")
+        self.servers = servers
+        self.queues = self._queues()
+        Templated.__init__(self)
+
+    @staticmethod
+    def _duration(seconds):
+        seconds = int(seconds or 0)
+        if seconds < 120:
+            return _("%(n)s seconds") % dict(n=seconds)
+        if seconds < 7200:
+            return _("%(n)s minutes") % dict(n=seconds // 60)
+        if seconds < 2 * 86400:
+            return _("%(n)s hours") % dict(n=seconds // 3600)
+        return _("%(n)s days") % dict(n=seconds // 86400)
+
+    @staticmethod
+    def _queues():
+        """[(name, messages waiting, consumers)] for the site's queues, or
+        None if RabbitMQ can't be asked."""
+        from r2.lib import amqp
+        try:
+            chan = amqp.connection_manager.get_channel()
+            result = []
+            for queue in g.queues:
+                ok = chan.queue_declare(queue=queue.name, passive=True)
+                result.append((queue.name, ok[1], ok[2]))
+            return sorted(result, key=lambda q: -q[1])
+        except Exception as e:
+            g.log.info("server status: couldn't ask RabbitMQ: %s", e)
+            return None
+
+
 class AdminSiteSettings(Templated):
     """The admin interface for the site settings (r2.lib.site_info)."""
     def __init__(self, image_errors=None, logo_error=None):

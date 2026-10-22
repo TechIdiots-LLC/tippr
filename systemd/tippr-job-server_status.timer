@@ -1,0 +1,10 @@
+[Unit]
+Description=Report this server's state for /admin/servers every minute
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:0/1
+AccuracySec=10s
+
+[Install]
+WantedBy=tippr.target

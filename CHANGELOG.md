@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/servers:** every server's version, load, memory, disks and services, reported by each once a minute
+  (`tippr-job-server_status`, a small script that doesn't load the app), with warnings for one that went quiet, is
+  short of disk or memory, is busy, has a service down or runs a different version from the others; plus the
+  RabbitMQ queues and whether anything is processing them. Servers are told apart by machine id and named by
+  `TIPPR_SERVER_NAME` (default: the host name). Only the latest report is kept; one gone for 7 days drops off.
 - **How the caches are doing, on /admin/config:** each memcached the site uses (memory used of its size, items,
   how many lookups find something, and evictions, with a hint to give it more memory when it's full), whether
   nginx keeps logged-out pages and for how long, and who serves the static files.

@@ -40,6 +40,7 @@ from r2.lib.pages import (
     AdminGold,
     AdminLiveConfig,
     AdminLoginSettings,
+    AdminServerStatus,
     AdminPage,
     AdminPaymentSettings,
     AdminSiteSettings,
@@ -131,6 +132,12 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_logins(self):
         return AdminPage(content=AdminLoginSettings()).render()
+
+    @validate(VAdmin())
+    def GET_servers(self):
+        """Each server's version, load, memory, disks and services
+        (r2.lib.server_status)."""
+        return AdminPage(content=AdminServerStatus()).render()
 
     @validate(VAdmin())
     def GET_payments(self):

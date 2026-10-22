@@ -965,3 +965,81 @@ body.prefs-page > main.content {
         font-weight: bold;
     }
 }
+// /admin/servers
+.admin-servers {
+    max-width: 60em;
+    > p {
+        margin-bottom: 10px;
+    }
+    .server-card {
+        margin: 0 0 16px;
+        padding: 10px 14px;
+        border: 1px solid @tp-border;
+        border-radius: 6px;
+        background: @tp-surface;
+        h2 small {
+            font-weight: normal;
+            color: @tp-text-muted;
+        }
+        td {
+            padding: 3px 12px 3px 0;
+            vertical-align: top;
+        }
+        td:first-child {
+            white-space: nowrap;
+            font-weight: bold;
+        }
+    }
+    .server-warn {
+        border-color: #d9a33b;
+    }
+    .server-stale {
+        opacity: .7;
+    }
+    .server-warnings {
+        margin: 4px 0 8px 18px;
+        color: #b5651d;
+        list-style: disc;
+    }
+    .server-bar {
+        display: inline-block;
+        width: 120px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 4px;
+        background: @tp-gray;
+        vertical-align: middle;
+        span {
+            display: block;
+            height: 100%;
+            border-radius: 4px;
+            background: @tp-accent;
+        }
+        .server-bar-warn {
+            background: #d9534f;
+        }
+    }
+    .server-service {
+        display: inline-block;
+        margin: 0 4px 4px 0;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: @tp-font-xs;
+    }
+    .server-service-up {
+        background: #2e7d4f;
+        color: #fff;
+    }
+    .server-service-down {
+        background: #c0392b;
+        color: #fff;
+    }
+    .server-queues td, .server-queues th {
+        padding: 2px 14px 2px 0;
+        text-align: left;
+    }
+    .server-queue-warn td {
+        color: #c0392b;
+        font-weight: bold;
+    }
+}

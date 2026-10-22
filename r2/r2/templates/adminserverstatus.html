@@ -1,0 +1,113 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## /admin/servers: each server's last report (r2.lib.server_status)
+
+<%!
+  def size(n):
+      return "%.1f GB" % ((n or 0) / 1024.0 ** 3)
+%>
+
+<div class="admin-servers">
+<h1>${_("servers")}</h1>
+<p>${_("Each server reports its state here once a minute (tippr-job-server_status). Only the latest report is kept; a server that stops reporting is flagged after 3 minutes and dropped after 7 days, or forget it below once it's out of service.")}</p>
+
+%if not thing.servers:
+  <p class="error">${_("No server has reported yet. Reports start within a minute of installing or upgrading (the tippr-job-server_status timer).")}</p>
+%endif
+
+%for s in thing.servers:
+  <div class="server-card ${'server-stale' if s['stale'] else ''} ${'server-warn' if s['warnings'] else ''}">
+    <h2>
+      ${s.get('name')}
+      <small><code>${s['id']}</code>
+      %if s.get('host') and s.get('host') != s.get('name'):
+        &middot; ${s['host']}
+      %endif
+      </small>
+    </h2>
+    %if s['warnings']:
+      <ul class="server-warnings">
+        %for w in s['warnings']:
+          <li>${w}</li>
+        %endfor
+      </ul>
+    %endif
+    <table class="lined-table borderless">
+      <tr><td>${_("version")}</td>
+          <td>${s.get('version') or '?'}
+            %if s.get('commit'):
+              <small>(<code>${s['commit']}</code>)</small>
+            %endif
+          </td></tr>
+      <tr><td>${_("reported")}</td>
+          <td>${_("%(time)s ago") % dict(time=thing._duration(s['age']))}
+            %if s['uptime_text']:
+              &middot; ${_("up %(time)s") % dict(time=s['uptime_text'])}
+            %endif
+          </td></tr>
+      <tr><td>${_("load")}</td>
+          <td>${" / ".join("%.2f" % x for x in s.get('load') or [])}
+            <small>${_("(1, 5 and 15 minutes, on %(n)s CPUs)") % dict(n=s.get('cpus'))}</small></td></tr>
+      <% m = s.get('memory') or {} %>
+      <tr><td>${_("memory")}</td>
+          <td>
+            %if m.get('total'):
+              ${_("%(used)s of %(total)s used (%(p)s%%)") % dict(used=size(m['used']), total=size(m['total']), p=s['memory_percent'])}
+              %if m.get('swap_total'):
+                <small>&middot; ${_("swap %(used)s of %(total)s") % dict(used=size(m['swap_used']), total=size(m['swap_total']))}</small>
+              %endif
+            %endif
+          </td></tr>
+      %for d in s.get('disks') or []:
+        <tr><td>${_("disk")} <code>${d['path']}</code></td>
+            <td>
+              <span class="server-bar"><span style="width: ${d['percent']}%"
+                class="${'server-bar-warn' if d['percent'] >= thing.DISK_WARN else ''}"></span></span>
+              ${_("%(used)s of %(total)s used (%(p)s%%), %(free)s free") % dict(used=size(d['used']), total=size(d['total']), p=d['percent'], free=size(d['free']))}
+              <br><small>${", ".join(d['labels'])}</small>
+            </td></tr>
+      %endfor
+      <tr><td>${_("services")}</td>
+          <td>
+            %for svc in s.get('services') or []:
+              <span class="server-service server-service-${'up' if svc['state'] == 'active' else 'down'}"
+                    title="${svc['unit']}: ${svc['state']}">${svc['label']}</span>
+            %endfor
+          </td></tr>
+    </table>
+    <form action="/post/forget_server" method="post" class="pretty-form"
+          onsubmit="return confirm('${_("Forget this server? It comes back if it reports again.")}') &amp;&amp; post_form(this, 'forget_server')">
+      <input type="hidden" name="server" value="${s['id']}">
+      <button class="btn" type="submit">${_("forget")}</button>
+      <span class="status"></span>
+    </form>
+  </div>
+%endfor
+
+<h2>${_("queues")}</h2>
+%if thing.queues is None:
+  <p class="error">${_("RabbitMQ couldn't be asked about its queues.")}</p>
+%else:
+  <p>${_("Work waiting for the queue processors (tippr-consumers). A queue that keeps growing means they aren't keeping up, or aren't running.")}</p>
+  <table class="lined-table borderless server-queues">
+    <tr><th>${_("queue")}</th><th>${_("waiting")}</th><th>${_("processors")}</th></tr>
+    %for name, waiting, consumers in thing.queues:
+      <tr class="${'server-queue-warn' if waiting > 1000 or not consumers else ''}">
+        <td><code>${name}</code></td><td>${waiting}</td><td>${consumers}</td></tr>
+    %endfor
+  </table>
+%endif
+</div>
