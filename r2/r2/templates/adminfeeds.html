@@ -15,6 +15,7 @@
 
 ## /admin/feeds: feeds posted to vaults by bot accounts (r2.lib.feeds)
 <%!
+  from r2.lib import ai_content
   from r2.lib.utils import timesince
 %>
 
@@ -53,6 +54,18 @@
         <td><input type="text" name="title_prefix" size="20" maxlength="40"
                    value="${(feed['title_prefix'] or '') if feed else ''}" placeholder="[Blog]">
           <br><small>${_("Optional, put before each post's title.")}</small></td></tr>
+      <tr><th>${_("NSFW")}</th>
+        <td><label><input type="checkbox" name="over_18"
+                   ${'checked' if feed and feed['over_18'] else ''}>
+          ${_("mark every post NSFW")}</label></td></tr>
+      <tr><th>${_("AI label")}</th>
+        <td><select name="ai_content">
+            <option value="">${_("not labelled")}</option>
+            %for label in ai_content.LABELS:
+              <option value="${label}" ${'selected' if feed and feed['ai_content'] == label else ''}>${_(ai_content.LABEL_NAMES[label])}</option>
+            %endfor
+          </select>
+          <br><small>${_("Put on every post, as a member labels their own. It must be one the vault accepts.")}</small></td></tr>
     </table>
     <button class="btn" type="submit">${_("add the feed") if what == 'add' else _("save")}</button>
     <span class="status"></span>
@@ -88,6 +101,12 @@
           <small><a href="${f['url']}" rel="nofollow noopener">${f['url']}</a></small>
           %if f['title_prefix']:
             <br><small>${_("titles start with")} <code>${f['title_prefix']}</code></small>
+          %endif
+          %if f['over_18'] or f['ai_content']:
+            <br><small>${_("posts are marked")}
+              ${", ".join(([_("NSFW")] if f['over_18'] else []) +
+                          ([_(ai_content.LABEL_NAMES[f['ai_content']])]
+                           if f['ai_content'] in ai_content.LABEL_NAMES else []))}</small>
           %endif
           %if not f['enabled']:
             <br><strong>${_("paused")}</strong>

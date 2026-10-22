@@ -16,8 +16,10 @@
 """Add many feeds to /admin/feeds at once, from a list.
 
 Each line of the list has a vault (/v/name), a feed address and, if you
-like, a [prefix] for the posts' titles, separated by tabs, commas or spaces;
-anything else on a line is ignored, and a line without a vault uses the
+like, a [prefix] for the posts' titles, separated by tabs, commas or spaces.
+A line can also mark the feed's posts: "nsfw" marks them NSFW, and
+"ai:human", "ai:assisted" or "ai:generated" gives them that AI label (it
+must be one the vault accepts). Anything else on a line is ignored, and a line without a vault uses the
 vault of the line above (so a table copied from a page or a spreadsheet
 works). Lines starting with # are skipped. An address can be a site's page
 instead of its feed: if the page links to its feed, that's what is added.
@@ -62,7 +64,7 @@ import requests
 from lxml import html
 
 import r2
-from r2.lib import feeds, starter_content
+from r2.lib import ai_content, feeds, starter_content
 from r2.lib.db.thing import NotFound
 from r2.models import Vault
 
@@ -74,6 +76,9 @@ FEED_TYPES = ("application/rss+xml", "application/atom+xml",
 URL_RE = re.compile(r"https?://[^\s|<>\"',]+")
 VAULT_RE = re.compile(r"(?:^|[\s|,;])/?v/([A-Za-z0-9_]{2,21})\b")
 PREFIX_RE = re.compile(r"(\[[^\[\]\t|]{1,38}\])")
+NSFW_RE = re.compile(r"(?:^|[\s|,;])nsfw(?=$|[\s|,;])", re.I)
+AI_RE = re.compile(r"(?:^|[\s|,;])ai[:=](%s)(?=$|[\s|,;])"
+                   % "|".join(ai_content.LABELS), re.I)
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; tippr-feeds/1.0)"}
 
 
@@ -107,7 +112,7 @@ def resolve(url):
 
 
 def read_list(path):
-    """[(line number, vault name, address, prefix)]"""
+    """[(line number, vault name, address, prefix, nsfw, AI label)]"""
     entries, vault_name = [], None
     with open(path, encoding="utf-8") as f:
         for number, line in enumerate(f, 1):
@@ -119,9 +124,13 @@ def read_list(path):
             url_match = URL_RE.search(line)
             if url_match and vault_name:
                 prefix = PREFIX_RE.search(line)
+                rest = line.replace(url_match.group(0), " ")
+                ai_label = AI_RE.search(rest)
                 entries.append((number, vault_name,
                                 url_match.group(0).rstrip(".;)"),
-                                prefix.group(1) if prefix else None))
+                                prefix.group(1) if prefix else None,
+                                bool(NSFW_RE.search(rest)),
+                                ai_label.group(1).lower() if ai_label else None))
             elif url_match:
                 print("SKIPPED  line %-3d no vault before it" % number)
     return entries
@@ -187,14 +196,14 @@ def starter_entries(choice, bot, entries):
         # get theirs
         have = {f["vault_id"] for f in bot_feeds(bot)}
         names = {}
-        for _number, vault_name, url, _prefix in entries:
+        for _number, vault_name, url, *_flags in entries:
             if vault_name not in names:
                 try:
                     names[vault_name] = Vault._by_name(vault_name)._id
                 except NotFound:
                     names[vault_name] = None
         offered = {starter_content.feed_key(vault_name, url)
-                   for _number, vault_name, url, _prefix in entries
+                   for _number, vault_name, url, *_flags in entries
                    if names[vault_name] in have}
         starter_content.record_feeds(offered)
     new = [e for e in entries
@@ -231,7 +240,7 @@ def main():
     counts = {}
     # (vault id, feed address) of everything in the list, for FEEDS_SYNC
     wanted = set()
-    for number, vault_name, url, prefix in entries:
+    for number, vault_name, url, prefix, over_18, ai_label in entries:
         try:
             vault = Vault._by_name(vault_name)
         except NotFound:
@@ -268,14 +277,22 @@ def main():
             counts["already there"] = counts.get("already there", 0) + 1
             done.append(starter_content.feed_key(vault_name, url))
             continue
+        if ai_label and ai_label not in ai_content.allowed_labels(vault.ai_policy):
+            print("REFUSED  line %-3d /v/%-14s %s: the vault doesn't accept "
+                  "ai:%s posts" % (number, vault.name, feed_url, ai_label))
+            counts["refused"] = counts.get("refused", 0) + 1
+            continue
         if adding:
-            feeds.add(feed_url, vault, account, interval, prefix)
+            feeds.add(feed_url, vault, account, interval, prefix,
+                      over_18=over_18, ai_content=ai_label)
             existing.add(key)
             done.append(starter_content.feed_key(vault_name, url))
         result = "added" if adding else "to add"
-        print("%-8s line %-3d /v/%-14s %-12s %s  \"%s\", %d items%s"
+        flags = "".join(("  nsfw" if over_18 else "",
+                         "  ai:%s" % ai_label if ai_label else ""))
+        print("%-8s line %-3d /v/%-14s %-12s %s  \"%s\", %d items%s%s"
               % (result.upper(), number, vault.name, prefix or "", feed_url,
-                 title, n, found))
+                 title, n, flags, found))
         counts[result] = counts.get(result, 0) + 1
 
     if syncing:

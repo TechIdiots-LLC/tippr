@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Feed flags:** a feed on /admin/feeds can mark every post it makes NSFW and give them an AI label (human-made,
+  AI-assisted or AI-generated). A label the vault doesn't accept is refused when the feed is saved. Lists for
+  `scripts/import_feeds.py` take `nsfw` and `ai:human` / `ai:assisted` / `ai:generated` on a feed's line.
 - **Activity on the traffic pages:** /traffic (staff) shows what people did, for the last 24 hours, 7 days and 30
   days and by day: new visitors, sign-ups and logins (and failed ones), password resets, posts, comments, upvotes and
   downvotes, reports, moderator actions (also by type), messages and modmail. A vault's /about/traffic shows its own

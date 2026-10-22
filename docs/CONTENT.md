@@ -38,7 +38,10 @@ preview).
 Vaults can fill themselves from RSS and Atom feeds (/admin/feeds): every
 15 minutes `tippr-job-feeds` checks the feeds that are due and posts their
 new items into each feed's vault, from a bot account, with an optional
-title prefix such as `[NASA]`. `scripts/starter_feeds.txt` lists public
+title prefix such as `[NASA]`. A feed can also mark every post it makes
+NSFW and give them an AI label (human-made, AI-assisted or AI-generated,
+one the vault accepts); in a list for `import_feeds.py`, put `nsfw` or
+`ai:generated` (etc.) on the feed's line. `scripts/starter_feeds.txt` lists public
 feeds for the starter vaults. The installer adds them on a new site
 (`TIPPR_STARTER_FEEDS`: `auto`, the default, adds them on a new site and
 keeps the site's choice after that; `1` turns them on, `0` off), and on

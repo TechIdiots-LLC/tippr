@@ -5336,9 +5336,12 @@ class ApiController(TipprController):
         bot_name=VLength("bot", max_length=20, empty_error=None),
         interval=VInt("interval", min=1, max=10080),
         title_prefix=VLength("title_prefix", max_length=40, empty_error=None),
+        over_18=VBoolean("over_18"),
+        # "" leaves the posts unlabelled
+        ai_label=VOneOf("ai_content", (None, "") + ai_content.LABELS),
     )
     def POST_admin_feed(self, form, jquery, do, feed_id, url, vault_name,
-                        bot_name, interval, title_prefix):
+                        bot_name, interval, title_prefix, over_18, ai_label):
         """Add, edit, check now, enable, disable or delete a feed
         (/admin/feeds, r2.lib.feeds)."""
         from r2.lib import feeds
@@ -5356,6 +5359,15 @@ class ApiController(TipprController):
             except NotFound:
                 form.set_text(".status", _("no such vault"))
                 return
+            if (errors.INVALID_OPTION, "ai_content") in c.errors:
+                form.set_text(".status", _("pick one of the AI labels"))
+                return
+            if (ai_label and ai_label not in
+                    ai_content.allowed_labels(vault.ai_policy)):
+                form.set_text(".status", _("/v/%(vault)s doesn't accept %(label)s posts")
+                              % dict(vault=vault.name,
+                                     label=_(ai_content.LABEL_NAMES[ai_label])))
+                return
             bot_name = (bot_name or "").strip()
             if not chkuser(bot_name):
                 form.set_text(".status", _("give the bot account a valid username"))
@@ -5370,7 +5382,8 @@ class ApiController(TipprController):
                 form.set_text(".status", _("that account is suspended or deleted"))
                 return
             if do == "add":
-                feeds.add(url, vault, account, interval, title_prefix)
+                feeds.add(url, vault, account, interval, title_prefix,
+                          over_18=over_18, ai_content=ai_label)
             else:
                 if not feeds.get_feed(feed_id):
                     form.set_text(".status", _("no such feed"))
@@ -5380,7 +5393,8 @@ class ApiController(TipprController):
                              interval_minutes=max(feeds.MIN_INTERVAL_MINUTES,
                                                   interval or
                                                   feeds.DEFAULT_INTERVAL_MINUTES),
-                             title_prefix=(title_prefix or "").strip() or None)
+                             title_prefix=(title_prefix or "").strip() or None,
+                             over_18=bool(over_18), ai_content=ai_label or None)
             g.log.info("admin_feed: %s %s %s -> /v/%s as %s", c.user.name, do,
                        url, vault.name, account.name)
             form.refresh()

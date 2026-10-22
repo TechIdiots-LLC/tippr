@@ -64,6 +64,11 @@ feeds = sa.Table(
     sa.Column("posted", sa.Integer, nullable=False, default=0),
     # the feed's own title, from the last fetch
     sa.Column("feed_title", sa.String, nullable=True),
+    # flags put on every post: NSFW, and the AI label (r2.lib.ai_content;
+    # None leaves the posts unlabelled)
+    sa.Column("over_18", sa.Boolean, nullable=False, default=False,
+              server_default=sa.false()),
+    sa.Column("ai_content", sa.String, nullable=True),
 )
 
 feed_items = sa.Table(
@@ -78,6 +83,27 @@ feed_items = sa.Table(
 
 create_table(feeds)
 create_table(feed_items, [index_str(feed_items, "url", "url")])
+
+
+def _add_new_columns():
+    """create_table doesn't change a table that exists: add the columns
+    that came after it was made."""
+    if not g.db_create_tables:
+        return
+    try:
+        have = {col["name"] for col in sa.inspect(ENGINE).get_columns("feeds")}
+        with ENGINE.begin() as conn:
+            if "over_18" not in have:
+                conn.execute(sa.text("ALTER TABLE feeds ADD COLUMN over_18 "
+                                     "boolean NOT NULL DEFAULT false"))
+            if "ai_content" not in have:
+                conn.execute(sa.text("ALTER TABLE feeds ADD COLUMN ai_content "
+                                     "varchar"))
+    except sa.exc.SQLAlchemyError as e:
+        g.log.warning("feeds: couldn't add the new columns: %s", e)
+
+
+_add_new_columns()
 
 
 class FeedError(Exception):
@@ -203,7 +229,7 @@ def get_feed(feed_id):
 
 
 def add(url, vault, account, interval_minutes=DEFAULT_INTERVAL_MINUTES,
-        title_prefix=None):
+        title_prefix=None, over_18=False, ai_content=None):
     interval = max(MIN_INTERVAL_MINUTES, int(interval_minutes or
                                              DEFAULT_INTERVAL_MINUTES))
     with ENGINE.begin() as conn:
@@ -211,6 +237,7 @@ def add(url, vault, account, interval_minutes=DEFAULT_INTERVAL_MINUTES,
             url=url, vault_id=vault._id, account_id=account._id,
             enabled=True, interval_minutes=interval,
             title_prefix=(title_prefix or "").strip() or None,
+            over_18=bool(over_18), ai_content=ai_content or None,
             created=_now(), posted=0))
         return result.inserted_primary_key[0]
 
@@ -246,7 +273,11 @@ def _post(feed, vault, account, item):
     title = re.sub(r"\s+", " ", title).strip()[:300]
     link = Link._submit(is_self=False, title=title, content=item["url"],
                         author=account, vault=vault, ip="0.0.0.0",
-                        sendreplies=False)
+                        sendreplies=False,
+                        ai_content=feed.get("ai_content") or None)
+    if feed.get("over_18") and not link.over_18:
+        link.over_18 = True
+        link._commit()
     queries.new_link(link)
     try:
         link.update_search_index()

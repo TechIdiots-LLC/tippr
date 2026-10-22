@@ -1,6 +1,7 @@
 # Starter feeds for scripts/import_feeds.py: public RSS/Atom feeds for the
 # vaults scripts/create_default_vaults.py makes, so a new site has something
-# to read. One per line: vault, [title prefix], feed address.
+# to read. One per line: vault, [title prefix], feed address, and optionally
+# "nsfw" and "ai:human", "ai:assisted" or "ai:generated" for its posts.
 
 # Business and finance (/v/business isn't a front page default)
 /v/business	[WSJ]	https://feeds.content.dowjones.io/public/rss/RSSMarketsMain
