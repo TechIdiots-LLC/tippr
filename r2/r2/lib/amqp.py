@@ -72,6 +72,7 @@ class Config:
         self.stats = g.stats
         self.queues = g.queues
         self.reset_caches = g.reset_caches
+        self.cache = g.gencache
 
 
 class Worker:
@@ -234,6 +235,48 @@ def add_item(routing_key, body, message_id=None,
 def add_kw(routing_key, **kw):
     add_item(routing_key, pickle.dumps(kw))
 
+
+# handle_items() consumers poll with basic.get, so RabbitMQ doesn't count
+# them as consumers. Each one says it's alive in memcache instead, and
+# has_consumer() reads that: the optional queues (the comment tree fast
+# lane, the sharded queues) are only used while something is taking items
+# from them, so turning one on before its consumers run never strands items.
+HEARTBEAT_SECONDS = 30
+HEARTBEAT_TTL = 120
+_heartbeats = {}
+_consumer_seen = {}
+
+
+def _heartbeat_key(queue):
+    return "amqp_consumer_alive-" + queue
+
+
+def _heartbeat(queue):
+    now = time.time()
+    if now - _heartbeats.get(queue, 0) < HEARTBEAT_SECONDS:
+        return
+    _heartbeats[queue] = now
+    try:
+        cfg.cache.set(_heartbeat_key(queue), int(now), time=HEARTBEAT_TTL)
+    except Exception as e:
+        cfg.log.warning("amqp: couldn't record a heartbeat for %s: %r",
+                        queue, e)
+
+
+def has_consumer(queue):
+    """Whether a handle_items() consumer took items from queue lately
+    (memcache is asked at most every HEARTBEAT_SECONDS)."""
+    now = time.time()
+    seen = _consumer_seen.get(queue)
+    if seen and now - seen[0] < HEARTBEAT_SECONDS:
+        return seen[1]
+    try:
+        alive = bool(cfg.cache.get(_heartbeat_key(queue)))
+    except Exception:
+        alive = False
+    _consumer_seen[queue] = (now, alive)
+    return alive
+
 def consume_items(queue, callback, verbose=True):
     """A lighter-weight version of handle_items that uses AMQP's
        basic.consume instead of basic.get. Callback is only passed a
@@ -306,6 +349,8 @@ def handle_items(queue, callback, ack=True, limit=1, min_size=0,
         if countdown == 0:
             break
 
+        if not drain:
+            _heartbeat(queue)
         msg = chan.basic_get(queue)
         if not msg and drain:
             return

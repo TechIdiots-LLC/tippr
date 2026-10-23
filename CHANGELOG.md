@@ -2,9 +2,18 @@
 
 ## master
 ### ✨ Features and improvements
+- **Busy threads can get their own comment queue:** `fastlane_links` (now described on /admin/config) sends new
+  comments on the listed threads to `commentstree_fastlane_q`, so a flood of comments there doesn't slow down comment
+  trees elsewhere. The installer and Docker run its consumer.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
+- **The fast lane and the sharded queues had no consumers:** listing a thread in `fastlane_links`, or turning on a
+  `shard_*_queues` setting, sent items to queues nothing read, so those comment trees and listings stopped updating.
+  Each now has consumer units (`tippr-consumer-<queue>_shard_q@1` to `@10`, which the installer starts when the
+  setting is on), and an optional queue is used only while its consumer runs; otherwise items stay on the main
+  queue. Domain shards were picked with Python's `hash()`, which differs from process to process, so one domain
+  could land on any shard; they use a stable hash now.
 - _...Add new stuff here..._
 
 ## 0.17.0

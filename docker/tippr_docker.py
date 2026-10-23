@@ -73,7 +73,7 @@ DEFAULT_CONSUMERS = {
     "commentstree_q": 1, "newcomments_q": 1, "vote_link_q": 1,
     "vote_comment_q": 1, "automoderator_q": 0, "butler_q": 1,
     "author_query_q": 1, "vault_query_q": 1, "domain_query_q": 1,
-    "privacy_export_q": 1, "search_q": 1,
+    "privacy_export_q": 1, "search_q": 1, "commentstree_fastlane_q": 1,
 }
 
 # the timers install/tippr.sh enables; TIPPR_JOBS (comma separated timer

@@ -1065,14 +1065,30 @@ def new_link(link):
     amqp.add_item('new_link', link._fullname)
 
 
+def commentstree_queue(link_id):
+    """The queue for a new comment on link_id. Busy threads (fastlane_links
+    on /admin/config) get their own queue so they don't hold up the rest,
+    and shard_commentstree_queues spreads the others over ten queues by
+    link, to cut lock contention. Either is used only while it has a
+    consumer, otherwise comments go to commentstree_q."""
+    if utils.to36(link_id) in g.live_config["fastlane_links"]:
+        if amqp.has_consumer("commentstree_fastlane_q"):
+            return "commentstree_fastlane_q"
+    if g.shard_commentstree_queues:
+        shard = "commentstree_%d_q" % (link_id % 10)
+        if amqp.has_consumer(shard):
+            return shard
+    return "commentstree_q"
+
+
+def run_commentstree_shard(instance):
+    """Consumer for one commentstree shard (the systemd instance number,
+    1-10, is the shard plus one)."""
+    run_commentstree(qname="commentstree_%d_q" % ((int(instance) - 1) % 10))
+
+
 def add_to_commentstree_q(comment):
-    if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
-        amqp.add_item('commentstree_fastlane_q', comment._fullname)
-    elif g.shard_commentstree_queues:
-        amqp.add_item('commentstree_%d_q' % (comment.link_id % 10),
-                      comment._fullname)
-    else:
-        amqp.add_item('commentstree_q', comment._fullname)
+    amqp.add_item(commentstree_queue(comment.link_id), comment._fullname)
 
 
 def update_comment_notifications(comment, inbox_rels):

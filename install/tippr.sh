@@ -1857,6 +1857,21 @@ set_consumer_count author_query_q 1
 set_consumer_count vault_query_q 1
 set_consumer_count domain_query_q 1
 set_consumer_count privacy_export_q 1
+# comments on the threads in fastlane_links (/admin/config) go to their
+# own queue; one idle consumer waits for them
+set_consumer_count commentstree_fastlane_q 1
+# the shard_*_queues ini settings split a queue ten ways to cut lock
+# contention on big sites: one consumer per shard (instance n is shard n-1).
+# Until they run, items stay on the main queue.
+for kind in commentstree author_query vault_query domain_query; do
+    if grep -qiE "^shard_${kind}_queues *= *(true|yes|on|1) *$" "$TIPPR_SRC/tippr/r2/run.ini" 2>/dev/null; then
+        if [ "$(cat $CONSUMER_CONFIG_ROOT/${kind}_shard_q 2>/dev/null || echo 0)" = "0" ]; then
+            echo 10 > $CONSUMER_CONFIG_ROOT/${kind}_shard_q
+        fi
+    else
+        echo 0 > $CONSUMER_CONFIG_ROOT/${kind}_shard_q
+    fi
+done
 
 chown -R $TIPPR_USER:$TIPPR_GROUP $CONSUMER_CONFIG_ROOT/
 

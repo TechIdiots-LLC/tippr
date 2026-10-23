@@ -24,6 +24,7 @@
 ###############################################################################
 
 import json
+import zlib
 from collections import defaultdict
 from datetime import datetime
 
@@ -189,12 +190,28 @@ def consume_link_vote_queue(qname="vote_link_q"):
 SORTS = ["hot", "top", "controversial"]
 
 
+QUERY_SHARDS = 10
+
+
+def _query_queue(kind, sharded, shard_key):
+    """The queue for a <kind>_query_q update: one of its QUERY_SHARDS
+    shards when sharding is on (shard_<kind>_query_queues in the ini) and
+    that shard has a consumer, otherwise the main queue."""
+    if sharded:
+        shard = "%s_query_%d_q" % (kind, shard_key % QUERY_SHARDS)
+        if amqp.has_consumer(shard):
+            return shard
+    return "%s_query_q" % kind
+
+
+def query_shard_queue(kind, instance):
+    """The shard queue a systemd instance (1-QUERY_SHARDS) consumes."""
+    return "%s_query_%d_q" % (kind, (int(instance) - 1) % QUERY_SHARDS)
+
+
 def add_to_author_query_q(link):
-    if g.shard_author_query_queues:
-        author_shard = link.author_id % 10
-        queue_name = "author_query_%s_q" % author_shard
-    else:
-        queue_name = "author_query_q"
+    queue_name = _query_queue(
+        "author", g.shard_author_query_queues, link.author_id)
     amqp.add_item(queue_name, link._fullname)
 
 
@@ -236,11 +253,8 @@ def consume_author_query_queue(qname="author_query_q", limit=1000):
 
 
 def add_to_vault_query_q(link):
-    if g.shard_vault_query_queues:
-        vault_shard = link.vault_id % 10
-        queue_name = "vault_query_%s_q" % vault_shard
-    else:
-        queue_name = "vault_query_q"
+    queue_name = _query_queue(
+        "vault", g.shard_vault_query_queues, link.vault_id)
     amqp.add_item(queue_name, link._fullname)
 
 
@@ -286,11 +300,11 @@ def add_to_domain_query_q(link):
         # no valid domains found
         return
 
-    if g.shard_domain_query_queues:
-        domain_shard = hash(parsed.hostname) % 10
-        queue_name = "domain_query_%s_q" % domain_shard
-    else:
-        queue_name = "domain_query_q"
+    # crc32 rather than hash(), which differs from process to process for
+    # strings, so a domain always lands on the same shard
+    queue_name = _query_queue(
+        "domain", g.shard_domain_query_queues,
+        zlib.crc32(parsed.hostname.encode("utf-8")))
     amqp.add_item(queue_name, link._fullname)
 
 

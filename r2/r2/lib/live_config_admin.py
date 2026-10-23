@@ -98,6 +98,12 @@ COMMON = [
         "Total karma (posts and comments) needed to register an API app.")),
     ("app_create_require_verified_email", N_(
         "Whether registering an API app needs a verified email address.")),
+    ("fastlane_links", N_(
+        "Busy threads whose new comments get a queue of their own, so a "
+        "flood of comments there doesn't slow down comments everywhere "
+        "else: the ids of their posts (the part of a post's address after "
+        "/comments/), comma-separated. Remove a thread once it calms "
+        "down.")),
     ("cflag_min_votes", N_(
         "Votes a post or comment needs before it can count as controversial.")),
     ("cflag_lower_bound", N_(
