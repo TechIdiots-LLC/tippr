@@ -26,54 +26,55 @@
 
 
 import argparse
+import datetime
+import hashlib
 import mimetypes
 import os
 import urllib.parse
 
-import boto
+import boto3
 
-NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
+NEVER = datetime.datetime(2037, 12, 31, 23, 59, 59,
+                          tzinfo=datetime.timezone.utc)
 
 
 def upload(static_root, bucket_url):
-    s3 = boto.connect_s3()
-    bucket = s3.get_bucket(bucket_url.netloc, validate=False)
+    """Upload the built static files under static_root to an S3 bucket
+    (s3://bucket/prefix), skipping files already there unchanged.
+    Credentials come from boto3's usual places (environment, ~/.aws)."""
+    bucket = boto3.resource("s3").Bucket(bucket_url.netloc)
+    prefix = bucket_url.path.lstrip("/")
 
     # build a list of files already in the bucket
     print("checking existing files on s3...")
-    remote_files = {key.name : key.etag.strip('"') for key in bucket.list()}
+    remote_files = {obj.key: obj.e_tag.strip('"')
+                    for obj in bucket.objects.filter(Prefix=prefix)}
 
     # upload local files not already in the bucket
     for root, dirs, files in os.walk(static_root):
         for file in files:
             absolute_path = os.path.join(root, file)
             relative_path = os.path.relpath(absolute_path, start=static_root)
-            key_name = os.path.join(bucket_url.path, relative_path).lstrip("/")
+            key_name = os.path.join(prefix, relative_path).lstrip("/")
 
             type, encoding = mimetypes.guess_type(file)
             if not type:
                 continue
-            headers = {}
-            headers['Expires'] = NEVER
-            headers['Content-Type'] = type
+            extra = {"ContentType": type, "Expires": NEVER,
+                     "ACL": "public-read"}
             if encoding:
-                headers['Content-Encoding'] = encoding
+                extra["ContentEncoding"] = encoding
 
-            key = bucket.new_key(key_name)
             with open(absolute_path, 'rb') as f:
-                etag, base64_tag = key.compute_md5(f)
+                data = f.read()
 
-                # don't upload the file if it already exists unmodified in the bucket
-                if remote_files.get(key_name, None) == etag:
-                    continue
+            # don't upload the file if it already exists unmodified in the
+            # bucket (a single-part upload's ETag is the MD5 of the file)
+            if remote_files.get(key_name) == hashlib.md5(data).hexdigest():
+                continue
 
-                print("uploading", key_name, "to S3...")
-                key.set_contents_from_file(
-                    f,
-                    headers=headers,
-                    policy='public-read',
-                    md5=(etag, base64_tag),
-                )
+            print("uploading", key_name, "to S3...")
+            bucket.put_object(Key=key_name, Body=data, **extra)
 
     print("all done")
 
