@@ -1126,6 +1126,38 @@ class VNotInTimeout(Validator):
             return False
 
 
+PASSWORD_RECHECK_FAILURES = 10  # wrong passwords per account per window
+PASSWORD_RECHECK_SECONDS = 600
+
+
+def recheck_password(account, password):
+    """The signed-in member's password, asked for again (changing the email
+    address or password, admin mode, two-factor changes...). Like logging
+    in, the wrong ones are counted: after PASSWORD_RECHECK_FAILURES in
+    PASSWORD_RECHECK_SECONDS, every try fails until the window passes, so
+    someone with a stolen session can't guess the password at bcrypt speed.
+    (A limited try counts as a wrong password, not an error of its own: the
+    callers only look for WRONG_PASSWORD.)"""
+    limit = None
+    key = getattr(account, "_id36", None)
+    if key and not g.disable_ratelimit:
+        limit = ratelimit.SimpleRateLimit(
+            "password_recheck_" + key, seconds=PASSWORD_RECHECK_SECONDS,
+            limit=PASSWORD_RECHECK_FAILURES)
+        try:
+            if not limit.check():
+                return False
+        except ratelimit.RatelimitError:
+            pass
+    ok = valid_password(account, password)
+    if not ok and limit is not None:
+        try:
+            limit.record_usage()
+        except ratelimit.RatelimitError:
+            pass
+    return ok
+
+
 class VVerifyPassword(Validator):
     def __init__(self, param, fatal=True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
@@ -1133,7 +1165,7 @@ class VVerifyPassword(Validator):
 
     def run(self, password):
         VUser().run()
-        if not valid_password(c.user, password):
+        if not recheck_password(c.user, password):
             if self.fatal:
                 abort(403)
             self.set_error(errors.WRONG_PASSWORD)
@@ -2968,7 +3000,7 @@ class VTwoFactorProof(Validator):
             if (not two_factor.recent(c.user) and
                     not two_factor.check_code(c.user, otp)):
                 self.set_error(errors.TWO_FACTOR_REQUIRED, field="otp")
-        elif not (password and valid_password(c.user, password)):
+        elif not (password and recheck_password(c.user, password)):
             self.set_error(errors.WRONG_PASSWORD, field="password")
 
     def param_docs(self):

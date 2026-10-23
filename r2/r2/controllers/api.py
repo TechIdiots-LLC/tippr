@@ -6073,7 +6073,7 @@ class ApiController(TipprController):
         if not method:
             return
         if (len(two_factor.methods(c.user)) == 1 and
-                not valid_password(c.user, request.POST.get("password"))):
+                not recheck_password(c.user, request.POST.get("password"))):
             c.errors.add(errors.WRONG_PASSWORD, field="password")
             form.has_errors("password", errors.WRONG_PASSWORD)
             return
