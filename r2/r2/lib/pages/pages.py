@@ -33,6 +33,7 @@ import random
 import re
 import time
 from collections import defaultdict, namedtuple
+from ipaddress import ip_address
 from itertools import chain
 from urllib.parse import quote, urlencode, urlparse
 
@@ -49,7 +50,6 @@ from r2.config.extensions import is_api
 from r2.lib import hooks, inventory, media, promote
 from r2.lib.cache import MemcachedError, make_key_id
 from r2.lib.captcha import get_iden
-from r2.lib.contrib.ipaddress import ip_address
 from r2.lib.db import queries, tdb_cassandra
 from r2.lib.db.operators import asc
 from r2.lib.filters import (

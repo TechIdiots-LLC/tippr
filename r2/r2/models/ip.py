@@ -1,11 +1,11 @@
 import datetime
+from ipaddress import ip_address
 
 import pytz
 from r2.lib.db.cassandra_compat import Mutator
 from r2.lib.db.cassandra_compat import ASCII_TYPE
 from pylons import app_globals as g
 
-from r2.lib.contrib.ipaddress import ip_address
 from r2.lib.db import tdb_cassandra
 
 __all__ = ["IPsByAccount", "AccountsByIP"]

@@ -24,6 +24,7 @@
 ###############################################################################
 
 import functools
+import ipaddress
 import json
 import os
 import urllib.error
@@ -40,7 +41,6 @@ from kazoo.handlers.threading import KazooTimeoutError
 from kazoo.security import make_digest_acl
 
 from r2.lib import hooks
-from r2.lib.contrib import ipaddress
 
 log = logging.getLogger(__name__)
 

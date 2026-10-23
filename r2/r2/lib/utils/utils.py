@@ -27,6 +27,7 @@ import base64
 import codecs
 import configparser
 import functools
+import ipaddress
 import itertools
 import math
 import os
@@ -53,7 +54,6 @@ from pylons import app_globals as g
 from pylons import config, request
 from pylons import tmpl_context as c
 
-from r2.lib.contrib import ipaddress
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.utils._utils import *
