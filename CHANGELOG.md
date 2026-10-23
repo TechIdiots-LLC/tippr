@@ -18,6 +18,9 @@
 - **Passkeys named by where they're saved** ("iCloud Keychain", "Google Password Manager", "Windows Hello"), with the
   FIDO Alliance's wording: "create a passkey", "delete", what a passkey is and where it's kept, and failure messages
   that say what to do next.
+- **Helping translate goes to the translations project:** /help/translate (the "volunteer to translate" link next to
+  the language choice) sends people to tippr-i18n on GitHub, to send a pull request or open an issue about a
+  mistake, instead of messaging the site's admins, who can't change the translations themselves.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
