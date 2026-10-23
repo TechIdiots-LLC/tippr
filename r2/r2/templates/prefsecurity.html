@@ -61,6 +61,22 @@
       ${_md("two-factor authentication is **on**. you're asked for a code from one of your methods when changing your password or email address, and when linking or unlinking a sign-in.")}
     </p>
 
+    %if thing.passkey_created:
+      <p class="two-factor-done">${_("Passkey created. Next time a code is asked for, choose \"use a passkey\".")}</p>
+    %endif
+    %if thing.recovered:
+      <div class="two-factor-recovered">
+        <p><strong>${_("You signed in with a recovery code.")}</strong></p>
+        <p>${_("If you lost your phone or key, delete it from the list below and create a passkey or add a new app, so you aren't locked out next time.")}
+          %if thing.codes_left:
+            ${_("You have %(count)s recovery codes left.") % dict(count=thing.codes_left)}
+          %else:
+            <strong>${_("That was your last recovery code: make new ones below.")}</strong>
+          %endif
+        </p>
+      </div>
+    %endif
+
     %if thing.new_codes:
       ${new_recovery_codes()}
     %endif
@@ -104,7 +120,7 @@
               <input type="password" name="password" placeholder="${_('password')}" autocomplete="current-password">
               ${error_field("WRONG_PASSWORD", "password")}
             %endif
-            <button class="btn" type="submit">${_("remove")}</button>
+            <button class="btn" type="submit">${_("delete")}</button>
             ${error_field("TWO_FACTOR_REQUIRED", "otp")}
             <span class="status"></span>
           </form>
@@ -114,7 +130,10 @@
     %endfor
     </table>
     %if thing.unlocked and len(thing.methods) == 1:
-      <p><small>${_("Removing your only method turns two-factor off, so it needs your password too.")}</small></p>
+      <p><small>${_("Deleting your only method turns two-factor off, so it needs your password too.")}</small></p>
+    %endif
+    %if thing.has_passkey:
+      <p><small>${_("Deleting a passkey here stops it working on this site. Your device or password manager keeps its copy until you delete it there too.")}</small></p>
     %endif
 
     ## what makes losing a device less of a problem, and phishing harder
@@ -223,9 +242,10 @@
       ${error_field("TWO_FACTOR_REQUIRED", "otp")}
       <div class="two-factor-choices">
         <div class="two-factor-choice passkey-only">
-          <button class="btn passkey-add-button" type="button">${_("add a passkey")}</button>
+          <button class="btn passkey-add-button" type="button">${_("create a passkey")}</button>
           <span class="two-factor-recommended">${_("recommended")}</span>
-          <p><small>${_("Your phone, computer or security key confirms it's you with a fingerprint, face or PIN. It only works on this site, so a fake login page can't use it.")}</small></p>
+          <p><small>${_("Passkeys are encrypted digital keys you create using your fingerprint, face or screen lock. They're saved in your password manager (like Google Password Manager or iCloud Keychain), so you can use them on your other devices too.")}</small></p>
+          <p><small>${_("A passkey only works on this site, so a fake login page can't use it. Don't create one on a shared computer.")}</small></p>
         </div>
         <div class="two-factor-choice">
           <button class="btn" type="submit">${_("add an authenticator app")}</button>

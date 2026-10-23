@@ -248,12 +248,14 @@ def stamp(account):
             getattr(account, "otp_secret", "") or "")
 
 
-def _name(name, kind, account):
+def _name(name, kind, account, default=None):
+    """The name given, or default (else the kind's), numbered when the
+    account has one by that name already ("Windows Hello 2")."""
     name = " ".join((name or "").split())[:40]
     if name:
         return name
     taken = {m["name"] for m in methods(account)}
-    base, n = KIND_NAMES[kind], 1
+    base, n = default or KIND_NAMES[kind], 1
     while (base if n == 1 else "%s %d" % (base, n)) in taken:
         n += 1
     return base if n == 1 else "%s %d" % (base, n)
@@ -263,14 +265,15 @@ class TooManyMethods(Exception):
     pass
 
 
-def _add(account, kind, name, **values):
+def _add(account, kind, name, default_name=None, **values):
     if len(methods(account, kind)) >= MAX_METHODS:
         raise TooManyMethods
     first = not enabled(account)
     with _engine().begin() as conn:
         conn.execute(_table().insert().values(
             id=secrets.token_hex(8), account_id=account._id, kind=kind,
-            name=_name(name, kind, account), created=_now(), **values))
+            name=_name(name, kind, account, default_name), created=_now(),
+            **values))
     _changed(account)
     g.log.info("two-factor: %s added a %s", account.name, kind)
     return first
@@ -283,12 +286,13 @@ def add_totp(account, secret, name=None):
 
 
 def add_passkey(account, credential_id, public_key, sign_count,
-                transports="", name=None):
+                transports="", name=None, default_name=None):
     """Add a passkey (r2.lib.passkeys). Returns whether it's the first
-    method."""
-    return _add(account, "passkey", name, credential_id=credential_id,
-                public_key=public_key, sign_count=sign_count or 0,
-                transports=transports or None)
+    method. default_name (where it was saved) is used when no name is
+    given."""
+    return _add(account, "passkey", name, default_name=default_name,
+                credential_id=credential_id, public_key=public_key,
+                sign_count=sign_count or 0, transports=transports or None)
 
 
 def has_passkeys(account):
@@ -344,15 +348,22 @@ def from_app():
 # "Entered a code a moment ago": per login session
 ###############################################################################
 
-def _session_key(account):
-    session = request.cookies.get(g.login_cookie, "") or ""
+def _session_key(account, session=None):
+    """session: the login cookie's value as set (for one just set); by
+    default the request's, which the browser sends quoted."""
+    if session is None:
+        from urllib.parse import unquote
+        session = unquote(request.cookies.get(g.login_cookie, "") or "")
     digest = hashlib.sha256(session.encode("utf-8")).hexdigest()[:20]
     return "otp:recent_%s_%s" % (account._id36, digest)
 
 
-def mark_recent(account):
+def mark_recent(account, session=None):
+    """A code was just entered in this login session (or in session, the
+    login cookie just set, for a code typed while signing in)."""
     # kept: when it runs out (for "unlocked for N more minutes")
-    g.gencache.set(_session_key(account), int(time.time()) + RECENT_MINUTES * 60,
+    g.gencache.set(_session_key(account, session),
+                   int(time.time()) + RECENT_MINUTES * 60,
                    time=RECENT_MINUTES * 60)
 
 
@@ -507,8 +518,11 @@ def check_code(account, code):
         if code.startswith("pk-"):
             ok = _use_passkey_token(account, code)
         else:
-            ok = (_check_totp(account, code) or
-                  use_recovery_code(account, code))
+            ok = _check_totp(account, code)
+            if not ok and use_recovery_code(account, code):
+                # (signing in this way suggests a lost device: the login
+                # code page then shows what to do about it)
+                ok = c.two_factor_recovery_used = True
     finally:
         c.user = previous
     if ok:

@@ -1333,13 +1333,19 @@ class PrefSecurity(Templated):
             if (datetime.datetime.now(g.tz) - when).total_seconds() < 60:
                 return _("just now")
             return _("%(time)s ago") % dict(time=timesince(when))
-        self.methods = [
+        # passkeys first: the method to prefer
+        self.methods = sorted([
             dict(id=m["id"], name=m["name"], kind=m["kind"],
                  kind_name=two_factor.KIND_NAMES[m["kind"]],
                  added=ago(m["created"]), used=ago(m["last_used"]))
-            for m in two_factor.methods(c.user)]
+            for m in two_factor.methods(c.user)],
+            key=lambda m: m["kind"] != "passkey")
         self.two_factor = two_factor.enabled(c.user)
         self.has_passkey = any(m["kind"] == "passkey" for m in self.methods)
+        # just made one (passkey.js), or just signed in with a recovery
+        # code (r2.controllers.linked_logins)
+        self.passkey_created = request.GET.get("passkey") == "created"
+        self.recovered = bool(request.GET.get("recovered")) and self.two_factor
         # one code unlocks the page's changes for a while (two_factor.recent)
         self.minutes_left = (two_factor.recent_minutes_left(c.user)
                              if self.two_factor else 0)

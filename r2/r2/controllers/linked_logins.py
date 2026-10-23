@@ -136,7 +136,8 @@ class LinkedLoginsController(TipprController):
         return self._finish_login(account, record["rem"], record["dest"],
                                   provider, identity["subject"])
 
-    def _finish_login(self, account, rem, dest, provider, subject):
+    def _finish_login(self, account, rem, dest, provider, subject,
+                      code_entered=False):
         c.user = account
         c.user_is_loggedin = True
         self.login(account, rem=rem)
@@ -144,6 +145,16 @@ class LinkedLoginsController(TipprController):
             linked_logins.touch(provider, subject)
             g.log.info("linked logins: %s signed in with %s", account.name,
                        provider)
+        if code_entered:
+            # the code just typed counts in the new login session too, as
+            # it would have after logging in (preferences, security)
+            session = c.cookies.get(g.login_cookie)
+            if session is not None:
+                two_factor.mark_recent(account, session.value)
+            if getattr(c, "two_factor_recovery_used", False):
+                # a recovery code: probably a lost phone or key, so off to
+                # where it can be replaced
+                return self.redirect("/prefs/security?recovered=1")
         return self.redirect(linked_logins.safe_dest(dest))
 
     @validate(dest=nop("dest"))
@@ -193,7 +204,8 @@ class LinkedLoginsController(TipprController):
         return self._link_and_login(user, held["rem"], held["dest"],
                                     provider, held["identity"])
 
-    def _link_and_login(self, account, rem, dest, provider, identity):
+    def _link_and_login(self, account, rem, dest, provider, identity,
+                        code_entered=False):
         try:
             linked_logins.link(account, provider, identity)
         except linked_logins.LoginError as e:
@@ -201,7 +213,8 @@ class LinkedLoginsController(TipprController):
         g.log.info("linked logins: %s linked %s while signing in",
                    account.name, provider)
         return self._finish_login(account, rem, dest, provider,
-                                  identity["subject"])
+                                  identity["subject"],
+                                  code_entered=code_entered)
 
     def _passkey_json(self, data):
         response.content_type = "application/json"
@@ -270,6 +283,8 @@ class LinkedLoginsController(TipprController):
         if held.get("link_identity"):
             return self._link_and_login(account, held["rem"], held["dest"],
                                         held["provider"],
-                                        held["link_identity"])
+                                        held["link_identity"],
+                                        code_entered=True)
         return self._finish_login(account, held["rem"], held["dest"],
-                                  held["provider"], held["subject"])
+                                  held["provider"], held["subject"],
+                                  code_entered=True)

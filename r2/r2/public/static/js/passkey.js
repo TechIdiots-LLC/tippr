@@ -88,15 +88,22 @@ r.passkey = {
     return this.post('/api/' + action + '.json', _.extend({uh: r.config.modhash}, data))
   },
 
-  failed: function(err) {
+  // what happened, and what to do next (the FIDO Alliance's guidance for
+  // passkey failures: say what happened, without blame, and a next step)
+  failed: function(err, creating) {
     // the person cancelled, or no passkey was there
     if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
-      return r._('no passkey was used')
+      return creating
+        ? r._('No passkey was created. Try again, or add an authenticator app instead.')
+        : r._('No passkey was used. Try again, or enter a code instead.')
     }
     if (err && err.name === 'InvalidStateError') {
-      return r._('that passkey is already added')
+      return r._('This device already has a passkey for your account: it is in your list.')
     }
-    return (err && err.error) || r._("the passkey didn't work")
+    if (err && err.error) { return err.error }
+    return creating
+      ? r._("We couldn't create your passkey. Try again, or add an authenticator app instead.")
+      : r._("We couldn't check your passkey. Try again, or enter a code instead.")
   },
 
   // sign with a passkey; resolves to the code for the form
@@ -157,6 +164,8 @@ r.passkey = {
                 password: $form.find('[name=password]').val() || ''}
     self.api('passkey_register_options', data).then(function(res) {
       if (!res || res.error) { return Promise.reject(res) }
+      // before the browser's own prompt: what it's for
+      $status.text(r._('Follow your browser’s prompt to create a passkey for this site.'))
       return navigator.credentials.create({publicKey: self.creationOptions(res.options)})
         .then(function(cred) {
           return self.api('passkey_register', {
@@ -165,10 +174,19 @@ r.passkey = {
         })
     }).then(function(res) {
       if (!res || res.error) { return Promise.reject(res) }
-      window.location = '/prefs/security' + (res.first ? '#recovery-codes' : '#two-factor-methods')
-      window.location.reload()
-    }, function(err) {
-      $status.text(self.failed(err))
+      // "Passkey created" on the page it comes back to
+      var page = '/prefs/security?passkey=created'
+      var hash = res.first ? '#recovery-codes' : '#two-factor-methods'
+      if (window.location.pathname + window.location.search === page) {
+        // (only the hash would change, which doesn't load the page)
+        window.location.hash = hash
+        window.location.reload()
+      } else {
+        window.location = page + hash
+      }
+    }).catch(function(err) {
+      // (the server's refusal too, which the step above turns into this)
+      $status.text(self.failed(err, true))
     })
   },
 
