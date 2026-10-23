@@ -3,12 +3,39 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Sign in with a passkey alone:** the login forms' username field offers the site's passkeys in the browser's
+  autofill, and choosing one signs in with no password or code; browsers that can't offer them there get a "sign in
+  with a passkey" button. The passkey must check the person (fingerprint, face or PIN), which makes it both factors.
+  Staff (admins and employees) still sign in with their password and then a code or passkey, and admin mode asks for
+  both as before. Passkeys made earlier work when the device kept them for signing in (most do).
+- **Preferences, security asks for one code:** instead of a code field on every form there, one code (or a passkey)
+  unlocks the page for 15 minutes; signing in with a code or a passkey unlocks it too. Turning two-factor off still
+  needs the password and a code typed then.
+- **Passkeys first, and a plan for a lost device:** adding a method offers a passkey (recommended: a fake login page
+  can't use one) or an authenticator app side by side, each explained. New recovery codes are shown at the top with
+  what to do with them, an account with one method is told to add a second, and signing in with a recovery code
+  lands on the page to replace the lost phone or key.
+- **Passkeys named by where they're saved** ("iCloud Keychain", "Google Password Manager", "Windows Hello"), with the
+  FIDO Alliance's wording: "create a passkey", "delete", what a passkey is and where it's kept, and failure messages
+  that say what to do next.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Authenticator app secrets were stored as they are:** a copy of the database could make two-factor codes for
+  every account with an app. They're now encrypted with a key from the site's `SECRET` (which backups carry), each
+  bound to its account; secrets kept before are encrypted the next time they're read.
+- **A wrong code when adding an authenticator app said "wrong password":** it now says the code didn't work and to
+  check that the phone sets its time automatically, as the login code page does too.
+- **A passkey the site refused (too many, say) said nothing:** the reason is shown now.
 
 ## 0.16.0
 ### ✨ Features and improvements
+- **Feed posts are mixed on /v/all:** a feed check posted each feed's new items back to back, so /v/all showed a
+  block of one feed, then the next. Each run now fetches every due feed first and posts their items one vault, and
+  one feed, at a time. An item whose link is already in the vault, or whose title was posted there in the same run
+  (two feeds with the same story), isn't posted again.
+- **OpenSearch gets longer to start** (`TIPPR_OPENSEARCH_START_TIMEOUT`, 10 minutes by default) as its data grows,
+  and the installer restarts it only when its settings changed or it isn't running.
 - **Translations update with every install and upgrade:** the installer (also run by first boot and server
   updates) now brings an existing `i18n` checkout up to the latest translations instead of only cloning a missing
   one. A copy that isn't a git checkout is moved aside (`i18n.old-<date>`) and cloned again; if GitHub can't be
@@ -24,6 +51,9 @@
   - For installs with `tippr-firstboot` (Proxmox containers). `TIPPR_WEB_UPDATES=0` turns it off.
 
 ### 🐞 Bug fixes
+- **Requests could see another request's user:** the Pylons compatibility layer kept request state (the user,
+  the request, the response) shared by all threads, and paster serves requests from a pool of threads, so under load
+  one request could briefly see another's `c.user`. It's kept per thread now.
 - **An empty rising page said the vault had nothing in it:** rising is often empty in a vault that has posts, so it
   now shows the plain "nothing here" message, as gilded does. The "Nothing in /v/… yet" welcome is for hot and new.
 
