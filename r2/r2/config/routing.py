@@ -176,11 +176,7 @@ def make_map(config):
     mc('/admin/errors', controller='admintool', action='errors')
     mc('/admin/gold', controller='admintool', action='gold')
 
-    # Privacy Admin Dashboard
-    mc('/admin/privacy', controller='adminprivacy', action='privacy_dashboard')
-    mc('/admin/privacy/user/:username', controller='adminprivacy', action='user_data_view')
-    mc('/admin/privacy/process', controller='adminprivacy', action='process_request')
-    mc('/admin/privacy/trigger_export', controller='adminprivacy', action='trigger_export')
+    mc('/admin/privacy', controller='admintool', action='privacy')
 
     mc('/user/:username/about', controller='user', action='about',
        where='overview')

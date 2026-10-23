@@ -37,6 +37,7 @@ from r2.lib.pages import (
     AdminDomains,
     AdminErrors,
     AdminFeeds,
+    AdminPrivacy,
     AdminGold,
     AdminLiveConfig,
     AdminLoginSettings,
@@ -150,6 +151,10 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_errors(self):
         return AdminPage(content=AdminErrors()).render()
+
+    @validate(VAdmin())
+    def GET_privacy(self):
+        return AdminPage(content=AdminPrivacy()).render()
 
     @validate(VAdmin(), q=nop("q"), before=nop("before"), after=nop("after"))
     def GET_users(self, q, before, after):

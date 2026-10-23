@@ -7,6 +7,10 @@
   trees elsewhere. The installer and Docker run its consumer.
 - **Admin pages have a margin:** like the preferences pages, their content no longer runs against the page's edge
   (less of one on phones), and their tables' cells have room around them.
+- **Data export requests on /admin/privacy** (in the admin tools menu as "data exports"): members' requests that are
+  waiting, processing or failed, with the stuck ones marked, to send again or cancel, and a form to start an export
+  for a member. The old privacy dashboard was never loaded (its address gave "page not found") and wrote values
+  into the page unescaped.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
@@ -24,6 +28,9 @@
   code all got in, and a stale copy of the account could put back codes used meanwhile. Codes are now taken under a
   lock from a fresh copy, and the passkey check a form gets is good for one request only. A passkey's credential id
   is unique now too (added to existing databases), so a made-up registration can't reuse another account's.
+- **A data export request whose queue item was lost blocked new ones for good:** asking again now sends a request
+  that's been waiting over half an hour once more. A member's requests are also listed newest first again (their
+  index's time-based keys don't sort by time as stored).
 - _...Add new stuff here..._
 
 ## 0.17.0

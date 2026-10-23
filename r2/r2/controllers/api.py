@@ -5743,6 +5743,66 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        request_id=VLength("request_id", max_length=64),
+        action=VOneOf("action", ("retry", "cancel")),
+    )
+    def POST_admin_privacy_request(self, form, jquery, request_id, action):
+        """Send a data export request (/admin/privacy) to the queue again,
+        or cancel it."""
+        from r2.models.privacy import (
+            PrivacyRequest,
+            PrivacyRequestStatus,
+            PrivacyRequestType,
+        )
+        if not request_id or not action:
+            abort(400)
+        try:
+            privacy_request = PrivacyRequest._byID(request_id)
+        except tdb_cassandra.NotFound:
+            abort(404)
+        if action == "cancel":
+            privacy_request.cancel()
+        elif privacy_request.request_type == PrivacyRequestType.DATA_EXPORT:
+            privacy_request.processed_by = c.user.name
+            privacy_request.error_message = ""
+            if privacy_request.status != PrivacyRequestStatus.PENDING:
+                old_status = privacy_request.status
+                privacy_request.status = PrivacyRequestStatus.PENDING
+                privacy_request._commit()
+                privacy_request._update_status_index(
+                    old_status, PrivacyRequestStatus.PENDING)
+            else:
+                privacy_request._commit()
+            amqp.add_item("privacy_export_q", privacy_request._id)
+        g.log.info("privacy: %s chose %s for request %s", c.user.name,
+                   action, request_id)
+        jquery.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        account=VExistingUname("user"),
+    )
+    def POST_admin_privacy_export(self, form, jquery, account):
+        """Start a data export for a member (/admin/privacy)."""
+        from r2.models.privacy import PrivacyRequest, PrivacyRequestType
+        if (form.has_errors("user", errors.USER_DOESNT_EXIST,
+                            errors.NO_USER) or not account):
+            return
+        privacy_request = PrivacyRequest.create(
+            account=account, request_type=PrivacyRequestType.DATA_EXPORT,
+            request_ip="admin:" + request.ip)
+        privacy_request.processed_by = c.user.name
+        privacy_request.admin_notes = "started by %s" % c.user.name
+        privacy_request._commit()
+        amqp.add_item("privacy_export_q", privacy_request._id)
+        g.log.info("privacy: %s started a data export for %s", c.user.name,
+                   account.name)
+        jquery.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         action=VOneOf("action", ("export", "delete", "restore", "import",
                                  "create_key", "revoke_key")),
         name=VLength("name", max_length=40, empty_error=None),

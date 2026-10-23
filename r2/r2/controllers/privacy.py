@@ -102,6 +102,15 @@ class PrivacyController(TipprController):
             PrivacyRequestStatus.PENDING, PrivacyRequestStatus.PROCESSING
         )]
         
+        stuck = [r for r in pending if r.stuck()]
+        if stuck:
+            # its queue item was probably lost: send it again rather than
+            # keep the member waiting on it forever
+            for r in stuck:
+                amqp.add_item('privacy_export_q', r._id)
+            form.set_text('.status', _('Your data export request has been submitted. '
+                                       'You will receive a notification when it is ready.'))
+            return
         if pending:
             c.errors.add(errors.RATELIMIT, field='ratelimit',
                         msg_params={'time': '24 hours'})

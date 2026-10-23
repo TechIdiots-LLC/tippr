@@ -121,15 +121,13 @@ class PrivacyRequest(tdb_cassandra.Thing):
     
     @classmethod
     def by_account(cls, account, request_type=None, limit=100):
-        """Get all privacy requests for an account."""
-        # Query by account - we'll need an index for this
+        """The account's privacy requests, newest first (by date: the
+        index's time UUID columns are kept as text, which doesn't sort by
+        time)."""
         requests = []
         try:
             index = PrivacyRequestsByAccount._cf.get(
-                account._id36,
-                column_count=limit,
-                column_reversed=True,
-            )
+                account._id36, column_count=tdb_cassandra.max_column_count)
             for request_id in index.values():
                 try:
                     req = cls._byID(request_id)
@@ -139,28 +137,44 @@ class PrivacyRequest(tdb_cassandra.Thing):
                     pass
         except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             pass
-        return requests
+        requests.sort(key=lambda req: req.created_date, reverse=True)
+        return requests[:limit]
     
     @classmethod
-    def pending_requests(cls, limit=100):
-        """Get all pending privacy requests (for admin dashboard)."""
+    def by_status(cls, status, limit=100):
+        """The requests with this status, newest first (for /admin/privacy).
+        (Sorted by their dates: the index's time UUID columns are kept as
+        text, which doesn't sort by time.)"""
         requests = []
         try:
             index = PrivacyRequestsByStatus._cf.get(
-                PrivacyRequestStatus.PENDING,
-                column_count=limit,
-                column_reversed=True,
-            )
-            for request_id in index.values():
-                try:
-                    req = cls._byID(request_id)
-                except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
-                    continue
-                if req.status == PrivacyRequestStatus.PENDING:
-                    requests.append(req)
+                status, column_count=tdb_cassandra.max_column_count)
         except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
-            pass
-        return requests
+            return requests
+        for request_id in set(index.values()):
+            try:
+                req = cls._byID(request_id)
+            except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
+                continue
+            if req.status == status:
+                requests.append(req)
+        requests.sort(key=lambda req: req.created_date, reverse=True)
+        return requests[:limit]
+
+    @classmethod
+    def pending_requests(cls, limit=100):
+        """Get all pending privacy requests (for admin dashboard)."""
+        return cls.by_status(PrivacyRequestStatus.PENDING, limit=limit)
+
+    def stuck(self, minutes=30):
+        """Whether the request has waited, or been processing, so long that
+        its queue item was probably lost."""
+        if self.status not in (PrivacyRequestStatus.PENDING,
+                               PrivacyRequestStatus.PROCESSING):
+            return False
+        created = self.created_datetime
+        return bool(created and
+                    datetime.now(g.tz) - created > timedelta(minutes=minutes))
     
     def mark_processing(self):
         """Mark the request as being processed."""

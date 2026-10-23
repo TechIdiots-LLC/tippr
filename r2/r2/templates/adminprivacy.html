@@ -1,0 +1,75 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<div class="admin-privacy">
+<h1>${_("data export requests")}</h1>
+
+<p>
+  ${_("Members ask for a copy of their data on /prefs/privacy, and the privacy_export_q consumer makes it within a few minutes. Requests still waiting or processing after half an hour probably lost their queue item: send them again. Failed ones show why.")}
+</p>
+
+%if thing.requests:
+  <table class="lined-table privacy-requests">
+    <tr>
+      <th>${_("member")}</th><th>${_("asked")}</th><th>${_("status")}</th>
+      <th>${_("details")}</th><th></th>
+    </tr>
+    %for row in thing.requests:
+      <% req = row["request"] %>
+      <tr>
+        <td>
+          %if row["account"]:
+            <a href="/admin/users/${row['account'].name}">${row["account"].name}</a>
+          %else:
+            ${_("[deleted account]")}
+          %endif
+        </td>
+        <td>${row["created"]}<br><small>${req.request_ip}</small></td>
+        <td>
+          ${req.status}
+          %if row["stuck"]:
+            <br><strong>${_("stuck")}</strong>
+          %endif
+        </td>
+        <td><small>${req.error_message or req.admin_notes}</small></td>
+        <td class="privacy-actions">
+          %for action, label in (("retry", _("send again")), ("cancel", _("cancel"))):
+            <form action="/api/admin_privacy_request" method="post"
+                  onsubmit="return post_form(this, 'admin_privacy_request');">
+              <input type="hidden" name="request_id" value="${req._id}">
+              <input type="hidden" name="action" value="${action}">
+              <button class="btn" type="submit">${label}</button>
+              <span class="status"></span>
+            </form>
+          %endfor
+        </td>
+      </tr>
+    %endfor
+  </table>
+%else:
+  <p>${_("No requests waiting, processing or failed.")}</p>
+%endif
+
+<h2>${_("start an export for a member")}</h2>
+<p>${_("They get the usual message with the download link when it's ready.")}</p>
+<form action="/api/admin_privacy_export" method="post" class="pretty-form"
+      onsubmit="return post_form(this, 'admin_privacy_export');">
+  <input type="text" name="user" placeholder="${_('username')}">
+  <button class="btn" type="submit">${_("start export")}</button>
+  <span class="status"></span>
+  <span class="error USER_DOESNT_EXIST field-user"></span>
+  <span class="error NO_USER field-user"></span>
+</form>
+</div>

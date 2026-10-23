@@ -3920,6 +3920,29 @@ class AdminBackups(Templated):
         Templated.__init__(self)
 
 
+class AdminPrivacy(Templated):
+    """Members' data export requests (r2.models.privacy): the ones waiting,
+    processing or failed, which an admin can send again or cancel, and a
+    form to start an export for someone."""
+    STATUSES = ("pending", "processing", "failed")
+
+    def __init__(self):
+        from r2.models.privacy import PrivacyRequest
+        requests = []
+        for status in self.STATUSES:
+            requests.extend(PrivacyRequest.by_status(status, limit=100))
+        requests.sort(key=lambda req: req.created_date, reverse=True)
+        accounts = Account._byID36(
+            sorted({req.account_id36 for req in requests if req.account_id36}),
+            data=True, return_dict=True, ignore_missing=True)
+        self.requests = [
+            dict(request=req, account=accounts.get(req.account_id36),
+                 created=(req.created_date or "")[:16].replace("T", " "),
+                 stuck=req.stuck())
+            for req in requests]
+        Templated.__init__(self)
+
+
 class AdminErrors(Templated):
     """Recent unhandled errors (r2.lib.error_log)."""
     def __init__(self):
