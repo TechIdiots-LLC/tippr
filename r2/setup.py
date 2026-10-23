@@ -37,23 +37,23 @@ from setuptools import Extension, find_packages, setup
 pyx_extensions = []
 # command class mapping used by setuptools (populated below if Thrift present)
 commands = {}
-build_commands = {"build", "build_ext", "bdist_wheel", "bdist_egg", "install"}
+build_commands = {"build", "build_ext", "bdist_wheel", "bdist_egg", "install",
+                  "develop", "editable_wheel"}
 if build_commands.intersection(sys.argv):
+    # the .pyx modules (sorts, sgm, wrapped, utils, comment trees, mr_tools)
+    # have no pure-Python copies, so the site can't run without them
     try:
         from Cython.Build import cythonize
-    except Exception:
-        print("Cannot find Cython. Skipping Cython build.")
-        pyx_extensions = []
-    else:
-        pyx_files = []
-        for root, directories, files in os.walk('.'):
-            for f in fnmatch.filter(files, '*.pyx'):
-                pyx_files.append(os.path.join(root, f))
-        # Some Cython sources in this project use Python 2 style syntax.
-        pyx_extensions = cythonize(
-            pyx_files,
-            compiler_directives={"language_level": "2"},
-        )
+    except ImportError:
+        sys.exit("Building tippr needs Cython (pip install cython).")
+    pyx_files = []
+    for root, directories, files in os.walk('.'):
+        for f in fnmatch.filter(files, '*.pyx'):
+            pyx_files.append(os.path.join(root, f))
+    pyx_extensions = cythonize(
+        pyx_files,
+        compiler_directives={"language_level": "3"},
+    )
 
 
 # guard against import errors in case this is the first run of setup.py and we

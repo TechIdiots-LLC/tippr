@@ -24,15 +24,15 @@
 ###############################################################################
 
 import math
-from datetime import datetime, timedelta
-from pylons import app_globals as g
+from datetime import datetime, timedelta, timezone
 
 
 cdef extern from "math.h":
     double log10(double)
     double sqrt(double)
 
-epoch = datetime(1970, 1, 1, tzinfo = g.tz)
+# UTC, as postgres's date_part('epoch', ...) in hot() counts
+epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
 cpdef double epoch_seconds(date):
     """Returns the number of seconds from the epoch to date. Should
@@ -73,13 +73,13 @@ cpdef double controversy(long ups, long downs):
 cpdef double _confidence(int ups, int downs):
     """The confidence sort.
        http://www.evanmiller.org/how-not-to-sort-by-average-rating.html"""
-    cdef float n = ups + downs
+    cdef double n = ups + downs
 
     if n == 0:
         return 0
 
-    cdef float z = 1.281551565545 # 80% confidence
-    cdef float p = float(ups) / n
+    cdef double z = 1.281551565545 # 80% confidence
+    cdef double p = ups / n
 
     left = p + 1/(2*n)*z*z
     right = z*sqrt(p*(1-p)/n + z*z/(4*n*n))

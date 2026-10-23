@@ -41,6 +41,12 @@
   now load from the site that serves them, show its icon and name, and read the `tippr_url`, `tippr_title` and
   other options the page tells people to set (they read `reddit_*` names before). The snippets on the page use the
   site's full address, so they work pasted elsewhere.
+- **Tests ran different code from the site:** sorts, sgm, wrapped (page rendering), the utils helpers and comment
+  tree helpers each had a pure-Python copy next to the Cython module the site runs, and they'd drifted (the
+  rendering copy was a cut-down version, and "best" scores differed in the last decimals). The copies are gone:
+  everything, tests included, uses the compiled modules, now built as Python 3 and 1.3 to 7 times faster than the
+  copies were. Building tippr without Cython stops with that message instead of quietly leaving them out. The
+  "best" sort's scores use full precision, and the hot sort's epoch is UTC as postgres's is, so the two always agree.
 - **/admin/servers showed working queues as having no processors:** the comment tree and listing queues' processors
   poll, which RabbitMQ doesn't count, so they were flagged with 0. They show "polling" while they run now.
 - _...Add new stuff here..._
