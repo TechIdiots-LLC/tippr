@@ -2,6 +2,13 @@
 
 ## master
 ### ✨ Features and improvements
+- _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.19.0
+### ✨ Features and improvements
 - **Live comments keep the thread's comment count up to date:** the "N comments" link and the "all N comments"
   heading count the comments that arrive while the page is open.
 - **"N here now" on threads:** next to a thread's comment heading, how many people have had it open in the last 15
@@ -36,7 +43,6 @@
   ("don't ask on this device" at login, "remember this computer" for admin mode and confirmations), this one too,
   is asked for a code again next time, for a lost device or a shared computer. Nobody is logged out. The section also
   says whether this device is remembered.
-- _...Add new stuff here..._
 
 ### 🐞 Bug fixes
 - **Turning admin mode on from a remembered computer** still offered "use a passkey" beside the greyed-out code field
@@ -49,7 +55,6 @@
   OpenTelemetry collector at localhost:4317, and with none there its retries froze those servers, so requests to
   the activity service timed out. Tracing export is off for them (`OTEL_SDK_DISABLED=true`; set it to `false` in
   `/etc/default/tippr` once a collector runs).
-- _...Add new stuff here..._
 
 ## 0.18.0
 ### ✨ Features and improvements
