@@ -14,6 +14,10 @@
   setting is on), and an optional queue is used only while its consumer runs; otherwise items stay on the main
   queue. Domain shards were picked with Python's `hash()`, which differs from process to process, so one domain
   could land on any shard; they use a stable hash now.
+- **Reading a Cassandra row backwards from a column returned the wrong columns:** `get()` with `column_reversed`
+  and a start column kept the columns after the start instead of before it (so "the goal in effect on a date"
+  found the newest goal instead), took `""` as a bound rather than none, and returned an empty row where pycassa
+  raises not found. It now slices the way `multiget()` already did.
 - _...Add new stuff here..._
 
 ## 0.17.0

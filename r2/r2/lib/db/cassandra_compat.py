@@ -145,6 +145,32 @@ def _stored_key(key):
     return str(key) if isinstance(key, uuid.UUID) else key
 
 
+def _slice_columns(od, columns=None, column_start=None, column_finish=None,
+                   column_reversed=False, column_count=None):
+    """A row's columns as pycassa's get/multiget slice them: only `columns`
+    if given, between column_start and column_finish ("" or None is no
+    bound; reversed, the start is the high end, column_start >= name >=
+    column_finish), reversed if asked, then the first column_count."""
+    if columns is not None:
+        od = OrderedDict((k, od[k]) for k in columns if k in od)
+
+    cs_str = None if column_start in (None, "") else str(column_start)
+    cf_str = None if column_finish in (None, "") else str(column_finish)
+    if cs_str is not None or cf_str is not None:
+        low, high = (cf_str, cs_str) if column_reversed else (cs_str, cf_str)
+        od = OrderedDict(
+            (k, v) for k, v in od.items()
+            if (low is None or str(k) >= low) and
+               (high is None or str(k) <= high))
+
+    if column_reversed:
+        od = OrderedDict(reversed(list(od.items())))
+
+    if column_count is not None and len(od) > column_count:
+        od = OrderedDict(list(od.items())[:column_count])
+    return od
+
+
 class NotFoundException(Exception):
     pass
 
@@ -282,39 +308,9 @@ class ColumnFamily:
         for row in rows:
             result_key = requested.get(str(row.key), str(row.key))
             raw = row.columns if hasattr(row, 'columns') else row[1]
-            od = self._deserialize_map(raw)
-            if columns is not None:
-                od = OrderedDict((k, od[k]) for k in columns if k in od)
-
-            # Handle column_start and column_finish filtering. As in pycassa,
-            # "" (or None) means no bound, and for a reversed query the start
-            # is the high end (column_start >= name >= column_finish).
-            cs_str = None if column_start in (None, "") else str(column_start)
-            cf_str = None if column_finish in (None, "") else str(column_finish)
-            if cs_str is not None or cf_str is not None:
-                low, high = (cf_str, cs_str) if column_reversed else (cs_str, cf_str)
-                filtered = OrderedDict()
-                for k, v in od.items():
-                    k_str = str(k) if not isinstance(k, str) else k
-                    if low is not None and k_str < low:
-                        continue
-                    if high is not None and k_str > high:
-                        continue
-                    filtered[k] = v
-                od = filtered
-
-            # Handle column_reversed
-            if column_reversed:
-                od = OrderedDict(reversed(list(od.items())))
-
-            if column_count is not None and len(od) > column_count:
-                # truncate (preserve insertion order)
-                reduced = OrderedDict()
-                for i, (k, v) in enumerate(od.items()):
-                    if i >= column_count:
-                        break
-                    reduced[k] = v
-                od = reduced
+            od = _slice_columns(self._deserialize_map(raw), columns,
+                                column_start, column_finish,
+                                column_reversed, column_count)
             if include_timestamp:
                 # Legacy pycassa returned (value, timestamp) pairs per column
                 # when include_timestamp=True. If we stored timestamps at
@@ -379,37 +375,11 @@ class ColumnFamily:
         raw = row.columns if hasattr(row, 'columns') else row[0]
         od = self._deserialize_map(raw)
 
-        # If a specific column list was requested, restrict to those keys
-        if columns is not None:
-            od = OrderedDict((k, od[k]) for k in columns if k in od)
-
-        # Handle start/finish slicing
-        if column_start is not None or column_finish is not None:
-            filtered = OrderedDict()
-            for k, v in od.items():
-                k_str = str(k) if not isinstance(k, str) else k
-                cs_str = str(column_start) if column_start is not None and not isinstance(column_start, str) else column_start
-                cf_str = str(column_finish) if column_finish is not None and not isinstance(column_finish, str) else column_finish
-
-                if column_start is not None and k_str < cs_str:
-                    continue
-                if column_finish is not None and k_str > cf_str:
-                    continue
-                filtered[k] = v
-            od = filtered
-
-        # Handle reversed ordering
-        if column_reversed:
-            od = OrderedDict(reversed(list(od.items())))
-
-        # Truncate to column_count if requested
-        if column_count is not None and len(od) > column_count:
-            reduced = OrderedDict()
-            for i, (k, v) in enumerate(od.items()):
-                if i >= column_count:
-                    break
-                reduced[k] = v
-            od = reduced
+        od = _slice_columns(od, columns, column_start, column_finish,
+                            column_reversed, column_count)
+        # as in pycassa, no columns in the slice is the same as no row
+        if not od:
+            raise NotFoundException()
 
         if include_timestamp:
             od_ts = OrderedDict()
