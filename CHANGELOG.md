@@ -19,6 +19,13 @@
   for a member. The old privacy dashboard was never loaded (its address gave "page not found") and wrote values
   into the page unescaped.
 - **The footer links to /buttons again**, under tippr gold, for sites that want a submit or vote button.
+- **Ready for Python 3.13:** nothing uses the `cgi`, `crypt` or `lib2to3` modules it removed any more. Uploads
+  are recognised without `cgi`, HTTP basic sign-in (the `http` auth provider) checks passwords the way the login
+  form does (it had also been handing bcrypt text, which failed), and the installer no longer runs lib2to3 over the
+  translations, which have been Python 3 all along.
+- **`scripts/upload_static_files_to_s3.py` works again,** with boto3 (it needed the old boto, which isn't
+  installed). The shim that faked old boto's bundled `six` for it is gone, as is a reddit-era preview image
+  backfill.
 - **Zendesk is gone:** reddit's ZenDesk ticket provider, which nothing on the site used (the support queue is
   tippr's own), and the modmail-to-email relay that only worked with replies from ZenDesk agents
   (`/api/zendeskreply`, `modmail_email_q` and its consumer). Their settings (`zendesk_*`, `ticket_*`,

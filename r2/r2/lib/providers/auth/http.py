@@ -23,16 +23,13 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-import crypt
-
-import bcrypt
 from pylons import app_globals as g
 from pylons import request
 
 from r2.lib.configparse import ConfigValue
 from r2.lib.providers.auth import AuthenticationProvider
 from r2.lib.require import RequirementException
-from r2.lib.utils import constant_time_compare, parse_http_basic
+from r2.lib.utils import parse_http_basic
 
 
 class HttpAuthenticationProvider(AuthenticationProvider):
@@ -58,6 +55,7 @@ class HttpAuthenticationProvider(AuthenticationProvider):
 
     def get_authenticated_account(self):
         from r2.models import Account, NotFound, register
+        from r2.models.account import valid_password
 
         try:
             authorization = request.environ.get("HTTP_AUTHORIZATION")
@@ -80,12 +78,7 @@ class HttpAuthenticationProvider(AuthenticationProvider):
         if g.auth_trust_http_authorization:
             return account
 
-        # not all systems support bcrypt in the standard crypt
-        if account.password.startswith("$2a$"):
-            expected_hash = bcrypt.hashpw(password, account.password)
-        else:
-            expected_hash = crypt.crypt(password, account.password)
-
-        if not constant_time_compare(expected_hash, account.password):
+        # the same check as the login form (bcrypt, or older hashes)
+        if not valid_password(account, password):
             return None
         return account

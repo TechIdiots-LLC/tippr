@@ -23,7 +23,6 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-import cgi
 import inspect
 import json
 import re
@@ -70,6 +69,12 @@ from r2.models.promo import Location
 from r2.models.rules import MAX_RULES_PER_VAULT, VaultRules
 
 
+def is_upload(value):
+    """Whether a POST value is an uploaded file (WebOb gives those as
+    FieldStorage objects, from cgi or, on Python 3.13+, legacy-cgi)."""
+    return hasattr(value, "filename") and hasattr(value, "file")
+
+
 def can_view_link_comments(article):
     return (article.vault_slow.can_view(c.user) and
             article.can_view_promo(c.user))
@@ -113,11 +118,10 @@ class Validator:
         a = []
         if self.param:
             for p in utils.tup(self.param):
-                # an upload is a cgi.FieldStorage, which raises TypeError
-                # when tested for truth in Python 3: check its type first
+                # an upload is a FieldStorage, which raises TypeError when
+                # tested for truth in Python 3: check for one first
                 post_val = request.POST.get(p)
-                if self.post and (isinstance(post_val, cgi.FieldStorage) or
-                                  post_val):
+                if self.post and (is_upload(post_val) or post_val):
                     val = request.POST[p]
                 elif ((self.get_multiple and
                       (self.get_multiple == True or
@@ -677,7 +681,7 @@ class VUploadLength(VLength):
     def run(self, upload, text2=''):
         # upload is expected to be a FieldStorage object; its value is bytes,
         # so only check that it's there and not too big
-        if isinstance(upload, cgi.FieldStorage):
+        if is_upload(upload):
             data = upload.value or b""
             if not data:
                 self.set_error(self.empty_error, code=400)

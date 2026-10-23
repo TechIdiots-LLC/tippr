@@ -880,14 +880,6 @@ sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install psycopg2-binary || true
 # the build-toolchain compatible for later editable installs.
 sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --upgrade --force-reinstall --no-deps 'packaging>=23.1' || true
 
-# Convert legacy Python 2 sources in i18n to Python 3 using lib2to3
-if [ -d "$TIPPR_SRC/i18n" ]; then
-    echo "Converting i18n Python files to Python 3 with lib2to3"
-    for pyf in $(find "$TIPPR_SRC/i18n" -name "*.py"); do
-        sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" python3 -m lib2to3 -w "$pyf" || true
-    done
-fi
-
 function install_tippr_repo {
     pushd $TIPPR_SRC/$1
     # Ensure build-toolchain is pinned so metadata generation won't fail
