@@ -184,9 +184,9 @@ $(function() {
 <%def name="draw_interactive(type)">
 %if type:
   <script type="text/javascript" 
-          src="${static('button/button%s.js' % type)}"></script>
+          src="${static('button/button%s.js' % type, absolute=True)}"></script>
 %else:
-  <script type="text/javascript" src="${static('button/button1.js')}"></script>
+  <script type="text/javascript" src="${static('button/button1.js', absolute=True)}"></script>
 %endif
 </%def>
 
@@ -200,6 +200,6 @@ $(function() {
   tippr_bgcolor = "FF3";
   tippr_bordercolor = "00F";
 </script>
-<script type="text/javascript" src="//${g.static_domain}/button/button3.js"></script>
+<script type="text/javascript" src="${static('button/button3.js', absolute=True)}"></script>
 </%def>
 

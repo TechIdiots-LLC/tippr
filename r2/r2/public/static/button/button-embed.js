@@ -1,6 +1,7 @@
 var buttonEmbed = (function() {
-  var baseUrl = "//www.tippr.net"
-  var apiUrl = "//buttons.tippr.net"
+  // the site serving these button files: its posts, submit page and API
+  var baseUrl = window.location.protocol + "//" + window.location.host
+  var apiUrl = baseUrl
   var logo = $q('a.logo')
   var up = $q('a.up')
   var down = $q('a.down')
@@ -88,6 +89,11 @@ var buttonEmbed = (function() {
   }
 
   function init() {
+    // the site's name, and where the button hides that text, its icon
+    logo.textContent = window.location.hostname.replace(/^www\./, "")
+    if (parseInt(window.getComputedStyle(logo).textIndent, 10) < 0) {
+      logo.style.backgroundImage = "url(" + baseUrl + "/favicon.ico)"
+    }
     submission.href = logo.href = up.href = down.href = submitUrl()
     applyParams()
     loadSubmission()

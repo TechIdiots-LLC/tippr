@@ -35,6 +35,11 @@
   order for numbers. Each column family now orders, bounds and returns its column names by its comparator, as
   pycassa did, so reads newest first, paging and "the latest N" are right; the sorting each model did on its own
   to make up for it is gone. Stored data is unchanged.
+- **The interactive buttons on /buttons loaded from reddit's servers:** the button scripts other sites paste in
+  wrote an iframe from redditstatic.com, which talked to fixed tippr.net addresses and showed reddit's logo. They
+  now load from the site that serves them, show its icon and name, and read the `tippr_url`, `tippr_title` and
+  other options the page tells people to set (they read `reddit_*` names before). The snippets on the page use the
+  site's full address, so they work pasted elsewhere.
 - **/admin/servers showed working queues as having no processors:** the comment tree and listing queues' processors
   poll, which RabbitMQ doesn't count, so they were flagged with 0. They show "polling" while they run now.
 - _...Add new stuff here..._

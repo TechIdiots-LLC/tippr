@@ -1,29 +1,32 @@
+// A tippr button for other sites: the page sets tippr_url, tippr_title,
+// tippr_target (a vault), tippr_bgcolor, tippr_bordercolor and
+// tippr_newwindow if it likes, then includes this script, which adds an
+// iframe with button3.html from wherever this script was loaded.
 (function() {
-  var write_string="<iframe src=\"//www.redditstatic.com/button/button3.html?url=";
-
-  if (window.reddit_url)  { 
-      write_string += encodeURIComponent(reddit_url); 
+  var script = document.currentScript || (function() {
+    var scripts = document.getElementsByTagName('script');
+    return scripts[scripts.length - 1];
+  })();
+  var base = script.src.substring(0, script.src.lastIndexOf('/') + 1);
+  var src = base + 'button3.html?url=' +
+      encodeURIComponent(window.tippr_url || window.location.href);
+  var options = {
+    title: window.tippr_title,
+    vault: window.tippr_target,
+    bgcolor: window.tippr_bgcolor,
+    bordercolor: window.tippr_bordercolor,
+    newwindow: window.tippr_newwindow
+  };
+  for (var name in options) {
+    if (options[name]) {
+      src += '&' + name + '=' + encodeURIComponent(options[name]);
+    }
   }
-  else { 
-      write_string += encodeURIComponent(window.location.href);
-  }
-  if (window.reddit_title) {
-       write_string += '&title=' + encodeURIComponent(window.reddit_title);
-  }
-  if (window.reddit_target) {
-       write_string += '&vault=' + encodeURIComponent(window.reddit_target);
-  }
-  if (window.reddit_css) {
-      write_string += '&css=' + encodeURIComponent(window.reddit_css);
-  }
-  if (window.reddit_bgcolor) {
-      write_string += '&bgcolor=' + encodeURIComponent(window.reddit_bgcolor); 
-  }
-  if (window.reddit_bordercolor) {
-      write_string += '&bordercolor=' + encodeURIComponent(window.reddit_bordercolor); 
-  }
-  if (window.reddit_newwindow) { 
-      write_string += '&newwindow=' + encodeURIComponent(window.reddit_newwindow);}
-  write_string += "\" height=\"52\" width=\"69\" scrolling='no' frameborder='0'></iframe>";
-  document.write(write_string);
-})()
+  var frame = document.createElement('iframe');
+  frame.src = src;
+  frame.height = '52';
+  frame.width = '69';
+  frame.scrolling = 'no';
+  frame.frameBorder = '0';
+  script.parentNode.insertBefore(frame, script.nextSibling);
+})();
