@@ -338,7 +338,11 @@ class StringsSource(LocaleSpecificSource):
             self._check_formatting_specifiers(key)
             msg = catalog[key]
 
-            if not msg or not msg.string:
+            # (fuzzy: a guess from a similar string, waiting for a
+            # translator; msgfmt leaves them out of the .mo files, so the
+            # pages' own text never shows them, and nor should the scripts':
+            # one turned "use a passkey" into "make update")
+            if not msg or not msg.string or msg.fuzzy:
                 continue
 
             # jed expects to ignore the first value in the translations array
