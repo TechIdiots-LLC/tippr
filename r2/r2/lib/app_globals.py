@@ -283,7 +283,6 @@ class Globals:
             'known_image_domains',
             'reserved_subdomains',
             'offsite_subdomains',
-            'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
             'autoexpand_media_types',
             'media_preview_domain_whitelist',
@@ -353,10 +352,6 @@ class Globals:
         ConfigValue.baseplate(baseplate_config.Optional(baseplate_config.Endpoint)): [
             "activity_endpoint",
             "tracing_endpoint",
-        ],
-
-        ConfigValue.dict(ConfigValue.str, ConfigValue.str): [
-            'emr_traffic_tags',
         ],
     }
 
