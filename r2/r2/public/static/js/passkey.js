@@ -90,20 +90,34 @@ r.passkey = {
 
   // what happened, and what to do next (the FIDO Alliance's guidance for
   // passkey failures: say what happened, without blame, and a next step)
-  failed: function(err, creating) {
+  failed: function(err, creating, hasApp) {
+    if (hasApp === undefined) { hasApp = !!r.config.two_factor_app }
     // the person cancelled, or no passkey was there
     if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
-      return creating
-        ? r._('No passkey was created. Try again, or add an authenticator app instead.')
-        : r._('No passkey was used. Try again, or enter a code instead.')
+      if (creating) {
+        return r._('No passkey was created. Try again, or add an authenticator app instead.')
+      }
+      return hasApp ? r._('No passkey was used. Try again, or enter a code instead.')
+                    : r._('No passkey was used. Try again, or use a recovery code instead.')
     }
     if (err && err.name === 'InvalidStateError') {
       return r._('This device already has a passkey for your account: it is in your list.')
     }
     if (err && err.error) { return err.error }
-    return creating
-      ? r._("We couldn't create your passkey. Try again, or add an authenticator app instead.")
-      : r._("We couldn't check your passkey. Try again, or enter a code instead.")
+    if (creating) {
+      return r._("We couldn't create your passkey. Try again, or add an authenticator app instead.")
+    }
+    return hasApp ? r._("We couldn't check your passkey. Try again, or enter a code instead.")
+                  : r._("We couldn't check your passkey. Try again, or use a recovery code instead.")
+  },
+
+  // whether the account the form is for has an authenticator app, so has
+  // codes to type (the login code page says on its form; otherwise it's
+  // the account signed in)
+  hasApp: function($form) {
+    var attr = $form.attr('data-has-app')
+    if (attr !== undefined) { return attr === '1' }
+    return !!r.config.two_factor_app
   },
 
   // sign with a passkey; resolves to the code for the form
@@ -127,33 +141,64 @@ r.passkey = {
     })
   },
 
-  // "use a passkey" next to a code field
+  // "use a passkey" with a code field. With an authenticator app, the field
+  // stays and the button is the other way ("or use a passkey"). Without
+  // one there's no code to type: the button leads, the field (and a submit
+  // button that's only for it, .otp-submit) hide behind "use a recovery
+  // code instead", and sending the form with no code asks for the passkey
+  // first.
   addButton: function(input) {
     var self = this, $input = $(input), $form = $input.closest('form')
     if ($input.data('passkey-button') || $form.is('#pref-otp-qr')) { return }
     $input.data('passkey-button', true)
+    var hasApp = self.hasApp($form)
     var $status = $('<span class="passkey-status"></span>')
     var $button = $('<button type="button" class="btn passkey-use"></button>')
-      .text(r._('use a passkey'))
-      .on('click', function() {
-        $status.text('')
-        $button.prop('disabled', true)
-        self.authenticate($form).then(function(code) {
-          $input.val(code)
-          if ($form.hasClass('passkey-add')) {
-            // proved with a passkey: on to adding the new one
-            self.register($form.find('.passkey-add-button'))
-          } else if ($form[0].requestSubmit) {
-            // send the form as if the code had been typed
-            $form[0].requestSubmit()
-          } else {
-            $form.submit()
-          }
-        }, function(err) {
-          $status.text(self.failed(err))
-        }).then(function() { $button.prop('disabled', false) })
+      .text(hasApp ? r._('or use a passkey') : r._('use a passkey'))
+    var usePasskey = function() {
+      $status.text('')
+      $button.prop('disabled', true)
+      self.authenticate($form).then(function(code) {
+        $input.val(code)
+        if ($form.hasClass('passkey-add')) {
+          // proved with a passkey: on to adding the new one
+          self.register($form.find('.passkey-add-button'))
+        } else if ($form[0].requestSubmit) {
+          // send the form as if the code had been typed
+          $form[0].requestSubmit()
+        } else {
+          $form.submit()
+        }
+      }, function(err) {
+        $status.text(self.failed(err, false, hasApp))
+      }).then(function() { $button.prop('disabled', false) })
+    }
+    $button.on('click', usePasskey)
+    if (hasApp) {
+      $input.after($button, $status)
+      return
+    }
+
+    var $submit = $form.find('.otp-submit')
+    var $recovery = $('<a href="#" class="passkey-recovery"></a>')
+      .text(r._('use a recovery code instead'))
+      .on('click', function(e) {
+        e.preventDefault()
+        $recovery.hide()
+        $input.attr('placeholder', r._('recovery code')).show().focus()
+        $submit.show()
       })
-    $input.after($button, $status)
+    $input.hide().before($button, $status, $recovery)
+    $submit.hide()
+    // sent without a code (the field still hidden): the passkey first.
+    // (A capture listener runs before the form's own onsubmit, and stops it.)
+    // (not where one entered a few minutes ago still counts: data-otp-optional)
+    $form[0].addEventListener('submit', function(e) {
+      if ($input.val() || $input.is(':visible') || $input.attr('data-otp-optional')) { return }
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      usePasskey()
+    }, true)
   },
 
   // "add a passkey" on preferences, security

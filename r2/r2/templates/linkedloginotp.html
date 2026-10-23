@@ -16,14 +16,18 @@
 ## the two-factor code at login: after the password, or after signing in
 ## with a linked account (r2.controllers.linked_logins)
 <div class="payment-status linked-login-otp">
-  <p>${_("Your account uses two-factor sign-in: enter the code from your authenticator app (or one of your recovery codes).")}</p>
+  %if thing.has_app or not thing.passkeys:
+    <p>${_("Your account uses two-factor sign-in: enter the code from your authenticator app (or one of your recovery codes).")}</p>
+  %else:
+    <p>${_("Your account uses two-factor sign-in: confirm it's you with your passkey.")}</p>
+  %endif
   %if thing.wrong:
     <p class="error">${_("That code isn't right. Try again.")}
       ${_("Codes follow the clock: if they keep failing, check that your phone sets its time automatically.")}</p>
   %endif
   <form action="/logins/otp" method="post"
         %if thing.passkeys:
-        data-passkey-login="${thing.token}"
+        data-passkey-login="${thing.token}" data-has-app="${'1' if thing.has_app else '0'}"
         %endif
         >
     <input type="hidden" name="token" value="${thing.token}">
@@ -33,6 +37,6 @@
       <input type="checkbox" name="remember">
       ${_("don't ask again on this device for %(days)s days") % dict(days=thing.device_days)}
     </label>
-    <button class="btn" type="submit">${_("sign in")}</button>
+    <button class="btn otp-submit" type="submit">${_("sign in")}</button>
   </form>
 </div>

@@ -595,7 +595,8 @@ action = add_vault(action, vault_path=False)
   <tr>
     <td>
       %if getattr(thing, "ask_code", False):
-        <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" size="10" placeholder="${_('two-factor code')}">
+        <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" size="10" placeholder="${_('two-factor code')}"
+               ${'data-otp-optional="1"' if getattr(thing, "code_optional", False) else ''}>
       %endif
       <input type="submit" class="btn" value="${_('save options')}"/>
     </td>

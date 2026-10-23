@@ -153,7 +153,8 @@ ${thing.captcha}
 %if thing.ask_code:
 <div class="spacer">
   <%utils:round_field title="${_('two-factor code')}" description="${_('(not needed if you entered one in the last 15 minutes)')}">
-    <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12">
+    <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12"
+           ${'data-otp-optional="1"' if thing.code_optional else ''}>
     ${error_field("TWO_FACTOR_REQUIRED", "otp", "div")}
   </%utils:round_field>
 </div>

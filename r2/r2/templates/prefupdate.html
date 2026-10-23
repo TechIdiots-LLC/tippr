@@ -31,7 +31,8 @@
   %if thing.two_factor:
   <div class="spacer">
     <%utils:round_field title="${_('two-factor code')}" description="${_('(required)') if thing.needs_code else _('(entered a moment ago)')}">
-      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12">
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12"
+             ${'data-otp-optional="1"' if not thing.needs_code else ''}>
       ${error_field("TWO_FACTOR_REQUIRED", "otp")}
     </%utils:round_field>
   </div>

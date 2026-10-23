@@ -148,6 +148,11 @@ def _has_passkeys(user):
     return two_factor.has_passkeys(user)
 
 
+def _has_authenticator_app(user):
+    from r2.lib import two_factor
+    return two_factor.has_authenticator_app(user)
+
+
 def _switch_account_names():
     # imported here: account_switcher needs r2.models, which needs this
     from r2.lib import account_switcher
@@ -305,6 +310,9 @@ def js_config(extra_config=None):
         # accounts (so switching to one without it still lets you back)
         # "use a passkey" next to two-factor code fields (passkey.js)
         "two_factor_passkeys": bool(logged and _has_passkeys(c.user)),
+        # (without an authenticator app, the code fields become "use a
+        # passkey", with a recovery code as the fallback)
+        "two_factor_app": bool(logged and _has_authenticator_app(c.user)),
         "switch_accounts": switch_accounts,
         "account_switcher": bool(logged and (c.user.pref_account_switcher or
                                              switch_accounts)),

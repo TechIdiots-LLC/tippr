@@ -306,6 +306,15 @@ def passkey_by_credential(credential_id):
     return dict(row) if row else None
 
 
+def has_authenticator_app(account):
+    """Whether account has an authenticator app, so there's a code to type
+    (no database query). Without one, two-factor prompts lead with "use a
+    passkey", a recovery code being the fallback."""
+    return bool(getattr(account, "otp_secret", None) or
+                (getattr(account, "two_factor_methods", 0) or 0) >
+                (getattr(account, "two_factor_passkeys", 0) or 0))
+
+
 def has_passkeys(account):
     """Whether "use a passkey" can be offered (no database query)."""
     return bool(getattr(account, "two_factor_passkeys", 0))

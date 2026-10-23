@@ -1312,7 +1312,12 @@ class PrefOptions(Templated):
         from r2.lib import two_factor
         ask_code = (c.user_is_loggedin and two_factor.enabled(c.user) and
                     getattr(c.user, "pref_otp_settings", False))
+        # (one entered in the last few minutes counts: the field may be
+        # left empty, passkey.js)
+        code_optional = ask_code and not two_factor.needs_code(c.user,
+                                                               "settings")
         Templated.__init__(self, done=done, ask_code=ask_code,
+                code_optional=code_optional,
                 error_style_override=error_style_override,
                 feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                 generic_error=generic_error, themes=themes, use_other_theme=use_other_theme)
@@ -1342,6 +1347,9 @@ class PrefSecurity(Templated):
             key=lambda m: m["kind"] != "passkey")
         self.two_factor = two_factor.enabled(c.user)
         self.has_passkey = any(m["kind"] == "passkey" for m in self.methods)
+        # (without an authenticator app there's no code to type: the page
+        # asks for the passkey instead)
+        self.has_app = any(m["kind"] == "totp" for m in self.methods)
         # just made one (passkey.js), or just signed in with a recovery
         # code (r2.controllers.linked_logins)
         self.passkey_created = request.GET.get("passkey") == "created"
@@ -1391,10 +1399,11 @@ class LinkedLoginOtp(Templated):
         try:
             account = Account._byID(held["account_id"], data=True)
             passkeys = two_factor.has_passkeys(account)
+            has_app = two_factor.has_authenticator_app(account)
         except (KeyError, NotFound):
-            passkeys = False
+            passkeys, has_app = False, True
         Templated.__init__(self, token=token, wrong=wrong, passkeys=passkeys,
-                           device_days=two_factor.DEVICE_DAYS)
+                           has_app=has_app, device_days=two_factor.DEVICE_DAYS)
 
 
 class AdminLoginSettings(Templated):
@@ -3708,6 +3717,8 @@ class NewLink(Templated):
         from r2.lib import two_factor
         self.ask_code = (two_factor.enabled(c.user) and
                          getattr(c.user, "pref_otp_post", False))
+        self.code_optional = (self.ask_code and
+                              not two_factor.needs_code(c.user, "post"))
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, text = text)

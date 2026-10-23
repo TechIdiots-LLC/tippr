@@ -81,6 +81,15 @@ class TestTwoFactor(TipprTestCase):
         self.assertEqual(two_factor._open("JBSWY3DPEHPK3PXP", 7),
                          "JBSWY3DPEHPK3PXP")
 
+    def test_has_authenticator_app(self):
+        # an app from before several methods (otp_secret)
+        self.assertTrue(two_factor.has_authenticator_app(self.account))
+        self.account.otp_secret = ""
+        self.account.two_factor_methods, self.account.two_factor_passkeys = 1, 1
+        self.assertFalse(two_factor.has_authenticator_app(self.account))
+        self.account.two_factor_methods = 2
+        self.assertTrue(two_factor.has_authenticator_app(self.account))
+
     def test_minutes_left(self):
         self.assertEqual(two_factor.recent_minutes_left(self.account), 0)
         two_factor.mark_recent(self.account)

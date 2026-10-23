@@ -58,7 +58,11 @@
 <div class="two-factor">
 % if thing.two_factor:
     <p class="two-factor-state">
-      ${_md("two-factor authentication is **on**. you're asked for a code from one of your methods when changing your password or email address, and when linking or unlinking a sign-in.")}
+      %if thing.has_app:
+        ${_md("two-factor authentication is **on**. you're asked for a code from one of your methods when changing your password or email address, and when linking or unlinking a sign-in.")}
+      %else:
+        ${_md("two-factor authentication is **on**. you're asked to confirm it's you with your passkey when changing your password or email address, and when linking or unlinking a sign-in.")}
+      %endif
     </p>
 
     %if thing.passkey_created:
@@ -89,10 +93,16 @@
     %else:
       <form action="/post/two_factor_unlock" method="post" class="pretty-form two-factor-unlock"
             onsubmit="return post_form(this, 'two_factor_unlock')">
-        <p>${_("To change anything here, enter a code from one of your methods first. It counts for 15 minutes.")}</p>
+        %if thing.has_app:
+          <p>${_("To change anything here, enter a code from your authenticator app first. It counts for 15 minutes.")}</p>
+        %else:
+          ## no app, so no codes to type: the passkey (passkey.js turns the
+          ## field into "use a passkey", with a recovery code as the fallback)
+          <p>${_("To change anything here, confirm it's you with your passkey first. It counts for 15 minutes.")}</p>
+        %endif
         <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
                maxlength="40" size="10" placeholder="${_('two-factor code')}">
-        <button class="btn" type="submit">${_("unlock")}</button>
+        <button class="btn otp-submit" type="submit">${_("unlock")}</button>
         ${error_field("WRONG_OTP", "otp")}
         <span class="status"></span>
       </form>
