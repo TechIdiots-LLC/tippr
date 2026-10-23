@@ -16,6 +16,12 @@ class FakeCache(dict):
     def set(self, key, value, time=None):
         self[key] = value
 
+    def add(self, key, value, time=None):
+        if key in self:
+            return False
+        self[key] = value
+        return True
+
     def delete(self, key):
         self.pop(key, None)
 
@@ -101,7 +107,16 @@ class TestTwoFactor(TipprTestCase):
         self.cache[key] = int(time.time()) - 5   # not yet expired from cache
         self.assertEqual(two_factor.recent_minutes_left(self.account), 1)
 
+    def stored_account(self, stored):
+        """use_recovery_code reads the account afresh: stored is that copy."""
+        models = MagicMock()
+        models.Account.get_things_from_cache.return_value = {7: stored}
+        p = patch.dict("sys.modules", {"r2.models": models})
+        p.start()
+        self.addCleanup(p.stop)
+
     def test_recovery_codes_work_once(self):
+        self.stored_account(self.account)
         codes = two_factor.new_recovery_codes(self.account)
         self.assertEqual(len(codes), two_factor.RECOVERY_CODES)
         self.assertNotIn(codes[0], self.account.otp_recovery_codes)
@@ -113,6 +128,26 @@ class TestTwoFactor(TipprTestCase):
         # new codes replace the old ones
         two_factor.new_recovery_codes(self.account)
         self.assertFalse(two_factor.use_recovery_code(self.account, codes[1]))
+
+    def test_recovery_code_used_elsewhere(self):
+        codes = two_factor.new_recovery_codes(self.account)
+        stored = MagicMock(otp_recovery_codes=list(
+            self.account.otp_recovery_codes))
+        self.stored_account(stored)
+        # another request used codes[0]; this one's copy is stale
+        stored.otp_recovery_codes = stored.otp_recovery_codes[1:]
+        self.assertFalse(two_factor.use_recovery_code(self.account, codes[0]))
+        self.assertTrue(two_factor.use_recovery_code(self.account, codes[1]))
+        # what's written is the fresh list, without codes[0] coming back
+        self.assertEqual(stored.otp_recovery_codes,
+                         self.account.otp_recovery_codes)
+        self.assertEqual(len(stored.otp_recovery_codes),
+                         two_factor.RECOVERY_CODES - 2)
+
+    def test_passkey_token_works_once(self):
+        token = two_factor.passkey_token(self.account)
+        self.assertTrue(two_factor._use_passkey_token(self.account, token))
+        self.assertFalse(two_factor._use_passkey_token(self.account, token))
 
     def test_remembered_device(self):
         self.account.pref_otp_login = True

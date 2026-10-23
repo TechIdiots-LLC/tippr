@@ -170,6 +170,10 @@ def register(account, token, credential, name=None):
             default_name=provider_name(verified.aaguid, transport_list))
     except two_factor.TooManyMethods:
         raise PasskeyError("That's as many passkeys as an account can have.")
+    except two_factor.PasskeyInUse:
+        g.log.warning("passkeys: %s registered a credential id that's "
+                      "already in use", account.name)
+        raise PasskeyError("That passkey couldn't be added.")
 
 
 def authentication_options(account):

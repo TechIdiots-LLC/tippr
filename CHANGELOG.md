@@ -18,6 +18,10 @@
   and a start column kept the columns after the start instead of before it (so "the goal in effect on a date"
   found the newest goal instead), took `""` as a bound rather than none, and returned an empty row where pycassa
   raises not found. It now slices the way `multiget()` already did.
+- **A recovery code or passkey check could be used twice at once:** several sign-ins sent together with one recovery
+  code all got in, and a stale copy of the account could put back codes used meanwhile. Codes are now taken under a
+  lock from a fresh copy, and the passkey check a form gets is good for one request only. A passkey's credential id
+  is unique now too (added to existing databases), so a made-up registration can't reuse another account's.
 - _...Add new stuff here..._
 
 ## 0.17.0

@@ -85,10 +85,28 @@ def _engine():
         table = _methods_table(make_metadata(engine))
         create_table(table, [
             index_str(table, "account_id", "account_id"),
-            index_str(table, "credential_id", "credential_id"),
         ])
+        _unique_credentials(engine, table)
         _db.update(engine=engine, table=table)
     return _db["engine"]
+
+
+def _unique_credentials(engine, table):
+    """A passkey's credential id belongs to one method: the browser picks
+    it, so without this a made-up registration could reuse someone else's
+    and make signing in with their passkey find the wrong account. (Tables
+    made before it had a plain index; this adds the unique one to those.)"""
+    if not g.db_create_tables:
+        return
+    command = (
+        "create unique index if not exists idx_credential_unique_%s on %s "
+        "(credential_id)" % (table.name, table.name))
+    try:
+        with engine.begin() as conn:
+            conn.execute(sa.text(command))
+    except Exception as e:
+        g.log.error("two-factor: couldn't add %r (the same passkey on two "
+                    "methods?): %s", command, e)
 
 
 def _table():
@@ -265,15 +283,24 @@ class TooManyMethods(Exception):
     pass
 
 
+class PasskeyInUse(Exception):
+    """The passkey's credential id is already on a method."""
+
+
 def _add(account, kind, name, default_name=None, **values):
     if len(methods(account, kind)) >= MAX_METHODS:
         raise TooManyMethods
     first = not enabled(account)
-    with _engine().begin() as conn:
-        conn.execute(_table().insert().values(
-            id=secrets.token_hex(8), account_id=account._id, kind=kind,
-            name=_name(name, kind, account, default_name), created=_now(),
-            **values))
+    try:
+        with _engine().begin() as conn:
+            conn.execute(_table().insert().values(
+                id=secrets.token_hex(8), account_id=account._id, kind=kind,
+                name=_name(name, kind, account, default_name),
+                created=_now(), **values))
+    except sa.exc.IntegrityError:
+        if kind == "passkey":
+            raise PasskeyInUse
+        raise
     _changed(account)
     g.log.info("two-factor: %s added a %s", account.name, kind)
     return first
@@ -289,7 +316,9 @@ def add_passkey(account, credential_id, public_key, sign_count,
                 transports="", name=None, default_name=None):
     """Add a passkey (r2.lib.passkeys). Returns whether it's the first
     method. default_name (where it was saved) is used when no name is
-    given."""
+    given. Raises PasskeyInUse if its credential id is already taken."""
+    if passkey_by_credential(credential_id):
+        raise PasskeyInUse
     return _add(account, "passkey", name, default_name=default_name,
                 credential_id=credential_id, public_key=public_key,
                 sign_count=sign_count or 0, transports=transports or None)
@@ -459,16 +488,29 @@ def use_recovery_code(account, code):
     is then used up)."""
     if not code or len(code.replace("-", "").replace(" ", "")) != 8:
         return False
-    hashes = list(getattr(account, "otp_recovery_codes", None) or [])
     wanted = _hash_recovery(code)
-    for h in hashes:
-        if hmac.compare_digest(h, wanted):
-            hashes.remove(h)
-            account.otp_recovery_codes = hashes
-            account._commit()
-            g.log.info("two-factor: %s used a recovery code (%d left)",
-                       account.name, len(hashes))
-            return True
+    if not any(hmac.compare_digest(h, wanted) for h in
+               getattr(account, "otp_recovery_codes", None) or []):
+        return False
+    # Two requests with the same code at once, or one with a stale copy of
+    # the account, could each take it (and a stale copy would write back
+    # codes used meanwhile): take it on a fresh copy, under a lock.
+    from r2.models import Account
+    with g.make_lock("two_factor", "recovery_" + account._id36, timeout=10):
+        # (past this request's own cache, which has the copy it read)
+        fresh = (Account.get_things_from_cache(
+                     [account._id], allow_local=False).get(account._id) or
+                 Account._byID(account._id, data=True))
+        hashes = list(getattr(fresh, "otp_recovery_codes", None) or [])
+        for h in hashes:
+            if hmac.compare_digest(h, wanted):
+                hashes.remove(h)
+                fresh.otp_recovery_codes = hashes
+                fresh._commit()
+                account.otp_recovery_codes = hashes
+                g.log.info("two-factor: %s used a recovery code (%d left)",
+                           account.name, len(hashes))
+                return True
     return False
 
 
@@ -512,6 +554,10 @@ def passkey_token(account):
 def _use_passkey_token(account, token):
     key = "otp:pk_" + token
     if g.gencache.get(key) != account._id:
+        return False
+    # one use, even for two requests at once
+    if not g.gencache.add("otp:pk_used_" + token, True,
+                          time=PASSKEY_TOKEN_SECONDS):
         return False
     g.gencache.delete(key)
     return True
