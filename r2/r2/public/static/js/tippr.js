@@ -92,10 +92,18 @@ function get_form_fields(form, fields, filter_func) {
             }
         });
     if (fields.id == null) {
-        fields.id = $(form).attr("id") ? ("#" + $(form).attr("id")) : "";
+        // the server answers with jQuery calls on this selector (the status
+        // line's "saved", the errors), so a form without an id gets one:
+        // with "" they matched nothing, and "submitting..." stayed
+        var $form = $(form)
+        if (!$form.attr("id")) {
+            $form.attr("id", "form-auto-" + (++get_form_fields._made))
+        }
+        fields.id = "#" + $form.attr("id");
     }
     return fields;
 };
+get_form_fields._made = 0;
 
 function form_error(form) {
     return function(req) {
