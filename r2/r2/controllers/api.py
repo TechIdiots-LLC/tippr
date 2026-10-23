@@ -353,6 +353,22 @@ class ApiController(TipprController):
         if not (responder.has_errors("user", errors.BAD_USERNAME)):
             return bool(user)
 
+    @json_validate(
+        VUser(),
+        VModhash(),
+        consent=VOneOf("consent", ("granted", "denied")),
+    )
+    def POST_analytics_consent(self, responder, consent):
+        """Keep a member's Google Analytics answer with their account, so
+        it follows them to every device (the consent banner and the
+        browser's cookie handle the rest; templates/utils.html)."""
+        if not consent:
+            return {"error": "consent must be granted or denied"}
+        if c.user.pref_analytics_consent != consent:
+            c.user.pref_analytics_consent = consent
+            c.user._commit()
+        return {"consent": consent}
+
     @csrf_exempt
     @json_validate(link=VByName("link_id", thing_cls=Link))
     def POST_here_now(self, responder, link):
@@ -5075,10 +5091,12 @@ class ApiController(TipprController):
         VModhash(),
         signups=VOneOf("signups", ("open", "closed")),
         sitemaps=VOneOf("sitemaps", ("recent", "complete")),
+        analytics_consent=VOneOf("analytics_consent", ("ask", "off")),
         **{name: VLength(name, max_length=length, empty_error=None)
            for name, length in site_info_text_lengths().items()}
     )
-    def POST_site_settings(self, form, jquery, signups, sitemaps, **values):
+    def POST_site_settings(self, form, jquery, signups, sitemaps,
+                           analytics_consent, **values):
         """Save the site settings on /admin/site; blank values go back to
         the ini (or to nothing)."""
         from r2.lib import site_info
@@ -5123,6 +5141,7 @@ class ApiController(TipprController):
             values["google_analytics_id"] = match.group(0)
         values["signups"] = "closed" if signups == "closed" else ""
         values["sitemaps"] = "complete" if sitemaps == "complete" else ""
+        values["analytics_consent"] = "off" if analytics_consent == "off" else ""
         site_info.save(values)
         form.set_text(".status", _("saved"))
 

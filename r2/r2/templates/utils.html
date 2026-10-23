@@ -456,8 +456,19 @@ ${unsafe(txt)}
 ## for visitors whose browser asks not to be tracked (Do Not Track, Global
 ## Privacy Control), and with IP addresses anonymized. (reddit's ga.js and
 ## analytics.js code was for Universal Analytics, which Google shut down.)
+##
+## With "ask first" on /admin/site, nothing from Google loads until the
+## visitor allows it (consent mode's "basic" way). The answer is kept in a
+## cookie, and with a signed-in member's account (pref_analytics_consent,
+## POST /api/analytics_consent), which wins, so it follows them to every
+## device. Decided here in the browser: pages for logged-out visitors may
+## come from a shared cache.
 <%def name="googleanalytics(uitype, is_gold_page=False)">
-  <% ga_id = getattr(g, "google_analytics_id", None) %>
+  <%
+    from r2.lib import site_info
+    ga_id = getattr(g, "google_analytics_id", None)
+    member_choice = (c.user.pref_analytics_consent or None) if c.user_is_loggedin else None
+  %>
   %if ga_id and thing.site_tracking:
   <script type="text/javascript">
     (function() {
@@ -467,18 +478,99 @@ ${unsafe(txt)}
         return;
       }
       var id = ${scriptsafe_dumps(ga_id)};
-      var s = document.createElement('script');
-      s.async = true;
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
-      document.head.appendChild(s);
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = function() { window.dataLayer.push(arguments); };
-      window.gtag('js', new Date());
-      window.gtag('config', id, {
-        anonymize_ip: true,
-        user_type: ${scriptsafe_dumps("guest" if not c.user_is_loggedin else "member")},
-        ui_type: ${scriptsafe_dumps(uitype)}
-      });
+      var ask = ${scriptsafe_dumps(site_info.analytics_consent_required())};
+      var member = ${scriptsafe_dumps(bool(c.user_is_loggedin))};
+      var saved = ${scriptsafe_dumps(member_choice)};
+      var COOKIE = 'tippr_analytics_consent';
+
+      function fromCookie() {
+        var m = document.cookie.match(/(?:^|; )tippr_analytics_consent=(granted|denied)/);
+        return m ? m[1] : null;
+      }
+
+      function remember(choice) {
+        document.cookie = COOKIE + '=' + choice + '; path=/; max-age=31536000; SameSite=Lax' +
+            (location.protocol == 'https:' ? '; Secure' : '');
+      }
+
+      function keepWithAccount(choice) {
+        if (!member) {
+          return;
+        }
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/analytics_consent.json');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.send('consent=' + choice + '&uh=' + encodeURIComponent(${scriptsafe_dumps(c.modhash or "")}));
+      }
+
+      function load() {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', id, {
+          anonymize_ip: true,
+          user_type: member ? 'member' : 'guest',
+          ui_type: ${scriptsafe_dumps(uitype)}
+        });
+      }
+
+      function decide(choice) {
+        remember(choice);
+        keepWithAccount(choice);
+        var banner = document.getElementById('analytics-consent');
+        if (banner) {
+          banner.parentNode.removeChild(banner);
+        }
+        if (choice == 'granted') {
+          load();
+        }
+      }
+
+      function showBanner() {
+        var banner = document.createElement('div');
+        banner.id = 'analytics-consent';
+        banner.className = 'analytics-consent';
+        banner.setAttribute('role', 'dialog');
+        banner.setAttribute('aria-label', ${scriptsafe_dumps(_("analytics consent"))});
+        var text = document.createElement('p');
+        text.textContent = ${scriptsafe_dumps(_("This site would like to use Google Analytics to see how it's used, which sets cookies and sends Google details of your visit. Is that all right?"))} + ' ';
+        var more = document.createElement('a');
+        more.href = '/help/privacypolicy';
+        more.textContent = ${scriptsafe_dumps(_("privacy policy"))};
+        text.appendChild(more);
+        banner.appendChild(text);
+        [['granted', ${scriptsafe_dumps(_("allow"))}],
+         ['denied', ${scriptsafe_dumps(_("don't allow"))}]].forEach(function(b) {
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'btn';
+          button.textContent = b[1];
+          button.onclick = function() { decide(b[0]); };
+          banner.appendChild(button);
+        });
+        document.body.appendChild(banner);
+      }
+
+      var choice = saved || fromCookie();
+      /* (the page is sent with its whitespace collapsed: no // comments) */
+      if (saved && saved != fromCookie()) {
+        remember(saved);           /* this browser follows the account */
+      } else if (member && !saved && choice) {
+        keepWithAccount(choice);   /* the account learns this browser's answer */
+      }
+      if (!ask || choice == 'granted') {
+        load();
+      } else if (choice != 'denied') {
+        if (document.body) {
+          showBanner();
+        } else {
+          document.addEventListener('DOMContentLoaded', showBanner);
+        }
+      }
     })();
   </script>
   %endif

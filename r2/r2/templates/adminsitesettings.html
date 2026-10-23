@@ -107,6 +107,14 @@
   <p><small>${_("The site counts its own traffic for the traffic pages (/traffic, and each vault's traffic stats) without any outside service. To use Google Analytics as well, paste its measurement ID (G-…, or the whole tag Google gives you). It isn't loaded for visitors whose browser asks not to be tracked. In some places (the EU and UK, for example) you need visitors' consent before using it; the privacy policy already says the site may use analytics.")}</small></p>
   <table class="lined-table borderless">
     ${text_row("google_analytics_id", _("Google Analytics"), _("The measurement ID, e.g. G-ABC123XYZ. Blank: no Google Analytics."), 30, placeholder="G-")}
+    <tr>
+      <td>${_("visitors' consent")}</td>
+      <td>
+        <label><input type="radio" name="analytics_consent" value="ask" ${'checked' if thing.analytics_consent_required else ''}> ${_("ask first")}</label>
+        <label><input type="radio" name="analytics_consent" value="off" ${'' if thing.analytics_consent_required else 'checked'}> ${_("don't ask")}</label>
+        <br><small>${_("Ask first: a banner asks each visitor, and Google Analytics loads only for those who allow it. Their answer is kept in their browser, and with their account when they're signed in (they can change it in their preferences). Don't ask: it loads for everyone, which is only allowed where consent isn't required.")}</small>
+      </td>
+    </tr>
   </table>
 
   <h2>${_("announcement")}</h2>

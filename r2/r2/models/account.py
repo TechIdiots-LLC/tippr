@@ -84,6 +84,9 @@ class Account(Thing):
                      pref_clickgadget = 5,
                      pref_store_visits = False,
                      pref_public_votes = False,
+                     # Google Analytics consent: "granted", "denied" or "" (not
+                     # asked yet); kept so it follows the member everywhere
+                     pref_analytics_consent = "",
                      pref_hide_from_robots = False,
                      pref_research = False,
                      pref_hide_ups = False,

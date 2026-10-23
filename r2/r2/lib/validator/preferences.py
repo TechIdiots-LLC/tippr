@@ -67,6 +67,7 @@ PREFS_VALIDATORS = dict(
     pref_organic=VBoolean('organic'),
     pref_newwindow=VBoolean('newwindow'),
     pref_public_votes=VBoolean('public_votes'),
+    pref_analytics_consent=VOneOf('analytics_consent', ('granted', 'denied')),
     pref_hide_from_robots=VBoolean('hide_from_robots'),
     pref_hide_ups=VBoolean('hide_ups'),
     pref_hide_downs=VBoolean('hide_downs'),
@@ -191,6 +192,11 @@ def filter_prefs(prefs, user):
     # otherwise leave the member's choice as it is
     if not g.live_config.get("live_comments"):
         prefs.pop('pref_live_comments', None)
+
+    # the analytics choice is only on the form when the site uses Google
+    # Analytics: without an answer, keep the one saved
+    if not prefs.get('pref_analytics_consent'):
+        prefs.pop('pref_analytics_consent', None)
 
     # check stylesheet override
     if (feature.is_enabled('stylesheets_everywhere', user=user) and

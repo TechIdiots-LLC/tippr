@@ -138,6 +138,7 @@ class UserDataExporter:
                 'pref_compress', 'pref_domain_details', 'pref_newwindow',
                 'pref_media', 'pref_media_preview', 'pref_default_comment_sort',
                 'pref_highlight_new_comments', 'pref_live_comments',
+                'pref_analytics_consent',
                 'pref_show_trending', 'pref_show_multis',
                 'pref_infinite_scroll', 'pref_keyboard_nav', 'pref_nightmode',
                 'pref_hide_child_comments', 'pref_show_images', 'pref_auto_expand_images',

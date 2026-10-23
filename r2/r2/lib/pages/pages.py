@@ -4397,6 +4397,7 @@ class AdminSiteSettings(Templated):
         self.signups_open = site_info.signups_open()
         from r2.lib.sitemaps import complete
         self.sitemaps_complete = site_info.sitemaps_complete()
+        self.analytics_consent_required = site_info.analytics_consent_required()
         self.sitemap_status = complete.status()
         Templated.__init__(self)
 

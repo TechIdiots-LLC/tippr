@@ -56,6 +56,9 @@ SETTINGS = {
     "bing_site_verification": 120,
     # Google Analytics 4's measurement ID (G-…; templates/utils.html)
     "google_analytics_id": 40,
+    # "off": load it without asking visitors first; anything else asks
+    # (templates/utils.html googleanalytics)
+    "analytics_consent": 10,
     # images (media store URLs)
     "site_favicon": 500,
     "share_image": 500,
@@ -74,7 +77,7 @@ SETTINGS = {
 }
 
 # the settings set from the /admin/site text form (the others have their
-# own controls: image uploads, the sign-ups and sitemap switches)
+# own controls: image uploads, the sign-ups, sitemap and consent switches)
 TEXT_SETTINGS = (
     "site_name", "short_description", "contact_email", "front_page_title",
     "title_format", "google_site_verification", "bing_site_verification",
@@ -269,6 +272,11 @@ def signups_open():
 
 def sitemaps_complete():
     return getattr(g, "sitemaps", None) == "complete"
+
+
+def analytics_consent_required():
+    """Whether visitors are asked before Google Analytics loads."""
+    return getattr(g, "analytics_consent", None) != "off"
 
 
 def announcement():
