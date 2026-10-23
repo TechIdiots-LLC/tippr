@@ -216,6 +216,12 @@ $.request = function(op, parameters, worker_in, block, type,
         if($(form).length && res.success) {
           $(window).off('beforeunload');
         }
+        // votes, comments, posts and subscriptions, for Google Analytics
+        if (r.analytics && r.analytics.requestDone) {
+          try {
+            r.analytics.requestDone(action, parameters, res);
+          } catch (e) {}
+        }
         return worker_in(res);
     };
     /* do the same for the error handler, and make sure to release the lock*/

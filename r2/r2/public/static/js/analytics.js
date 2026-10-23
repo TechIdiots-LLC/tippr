@@ -81,6 +81,11 @@ r.analytics = {
 
     r.analytics.firePageTrackingPixel(r.analytics.stripAnalyticsParams);
 
+    // a search (what was searched for isn't sent)
+    if ($('body').hasClass('search-page')) {
+      r.analytics.sendGA4Event('search', {});
+    }
+
     r.hooks.get('analytics').call();
   },
 
@@ -103,116 +108,125 @@ r.analytics = {
         });
   },
 
-  _isGALoaded: false,
-
-  isGALoaded: function() {
-    // We've already passed this test, just return `true`
-    if (this._isGALoaded) {
-      return true;
-    }
-
-    // GA hasn't tried to load yet, so we can't know if it
-    // will succeed.
-    if (_.isArray(_gaq)) {
-      return undefined;
-    }
-
-    var test = false;
-
-    _gaq.push(function() {
-      test = true;
-    });
-
-    // Remember the result, so we only have to run this test once
-    // if it passes.
-    this._isGALoaded = test;
-
-    return test;
+  // Google Analytics 4: templates/utils.html defines window.gtag only for
+  // visitors it may track (they allowed it, or the site doesn't ask, and
+  // their browser doesn't ask not to be tracked); otherwise nothing is
+  // sent. Events take GA4's recommended names where one fits, so its
+  // reports understand them. No usernames, titles or ids go to Google.
+  _GA4_EVENTS: {
+    'login-form/submit': ['login', {method: 'password'}],
+    'register-form/submit': ['sign_up', {method: 'password'}],
+    'newsletter-form/submit': ['newsletter_signup', {}],
   },
 
-  _wrapCallback: function(callback) {
-    var original = callback;
+  sendGA4Event: function(name, params, callback) {
+    callback = callback || function() {};
+    if (typeof window.gtag !== 'function') {
+      callback();
+      return;
+    }
+    // GA may be slow or blocked: go on regardless after a moment
+    var done = _.once(callback);
+    window.gtag('event', name, _.extend({}, params, {
+      event_callback: done,
+      event_timeout: 500,
+    }));
+    setTimeout(done, 600);
+  },
 
-    original.called = false;
-    callback = function() {
-      if (!original.called) {
-        original();
-        original.called = true;
-      }
-    };
-
-    // GA may timeout.  ensure the callback is called.
-    setTimeout(callback, 500);
-
-    return callback;
+  _eventName: function(category, action) {
+    // GA4: letters, digits and underscores, starting with a letter, <= 40
+    return (category + '_' + action).toLowerCase()
+      .replace(/[^a-z0-9_]+/g, '_').replace(/^[^a-z]+/, '').slice(0, 40);
   },
 
   fireFunnelEvent: function(category, action, options, callback) {
     options = options || {};
-    callback = callback || window.Function.prototype;
+    callback = callback || function() {};
 
-    var page = '/' + _.compact([category, action, options.label]).join('-');
-
-    // if it's for Gold tracking and we have new _ga available
-    // then use it to track the event; otherwise, fallback to old version
-    if (options.tracker &&
-        '_ga' in window &&
-        window._ga.getByName &&
-        window._ga.getByName(options.tracker)) {
-      window._ga(options.tracker + '.send', 'pageview', {
-        'page': page,
-        'hitCallback': callback
-      });
-
-      if (options.value) {
-        window._ga(options.tracker + '.send', 'event', category, action, options.label, options.value);
-      }
-
-      return;
-    }
-
-    if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
+    if (!this.shouldFireEvent.apply(this, arguments)) {
       callback();
       return;
     }
 
-    var isGALoaded = this.isGALoaded();
-
-    if (!isGALoaded) {
-      callback = this._wrapCallback(callback);
-    }
-
-    // Virtual page views are needed for a funnel to work with GA.
-    // see: http://gatipoftheday.com/you-can-use-events-for-goals-but-not-for-funnels/
-    _gaq.push(['_trackPageview', page]);
-
-    // The goal can have a conversion value in GA.
+    var name = (category === 'gold' && action === 'checkout') ?
+      'begin_checkout' : this._eventName(category, action);
+    var params = {};
     if (options.value) {
-      _gaq.push(['_trackEvent', category, action, options.label, options.value]);
+      params.value = options.value;
+      params.currency = 'USD';
     }
-
-    _gaq.push(callback);
+    this.sendGA4Event(name, params, callback);
   },
 
   fireGAEvent: function(category, action, opt_label, opt_value, opt_noninteraction, callback) {
-    opt_label = opt_label || '';
-    opt_value = opt_value || 0;
-    opt_noninteraction = !!opt_noninteraction;
     callback = callback || function() {};
 
-    if (!window._gaq || !this.shouldFireEvent.apply(this, arguments)) {
+    if (!this.shouldFireEvent.apply(this, arguments)) {
       callback();
       return;
     }
 
-    var isGALoaded = this.isGALoaded();
-
-    if (!isGALoaded) {
-      callback = this._wrapCallback(callback);
+    var known = this._GA4_EVENTS[category + '/' + action];
+    var name, params;
+    if (known) {
+      name = known[0];
+      params = _.clone(known[1]);
+    } else if (category === 'post-sharing' && action.indexOf('share-to-') === 0) {
+      name = 'share';
+      params = {method: action.slice('share-to-'.length), content_type: 'post'};
+    } else if (category === 'post-sharing' && action.indexOf('link-') === 0) {
+      name = 'share';
+      params = {method: 'link', content_type: 'post'};
+    } else {
+      // (the label is left out: reddit's code put ids in it)
+      name = this._eventName(category, action);
+      params = {};
     }
+    if (opt_value) {
+      params.value = opt_value;
+    }
+    if (opt_noninteraction) {
+      params.non_interaction = true;
+    }
+    this.sendGA4Event(name, params, callback);
+  },
 
-    _gaq.push(['_trackEvent', category, action, opt_label, opt_value, opt_noninteraction]);
-    _gaq.push(callback);
+  // community actions, from $.request (jquery.tippr.js) once they've
+  // worked: (request parameters) -> [GA4 event, params], or null to skip
+  _ACTIONS: {
+    vote: function(params) {
+      if (params.dir == 1) {
+        return ['vote', {direction: 'up'}];
+      } else if (params.dir == -1) {
+        return ['vote', {direction: 'down'}];
+      }
+      return null;
+    },
+    comment: function() {
+      return ['post_comment', {}];
+    },
+    submit: function(params) {
+      return ['submit_post', {post_type: params.kind === 'self' ? 'text' : 'link'}];
+    },
+    subscribe: function(params) {
+      return params.action === 'sub' ? ['join_group', {group_id: params.vault}] : null;
+    },
+  },
+
+  requestDone: function(action, params, res) {
+    var make = this._ACTIONS[action];
+    if (!make) {
+      return;
+    }
+    var errors = res && res.json && res.json.errors;
+    if (errors && errors.length) {
+      return;
+    }
+    var event = make(params || {});
+    if (event) {
+      this.sendGA4Event(event[0], event[1]);
+    }
   },
 
   fireTrackingPixel: function(el) {
