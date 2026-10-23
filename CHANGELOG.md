@@ -23,6 +23,9 @@
   as it was (public vaults and the 10,000 newest posts). "Every post" has the new daily `tippr-job-sitemaps` list
   every public vault and post, in as many 50,000-address sitemaps as that takes, and the page shows when it last
   ran. reddit's S3 sitemap code, which needed its EMR data pipeline and SQS, is gone with its consumer and settings.
+- **Unused settings are gone from example.ini:** about-page, gold server, self-serve ad wiki pages, adzerk,
+  liveupdate, Cloudflare API URL, error reporter and notification email settings, and two feature flags nothing
+  checked, all left from reddit.
 - **Ready for Python 3.13:** nothing uses the `cgi`, `crypt` or `lib2to3` modules it removed any more. Uploads
   are recognised without `cgi`, HTTP basic sign-in (the `http` auth provider) checks passwords the way the login
   form does (it had also been handing bcrypt text, which failed), and the installer no longer runs lib2to3 over the
