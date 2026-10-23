@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.17.0
+### ✨ Features and improvements
 - **Sign in with a passkey alone:** the login forms' username field offers the site's passkeys in the browser's
   autofill, and choosing one signs in with no password or code; browsers that can't offer them there get a "sign in
   with a passkey" button. The passkey must check the person (fingerprint, face or PIN), which makes it both factors.
@@ -23,7 +29,6 @@
   mistake, instead of messaging the site's admins, who can't change the translations themselves.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Authenticator app secrets were stored as they are:** a copy of the database could make two-factor codes for
   every account with an app. They're now encrypted with a key from the site's `SECRET` (which backups carry), each
   bound to its account; secrets kept before are encrypted the next time they're read.
