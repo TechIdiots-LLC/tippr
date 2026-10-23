@@ -16,6 +16,14 @@
   - The web app only asks, through ZooKeeper. A root-owned updater (`tippr-update.timer`) does the work, and
     downloads only from the repository in root's `/etc/tippr/updates.conf`.
   - For installs with `tippr-firstboot` (Proxmox containers). `TIPPR_WEB_UPDATES=0` turns it off.
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+- **An empty rising page said the vault had nothing in it:** rising is often empty in a vault that has posts, so it
+  now shows the plain "nothing here" message, as gilded does. The "Nothing in /v/… yet" welcome is for hot and new.
+
+## 0.15.0
+### ✨ Features and improvements
 - **/admin/servers shows when an update is out:** the newest release on GitHub (`release_repo`, checked hourly),
   whether each server runs an older one, and a link to the release notes. Pre-releases are mentioned, not counted.
 - **Sign up with Google, GitHub and the rest:** signing in with an outside account nobody linked now also offers
@@ -86,9 +94,6 @@
   in-article unit's colours be set, so it's the way to have night mode ads that match the dark pages.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
-- **An empty rising page said the vault had nothing in it:** rising is often empty in a vault that has posts, so it
-  now shows the plain "nothing here" message, as gilded does. The "Nothing in /v/… yet" welcome is for hot and new.
 - **Explore was empty on a small site:** recommendations come from many members' subscriptions, no discovery vaults
   are set by default, and rising skipped the vaults you're in. With no discovery vaults set, explore now picks
   popular vaults you haven't joined, and when nothing is rising elsewhere it shows what's rising in your own vaults.
