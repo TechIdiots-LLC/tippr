@@ -4367,7 +4367,12 @@ class AdminServerStatus(Templated):
             result = []
             for queue in g.queues:
                 ok = chan.queue_declare(queue=queue.name, passive=True)
-                result.append((queue.name, ok[1], ok[2]))
+                consumers = ok[2]
+                # processors that poll (amqp.handle_items) aren't counted
+                # by RabbitMQ; they leave a heartbeat instead
+                if not consumers and amqp.has_consumer(queue.name):
+                    consumers = _("polling")
+                result.append((queue.name, ok[1], consumers))
             return sorted(result, key=lambda q: -q[1])
         except Exception as e:
             g.log.info("server status: couldn't ask RabbitMQ: %s", e)

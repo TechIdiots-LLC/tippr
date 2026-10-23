@@ -31,6 +31,8 @@
 - **A data export request whose queue item was lost blocked new ones for good:** asking again now sends a request
   that's been waiting over half an hour once more. A member's requests are also listed newest first again (their
   index's time-based keys don't sort by time as stored).
+- **/admin/servers showed working queues as having no processors:** the comment tree and listing queues' processors
+  poll, which RabbitMQ doesn't count, so they were flagged with 0. They show "polling" while they run now.
 - _...Add new stuff here..._
 
 ## 0.17.0
