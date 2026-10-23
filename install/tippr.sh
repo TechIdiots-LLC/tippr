@@ -1932,6 +1932,9 @@ TIPPR_TIMERS=(
     # works out which vaults are like which, for the explore page
     # (r2.lib.vault_similarity)
     tippr-job-vault_similarity.timer
+    # builds the complete sitemaps each day; does nothing unless /admin/site
+    # asks for every post (r2.lib.sitemaps.complete)
+    tippr-job-sitemaps.timer
     # this server's state for /admin/servers, every minute (on every server)
     tippr-job-server_status.timer
 )

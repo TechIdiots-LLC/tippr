@@ -88,6 +88,7 @@ DEFAULT_JOBS = (
     "tippr-job-update_gold_users", "tippr-job-feeds",
     "tippr-job-subscribers", "tippr-job-update_promo_metrics",
     "tippr-job-year_clubs", "tippr-job-vault_similarity",
+    "tippr-job-sitemaps",
 )
 
 

@@ -90,6 +90,17 @@
   <table class="lined-table borderless">
     ${text_row("google_site_verification", _("Google verification"), _("The content of the google-site-verification tag."), 50, placeholder="")}
     ${text_row("bing_site_verification", _("Bing verification"), _("The content of the msvalidate.01 tag."), 50, placeholder="")}
+    <tr>
+      <td>${_("sitemap")}</td>
+      <td>
+        <label><input type="radio" name="sitemaps" value="recent" ${'' if thing.sitemaps_complete else 'checked'}> ${_("recent posts")}</label>
+        <label><input type="radio" name="sitemaps" value="complete" ${'checked' if thing.sitemaps_complete else ''}> ${_("every post")}</label>
+        <br><small>${_("Recent posts: the sitemap lists the public vaults and the 10,000 newest posts, made when asked for. That's fine for a small site. Every post: tippr-job-sitemaps lists every public vault and post each day, in as many sitemaps as that takes, for a site with more than that; until its first run the recent sitemap is shown.")}</small>
+        %if thing.sitemap_status["built"]:
+          <br><small>${_("Last built %(when)s: %(urls)s addresses in %(parts)s sitemaps.") % dict(when=thing.sitemap_status["built"].strftime("%Y-%m-%d %H:%M UTC"), urls="{:,}".format(thing.sitemap_status["urls"]), parts=thing.sitemap_status["parts"])}</small>
+        %endif
+      </td>
+    </tr>
   </table>
 
   <h2>${_("analytics")}</h2>

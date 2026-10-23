@@ -5049,10 +5049,11 @@ class ApiController(TipprController):
         VAdmin(),
         VModhash(),
         signups=VOneOf("signups", ("open", "closed")),
+        sitemaps=VOneOf("sitemaps", ("recent", "complete")),
         **{name: VLength(name, max_length=length, empty_error=None)
            for name, length in site_info_text_lengths().items()}
     )
-    def POST_site_settings(self, form, jquery, signups, **values):
+    def POST_site_settings(self, form, jquery, signups, sitemaps, **values):
         """Save the site settings on /admin/site; blank values go back to
         the ini (or to nothing)."""
         from r2.lib import site_info
@@ -5096,6 +5097,7 @@ class ApiController(TipprController):
                 return
             values["google_analytics_id"] = match.group(0)
         values["signups"] = "closed" if signups == "closed" else ""
+        values["sitemaps"] = "complete" if sitemaps == "complete" else ""
         site_info.save(values)
         form.set_text(".status", _("saved"))
 

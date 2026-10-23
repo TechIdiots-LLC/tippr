@@ -4395,6 +4395,9 @@ class AdminSiteSettings(Templated):
         if logo_error:
             self.image_errors["site_logo"] = logo_error
         self.signups_open = site_info.signups_open()
+        from r2.lib.sitemaps import complete
+        self.sitemaps_complete = site_info.sitemaps_complete()
+        self.sitemap_status = complete.status()
         Templated.__init__(self)
 
 

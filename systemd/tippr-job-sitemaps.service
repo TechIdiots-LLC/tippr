@@ -1,0 +1,15 @@
+[Unit]
+Description=build the complete sitemaps, when /admin/site asks for every post
+
+After=network.target
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+# run-locked: on one server at a time when several share the site
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked sitemaps @TIPPR_VENV@/bin/paster --plugin=r2 run ${TIPPR_INI} -c 'from r2.lib.sitemaps import complete; complete.build_if_enabled()'
+
+Nice=10

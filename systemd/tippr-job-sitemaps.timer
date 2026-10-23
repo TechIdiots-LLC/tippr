@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-sitemaps daily
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

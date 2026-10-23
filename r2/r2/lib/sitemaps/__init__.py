@@ -23,47 +23,14 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-"""This module is used for the generation of sitemaps.
+"""Sitemaps (http://www.sitemaps.org/protocol.html), so search engines find
+the posts and vaults nothing links to.
 
-Sitemaps (http://www.sitemaps.org/protocol.html) are an xml
-protocol designed to exhaustively describe websites. In lieu of
-an external link or a link from a tippr, in general most tippr
-links do not get indexed by search engines. This means that the vast
-majority of Tippr content does not get indexed by Google, Bing, or Yahoo.
-Sitemaps solve the problem by showing search engines links that they
-likely don't have access to any other way.
+  r2.lib.sitemaps.live      /sitemap.xml and /sitemaps/<name>.xml: the
+                            recent sitemaps, made when asked for
+  r2.lib.sitemaps.complete  every post and vault, built each day by
+                            tippr-job-sitemaps when /admin/site asks for it
 
-Tippr contains tons and tons of links. Generating them on the fly is simply
-impractical. The solution this module implements is a very slow batch that
-goes through every vault and every link and creates crawlable permalinks
-from them. These links are then put into sitemaps and stored in
-s3. We then upload those sitemaps as static files to s3 where we host them.
-
-The Sitemap protocol specifies a hard limit of 50000 links. Since we have
-significantly more links than that, we have to define a Sitemap Index
-(http://www.sitemaps.org/protocol.html#index.) The sitemap similarly has
-up to 50000 links to other sitemaps. For now it suits our purposes to have
-exactly one sitemap, but it may change in the future.
-
-There are only two types of links we currently support. Vault links
-in the form of
-
-https://www.tippr.net/v/hiphopheads
-
-and comment links in the form of
-
-https://www.tippr.net/v/hiphopheads/comments/4gxk5i/fresh_album_drake_views/.
-
-
-This module is split into 3 parts.
-
-  r2.lib.sitemaps.data - Loads up the raw Vault and Link Things.
-  r2.lib.sitemaps.generate - Transforms the Things into sitemap xml strings.
-  r2.lib.sitemaps.store - Stores the sitemaps on s3.
-  r2.lib.sitemaps.watcher - Reads from the SQS queue and starts a new upload
-
-
-The only function that's supposed to be used outside of this module is
-r2.lib.sitemaps.watcher.watcher. This is designed to be used as a constantly
-running daemon.
+A sitemap holds at most 50,000 addresses, so the complete set is split
+into as many as it takes, all listed in the index at /sitemap.xml.
 """

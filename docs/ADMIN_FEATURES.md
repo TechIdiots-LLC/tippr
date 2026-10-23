@@ -19,7 +19,7 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/awards/:awardcn/:action` — award actions (`give` or `winners`).
 - `/admin/coins` — give a user Give Gold: prepaid months of gold they can gift to others (handler: `AdminToolController.GET_coins`).
 - `/admin/gold` — give/take gold days for a user (handler: `AdminToolController.GET_gold`).
-- `/admin/site` — the site's name, description, contact address and header logo. Saved values apply at once on every web process; blank ones fall back to the ini. Also shows how to change the domain (re-run the installer with `TIPPR_DOMAIN`).
+- `/admin/site` — the site's name, description, contact address and header logo. Saved values apply at once on every web process; blank ones fall back to the ini. Also shows how to change the domain (re-run the installer with `TIPPR_DOMAIN`), and the sitemap choice: recent posts (made when asked for), or every post, built each day by `tippr-job-sitemaps` in as many 50,000-address sitemaps as it takes (`r2/lib/sitemaps`).
 - `/admin/antispam` — spam protection: the captcha for untrusted users (tippr's image captcha, Cloudflare Turnstile, hCaptcha, Google reCAPTCHA or none; on posting, messages, new vaults and, optionally, sign-up) and CleanTalk, which checks sign-ups and untrusted users' posts, comments and messages without a challenge. Spam sign-ups are refused; spam content is hidden in the moderators' spam queue. Saving checks the CleanTalk key.
 - `/admin/errors` — recent unhandled errors, grouped by error and code location, with counts and the last traceback (kept in the hardcache; full logs in `journalctl -u tippr-paster`).
 - `/admin/email` — outgoing email settings: SMTP or Gmail, and a test message ([EMAIL.md](EMAIL.md)).

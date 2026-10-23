@@ -14,13 +14,16 @@
 ###############################################################################
 """Sitemaps served by the site itself (/sitemap.xml).
 
-reddit's sitemaps (the rest of this package) were built offline and
-uploaded to S3. A self-hosted site has neither, so these are made on
-request and cached for an hour:
+By default ("recent" on /admin/site) they're made on request and cached
+for an hour:
 
   /sitemap.xml           the index, pointing at the two below
   /sitemaps/vaults.xml   public vaults, most subscribed first
   /sitemaps/posts.xml    the newest posts in public vaults
+
+Set to "every post", the site serves the complete sitemaps that
+tippr-job-sitemaps builds each day instead (r2.lib.sitemaps.complete),
+falling back to these until the first build is done.
 
 Only what a logged-out visitor can see is listed: no private or quarantined
 vaults, nothing marked NSFW, spam or deleted, and no ads.
@@ -48,8 +51,8 @@ def _xml(root):
                           encoding="UTF-8").decode("utf-8")
 
 
-def _urlset(entries):
-    """entries: (path, lastmod datetime or None)"""
+def urlset(entries):
+    """A sitemap of entries: (path, lastmod datetime or None)."""
     urlset = etree.Element("urlset", xmlns=SITEMAP_NAMESPACE)
     for path, lastmod in entries:
         url = etree.SubElement(urlset, "url")
@@ -59,12 +62,16 @@ def _urlset(entries):
     return _xml(urlset)
 
 
-def _index():
+def sitemap_index(parts):
+    """A sitemap index of parts: (name, lastmod datetime or None)."""
     root = etree.Element("sitemapindex", xmlns=SITEMAP_NAMESPACE)
-    for part in PARTS:
+    for name, lastmod in parts:
         sitemap = etree.SubElement(root, "sitemap")
         etree.SubElement(sitemap, "loc").text = _url(
-            "/sitemaps/%s.xml" % part)
+            "/sitemaps/%s.xml" % name)
+        if lastmod:
+            etree.SubElement(sitemap, "lastmod").text = lastmod.strftime(
+                "%Y-%m-%d")
     return _xml(root)
 
 
@@ -74,49 +81,65 @@ def _listable(vault):
             not getattr(vault, "quarantine", False))
 
 
-def _vaults():
+def listable_vaults():
+    """(path, None) for each listable vault, most subscribed first."""
     from r2.models import Vault
     query = Vault._query(Vault.c.type == ("public", "restricted", "archived"),
                          Vault.c._spam == False,
                          sort=(desc("_downs"), desc("_ups")),
                          data=True)
-    entries = []
     for vault in fetch_things2(query, chunk_size=1000):
-        if not _listable(vault):
-            continue
-        entries.append(("/v/%s/" % vault.name, None))
-        if len(entries) >= MAX_VAULTS:
-            break
-    return _urlset(entries)
+        if _listable(vault):
+            yield ("/v/%s/" % vault.name, None)
 
 
-def _posts():
+def listable_posts():
+    """(permalink, date) for each listable post, newest first."""
     from r2.models import Link, Vault
     query = Link._query(Link.c._spam == False,
                         Link.c._deleted == False,
                         sort=desc("_date"),
-                        limit=MAX_POSTS * 2,
                         data=True)
-    links = [link for link in query
-             if link.promoted is None and not link.over_18]
-    vaults = Vault._byID({link.vault_id for link in links},
-                         data=True, return_dict=True)
-    entries = []
-    for link in links:
-        vault = vaults.get(link.vault_id)
-        if not vault or not _listable(vault):
-            continue
-        entries.append((link.make_permalink(vault), link._date))
-        if len(entries) >= MAX_POSTS:
+    for links in fetch_things2(query, chunk_size=1000, chunks=True):
+        links = [link for link in links
+                 if link.promoted is None and not link.over_18]
+        vaults = Vault._byID({link.vault_id for link in links},
+                             data=True, return_dict=True)
+        for link in links:
+            vault = vaults.get(link.vault_id)
+            if vault and _listable(vault):
+                yield (link.make_permalink(vault), link._date)
+
+
+def _first(entries, count):
+    for i, entry in enumerate(entries):
+        if i >= count:
             break
-    return _urlset(entries)
+        yield entry
 
 
-BUILDERS = {"index": _index, "vaults": _vaults, "posts": _posts}
+BUILDERS = {
+    "index": lambda: sitemap_index((part, None) for part in PARTS),
+    "vaults": lambda: urlset(_first(listable_vaults(), MAX_VAULTS)),
+    "posts": lambda: urlset(_first(listable_posts(), MAX_POSTS)),
+}
+
+
+def exists(name):
+    """Whether /sitemaps/<name>.xml (or the index) is there to serve."""
+    from r2.lib.sitemaps import complete
+    if complete.enabled() and complete.built():
+        return name == "index" or name in complete.part_names()
+    return name == "index" or name in PARTS
 
 
 def sitemap(name):
-    """The XML for "index" or one of PARTS (cached)."""
+    """The XML for "index" or one of the parts."""
+    from r2.lib.sitemaps import complete
+    if complete.enabled():
+        xml = complete.get(name)
+        if xml is not None:
+            return xml
     key = "sitemap-live-" + name
     xml = g.gencache.get(key)
     if xml is None:

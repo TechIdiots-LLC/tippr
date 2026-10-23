@@ -62,6 +62,9 @@ SETTINGS = {
     # a banner at the top of every page, with an optional link
     "announcement": 300,
     "announcement_link": 500,
+    # "complete": serve the daily-built sitemaps of every post
+    # (r2.lib.sitemaps.complete); anything else, the recent ones
+    "sitemaps": 10,
     # "closed" to stop new accounts; anything else is open
     "signups": 10,
     # who runs the site, for the policy pages (docs/policies): the legal
@@ -71,7 +74,7 @@ SETTINGS = {
 }
 
 # the settings set from the /admin/site text form (the others have their
-# own controls: image uploads, the sign-ups switch)
+# own controls: image uploads, the sign-ups and sitemap switches)
 TEXT_SETTINGS = (
     "site_name", "short_description", "contact_email", "front_page_title",
     "title_format", "google_site_verification", "bing_site_verification",
@@ -262,6 +265,10 @@ def stamp_revised(text, current=None, today=None):
 
 def signups_open():
     return getattr(g, "signups", None) != "closed"
+
+
+def sitemaps_complete():
+    return getattr(g, "sitemaps", None) == "complete"
 
 
 def announcement():

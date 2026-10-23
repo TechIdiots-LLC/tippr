@@ -75,7 +75,7 @@ class RobotsController(MinimalController):
         from r2.lib.sitemaps import live
         if request.environ.get('extension', None) != 'xml':
             abort(404)
-        if name != "index" and name not in live.PARTS:
+        if not live.exists(name):
             abort(404)
         if not self.on_crawlable_domain():
             abort(404)
