@@ -48,19 +48,11 @@
   }
 
   function _addEventListener(type, handler, useCapture) {
-    if ('addEventListener' in global) {
-      global.addEventListener(type, handler, useCapture);
-    } else if ('attachEvent' in global) {
-      global.attachEvent('on' + type, handler);
-    }
+    global.addEventListener(type, handler, useCapture);
   }
 
   function _removeEventListener(type, handler, useCapture) {
-    if ('removeEventListener' in global) {
-      global.removeEventListener(type, handler);
-    } else if ('detachEvent' in global) {
-      global.attachEvent('on' + type, handler);
-    }
+    global.removeEventListener(type, handler, useCapture);
   }
 
 

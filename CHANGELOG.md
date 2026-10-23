@@ -47,6 +47,10 @@
   everything, tests included, uses the compiled modules, now built as Python 3 and 1.3 to 7 times faster than the
   copies were. Building tippr without Cython stops with that message instead of quietly leaving them out. The
   "best" sort's scores use full precision, and the hot sort's epoch is UTC as postgres's is, so the two always agree.
+- **Internet Explorer support is gone:** the IE 8 script bundle and its jQuery 1.11, the IE traffic charts bundle
+  (excanvas), html5shiv, the ES5, JSON and CustomEvent polyfills, IE conditional comments, IE-only stylesheet rules
+  and gradient filters, and IE workarounds in the scripts. Every browser still in use has what they stood in for;
+  pages load a little less.
 - **/admin/servers showed working queues as having no processors:** the comment tree and listing queues' processors
   poll, which RabbitMQ doesn't count, so they were flagged with 0. They show "polling" while they run now.
 - **Day- and week-long rate limits depended on the server's timezone:** their counters were named with strftime's

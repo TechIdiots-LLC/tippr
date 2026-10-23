@@ -265,10 +265,6 @@ r.utils = {
         }
     },
 
-    onTrident: function() {
-        return 'ActiveXObject' in window;
-    },
-
 }
 
 // Nothing is true. Everything is permitted.

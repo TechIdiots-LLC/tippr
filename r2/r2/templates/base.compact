@@ -49,13 +49,7 @@
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
 
-    <!--[if gte IE 9]> <!-->
-      ${unsafe(js.use('tippr-init'))}
-    <!-- <![endif]-->
-
-    <!--[if lt IE 9]>
-      ${unsafe(js.use('tippr-init-legacy'))}
-    <![endif]-->
+    ${unsafe(js.use('tippr-init'))}
 
     ${js_setup(thing.extra_js_config)}
     ${googleanalytics('mobile')}

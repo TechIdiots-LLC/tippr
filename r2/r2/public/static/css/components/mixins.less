@@ -1,7 +1,6 @@
 .animation (@animation) {
     -webkit-animation: @animation;
     -moz-animation: @animation;
-    -ms-animation: @animation;
     -o-animation: @animation;
     animation: @animation;
 }
@@ -10,13 +9,11 @@
     -webkit-transition: @arguments;
     -moz-transition: @arguments;
     -o-transition: @arguments;
-    -ms-transition: @arguments;
     transition: @arguments;
 }
 
 .translate(@x; @y) {
     -webkit-transform: translate(@x, @y);
-    -ms-transform: translate(@x, @y);
     -o-transform: translate(@x, @y);
     transform: translate(@x, @y);
 }
@@ -32,7 +29,6 @@
     -webkit-transition: @transition;
     -moz-transition: @transition;
     -o-transition: @transition;
-    -ms-transition: @transition;
     transition: @transition;
 }
 
@@ -42,7 +38,6 @@
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,@color1), color-stop(100%, @color2));
     background: -webkit-linear-gradient(top,  @color1 0%, @color2 100%);
     background: -o-linear-gradient(top,  @color1 0%, @color2 100%);
-    background: -ms-linear-gradient(top,  @color1 0%, @color2 100%);
     background: linear-gradient(to bottom,  @color1 0%, @color2 100%);
 }
 
@@ -62,7 +57,6 @@
     -webkit-transform: @transformation;
     -moz-transform: @transformation;
     -o-transform: @transformation;
-    -ms-transform: @transformation;
 }
 
 .opacity(@opacity) {
@@ -161,7 +155,6 @@
         background-image: -o-linear-gradient(left, @start-color, @end-color);
         background-image: linear-gradient(to right, @start-color, @end-color);
         background-repeat: repeat-x;
-        filter: e(%("progid:DXImageTransform.Microsoft.gradient(start-colorstr='%d', end-colorstr='%d', GradientType=1)", argb(@start-color), argb(@end-color))); // IE9 and down
     }
 
     .vertical(@start-color: #555, @end-color: #333) {
@@ -172,7 +165,6 @@
         background-image: -o-linear-gradient(top, @start-color, @end-color);
         background-image: linear-gradient(to bottom, @start-color, @end-color);
         background-repeat: repeat-x;
-        filter: e(%("progid:DXImageTransform.Microsoft.gradient(start-colorstr='%d', end-colorstr='%d', GradientType=0)", argb(@start-color), argb(@end-color))); // IE9 and down
     }
 }
 
@@ -194,13 +186,11 @@
         opacity: 1;
     }
 
-    &:-ms-input-placeholder { color: @color; }
     &::-webkit-input-placeholder  { color: @color; }
 }
 
 .no-select() {
     -webkit-user-select: none;
     -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
 }

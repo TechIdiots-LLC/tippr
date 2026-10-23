@@ -25,23 +25,6 @@ r.ui.init = function() {
         $(document.body).on('click', 'a.may-blank, .may-blank-within a', function(e) {
 
             if (!this.target) {
-                // Trident doesn't support `rel="noreferrer"` and requires a
-                // fallback to make sure `window.opener` is unset
-                var isWebLink = _.contains(['http:', 'https:'], this.protocol);
-                if (this.href && isWebLink && r.utils.onTrident()) {
-                    var w = window.open(this.href, '_blank');
-                    // some popup blockers appear to return null for
-                    // `window.open` even inside click handlers.
-                    if (w !== null) {
-                        // try to nullify `window.opener` so the new tab can't
-                        // navigate us
-                        w.opener = null;
-                        // suppress normal link opening behaviour
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-
                 this.target = '_blank';
                 // Required so the tabs can't navigate us via `window.opener`
                 this.rel = 'noreferrer';

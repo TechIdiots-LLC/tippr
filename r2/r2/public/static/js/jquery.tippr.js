@@ -756,13 +756,7 @@ $.fn.insertAtCursor = function(value) {
 $.fn.select_line = function(lineNo) {
     return $(this).filter("textarea").each(function() {
             var newline = '\n', newline_length = 1, caret_pos = 0;
-            var isIE = !!/msie [\w.]+/.exec( navigator.userAgent.toLowerCase() );
-            if ( isIE ) { /* IE hack */
-                newline = '\r';
-                newline_length = 0;
-                caret_pos = 1;
-            }
-            
+
             var lines = $(this).val().split(newline);
             
             for(var x=0; x<lineNo-1; x++) 

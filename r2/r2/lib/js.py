@@ -510,27 +510,20 @@ _submodule["archived"] = Module("_archived.js",
 )
 
 module["gtm-jail"] = Module("gtm-jail.js",
-    "lib/json2.js",
-    "custom-event.js",
     "frames.js",
     "google-tag-manager/gtm-jail-listener.js",
 )
 
 
 module["gtm"] = Module("gtm.js",
-    "lib/json2.js",
-    "custom-event.js",
     "frames.js",
     "google-tag-manager/gtm-listener.js",
 )
 
 
 module["tippr-embed-base"] = Module("tippr-embed-base.js",
-    "lib/es5-shim.js",
-    "lib/json2.js",
     "base.js",
     "uuid.js",
-    "custom-event.js",
     "frames.js",
     "embed/utils.js",
     "embed/pixel-tracking.js",
@@ -551,7 +544,6 @@ module["comment-embed"] = Module("comment-embed.js",
 
 module["tippr-init-base"] = LocalizedModule("tippr-init-base.js",
     "lib/modernizr.js",
-    "lib/json2.js",
     "lib/underscore-1.4.4-1.js",
     "lib/store.js",
     "lib/jed.js",
@@ -595,18 +587,8 @@ module["tippr-init-base"] = LocalizedModule("tippr-init-base.js",
     ],
 )
 
-module["tippr-init-legacy"] = LocalizedModule("tippr-init-legacy.js",
-    "lib/html5shiv.js",
-    "lib/jquery-1.11.1.js",
-    "lib/es5-shim.js",
-    "lib/es5-sham.js",
-    module["tippr-init-base"],
-    wrap=catch_errors,
-)
-
 module["tippr-init"] = LocalizedModule("tippr-init.js",
     "lib/jquery-2.1.1.js",
-    "lib/es5-shim.js",
     module["tippr-init-base"],
     wrap=catch_errors,
 )
@@ -621,7 +603,6 @@ module["expando-nsfw-flow"] = Module("expando-nsfw-flow.js",
 module["tippr"] = LocalizedModule("tippr.js",
     "lib/jquery.url.js",
     "lib/backbone-1.0.0.js",
-    "custom-event.js",
     "frames.js",
     "embed/utils.js",
     "embed/pixel-tracking.js",
@@ -712,12 +693,6 @@ module["timeseries"] = Module("timeseries.js",
     "lib/jquery.flot.js",
     "lib/jquery.flot.time.js",
     "timeseries.js",
-)
-
-
-module["timeseries-ie"] = Module("timeseries-ie.js",
-    "lib/excanvas.min.js",
-    module["timeseries"],
 )
 
 
