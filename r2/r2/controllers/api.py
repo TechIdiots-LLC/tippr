@@ -6036,8 +6036,8 @@ class ApiController(TipprController):
             return
 
         if not VOneTimePassword.validate_otp(secret, otp):
-            c.errors.add(errors.WRONG_PASSWORD, field="otp")
-            form.has_errors("otp", errors.WRONG_PASSWORD)
+            c.errors.add(errors.WRONG_OTP, field="otp")
+            form.has_errors("otp", errors.WRONG_OTP)
             return
 
         g.gencache.delete("otp:secret_" + c.user._id36)

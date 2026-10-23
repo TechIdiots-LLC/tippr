@@ -212,7 +212,7 @@
 
     <%utils:round_field title="${_('code from the app')}" description="${_('(required)')}">
       <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" />
-      ${error_field("WRONG_PASSWORD", "otp")}
+      ${error_field("WRONG_OTP", "otp")}
       ${error_field("EXPIRED", "otp")}
     </%utils:round_field>
 

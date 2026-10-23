@@ -18,7 +18,8 @@
 <div class="payment-status linked-login-otp">
   <p>${_("Your account uses two-factor sign-in: enter the code from your authenticator app (or one of your recovery codes).")}</p>
   %if thing.wrong:
-    <p class="error">${_("That code isn't right. Try again.")}</p>
+    <p class="error">${_("That code isn't right. Try again.")}
+      ${_("Codes follow the clock: if they keep failing, check that your phone sets its time automatically.")}</p>
   %endif
   <form action="/logins/otp" method="post"
         %if thing.passkeys:

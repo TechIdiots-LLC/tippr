@@ -150,6 +150,7 @@ error_list = dict((
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
         ('OTP_ALREADY_ENABLED', _('two-factor authentication is already enabled')),
         ('TWO_FACTOR_REQUIRED', _('enter the code from your authenticator app (or a recovery code)')),
+        ('WRONG_OTP', _("that code didn't work. Codes follow the clock, so check that your phone sets its time automatically.")),
         ('TWO_FACTOR_NEEDED_FOR_STAFF', _('turn on two-factor authentication (preferences, security) to use these tools')),
         ('BAD_IMAGE', _('image problem')),
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
