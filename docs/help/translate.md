@@ -1,15 +1,31 @@
 # Translating {{SITE_NAME}}
 
-{{SITE_NAME}} runs on Tippr, open source software, and its interface can be shown in many languages: choose yours in your [preferences](/prefs/). Languages marked (*) are only partly translated, so some text shows in English.
+{{SITE_NAME}} is powered by Tippr, an open-source platform, and supports multiple languages. You can select your preferred language in your [preferences](/prefs/). Languages marked with an asterisk (*) are partially translated and may still display some text in English.
 
-Translations are part of the software, so they're shared by every site that runs it, and they're made in one place: the [tippr-i18n project on GitHub](https://github.com/TechIdiots-LLC/tippr-i18n). A fix made there reaches every site with its next update.
+All translations are maintained centrally in the [tippr-i18n project on GitHub](https://github.com/TechIdiots-LLC/tippr-i18n). Because translations are built into the core software, any updates or improvements made there automatically roll out to every site powered by Tippr with its next update.
 
-## Fix or finish a translation
+## Fix or complete a translation
 
-Each language is one file, `tippr_i18n/<language>/LC_MESSAGES/r2.po`, which you can edit in any PO editor (Poedit, Lokalize and the like) or on GitHub itself. The project's [README](https://github.com/TechIdiots-LLC/tippr-i18n/blob/master/README.txt) says what to look out for, such as keeping placeholders like `%(name)s` exactly as they are in English. Then [send a pull request](https://github.com/TechIdiots-LLC/tippr-i18n/pulls).
+Each language is contained in a single file:
 
-## Report a mistake
+    tippr_i18n/<language>/LC_MESSAGES/r2.po
 
-If you spot a wrong or awkward translation but don't want to change the file yourself, [open an issue](https://github.com/TechIdiots-LLC/tippr-i18n/issues/new) saying which language, which page it's on, what it says and what it should say. A screenshot helps.
+You can edit this file directly on GitHub or with any PO editor (such as [Poedit](https://poedit.net/) or [Lokalize](https://apps.kde.org/lokalize/)).
 
-Both need a free GitHub account.
+1. Review the project's [README](https://github.com/TechIdiots-LLC/tippr-i18n/blob/master/README.txt) for formatting guidelines (for example, keeping placeholders like `%(name)s` exactly as they are in English).
+2. Make your edits.
+3. Submit a [pull request](https://github.com/TechIdiots-LLC/tippr-i18n/pulls).
+
+Contributing directly requires a free GitHub account.
+
+## Report a translation issue
+
+If you notice an incorrect or awkward translation but prefer not to edit the file yourself, please [open an issue](https://github.com/TechIdiots-LLC/tippr-i18n/issues/new) on GitHub (this also needs a free GitHub account).
+
+To help us fix it quickly, please include:
+
+- the language
+- the page where it appears
+- the current text, and what it should say
+
+A screenshot helps too.
