@@ -572,6 +572,10 @@ class FrontController(TipprController):
                 article, article.vault_slow, sort,
                 user=c.user, logged_in=c.user_is_loggedin)
             if live:
+                # the counts the page shows, for the script to keep up to
+                # date ("top N comments" stays as it is)
+                live['num_comments'] = article.num_comments
+                live['all_shown'] = article.num_comments <= num
                 extra_js_config['live_comments'] = live
 
         res = LinkInfoPage(

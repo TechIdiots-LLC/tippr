@@ -2,6 +2,8 @@
 
 ## master
 ### ✨ Features and improvements
+- **Live comments keep the thread's comment count up to date:** the "N comments" link and the "all N comments"
+  heading count the comments that arrive while the page is open.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

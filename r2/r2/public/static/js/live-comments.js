@@ -59,10 +59,16 @@ r.liveComments = {
 
     var inserted = _.bind(function (res) {
       $.handleResponse('morechildren')(res)
+      var arrived = 0
       _.each(ids, function (id) {
-        $('.thing.comment[data-fullname$="_' + id + '"]')
-          .addClass('live-comment')
+        var $comment = $('.thing.comment[data-fullname$="_' + id + '"]')
+          .not('.live-comment')
+        if ($comment.length) {
+          $comment.addClass('live-comment')
+          arrived += 1
+        }
       })
+      this._counted(arrived)
       done()
     }, this)
 
@@ -78,6 +84,24 @@ r.liveComments = {
       sort: this._config.sort,
       children: ids.join(','),
     }, inserted, undefined, undefined, true, failed)
+  },
+
+  // the thread's comment count, in its "N comments" link and the "all N
+  // comments" heading over the comments
+  _counted: function (arrived) {
+    if (!arrived) {
+      return
+    }
+    var config = this._config
+    config.num_comments += arrived
+    var num = config.num_comments
+    $('.thing.link[data-fullname="' + config.link + '"] a.comments')
+      .text(r.P_('%(num)s comment', '%(num)s comments', num).format({num: num}))
+    if (config.all_shown) {
+      $('.commentarea .panestack-title .title')
+        .text(r.P_('all %(num)s comment', 'all %(num)s comments', num)
+          .format({num: num}))
+    }
   },
 }
 
