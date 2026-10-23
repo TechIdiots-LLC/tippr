@@ -80,6 +80,16 @@ ${self.sidetables()}
 ${self.tables()}
 </div>
 
+## tables too wide for the column beside the side tables (activity by day):
+## the page's full width, scrolling sideways if even that's too narrow
+% if getattr(thing, 'wide_tables', None):
+<div class="traffic-tables-wide">
+  % for table in thing.wide_tables:
+  <div class="traffic-table-scroll">${table}</div>
+  % endfor
+</div>
+% endif
+
 <script type="text/javascript">
   r.timeseries.init()
 </script>

@@ -8,11 +8,29 @@ r.timeseries = {
     _tooltip: null,
     _currentHover: null,
 
+    // the charts drawn, to draw again at their new size when the window's
+    // width changes (each table's charts fill a grid row: see .timeseries-group)
+    _plots: [],
+
     init: function () {
         $('table.timeseries').each($.proxy(function (i, table) {
             var series = this.makeTimeSeriesChartsFromTable(table)
             this.addBarsToTable(table, series)
         }, this))
+
+        var plots = this._plots, width = $(window).width(), timer = null
+        $(window).on('resize', function () {
+            if ($(window).width() === width) {
+                return
+            }
+            width = $(window).width()
+            clearTimeout(timer)
+            timer = setTimeout(function () {
+                $.each(plots, function (i, p) {
+                    $.plot(p.placeholder, [p.chart], p.options)
+                })
+            }, 200)
+        })
     },
 
     _formatTick: function (val, axis) {
@@ -36,7 +54,8 @@ r.timeseries = {
         var table = $(table),
             series = this._readFromTable(table),
             options = this._configureFlot(table),
-            chartRow = $('<div>')
+            chartRow = $('<div class="timeseries-group">'),
+            plots = this._plots
 
         $.each(series, function (i, chart) {
             var figure = $('<div class="timeseries">')
@@ -50,6 +69,7 @@ r.timeseries = {
 
         $.each(series, function(i, chart) {
             $.plot(chart.placeholder, [chart], options)
+            plots.push({placeholder: chart.placeholder, chart: chart, options: options})
         })
 
         table.addClass('charted')

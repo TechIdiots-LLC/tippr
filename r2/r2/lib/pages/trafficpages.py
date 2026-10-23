@@ -251,7 +251,7 @@ _CHARTED_ACTIVITY = {
 def add_activity(pane, kind, key="", public=False):
     """What people did (r2.lib.activity_counter), on a traffic pane: a
     summary for the last day, week and month (pane.activity_summary), a
-    daily chart and table (in pane.tables) and moderator actions by type
+    daily chart and table (in pane.wide_tables) and moderator actions by type
     (pane.activity_mod_actions). public: only what anyone may see on a
     vault with public traffic (not reports or moderation)."""
     from r2.lib import activity_counter as ac
@@ -289,9 +289,14 @@ def add_activity(pane, kind, key="", public=False):
         columns.append(column)
     rows = [(period, [counts.get(name, 0) for name in names])
             for period, counts in reversed(history)]
-    pane.tables.append(TimeSeriesChart(
+    # a column per kind of activity: too wide for beside the side tables,
+    # so it gets the page's full width (tipprtraffic.html)
+    if not hasattr(pane, "wide_tables"):
+        pane.wide_tables = []
+    pane.wide_tables.append(TimeSeriesChart(
         "activity-day", _("activity by day"), "day", columns, rows,
-        now + datetime.timedelta(days=1), classes=["traffic-table"]))
+        now + datetime.timedelta(days=1),
+        classes=["traffic-table", "traffic-table-wide"]))
 
 
 class SitewideTraffic(TipprTraffic):
