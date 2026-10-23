@@ -11,6 +11,11 @@ Group=@TIPPR_GROUP@
 WorkingDirectory=@TIPPR_SRC@/websockets
 EnvironmentFile=-/etc/default/tippr
 Environment=PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_tippr
+# baseplate-serve always exports traces to an OpenTelemetry collector at
+# localhost:4317; with none there its gRPC retries froze this gevent server,
+# so requests went unanswered. Set OTEL_SDK_DISABLED=false in
+# /etc/default/tippr (after a collector is running) to trace.
+Environment=OTEL_SDK_DISABLED=true
 ExecStartPre=+/bin/mkdir -p /tmp/prometheus_tippr
 ExecStartPre=+/bin/chown @TIPPR_USER@:@TIPPR_GROUP@ /tmp/prometheus_tippr
 ExecStart=@TIPPR_VENV@/bin/baseplate-serve --bind 127.0.0.1:9001 @TIPPR_SRC@/websockets/tippr.ini

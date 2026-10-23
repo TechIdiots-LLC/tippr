@@ -14,6 +14,10 @@
 - **A vault's "users here now" was always ~0:** tippr's client for the activity service was a placeholder that sent
   nothing, recording no visits and answering every count with 0. It's the real generated Thrift client now, so the
   sidebar counts the logged-in members who've visited in the last 15 minutes.
+- **The activity and websockets services could stop answering:** `baseplate-serve` always sends traces to an
+  OpenTelemetry collector at localhost:4317, and with none there its retries froze those servers, so requests to
+  the activity service timed out. Tracing export is off for them (`OTEL_SDK_DISABLED=true`; set it to `false` in
+  `/etc/default/tippr` once a collector runs).
 - _...Add new stuff here..._
 
 ## 0.18.0

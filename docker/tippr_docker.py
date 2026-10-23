@@ -551,6 +551,10 @@ def baseplate_serve(service, port):
     os.makedirs(os.environ.get("PROMETHEUS_MULTIPROC_DIR", "/tmp/prometheus"),
                 exist_ok=True)
     os.chdir(os.path.dirname(ini))
+    # baseplate-serve always exports traces to an OpenTelemetry collector
+    # at localhost:4317; with none there its gRPC retries froze the gevent
+    # server (requests went unanswered). OTEL_SDK_DISABLED=false traces.
+    os.environ.setdefault("OTEL_SDK_DISABLED", "true")
     os.execv(VENV + "/bin/baseplate-serve",
              ["baseplate-serve", "--bind", "0.0.0.0:%d" % port, ini])
 
