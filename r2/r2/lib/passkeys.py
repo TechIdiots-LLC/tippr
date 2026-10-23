@@ -12,13 +12,15 @@
 # The Initial Developer of the Original Code is TechIdiots LLC.
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
-"""Passkeys (WebAuthn) as a two-factor method (r2.lib.two_factor).
+"""Passkeys (WebAuthn): a two-factor method (r2.lib.two_factor), and a way
+to sign in on their own.
 
 A passkey lives on the member's phone, computer or security key, and signs
-in with a fingerprint, face or PIN. Here it stands in for a code from an
+in with a fingerprint, face or PIN. It stands in for a code from an
 authenticator app: anywhere a code is asked for, "use a passkey" checks
 one (authenticate), and the form gets a short-lived token that counts as
-the code (two_factor.passkey_token).
+the code (two_factor.passkey_token). On the login form, a passkey signs in
+without the username or password (signin).
 
 Each ceremony is two steps: options from the server (with a challenge
 kept here for a few minutes, under a token), then the browser's answer,
@@ -198,6 +200,82 @@ def authentication_options(account):
         allow_credentials=[descriptor(m) for m in passkeys],
         user_verification=UserVerificationRequirement.PREFERRED)
     return options_to_json(options), _hold("auth", account, options.challenge)
+
+
+###############################################################################
+# Signing in with a passkey alone (the login form's autofill, or its "sign in
+# with a passkey" button): no username or password, and no account known
+# until the browser answers. The passkey names the account (its credential
+# id, which is one of the account's methods), and it must have checked the
+# person (fingerprint, face, PIN: user verification), which makes it both
+# factors: possession of the device and what unlocks it.
+###############################################################################
+
+def signin_options():
+    """Options for the browser to offer any of the site's passkeys: (json,
+    token)."""
+    from webauthn import generate_authentication_options, options_to_json
+    from webauthn.helpers import bytes_to_base64url
+    from webauthn.helpers.structs import UserVerificationRequirement
+    rp_id, origin = _site()
+    options = generate_authentication_options(
+        rp_id=rp_id, timeout=TTL * 1000, allow_credentials=[],
+        user_verification=UserVerificationRequirement.REQUIRED)
+    token = secrets.token_urlsafe(18)
+    g.gencache.set("passkey_signin:" + token,
+                   bytes_to_base64url(options.challenge), time=TTL)
+    return options_to_json(options), token
+
+
+def signin(token, credential):
+    """The account whose passkey answered (signin_options), checked: the
+    challenge (once only), the site, the signature and that the person was
+    verified. Raises PasskeyError otherwise."""
+    from webauthn import verify_authentication_response
+    from webauthn.helpers import base64url_to_bytes
+    from r2.models import Account, NotFound
+    key = "passkey_signin:" + (token or "")
+    challenge = g.gencache.get(key) if token else None
+    g.gencache.delete(key)
+    if not challenge:
+        raise PasskeyError("That took too long; please try again.")
+    try:
+        answer = json.loads(credential)
+        credential_id = answer["id"]
+        user_handle = (answer.get("response") or {}).get("userHandle")
+    except (ValueError, KeyError, TypeError, AttributeError):
+        raise PasskeyError("That passkey answer wasn't readable.")
+    method = two_factor.passkey_by_credential(credential_id)
+    if not method:
+        raise PasskeyError("That passkey isn't one this site knows. It may "
+                           "have been deleted from your account.")
+    try:
+        account = Account._byID(method["account_id"], data=True)
+    except NotFound:
+        raise PasskeyError("That passkey isn't one this site knows.")
+    if user_handle:
+        # the authenticator's copy of whose passkey it is
+        try:
+            handle = base64url_to_bytes(user_handle).decode("ascii")
+        except (ValueError, UnicodeDecodeError):
+            handle = None
+        if handle != account._id36:
+            raise PasskeyError("That passkey isn't one this site knows.")
+    rp_id, origin = _site()
+    try:
+        verified = verify_authentication_response(
+            credential=credential,
+            expected_challenge=base64url_to_bytes(challenge),
+            expected_rp_id=rp_id, expected_origin=origin,
+            credential_public_key=base64url_to_bytes(method["public_key"]),
+            credential_current_sign_count=method["sign_count"] or 0,
+            require_user_verification=True)
+    except Exception as e:
+        g.log.info("passkeys: a sign-in with %s's passkey wasn't accepted: "
+                   "%s", account.name, e)
+        raise PasskeyError("That passkey wasn't accepted.")
+    two_factor.passkey_used(method["id"], verified.new_sign_count)
+    return account
 
 
 def authenticate(account, token, credential):

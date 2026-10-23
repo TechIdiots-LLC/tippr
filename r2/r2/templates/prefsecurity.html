@@ -133,6 +133,7 @@
       <p><small>${_("Deleting your only method turns two-factor off, so it needs your password too.")}</small></p>
     %endif
     %if thing.has_passkey:
+      <p class="two-factor-tip">${_("Your passkeys also sign you in on their own: on the login form, choose one from the username box (or \"sign in with a passkey\"), with no password or code.")}</p>
       <p><small>${_("Deleting a passkey here stops it working on this site. Your device or password manager keeps its copy until you delete it there too.")}</small></p>
     %endif
 
@@ -245,7 +246,7 @@
           <button class="btn passkey-add-button" type="button">${_("create a passkey")}</button>
           <span class="two-factor-recommended">${_("recommended")}</span>
           <p><small>${_("Passkeys are encrypted digital keys you create using your fingerprint, face or screen lock. They're saved in your password manager (like Google Password Manager or iCloud Keychain), so you can use them on your other devices too.")}</small></p>
-          <p><small>${_("A passkey only works on this site, so a fake login page can't use it. Don't create one on a shared computer.")}</small></p>
+          <p><small>${_("A passkey only works on this site, so a fake login page can't use it, and it signs you in without your password. Don't create one on a shared computer.")}</small></p>
         </div>
         <div class="two-factor-choice">
           <button class="btn" type="submit">${_("add an authenticator app")}</button>

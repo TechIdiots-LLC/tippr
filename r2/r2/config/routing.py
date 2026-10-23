@@ -450,6 +450,11 @@ def make_map(config):
        action='passkey_options')
     mc('/logins/passkey_auth', controller='linkedlogins',
        action='passkey_auth')
+    # signing in with a passkey alone, from the login form
+    mc('/logins/passkey_signin_options', controller='linkedlogins',
+       action='passkey_signin_options')
+    mc('/logins/passkey_signin', controller='linkedlogins',
+       action='passkey_signin')
 
     # r2.lib.payments: the providers set up on /admin/payments
     mc('/payments/checkout', controller='payments', action='checkout')

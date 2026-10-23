@@ -34,7 +34,7 @@
    import random
  %>
 <%namespace file="captcha.html" import="captchagen"/>
-<%namespace file="linkedsignin.html" import="linked_signin"/>
+<%namespace file="linkedsignin.html" import="linked_signin, passkey_signin"/>
 <%namespace file="utils.html" import="error_field, img_link, form_group, text_with_links"/>
 
 ## default content 
@@ -84,6 +84,8 @@
                 autocomplete="off"
                %else:
                 placeholder="${_('username')}"
+                ## the browser offers this site's passkeys here (passkey.js)
+                autocomplete="username webauthn"
                 %if autofocus:
                   autofocus
                 %endif
@@ -173,6 +175,7 @@
       </div>
     </form>
     %if not register:
+      ${passkey_signin()}
       ${linked_signin(dest)}
     %endif
   %else:

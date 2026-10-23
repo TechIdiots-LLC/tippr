@@ -258,6 +258,67 @@ class LinkedLoginsController(TipprController):
         return self._passkey_json({"code": code})
 
     @csrf_exempt
+    def POST_passkey_signin_options(self):
+        """The login form's passkey sign-in (autofill, or its button): the
+        options for the browser to offer any of this site's passkeys."""
+        from r2.lib import passkeys
+        if c.user_is_loggedin:
+            return self._passkey_json({"error": _("You're logged in.")})
+        options, token = passkeys.signin_options()
+        return self._passkey_json({"options": json.loads(options),
+                                   "token": token})
+
+    @csrf_exempt
+    @validate(token=VLength("token", 200, empty_error=None),
+              credential=VLength("credential", 20000, empty_error=None),
+              rem=VBoolean("rem"),
+              dest=nop("dest"))
+    def POST_passkey_signin(self, token, credential, rem, dest):
+        """The browser's passkey answer on the login form: signs in to the
+        account it belongs to, with no password or code (the passkey
+        checked the person: r2.lib.passkeys.signin)."""
+        from r2.lib import passkeys, ratelimit
+        if c.user_is_loggedin:
+            return self._passkey_json({"error": _("You're logged in.")})
+        if not g.disable_ratelimit:
+            tries = ratelimit.SimpleRateLimit(
+                name="passkey_signin_" + (request.ip or ""), seconds=600,
+                limit=30)
+            if not tries.record_and_check():
+                return self._passkey_json({"error": _(
+                    "Too many tries. Please wait a few minutes and try "
+                    "again.")})
+        if not (token and credential):
+            return self._passkey_json({"error": _(
+                "We couldn't check your passkey. Try again.")})
+        try:
+            account = passkeys.signin(token, credential)
+        except passkeys.PasskeyError as e:
+            return self._passkey_json({"error": _(str(e))})
+        if account._deleted or account._banned:
+            return self._passkey_json({"error": _(
+                "That account can't be logged into.")})
+        if account.name in g.admins or getattr(account, "employee", False):
+            # staff tools (admin mode, the support queue) want the password
+            # and a second step: a passkey alone is one device
+            g.log.info("passkeys: %s (staff) tried to sign in with a "
+                       "passkey alone", account.name)
+            return self._passkey_json({"error": _(
+                "Staff accounts sign in with their password, then a code "
+                "or passkey.")})
+        c.user = account
+        c.user_is_loggedin = True
+        self.login(account, rem=rem)
+        # the passkey checked the person just now: preferences, security
+        # opens without another code for a while
+        session = c.cookies.get(g.login_cookie)
+        if session is not None:
+            two_factor.mark_recent(account, session.value)
+        g.log.info("passkeys: %s signed in with a passkey", account.name)
+        return self._passkey_json({"ok": True,
+                                   "dest": linked_logins.safe_dest(dest)})
+
+    @csrf_exempt
     @validate(token=VLength("token", 200, empty_error=None),
               otp=nop("otp"),
               remember=VBoolean("remember"))

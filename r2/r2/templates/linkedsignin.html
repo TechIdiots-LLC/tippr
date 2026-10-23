@@ -17,6 +17,18 @@
    from r2.lib import linked_logins
 %>
 
+## signing in with a passkey alone (passkey.js): the browser's autofill on
+## the username field offers them; this button is for browsers without
+## that, and the line under it says how it went
+<%def name="passkey_signin()">
+  <div class="passkey-signin">
+    <button type="button" class="c-btn passkey-signin-button" style="display: none">
+      ${_("sign in with a passkey")}
+    </button>
+    <p class="passkey-signin-status" aria-live="polite"></p>
+  </div>
+</%def>
+
 ## "sign in with Google" and the like, for the providers on /admin/logins
 <%def name="linked_signin(dest='')">
   <% providers = linked_logins.enabled_providers() %>

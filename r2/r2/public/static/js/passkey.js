@@ -190,8 +190,98 @@ r.passkey = {
     })
   },
 
+  // Signing in with a passkey alone, on the login forms. The browser's
+  // autofill on the username field offers the site's passkeys (conditional
+  // mediation: the FIDO Alliance found it works far better than a separate
+  // button); browsers without that get a "sign in with a passkey" button.
+  signinStart: function($scope) {
+    var self = this
+    $scope = $scope || $(document)
+    var $inputs = $scope.find('input[autocomplete~="webauthn"]')
+    if (!$inputs.length || !self.supported()) { return }
+    $scope.find('.passkey-signin-button').off('click.passkey').on('click.passkey', function() {
+      self.signinWith($(this), false)
+    })
+    var PKC = window.PublicKeyCredential
+    var check = PKC.isConditionalMediationAvailable ? PKC.isConditionalMediationAvailable() : Promise.resolve(false)
+    check.then(function(available) {
+      if (available) {
+        self.signinTries = 0
+        self.signinWith($inputs.first(), true)
+      } else {
+        $scope.find('.passkey-signin-button').show()
+      }
+    }, function() { $scope.find('.passkey-signin-button').show() })
+  },
+
+  // the login form the passkey is for: the one being typed in, else el's
+  signinForm: function($el) {
+    var $active = $(document.activeElement).closest('form')
+    if ($active.find('input[autocomplete~="webauthn"]').length) { return $active }
+    var $form = $el.closest('form')
+    if ($form.length) { return $form }
+    return $el.closest('.passkey-signin').prevAll('form').first()
+  },
+
+  signinDest: function($form) {
+    // where to go after: the form's dest, else back to this page
+    var dest = $form.find('[name=dest]').val() || (window.location.pathname + window.location.search)
+    try {
+      var url = new URL(dest, window.location.origin)
+      if (url.origin === window.location.origin) { dest = url.pathname + url.search + url.hash }
+    } catch (e) {}
+    return dest
+  },
+
+  signinWith: function($el, conditional) {
+    var self = this
+    // one passkey request at a time: a new one replaces the autofill's
+    if (self.signinAbort) { self.signinAbort.abort(); self.signinAbort = null }
+    var ctrl = (conditional && window.AbortController) ? new AbortController() : null
+    if (ctrl) { self.signinAbort = ctrl }
+    var $form = self.signinForm($el)
+    var $status = $form.nextAll('.passkey-signin').first().find('.passkey-signin-status')
+    if (!conditional) {
+      $status.text(r._('Follow your browser’s prompt to choose a passkey for this site.'))
+    }
+    self.post('/logins/passkey_signin_options', {}).then(function(res) {
+      if (!res || res.error) { return Promise.reject(res) }
+      var request = {publicKey: self.requestOptions(res.options)}
+      if (conditional) {
+        request.mediation = 'conditional'
+        if (ctrl) { request.signal = ctrl.signal }
+      }
+      return navigator.credentials.get(request).then(function(cred) {
+        $form = self.signinForm($el)
+        $status = $form.nextAll('.passkey-signin').first().find('.passkey-signin-status')
+        $status.text(r._('Signing in…'))
+        return self.post('/logins/passkey_signin', {
+          token: res.token, credential: self.credentialJSON(cred),
+          rem: $form.find('[name=rem]').is(':checked') ? 'on' : '',
+          dest: self.signinDest($form)})
+      })
+    }).then(function(res) {
+      if (!res || res.error) { return Promise.reject(res) }
+      window.location = res.dest || '/'
+    }).catch(function(err) {
+      // replaced by another request (the button, or the popup opening)
+      if (err && err.name === 'AbortError' && ctrl && ctrl.signal.aborted) { return }
+      var cancelled = err && (err.name === 'NotAllowedError' || err.name === 'AbortError')
+      if (!(conditional && cancelled)) {
+        $status.text((err && err.error) ||
+          (cancelled ? r._('No passkey was used. Try again, or log in with your password.')
+                     : r._("We couldn't sign you in with a passkey. Try again, or log in with your password.")))
+      }
+      // keep offering passkeys in the autofill (a few times, not forever)
+      if (conditional && (self.signinTries = (self.signinTries || 0) + 1) < 5) {
+        self.signinWith($el, true)
+      }
+    })
+  },
+
   init: function() {
     var self = this
+    if (!r.config.logged) { self.signinStart() }
     if (!self.supported()) {
       // the browser can't make one: only the authenticator app is offered
       $('.passkey-only').hide()

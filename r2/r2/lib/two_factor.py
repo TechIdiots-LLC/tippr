@@ -295,6 +295,17 @@ def add_passkey(account, credential_id, public_key, sign_count,
                 sign_count=sign_count or 0, transports=transports or None)
 
 
+def passkey_by_credential(credential_id):
+    """The passkey method with this credential id (base64url), if any (for
+    signing in with a passkey alone, r2.lib.passkeys.signin)."""
+    query = (sa.select(_table())
+             .where((_table().c.kind == "passkey") &
+                    (_table().c.credential_id == credential_id)))
+    with _engine().connect() as conn:
+        row = conn.execute(query).mappings().first()
+    return dict(row) if row else None
+
+
 def has_passkeys(account):
     """Whether "use a passkey" can be offered (no database query)."""
     return bool(getattr(account, "two_factor_passkeys", 0))

@@ -436,6 +436,10 @@ r.ui.LoginPopup.prototype = _.extend({}, r.ui.Popup.prototype, {
         this.$.find('#cover-msg').text(notice).toggle(!!notice);
 
         r.ui.Popup.prototype.show.call(this);
+        // passkeys in the login form's autofill (passkey.js)
+        if (r.passkey) {
+            r.passkey.signinStart(this.$);
+        }
         // the sign-up form's captcha widget, now that it's on screen (again
         // once the opening animation is done, in case it wasn't visible yet)
         var $popup = this.$;

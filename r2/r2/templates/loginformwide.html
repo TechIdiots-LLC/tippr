@@ -30,7 +30,7 @@
 %>
 
 <%namespace file="utils.html" import="error_field"/>
-<%namespace file="linkedsignin.html" import="linked_signin"/>
+<%namespace file="linkedsignin.html" import="linked_signin, passkey_signin"/>
 
 <%
   op = "login-main"
@@ -41,7 +41,8 @@
       id="login_${op}"
       class="login-form login-form-side">
   <input type="hidden" name="op" value="${op}" />
-  <input name="user" placeholder="${_('username')}" type="text" maxlength="20" tabindex="1"/>
+  <input name="user" placeholder="${_('username')}" type="text" maxlength="20" tabindex="1"
+         autocomplete="username webauthn"/>
   <input name="passwd" placeholder="${_('password')}" type="password" tabindex="1"/>
 
   <div class="status"></div>
@@ -59,5 +60,6 @@
   
   <div class="clear"></div>
 </form>
+${passkey_signin()}
 ${linked_signin()}
 
