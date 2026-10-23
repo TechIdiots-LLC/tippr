@@ -45,6 +45,9 @@
   says whether this device is remembered.
 
 ### 🐞 Bug fixes
+- **/admin/servers showed the event collector queues in red** with no processor, as if stopped. They're for an
+  analytics event collector service, and without one (`events_collector_url`) the site queues nothing there and runs
+  no processor for them on purpose: they now say "off (no event collector)".
 - **The trophy case was unreadable in the dark theme:** award names were always black (and descriptions dark grey);
   they follow the theme's text colors now.
 - **Turning admin mode on from a remembered computer** still offered "use a passkey" beside the greyed-out code field

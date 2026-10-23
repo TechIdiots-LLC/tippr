@@ -4270,6 +4270,11 @@ class AdminLiveConfig(Templated):
         Templated.__init__(self)
 
 
+# the queues of analytics events for an event collector service
+# (r2.lib.eventcollector)
+EVENT_QUEUES = ("event_collector", "event_collector_failed")
+
+
 class AdminServerStatus(Templated):
     """/admin/servers: each server's last report (r2.lib.server_status),
     with what to look at flagged, and the site's queues."""
@@ -4388,6 +4393,12 @@ class AdminServerStatus(Templated):
                 # by RabbitMQ; they leave a heartbeat instead
                 if not consumers and amqp.has_consumer(queue.name):
                     consumers = _("polling")
+                # analytics events only go to an event collector service:
+                # without one (events_collector_url) the site queues none
+                # and the installer runs no processor for them
+                if (not consumers and queue.name in EVENT_QUEUES and
+                        not g.events_collector_url):
+                    consumers = _("off (no event collector)")
                 result.append((queue.name, ok[1], consumers))
             return sorted(result, key=lambda q: -q[1])
         except Exception as e:
