@@ -22,6 +22,11 @@
   (`r2/lib/traffic`, `emr_helpers.py`, `scripts/traffic`, `tippr-job-hourly_traffic`) and its `TRAFFIC_*` and
   `emr_*` settings. tippr counts its own traffic as pages are served (the traffic pages), with Google Analytics as an
   option on /admin/site; neither changes.
+- **The site gives the Early Member award:** to its first 100 members (`early_member_count` on /admin/config; 0
+  turns it off), when they sign up. The site's own accounts (the system user, AutoModerator, feed bots) don't take a
+  place; a deleted or banned member keeps theirs without the award, so the first 100 stay the first 100. Existing
+  members get theirs when the starter awards script runs (on update), and the daily `tippr-job-year_clubs` catches
+  up anyone missed, including the members a raised count now includes. Admins can still give it by hand.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

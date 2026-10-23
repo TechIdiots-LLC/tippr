@@ -213,6 +213,9 @@ def handle_register(
         user.pref_lang = c.lang
         user._commit()
 
+        from r2.lib import early_member
+        early_member.on_register(user)
+
         amqp.add_item('new_account', user._fullname)
 
         hooks.get_hook("account.registered").call(user=user)

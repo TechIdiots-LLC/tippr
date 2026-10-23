@@ -111,6 +111,13 @@ COMMON = [
         "Whether a new account starts with live comments on (the member "
         "can change it in their preferences); also what logged-out "
         "visitors get. Accounts that already exist keep their setting.")),
+    ("early_member_count", N_(
+        "The first this many members get the Early Member award, in the "
+        "order they signed up (the site's own accounts, like AutoModerator "
+        "and feed bots, don't count). Raising it gives the award to the "
+        "members it now includes within a day; lowering it doesn't take "
+        "the award back. 0: nobody gets it automatically (admins can still "
+        "give it on /admin/awards).")),
     ("fastlane_links", N_(
         "Busy threads whose new comments get a queue of their own, so a "
         "flood of comments there doesn't slow down comments everywhere "

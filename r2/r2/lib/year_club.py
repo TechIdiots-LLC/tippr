@@ -138,6 +138,8 @@ def update_all(now=None):
 
 
 def run():
-    """tippr-job-year_clubs"""
+    """tippr-job-year_clubs (and the Early Member award's catch-up)"""
     seen = update_recent()
     g.log.info("year clubs: looked at %d members with an anniversary", seen)
+    from r2.lib import early_member
+    g.log.info("early members: %d", early_member.update())

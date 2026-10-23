@@ -378,6 +378,9 @@ class Globals:
             'logged_out_page_cache_seconds',
             'app_create_min_account_age_days',
             'app_create_min_karma',
+            # the first members who get the Early Member award
+            # (r2.lib.early_member; 0: none)
+            'early_member_count',
             'captcha_exempt_comment_karma',
             'captcha_exempt_link_karma',
             'create_vault_account_age_days',

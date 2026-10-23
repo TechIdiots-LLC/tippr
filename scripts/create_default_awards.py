@@ -19,16 +19,19 @@ Run with tippr-run (install/tippr.sh does this on every install):
 
     tippr-run scripts/create_default_awards.py
 
-Two are given out by the site itself, which only does so once they exist:
+Three are given out by the site itself, which only does so once they exist:
 
 - verified_email: when a member verifies their email address (and taken
   back if they change it)
 - tippr_gold: when a member gets gold
+- early_member: to the site's first members when they sign up
+  (early_member_count on /admin/config, 100 to start; r2.lib.early_member);
+  admins can give it too
 
 The rest are for the admins to give from /admin/awards (an award's "give"
 button), with an optional note and link:
 
-- staff, early_member, bug_hunter, translator, helpful, best_comment
+- staff, bug_hunter, translator, helpful, best_comment
 
 The "N-Year Club" trophies are made as members reach them (r2.lib.year_club,
 kept up to date daily by tippr-job-year_clubs); the first run here gives
@@ -106,3 +109,8 @@ if "verified_email" in made or "tippr_gold" in made:
     # date from then on, on each member's cake day
     from r2.lib import year_club
     print("year clubs: looked at %d members" % year_club.update_all())
+
+# the first members' Early Member awards, every run (so sites made before the
+# site gave it by itself get theirs)
+from r2.lib import early_member
+print("early members: %d" % early_member.update())
