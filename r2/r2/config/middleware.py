@@ -207,7 +207,7 @@ class DomainMiddleware:
             redir = g.default_scheme + "://" + redir.replace('//', '/')
 
             start_response("301 Moved Permanently", [("Location", redir)])
-            return [""]
+            return [b""]
 
         return self.app(environ, start_response)
 
@@ -297,6 +297,9 @@ class StaticTestMiddleware:
         raise webob.exc.HTTPNotFound()
 
 
+_HTML = [("Content-Type", "text/html; charset=UTF-8")]
+
+
 def _wsgi_json(start_response, status_int, message=""):
     status_message = webob.util.status_reasons[status_int]
     message = message or status_message
@@ -331,8 +334,8 @@ class LimitUploadSize:
                 if is_api:
                     return _wsgi_json(start_response, 411)
                 else:
-                    start_response("411 Length Required", [])
-                    return ['<html><body>length required</body></html>']
+                    start_response("411 Length Required", _HTML)
+                    return [b'<html><body>length required</body></html>']
 
             try:
                 cl_int = int(environ[cl_key])
@@ -340,8 +343,8 @@ class LimitUploadSize:
                 if is_api:
                     return _wsgi_json(start_response, 400)
                 else:
-                    start_response("400 Bad Request", [])
-                    return ['<html><body>bad request</body></html>']
+                    start_response("400 Bad Request", _HTML)
+                    return [b'<html><body>bad request</body></html>']
 
             if cl_int > self.max_size:
                 error_msg = "too big. keep it under %d KiB" % (
@@ -350,16 +353,17 @@ class LimitUploadSize:
                 if is_api:
                     return _wsgi_json(start_response, 413, error_msg)
                 else:
-                    start_response("413 Too Big", [])
-                    return ["<html>"
-                            "<head>"
-                            "<script type='text/javascript'>"
-                            "parent.completedUploadImage('failed',"
-                            "'',"
-                            "'',"
-                            "[['BAD_CSS_NAME', ''], ['IMAGE_ERROR', '", error_msg,"']],"
-                            "'');"
-                            "</script></head><body>you shouldn\'t be here</body></html>"]
+                    start_response("413 Too Big", _HTML)
+                    return [("<html>"
+                             "<head>"
+                             "<script type='text/javascript'>"
+                             "parent.completedUploadImage('failed',"
+                             "'',"
+                             "'',"
+                             "[['BAD_CSS_NAME', ''], ['IMAGE_ERROR', '" + error_msg + "']],"
+                             "'');"
+                             "</script></head><body>you shouldn\'t be here</body></html>"
+                             ).encode("utf-8")]
 
         return self.app(environ, start_response)
 

@@ -71,6 +71,9 @@
   that request's state each time, never freed, so it could be used to fill the server's memory. Only the test
   client (tests and `tippr-run` scripts) gets it now. The middleware's patches to Paste and WebOb, which newer
   versions made unneeded (or which never took effect), are gone.
+- **A form sent with no body, a bad length or too big an upload crashed the worker:** the "length required", "bad
+  request" and "too big" replies were text where the server needs bytes, so the visitor got an error page from the
+  server instead. They're sent properly now.
 
 ## 0.17.0
 ### ✨ Features and improvements
