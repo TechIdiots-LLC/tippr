@@ -29,8 +29,9 @@ from hashlib import md5
 import raven
 from pylons import app_globals as g
 from pylons import request
+import pylons
 from pylons import tmpl_context as c
-from pylons.util import AttribSafeContextObj, ContextObj, PylonsContext
+from pylons.wsgiapp import _AttribSafeTmplContext, _DefaultTmplContext
 from raven.processors import Processor
 
 from r2.lib.app_globals import Globals
@@ -68,11 +69,14 @@ class SanitizeStackLocalsProcessor(Processor):
         "__traceback_supplement__",
     )
 
+    # g, and c (the request's, and the one outside a request): the classes
+    # `c` really is (it was Pylons' ContextObj classes, which the shim never
+    # made, so c went to Sentry with everything on it)
     classes_to_remove = (
         Globals,
-        PylonsContext,
-        AttribSafeContextObj,
-        ContextObj,
+        _AttribSafeTmplContext,
+        _DefaultTmplContext,
+        pylons._DefaultTmplContext,
     )
 
     def filter_stacktrace(self, data, **kwargs):
