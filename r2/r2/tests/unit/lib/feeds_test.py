@@ -37,3 +37,19 @@ class TestFeedTitles(TipprTestCase):
     def test_atom_html_title(self):
         _, items = feeds.parse(ATOM)
         self.assertEqual(items[0]["title"], "Café news")
+
+
+class TestInterleave(TipprTestCase):
+    def test_spreads_vaults_and_feeds(self):
+        sports1, sports2, anime = {"id": 1}, {"id": 2}, {"id": 3}
+        order = feeds._interleave([
+            ("sports", sports1, ["s1a", "s1b", "s1c"]),
+            ("sports", sports2, ["s2a", "s2b"]),
+            ("anime", anime, ["a1", "a2"]),
+        ])
+        self.assertEqual([item for _, item in order],
+                         ["s1a", "a1", "s2a", "a2", "s1b", "s2b", "s1c"])
+
+    def test_empty(self):
+        self.assertEqual(feeds._interleave([]), [])
+        self.assertEqual(feeds._interleave([("v", {"id": 1}, [])]), [])

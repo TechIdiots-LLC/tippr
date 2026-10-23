@@ -286,64 +286,144 @@ def _post(feed, vault, account, item):
     return link
 
 
-def check(feed):
-    """Fetch one feed and post its new items. Returns how many were posted;
-    records the time and any error on the feed."""
+def _mark_seen(feed_id, item, link_id=None):
+    with ENGINE.begin() as conn:
+        conn.execute(feed_items.insert().values(
+            feed_id=feed_id, item_key=item["key"], url=item["url"],
+            link_id=link_id, seen=_now()))
+
+
+def _collect(feed):
+    """Fetch one feed: (vault, account, the items to post oldest first,
+    the feed's title). The rest of its new items (the backlog on a first
+    fetch, or more than the cap) are marked seen, not posted, so older
+    items don't land on top of newer ones at the next check."""
     from r2.models import Account, Vault
+    title, items = fetch(feed["url"])
+    vault = Vault._byID(feed["vault_id"], data=True)
+    account = Account._byID(feed["account_id"], data=True)
+    if account._deleted or account._banned:
+        raise FeedError("the posting account is deleted or suspended")
+    with ENGINE.connect() as conn:
+        keys, urls = _seen_keys(conn, feed["id"])
+    first_fetch = not keys
+    new = []
+    for item in items:
+        if item["key"] not in keys and item["url"] not in urls:
+            new.append(item)
+            keys.add(item["key"])       # a feed that repeats an item
+            urls.add(item["url"])
+    to_post = new[:FIRST_FETCH_POSTS if first_fetch else MAX_POSTS_PER_FETCH]
+    for item in new[len(to_post):]:
+        _mark_seen(feed["id"], item)
+    # oldest first, so the newest ends up on top
+    return vault, account, list(reversed(to_post)), title
+
+
+def _interleave(batches):
+    """The posting order for one run: batches is [(vault id, feed, [item])],
+    and the result [(feed, item)] takes one item from each vault in turn,
+    and within a vault from each of its feeds in turn, so a run doesn't put
+    a block of one feed's posts together on /v/all (posts made in the same
+    run rank by the order they were made in). Each feed's items keep their
+    order."""
+    by_vault = {}
+    for vault_id, feed, items in batches:
+        by_vault.setdefault(vault_id, []).append(
+            [(feed, item) for item in items])
+
+    def round_robin(queues):
+        queues = [list(q) for q in queues if q]
+        out = []
+        while queues:
+            for q in queues:
+                out.append(q.pop(0))
+            queues = [q for q in queues if q]
+        return out
+
+    return round_robin(round_robin(queues) for queues in by_vault.values())
+
+
+def _normal_title(title):
+    return re.sub(r"\W+", " ", title).strip().lower()
+
+
+def _already_in_vault(vault, url):
+    from r2.lib.db.thing import NotFound
+    from r2.models import Link
     try:
-        title, items = fetch(feed["url"])
-        vault = Vault._byID(feed["vault_id"], data=True)
-        account = Account._byID(feed["account_id"], data=True)
-        if account._deleted or account._banned:
-            raise FeedError("the posting account is deleted or suspended")
-        with ENGINE.connect() as conn:
-            keys, urls = _seen_keys(conn, feed["id"])
-        first_fetch = not keys
-        new = []
-        for item in items:
-            if item["key"] not in keys and item["url"] not in urls:
-                new.append(item)
-                keys.add(item["key"])       # a feed that repeats an item
-                urls.add(item["url"])
-        to_post = new[:FIRST_FETCH_POSTS if first_fetch else MAX_POSTS_PER_FETCH]
-        # oldest first, so the newest ends up on top
-        posted = 0
-        for item in reversed(to_post):
-            link = _post(feed, vault, account, item)
-            posted += 1
-            with ENGINE.begin() as conn:
-                conn.execute(feed_items.insert().values(
-                    feed_id=feed["id"], item_key=item["key"],
-                    url=item["url"], link_id=link._id, seen=_now()))
-        # the rest (the feed's backlog on a first fetch, or more new items
-        # than the cap): seen, not posted, so older items don't land on top
-        # of newer ones at the next check
-        with ENGINE.begin() as conn:
-            for item in new[len(to_post):]:
-                conn.execute(feed_items.insert().values(
-                    feed_id=feed["id"], item_key=item["key"],
-                    url=item["url"], link_id=None, seen=_now()))
-        update(feed["id"], last_checked=_now(), last_error=None,
-               posted=feed["posted"] + posted, feed_title=(title or "")[:300])
-        return posted
-    except Exception as e:
+        return bool(Link._by_url(url, vault))
+    except NotFound:
+        return False
+
+
+def check_feeds(feed_list):
+    """Fetch the feeds, then post their new items interleaved (_interleave).
+    An item whose link, or title, is already in the vault (another feed of
+    the same story) is marked seen instead. Returns {feed id: how many were
+    posted}, and records the time and any error on each feed."""
+    batches, titles, posted = [], {}, {}
+
+    def failed(feed, e):
         if not isinstance(e, FeedError):
             g.log.exception("feeds: checking feed %s failed", feed["id"])
         update(feed["id"], last_checked=_now(), last_error=str(e)[:1000])
-        return 0
+
+    for feed in feed_list:
+        try:
+            vault, account, items, titles[feed["id"]] = _collect(feed)
+        except Exception as e:
+            failed(feed, e)
+            continue
+        batches.append((vault._id, (feed, vault, account), items))
+        posted[feed["id"]] = 0
+
+    vault_titles = {}
+    broken = set()
+    for (feed, vault, account), item in _interleave(batches):
+        if feed["id"] in broken:
+            continue
+        seen = vault_titles.setdefault(vault._id, set())
+        title = _normal_title(item["title"])
+        try:
+            if title in seen or _already_in_vault(vault, item["url"]):
+                _mark_seen(feed["id"], item)
+                continue
+            link = _post(feed, vault, account, item)
+            seen.add(title)
+            _mark_seen(feed["id"], item, link._id)
+            posted[feed["id"]] += 1
+        except Exception as e:
+            broken.add(feed["id"])
+            failed(feed, e)
+
+    for _, (feed, _, _), _ in batches:
+        if feed["id"] not in broken:
+            update(feed["id"], last_checked=_now(), last_error=None,
+                   posted=feed["posted"] + posted[feed["id"]],
+                   feed_title=(titles[feed["id"]] or "")[:300])
+    return posted
+
+
+def check(feed):
+    """Fetch one feed and post its new items. Returns how many were posted."""
+    return check_feeds([feed]).get(feed["id"], 0)
 
 
 def run_due():
     """Check every enabled feed whose interval has passed (tippr-job-feeds)."""
     now = _now()
+    due = []
     for feed in all_feeds():
         if not feed["enabled"]:
             continue
         last = feed["last_checked"]
         if last and now - last < timedelta(minutes=feed["interval_minutes"]):
             continue
-        posted = check(feed)
-        g.log.info("feeds: %s: %d posted", feed["url"], posted)
+        due.append(feed)
+    by_url = {feed["id"]: feed["url"] for feed in due}
+    for feed_id, posted in check_feeds(due).items():
+        g.log.info("feeds: %s: %d posted", by_url[feed_id], posted)
 
 
 def bot_account(name):
