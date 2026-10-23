@@ -1,3 +1,4 @@
+# cython: language_level=3
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -193,7 +194,7 @@ class Templated(object):
         therefore finalize() must be called on it to turn it into its
         final form
         """
-        from filters import unsafe
+        from r2.lib.filters import unsafe
         from pylons import tmpl_context as c
         from pylons import app_globals as g
 
