@@ -64,6 +64,23 @@ class TestTwoFactor(TipprTestCase):
         self.request.cookies = {"session": "another-login"}
         self.assertTrue(two_factor.needs_code(self.account, "password"))
 
+    def test_authenticator_secrets_are_sealed(self):
+        sealed = two_factor._seal("JBSWY3DPEHPK3PXP", 7)
+        self.assertTrue(sealed.startswith(two_factor._SEALED))
+        self.assertNotIn("JBSWY3DPEHPK3PXP", sealed)
+        self.assertEqual(two_factor._open(sealed, 7), "JBSWY3DPEHPK3PXP")
+        # each sealing differs (a fresh nonce)
+        self.assertNotEqual(sealed, two_factor._seal("JBSWY3DPEHPK3PXP", 7))
+        # bound to the account, and to the site's SECRET
+        with self.assertRaises(Exception):
+            two_factor._open(sealed, 8)
+        self.g.secrets = {"SECRET": "another"}
+        with self.assertRaises(Exception):
+            two_factor._open(sealed, 7)
+        # secrets kept before sealing still read
+        self.assertEqual(two_factor._open("JBSWY3DPEHPK3PXP", 7),
+                         "JBSWY3DPEHPK3PXP")
+
     def test_minutes_left(self):
         self.assertEqual(two_factor.recent_minutes_left(self.account), 0)
         two_factor.mark_recent(self.account)

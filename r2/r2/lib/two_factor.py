@@ -120,6 +120,74 @@ def _now():
     return datetime.now(g.tz)
 
 
+###############################################################################
+# Authenticator app secrets, encrypted in the database
+###############################################################################
+# An authenticator app's code comes from a secret the site keeps too, so a
+# copy of the database (a stolen backup) would make codes for every account.
+# The secrets are kept encrypted (AES-GCM) with a key from the site's
+# [secrets] SECRET, which backups carry separately (secrets.json) and a
+# restore puts back. Secrets kept before this are encrypted the next time
+# the account's methods are read.
+
+_SEALED = "enc1:"
+
+
+def _secret_key():
+    secret = g.secrets["SECRET"]
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
+    return hmac.new(secret, b"two-factor authenticator secrets",
+                    hashlib.sha256).digest()
+
+
+def _aad(account_id):
+    # bound to the account: a secret copied to another account's row
+    # doesn't open
+    return ("totp:%d" % account_id).encode("ascii")
+
+
+def _seal(secret, account_id):
+    import base64
+    try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    except ImportError:
+        g.log.warning("two-factor: the cryptography package is missing, so "
+                      "authenticator secrets are kept unencrypted")
+        return secret
+    nonce = secrets.token_bytes(12)
+    sealed = AESGCM(_secret_key()).encrypt(nonce, secret.encode("ascii"),
+                                           _aad(account_id))
+    return _SEALED + base64.urlsafe_b64encode(nonce + sealed).decode("ascii")
+
+
+def _open(value, account_id):
+    """The secret from its kept form (sealed, or plain from before)."""
+    import base64
+    if not value or not value.startswith(_SEALED):
+        return value
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    raw = base64.urlsafe_b64decode(value[len(_SEALED):].encode("ascii"))
+    return AESGCM(_secret_key()).decrypt(raw[:12], raw[12:],
+                                         _aad(account_id)).decode("ascii")
+
+
+def _seal_old_secrets(account, rows):
+    """Encrypt the secrets of rows kept before they were encrypted."""
+    for row in rows:
+        if row["kind"] != "totp" or not row["secret"] or \
+                row["secret"].startswith(_SEALED):
+            continue
+        sealed = _seal(row["secret"], account._id)
+        if sealed == row["secret"]:
+            return
+        with _engine().begin() as conn:
+            conn.execute(_table().update()
+                         .where(_table().c.id == row["id"])
+                         .values(secret=sealed))
+        row["secret"] = sealed
+
+
 def enabled(account):
     """Whether account has two-factor sign-in on (no database query: the
     account keeps how many methods it has)."""
@@ -136,7 +204,8 @@ def _migrate(account):
     with _engine().begin() as conn:
         conn.execute(_table().insert().values(
             id=secrets.token_hex(8), account_id=account._id, kind="totp",
-            name=KIND_NAMES["totp"], secret=secret, created=_now()))
+            name=KIND_NAMES["totp"], secret=_seal(secret, account._id),
+            created=_now()))
     account.otp_secret = ""
     _changed(account)
 
@@ -150,7 +219,9 @@ def methods(account, kind=None):
     if kind:
         query = query.where(_table().c.kind == kind)
     with _engine().connect() as conn:
-        return [dict(r) for r in conn.execute(query).mappings()]
+        rows = [dict(r) for r in conn.execute(query).mappings()]
+    _seal_old_secrets(account, rows)
+    return rows
 
 
 def _changed(account):
@@ -208,7 +279,7 @@ def _add(account, kind, name, **values):
 def add_totp(account, secret, name=None):
     """Add an authenticator app. Returns whether it's the first method
     (so two-factor just turned on)."""
-    return _add(account, "totp", name, secret=secret)
+    return _add(account, "totp", name, secret=_seal(secret, account._id))
 
 
 def add_passkey(account, credential_id, public_key, sign_count,
@@ -380,8 +451,14 @@ def _check_totp(account, code):
     if not code.isdigit() or len(code) != 6:
         return False
     for method in methods(account, "totp"):
-        if any(constant_time_compare(code, totp.make_totp(method["secret"],
-                                                         skew=skew))
+        try:
+            secret = _open(method["secret"], account._id)
+        except Exception:
+            # sealed with another SECRET (restored without its secrets?)
+            g.log.warning("two-factor: %s's authenticator %s can't be "
+                          "decrypted", account.name, method["id"])
+            continue
+        if any(constant_time_compare(code, totp.make_totp(secret, skew=skew))
                for skew in VOneTimePassword.allowed_skew):
             # used up (kept a little longer than codes are accepted)
             used = g.gencache.add(
