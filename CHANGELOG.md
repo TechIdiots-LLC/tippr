@@ -35,6 +35,9 @@
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
+- **Turning admin mode on from a remembered computer** still offered "use a passkey" beside the greyed-out code field
+  (and, with passkeys only, asked for one on submit, though no code was needed). The form now says the computer is
+  remembered, with no code field, and has a "forget this computer" button to ask for a code again next time.
 - **A vault's "users here now" was always ~0:** tippr's client for the activity service was a placeholder that sent
   nothing, recording no visits and answering every count with 0. It's the real generated Thrift client now, so the
   sidebar counts the logged-in members who've visited in the last 15 minutes.

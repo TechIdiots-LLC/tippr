@@ -6118,6 +6118,17 @@ class ApiController(TipprController):
     @validatedForm(
         VUser(),
         VModhash(),
+    )
+    def POST_forget_otp(self, form, jquery):
+        """Forget that this browser passed two-factor ("remember this
+        computer"): the next thing that needs a code asks for one."""
+        set_user_cookie(g.otp_cookie, "", secure=True, httponly=True,
+                        expires=DELETE)
+        form.refresh()
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
         VTwoFactorProof(),
     )
     def POST_generate_otp_secret(self, form, jquery):

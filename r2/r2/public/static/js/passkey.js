@@ -150,6 +150,8 @@ r.passkey = {
   addButton: function(input) {
     var self = this, $input = $(input), $form = $input.closest('form')
     if ($input.data('passkey-button') || $form.is('#pref-otp-qr')) { return }
+    // no code wanted there (the computer is remembered)
+    if ($input.prop('disabled')) { return }
     $input.data('passkey-button', true)
     var hasApp = self.hasApp($form)
     var $status = $('<span class="passkey-status"></span>')
