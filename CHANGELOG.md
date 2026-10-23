@@ -45,6 +45,8 @@
   says whether this device is remembered.
 
 ### 🐞 Bug fixes
+- **The trophy case was unreadable in the dark theme:** award names were always black (and descriptions dark grey);
+  they follow the theme's text colors now.
 - **Turning admin mode on from a remembered computer** still offered "use a passkey" beside the greyed-out code field
   (and, with passkeys only, asked for one on submit, though no code was needed). The form now says the computer is
   remembered, with no code field, and has a "forget this computer" button to ask for a code again next time.
