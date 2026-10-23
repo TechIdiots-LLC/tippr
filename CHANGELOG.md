@@ -2,6 +2,13 @@
 
 ## master
 ### ✨ Features and improvements
+- _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.19.0
+### ✨ Features and improvements
 - **Live comments keep the thread's comment count up to date:** the "N comments" link and the "all N comments"
   heading count the comments that arrive while the page is open.
 - **"N here now" on threads:** next to a thread's comment heading, how many people have had it open in the last 15
@@ -22,7 +29,6 @@
   (`r2/lib/traffic`, `emr_helpers.py`, `scripts/traffic`, `tippr-job-hourly_traffic`) and its `TRAFFIC_*` and
   `emr_*` settings. tippr counts its own traffic as pages are served (the traffic pages), with Google Analytics as an
   option on /admin/site; neither changes.
-- _...Add new stuff here..._
 
 ### 🐞 Bug fixes
 - **A vault's "users here now" was always ~0:** tippr's client for the activity service was a placeholder that sent
@@ -32,7 +38,6 @@
   OpenTelemetry collector at localhost:4317, and with none there its retries froze those servers, so requests to
   the activity service timed out. Tracing export is off for them (`OTEL_SDK_DISABLED=true`; set it to `false` in
   `/etc/default/tippr` once a collector runs).
-- _...Add new stuff here..._
 
 ## 0.18.0
 ### ✨ Features and improvements
