@@ -1043,18 +1043,30 @@ class MinimalController(BaseController):
         if c.loid:
             c.loid.save(domain=g.domain)
 
-        # send cookies
-        secure_cookies = feature.is_enabled("force_https")
+        # send cookies. On a site served over https every one is Secure,
+        # whatever the force_https flag (off unless set by hand) or the
+        # cookie says: otherwise the browser sends the session cookie over
+        # plain http too, to anyone who can make it load an http:// address.
+        # SameSite=Lax keeps them off other sites' requests that change
+        # things (form posts from another site, so no logging a visitor in
+        # to an account of the attacker's), while top-level links and the
+        # sign-in and payment providers' redirects back still carry them.
+        site_https = (g.https_endpoint or "").startswith("https://")
+        secure_cookies = site_https or feature.is_enabled("force_https")
         for k, v in c.cookies.items():
             if v.dirty:
-                v_secure = v.secure if v.secure is not None else secure_cookies
+                if site_https:
+                    v_secure = True
+                else:
+                    v_secure = v.secure if v.secure is not None else secure_cookies
                 # WebOb `Response.set_cookie` expects `name`, not `key`.
                 response.set_cookie(name=k,
                                     value=quote(v.value),
                                     domain=v.domain,
                                     expires=v.expires,
                                     secure=v_secure,
-                                    httponly=getattr(v, 'httponly', False))
+                                    httponly=getattr(v, 'httponly', False),
+                                    samesite="Lax")
 
 
         if not isinstance(c.site, FakeVault) and not g.disallow_db_writes:
