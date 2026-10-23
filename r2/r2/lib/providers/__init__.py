@@ -26,7 +26,7 @@
 from importlib.metadata import entry_points
 
 
-def select_provider(config_parser, working_set, type, name):
+def select_provider(config_parser, type, name):
     """Given a type and name return an instantiated provider.
 
     Providers are objects that abstract away an external service. They are
@@ -40,8 +40,6 @@ def select_provider(config_parser, working_set, type, name):
     spec dictionary, the spec will be added to the main configuration parser
     similarly to the plugin system. This allows providers to declare extra
     config options for parsing.
-
-    Note: working_set parameter is kept for backwards compatibility but ignored.
     """
 
     eps = entry_points(group=type)
