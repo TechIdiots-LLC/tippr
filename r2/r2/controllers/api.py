@@ -6350,6 +6350,18 @@ class ApiController(TipprController):
     @validatedForm(
         VUser(),
         VModhash(),
+    )
+    def POST_forget_devices(self, form, jquery):
+        """Every browser that skips the two-factor code asks for it again
+        (preferences, security). No code needed: it only ever asks for
+        more."""
+        from r2.lib import two_factor
+        two_factor.forget_devices(c.user)
+        form.redirect("/prefs/security?devices=forgotten#remembered-devices")
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
         otp=nop("otp"),
     )
     def POST_two_factor_unlock(self, form, jquery, otp):

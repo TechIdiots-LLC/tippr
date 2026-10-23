@@ -1362,6 +1362,9 @@ class PrefSecurity(Templated):
         self.new_codes = two_factor.take_new_codes(c.user)
         self.codes_left = two_factor.recovery_codes_left(c.user)
         self.device_days = two_factor.DEVICE_DAYS
+        self.remembered_here = (self.two_factor and
+                                two_factor.remembered_here(c.user))
+        self.devices_forgotten = request.GET.get("devices") == "forgotten"
         self.required_for_tools = (two_factor.staff_required() and
                                    two_factor.is_staff_or_moderator(c.user))
         links = {l["provider"]: l for l in linked_logins.links_for(c.user)}

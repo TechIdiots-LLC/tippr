@@ -32,6 +32,10 @@
   see them. /admin/users shows each account's label in a new column (the note on hover), lists the labels in use with
   how many accounts have each, and lists the accounts with one. Changes are logged under the account's admin
   actions.
+- **Forget all remembered devices** (preferences → security, with two-factor on): every browser that skips the code
+  ("don't ask on this device" at login, "remember this computer" for admin mode and confirmations), this one too,
+  is asked for a code again next time, for a lost device or a shared computer. Nobody is logged out. The section also
+  says whether this device is remembered.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

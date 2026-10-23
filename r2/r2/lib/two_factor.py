@@ -260,6 +260,19 @@ def _changed(account):
     account._commit()
 
 
+def forget_devices(account):
+    """Every browser that skips the code stops skipping it: "don't ask on
+    this device" at login, and "remember this computer" (the otp cookie),
+    this one too. Logins and admin mode carry on."""
+    account.two_factor_stamp = secrets.token_hex(8)
+    account._commit()
+
+
+def remembered_here(account):
+    """This browser skips the code, one way or the other."""
+    return bool(c.otp_cached) or device_remembered(account)
+
+
 def stamp(account):
     """What changes whenever the methods do (for signing cookies)."""
     return (getattr(account, "two_factor_stamp", "") or

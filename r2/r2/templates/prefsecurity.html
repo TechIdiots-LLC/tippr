@@ -207,6 +207,27 @@
       %endif
     </form>
 
+    ## the browsers that skip the code ("don't ask on this device",
+    ## "remember this computer"); forgetting them needs no code, since it
+    ## only ever asks for more
+    <form action="/post/forget_devices" method="post" onsubmit="return post_form(this, 'forget_devices')"
+          class="pretty-form two-factor-devices" id="remembered-devices">
+    <h2>${_("remembered devices")}</h2>
+      <p>
+        %if thing.devices_forgotten:
+          <strong>${_("Done: every device will be asked for a code again.")}</strong>
+        %elif thing.remembered_here:
+          ${_("This device is remembered, so it isn't asked for a code.")}
+        %else:
+          ${_("This device isn't remembered.")}
+        %endif
+        &#32;${_("If you lost a device you chose to skip the code on, or used a shared computer, forget them all: each one is asked for a code again next time.")}
+      </p>
+      <button class="btn" type="submit">${_("forget all remembered devices")}</button>
+      <span class="status"></span>
+      <p><small>${_("Nobody is logged out. To end the logins themselves, use \"log out of all other sessions\" on the account activity page.")}</small></p>
+    </form>
+
     ## turning it off wants the password and a code typed then (VFreshOneTimePassword)
     <details class="two-factor-off">
     <summary>${_("turn off two-factor authentication…")}</summary>
