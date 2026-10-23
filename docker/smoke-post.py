@@ -43,6 +43,10 @@ login = s.post(BASE + "/api/login/" + user, data={
     "api_type": "json"}).json()["json"]
 if login["errors"]:
     fail("login: %s" % login["errors"])
+# the site marks its cookies Secure (it's on https); this talks to the app
+# over plain http behind the proxy, so send them back regardless
+for cookie in s.cookies:
+    cookie.secure = False
 print("logged in as " + user)
 
 title = "smoke test post %d" % time.time()
