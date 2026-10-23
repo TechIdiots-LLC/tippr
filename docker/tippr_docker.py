@@ -585,7 +585,7 @@ def main():
         os.execv(VENV + "/bin/paster", paster_run(*args))
     elif role == "shell":
         os.chdir(R2)
-        os.execv(VENV + "/bin/paster", [VENV + "/bin/paster", "shell", INI])
+        os.execv(VENV + "/bin/paster", paster_run("--shell", *args))
     else:
         sys.exit("tippr: unknown role %r (try: help)" % role)
 

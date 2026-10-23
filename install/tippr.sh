@@ -1264,9 +1264,8 @@ TIPPRRUN
 
 helper-script /usr/local/bin/tippr-shell <<TIPPRSHELL
 #!/bin/bash
-# Use paster shell command
-cd $TIPPR_SRC/tippr/r2
-exec $TIPPR_VENV/bin/paster shell run.ini
+# A Python prompt with the app loaded (tippr-run, then the prompt)
+exec /usr/local/bin/tippr-run --shell "\$@"
 TIPPRSHELL
 
 # tippr.target pulls in the app, consumers (via tippr-consumers.service) and

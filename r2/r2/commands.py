@@ -49,6 +49,9 @@ class RunCommand(command.Command):
     parser.add_option("", "--proctitle",
                       dest="proctitle",
                       help="set the title seen by ps and top")
+    parser.add_option("", "--shell",
+                      dest="shell", action="store_true",
+                      help="then an interactive prompt (tippr-shell)")
 
     def command(self):
         try:
@@ -103,3 +106,32 @@ class RunCommand(command.Command):
                 exc_info = sys.exc_info()
                 RavenErrorReporter.capture_exception(exc_info=exc_info)
             raise
+
+        if self.options.shell:
+            self.interact(loaded_namespace)
+
+    @staticmethod
+    def interact(namespace):
+        """tippr-shell: a Python prompt with the app loaded (paster shell
+        was Pylons', which tippr doesn't have)."""
+        import code
+
+        from pylons import app_globals as g
+        from pylons import request
+        from pylons import tmpl_context as c
+
+        import r2.models
+        namespace.setdefault("g", g)
+        namespace.setdefault("c", c)
+        namespace.setdefault("request", request)
+        for name in getattr(r2.models, "__all__", None) or dir(r2.models):
+            if not name.startswith("_"):
+                namespace.setdefault(name, getattr(r2.models, name))
+        try:
+            import readline  # noqa: F401 (history and editing at the prompt)
+        except ImportError:
+            pass
+        code.interact(
+            banner="tippr shell: g, c, request and r2.models are loaded "
+                   "(Account, Link, Vault...). Ctrl-D to leave.",
+            local=namespace, exitmsg="")

@@ -149,7 +149,6 @@ setup(
     main=r2:make_app
     [paste.paster_command]
     run = r2.commands:RunCommand
-    shell = pylons.commands:ShellCommand
     [paste.filter_app_factory]
     gzip = r2.lib.gzipper:make_gzip_middleware
     [r2.provider.media]
