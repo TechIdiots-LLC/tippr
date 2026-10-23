@@ -1183,3 +1183,16 @@ body.prefs-page > main.content {
     from { box-shadow: inset 3px 0 0 @tp-accent; }
     to { box-shadow: inset 3px 0 0 transparent; }
 }
+// "N here now" after the comment heading (here-now.js)
+.commentarea .panestack-title .here-now {
+    margin-left: 0.5em;
+    color: @tp-text-muted;
+    font-size: smaller;
+    &:before {
+        content: "\00b7";
+        margin-right: 0.5em;
+    }
+    &:empty {
+        display: none;
+    }
+}

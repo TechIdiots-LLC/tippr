@@ -566,6 +566,11 @@ class FrontController(TipprController):
                 'target_sort': sort,
             }
         extra_js_config = {'event_target': event_target}
+        # "N here now" by the comment heading (r2.lib.activity)
+        from r2.lib import activity
+        if activity.enabled() and not article.is_archived(article.vault_slow):
+            extra_js_config['here_now'] = {"link": article._fullname}
+
         if not comment:
             from r2.lib import live_comments
             live = live_comments.page_config(

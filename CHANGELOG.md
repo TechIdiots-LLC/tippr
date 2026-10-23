@@ -4,6 +4,9 @@
 ### ✨ Features and improvements
 - **Live comments keep the thread's comment count up to date:** the "N comments" link and the "all N comments"
   heading count the comments that arrive while the page is open.
+- **"N here now" on threads:** next to a thread's comment heading, how many people have had it open in the last 15
+  minutes, logged in or not, updated every minute while it's on screen (small numbers are fuzzed, shown with a "~").
+  It uses the activity service, like a vault's "users here now".
 - **reddit's EMR traffic pipeline is gone:** the hourly job that sent web server logs through Amazon EMR and Pig
   (`r2/lib/traffic`, `emr_helpers.py`, `scripts/traffic`, `tippr-job-hourly_traffic`) and its `TRAFFIC_*` and
   `emr_*` settings. tippr counts its own traffic as pages are served (the traffic pages), with Google Analytics as an

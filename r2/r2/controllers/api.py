@@ -354,6 +354,24 @@ class ApiController(TipprController):
             return bool(user)
 
     @csrf_exempt
+    @json_validate(link=VByName("link_id", thing_cls=Link))
+    def POST_here_now(self, responder, link):
+        """Count this visitor as on a thread, and say how many are
+        (r2.lib.activity; the thread page asks every minute). A POST, so no
+        cache keeps an answer meant for one visitor."""
+        from r2.lib import activity
+        response.headers["Cache-Control"] = "private, no-store"
+        if (not link or not activity.enabled() or
+                not link.vault_slow.can_view(c.user)):
+            return {}
+        visitor = activity.visitor_id(c.user, c.user_is_loggedin, c.loid)
+        found = activity.here_now(link._fullname, visitor)
+        if not found:
+            return {}
+        count, fuzzed = found
+        return {"count": count, "fuzzed": bool(fuzzed)}
+
+    @csrf_exempt
     @json_validate(user=VUname(("user",)))
     def POST_check_username(self, responder, user):
         """

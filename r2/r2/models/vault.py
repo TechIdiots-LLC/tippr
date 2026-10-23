@@ -43,6 +43,7 @@ from thrift.Thrift import TApplicationException
 from thrift.transport.TTransport import TTransportException
 
 from r2.lib import hooks
+from r2.lib.activity import _activity_service
 from r2.lib.cache import MemcachedError
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.cassandra_compat import NotFoundException
@@ -213,13 +214,6 @@ class BaseSite:
 
 
 class VaultExists(Exception): pass
-
-
-def _activity_service():
-    """The activity service client for this request, if one is configured
-    (activity_endpoint); it lives on the baseplate request context."""
-    context = getattr(c, "baseplate_context", None)
-    return getattr(context, "activity_service", None) if context else None
 
 
 class Vault(Thing, Printable, BaseSite):
