@@ -6089,9 +6089,16 @@ class ApiController(TipprController):
         """Start adding a passkey (preferences, security): the options for
         the browser. Needs the same proof as adding an authenticator app."""
         from r2.lib import passkeys
+        # (a wrong one isn't "missing": say which it was)
         if (errors.TWO_FACTOR_REQUIRED, "otp") in c.errors:
+            if request.params.get("otp"):
+                return {"error": _("That code didn't work. Codes follow the "
+                                   "clock, so check that your phone sets its "
+                                   "time automatically.")}
             return {"error": _("enter a code from one of your methods first")}
         if (errors.WRONG_PASSWORD, "password") in c.errors:
+            if request.params.get("password"):
+                return {"error": _("That password isn't right. Try again.")}
             return {"error": _("enter your password first")}
         try:
             options, token = passkeys.registration_options(c.user)
