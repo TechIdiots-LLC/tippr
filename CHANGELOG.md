@@ -35,6 +35,12 @@
 - **A wrong code when adding an authenticator app said "wrong password":** it now says the code didn't work and to
   check that the phone sets its time automatically, as the login code page does too.
 - **A passkey the site refused (too many, say) said nothing:** the reason is shown now.
+- **An account with only passkeys was asked for a code:** two-factor prompts now lead with "use a passkey" when the
+  account has no authenticator app, with "use a recovery code instead" as the fallback; with an app, the code box
+  stays and the button reads "or use a passkey".
+- **Script text showed translators' unfinished guesses:** the strings built for the page scripts included fuzzy
+  catalog entries (which the pages themselves never show), so the passkey button read "make update". They're left
+  out now.
 - **Save buttons stuck on "submitting…":** a form without an `id` sent an empty one, and the server's answer
   (clearing the status, "saved", the errors) is aimed at that id, so it changed nothing on the page. Such a form gets
   an id of its own when it's sent now, so its status and errors show (preferences, security's "also ask for a code",
