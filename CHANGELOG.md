@@ -29,8 +29,12 @@
   lock from a fresh copy, and the passkey check a form gets is good for one request only. A passkey's credential id
   is unique now too (added to existing databases), so a made-up registration can't reuse another account's.
 - **A data export request whose queue item was lost blocked new ones for good:** asking again now sends a request
-  that's been waiting over half an hour once more. A member's requests are also listed newest first again (their
-  index's time-based keys don't sort by time as stored).
+  that's been waiting over half an hour once more.
+- **"Newest first" from Cassandra wasn't:** column names are stored as text, and Cassandra returns them in text
+  order, which isn't time order for time UUIDs (admin notes, privacy requests, the mod log's paging) or number
+  order for numbers. Each column family now orders, bounds and returns its column names by its comparator, as
+  pycassa did, so reads newest first, paging and "the latest N" are right; the sorting each model did on its own
+  to make up for it is gone. Stored data is unchanged.
 - **/admin/servers showed working queues as having no processors:** the comment tree and listing queues' processors
   poll, which RabbitMQ doesn't count, so they were flagged with 0. They show "polling" while they run now.
 - _...Add new stuff here..._

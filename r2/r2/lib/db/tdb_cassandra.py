@@ -248,6 +248,7 @@ class ThingMeta(type):
             try:
                 cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
+                                       comparator = cls._compare_with,
                                        read_consistency_level = cls._read_consistency_level,
                                        write_consistency_level = cls._write_consistency_level)
             except NotFoundException:
@@ -274,6 +275,7 @@ class ThingMeta(type):
                 # try again to look it up
                 cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
+                                       comparator = cls._compare_with,
                                        read_consistency_level = cls._read_consistency_level,
                                        write_consistency_level = cls._write_consistency_level)
 
@@ -1109,15 +1111,6 @@ class ColumnQuery:
         self.obj_to_column = obj_to_column or self.default_obj_to_column
         self._rules = []    # dummy parameter to mimic tdb_sql queries
 
-        # Sorting for TimeUuid objects
-        if self.cls._compare_with == TIME_UUID_TYPE:
-            def sort_key(i):
-                return i.time
-        else:
-            def sort_key(i):
-                return i
-        self.sort_key = sort_key
-
     @staticmethod
     def combine(queries):
         raise NotImplementedError
@@ -1159,69 +1152,8 @@ class ColumnQuery:
         # Logic of standard tippr query is opposite of cassandra
         self.column_reversed = False
 
-    def _iter_time_uuid(self, yield_column_names=False):
-        """TimeUUID-named columns: fetch the rows and sort, bound and limit
-        them by time here. cassandra_compat keeps column names as text, and
-        text order isn't time order for UUID1s, so slicing in the store
-        (column_start / column_count) would pick the wrong columns.
-        """
-        def to_uuid(name):
-            if isinstance(name, UUID):
-                return name
-            try:
-                return UUID(str(name))
-            except (TypeError, ValueError):
-                return None
-
-        try:
-            rows = self.cls._cf.multiget(self.rowkeys)
-        except NotFoundException:
-            return
-
-        columns = {}
-        for row in rows.values():
-            for name, value in row.items():
-                key = to_uuid(name)
-                if key is not None:
-                    columns[key] = value
-
-        # column_reversed (the default) means newest first
-        names = sorted(columns, key=lambda u: u.time,
-                       reverse=self.column_reversed)
-
-        def before(a, b):
-            """a comes before b in this query's order"""
-            return a.time > b.time if self.column_reversed else a.time < b.time
-
-        start = to_uuid(self.column_start) if self.column_start else None
-        if start is not None:
-            # paging: everything after column_start, which itself is excluded
-            names = [n for n in names if before(start, n)]
-        finish = to_uuid(self.column_finish) if self.column_finish else None
-        if finish is not None:
-            names = [n for n in names if not before(finish, n)]
-
-        names = names[:self._limit]
-        if not names:
-            return
-
-        l_columns = [{name: columns[name]} for name in names]
-        objs = self.column_to_obj(l_columns)
-        if yield_column_names:
-            if len(names) == 1:
-                ret = (names[0], objs),
-            else:
-                ret = list(zip(names, objs))
-        else:
-            ret = objs
-        ret, is_single = tup(ret, ret_is_single=True)
-        yield from ret
-
     def __iter__(self, yield_column_names=False):
-        if self.cls._compare_with == TIME_UUID_TYPE:
-            yield from self._iter_time_uuid(yield_column_names)
-            return
-
+        name_key = self.cls._cf.name_key
         retrieved = 0
         column_start = self.column_start
         while retrieved < self._limit:
@@ -1236,14 +1168,14 @@ class ColumnQuery:
                                           column_reversed=self.column_reversed)
 
                 # multiget returns OrderedDict {rowkey: {column_name: column_value}}
-                # combine into single OrderedDict of {column_name: column_value}
+                # combine the rows into one, in the comparator's order
                 if not r:
                     return
                 r_combined = {}
                 for d in r.values():
                     r_combined.update(d)
                 columns = OrderedDict(sorted(r_combined.items(),
-                                             key=lambda t: self.sort_key(t[0]),
+                                             key=lambda t: name_key(t[0]),
                                              reverse=self.column_reversed))
             except NotFoundException:
                 return
@@ -1251,18 +1183,11 @@ class ColumnQuery:
             retrieved += self._chunk_size
 
             if column_start:
-                try:
-                    del columns[column_start]
-                except KeyError:
-                    # This can happen when a timezone-aware datetime is
-                    # passed in as a column_start, but non-timezone-aware
-                    # datetimes are returned from cassandra, causing `del` to
-                    # fail.
-                    #
-                    # Reversed queries include column_start in the results,
-                    # while non-reversed queries do not.
-                    if self.column_reversed:
-                        columns.popitem(last=False)
+                # the slice includes column_start itself (which may be given
+                # as text, or as a datetime in another timezone)
+                start_key = name_key(column_start)
+                for name in [n for n in columns if name_key(n) == start_key]:
+                    del columns[name]
 
             if not columns:
                 return

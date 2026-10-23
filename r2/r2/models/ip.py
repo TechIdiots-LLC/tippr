@@ -18,8 +18,8 @@ CF_TTL = datetime.timedelta(days=100).total_seconds()
 
 
 def _column_date(value):
-    """A column name as a UTC datetime: the Cassandra compatibility layer
-    hands DateType column names back as text ("2026-10-18 17:59:07+00:00")."""
+    """A column name (a datetime; text if it didn't parse as one) as a
+    timezone-aware datetime, UTC if it had no timezone."""
     if isinstance(value, str):
         value = datetime.datetime.fromisoformat(value)
     if value.tzinfo is None:

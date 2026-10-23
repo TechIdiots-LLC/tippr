@@ -1607,16 +1607,10 @@ class SubscriptionsByDay(tdb_cassandra.View):
     def get_all_counts(cls, date):
         if date.tzinfo is None:
             date = date.replace(tzinfo=g.tz)
-        import ast
         counts = collections.Counter()
         for name, val in cls._cf.xget(cls._rowkey(date)):
-            # the (vault, user) column names come back as their text,
-            # "('n', 'q')"
-            if isinstance(name, str):
-                try:
-                    name = ast.literal_eval(name)
-                except (ValueError, SyntaxError):
-                    continue
+            if not isinstance(name, tuple):
+                continue
             vault_id36, _user_id36 = name
             counts[vault_id36] += 1
         for vault_id36, count in sorted(counts.items()):

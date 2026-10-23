@@ -60,8 +60,8 @@ COUNTER_COLUMN_TYPE = 'org.apache.cassandra.db.marshal.CounterColumnType'
 
 
 # pycassa.types: column type classes some models declare their columns with
-# (LongType() etc.). The storage here keeps column names as text, so these
-# only mark the intended type.
+# (LongType() etc.). Column names are stored as text; a column family's
+# comparator (one of these, or a *_TYPE name) says how to read them.
 class CassandraType:
     def __eq__(self, other):
         return type(self) is type(other)
@@ -125,8 +125,7 @@ def convert_uuid_to_time(uuid_obj):
         # value type, e.g. TryLaterBySubject: when a timeout ends)
         return uuid_obj / 1000.0 if uuid_obj > 1e11 else float(uuid_obj)
     if not isinstance(uuid_obj, uuid.UUID):
-        # column names come back from cassandra_compat as text: a UUID, or a
-        # datetime written as a TimeUUID column name
+        # a UUID or datetime given as text (e.g. from a URL or a stored id)
         text = str(uuid_obj)
         try:
             uuid_obj = uuid.UUID(text)
@@ -145,23 +144,122 @@ def _stored_key(key):
     return str(key) if isinstance(key, uuid.UUID) else key
 
 
-def _slice_columns(od, columns=None, column_start=None, column_finish=None,
-                   column_reversed=False, column_count=None):
-    """A row's columns as pycassa's get/multiget slice them: only `columns`
-    if given, between column_start and column_finish ("" or None is no
-    bound; reversed, the start is the high end, column_start >= name >=
-    column_finish), reversed if asked, then the first column_count."""
-    if columns is not None:
-        od = OrderedDict((k, od[k]) for k in columns if k in od)
+# Column names are stored as text (map<text, blob>), which Cassandra returns
+# in text order. Each column family's comparator (the model's _compare_with)
+# says what the names really are; reads turn them back into that type, as
+# pycassa returned them, and order and bound them by it (text order isn't
+# time order for time UUIDs, nor number order for numbers).
+_COMPARATOR_KINDS = {
+    "TimeUUIDType": "timeuuid",
+    "LongType": "number",
+    "Int32Type": "number",
+    "IntegerType": "number",
+    "DateType": "date",
+}
+_UUID_EPOCH = 0x01b21dd213814000  # 100ns intervals from 1582-10-15 to 1970
 
-    cs_str = None if column_start in (None, "") else str(column_start)
-    cf_str = None if column_finish in (None, "") else str(column_finish)
-    if cs_str is not None or cf_str is not None:
-        low, high = (cf_str, cs_str) if column_reversed else (cs_str, cf_str)
+
+def comparator_kind(comparator):
+    """"timeuuid", "number", "date", "composite" or "text"."""
+    if isinstance(comparator, CompositeType):
+        return "composite"
+    if comparator is None:
+        return "text"
+    name = comparator if isinstance(comparator, str) else type(comparator).__name__
+    return _COMPARATOR_KINDS.get(name.rsplit(".", 1)[-1], "text")
+
+
+def _parse_datetime(text):
+    try:
+        return datetime.datetime.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def decode_name(kind, name):
+    """A stored (text) column name as its comparator's type. Names that
+    don't parse stay text."""
+    if not isinstance(name, str) or kind == "text":
+        return name
+    if kind == "timeuuid":
+        try:
+            return uuid.UUID(name)
+        except ValueError:
+            # datetimes are written as names here too (TryLater)
+            return _parse_datetime(name) or name
+    if kind == "number":
+        try:
+            return int(name)
+        except ValueError:
+            return name
+    if kind == "date":
+        return _parse_datetime(name) or name
+    if kind == "composite" and name.startswith("("):
+        import ast
+        try:
+            value = ast.literal_eval(name)
+        except (ValueError, SyntaxError):
+            return name
+        return value if isinstance(value, tuple) else name
+    return name
+
+
+def _utc_seconds(dt):
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt.timestamp()
+
+
+def name_key(kind, name, high=False):
+    """A sort key putting column names (or slice bounds) in comparator
+    order. A datetime bound on time UUID names sorts before (or, as the
+    high bound, after) every UUID of that instant. Names that aren't of
+    the comparator's type sort after those that are, by their text."""
+    name = decode_name(kind, name)
+    if kind == "timeuuid":
+        if isinstance(name, uuid.UUID):
+            return (0, name.time, name.bytes)
+        if isinstance(name, datetime.datetime):
+            ticks = int(_utc_seconds(name) * 1e7) + _UUID_EPOCH
+            return (0, ticks, b"\xff" * 16 if high else b"")
+    elif kind == "number":
+        if isinstance(name, int) and not isinstance(name, bool):
+            return (0, name)
+    elif kind == "date":
+        if isinstance(name, datetime.datetime):
+            return (0, _utc_seconds(name))
+    elif kind == "composite":
+        if isinstance(name, tuple):
+            return (0, tuple(str(part) for part in name))
+    else:
+        return (0, str(name))
+    return (1, str(name))
+
+
+def _slice_columns(od, columns=None, column_start=None, column_finish=None,
+                   column_reversed=False, column_count=None, kind="text"):
+    """A row's columns as pycassa's get/multiget slice them: in comparator
+    order, only `columns` if given, between column_start and column_finish
+    ("" or None is no bound; reversed, the start is the high end,
+    column_start >= name >= column_finish), reversed if asked, then the
+    first column_count."""
+    od = OrderedDict(sorted(od.items(), key=lambda kv: name_key(kind, kv[0])))
+
+    if columns is not None:
+        wanted = {name_key(kind, name) for name in columns}
+        od = OrderedDict((k, v) for k, v in od.items()
+                         if name_key(kind, k) in wanted)
+
+    start = None if column_start in (None, "") else column_start
+    finish = None if column_finish in (None, "") else column_finish
+    if start is not None or finish is not None:
+        low, high = (finish, start) if column_reversed else (start, finish)
+        low = None if low is None else name_key(kind, low)
+        high = None if high is None else name_key(kind, high, high=True)
         od = OrderedDict(
             (k, v) for k, v in od.items()
-            if (low is None or str(k) >= low) and
-               (high is None or str(k) <= high))
+            if (low is None or name_key(kind, k) >= low) and
+               (high is None or name_key(kind, k) <= high))
 
     if column_reversed:
         od = OrderedDict(reversed(list(od.items())))
@@ -244,9 +342,12 @@ class ColumnFamily:
     Methods implemented: multiget, multiget_slice (columns filter), get,
     insert, remove, xget.
     """
-    def __init__(self, pool: ConnectionPool, name: str, **kwargs):
+    def __init__(self, pool: ConnectionPool, name: str, comparator=None,
+                 **kwargs):
         self.pool = pool
         self.name = name
+        # what the column names are (see name_key); None: text
+        self.comparator_kind = comparator_kind(comparator)
         self.keyspace = pool.keyspace
         # normalize table name to lowercase to avoid quoted/mixed-case
         # identifier mismatches with tables created via cqlsh
@@ -278,8 +379,13 @@ class ColumnFamily:
                 val = pickle.loads(v) if v is not None else None
             except Exception:
                 val = v
-            od[str(k)] = val
+            od[decode_name(self.comparator_kind, str(k))] = val
         return od
+
+    def name_key(self, name, high=False):
+        """Sort key for a column name (or bound) in this column family's
+        comparator order."""
+        return name_key(self.comparator_kind, name, high)
 
     @staticmethod
     def _strip_timestamps(od: OrderedDict) -> OrderedDict:
@@ -310,7 +416,8 @@ class ColumnFamily:
             raw = row.columns if hasattr(row, 'columns') else row[1]
             od = _slice_columns(self._deserialize_map(raw), columns,
                                 column_start, column_finish,
-                                column_reversed, column_count)
+                                column_reversed, column_count,
+                                kind=self.comparator_kind)
             if include_timestamp:
                 # Legacy pycassa returned (value, timestamp) pairs per column
                 # when include_timestamp=True. If we stored timestamps at
@@ -352,6 +459,7 @@ class ColumnFamily:
         for row in rows:
             raw = row.columns if hasattr(row, 'columns') else row[1]
             od = self._deserialize_map(raw)
+            od = _slice_columns(od, kind=self.comparator_kind)
             out.append((str(row.key), self._strip_timestamps(od)))
         return out
 
@@ -376,7 +484,8 @@ class ColumnFamily:
         od = self._deserialize_map(raw)
 
         od = _slice_columns(od, columns, column_start, column_finish,
-                            column_reversed, column_count)
+                            column_reversed, column_count,
+                            kind=self.comparator_kind)
         # as in pycassa, no columns in the slice is the same as no row
         if not od:
             raise NotFoundException()

@@ -1274,14 +1274,12 @@ class LinksByUrlAndVault(tdb_cassandra.View):
         else:
             rowkey = cls.make_all_rowkey(canonical_url)
         try:
-            columns = cls._cf.get(rowkey)
+            columns = cls._cf.get(rowkey, column_count=limit,
+                                  column_reversed=True)
         except tdb_cassandra.NotFoundException:
             return []
 
-        # cassandra_compat stores column names as text, so the LongType
-        # ordering (newest link first) is done here
-        link_ids = sorted((int(i) for i in columns.keys()), reverse=True)
-        return link_ids[:limit]
+        return list(columns.keys())
 
 
 # Note that there are no instances of PromotedLink or LinkCompressed,
@@ -3100,22 +3098,15 @@ class CommentVisitsByUser(tdb_cassandra.View):
     def get_previous_visits(cls, user, link):
         rowkey = cls._rowkey(user, link)
         try:
-            columns = cls._cf.get(rowkey)
+            columns = cls._cf.get(rowkey, column_count=cls.MAX_VISITS,
+                                  column_reversed=True)
         except NotFoundException:
             return []
 
-        # cassandra_compat stores column names as text (str(datetime))
-        dates = []
-        for date in columns.keys():
-            if isinstance(date, str):
-                try:
-                    date = datetime.fromisoformat(date)
-                except ValueError:
-                    continue
-            if date.tzinfo is None:
-                date = date.replace(tzinfo=pytz.UTC)
-            dates.append(date)
-        return sorted(dates)[-cls.MAX_VISITS:]
+        # oldest first; names without a timezone are UTC
+        return [date if date.tzinfo else date.replace(tzinfo=pytz.UTC)
+                for date in reversed(list(columns.keys()))
+                if isinstance(date, datetime)]
 
     @classmethod
     def add_visit(cls, user, link, visit_time):

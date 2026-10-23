@@ -121,13 +121,14 @@ class PrivacyRequest(tdb_cassandra.Thing):
     
     @classmethod
     def by_account(cls, account, request_type=None, limit=100):
-        """The account's privacy requests, newest first (by date: the
-        index's time UUID columns are kept as text, which doesn't sort by
-        time)."""
+        """The account's privacy requests, newest first."""
         requests = []
         try:
             index = PrivacyRequestsByAccount._cf.get(
-                account._id36, column_count=tdb_cassandra.max_column_count)
+                account._id36,
+                column_count=limit,
+                column_reversed=True,
+            )
             for request_id in index.values():
                 try:
                     req = cls._byID(request_id)
@@ -137,29 +138,34 @@ class PrivacyRequest(tdb_cassandra.Thing):
                     pass
         except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             pass
-        requests.sort(key=lambda req: req.created_date, reverse=True)
-        return requests[:limit]
+        return requests
     
     @classmethod
     def by_status(cls, status, limit=100):
-        """The requests with this status, newest first (for /admin/privacy).
-        (Sorted by their dates: the index's time UUID columns are kept as
-        text, which doesn't sort by time.)"""
+        """The requests with this status, the latest to get it first (for
+        /admin/privacy)."""
         requests = []
         try:
             index = PrivacyRequestsByStatus._cf.get(
-                status, column_count=tdb_cassandra.max_column_count)
+                status, column_count=tdb_cassandra.max_column_count,
+                column_reversed=True)
         except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
             return requests
-        for request_id in set(index.values()):
+        seen = set()
+        for request_id in index.values():
+            if request_id in seen:
+                continue
+            seen.add(request_id)
             try:
                 req = cls._byID(request_id)
             except (tdb_cassandra.NotFound, tdb_cassandra.NotFoundException):
                 continue
+            # (the index can still list requests that have moved on)
             if req.status == status:
                 requests.append(req)
-        requests.sort(key=lambda req: req.created_date, reverse=True)
-        return requests[:limit]
+                if len(requests) >= limit:
+                    break
+        return requests
 
     @classmethod
     def pending_requests(cls, limit=100):
