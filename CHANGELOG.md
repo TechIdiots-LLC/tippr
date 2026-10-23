@@ -11,6 +11,7 @@
   waiting, processing or failed, with the stuck ones marked, to send again or cancel, and a form to start an export
   for a member. The old privacy dashboard was never loaded (its address gave "page not found") and wrote values
   into the page unescaped.
+- **The footer links to /buttons again**, under tippr gold, for sites that want a submit or vote button.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

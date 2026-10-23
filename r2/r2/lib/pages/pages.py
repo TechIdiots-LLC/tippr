@@ -1139,6 +1139,7 @@ class TipprFooter(CachedTemplate):
 
             NavMenu([
                     NamedButton("gold", False, dest="/gold/about", css_class="buygold"),
+                    NamedButton("buttons", False),
                 ],
                 title = _("<3"),
                 type = "flat_vert",
