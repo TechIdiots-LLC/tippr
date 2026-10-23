@@ -11,6 +11,9 @@
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
+- **A vault's "users here now" was always ~0:** tippr's client for the activity service was a placeholder that sent
+  nothing, recording no visits and answering every count with 0. It's the real generated Thrift client now, so the
+  sidebar counts the logged-in members who've visited in the last 15 minutes.
 - _...Add new stuff here..._
 
 ## 0.18.0
