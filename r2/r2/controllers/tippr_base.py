@@ -948,6 +948,10 @@ class MinimalController(BaseController):
         c.subdomain = extract_subdomain()
         c.errors = ErrorSet()
         c.cookies = Cookies()
+        # what post() needs is there now (it runs after an abort too, and
+        # one before here, set_vault's redirect for a vault that doesn't
+        # exist or a rate limit, leaves only the headers to add)
+        c.request_ready = True
         # if an rss feed, this will also log the user in if a feed=
         # GET param is included
         set_content_type()
@@ -965,7 +969,25 @@ class MinimalController(BaseController):
 
         hooks.get_hook("tippr.request.minimal_begin").call()
 
+    def _security_headers(self):
+        # we need to not add X-Frame-Options to requests (such as media embeds)
+        # that intend to allow framing.
+        if not c.allow_framing:
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
+
+        # set some headers related to client security
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+
     def post(self):
+        if not c.request_ready:
+            # pre() stopped before the request was set up: only the headers
+            # that need nothing from it, and never for a shared cache
+            self._security_headers()
+            response.headers['Cache-Control'] = (
+                'private, s-maxage=0, max-age=0, must-revalidate')
+            return
+
         c.request_timer.intermediate("action")
 
         # if the action raised an HTTPException (i.e. it aborted) then pylons
@@ -977,14 +999,7 @@ class MinimalController(BaseController):
             wrapped_content = c.response_wrapper(content)
             response.content = wrapped_content
 
-        # we need to not add X-Frame-Options to requests (such as media embeds)
-        # that intend to allow framing.
-        if not c.allow_framing:
-            response.headers["X-Frame-Options"] = "SAMEORIGIN"
-
-        # set some headers related to client security
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-XSS-Protection'] = '1; mode=block'
+        self._security_headers()
 
         if (feature.is_enabled("force_https")
                 and feature.is_enabled("upgrade_cookies")):
@@ -1554,6 +1569,8 @@ class TipprController(OAuth2ResourceController):
 
     def post(self):
         MinimalController.post(self)
+        if not c.request_ready:
+            return
         if response.content_type == "text/html":
             self._embed_html_timing_data()
 

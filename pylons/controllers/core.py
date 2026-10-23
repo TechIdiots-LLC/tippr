@@ -49,6 +49,37 @@ class WSGIController:
     def __call__(self, environ, start_response):
         """WSGI interface - dispatch to the appropriate action."""
         try:
+            return self._call(environ, start_response)
+        except HTTPException as e:
+            # An abort (from __before__ or the action). As Pylons did,
+            # __after__ still runs, with the response marked as an exception
+            # (r2's post() reads response._exception), and what it put on the
+            # response goes on the error's: the security headers, cookies,
+            # Cache-Control. (It used to be returned as it was, without them.)
+            environ['pylons.controller.exception'] = e
+            current = _current_response()
+            if current is not None:
+                try:
+                    current._exception = True
+                except Exception:
+                    pass
+            try:
+                self.__after__()
+            except HTTPException:
+                pass
+            except Exception:
+                log.exception("__after__ failed for %s %s",
+                              environ.get('REQUEST_METHOD'),
+                              environ.get('PATH_INFO'))
+            if current is not None and current is not e:
+                _copy_headers(current, e)
+            if e.status_int == 304:
+                # (no body, so no content type)
+                e.headers.pop('Content-Type', None)
+            return e(environ, start_response)
+
+    def _call(self, environ, start_response):
+        try:
             # Call __before__ hook
             self.__before__()
 
@@ -124,9 +155,9 @@ class WSGIController:
             # Return the WSGI response
             return response(environ, start_response)
 
-        except HTTPException as e:
-            # HTTP exceptions are valid responses (redirects, errors, etc.)
-            return e(environ, start_response)
+        except HTTPException:
+            # (__call__ runs __after__ and returns it)
+            raise
 
         except Exception as e:
             # Log every unhandled error (to the service's journal); the error
@@ -149,6 +180,30 @@ class WSGIController:
                 import traceback
                 return [f'Controller error: {e}\n\n{traceback.format_exc()}'.encode('utf-8')]
             return [b'Internal Server Error']
+
+
+def _current_response():
+    """The request's response object (pylons.response's current one)."""
+    try:
+        if hasattr(pylons.response, '_current_obj'):
+            return pylons.response._current_obj()
+    except Exception:
+        return None
+    return None
+
+
+def _copy_headers(source, exc):
+    """Put what __after__ set on the response onto the error being
+    returned instead, as Pylons did: every cookie, and each other header
+    the error doesn't set itself."""
+    for name, value in getattr(source, 'headerlist', []):
+        lower = name.lower()
+        if lower == 'set-cookie':
+            exc.headers.add(name, value)
+        elif lower in ('content-type', 'content-length'):
+            continue
+        elif name not in exc.headers:
+            exc.headers[name] = value
 
 
 def _route_args(action, routes_dict):
