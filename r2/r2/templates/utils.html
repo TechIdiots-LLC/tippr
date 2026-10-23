@@ -537,7 +537,7 @@ ${unsafe(txt)}
         banner.setAttribute('role', 'dialog');
         banner.setAttribute('aria-label', ${scriptsafe_dumps(_("analytics consent"))});
         var text = document.createElement('p');
-        text.textContent = ${scriptsafe_dumps(_("This site would like to use Google Analytics to see how it's used, which sets cookies and sends Google details of your visit. Is that all right?"))} + ' ';
+        text.textContent = ${scriptsafe_dumps(_("We'd like to use optional analytics cookies to see how the site is used. Is that all right?"))} + ' ';
         var more = document.createElement('a');
         more.href = '/help/privacypolicy';
         more.textContent = ${scriptsafe_dumps(_("privacy policy"))};

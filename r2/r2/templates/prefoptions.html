@@ -499,7 +499,7 @@ action = add_vault(action, vault_path=False)
       %if getattr(g, "google_analytics_id", None):
       <br/>
       <% choice = c.user.pref_analytics_consent %>
-      ${_("Google Analytics, which helps the site's admins see how it's used:")}
+      ${_("optional analytics cookies, which help the site's admins see how it's used (see the privacy policy):")}
       <label><input type="radio" name="analytics_consent" value="granted" ${'checked' if choice == 'granted' else ''}> ${_("allow")}</label>
       <label><input type="radio" name="analytics_consent" value="denied" ${'checked' if choice == 'denied' else ''}> ${_("don't allow")}</label>
       <span class="details">(${_("kept with your account, on every device you sign in on")})</span>
