@@ -23,9 +23,8 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 from pylons import app_globals as g
-from pylons import request, url
+from pylons import request
 from pylons import tmpl_context as c
-from pylons.controllers.util import redirect
 from pylons.i18n import _
 
 from r2.config import feature
@@ -236,4 +235,4 @@ class PostController(ApiController):
             rising=rising,
             nsfw=nsfw,
         )
-        return redirect(url(controller='front', action='explore'))
+        return self.redirect('/explore')

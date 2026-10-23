@@ -30,6 +30,8 @@
 - **A wrong code when adding an authenticator app said "wrong password":** it now says the code didn't work and to
   check that the phone sets its time automatically, as the login code page does too.
 - **A passkey the site refused (too many, say) said nothing:** the reason is shown now.
+- **Saving the explore page's settings failed** with an error (`'UrlPushable' object is not callable`): it built
+  its redirect with Pylons' `url()`, which the compatibility layer doesn't provide. It goes back to /explore now.
 - **The traffic pages' layout:** the charts are an even grid (two across, one on a phone) instead of rows that
   wrapped differently, "activity by day" gets the page's full width below the other tables (scrolling sideways in
   its own box if need be) instead of running under the sidebar, and the tables' stripes no longer show as white
