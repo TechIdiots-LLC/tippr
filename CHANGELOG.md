@@ -15,6 +15,9 @@
   banner asks each visitor, and nothing from Google loads until they allow it. The answer is kept in a cookie and,
   for members, with their account, so it applies on every device they sign in on; they can change it under
   preferences → privacy options.
+- **The privacy policy describes the analytics:** the site's own counting (traffic totals, "here now"), Google
+  Analytics only with consent, and how to change the choice. It had said the site ignores Do Not Track, which it
+  doesn't for Google Analytics.
 - **reddit's EMR traffic pipeline is gone:** the hourly job that sent web server logs through Amazon EMR and Pig
   (`r2/lib/traffic`, `emr_helpers.py`, `scripts/traffic`, `tippr-job-hourly_traffic`) and its `TRAFFIC_*` and
   `emr_*` settings. tippr counts its own traffic as pages are served (the traffic pages), with Google Analytics as an

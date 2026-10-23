@@ -2,7 +2,7 @@
 
 *Effective Date: January 22, 2026*
 
-*Last Revised: January 22, 2026*
+*Last Revised: October 23, 2026*
 
 This Privacy Policy explains how {{OPERATOR}} ("Company," "we," "us," or "our") collects, uses, and shares information about you when you use [{{DOMAIN}}]({{SITE_URL}}) and related services (collectively, the "Services").
 
@@ -102,7 +102,7 @@ You can access and update your account information through your account settings
 
 ### 4.2 Cookies
 
-Most browsers allow you to control cookies through their settings. Note that disabling cookies may affect your ability to use certain features.
+Most browsers allow you to control cookies through their settings. Note that disabling cookies may affect your ability to use certain features. Whether we may use Google Analytics is your choice, as described in Section 6.3.
 
 ### 4.3 Email Communications
 
@@ -118,7 +118,7 @@ You may request deletion of your personal data. We will delete your data except 
 
 ### 4.6 Do Not Track
 
-We do not currently respond to "Do Not Track" browser signals.
+If your browser sends a "Do Not Track" or "Global Privacy Control" signal, we do not load Google Analytics for you. Our own counting described in Section 6.3 still applies, since it is needed to run the Services.
 
 ## 5. Data Retention
 
@@ -143,8 +143,14 @@ We retain your information for as long as your account is active or as needed to
 You can manage cookies through:
 
 - Your browser settings;
-- Our cookie preference center (when available);
-- Third-party opt-out tools.
+- The analytics choice we show when we ask for your consent, and, when you are signed in, your preferences (privacy options), where your choice is kept with your account so it applies on every device you sign in on;
+- Third-party opt-out tools, such as Google's [Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
+
+### 6.3 Analytics
+
+**Our own counting.** To show traffic statistics to the site's administrators and moderators, we count page views, unique visitors and actions such as sign-ups, posts, comments and votes. We keep only the totals, not a record of what each person did. To show how many people are on a community or a thread right now ("here now"), we briefly count visitors by account, or by a random identifier kept in a cookie for visitors who aren't signed in, and forget them after about 15 minutes. Small numbers are shown approximately so they can't single anyone out.
+
+**Google Analytics.** If we use Google Analytics, it loads only for visitors who allow it when we ask, and never for browsers sending a Do Not Track or Global Privacy Control signal. It sets cookies and sends Google information about your visit, such as the pages you view, your browser and device, and events such as signing in, posting, commenting, voting or sharing (not your username or what you post). IP addresses are anonymized. Google's use of this information is described in [Google's Privacy Policy](https://policies.google.com/privacy). You can change your choice at any time as described in Section 6.2.
 
 ## 7. Data Security
 
