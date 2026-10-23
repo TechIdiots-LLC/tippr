@@ -182,9 +182,13 @@ create_table(links_table, [
 
 def safe_dest(dest):
     """Only addresses on this site (no //other.host), for where to go
-    after signing in."""
+    after signing in. Control characters and whitespace are refused too:
+    urlsplit drops tabs and newlines before it parses, so "/\\t/evil.example"
+    would come out as //evil.example, another site."""
     dest = (dest or "").strip()
-    if not dest.startswith("/") or dest.startswith("//") or "\\" in dest:
+    if (not dest.startswith("/") or dest.startswith("//") or "\\" in dest or
+            any(ch.isspace() or ord(ch) < 0x20 or ord(ch) == 0x7f
+                for ch in dest)):
         return "/"
     return dest
 

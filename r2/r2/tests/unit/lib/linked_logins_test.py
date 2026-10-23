@@ -105,8 +105,13 @@ class TestLinkedLogins(TipprTestCase):
 
     def test_only_local_destinations(self):
         self.assertEqual(linked_logins.safe_dest("/v/books"), "/v/books")
-        for bad in ("https://evil.example/", "//evil.example/", "/\\evil", "", None):
+        for bad in ("https://evil.example/", "//evil.example/", "/\\evil", "", None,
+                    # urlsplit drops these first: "//evil.example"
+                    "/\t/evil.example", "/\n/evil.example", "/\r/evil.example",
+                    "/ /evil.example", "/\x00/evil.example"):
             self.assertEqual(linked_logins.safe_dest(bad), "/")
+        self.assertEqual(linked_logins.safe_dest("/v/books?sort=new#top"),
+                         "/v/books?sort=new#top")
 
     def test_link_refuses_someone_elses_account(self):
         account = MagicMock(_id=1)
