@@ -2075,13 +2075,9 @@ class Message(Thing, Printable):
 
     @classmethod
     def _new(cls, author, to, subject, body, ip, parent=None, vault=None,
-             from_vault=False, can_send_email=True, sent_via_email=False,
-             email_id=None):
-        from r2.lib.message_to_email import queue_modmail_email
-
+             from_vault=False):
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
-                    ip=ip, from_vault=from_vault, sent_via_email=sent_via_email,
-                    email_id=email_id)
+                    ip=ip, from_vault=from_vault)
         m._spam = author._spam
 
         if author._spam:
@@ -2152,10 +2148,6 @@ class Message(Thing, Printable):
             if vault.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
-
-            if (can_send_email and
-                    vault.name in g.live_config['modmail_forwarding_email']):
-                queue_modmail_email(m)
 
         if author.name in g.admins:
             m.distinguished = 'admin'

@@ -172,7 +172,6 @@ This is an automated message from """ + g.site_name + """.
             subject,
             body,
             '',  # IP
-            can_send_email=True,
         )
         queries.new_message(item, inbox_rel, update_modmail=False)
         
@@ -203,7 +202,6 @@ This is an automated message from """ + g.site_name + """.
             subject,
             body,
             '',  # IP
-            can_send_email=True,
         )
         queries.new_message(item, inbox_rel, update_modmail=False)
         

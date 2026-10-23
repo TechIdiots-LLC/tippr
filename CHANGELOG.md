@@ -19,6 +19,11 @@
   for a member. The old privacy dashboard was never loaded (its address gave "page not found") and wrote values
   into the page unescaped.
 - **The footer links to /buttons again**, under tippr gold, for sites that want a submit or vote button.
+- **Zendesk is gone:** reddit's ZenDesk ticket provider, which nothing on the site used (the support queue is
+  tippr's own), and the modmail-to-email relay that only worked with replies from ZenDesk agents
+  (`/api/zendeskreply`, `modmail_email_q` and its consumer). Their settings (`zendesk_*`, `ticket_*`,
+  `modmail_forwarding_email`, `modmail_account_map`, `modmail_*_email`) and the `modmail_email_secret` the installer
+  made are gone from the ini.
 
 ### 🐞 Bug fixes
 - **The fast lane and the sharded queues had no consumers:** listing a thread in `fastlane_links`, or turning on a

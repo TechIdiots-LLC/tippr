@@ -446,7 +446,7 @@ tippr_secret TIPPR_ZOOKEEPER_PASSWORD existing_zookeeper_password
 tippr_secret TIPPR_ADMIN_PASSWORD random_password
 for secret in SECRET FEEDSECRET ADMINSECRET WEBSOCKET WEBSOCKET_ADMIN MEDIA_EMBED \
               ACTION_NAME EMAIL_NOTIFICATIONS CACHE_POISONING \
-              ADSERVER_CLICK_URL_SECRET MODMAIL_EMAIL_SECRET \
+              ADSERVER_CLICK_URL_SECRET \
               REQUEST_SIGNATURE_SECRET TRACKING_SECRET; do
     tippr_secret "TIPPR_SECRET_${secret}" random_secret
 done
@@ -1131,7 +1131,6 @@ action_name = $TIPPR_SECRET_ACTION_NAME
 email_notifications = $TIPPR_SECRET_EMAIL_NOTIFICATIONS
 cache_poisoning = $TIPPR_SECRET_CACHE_POISONING
 adserver_click_url_secret = $TIPPR_SECRET_ADSERVER_CLICK_URL_SECRET
-modmail_email_secret = $TIPPR_SECRET_MODMAIL_EMAIL_SECRET
 request_signature_secret = $TIPPR_SECRET_REQUEST_SIGNATURE_SECRET
 
 # Live settings' starting values (/admin/config can change them): logged-out
