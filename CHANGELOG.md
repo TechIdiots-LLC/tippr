@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.16.0
+### ✨ Features and improvements
 - **Translations update with every install and upgrade:** the installer (also run by first boot and server
   updates) now brings an existing `i18n` checkout up to the latest translations instead of only cloning a missing
   one. A copy that isn't a git checkout is moved aside (`i18n.old-<date>`) and cloned again; if GitHub can't be
@@ -18,7 +24,6 @@
   - For installs with `tippr-firstboot` (Proxmox containers). `TIPPR_WEB_UPDATES=0` turns it off.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **An empty rising page said the vault had nothing in it:** rising is often empty in a vault that has posts, so it
   now shows the plain "nothing here" message, as gilded does. The "Nothing in /v/… yet" welcome is for hot and new.
 
