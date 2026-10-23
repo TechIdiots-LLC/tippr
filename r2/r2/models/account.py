@@ -202,6 +202,10 @@ class Account(Thing):
                      admin_takedown_strikes=0,
                      pref_threaded_modmail=False,
                      in_timeout=False,
+                     # what the admins note about the account, only they
+                     # see it (/admin/users; r2.lib.user_admin)
+                     admin_status="",
+                     admin_status_note="",
                      has_used_mobile_app=False,
                      disable_karma=False,
                      )

@@ -26,6 +26,9 @@
   %if thing.status:
     <small>(${", ".join(thing.status)})</small>
   %endif
+  %if thing.internal_status:
+    <small>&#32;&middot; ${_("internal status:")} <b>${thing.internal_status}</b></small>
+  %endif
 </h1>
 
 <p>
@@ -82,6 +85,28 @@
     %endif
   </td></tr>
 </table>
+
+<h2>${_("internal status")}</h2>
+<form action="/api/admin_user" method="post" class="pretty-form admin-user-action admin-user-status"
+      onsubmit="return post_form(this, 'admin_user');">
+  <input type="hidden" name="username" value="${a.name}">
+  <input type="hidden" name="do" value="set_status">
+  <input type="text" name="status" value="${thing.internal_status}" size="20"
+         maxlength="${thing.status_max_length}" list="admin-statuses"
+         placeholder="${_('e.g. trusted, watch')}">
+  <datalist id="admin-statuses">
+    %for label, n in thing.statuses:
+      <option value="${label}">
+    %endfor
+  </datalist>
+  <br>
+  <textarea name="note" rows="3" cols="60" maxlength="${thing.note_max_length}"
+            placeholder="${_('note for the other admins (optional)')}">${thing.internal_note}</textarea>
+  <br>
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+  <br><small>${_("Only admins see this; the member doesn't. It's shown on /admin/users, where you can list the accounts with each status. Leave both blank to clear it. Changes are logged under admin actions.")}</small>
+</form>
 
 <%def name="act(what, label, reason=False, days=False, confirm=None)">
   <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"

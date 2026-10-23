@@ -28,6 +28,25 @@
   <br><small>${_("A username finds that account and names starting with it; an email address finds every account that used it; an IP address finds the accounts that logged in from it (logins are kept for 100 days).")}</small>
 </form>
 
+%if thing.statuses:
+  <p class="admin-users-statuses">${_("internal status:")}
+    %for label, n in thing.statuses:
+      &#32;<a href="/admin/users?status=${label|n,u}">
+        %if label == thing.status:
+          <b>${label}</b>
+        %else:
+          ${label}
+        %endif
+      </a> <small>(${n})</small>
+    %endfor
+  </p>
+%endif
+
+%if thing.status:
+  <h2>${_("internal status: %(status)s") % dict(status=thing.status)} <small>(${len(thing.results)})</small></h2>
+  <p><small><a href="/admin/users">${_("all accounts")}</a></small></p>
+%endif
+
 <%def name="pages()">
   %if thing.newer or thing.older:
     <p class="nextprev admin-users-pages">
@@ -50,12 +69,12 @@
   ${pages()}
 %endif
 
-%if thing.query or thing.total is not None:
+%if thing.query or thing.status or thing.total is not None:
   %if thing.results:
     <table class="lined-table admin-users-results">
       <tr>
         <th>${_("account")}</th><th>${_("joined")}</th><th>${_("karma")}</th>
-        <th>${_("email")}</th><th>${_("status")}</th>
+        <th>${_("email")}</th><th>${_("status")}</th><th>${_("internal status")}</th>
       </tr>
       %for r in thing.results:
         <% a = r['account'] %>
@@ -74,10 +93,18 @@
             %endif
           </td>
           <td>${", ".join(r['status'])}</td>
+          <% label, note = r['internal'] %>
+          <td>
+            %if label:
+              <a href="/admin/users?status=${label|n,u}" title="${note}">${label}</a>
+            %elif note:
+              <span title="${note}">${_("(note)")}</span>
+            %endif
+          </td>
         </tr>
       %endfor
     </table>
-    %if not thing.query:
+    %if not thing.query and not thing.status:
       ${pages()}
     %endif
   %else:

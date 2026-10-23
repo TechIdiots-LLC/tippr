@@ -156,11 +156,13 @@ class AdminToolController(TipprController):
     def GET_privacy(self):
         return AdminPage(content=AdminPrivacy()).render()
 
-    @validate(VAdmin(), q=nop("q"), before=nop("before"), after=nop("after"))
-    def GET_users(self, q, before, after):
-        """Find accounts by name, email or IP, or with no search list them
-        all a page at a time (r2.lib.user_admin)."""
-        return AdminPage(content=AdminUsers(q, before=before, after=after)).render()
+    @validate(VAdmin(), q=nop("q"), before=nop("before"), after=nop("after"),
+              status=nop("status"))
+    def GET_users(self, q, before, after, status):
+        """Find accounts by name, email, IP or internal status, or with no
+        search list them all a page at a time (r2.lib.user_admin)."""
+        return AdminPage(content=AdminUsers(q, before=before, after=after,
+                                            status=status)).render()
 
     @validate(VAdmin())
     def GET_user(self, username):

@@ -5286,14 +5286,16 @@ class ApiController(TipprController):
         do=VOneOf("do", ("timeout", "untimeout", "suspend", "unsuspend",
                          "remove_content", "spam_content", "delete_content",
                          "reverify_email", "remove_email", "reset_2fa",
-                         "delete_account")),
+                         "delete_account", "set_status")),
         days=VInt("days", min=0, max=365, num_default=0),
         reason=VLength("reason", max_length=500, empty_error=None),
         confirm=nop("confirm"),
         posts=VOneOf("posts", ("keep", "delete")),
+        status=VLength("status", max_length=40, empty_error=None),
+        note=VLength("note", max_length=1000, empty_error=None),
     )
     def POST_admin_user(self, form, jquery, username, do, days, reason,
-                        confirm, posts):
+                        confirm, posts, status, note):
         """Act on an account from /admin/users (r2.lib.user_admin)."""
         from r2.lib import user_admin
         from r2.lib.db.thing import NotFound
@@ -5304,6 +5306,14 @@ class ApiController(TipprController):
             return
         if not do:
             form.set_text(".status", _("unknown action"))
+            return
+        # only for the admins to read, so any account, admins too
+        if do == "set_status":
+            if (form.has_errors("status", errors.TOO_LONG) or
+                    form.has_errors("note", errors.TOO_LONG)):
+                return
+            user_admin.set_internal_status(account, c.user, status, note)
+            form.refresh()
             return
         if account.name in g.admins or account._id == c.user._id:
             form.set_text(".status", _("not on admins (take them off the employees list on /admin/config first)"))

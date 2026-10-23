@@ -255,6 +255,45 @@ def status(account):
     return labels
 
 
+# The internal status: a short label the admins give an account ("trusted",
+# "watch", ...) and a note, for each other. Only admins see them; the member
+# doesn't.
+STATUS_MAX_LENGTH = 40
+NOTE_MAX_LENGTH = 1000
+MAX_BY_STATUS = 200     # accounts listed for one status
+
+
+def internal_status(account):
+    """(label, note) the admins gave the account ("" for none)."""
+    return (getattr(account, "admin_status", "") or "",
+            getattr(account, "admin_status_note", "") or "")
+
+
+def statuses_in_use():
+    """[(label, accounts with it)], the most used first."""
+    table, engine = _account_data_table()
+    count = sa.func.count()
+    query = (sa.select(table.c.value, count)
+             .where(table.c.key == "admin_status", table.c.value != "")
+             .group_by(table.c.value)
+             .order_by(count.desc(), table.c.value)
+             .limit(MAX_RESULTS))
+    with engine.connect() as conn:
+        return [(row[0], row[1]) for row in conn.execute(query)]
+
+
+def by_internal_status(label):
+    """The accounts with that status, newest first."""
+    table, engine = _account_data_table()
+    query = (sa.select(table.c.thing_id)
+             .where(table.c.key == "admin_status", table.c.value == label)
+             .order_by(table.c.thing_id.desc())
+             .limit(MAX_BY_STATUS))
+    with engine.connect() as conn:
+        ids = [row[0] for row in conn.execute(query)]
+    return _accounts(ids)
+
+
 ###############################################################################
 # Actions (each one logged in account_admin_actions)
 ###############################################################################
@@ -277,7 +316,8 @@ actions_table = sa.Table(
     sa.Column("admin_id", sa.BigInteger, nullable=True),
     sa.Column("time", sa.DateTime(timezone=True), nullable=False),
     # timeout, untimeout, suspend, unsuspend, remove_content, spam_content,
-    # delete_content, reverify_email, remove_email, reset_2fa, delete_account
+    # delete_content, reverify_email, remove_email, reset_2fa, delete_account,
+    # set_status
     sa.Column("action", sa.String, nullable=False),
     sa.Column("detail", sa.Text, nullable=True),
 )
@@ -297,6 +337,7 @@ ACTION_NAMES = {
     "remove_email": "email address removed",
     "reset_2fa": "two-factor reset",
     "delete_account": "account deleted",
+    "set_status": "internal status changed",
 }
 MAX_CONTENT = 1000      # posts, and comments, acted on by the content tools
 MAX_TIMEOUT_DAYS = 365
@@ -342,6 +383,25 @@ def timeout(account, admin, days, reason):
                   "still reach the site's staff through the contact page: %s")
                  % ("for %d days" % days if days else "until the staff lift it",
                     reason or "not given", site_info.contact_url("appeals")))
+
+
+def set_internal_status(account, admin, label, note):
+    """Give the account an internal status (internal_status); a blank label
+    and note clear it. Returns whether anything changed."""
+    label = " ".join((label or "").split())[:STATUS_MAX_LENGTH]
+    note = (note or "").strip()[:NOTE_MAX_LENGTH]
+    old_label, old_note = internal_status(account)
+    if (label, note) == (old_label, old_note):
+        return False
+    account.admin_status = label
+    account.admin_status_note = note
+    account._commit()
+    if label != old_label:
+        detail = "%s -> %s" % (old_label or "none", label or "none")
+    else:
+        detail = "%s (note changed)" % (label or "none")
+    _log(account, admin, "set_status", detail)
+    return True
 
 
 def untimeout(account, admin=None, reason=None):

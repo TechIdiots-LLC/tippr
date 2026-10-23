@@ -3955,19 +3955,26 @@ class AdminErrors(Templated):
 class AdminUsers(Templated):
     """Account search, or with no search every account, newest first, a page
     at a time (r2.lib.user_admin)."""
-    def __init__(self, query, before=None, after=None):
+    def __init__(self, query, before=None, after=None, status=None):
         from r2.lib import user_admin
         self.query = (query or "").strip()
+        self.status = (status or "").strip()
         self.newer = self.older = None
         self.total = None
-        if self.query:
+        self.statuses = user_admin.statuses_in_use()
+        if self.status:
+            self.query = ""
+            self.kind = "status"
+            accounts = user_admin.by_internal_status(self.status)
+        elif self.query:
             self.kind, accounts = user_admin.search(self.query)
         else:
             self.kind = None
             accounts, self.newer, self.older = user_admin.listing(
                 before=before, after=after)
             self.total = user_admin.count_accounts()
-        self.results = [dict(account=a, status=user_admin.status(a))
+        self.results = [dict(account=a, status=user_admin.status(a),
+                             internal=user_admin.internal_status(a))
                         for a in accounts]
         Templated.__init__(self)
 
@@ -3978,6 +3985,11 @@ class AdminUser(Templated):
         from r2.lib import support, user_admin
         self.account = account
         self.status = user_admin.status(account)
+        self.internal_status, self.internal_note = \
+            user_admin.internal_status(account)
+        self.statuses = user_admin.statuses_in_use()
+        self.status_max_length = user_admin.STATUS_MAX_LENGTH
+        self.note_max_length = user_admin.NOTE_MAX_LENGTH
         self.ips = user_admin.ip_history(account)
         self.related = user_admin.related_accounts(account, self.ips)
         self.vaults = user_admin.moderated_vaults(account)

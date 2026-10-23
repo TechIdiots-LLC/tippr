@@ -27,6 +27,11 @@
   place; a deleted or banned member keeps theirs without the award, so the first 100 stay the first 100. Existing
   members get theirs when the starter awards script runs (on update), and the daily `tippr-job-year_clubs` catches
   up anyone missed, including the members a raised count now includes. Admins can still give it by hand.
+- **An internal status for accounts:** on an account's /admin/users page, admins can give it a short label
+  ("trusted", "watch", ...; the labels already in use are suggested) and a note for the other admins. Only admins
+  see them. /admin/users shows each account's label in a new column (the note on hover), lists the labels in use with
+  how many accounts have each, and lists the accounts with one. Changes are logged under the account's admin
+  actions.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
