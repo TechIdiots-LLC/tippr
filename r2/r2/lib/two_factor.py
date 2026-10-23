@@ -280,11 +280,25 @@ def _session_key(account):
 
 
 def mark_recent(account):
-    g.gencache.set(_session_key(account), True, time=RECENT_MINUTES * 60)
+    # kept: when it runs out (for "unlocked for N more minutes")
+    g.gencache.set(_session_key(account), int(time.time()) + RECENT_MINUTES * 60,
+                   time=RECENT_MINUTES * 60)
 
 
 def recent(account):
     return bool(g.gencache.get(_session_key(account)))
+
+
+def recent_minutes_left(account):
+    """How many more minutes the code entered in this session counts (at
+    least 1), or 0 if there's none."""
+    until = g.gencache.get(_session_key(account))
+    if not until:
+        return 0
+    if until is True:
+        # kept before the end was
+        return RECENT_MINUTES
+    return max(1, -(-(until - int(time.time())) // 60))
 
 
 def needs_code(account, action):

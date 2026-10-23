@@ -64,6 +64,17 @@ class TestTwoFactor(TipprTestCase):
         self.request.cookies = {"session": "another-login"}
         self.assertTrue(two_factor.needs_code(self.account, "password"))
 
+    def test_minutes_left(self):
+        self.assertEqual(two_factor.recent_minutes_left(self.account), 0)
+        two_factor.mark_recent(self.account)
+        self.assertEqual(two_factor.recent_minutes_left(self.account),
+                         two_factor.RECENT_MINUTES)
+        key = two_factor._session_key(self.account)
+        self.cache[key] = int(time.time()) + 61
+        self.assertEqual(two_factor.recent_minutes_left(self.account), 2)
+        self.cache[key] = int(time.time()) - 5   # not yet expired from cache
+        self.assertEqual(two_factor.recent_minutes_left(self.account), 1)
+
     def test_recovery_codes_work_once(self):
         codes = two_factor.new_recovery_codes(self.account)
         self.assertEqual(len(codes), two_factor.RECOVERY_CODES)

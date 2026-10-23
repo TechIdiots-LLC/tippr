@@ -1334,11 +1334,16 @@ class PrefSecurity(Templated):
                 return _("just now")
             return _("%(time)s ago") % dict(time=timesince(when))
         self.methods = [
-            dict(id=m["id"], name=m["name"],
+            dict(id=m["id"], name=m["name"], kind=m["kind"],
                  kind_name=two_factor.KIND_NAMES[m["kind"]],
                  added=ago(m["created"]), used=ago(m["last_used"]))
             for m in two_factor.methods(c.user)]
         self.two_factor = two_factor.enabled(c.user)
+        self.has_passkey = any(m["kind"] == "passkey" for m in self.methods)
+        # one code unlocks the page's changes for a while (two_factor.recent)
+        self.minutes_left = (two_factor.recent_minutes_left(c.user)
+                             if self.two_factor else 0)
+        self.unlocked = bool(self.minutes_left)
         self.new_codes = two_factor.take_new_codes(c.user)
         self.codes_left = two_factor.recovery_codes_left(c.user)
         self.device_days = two_factor.DEVICE_DAYS

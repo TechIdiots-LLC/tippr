@@ -2951,10 +2951,12 @@ class VTwoFactor(Validator):
 
 class VTwoFactorProof(Validator):
     """Proof it's the member, for adding or removing a two-factor method:
-    with two-factor on, a code typed now from a method they have (an
-    authenticator app, a passkey or a recovery code); for the first
-    method, their password. Errors: TWO_FACTOR_REQUIRED on otp,
-    WRONG_PASSWORD on password."""
+    with two-factor on, a code from a method they have (an authenticator
+    app, a passkey or a recovery code), typed now or earlier in this login
+    session (r2.lib.two_factor.recent: preferences, security asks for one
+    code and then unlocks its forms for a while); for the first method,
+    their password. Errors: TWO_FACTOR_REQUIRED on otp, WRONG_PASSWORD on
+    password."""
 
     def __init__(self, password="password", otp="otp", **kw):
         Validator.__init__(self, (password, otp), **kw)
@@ -2963,7 +2965,8 @@ class VTwoFactorProof(Validator):
         from r2.lib import two_factor
         VUser().run()
         if two_factor.enabled(c.user):
-            if not two_factor.check_code(c.user, otp):
+            if (not two_factor.recent(c.user) and
+                    not two_factor.check_code(c.user, otp)):
                 self.set_error(errors.TWO_FACTOR_REQUIRED, field="otp")
         elif not (password and valid_password(c.user, password)):
             self.set_error(errors.WRONG_PASSWORD, field="password")

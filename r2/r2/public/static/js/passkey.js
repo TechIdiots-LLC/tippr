@@ -175,7 +175,8 @@ r.passkey = {
   init: function() {
     var self = this
     if (!self.supported()) {
-      $('.passkey-add').hide()
+      // the browser can't make one: only the authenticator app is offered
+      $('.passkey-only').hide()
       return
     }
     $('.passkey-add-button').on('click', function() { self.register($(this)) })

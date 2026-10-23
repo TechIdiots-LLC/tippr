@@ -901,9 +901,70 @@ body.nightmode.gold-page.gold-about .gold-banner {
     font-size: @tp-font-xs;
 }
 .passkey-add input[name=passkey_name] {
-    width: 12em;
+    width: 16em;
     padding: 4px 6px;
-    margin-right: 6px;
+    margin: 0 6px 8px 0;
+}
+// one code unlocks preferences, security for a while (two_factor.recent)
+.two-factor-unlock, .two-factor-unlocked {
+    padding: 10px 14px;
+    margin: 10px 0 14px;
+    background: @tp-tint-soft;
+    border: 1px solid @tp-border-accent;
+    p {
+        margin-bottom: 6px;
+    }
+}
+.two-factor-unlocked {
+    color: @tp-text;
+}
+.two-factor-tip {
+    color: @tp-text-muted;
+    margin: 6px 0;
+}
+// adding a method: a passkey or an authenticator app, side by side
+.two-factor-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 4px 0 8px;
+}
+.two-factor-choice {
+    flex: 1 1 18em;
+    padding: 10px 12px;
+    border: 1px solid @tp-border;
+    background: @tp-surface;
+    p {
+        margin: 6px 0 0;
+        color: @tp-text-muted;
+    }
+}
+.two-factor-recommended {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    font-size: @tp-font-xxs;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: @tp-on-accent;
+    background: @tp-accent-strong;
+    border-radius: 3px;
+}
+.recovery-codes-new {
+    padding: 10px 14px;
+    background: @tp-tint-soft;
+    border: 1px solid @tp-border-accent;
+}
+// turning two-factor off: folded away at the bottom
+.two-factor-off {
+    margin-top: 20px;
+    summary {
+        cursor: pointer;
+        color: @tp-link;
+    }
+    form {
+        margin-top: 8px;
+    }
 }
 // the preferences pages (PrefsPage): their content away from the edge, as
 // on the rest of the site

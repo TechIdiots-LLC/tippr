@@ -6047,6 +6047,9 @@ class ApiController(TipprController):
             form.set_text(".status", _("that's as many authenticator apps "
                                        "as an account can have"))
             return
+        # a code from the new app was just typed: the page stays unlocked,
+        # so a second method can be added straight away
+        two_factor.mark_recent(c.user)
         if first:
             # two-factor just turned on: codes for a lost phone
             self._show_recovery_codes(c.user)
@@ -6108,10 +6111,13 @@ class ApiController(TipprController):
         from r2.lib import passkeys
         if not (token and credential):
             return {"error": _("that passkey couldn't be added")}
+        from r2.lib import two_factor
         try:
             first = passkeys.register(c.user, token, credential, name)
         except passkeys.PasskeyError as e:
             return {"error": _(str(e))}
+        # the new passkey was just used: the page stays unlocked
+        two_factor.mark_recent(c.user)
         if first:
             # two-factor just turned on: codes for a lost device
             self._show_recovery_codes(c.user)
@@ -6194,17 +6200,37 @@ class ApiController(TipprController):
     @validatedForm(
         VUser(),
         VModhash(),
-        VFreshOneTimePassword("otp", required=True),
+        VTwoFactor("otp", "two_factor_prefs"),
     )
     def POST_new_recovery_codes(self, form, jquery):
         """A new set of two-factor recovery codes (the old ones stop
         working), shown once on preferences, security."""
-        if form.has_errors("otp", errors.WRONG_PASSWORD,
-                                  errors.NO_OTP_SECRET,
-                                  errors.RATELIMIT):
+        from r2.lib import two_factor
+        if not two_factor.enabled(c.user):
+            return
+        if form.has_errors("otp", errors.TWO_FACTOR_REQUIRED):
             return
         self._show_recovery_codes(c.user)
         form.redirect("/prefs/security#recovery-codes")
+
+    @validatedForm(
+        VUser(),
+        VModhash(),
+        otp=nop("otp"),
+    )
+    def POST_two_factor_unlock(self, form, jquery, otp):
+        """Preferences, security: one code (or a passkey) that unlocks the
+        page's changes for two_factor.RECENT_MINUTES, instead of a code
+        field on every form. Turning two-factor off still wants one typed
+        then."""
+        from r2.lib import two_factor
+        if not two_factor.enabled(c.user):
+            return
+        if not two_factor.check_code(c.user, otp):
+            c.errors.add(errors.WRONG_OTP, field="otp")
+            form.has_errors("otp", errors.WRONG_OTP)
+            return
+        form.redirect("/prefs/security")
 
     @staticmethod
     def _show_recovery_codes(account):

@@ -22,6 +22,9 @@
             text: uri
         })
 
+        // the name typed before choosing an authenticator app
+        newform.find('[name=name]').val(form.find('[name=passkey_name]').val() || '')
+
         newform.show()
         form.hide()
     }
