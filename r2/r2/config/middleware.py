@@ -25,22 +25,6 @@
 
 """Pylons middleware initialization"""
 
-# Compatibility shim: MUST be applied before any paste.registry imports
-# Some versions of Paste have LocalStack._pop_object that only accepts `self`,
-# but Paste's registry.cleanup may call it with an additional `obj` argument.
-try:
-    from paste import registry as _paste_registry
-    _LocalStack = getattr(_paste_registry, 'LocalStack', None)
-    if _LocalStack is not None:
-        _orig_pop = _LocalStack._pop_object
-        def _patched_pop_object(self, obj=None):
-            # Just pop from the stack, ignore the obj argument
-            if self._stack:
-                self._stack.pop()
-        _LocalStack._pop_object = _patched_pop_object
-except Exception:
-    pass
-
 import importlib
 import itertools
 import re
@@ -52,7 +36,6 @@ from threading import Lock
 
 import simplejson
 
-# patch in WebOb support for HTTP 429 "Too Many Requests"
 import webob.exc
 import webob.util
 from paste.cascade import Cascade
@@ -62,7 +45,6 @@ from paste.recursive import RecursiveMiddleware
 from paste.registry import RegistryManager
 from paste.request import path_info_split
 from paste.urlparser import StaticURLParser
-import types
 
 from pylons.middleware import ErrorHandler
 from pylons.wsgiapp import PylonsApp
@@ -74,14 +56,6 @@ from r2.config.extensions import extension_mapping, set_extension
 from r2.lib import csrf, filters
 from r2.lib.utils import is_language_subdomain, is_subdomain
 
-
-class HTTPTooManyRequests(webob.exc.HTTPClientError):
-    code = 429
-    title = 'Too Many Requests'
-    explanation = ('The server has received too many requests from the client.')
-
-webob.exc.status_map[429] = HTTPTooManyRequests
-webob.util.status_reasons[429] = HTTPTooManyRequests.title
 
 def error_mapper(code, message, environ, global_conf=None, **kw):
     if environ.get('pylons.error_call'):
@@ -443,6 +417,10 @@ class TestVariablesMiddleware:
     1. Intercepting requests to /_test_vars
     2. Saving the registry state for later restoration
     3. Returning a unique request ID that can be used to restore state
+
+    Only paste.fixture's requests (tests, and paster run scripts) get it:
+    each saved state is kept for good, so open to anyone it would let
+    visitors use up the server's memory.
     """
     def __init__(self, app):
         self.app = app
@@ -451,7 +429,8 @@ class TestVariablesMiddleware:
         from paste.evalexception.middleware import get_debug_count
         from paste import registry
 
-        if environ.get('PATH_INFO') == '/_test_vars':
+        if (environ.get('PATH_INFO') == '/_test_vars' and
+                environ.get('paste.testing')):
             # Get a unique request ID for this test
             request_id = get_debug_count(environ)
 
@@ -576,27 +555,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
         app = ErrorDocuments(app, global_conf, error_mapper, **app_conf)
 
     # Establish the Registry for this application
-    # Wrap RegistryManager with a safe __call__ that handles incompatibilities
-    # in some Paste versions where LocalStack._pop_object signature mismatches
-    # by catching the TypeError and falling back to the inner app.
-    _orig_registry_manager = RegistryManager(app)
-
-    # Capture the original unbound __call__ to avoid recursion when wrapping
-    _original_call = RegistryManager.__call__
-
-    def _safe_registry_call(self, environ, start_response):
-        try:
-            return _original_call(self, environ, start_response)
-        except TypeError as te:
-            msg = str(te)
-            if 'LocalStack._pop_object' in msg or 'takes 1 positional argument but 2 were given' in msg:
-                return app(environ, start_response)
-            raise
-
-    # Bind the safe wrapper to this instance
-    import types as _types
-    _orig_registry_manager.__call__ = _types.MethodType(_safe_registry_call, _orig_registry_manager)
-    app = _orig_registry_manager
+    app = RegistryManager(app)
 
     # Add test variables middleware for paste.fixture.TestApp support
     # This must come after RegistryManager so it has access to paste.registry

@@ -56,6 +56,10 @@
 - **Day- and week-long rate limits depended on the server's timezone:** their counters were named with strftime's
   `%s`, which reads the time as local time (and isn't available everywhere), so on a server not set to UTC they
   were shifted by its offset. They use the time in seconds directly now.
+- **/_test_vars was open to anyone:** the test client's setup address answered every visitor and kept a copy of
+  that request's state each time, never freed, so it could be used to fill the server's memory. Only the test
+  client (tests and `tippr-run` scripts) gets it now. The middleware's patches to Paste and WebOb, which newer
+  versions made unneeded (or which never took effect), are gone.
 - _...Add new stuff here..._
 
 ## 0.17.0
