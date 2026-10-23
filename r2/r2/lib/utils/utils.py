@@ -62,8 +62,11 @@ iters = (list, tuple, set)
 
 def randstr(length,
             alphabet='abcdefghijklmnopqrstuvwxyz0123456789'):
-    """Return a string made up of random chars from alphabet."""
-    return ''.join(random.choice(alphabet) for _ in range(length))
+    """Return a string made up of random chars from alphabet. From the
+    operating system's random source (secrets), not `random`: these make
+    gift codes and passwords, which mustn't be predictable from others."""
+    import secrets
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
 class Storage(dict):
