@@ -39,6 +39,11 @@
   see them. /admin/users shows each account's label in a new column (the note on hover), lists the labels in use with
   how many accounts have each, and lists the accounts with one. Changes are logged under the account's admin
   actions.
+- **An account's status, from its /admin/users page:** its staff permission (none, employee, sponsor or admin: the
+  same employees list as /admin/config, with its checks, so no one removes their own admin permission), and whether
+  it's one of the site's own accounts (a test account, a bot). The system user, AutoModerator and feed bots count as
+  the site's own by themselves. The status column on /admin/users shows sponsors and employees too, and labels the
+  site's own accounts, which don't take an Early Member place.
 - **Forget all remembered devices** (preferences → security, with two-factor on): every browser that skips the code
   ("don't ask on this device" at login, "remember this computer" for admin mode and confirmations), this one too,
   is asked for a code again next time, for a lost device or a shared computer. Nobody is logged out. The section also

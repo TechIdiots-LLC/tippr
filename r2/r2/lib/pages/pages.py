@@ -3990,6 +3990,11 @@ class AdminUser(Templated):
         self.status = user_admin.status(account)
         self.internal_status, self.internal_note = \
             user_admin.internal_status(account)
+        from r2.lib import live_config_admin
+        self.staff_level = user_admin.staff_level(account)
+        self.staff_levels = user_admin.STAFF_LEVELS
+        self.staff_editable = live_config_admin.editable()
+        self.site_account = user_admin.site_account(account)
         self.statuses = user_admin.statuses_in_use()
         self.status_max_length = user_admin.STATUS_MAX_LENGTH
         self.note_max_length = user_admin.NOTE_MAX_LENGTH

@@ -237,6 +237,34 @@ def support_tickets(account):
             .limit(50)).mappings()]
 
 
+STAFF_LEVELS = ("admin", "sponsor", "employee")
+
+
+def staff_level(account):
+    """The account's place on the employees list (/admin/config): admin,
+    sponsor, employee, or None."""
+    for name, level in (g.live_config.get("employees") or {}).items():
+        if name.lower() == account.name.lower():
+            return level
+    return None
+
+
+def site_account(account):
+    """Why the account is one of the site's own, which the site runs itself
+    rather than a member (None if it isn't): "system user", "AutoModerator",
+    "feed bot" or "internal" (marked here)."""
+    name = account.name.lower()
+    if name == (g.system_user or "").lower():
+        return "system user"
+    if name == (g.automoderator_account or "").lower():
+        return "AutoModerator"
+    if getattr(account, "feed_bot", False):
+        return "feed bot"
+    if getattr(account, "internal_account", False):
+        return "internal"
+    return None
+
+
 def status(account):
     """Short labels for the account's state."""
     labels = []
@@ -250,8 +278,13 @@ def status(account):
         labels.append("spammer")
     if getattr(account, "gold", False):
         labels.append("gold")
-    if account.name in g.admins:
-        labels.append("admin")
+    level = staff_level(account)
+    if level:
+        labels.append(level)
+    kind = site_account(account)
+    if kind:
+        labels.append("internal" if kind == "internal" else
+                      "site account (%s)" % kind)
     return labels
 
 
@@ -317,7 +350,7 @@ actions_table = sa.Table(
     sa.Column("time", sa.DateTime(timezone=True), nullable=False),
     # timeout, untimeout, suspend, unsuspend, remove_content, spam_content,
     # delete_content, reverify_email, remove_email, reset_2fa, delete_account,
-    # set_status
+    # set_status, set_staff, set_internal
     sa.Column("action", sa.String, nullable=False),
     sa.Column("detail", sa.Text, nullable=True),
 )
@@ -338,6 +371,8 @@ ACTION_NAMES = {
     "reset_2fa": "two-factor reset",
     "delete_account": "account deleted",
     "set_status": "internal status changed",
+    "set_staff": "staff permission changed",
+    "set_internal": "internal account changed",
 }
 MAX_CONTENT = 1000      # posts, and comments, acted on by the content tools
 MAX_TIMEOUT_DAYS = 365
@@ -402,6 +437,41 @@ def set_internal_status(account, admin, label, note):
         detail = "%s (note changed)" % (label or "none")
     _log(account, admin, "set_status", detail)
     return True
+
+
+def set_staff_level(account, admin, level):
+    """Put the account on the employees list at level (admin, sponsor or
+    employee), or take it off (None), as /admin/config does, with its
+    checks (no one removes their own admin permission). Returns an error
+    message, or None."""
+    from r2.lib import live_config_admin
+    if not live_config_admin.editable():
+        return "the live config is managed outside the site (ZooKeeper)"
+    old = staff_level(account)
+    if level == old:
+        return None
+    employees = [(name, lvl) for name, lvl in
+                 (g.live_config.get("employees") or {}).items()
+                 if name.lower() != account.name.lower()]
+    if level:
+        employees.append((account.name, level))
+    raw = ", ".join("%s:%s" % pair for pair in employees)
+    error = live_config_admin.save("employees", raw, admin)
+    if error:
+        return error
+    _log(account, admin, "set_staff", "%s -> %s" % (old or "none",
+                                                    level or "none"))
+    return None
+
+
+def set_internal(account, admin, internal):
+    """Mark the account as one of the site's own (site_account), or not."""
+    internal = bool(internal)
+    if internal == bool(getattr(account, "internal_account", False)):
+        return
+    account.internal_account = internal
+    account._commit()
+    _log(account, admin, "set_internal", "yes" if internal else "no")
 
 
 def untimeout(account, admin=None, reason=None):

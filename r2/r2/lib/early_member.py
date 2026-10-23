@@ -16,8 +16,8 @@
 """The "Early Member" award, for the site's first members: the first
 early_member_count accounts made (/admin/config; 0 turns it off).
 
-The site's own accounts (the system user, AutoModerator, feed bots) don't
-take a place. Every other account does, in the order they were made, even
+The site's own accounts (the system user, AutoModerator, feed bots, and ones
+admins mark as internal on /admin/users) don't take a place. Every other account does, in the order they were made, even
 one that's later deleted or banned (which doesn't get the award), so the
 places never move: the first 100 members stay the first 100.
 
@@ -51,6 +51,8 @@ def is_site_account(account):
     """The site's own accounts, which don't take a place."""
     return (account.name in (g.system_user, g.automoderator_account) or
             getattr(account, "feed_bot", False) or
+            # marked on /admin/users (a test account, a bot)
+            getattr(account, "internal_account", False) or
             # feed bots, before they're marked (r2.lib.feeds.bot_account)
             getattr(account, "registration_ip", None) == "0.0.0.0")
 

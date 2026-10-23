@@ -86,6 +86,47 @@
   </td></tr>
 </table>
 
+<h2>${_("status")}</h2>
+<table class="lined-table borderless admin-user-actions">
+  <tr><td>${_("staff permission")}</td><td>
+    %if thing.staff_editable:
+      <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+            onsubmit="return post_form(this, 'admin_user');">
+        <input type="hidden" name="username" value="${a.name}">
+        <input type="hidden" name="do" value="set_staff">
+        <select name="level">
+          <option value="none" ${'selected' if not thing.staff_level else ''}>${_("none")}</option>
+          %for level in thing.staff_levels:
+            <option value="${level}" ${'selected' if level == thing.staff_level else ''}>${_(level)}</option>
+          %endfor
+        </select>
+        <button class="btn" type="submit">${_("save")}</button>
+        <span class="status"></span>
+      </form>
+      <small>${_("Admins can turn on admin mode (everything on /admin); sponsors manage ads; employees are staff without either. The same list as \"employees\" on /admin/config; you can't remove your own admin permission.")}</small>
+    %else:
+      ${_(thing.staff_level) if thing.staff_level else _("none")}
+      <br><small>${_("The live config is managed outside the site (ZooKeeper), so it can't be changed here.")}</small>
+    %endif
+  </td></tr>
+  <tr><td>${_("internal account")}</td><td>
+    %if thing.site_account and thing.site_account != "internal":
+      ${_("yes: the site's %(kind)s") % dict(kind=_(thing.site_account))}
+    %else:
+      <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+            onsubmit="return post_form(this, 'admin_user');">
+        <input type="hidden" name="username" value="${a.name}">
+        <input type="hidden" name="do" value="set_internal">
+        <label><input type="checkbox" name="internal" ${'checked' if thing.site_account else ''}>
+          ${_("one of the site's own accounts (a test account, a bot), not a member")}</label>
+        <button class="btn" type="submit">${_("save")}</button>
+        <span class="status"></span>
+      </form>
+    %endif
+    <br><small>${_("The site's own accounts are labelled on /admin/users and don't take an Early Member place.")}</small>
+  </td></tr>
+</table>
+
 <h2>${_("internal status")}</h2>
 <form action="/api/admin_user" method="post" class="pretty-form admin-user-action admin-user-status"
       onsubmit="return post_form(this, 'admin_user');">

@@ -206,6 +206,9 @@ class Account(Thing):
                      # see it (/admin/users; r2.lib.user_admin)
                      admin_status="",
                      admin_status_note="",
+                     # one of the site's own accounts (a test account, a
+                     # bot), marked on /admin/users (r2.lib.user_admin)
+                     internal_account=False,
                      has_used_mobile_app=False,
                      disable_karma=False,
                      )

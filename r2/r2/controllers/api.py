@@ -5286,16 +5286,19 @@ class ApiController(TipprController):
         do=VOneOf("do", ("timeout", "untimeout", "suspend", "unsuspend",
                          "remove_content", "spam_content", "delete_content",
                          "reverify_email", "remove_email", "reset_2fa",
-                         "delete_account", "set_status")),
+                         "delete_account", "set_status", "set_staff",
+                         "set_internal")),
         days=VInt("days", min=0, max=365, num_default=0),
         reason=VLength("reason", max_length=500, empty_error=None),
         confirm=nop("confirm"),
         posts=VOneOf("posts", ("keep", "delete")),
         status=VLength("status", max_length=40, empty_error=None),
         note=VLength("note", max_length=1000, empty_error=None),
+        level=VOneOf("level", ("none", "employee", "sponsor", "admin")),
+        internal=VBoolean("internal"),
     )
     def POST_admin_user(self, form, jquery, username, do, days, reason,
-                        confirm, posts, status, note):
+                        confirm, posts, status, note, level, internal):
         """Act on an account from /admin/users (r2.lib.user_admin)."""
         from r2.lib import user_admin
         from r2.lib.db.thing import NotFound
@@ -5313,6 +5316,23 @@ class ApiController(TipprController):
                     form.has_errors("note", errors.TOO_LONG)):
                 return
             user_admin.set_internal_status(account, c.user, status, note)
+            form.refresh()
+            return
+        # the employees list's own checks apply (no one removes their own
+        # admin permission), as on /admin/config
+        if do == "set_staff":
+            if not level:
+                form.set_text(".status", _("choose a permission"))
+                return
+            error = user_admin.set_staff_level(
+                account, c.user, None if level == "none" else level)
+            if error:
+                form.set_text(".status", error)
+                return
+            form.refresh()
+            return
+        if do == "set_internal":
+            user_admin.set_internal(account, c.user, internal)
             form.refresh()
             return
         if account.name in g.admins or account._id == c.user._id:
