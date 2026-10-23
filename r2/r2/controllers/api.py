@@ -53,6 +53,7 @@ from r2.lib import (
     antispam,
     emailer,
     hooks,
+    live_comments,
     media,
     newsletter,
     promote,
@@ -2970,6 +2971,7 @@ class ApiController(TipprController):
                    # show_media_preview = VBoolean('show_media_preview'),
                    public_traffic = VBoolean('public_traffic'),
                    collapse_deleted_comments = VBoolean('collapse_deleted_comments'),
+                   live_comments=VBoolean('live_comments'),
                    exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
                    spam_links = VOneOf('spam_links', ('low', 'high', 'all')),
                    spam_selfposts = VOneOf('spam_selfposts', ('low', 'high', 'all')),
@@ -3058,6 +3060,7 @@ class ApiController(TipprController):
             'hide_ads',
             'lang',
             'link_type',
+            'live_comments',
             'name',
             'over_18',
             'public_description',
@@ -3084,6 +3087,10 @@ class ApiController(TipprController):
             keyword_fields.append('related_vaults')
 
         kw = {k: v for k, v in kw.items() if k in keyword_fields}
+        # the checkbox is only on the form while the site has live comments
+        # on: otherwise leave the vault's choice as it is
+        if not live_comments.site_enabled():
+            kw.pop('live_comments', None)
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')

@@ -394,6 +394,20 @@ try participating in other communities on tippr for a little while first before 
             ${_("collapse deleted and removed comments")}
           </label>
         </li>
+        %if g.live_config.get("live_comments"):
+          <li>
+            <input class="nomargin" type="checkbox"
+                   name="live_comments" id="live_comments"
+                   ## a new vault: what /admin/config says new vaults start with
+                   %if (thing.site.live_comments if thing.site else g.live_config.get("live_comments_new_vault_default")):
+                     checked="checked"
+                   %endif
+            >
+            <label for="live_comments">
+              ${_("live comments: new comments appear on a thread while people have it open")}
+            </label>
+          </li>
+        %endif
         %if thing.site and thing.site.type == 'gold_only':
           <li>
             <input class="nomargin" type="checkbox"

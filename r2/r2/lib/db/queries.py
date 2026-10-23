@@ -1775,6 +1775,9 @@ def run_commentstree(qname="commentstree_q", limit=400):
 
         if comments:
             add_comments(comments)
+            # open thread pages (r2.lib.live_comments)
+            from r2.lib import live_comments
+            live_comments.announce(comments)
 
     # High velocity threads put additional pressure on Cassandra.
     if qname == "commentstree_fastlane_q":

@@ -643,6 +643,8 @@ module["tippr"] = LocalizedModule("tippr.js",
     "warn-on-unload.js",
     "markdown-toolbar.js",
     "passkey.js",
+    "websocket.js",
+    "live-comments.js",
     "enhancements.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,

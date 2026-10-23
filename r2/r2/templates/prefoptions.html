@@ -310,6 +310,13 @@ action = add_vault(action, vault_path=False)
         &#32;
         <span class="details">${_("(on comments pages, buttons to jump between top-level comments, the submitter's, yours, new ones or ones with links)")}</span>
       </p>
+      %if g.live_config.get("live_comments"):
+      <p>
+        ${checkbox(_("live comments"), "live_comments")}
+        &#32;
+        <span class="details">${_("(new comments appear on a thread while you have it open, in vaults that use them)")}</span>
+      </p>
+      %endif
       <p>
         ${checkbox(_("account switcher"), "account_switcher")}
         &#32;

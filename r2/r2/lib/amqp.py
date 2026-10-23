@@ -162,6 +162,12 @@ class ConnectionManager(local):
                               durable=True,
                               auto_delete=False)
 
+        # the websockets service's broadcast exchange (r2.lib.websockets),
+        # declared as it declares it, so a broadcast sent before that
+        # service has ever run doesn't fail
+        chan.exchange_declare(exchange="sutro", type="fanout",
+                              durable=False, auto_delete=False)
+
         for queue in cfg.queues:
             chan.queue_declare(queue=queue.name,
                                durable=queue.durable,

@@ -1566,6 +1566,18 @@ location @tippr_app {
     include snippets/tippr-proxy.conf;
 }
 
+# the websockets service (sutro), for live comments (r2.lib.live_comments):
+# the path is the namespace a page listens on
+location /websocket/ {
+    proxy_pass http://127.0.0.1:9001;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 1h;
+    proxy_send_timeout 1h;
+}
+
 include snippets/tippr-static.conf;
 
 # /media/ (and /s3/, for uploads): snippets/tippr-media.conf, written below

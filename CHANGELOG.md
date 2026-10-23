@@ -19,6 +19,12 @@
   for a member. The old privacy dashboard was never loaded (its address gave "page not found") and wrote values
   into the page unescaped.
 - **The footer links to /buttons again**, under tippr gold, for sites that want a submit or vote button.
+- **Live comments:** new comments appear on a thread while people have it open, under their parent and briefly
+  highlighted, without reloading. Admins turn it on for the site (`live_comments` on /admin/config); then each
+  vault's moderators choose in their vault's settings, and each member in their preferences. Two more settings say
+  what new vaults and new accounts start with (logged-out visitors get the new-account choice). Each comment is
+  fetched for the person viewing, so blocked users, score thresholds and collapsing work as usual. It uses the
+  websockets service; the installer's nginx now passes `/websocket/` through to it (Docker's Caddy already did).
 - **Sitemaps for big sites:** a "sitemap" choice under search engines on /admin/site. "Recent posts" is the sitemap
   as it was (public vaults and the 10,000 newest posts). "Every post" has the new daily `tippr-job-sitemaps` list
   every public vault and post, in as many 50,000-address sitemaps as that takes, and the page shows when it last

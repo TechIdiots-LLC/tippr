@@ -1173,3 +1173,13 @@ body.prefs-page > main.content {
         font-weight: bold;
     }
 }
+// a comment that just arrived on an open thread (live-comments.js): its
+// left edge lights up and fades
+.thing.comment.live-comment > .entry {
+    box-shadow: inset 3px 0 0 @tp-accent;
+    animation: live-comment-arrived 6s ease-out forwards;
+}
+@keyframes live-comment-arrived {
+    from { box-shadow: inset 3px 0 0 @tp-accent; }
+    to { box-shadow: inset 3px 0 0 transparent; }
+}

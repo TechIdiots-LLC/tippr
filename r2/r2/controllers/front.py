@@ -566,6 +566,13 @@ class FrontController(TipprController):
                 'target_sort': sort,
             }
         extra_js_config = {'event_target': event_target}
+        if not comment:
+            from r2.lib import live_comments
+            live = live_comments.page_config(
+                article, article.vault_slow, sort,
+                user=c.user, logged_in=c.user_is_loggedin)
+            if live:
+                extra_js_config['live_comments'] = live
 
         res = LinkInfoPage(
             link=article,

@@ -271,6 +271,9 @@ class Vault(Thing, Printable, BaseSite):
         gilding_server_seconds=0,
         contest_mode_upvotes_only=False,
         collapse_deleted_comments=False,
+        # new comments appear on open threads (r2.lib.live_comments), when
+        # the site has them on
+        live_comments=False,
         icon_img='',
         icon_size=None,
         banner_img='',
@@ -387,6 +390,10 @@ class Vault(Thing, Printable, BaseSite):
             except NotFound:
                 if "allow_top" not in kw:
                     kw['allow_top'] = True
+                # live comments start as /admin/config says for new vaults
+                if "live_comments" not in kw:
+                    kw['live_comments'] = bool(
+                        g.live_config.get("live_comments_new_vault_default"))
                 vault = Vault(name = name,
                                title = title,
                                lang = lang,

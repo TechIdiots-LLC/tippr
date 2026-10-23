@@ -137,6 +137,9 @@ class Account(Thing):
                      pref_filter_vaults=(),
                      pref_filter_users=(),
                      pref_highlight_new_comments = True,
+                     # live comments on threads (r2.lib.live_comments);
+                     # new accounts start as /admin/config says
+                     pref_live_comments = True,
                      pref_monitor_mentions=True,
                      pref_collapse_left_bar=False,
                      pref_public_server_seconds=False,
@@ -1021,6 +1024,8 @@ def register(name, password, registration_ip):
                 password=bcrypt_password(password),
                 # new accounts keep the profanity filter settings until opting out
                 pref_no_profanity=True,
+                pref_live_comments=bool(
+                    g.live_config.get("live_comments_new_user_default", True)),
                 registration_ip=registration_ip,
             )
             account._commit()

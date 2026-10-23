@@ -122,6 +122,7 @@ PREFS_VALIDATORS = dict(
     pref_filter_vaults=VFilterList("filter_vaults", "vaults"),
     pref_filter_users=VFilterList("filter_users", "users"),
     pref_highlight_new_comments=VBoolean("highlight_new_comments"),
+    pref_live_comments=VBoolean("live_comments"),
     pref_show_gold_expiration=VBoolean("show_gold_expiration"),
     pref_monitor_mentions=VBoolean("monitor_mentions"),
     pref_hide_locationbar=VBoolean("hide_locationbar"),
@@ -185,6 +186,11 @@ def filter_prefs(prefs, user):
 
     if not (user.gold or user.is_moderator_somewhere):
         prefs['pref_highlight_new_comments'] = True
+
+    # the checkbox is only there while the site has live comments on:
+    # otherwise leave the member's choice as it is
+    if not g.live_config.get("live_comments"):
+        prefs.pop('pref_live_comments', None)
 
     # check stylesheet override
     if (feature.is_enabled('stylesheets_everywhere', user=user) and

@@ -98,6 +98,19 @@ COMMON = [
         "Total karma (posts and comments) needed to register an API app.")),
     ("app_create_require_verified_email", N_(
         "Whether registering an API app needs a verified email address.")),
+    ("live_comments", N_(
+        "New comments appear on a thread while people have it open, "
+        "without reloading. When this is on, each vault's moderators "
+        "choose whether their vault uses it (in the vault's settings), and "
+        "each member whether they see it (in their preferences). Needs the "
+        "websockets service (tippr-websockets) running.")),
+    ("live_comments_new_vault_default", N_(
+        "Whether a new vault starts with live comments on (its moderators "
+        "can change it). Vaults that already exist keep their setting.")),
+    ("live_comments_new_user_default", N_(
+        "Whether a new account starts with live comments on (the member "
+        "can change it in their preferences); also what logged-out "
+        "visitors get. Accounts that already exist keep their setting.")),
     ("fastlane_links", N_(
         "Busy threads whose new comments get a queue of their own, so a "
         "flood of comments there doesn't slow down comments everywhere "

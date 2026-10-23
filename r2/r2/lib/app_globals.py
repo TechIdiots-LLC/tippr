@@ -368,6 +368,12 @@ class Globals:
             'apps_require_approval',
             # moderators and staff need two-factor sign-in (r2.lib.two_factor)
             'require_two_factor_staff',
+            # new comments appear on open threads, in vaults that turn it on
+            # (r2.lib.live_comments)
+            'live_comments',
+            # what new vaults and new accounts start with
+            'live_comments_new_vault_default',
+            'live_comments_new_user_default',
             'mobile_gild_first_login',
             'precomputed_comment_suggested_sort',
         ],
