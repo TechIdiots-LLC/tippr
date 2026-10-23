@@ -81,6 +81,9 @@
 - **A form sent with no body, a bad length or too big an upload crashed the worker:** the "length required", "bad
   request" and "too big" replies were text where the server needs bytes, so the visitor got an error page from the
   server instead. They're sent properly now.
+- **Settings saved on /admin/site and /admin/config didn't reach scripts, consumers or jobs:** only web processes
+  applied them (on their first request), so `tippr-run` scripts, the queue consumers and the timed jobs went by the
+  ini alone.
 
 ## 0.17.0
 ### ✨ Features and improvements

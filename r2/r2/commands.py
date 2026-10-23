@@ -93,6 +93,13 @@ class RunCommand(command.Command):
         # (StackedObjectProxies)
         paste.registry.restorer.restoration_begin(request_id)
 
+        # the settings saved on /admin/site and /admin/config: web processes
+        # apply them on their first request (BaseController), which scripts,
+        # consumers and jobs never get
+        from r2.lib import live_config_admin, site_info
+        site_info.install()
+        live_config_admin.install()
+
         loaded_namespace = {}
 
         try:
