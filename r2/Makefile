@@ -64,9 +64,12 @@ GENERATED_STRINGS_FILE := r2/lib/generated_strings.py
 
 .PHONY: i18n clean_i18n
 
-# POTFILE is set by Makefile.py
+# POTFILE and PLUGIN_I18N_PATHS are set by Makefile.py; with no plugins
+# there's no trailing comma (babel takes "r2," as an empty second path)
+comma := ,
+I18N_INPUT_DIRS := r2$(if $(strip $(PLUGIN_I18N_PATHS)),$(comma)$(strip $(PLUGIN_I18N_PATHS)))
 i18n: $(GENERATED_STRINGS_FILE)
-	$(PYTHON) setup.py extract_messages --input-dirs=r2,$(PLUGIN_I18N_PATHS) -o $(POTFILE)
+	$(PYTHON) setup.py extract_messages --input-dirs=$(I18N_INPUT_DIRS) -o $(POTFILE)
 
 $(GENERATED_STRINGS_FILE): $(STRINGS_FILE)
 	$(PYTHON) $(STRINGS_FILE) > $(GENERATED_STRINGS_FILE)
