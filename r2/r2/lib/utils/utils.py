@@ -41,7 +41,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import unquote, unquote_plus, urlparse, urlunparse
-from urllib.request import Request, urlopen
+from urllib.request import Request
 
 import pytz
 import snudown
@@ -259,18 +259,19 @@ def get_title(url):
         return None
 
     try:
+        from r2.lib import safe_fetch
         req = Request(url)
         if g.useragent:
             req.add_header('User-Agent', g.useragent)
-        opener = urlopen(req, timeout=15)
+        # (a member's address: public hosts only)
+        opener = safe_fetch.urlopen(req, timeout=15)
 
-        # determine the encoding of the response
-        for param in opener.info().getplist():
-            if param.startswith("charset="):
-                param_name, sep, charset = param.partition("=")
-                codec = codecs.getreader(charset)
-                break
-        else:
+        # determine the encoding of the response (getplist() was Python
+        # 2's: it raised here, so "suggest title" never found one)
+        charset = opener.headers.get_content_charset() or "utf-8"
+        try:
+            codec = codecs.getreader(charset)
+        except LookupError:
             codec = codecs.getreader("utf-8")
 
         with codec(opener, "ignore") as reader:
@@ -331,7 +332,8 @@ def extract_title(data):
     # get rid of extraneous whitespace in the title
     title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
 
-    return title.encode('utf-8').strip()
+    # (text, for the submit form's title field: Python 2's encode left bytes)
+    return str(title).strip()
 
 VALID_SCHEMES = ('http', 'https', 'ftp', 'mailto')
 valid_dns = re.compile(r'\A[-a-zA-Z0-9_]+\Z')

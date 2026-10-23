@@ -50,7 +50,7 @@ from urllib.error import (
 )
 
 from r2.config import feature
-from r2.lib import amqp, hooks
+from r2.lib import amqp, hooks, safe_fetch
 from r2.lib.memoize import memoize
 from r2.lib.nymph import optimize_png
 from r2.lib.template_helpers import format_html
@@ -70,6 +70,9 @@ from r2.models.media_cache import (
     Media,
     MediaByURL,
 )
+
+# the most a page or image fetched for a preview may be
+MAX_FETCH_BYTES = 20 * 1024 * 1024
 
 _IMAGE_PREVIEW_TEMPLATE = """
 <img class="%(css_class)s" src="%(url)s" width="%(width)s" height="%(height)s">
@@ -216,8 +219,11 @@ def _fetch_url(url, referer=None):
     request = _initialize_request(url, referer=referer, gzip=True)
     if not request:
         return None, None
-    response = urllib.request.urlopen(request)
-    response_data = response.read()
+    # (a member's address: public hosts only, r2.lib.safe_fetch)
+    response = safe_fetch.urlopen(request, timeout=30)
+    response_data = response.read(MAX_FETCH_BYTES + 1)
+    if len(response_data) > MAX_FETCH_BYTES:
+        raise urllib.error.URLError("larger than %d bytes" % MAX_FETCH_BYTES)
     content_encoding = response.info().get("Content-Encoding")
     if content_encoding and content_encoding.lower() in ["gzip", "x-gzip"]:
         buf = io.BytesIO(response_data)
@@ -237,7 +243,7 @@ def _fetch_image_size(url, referer):
     parser = ImageFile.Parser()
     response = None
     try:
-        response = urllib.request.urlopen(request)
+        response = safe_fetch.urlopen(request, timeout=30)
 
         while True:
             chunk = response.read(1024)
