@@ -60,15 +60,14 @@ class RatelimitError(Exception):
 
 
 def _make_ratelimit_cache_key(key_prefix, time_slice):
-    # Short term rate limits: use a timestamp that's only valid for a day.
-    fmt = '-%H%M%S'
-    # Long term rate limits: use an unambigious timestamp.
-    if time_slice.end - time_slice.beginning >= 86400:
-        fmt = '-@%s'
-
     # enforce the "rl:" prefix for mcrouter
     prefix = "rl:" + key_prefix
-    return prefix + time.strftime(fmt, time.gmtime(time_slice.beginning))
+    # Long term rate limits: use an unambigious timestamp (epoch seconds;
+    # strftime's "%s" isn't portable and reads the time as local time).
+    if time_slice.end - time_slice.beginning >= 86400:
+        return prefix + "-@%d" % time_slice.beginning
+    # Short term rate limits: use a timestamp that's only valid for a day.
+    return prefix + time.strftime('-%H%M%S', time.gmtime(time_slice.beginning))
 
 
 def get_timeslice(slice_seconds):
