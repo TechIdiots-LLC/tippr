@@ -243,6 +243,41 @@ function clone_tippr_repo {
     copy_systemd $destination
 }
 
+# The translations aren't tied to a tippr release, so every install (first
+# boot and upgrades re-run this script too) brings them up to date with the
+# repository's default branch, even when the checkout already exists. A copy
+# that isn't a git checkout (from an old install) can't be updated, so it is
+# moved aside and cloned again. If the update fails (e.g. no network), the
+# existing translations are kept.
+function update_i18n_repo {
+    local destination=$TIPPR_SRC/i18n
+    local repo_spec=TechIdiots-LLC/tippr-i18n
+    local url=https://github.com/$repo_spec.git
+    local git="sudo -u $TIPPR_USER -H git -C $destination"
+
+    if [ -d "$destination" ] && ! $git rev-parse --git-dir >/dev/null 2>&1; then
+        local old="$destination.old-$(date +%Y%m%d%H%M%S)"
+        echo "$destination is not a git checkout; moving it to $old"
+        mv "$destination" "$old"
+    fi
+
+    if [ ! -d "$destination" ]; then
+        # TIPPR_BRANCH names a tippr branch; the translations use their own
+        TIPPR_BRANCH= clone_tippr_repo i18n "$repo_spec"
+        return
+    fi
+
+    echo "Updating the translations in $destination"
+    # older installs cloned from the old owner
+    $git remote set-url origin "$url"
+    if $git fetch --quiet origin && $git remote set-head origin --auto >/dev/null &&
+            $git reset --quiet --hard origin/HEAD; then
+        echo "Translations are at $($git log -1 --format='%h %cd' --date=short)"
+    else
+        echo "WARNING: could not update the translations; keeping the existing ones"
+    fi
+}
+
 function clone_tippr_service_repo {
     local name=$1
     local repo=${2:-tippr/tippr-service-$1}
@@ -259,9 +294,7 @@ if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ] &&        
 fi
 
 clone_tippr_repo tippr TechIdiots-LLC/tippr
-# i18n repo lives under the organization owner – ensure we clone the
-# TechIdiots-LLC owner (not the old `tippr/` owner).
-clone_tippr_repo i18n TechIdiots-LLC/tippr-i18n
+update_i18n_repo
 clone_tippr_service_repo websockets "$TIPPR_WEBSOCKETS_REPO"
 clone_tippr_service_repo activity "$TIPPR_ACTIVITY_REPO"
 
@@ -903,8 +936,12 @@ install_tippr_repo activity
 
 # generate binary translation files from source
 if [ "${SKIP_I18N}" != "1" ]; then
-    # Use venv's python for make commands
-    sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" make -C $TIPPR_SRC/i18n clean all
+    # Use venv's python for make commands. -k keeps going past a catalog
+    # msgfmt rejects, so one broken language doesn't leave every language
+    # after it uncompiled (the site shows those in English).
+    if ! sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" make -k -C $TIPPR_SRC/i18n clean all; then
+        echo "WARNING: some translations failed to compile (see above); those languages show in English"
+    fi
 else
     echo "Skipping i18n message compilation because i18n package was not installed"
 fi

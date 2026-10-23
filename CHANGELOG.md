@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Translations update with every install and upgrade:** the installer (also run by first boot and server
+  updates) now brings an existing `i18n` checkout up to the latest translations instead of only cloning a missing
+  one. A copy that isn't a git checkout is moved aside (`i18n.old-<date>`) and cloned again; if GitHub can't be
+  reached, the existing translations are kept. A catalog that fails to compile no longer stops the languages
+  after it from compiling.
 - **Update the servers from /admin/servers:** choose a release and each server updates itself within a minute, one
   at a time, as in the Proxmox upgrade steps. Each server downloads the release's installer from GitHub, checks it
   against the release's checksums, and makes a site backup first if asked. It then keeps the old code, re-runs the
