@@ -2,6 +2,13 @@
 
 ## master
 ### ✨ Features and improvements
+- _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.18.0
+### ✨ Features and improvements
 - **Busy threads can get their own comment queue:** `fastlane_links` (now described on /admin/config) sends new
   comments on the listed threads to `commentstree_fastlane_q`, so a flood of comments there doesn't slow down comment
   trees elsewhere. The installer and Docker run its consumer.
@@ -12,7 +19,6 @@
   for a member. The old privacy dashboard was never loaded (its address gave "page not found") and wrote values
   into the page unescaped.
 - **The footer links to /buttons again**, under tippr gold, for sites that want a submit or vote button.
-- _...Add new stuff here..._
 
 ### 🐞 Bug fixes
 - **The fast lane and the sharded queues had no consumers:** listing a thread in `fastlane_links`, or turning on a
@@ -60,7 +66,6 @@
   that request's state each time, never freed, so it could be used to fill the server's memory. Only the test
   client (tests and `tippr-run` scripts) gets it now. The middleware's patches to Paste and WebOb, which newer
   versions made unneeded (or which never took effect), are gone.
-- _...Add new stuff here..._
 
 ## 0.17.0
 ### ✨ Features and improvements
