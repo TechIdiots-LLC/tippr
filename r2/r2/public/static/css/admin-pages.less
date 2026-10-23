@@ -227,3 +227,21 @@ table.lined-table.borderless {
         margin: 0 8px 8px 0;
     }
 }
+
+// the admin pages (AdminPage): their content away from the edge, as the
+// preferences pages have
+body.admin-page > main.content {
+    padding: 4px 20px 0;
+    box-sizing: border-box;
+}
+@media (max-width: 768px) {
+    body.admin-page > main.content {
+        padding: 4px 12px 0;
+    }
+}
+// and their lists' cells (the settings forms have their own, above)
+body.admin-page table.lined-table:not(.borderless) {
+    th, td {
+        padding: 3px 8px;
+    }
+}

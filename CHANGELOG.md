@@ -5,6 +5,8 @@
 - **Busy threads can get their own comment queue:** `fastlane_links` (now described on /admin/config) sends new
   comments on the listed threads to `commentstree_fastlane_q`, so a flood of comments there doesn't slow down comment
   trees elsewhere. The installer and Docker run its consumer.
+- **Admin pages have a margin:** like the preferences pages, their content no longer runs against the page's edge
+  (less of one on phones), and their tables' cells have room around them.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

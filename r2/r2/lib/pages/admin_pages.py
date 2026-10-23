@@ -87,6 +87,8 @@ class AdminPage(Tippr):
     submit_box         = False
     extension_handling = False
     show_sidebar = False
+    # (their content gets a margin: admin-pages.less)
+    extra_page_classes = ['admin-page']
 
     def __init__(self, nav_menus = None, *a, **kw):
         Tippr.__init__(self, nav_menus = nav_menus, *a, **kw)
