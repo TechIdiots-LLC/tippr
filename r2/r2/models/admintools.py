@@ -49,6 +49,14 @@ from r2.models.wiki import WikiPage
 
 admintools_hooks = HookRegistrar()
 
+
+def _comments_changed(things):
+    """Removed or approved comments: their threads' cached comment views
+    are made afresh (r2.models.link.comments_changed)."""
+    from r2.models.link import Comment, comments_changed
+    comments_changed(t.link_id for t in things if isinstance(t, Comment))
+
+
 class AdminTools:
 
     def spam(self, things, auto=True, moderator_banned=False,
@@ -103,6 +111,7 @@ class AdminTools:
             self.set_last_sr_ban(new_things)
 
         queries.ban(all_things, filtered=auto)
+        _comments_changed(all_things)
 
         for t in all_things:
             if auto:
@@ -156,7 +165,8 @@ class AdminTools:
         self.author_spammer(things, False)
         self.set_last_sr_ban(things)
         queries.unban(things, insert)
-    
+        _comments_changed(things)
+
     def report(self, thing):
         pass
 

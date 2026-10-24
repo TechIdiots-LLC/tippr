@@ -20,6 +20,9 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
+- **A comment a moderator removed stayed in front of logged-out visitors for up to 2 minutes:** they get a thread's
+  comments from a short cache, which removing, approving, distinguishing or editing a comment didn't clear (it
+  follows the comment count). Those now change the thread's cache key, so the next view is built afresh.
 - **Removed posts and comments were hard to read for moderators:** their salmon background left the grey tagline and
   buttons at 1.4:1. They're a pale red with a red edge now.
 - **The unread message count was unreadable in night mode:** night mode's link colour turned it teal on its orange

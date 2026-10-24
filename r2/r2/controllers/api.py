@@ -131,6 +131,7 @@ from r2.lib.voting import cast_vote
 from r2.models import *
 from r2.models import wiki
 from r2.models.ip import set_account_ip
+from r2.models.link import comments_changed
 from r2.models.recommend import FEEDBACK_ACTIONS, AccountVaultFeedback
 from r2.models.rules import VaultRules
 from r2.models.vote import Vote
@@ -2284,6 +2285,8 @@ class ApiController(TipprController):
         item.ignore_reports = False
 
         item._commit()
+        if isinstance(item, Comment):
+            comments_changed([item.link_id])
 
         # only add to the edited page if this is marked as edited
         if hasattr(item, "editted"):
@@ -3600,6 +3603,8 @@ class ApiController(TipprController):
 
         thing.distinguished = how
         thing._commit()
+        if isinstance(thing, Comment):
+            comments_changed([thing.link_id])
 
         hooks.get_hook("thing.distinguish").call(thing=thing)
 

@@ -2085,11 +2085,14 @@ class CommentPane(Templated):
         elif num > 100:
             num = (num / 10) * 10
 
+        from r2.models.link import comment_version
         cache_key_args = [
             self.article._fullname,
             self.article.contest_mode,
             self.article.locked,
             num,
+            # removing, approving, distinguishing or editing a comment
+            comment_version(self.article),
             self.sort,
             self.num,
             c.lang,

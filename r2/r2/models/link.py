@@ -1348,6 +1348,28 @@ class LegacySearchResultLink(Link):
         Printable.add_props(user, wrapped)
 
 
+# Logged-out visitors (and members whose view is the same) get a thread's
+# comments from a cache for a couple of minutes (CommentPane,
+# commentpane_cache_time). Its key follows the comment count, which removing,
+# approving, distinguishing or editing a comment doesn't change, so a
+# comment a moderator removed stayed in front of visitors until the cache
+# ran out. Those bump the thread's comment version, part of the key, so the
+# next view is built afresh. (The version lives as long as the cache does:
+# when it lapses, so has every view made before the change.)
+COMMENT_VERSION_KEY = "comment_version:%s"
+
+
+def comment_version(link):
+    return g.gencache.get(COMMENT_VERSION_KEY % link._fullname) or 0
+
+
+def comments_changed(link_ids):
+    import time
+    for link_id in set(link_ids):
+        key = COMMENT_VERSION_KEY % Link._fullname_from_id36(utils.to36(link_id))
+        g.gencache.set(key, int(time.time() * 1000), time=g.commentpane_cache_time)
+
+
 class Comment(Thing, Printable):
     _cache = g.thingcache
     _data_int_props = Thing._data_int_props + ('reported', 'gildings')
