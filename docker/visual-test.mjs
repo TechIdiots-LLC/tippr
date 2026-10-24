@@ -118,7 +118,7 @@ async function session(name, viewport) {
     await page.goto(BASE + "/login", READY);
     await page.fill("#login-form input[name=user]", name);
     await page.fill("#login-form input[name=passwd]", accounts[name].password);
-    await Promise.all([page.waitForNavigation(), page.click("#login-form button[type=submit]")]);
+    await Promise.all([page.waitForNavigation(READY), page.click("#login-form button[type=submit]")]);
     const logged = await page.evaluate(() => window.r && r.config && r.config.logged);
     if (logged !== name) throw new Error(`${name} couldn't log in (logged in as ${logged})`);
   }
@@ -270,10 +270,14 @@ async function vote(s, fullname, dir, expect) {
 // A moderator's button on a post or comment ("remove", "lock", ...), with
 // its "are you sure?" answered (confirm: the answer's text), waiting for the
 // site to take it. (Some buttons have a hidden copy: the visible one is
-// used; "approve" on a removed comment is a button, not a link.)
+// used; "approve" on a removed comment is a button, not a link.) It waits
+// for the action's own request, /api/<label>: a thread page also posts on
+// its own (/api/here_now when it opens, live comments), and taking one of
+// those for the action reloaded the page before the action was sent.
 async function modAction(s, fullname, label, confirm = "yes") {
   const t = thing(s.page, fullname);
-  const done = s.page.waitForResponse((r) => r.url().includes("/api/") && r.request().method() === "POST",
+  const endpoint = new RegExp(`/api/${label}(?:[./?]|$)`);
+  const done = s.page.waitForResponse((r) => endpoint.test(r.url()) && r.request().method() === "POST",
                                       { timeout: 30000 });
   await t.locator(":scope > .entry :is(a, button):visible", { hasText: new RegExp(`^${label}$`) }).first().click();
   await s.page.waitForTimeout(500);
