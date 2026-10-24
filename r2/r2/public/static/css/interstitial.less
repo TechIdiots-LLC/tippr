@@ -57,6 +57,40 @@
   }
 }
 
+// admin mode on a remembered computer (admininterstitial.html): the note in
+// place of the code field, and "forget this computer" under the main button
+.admin-otp-remembered {
+  color: @tp-text-muted;
+  margin: (@margin-small * 1px) 0 0;
+}
+
+.admin-otp-forget {
+  border-top: 1px solid @tp-border;
+  margin: (@margin-xx-large * 1px) auto 0;
+  padding-top: @margin-large * 1px;
+  width: 400px;
+
+  .admin-otp-forget-button {
+    background: none;
+    border: none;
+    color: @tp-link;
+    cursor: pointer;
+    font: inherit;
+    font-size: @font-small * 1px;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .admin-otp-forget-note {
+    color: @tp-text-muted;
+    font-size: @font-x-small * 1px;
+    margin: (@margin-x-small * 1px) 0 0;
+  }
+}
+
 .interstitial .buttons {
   .display-flex();
   .justify-content(center);

@@ -39,7 +39,11 @@
 </%def>
 
 <%def name="interstitial_title()">
-  ${_('Enter your password and one-time code')}
+  %if c.otp_cached:
+    ${_('Enter your password')}
+  %else:
+    ${_('Enter your password and one-time code')}
+  %endif
 </%def>
 
 <%def name="interstitial_message()">
@@ -87,8 +91,9 @@
   % if c.otp_cached:
   <form action="/api/forget_otp" method="post"
       onsubmit="return post_form(this, 'forget_otp')" class="admin-otp-forget">
-    <button class="c-btn c-btn-secondary" type="submit">${_('forget this computer')}</button>
-    <small>${_("Asks for a one-time code again next time, here and anywhere else this computer was remembered for.")}</small>
+    <button class="admin-otp-forget-button" type="submit">${_('forget this computer')}</button>
+    <p class="admin-otp-forget-note">${_("Asks for a one-time code again next time, here and anywhere else this computer was remembered for.")}</p>
+    <p class="status error"></p>
   </form>
   % endif
 </%def>
