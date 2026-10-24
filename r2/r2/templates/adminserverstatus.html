@@ -61,7 +61,7 @@
     <% req = thing.update_request %>
     <p class="server-update-request">
       ${_("%(user)s asked for %(version)s %(time)s ago%(backup)s.") % dict(user=req.get('requested_by'), version=req.get('version'), time=req['age'], backup=_(", with a backup first") if req.get('backup') else "")}
-      ${_("Each server updates within a minute or so of its turn, one at a time; the site is down on each for 5-10 minutes while it does. Its state is on its card below.")}
+      ${_("Each server updates within a minute or so of its turn, one at a time; the site is down on each for a few minutes while it does. Its state is on its card below.")}
     </p>
     %if not thing.update_active:
       <form action="/post/server_update" method="post" class="pretty-form"
@@ -74,7 +74,7 @@
     %endif
   %elif thing.web_updates and thing.all_releases:
     <form action="/post/server_update" method="post" class="pretty-form server-update-form"
-          data-confirm="${_('Update the servers to this release? Each one goes down for 5-10 minutes while it updates, one at a time. Make a Proxmox snapshot first if you can.')}"
+          data-confirm="${_('Update the servers to this release? Each one goes down for a few minutes while it updates, one at a time. Make a Proxmox snapshot first if you can.')}"
           onsubmit="return confirm(this.getAttribute('data-confirm')) &amp;&amp; post_form(this, 'server_update')">
       <input type="hidden" name="do" value="update">
       <select name="version">

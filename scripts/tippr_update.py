@@ -408,7 +408,7 @@ def update(conf, ini, status, request):
                               "(see %s)" % LOG)
 
     status.set("installing", "the site is down until this finishes "
-                             "(5-10 minutes)")
+                             "(a few minutes)")
     run(["systemctl", "stop", "tippr.target"])
     if os.path.exists(old):
         shutil.rmtree(old)
