@@ -70,7 +70,8 @@
   traffic pipeline had finished; tippr counts as pages are viewed, so they list this month, and say so.
 - **The sitemap left out the front page:** it listed vaults from the most subscribed down, so the first page it
   gave search engines was the default /v/tippr ("Tippr Meta"), which Google then showed for a search for the site's
-  name. The front page is the sitemap's first entry now.
+  name. The front page is the sitemap's first entry now, followed by the vault directory (/vaults) and the help
+  pages and policies.
 - **Clicking a sponsored post failed:** its link goes through /click, served by reddit's separate click tracker,
   which was never ported to Python 3 (every click was an error) and which Docker installs didn't have at all. /click
   is part of the site now: it checks the link's signature, counts the click and sends the browser on. Updating

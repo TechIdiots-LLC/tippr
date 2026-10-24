@@ -18,7 +18,8 @@ By default ("recent" on /admin/site) they're made on request and cached
 for an hour:
 
   /sitemap.xml           the index, pointing at the two below
-  /sitemaps/vaults.xml   the front page, then public vaults, most subscribed
+  /sitemaps/vaults.xml   the front page, the vault directory and the help
+                         pages, then public vaults, most subscribed
                          first
   /sitemaps/posts.xml    the newest posts in public vaults
 
@@ -82,18 +83,34 @@ def _listable(vault):
             not getattr(vault, "quarantine", False))
 
 
-def listable_vaults():
-    """(path, None) for the front page, then each listable vault, most
-    subscribed first. (The front page first: without it, the first page a
-    search engine was told about was a default vault's, and it showed
-    /v/tippr for the site's own name.)"""
-    from r2.models import Vault
+def site_pages():
+    """(path, None) for the site's own public pages: the front page, the
+    vault directory, and the help pages and policies. (The front page
+    first: without it, the first page a search engine was told about was a
+    default vault's, and it showed /v/tippr for the site's own name.)"""
+    from r2.lib.help_pages import HELP_PAGES, POLICY_PAGES
     yield ("/", None)
+    yield ("/vaults/", None)
+    yield ("/help/", None)
+    for name in list(HELP_PAGES) + list(POLICY_PAGES):
+        yield ("/help/%s/" % name, None)
+
+
+def _vaults():
+    """Public vaults, most subscribed first."""
+    from r2.models import Vault
     query = Vault._query(Vault.c.type == ("public", "restricted", "archived"),
                          Vault.c._spam == False,
                          sort=(desc("_downs"), desc("_ups")),
                          data=True)
-    for vault in fetch_things2(query, chunk_size=1000):
+    return fetch_things2(query, chunk_size=1000)
+
+
+def listable_vaults():
+    """(path, None) for the site's own pages (site_pages), then each
+    listable vault, most subscribed first."""
+    yield from site_pages()
+    for vault in _vaults():
         if _listable(vault):
             yield ("/v/%s/" % vault.name, None)
 

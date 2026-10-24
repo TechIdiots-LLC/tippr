@@ -362,7 +362,7 @@ def make_map(config):
     # This unconditional mapping allows /help/<page> to reach the
     # PoliciesController even when domain/vault routing middleware sets
     # additional environ keys (see not_in_vault above).
-    # the help pages (docs/help/; PoliciesController.HELP_PAGES) and the
+    # the help pages (docs/help/; r2.lib.help_pages) and the
     # index of them
     mc('/help', controller='policies', action='help_index')
     mc('/help/', controller='policies', action='help_index')

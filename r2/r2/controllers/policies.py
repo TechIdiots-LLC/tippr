@@ -23,40 +23,20 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
-from collections import OrderedDict
-
 from bs4 import BeautifulSoup
 from pylons import app_globals as g
 from pylons import tmpl_context as c
-from pylons.i18n import N_, _
+from pylons.i18n import _
 
 from r2.controllers.tippr_base import TipprController
 from r2.lib.base import abort
 from r2.lib.db import tdb_cassandra
 from r2.lib.filters import generate_table_of_contents, unsafe, wikimarkdown
+from r2.lib.help_pages import HELP_PAGES, POLICY_PAGES
 from r2.lib.pages import HelpIndex, PolicyPage, PolicyView
 from r2.lib.validator import nop, validate
 from r2.models.vault import Frontpage
 from r2.models.wiki import WikiBadRevision, WikiPage, WikiRevision
-
-
-# The help pages (/help/<name>): wiki pages help/<name> in the site wiki,
-# loaded from docs/help/<name>.md by scripts/init_policy_wiki_pages.py.
-# Keep config/routing.py's /help/:page requirements in step.
-HELP_PAGES = OrderedDict([
-    ("faq", N_("frequently asked questions")),
-    ("search", N_("searching")),
-    ("formatting", N_("formatting posts and comments")),
-    ("rss", N_("RSS feeds")),
-    ("trophies", N_("trophies")),
-    ("suspensions", N_("timeouts and suspensions")),
-    ("quarantine", N_("quarantined vaults")),
-    ("muting", N_("muting in moderator mail")),
-    ("automoderator", N_("AutoModerator")),
-    ("api", N_("using the API")),
-    ("advertising", N_("advertising")),
-    ("translate", N_("translating")),
-])
 
 
 def help_wiki_name(page):
@@ -67,12 +47,7 @@ class PoliciesController(TipprController):
     def GET_help_index(self):
         """/help: the help pages and the policies."""
         pages = [(name, _(title)) for name, title in HELP_PAGES.items()]
-        policies = [
-            ("useragreement", _("user agreement")),
-            ("privacypolicy", _("privacy policy")),
-            ("contentpolicy", _("content policy")),
-            ("moderatorguidelines", _("moderator guidelines")),
-        ]
+        policies = [(name, _(title)) for name, title in POLICY_PAGES.items()]
         return PolicyPage(pagename=_("help"), help_page=True,
                           content=HelpIndex(pages=pages, policies=policies),
                           ).render()

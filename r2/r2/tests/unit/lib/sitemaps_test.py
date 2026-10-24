@@ -72,15 +72,19 @@ class CompleteSitemapsTest(unittest.TestCase):
 
 class ListableVaultsTest(unittest.TestCase):
     def test_front_page_first(self):
-        from r2.models import Vault
         books = mock.Mock(type="public", _spam=False, over_18=False,
                           quarantine=False)
         books.name = "books"
         nsfw = mock.Mock(type="public", _spam=False, over_18=True,
                          quarantine=False)
         nsfw.name = "nsfw"
-        with mock.patch.object(Vault, "_query"), \
-                mock.patch.object(live, "fetch_things2",
-                                  return_value=iter([books, nsfw])):
-            self.assertEqual(list(live.listable_vaults()),
-                             [("/", None), ("/v/books/", None)])
+        with mock.patch.object(live, "_vaults",
+                               return_value=iter([books, nsfw])):
+            paths = [path for path, _ in live.listable_vaults()]
+        self.assertEqual(paths[:3], ["/", "/vaults/", "/help/"])
+        for path in ("/help/faq/", "/help/formatting/",
+                     "/help/privacypolicy/", "/help/useragreement/"):
+            self.assertIn(path, paths)
+        # then the vaults, without the NSFW one
+        self.assertEqual(paths[-1], "/v/books/")
+        self.assertNotIn("/v/nsfw/", paths)
