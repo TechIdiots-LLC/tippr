@@ -5,6 +5,9 @@
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
+- **The admin mode page on a remembered computer looked unfinished:** "forget this computer" was a grey button with
+  its explanation wrapping beside it, and the heading still asked for a one-time code. It's now a link under the
+  main button with the explanation below it, and the heading asks for the password only.
 - _...Add new stuff here..._
 
 ## 0.20.0
@@ -21,8 +24,25 @@
   about 40 packages in groups at whatever versions were newest that day (and baseplate and formenergy-observability
   from their branches' tips). `TIPPR_BASEPLATE_PIP_URL` and `TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL` still install
   another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`.
+- **An account's status, from its /admin/users page:** its staff permission (none, employee, sponsor or admin: the
+  same employees list as /admin/config, with its checks, so no one removes their own admin permission), and whether
+  it's one of the site's own accounts (a test account, a bot). The system user, AutoModerator and feed bots count as
+  the site's own by themselves. The status column on /admin/users shows sponsors and employees too, and labels the
+  site's own accounts, which don't take an Early Member place.
+- **The consent banner asks about "optional analytics cookies"** instead of naming Google Analytics; the privacy
+  policy it links to says what they are. "Optional" makes clear that declining doesn't turn off the cookies the site
+  needs. The preference says the same.
+- **A clearer "Translating" help page** (/help/translate): how to fix a translation as numbered steps, the file to
+  edit on its own line, links to Poedit and Lokalize, and what to put in an issue as a list. The trophies help page
+  lists Early Member among the awards the site gives.
+- **Updates say the site is down for "a few minutes"** (on /admin/servers and in the updater) instead of 5–10.
 
 ### 🐞 Bug fixes
+- **/admin/servers showed the event collector queues in red** with no processor, as if stopped. They're for an
+  analytics event collector service, and without one (`events_collector_url`) the site queues nothing there and runs
+  no processor for them on purpose: they now say "off (no event collector)".
+- **The trophy case was unreadable in the dark theme:** award names were always black (and descriptions dark grey);
+  they follow the theme's text colors now.
 
 ## 0.19.0
 ### ✨ Features and improvements
@@ -56,22 +76,12 @@
   see them. /admin/users shows each account's label in a new column (the note on hover), lists the labels in use with
   how many accounts have each, and lists the accounts with one. Changes are logged under the account's admin
   actions.
-- **An account's status, from its /admin/users page:** its staff permission (none, employee, sponsor or admin: the
-  same employees list as /admin/config, with its checks, so no one removes their own admin permission), and whether
-  it's one of the site's own accounts (a test account, a bot). The system user, AutoModerator and feed bots count as
-  the site's own by themselves. The status column on /admin/users shows sponsors and employees too, and labels the
-  site's own accounts, which don't take an Early Member place.
 - **Forget all remembered devices** (preferences → security, with two-factor on): every browser that skips the code
   ("don't ask on this device" at login, "remember this computer" for admin mode and confirmations), this one too,
   is asked for a code again next time, for a lost device or a shared computer. Nobody is logged out. The section also
   says whether this device is remembered.
 
 ### 🐞 Bug fixes
-- **/admin/servers showed the event collector queues in red** with no processor, as if stopped. They're for an
-  analytics event collector service, and without one (`events_collector_url`) the site queues nothing there and runs
-  no processor for them on purpose: they now say "off (no event collector)".
-- **The trophy case was unreadable in the dark theme:** award names were always black (and descriptions dark grey);
-  they follow the theme's text colors now.
 - **Turning admin mode on from a remembered computer** still offered "use a passkey" beside the greyed-out code field
   (and, with passkeys only, asked for one on submit, though no code was needed). The form now says the computer is
   remembered, with no code field, and has a "forget this computer" button to ask for a code again next time.
