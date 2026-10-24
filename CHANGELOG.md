@@ -61,6 +61,8 @@
 - **/admin/servers ran words together, and an update's log was one long paragraph:** the page's space compression
   joined lines without a space ("The newest release is0.20.2", a server's name and id, "3.54(1, 5 and 15 minutes")
   and took the line breaks out of the log; both read properly now.
+- **/traffic/languages and the "top vaults" table were empty:** they listed last month, the newest reddit's batch
+  traffic pipeline had finished; tippr counts as pages are viewed, so they list this month, and say so.
 - **Updating could leave the queues and jobs stopped:** the installer installs the pinned Python packages, but pip
   kept a package already installed under the same name and version even when it came from elsewhere, and an older
   formenergy-observability from PyPI then conflicted with the pinned `packaging`: the pages worked, but paster refused

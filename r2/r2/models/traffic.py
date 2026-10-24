@@ -254,18 +254,18 @@ def make_history_query(cls, interval):
 
 
 def top_last_month(cls, key, ids=None, num=None):
-    """Aggregate a listing of the top items (by pageviews) last month.
+    """Aggregate a listing of the top items (by pageviews) this month.
 
-    We use the last month because it's guaranteed to be fully computed and
-    therefore will be more meaningful.
+    reddit used last month, the latest its batch pipeline had finished;
+    tippr counts as pages are viewed (r2.lib.traffic_counter), so this
+    month is up to date, and a new site has no last month.
 
     """
 
     cur_month = datetime.date.today().replace(day=1)
-    last_month = decrement_month(cur_month)
 
     q = (Session.query(cls)
-                .filter(cls.date == last_month)
+                .filter(cls.date == cur_month)
                 .filter(cls.interval == "month")
                 .order_by(desc(cls.date), desc(cls.pageview_count)))
 
@@ -431,12 +431,12 @@ class PageviewsByVault(Base):
         return fill_gaps(time_points, q, "unique_count", "pageview_count")
 
     @classmethod
-    @memoize_traffic(time=3600 * 6)
+    @memoize_traffic(time=3600)
     def top_last_month(cls, num=None):
         return top_last_month(cls, "vault", num=num)
 
     @classmethod
-    @memoize_traffic(time=3600 * 6)
+    @memoize_traffic(time=3600)
     def last_month(cls, vaults):
         ids = [vault.name for vault in vaults]
         return top_last_month(cls, "vault", ids=ids)
@@ -480,7 +480,7 @@ class PageviewsByLanguage(Base):
         return fill_gaps(time_points, q, "unique_count", "pageview_count")
 
     @classmethod
-    @memoize_traffic(time=3600 * 6)
+    @memoize_traffic(time=3600)
     def top_last_month(cls):
         return top_last_month(cls, "lang")
 
