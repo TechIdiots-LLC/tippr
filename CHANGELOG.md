@@ -2,6 +2,13 @@
 
 ## master
 ### ✨ Features and improvements
+- _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.20.1
+### ✨ Features and improvements
 - **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
   in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
   the post and the comments, changing and undoing votes, with the arrows and scores checked. A fifth account,
@@ -14,7 +21,6 @@
   for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
   screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
   docs/RELEASING.md.
-- _...Add new stuff here..._
 
 ### 🐞 Bug fixes
 - **Updating could leave the queues and jobs stopped:** the installer installs the pinned Python packages, but pip
@@ -44,7 +50,6 @@
   buttons at 1.4:1. They're a pale red with a red edge now.
 - **The unread message count was unreadable in night mode:** night mode's link colour turned it teal on its orange
   badge; it's white again.
-- _...Add new stuff here..._
 
 ## 0.20.0
 ### ✨ Features and improvements
