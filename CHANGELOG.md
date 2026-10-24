@@ -3,6 +3,24 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.20.1
+### ✨ Features and improvements
+- **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
+  in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
+  the post and the comments, changing and undoing votes, with the arrows and scores checked. A fifth account,
+  moderator of the test vault only, handles a member's report from the queue, removes and approves a comment,
+  distinguishes its own, locks and unlocks the thread, and bans and unbans a member, each checked as the moderator,
+  the members and logged-out visitors see it, and in the moderation log. And support requests: two members write to
+  the admins from the contact page; an admin turns on admin mode with a two-factor code, takes one, notes and replies,
+  and gives an employee one category, who sees only that; the member gets the answer from the admin team, without the
+  admin's name or the staff note, and their reply reaches the ticket. Every page is checked
+  for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
+  screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
+  docs/RELEASING.md.
 - **NSFW posts stay off the front page and /v/all unless a member asks for them:** being over 18 used to put
   every NSFW post in those listings, which also took the ads off those pages. A new preference, "show NSFW posts on
   the front page and /v/all" (off by default, and only for members who said they're over 18), brings them back;
@@ -22,32 +40,6 @@
   and tables, and reads properly in night mode; /help/formatting is rewritten to match.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
-- **Listings with NSFW posts still had AdSense ads:** 0.20.1's fix took ads off pages that show NSFW posts only for
-  search results; the front page, /v/all, other listings and profiles kept them. (Those listings already showed NSFW
-  posts only to people who said they're over 18; that part of the 0.20.1 note applied to search.)
-
-## 0.20.2
-### ✨ Features and improvements
-
-### 🐞 Bug fixes
-
-## 0.20.1
-### ✨ Features and improvements
-- **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
-  in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
-  the post and the comments, changing and undoing votes, with the arrows and scores checked. A fifth account,
-  moderator of the test vault only, handles a member's report from the queue, removes and approves a comment,
-  distinguishes its own, locks and unlocks the thread, and bans and unbans a member, each checked as the moderator,
-  the members and logged-out visitors see it, and in the moderation log. And support requests: two members write to
-  the admins from the contact page; an admin turns on admin mode with a two-factor code, takes one, notes and replies,
-  and gives an employee one category, who sees only that; the member gets the answer from the admin team, without the
-  admin's name or the staff note, and their reply reaches the ticket. Every page is checked
-  for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
-  screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
-  docs/RELEASING.md.
-
-### 🐞 Bug fixes
 - **Updating could leave the queues and jobs stopped:** the installer installs the pinned Python packages, but pip
   kept a package already installed under the same name and version even when it came from elsewhere, and an older
   formenergy-observability from PyPI then conflicted with the pinned `packaging`: the pages worked, but paster refused
@@ -57,10 +49,11 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
-- **NSFW posts were shown to everyone outside their vault:** on /v/all, the front page and profiles, logged out
-  too (only the vault's own page asked "are you over 18?"; hiding them elsewhere was reddit's safe_search
-  experiment, never on). They're shown only to people who said they're over 18 now, and a page showing any has
-  no AdSense ads, which Google doesn't allow next to adult content.
+- **Search showed NSFW posts to everyone, and pages with NSFW posts had ads:** search results included them for
+  people who hadn't said they're over 18, logged out too (hiding them was reddit's safe_search experiment, never
+  on); they're shown only to people who have now, as listings already did. And a page that shows any NSFW post
+  (the front page, /v/all, other listings, profiles, search) has no AdSense ads, which Google doesn't allow next to
+  adult content: before, only an NSFW vault's own pages and NSFW posts' pages dropped them.
 - **Every page loaded a tracking pixel nothing used, and on Docker it was missing:** reddit counted pageviews from
   the pixel's log, which nothing reads now that tippr counts them as it serves them, and Caddy had no route for it,
   so every page had a 404. Pages no longer load it (`tracker_url` is blank), and Caddy answers the remaining pixels
