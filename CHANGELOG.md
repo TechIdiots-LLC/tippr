@@ -16,6 +16,10 @@
   longer takes raw HTML tables (markdown tables do the same). Output is still checked against the same list of
   safe tags, raw HTML is still never used, and long or odd text renders quickly. Installs no longer build snudown
   or need gperf; linkify-it-py is new.
+- **Formatting buttons and help for the new markdown:** the toolbar over text boxes adds heading, code block,
+  numbered list, task list and table buttons (code on several lines now becomes a ``` block). The "formatting help"
+  table under the box shows every option, including strikethrough, superscript, headings, task lists, code blocks
+  and tables, and reads properly in night mode; /help/formatting is rewritten to match.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

@@ -79,6 +79,21 @@ $(function() {
     changed(ta)
   }
 
+  // what goes before a block at pos so it starts after a blank line
+  function blockLead(value, pos) {
+    if (pos === 0 || value.slice(pos - 2, pos) === '\n\n') {
+      return ''
+    }
+    return value.charAt(pos - 1) === '\n' ? '\n' : '\n\n'
+  }
+
+  // ``` lines around the selection (or a placeholder), on lines of their own
+  function fence(ta, placeholder) {
+    var start = ta.selectionStart
+    var after = ta.value.charAt(ta.selectionEnd) === '\n' ? '\n```' : '\n```\n'
+    surround(ta, blockLead(ta.value, start) + '```\n', after, placeholder)
+  }
+
   function insertText(ta, text) {
     var start = ta.selectionStart
     var value = ta.value
@@ -97,13 +112,30 @@ $(function() {
     code: function(ta) {
       var selected = ta.value.slice(ta.selectionStart, ta.selectionEnd)
       if (selected.indexOf('\n') !== -1) {
-        prefixLines(ta, '    ', '')
+        fence(ta, '')
       } else {
         surround(ta, '`', '`', r._('code'))
       }
     },
+    codeblock: function(ta) { fence(ta, r._('code')) },
+    heading: function(ta) { prefixLines(ta, '## ', r._('heading')) },
     quote: function(ta) { prefixLines(ta, '> ', r._('quoted text')) },
     list: function(ta) { prefixLines(ta, '* ', r._('item')) },
+    numbered: function(ta) { prefixLines(ta, '1. ', r._('item')) },
+    tasks: function(ta) { prefixLines(ta, '- [ ] ', r._('task')) },
+    table: function(ta) {
+      var start = ta.selectionStart
+      var heading = r._('heading')
+      var cell = r._('cell')
+      var table = blockLead(ta.value, start) +
+        '| ' + heading + ' | ' + heading + ' |\n' +
+        '|---|---|\n' +
+        '| ' + cell + ' | ' + cell + ' |\n'
+      insertText(ta, table)
+      // select the first heading so it can be typed over
+      var first = start + table.indexOf(heading)
+      ta.setSelectionRange(first, first + heading.length)
+    },
     link: function(ta) {
       var start = ta.selectionStart
       var text = ta.value.slice(start, ta.selectionEnd) || r._('link text')

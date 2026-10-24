@@ -36,9 +36,9 @@
   <div class="markhelp" style="display:none">
     <p>${md(strings.formatting_help_info)}</p>
     <table class="md">
-      <tr style="background-color: #ffff99; text-align: center">
-        <td><em>${_( "you type:")}</em></td>
-        <td><em>${_( "you see:")}</em></td>
+      <tr class="markhelp-head">
+        <th>${_( "you type:")}</th>
+        <th>${_( "you see:")}</th>
       </tr>
       <tr>
         <td>*${_( "italics")}*</td>
@@ -46,23 +46,69 @@
       </tr>
       <tr>
         <td>**${_( "bold")}**</td>
-        <td><b>${_( "bold")}</b></td>
+        <td><strong>${_( "bold")}</strong></td>
+      </tr>
+      <tr>
+        <td>~~${_("strikethrough")}~~</td>
+        <td><del>${_("strikethrough")}</del></td>
+      </tr>
+      <tr>
+        <td>super^script ^(${_("two words")})</td>
+        <td>super<sup>script</sup>&#32;<sup>${_("two words")}</sup></td>
+      </tr>
+      <tr>
+        <td>&gt;!${_("spoiler")}!&lt;</td>
+        <td><span class="md-spoiler-text">${_("spoiler")}</span></td>
+      </tr>
+      <tr>
+        <td>`${_("code")}`</td>
+        <td><code>${_("code")}</code></td>
       </tr>
       <tr>
         <td>[example](https://example.com)</td>
         <td><a href="https://example.com">example</a></td>
       </tr>
       <tr>
+        <td>/v/books u/name</td>
+        <td><a href="/v/books">/v/books</a>&#32;<a href="/u/name">u/name</a></td>
+      </tr>
+      <tr>
+        <td>## ${_("heading")}</td>
+        <td><strong class="markhelp-heading">${_("heading")}</strong></td>
+      </tr>
+      <tr>
         <td>
-          * ${_( "item")} 1<br/>
-          * ${_( "item")} 2<br/>
-          * ${_( "item")} 3
+          * ${_( "item")}<br/>
+          * ${_( "item")}
         </td>
         <td>
           <ul>
-            <li>${_( "item")} 1</li>
-            <li>${_( "item")} 2</li>
-            <li>${_( "item")} 3</li>
+            <li>${_( "item")}</li>
+            <li>${_( "item")}</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          1. ${_( "item")}<br/>
+          2. ${_( "item")}
+        </td>
+        <td>
+          <ol>
+            <li>${_( "item")}</li>
+            <li>${_( "item")}</li>
+          </ol>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          - [ ] ${_("to do")}<br/>
+          - [x] ${_("done")}
+        </td>
+        <td>
+          <ul>
+            <li class="md-task">&#9744; ${_("to do")}</li>
+            <li class="md-task">&#9745; ${_("done")}</li>
           </ul>
         </td>
       </tr>
@@ -71,39 +117,31 @@
         <td><blockquote>${_( "quoted text" )}</blockquote></td>
       </tr>
       <tr>
-          <td>
-              Lines starting with four spaces <br/>
-              are treated like code:<br/><br/>
-              <span class="spaces">
-                  &nbsp;&nbsp;&nbsp;&nbsp;
-              </span>
-              if 1 * 2 &lt; 3:<br/>
-              <span class="spaces">
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              </span>
-              print "hello, world!"<br/>
-          </td>
-          <td>Lines starting with four spaces <br/>
-              are treated like code:<br/>
-              <pre>if 1 * 2 &lt; 3:<br/>&nbsp;&nbsp;&nbsp;&nbsp;print "hello,
-              world!"</pre>
-          </td>
+        <td>
+          ```<br/>
+          if a &lt; b:<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;print("hello")<br/>
+          ```
+        </td>
+        ## (&#10; and &#32;: the page's space compression would join the lines)
+        <td><pre><code>if a &lt; b:&#10;&#32;&#32;&#32;&#32;print("hello")</code></pre></td>
       </tr>
       <tr>
-          <td>~~strikethrough~~</td>
-          <td><strike>strikethrough</strike></td>
+        <td>
+          | a | b |<br/>
+          |---|---|<br/>
+          | 1 | 2 |
+        </td>
+        <td>
+          <table>
+            <thead><tr><th>a</th><th>b</th></tr></thead>
+            <tbody><tr><td>1</td><td>2</td></tr></tbody>
+          </table>
+        </td>
       </tr>
       <tr>
-          <td>super^script</td>
-          <td>super<sup>script</sup></td>
-      </tr>
-      <tr>
-          <td>&gt;!${_("spoiler")}!&lt;</td>
-          <td><span class="md-spoiler-text">${_("spoiler")}</span></td>
-      </tr>
-      <tr>
-          <td>:thumbsup: :tada: :heart:</td>
-          <td>&#128077; &#127881; &#10084;&#65039;</td>
+        <td>:thumbsup: :tada: :heart:</td>
+        <td>&#128077; &#127881; &#10084;&#65039;</td>
       </tr>
       % if show_embed_help:
       <tr>
@@ -123,12 +161,18 @@
     <button type="button" class="md-tb" data-md="italic" title="${_('italic')} (Ctrl+I)"><i>I</i></button>
     <button type="button" class="md-tb" data-md="strike" title="${_('strikethrough')}"><s>S</s></button>
     <button type="button" class="md-tb" data-md="superscript" title="${_('superscript')}">x<sup>2</sup></button>
+    <button type="button" class="md-tb" data-md="spoiler" title="${_('spoiler')}">${_('spoiler')}</button>
     <span class="md-tb-sep"></span>
     <button type="button" class="md-tb" data-md="link" title="${_('link')}">${_('link')}</button>
+    <button type="button" class="md-tb" data-md="heading" title="${_('heading')}"><b>H</b></button>
     <button type="button" class="md-tb" data-md="quote" title="${_('quote')}">&#10077;</button>
     <button type="button" class="md-tb" data-md="code" title="${_('code')}">&lt;/&gt;</button>
+    <button type="button" class="md-tb" data-md="codeblock" title="${_('code block')}">{&#8202;}</button>
+    <span class="md-tb-sep"></span>
     <button type="button" class="md-tb" data-md="list" title="${_('bulleted list')}">&#8226;&#8212;</button>
-    <button type="button" class="md-tb" data-md="spoiler" title="${_('spoiler')}">${_('spoiler')}</button>
+    <button type="button" class="md-tb" data-md="numbered" title="${_('numbered list')}">1.&#8212;</button>
+    <button type="button" class="md-tb" data-md="tasks" title="${_('task list')}">&#9745;</button>
+    <button type="button" class="md-tb" data-md="table" title="${_('table')}">&#9638;</button>
     <span class="md-tb-sep"></span>
     <button type="button" class="md-tb md-tb-emoji" title="${_('emoji')}" aria-haspopup="dialog" aria-expanded="false">&#128578;</button>
     <button type="button" class="md-tb md-tb-preview" aria-pressed="false">${_('preview')}</button>
