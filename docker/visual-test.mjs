@@ -23,11 +23,17 @@
 //   - they vote on the post and the comments, change and undo votes; the
 //     arrows must show each voter's vote at once and after reloading, and
 //     the scores must follow (votes are counted by the vote queues)
+//   - visual_mod, a moderator of the test vault and nothing else: a member's
+//     report reaches its reports queue and clears when approved; a comment
+//     it removes shows "removed by" to it and vanishes for visitors, and
+//     comes back when approved; its own comment is distinguished; locking
+//     the thread stops members replying, unlocking lets them; a member it
+//     bans can't comment until the ban is lifted; the log lists it all
 //
 // On each page: no JavaScript errors, no failed requests to the site, no
 // sideways scrolling at phone width, and no text that can't be read on its
-// background (faint text is a warning). Screenshots and report.json go to VISUAL_OUT; it exits 1 when
-// something failed.
+// background (faint text is a warning). Screenshots and report.json go to
+// VISUAL_OUT; it exits 1 when something failed.
 //
 // usage: VISUAL_BASE=https://tippr.test VISUAL_SEED=seed.json \
 //        [VISUAL_OUT=dir] [VISUAL_RESOLVE=127.0.0.1] [CHROME=path] \
@@ -239,6 +245,43 @@ async function vote(s, fullname, dir, expect) {
               `the arrows should show "${expect}" straight away, not "${await voteState(s.page, fullname)}"`);
 }
 
+// A moderator's button on a post or comment ("remove", "lock", ...), with
+// its "are you sure?" answered (confirm: the answer's text), waiting for the
+// site to take it. (Some buttons have a hidden copy: the visible one is
+// used; "approve" on a removed comment is a button, not a link.)
+async function modAction(s, fullname, label, confirm = "yes") {
+  const t = thing(s.page, fullname);
+  const done = s.page.waitForResponse((r) => r.url().includes("/api/") && r.request().method() === "POST",
+                                      { timeout: 30000 });
+  await t.locator(":scope > .entry :is(a, button):visible", { hasText: new RegExp(`^${label}$`) }).first().click();
+  await s.page.waitForTimeout(500);
+  const answer = t.locator(":scope > .entry .flat-list a:visible", { hasText: new RegExp(`^${confirm}$`) });
+  if (await answer.count()) await answer.first().click();
+  await done;
+}
+
+// What a page says about a thing: shown at all, its classes, its text.
+const seen = (page, fullname) => page.evaluate((fullname) => {
+  const t = document.querySelector(`.thing[data-fullname="${fullname}"]`);
+  return t ? { classes: t.className, text: t.querySelector(":scope > .entry").innerText.replace(/\s+/g, " ") } : null;
+}, fullname);
+
+// Post a comment that may be refused: the error the form shows, or null.
+async function tryComment(s, text) {
+  const form = s.page.locator(".commentarea > form.usertext").first();
+  if (!(await form.count())) return "no comment box";
+  await form.locator("textarea[name=text]").fill(text);
+  await Promise.all([
+    s.page.waitForResponse((r) => r.url().includes("/api/comment"), { timeout: 30000 }),
+    form.locator("button.save").first().click(),
+  ]);
+  await s.page.waitForTimeout(800);
+  return form.evaluate((f) => {
+    const shown = [...f.querySelectorAll(".error, .status")].filter((e) => e.offsetParent && e.innerText.trim());
+    return shown.length ? shown.map((e) => e.innerText.trim()).join(" / ") : null;
+  });
+}
+
 let post;  // the post's fullname (tippr's posts are t1_, not reddit's t3_)
 async function comment(s, parentFullname, text) {
   const { page } = s;
@@ -358,6 +401,135 @@ try {
     const a = await visibleScore(bob.page, c1, true), b = await visibleScore(bob.page, c2, true);
     return (a === "4 points" && b === "0 points") || `${a} / ${b}`;
   });
+
+  // ---- moderation: visual_mod moderates /v/visualtest and nothing else ----
+  const mod = await session("visual_mod", "desktop");
+  const visitor = await session(null, "desktop");
+  const fresh = (s) => s.page.goto(`${postUrl}?t=${Date.now()}`, READY);  // past any page cache
+
+  // a member's report reaches the moderator, who approves it from the queue
+  await carol.page.reload(READY);
+  {
+    const t = thing(carol.page, c3);
+    await t.locator(":scope > .entry .flat-list a", { hasText: /^report$/ }).first().click();
+    const form = t.locator("form.report-action-form").first();
+    await form.locator("input[name=reason][value=spam]").check();
+    await Promise.all([
+      carol.page.waitForResponse((r) => r.url().includes("/api/report"), { timeout: 30000 }),
+      form.locator("button.submit-action-thing").click(),
+    ]);
+  }
+  await eventually("reports queue (as visual_mod)", "carol's report should be in the queue", async () => {
+    await mod.page.goto(`${BASE}/v/${VAULT}/about/reports/`, READY);
+    return (await thing(mod.page, c3).count()) > 0 || "not there";
+  });
+  await shoot(mod, "mod-reports");
+  if (await thing(mod.page, c3).count()) {
+    await modAction(mod, c3, "approve");
+    await mod.page.reload(READY);
+    await check("reports queue after approving", async () => !(await thing(mod.page, c3).count()),
+                "the approved comment should have left the queue");
+  }
+
+  // remove a comment: the moderator sees why, nobody else sees it; approve
+  // brings it back
+  await mod.page.goto(postUrl, READY);
+  await modAction(mod, c5, "remove");
+  await mod.page.reload(READY);
+  await check("removed comment (as visual_mod)", async () => /removed by visual_mod/.test((await seen(mod.page, c5) || {}).text || ""),
+              'the moderator should see "removed by visual_mod" on it');
+  await shoot(mod, "thread-removed");
+  await fresh(visitor);
+  await check("removed comment (logged out)", async () => !(await seen(visitor.page, c5)), "visitors shouldn't see it");
+  await modAction(mod, c5, "approve");
+  await fresh(visitor);
+  await check("approved comment (logged out)", async () => !!(await seen(visitor.page, c5)), "visitors should see it again");
+
+  // a moderator's comment, distinguished as the moderator's
+  const note = await comment(mod, post, "Moderator note: please keep the discussion civil.");
+  await mod.page.reload(READY);
+  await modAction(mod, note, "distinguish");
+  await fresh(visitor);
+  await check("distinguished comment (logged out)", async () =>
+    (await thing(visitor.page, note).locator(":scope > .entry .tagline .moderator").count()) > 0,
+    "it should be marked as a moderator's");
+  await shoot(visitor, "thread-mod-note");
+
+  // lock the thread: members are told, and can't reply (the reply links stay,
+  // as the kind that explains it's locked); unlock and they can
+  await mod.page.reload(READY);
+  await modAction(mod, post, "lock");
+  await bob.page.reload(READY);
+  await check("locked thread (as visual_bob)", async () =>
+    (await bob.page.getByText("This post is locked").count()) > 0 &&
+    !(await bob.page.locator(".commentarea > form.usertext").count()) &&
+    !(await bob.page.locator(".thing.comment > .entry .flat-list a:not(.locked-error)", { hasText: /^reply$/ }).count()),
+    "members should be told it's locked, with no comment box and no working reply links");
+  await shoot(bob, "thread-locked");
+  await shoot(mod, "thread-locked");
+  await mod.page.reload(READY);
+  await modAction(mod, post, "unlock");
+  {
+    const started = Date.now();
+    if (await eventually("unlocked thread (as visual_bob)", "members should have the comment box again", async () => {
+      await bob.page.reload(READY);
+      return (await bob.page.locator(".commentarea > form.usertext").count()) > 0 || "no comment box";
+    }, 30)) console.log(`unlocked thread: the comment box was back after ${Math.round((Date.now() - started) / 1000)}s`);
+  }
+
+  // ban dave from the vault: his comment is refused; lift it and he can again
+  await mod.page.goto(`${BASE}/v/${VAULT}/about/banned/`, READY);
+  {
+    const form = mod.page.locator("form#banned");
+    await form.locator("input[name=name]").fill("visual_dave");
+    await form.locator("input[name=note]").fill("browser test");
+    await form.locator("input[name=duration]").fill("1");
+    await form.locator("textarea[name=ban_message]").fill("A one-day ban from the browser test.");
+    await Promise.all([
+      mod.page.waitForResponse((r) => r.url().includes("/api/friend"), { timeout: 30000 }),
+      form.locator("button[type=submit], input[type=submit]").first().click(),
+    ]);
+  }
+  await mod.page.reload(READY);
+  await check("banned list", async () => (await mod.page.locator("table, .usertable, #banned-table").filter({ hasText: "visual_dave" }).count()) > 0,
+              "visual_dave should be on the banned list");
+  await shoot(mod, "mod-banned");
+  await dave.page.goto(postUrl, READY);
+  const refused = await tryComment(dave, "A comment while banned.");
+  await check("banned member's comment", async () => !!refused, "it should be refused");
+  console.log(`banned dave's comment: ${refused}`);
+  await shoot(dave, "thread-banned");
+  {
+    const row = mod.page.locator("tr", { hasText: "visual_dave" }).first();
+    await Promise.all([
+      mod.page.waitForResponse((r) => r.url().includes("/api/unfriend"), { timeout: 30000 }),
+      (async () => {
+        await row.locator("a", { hasText: /^remove$/ }).first().click();
+        await mod.page.waitForTimeout(400);
+        const yes = row.locator(".option.active a", { hasText: /^yes$/ });
+        if (await yes.count()) await yes.first().click();
+      })(),
+    ]);
+  }
+  await dave.page.reload(READY);
+  await check("unbanned member's comment", async () => (await tryComment(dave, "Back after the ban was lifted.")) === null,
+              "it should be accepted");
+
+  // the moderation log has all of it
+  await mod.page.goto(`${BASE}/v/${VAULT}/about/log/`, READY);
+  const log = await mod.page.evaluate(() => (document.querySelector(".modactionlisting") || document.body).innerText);
+  for (const [what, pattern] of [["the removal", /remove/i], ["the approval", /approve/i], ["the lock", /lock/i],
+                                 ["the ban", /ban/i], ["the distinguish", /distinguish/i]]) {
+    await check("moderation log", async () => pattern.test(log), `it should list ${what}`);
+  }
+  await shoot(mod, "mod-log");
+  for (const label of ["mod-log", "mod-reports"]) {
+    const s = await session("visual_mod", "phone");
+    await s.page.goto(`${BASE}/v/${VAULT}/about/${label === "mod-log" ? "log" : "reports"}/`, READY);
+    await shoot(s, label);
+    await s.context.close();
+  }
+  await visitor.context.close();
 
   // the thread, as each of them sees it (their own votes on the arrows)
   for (const s of [alice, bob, carol, dave]) {

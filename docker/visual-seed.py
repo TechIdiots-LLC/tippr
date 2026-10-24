@@ -20,7 +20,8 @@ can do: they post, comment and vote in the browser like anyone else. They're
 approved contributors of /v/visualtest (made here, owned by the admin), so
 brand-new accounts aren't held back by the comment and submit rate limits,
 and the one who posts has the post karma that skips the captcha. carol and
-dave use night mode, so the pages are seen in both themes.
+dave use night mode, so the pages are seen in both themes. visual_mod is a
+moderator of /v/visualtest and nothing else, for the moderator tools.
 
 Prints one line, "VISUAL_SEED " and the accounts as JSON
 ({name: {password, nightmode}}). Safe to re-run: existing accounts get new
@@ -45,7 +46,10 @@ MEMBERS = {
     "visual_bob": False,
     "visual_carol": True,
     "visual_dave": True,
+    "visual_mod": False,
 }
+# a moderator of /v/visualtest only: an ordinary account otherwise, not staff
+MODERATOR = "visual_mod"
 
 admin = Account._by_name(os.environ.get("TIPPR_ADMIN_USER") or "tippr")
 
@@ -73,6 +77,11 @@ for name, nightmode in MEMBERS.items():
     account._commit()
     if not vault.is_contributor(account):
         vault.add_contributor(account)
+    if name == MODERATOR and not vault.is_moderator(account):
+        vault.add_moderator(account)
+    # (an earlier run's ban, if the test stopped before lifting it)
+    if vault.is_banned(account):
+        vault.remove_banned(account)
     vault.add_subscriber(account)
     accounts[name] = {"password": password, "nightmode": nightmode}
 

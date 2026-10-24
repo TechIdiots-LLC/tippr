@@ -23,12 +23,17 @@ whole compose stack from it. `docker/smoke-test.sh` then checks:
 - that no background container logs an error.
 
 The browser test (`docker/visual-test.mjs`, with accounts from
-`docker/visual-seed.py`) drives Chrome as four ordinary members, not
-admins: one posts through the submit form, the others reply to each other
+`docker/visual-seed.py`) drives Chrome as ordinary members, not admins: one posts through the submit form, the others reply to each other
 four levels down a thread, and they all vote on the post and the comments,
 changing and undoing votes. The arrows must show each person's vote at once
 and after reloading, and the scores must follow once the vote queues have
-counted them. Every page they see is checked for JavaScript errors, failed
+counted them. A fifth account moderates the test vault and nothing else:
+a member's report must reach its reports queue and clear when approved; a
+comment it removes must show "removed by" to it and vanish for visitors,
+and come back when approved; its distinguished comment must be marked as a
+moderator's; locking the thread must stop members replying and unlocking
+let them again; a member it bans can't comment until the ban is lifted;
+and the moderation log must list all of it. Every page they see is checked for JavaScript errors, failed
 requests, sideways scrolling at phone width and text that can't be read on
 its background, and saved as a screenshot at desktop and phone width, in
 the light and the night theme. The screenshots are kept with the run (the
