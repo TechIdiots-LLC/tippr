@@ -349,6 +349,9 @@ class VaultListingController(ListingController):
         if isinstance(c.site, DefaultVault):
             render_params.update({'show_locationbar': True})
         else:
+            # the page's description (search results) is the vault's, as
+            # its link previews' is, not the site's
+            render_params["short_description"] = self._build_og_description()
             if not c.user_is_loggedin:
                 # This data is only for scrapers, which shouldn't be logged in.
                 

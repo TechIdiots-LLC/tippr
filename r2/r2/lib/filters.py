@@ -275,6 +275,22 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     else:
         return SC_OFF + text + SC_ON
 
+
+def markdown_text(text):
+    """What markdown reads as, in plain text on one line: for a page's
+    description (search results, link previews), which would otherwise
+    show the syntax ("* item", "[link](https://...)")."""
+    if not text:
+        return ""
+    html = snudown.markdown(_force_utf8(text), False, None)
+    if isinstance(html, bytes):
+        html = html.decode("utf-8")
+    # (a space between elements, so list items don't run together; none
+    # before punctuation that followed a link or code)
+    plain = " ".join(BeautifulSoup(html, "html.parser").get_text(" ").split())
+    return re.sub(r" ([,.;:!?)])", r"\1", plain)
+
+
 def wikimarkdown(text, include_toc=True, target=None):
     from r2.lib.template_helpers import add_vault, make_url_protocol_relative
     from r2.lib.utils import UrlParser

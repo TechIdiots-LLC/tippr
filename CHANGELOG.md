@@ -23,6 +23,9 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
+- **Search results showed the wrong descriptions:** a vault's page described the whole site (its link previews
+  already used the vault's own description), and a post's showed its markdown (`* item`, `[link](https://...)`).
+  A vault's page now has its own description, and a post's or comment's reads as plain text.
 - **A comment a moderator removed stayed in front of logged-out visitors for up to 2 minutes:** they get a thread's
   comments from a short cache, which removing, approving, distinguishing or editing a comment didn't clear (it
   follows the comment count). Those now change the thread's cache key, so the next view is built afresh.

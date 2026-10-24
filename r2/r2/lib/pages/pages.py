@@ -55,6 +55,7 @@ from r2.lib.db.operators import asc
 from r2.lib.filters import (
     _force_unicode,
     _force_utf8,
+    markdown_text,
     scriptsafe_dumps,
     spaceCompress,
     unsafe,
@@ -1815,7 +1816,8 @@ class LinkInfoPage(Tippr):
         title = strings.link_info_title % params
         short_description = None
         if link and link.selftext and not (link._spam or link._deleted):
-            short_description = _truncate(link.selftext.strip(), MAX_DESCRIPTION_LENGTH)
+            # (as it reads, not its markdown)
+            short_description = _truncate(markdown_text(link.selftext), MAX_DESCRIPTION_LENGTH)
         # only modify the title if the comment/author are neither deleted nor spam
         if comment and not comment._deleted and not comment._spam:
             author = Account._byID(comment.author_id, data=True)
@@ -1823,7 +1825,7 @@ class LinkInfoPage(Tippr):
             if not author._deleted and not author._spam:
                 params = {'author' : author.name, 'title' : _force_unicode(link_title)}
                 title = strings.permalink_title % params
-                short_description = _truncate(comment.body.strip(), MAX_DESCRIPTION_LENGTH) if comment.body else None
+                short_description = _truncate(markdown_text(comment.body), MAX_DESCRIPTION_LENGTH) if comment.body else None
 
         self.subtitle = subtitle
 
