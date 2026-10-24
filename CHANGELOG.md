@@ -49,6 +49,13 @@
   posts that break a rule. Posters, logged-out visitors (asked to log in), members in a timeout, and removed,
   archived or sponsored posts can't be tipped. Tips are kept in PostgreSQL (`scale_tips`) and are in a member's
   data export.
+- **Updating from /admin/servers shows its progress:** while an update runs, the page keeps itself up to date every
+  few seconds instead of needing reloads. Each server's card says what it's doing and for how long, with its log's
+  latest lines open, and the updater now refreshes those every 10 seconds while the backup and the installer run
+  (before, the page heard nothing from it until a step finished). While the site is down for the install, the page
+  says so and keeps checking, then catches up when it's back; it stops once every server has finished. Servers
+  that haven't started yet say they're waiting. (The updater that runs an update is the one already installed, so
+  the progress reports start with the update after this one.)
 
 ### 🐞 Bug fixes
 - **Updating could leave the queues and jobs stopped:** the installer installs the pinned Python packages, but pip

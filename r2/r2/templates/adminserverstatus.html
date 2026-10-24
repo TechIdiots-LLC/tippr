@@ -20,7 +20,9 @@
       return "%.1f GB" % ((n or 0) / 1024.0 ** 3)
 %>
 
-<div class="admin-servers">
+## data-watch: an update is running, and the page keeps itself up to date
+## (admin-servers.js)
+<div class="admin-servers" ${'data-watch="1"' if thing.update_watch else ''}>
 <h1>${_("servers")}</h1>
 <p>${_("Each server reports its state here once a minute (tippr-job-server_status). Only the latest report is kept; a server that stops reporting is flagged after 3 minutes and dropped after 7 days, or forget it below once it's out of service.")}</p>
 
@@ -62,7 +64,11 @@
     <p class="server-update-request">
       ${_("%(user)s asked for %(version)s %(time)s ago%(backup)s.") % dict(user=req.get('requested_by'), version=req.get('version'), time=req['age'], backup=_(", with a backup first") if req.get('backup') else "")}
       ${_("Each server updates within a minute or so of its turn, one at a time; the site is down on each for a few minutes while it does. Its state is on its card below.")}
+      %if thing.update_watch:
+        ${_("This page keeps itself up to date until it's done, including while the site is down.")}
+      %endif
     </p>
+    <p class="server-update-down" style="display: none"></p>
     %if not thing.update_active:
       <form action="/post/server_update" method="post" class="pretty-form"
             onsubmit="return post_form(this, 'server_update')">
@@ -94,7 +100,8 @@
 </div>
 
 %for s in thing.servers:
-  <div class="server-card ${'server-stale' if s['stale'] else ''} ${'server-warn' if s['warnings'] else ''}">
+  <div class="server-card ${'server-stale' if s['stale'] else ''} ${'server-warn' if s['warnings'] else ''}"
+       data-server="${s['id']}">
     <h2>
       ${s.get('name')}
       <small><code>${s['id']}</code>
@@ -122,6 +129,7 @@
           </td></tr>
       <% u = s.get('update_status') %>
       %if u and not u.get('old'):
+        <% running = u.get('state') in thing.update_active_states %>
         <tr><td>${_("update")}</td>
             <td class="server-update-state server-update-${u.get('state')}">
               <strong>${_(thing.update_states.get(u.get('state'), u.get('state') or '?'))}</strong>
@@ -129,13 +137,22 @@
               %if u.get('from_version'):
                 <small>${_("(from %(version)s)") % dict(version=u['from_version'])}</small>
               %endif
+              %if running and u.get('step_age'):
+                <small>&middot; ${_("for %(time)s") % dict(time=u['step_age'])}</small>
+              %endif
               %if u.get('message'):
                 <br><small>${u['message']}</small>
               %endif
               %if u.get('log'):
-                <details><summary><small>${_("log")}</small></summary>
+                ## open while it runs: its latest lines are the progress
+                <details ${'open' if running else ''}><summary><small>${_("log")}</small></summary>
                   <pre class="server-update-log">${"\n".join(u['log'])}</pre></details>
               %endif
+            </td></tr>
+      %elif thing.update_request and not s['stale']:
+        <tr><td>${_("update")}</td>
+            <td class="server-update-state">
+              ${_("asked for %(version)s: it starts within a minute, or when it's this server's turn") % dict(version=thing.update_request.get('version'))}
             </td></tr>
       %endif
       <tr><td>${_("reported")}</td>

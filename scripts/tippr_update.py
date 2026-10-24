@@ -75,6 +75,9 @@ DOMAIN_RE = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-
 DOWNLOAD_TIMEOUT = 60
 INSTALL_TIMEOUT = 3 * 3600
 CHECK_SECONDS = 300
+# while the backup or the installer runs, the page's report (its log lines
+# and how long it's taken) is refreshed this often
+PROGRESS_SECONDS = 10
 
 
 class UpdateError(Exception):
@@ -232,26 +235,27 @@ class Zk:
         else:
             zk.create(path, data, acl=self.acl())
 
-    def put(self, path, value, zk=None):
+    def put(self, path, value, zk=None, attempts=12):
         """Write value (JSON) at path: with zk, on that connection; else on
-        a new one, retried for a while (ZooKeeper may be restarting)."""
+        a new one, tried attempts times 10 seconds apart (ZooKeeper may be
+        restarting)."""
         data = json.dumps(value, sort_keys=True).encode("utf-8")
         if zk is not None:
             self._write(zk, path, data)
             return True
-        for attempt in range(12):
+        for attempt in range(attempts):
+            if attempt:
+                time.sleep(10)
             try:
                 conn = self.connect()
             except Exception as e:
-                log("couldn't reach ZooKeeper (%s); trying again" % e)
-                time.sleep(10)
+                log("couldn't reach ZooKeeper (%s)" % e)
                 continue
             try:
                 self._write(conn, path, data)
                 return True
             except Exception as e:
-                log("couldn't write to ZooKeeper (%s); trying again" % e)
-                time.sleep(10)
+                log("couldn't write to ZooKeeper (%s)" % e)
             finally:
                 conn.stop()
                 conn.close()
@@ -271,9 +275,19 @@ class Status:
 
     def set(self, state, message="", zk=None):
         log("%s: %s %s" % (self.record["version"], state, message))
-        self.record.update(state=state, message=message,
-                           updated=int(time.time()), log=log_tail())
+        now = int(time.time())
+        if state != self.record.get("state"):
+            self.record["step_started"] = now
+        self.record.update(state=state, message=message, updated=now,
+                           log=log_tail())
         self.zk.put("%s/%s" % (STATUS_PATH, self.me), self.record, zk=zk)
+
+    def progress(self):
+        """The same step, with the log's latest lines: while the backup or
+        the installer runs. One try, so a ZooKeeper the installer is
+        restarting doesn't hold it up; the next one catches up."""
+        self.record.update(updated=int(time.time()), log=log_tail())
+        self.zk.put("%s/%s" % (STATUS_PATH, self.me), self.record, attempts=1)
 
 
 ###############################################################################
@@ -341,17 +355,29 @@ def unpack(tarball, dest):
         raise UpdateError("the tarball has no tippr/install-tippr.sh")
 
 
-def run(command, timeout=None):
-    """Run a command with its output in the log; its exit status."""
+def run(command, timeout=None, progress=None):
+    """Run a command with its output in the log; its exit status. progress,
+    if given, is called every PROGRESS_SECONDS while it runs."""
     log("running: %s" % " ".join(command))
+    deadline = time.time() + timeout if timeout else None
     with open(LOG, "a") as out:
-        try:
-            return subprocess.run(command, stdout=out, stderr=subprocess.STDOUT,
-                                  stdin=subprocess.DEVNULL,
-                                  timeout=timeout).returncode
-        except subprocess.TimeoutExpired:
-            log("timed out after %d seconds" % timeout)
-            return -1
+        proc = subprocess.Popen(command, stdout=out, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL)
+        while True:
+            try:
+                return proc.wait(timeout=PROGRESS_SECONDS)
+            except subprocess.TimeoutExpired:
+                pass
+            if deadline and time.time() > deadline:
+                proc.kill()
+                proc.wait()
+                log("timed out after %d seconds" % timeout)
+                return -1
+            if progress:
+                try:
+                    progress()
+                except Exception as e:
+                    log("couldn't report progress: %r" % e)
 
 
 def site_answers(domain, seconds=CHECK_SECONDS):
@@ -377,13 +403,14 @@ def site_answers(domain, seconds=CHECK_SECONDS):
     return False
 
 
-def install(src, user, domain):
+def install(src, user, domain, progress=None):
     """Run the installer (tippr-firstboot) from the code now in src."""
     shutil.copyfile(os.path.join(src, "tippr", "proxmox", "tippr-firstboot"),
                     FIRSTBOOT)
     os.chmod(FIRSTBOOT, 0o755)
     subprocess.run(["chown", "-R", "%s:%s" % (user, user), src], check=True)
-    return run([FIRSTBOOT, domain], timeout=INSTALL_TIMEOUT) == 0
+    return run([FIRSTBOOT, domain], timeout=INSTALL_TIMEOUT,
+               progress=progress) == 0
 
 
 def update(conf, ini, status, request):
@@ -403,7 +430,8 @@ def update(conf, ini, status, request):
 
     if request.get("backup", True) and os.path.exists(BACKUP):
         status.set("backing_up")
-        if run([BACKUP, "export"], timeout=INSTALL_TIMEOUT) != 0:
+        if run([BACKUP, "export"], timeout=INSTALL_TIMEOUT,
+               progress=status.progress) != 0:
             raise UpdateError("the backup failed, so nothing was changed "
                               "(see %s)" % LOG)
 
@@ -414,7 +442,7 @@ def update(conf, ini, status, request):
         shutil.rmtree(old)
     os.rename(src, old)
     os.rename(new, src)
-    ok = install(src, user, domain)
+    ok = install(src, user, domain, status.progress)
     if ok:
         status.set("checking")
         ok = site_answers(domain)
@@ -430,7 +458,7 @@ def update(conf, ini, status, request):
         shutil.rmtree(failed)
     os.rename(src, failed)
     os.rename(old, src)
-    if install(src, user, domain) and site_answers(domain):
+    if install(src, user, domain, status.progress) and site_answers(domain):
         status.set("rolled_back", "%s didn't come up, so the old version is "
                    "back; the new code is in %s (see %s)"
                    % (version, failed, LOG))

@@ -193,7 +193,7 @@ class TestHandle(TipprTestCase):
             def get(self, path):
                 return test.nodes.get(path)
 
-            def put(self, path, value, zk=None):
+            def put(self, path, value, zk=None, attempts=12):
                 test.nodes[path] = json.loads(json.dumps(value))
                 return True
 
@@ -272,3 +272,62 @@ class TestHandle(TipprTestCase):
         self.updater.handle(self.conf)
         self.assertEqual(self.mine()["state"], "failed")
         self.assertEqual(self.updated, [])
+
+
+class TestProgress(TipprTestCase):
+    """While the backup or the installer runs, the page's report keeps up."""
+
+    def setUp(self):
+        self.updater = load_updater()
+        self.dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.dir)
+        self.updater.LOG = os.path.join(self.dir, "update.log")
+        self.updater.PROGRESS_SECONDS = 0.2
+        self.puts = []
+        test = self
+
+        class Zk:
+            def put(self, path, value, zk=None, attempts=12):
+                test.puts.append((json.loads(json.dumps(value)), attempts))
+                return True
+
+        self.status = self.updater.Status(Zk(), "me", dict(id="r1", version="0.15.0"),
+                                          "0.14.0")
+
+    def test_run_reports_while_it_runs(self):
+        calls = []
+        code = self.updater.run(["sh", "-c", "echo working; sleep 1"],
+                                progress=lambda: calls.append(1))
+        self.assertEqual(code, 0)
+        self.assertGreaterEqual(len(calls), 2)
+        with open(self.updater.LOG) as f:
+            self.assertIn("working", f.read())
+
+    def test_run_times_out(self):
+        start = time.time()
+        self.assertEqual(self.updater.run(["sleep", "10"], timeout=0.5), -1)
+        self.assertLess(time.time() - start, 5)
+
+    def test_a_progress_error_doesnt_stop_it(self):
+        def broken():
+            raise RuntimeError("ZooKeeper is restarting")
+        self.assertEqual(self.updater.run(["sleep", "0.5"], progress=broken), 0)
+
+    def test_progress_keeps_the_step_and_tries_once(self):
+        self.status.set("installing", "the site is down")
+        started = self.puts[-1][0]["step_started"]
+        self.updater.log("pip install ...")
+        self.status.progress()
+        record, attempts = self.puts[-1]
+        self.assertEqual(attempts, 1)
+        self.assertEqual(record["state"], "installing")
+        self.assertEqual(record["step_started"], started)
+        self.assertIn("pip install", record["log"][-1])
+
+    def test_a_new_step_starts_its_clock(self):
+        self.status.set("backing_up")
+        self.status.record["step_started"] -= 100
+        self.status.set("backing_up")
+        self.assertLess(self.puts[-1][0]["step_started"], time.time() - 50)
+        self.status.set("installing")
+        self.assertGreaterEqual(self.puts[-1][0]["step_started"], int(time.time()) - 1)

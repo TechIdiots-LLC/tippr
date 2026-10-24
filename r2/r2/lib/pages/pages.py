@@ -4363,19 +4363,37 @@ class AdminServerStatus(Templated):
         self.update_request = server_update.request(g.zookeeper)
         statuses = server_update.statuses(g.zookeeper)
         self.update_states = server_update.STATES
+        self.update_active_states = server_update.ACTIVE_STATES
         self.update_active = False
+        now = time.time()
         for s in self.servers:
             status = statuses.get(s["id"])
             if (status and self.update_request and
                     status.get("request_id") != self.update_request.get("id")):
                 status = dict(status, old=True)
+            if status and status.get("step_started"):
+                status["step_age"] = self._duration(now - status["step_started"])
             s["update_status"] = status
             if (status and not status.get("old") and
                     status.get("state") in server_update.ACTIVE_STATES):
                 self.update_active = True
         if self.update_request:
             self.update_request["age"] = self._duration(
-                time.time() - self.update_request.get("requested", 0))
+                now - self.update_request.get("requested", 0))
+
+        def unfinished(s):
+            status = s["update_status"]
+            if status and not status.get("old"):
+                return status.get("state") not in server_update.FINISHED_STATES
+            # not started yet (a server that's stopped reporting won't)
+            return not s["stale"]
+
+        # the page keeps itself up to date (admin-servers.js) until every
+        # server has finished the update asked for (for a few hours at most)
+        self.update_watch = bool(
+            self.update_request and
+            now - self.update_request.get("requested", 0) < 6 * 3600 and
+            any(unfinished(s) for s in self.servers))
 
     @staticmethod
     def _duration(seconds):

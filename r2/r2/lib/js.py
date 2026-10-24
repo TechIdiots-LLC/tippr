@@ -647,6 +647,7 @@ module["tippr"] = LocalizedModule("tippr.js",
     "live-comments.js",
     "here-now.js",
     "scales.js",
+    "admin-servers.js",
     "enhancements.js",
     PermissionsDataSource({
         "moderator": ModeratorPermissionSet,
