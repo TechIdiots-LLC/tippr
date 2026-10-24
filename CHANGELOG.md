@@ -5,9 +5,6 @@
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
-- **The admin mode page on a remembered computer looked unfinished:** "forget this computer" was a grey button with
-  its explanation wrapping beside it, and the heading still asked for a one-time code. It's now a link under the
-  main button with the explanation below it, and the heading asks for the password only.
 - _...Add new stuff here..._
 
 ## 0.20.0
@@ -43,6 +40,9 @@
   no processor for them on purpose: they now say "off (no event collector)".
 - **The trophy case was unreadable in the dark theme:** award names were always black (and descriptions dark grey);
   they follow the theme's text colors now.
+- **The admin mode page on a remembered computer looked unfinished:** "forget this computer" was a grey button with
+  its explanation wrapping beside it, and the heading still asked for a one-time code. It's now a link under the
+  main button with the explanation below it, and the heading asks for the password only.
 
 ## 0.19.0
 ### ✨ Features and improvements
