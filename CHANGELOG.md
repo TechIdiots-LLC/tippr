@@ -7,6 +7,15 @@
   every NSFW post in those listings, which also took the ads off those pages. A new preference, "show NSFW posts on
   the front page and /v/all" (off by default, and only for members who said they're over 18), brings them back;
   NSFW vaults and their posts are shown in the vault itself as before.
+- **Markdown follows CommonMark now, in place of reddit's snudown:** posts, comments, messages, sidebars and the
+  wiki use markdown-it-py, the standard most sites follow, with GitHub's tables, ~~strikethrough~~ and bare links,
+  and tippr's own super^script, ^(several words), >!spoilers!< and :emoji:. New: task lists (`- [ ]` / `- [x]`
+  show as ☐ / ☑), `[words](example.com)` links without `https://`, and /v/vault links, which snudown never made
+  (it linked reddit's /r/ instead). A picture's address, `![words](address)`, is a link to it outside the wiki,
+  not leftover syntax. Differences: a heading needs a space after its `#`s (`#1` stays as typed), and the wiki no
+  longer takes raw HTML tables (markdown tables do the same). Output is still checked against the same list of
+  safe tags, raw HTML is still never used, and long or odd text renders quickly. Installs no longer build snudown
+  or need gperf; linkify-it-py is new.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

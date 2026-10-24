@@ -45,7 +45,6 @@ from urllib.parse import unquote, unquote_plus, urlparse, urlunparse
 from urllib.request import Request
 
 import pytz
-import snudown
 import unidecode
 from babel.dates import TIMEDELTA_UNITS
 from bs4 import BeautifulSoup, SoupStrainer
@@ -55,6 +54,7 @@ from pylons import config, request
 from pylons import tmpl_context as c
 
 from r2.lib.filters import _force_unicode, _force_utf8
+from r2.lib.markdown import render as render_markdown
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.utils._utils import *
 
@@ -1638,7 +1638,7 @@ def constant_time_compare(actual, expected):
 def extract_urls_from_markdown(md):
     "Extract URLs that will be hot links from a piece of raw Markdown."
 
-    html = snudown.markdown(_force_utf8(md))
+    html = render_markdown(md)
     links = SoupStrainer("a")
 
     for link in BeautifulSoup(html, 'html.parser', parse_only=links).find_all('a'):

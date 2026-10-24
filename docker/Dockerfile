@@ -64,7 +64,7 @@ FROM ${UBUNTU} AS build
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential python3.12 python3.12-dev python3.12-venv \
-        git ca-certificates curl gperf gettext make \
+        git ca-certificates curl gettext make \
         libpq-dev libmemcached-dev zlib1g-dev libgeoip-dev libsnappy-dev \
         libxml2-dev libxslt1-dev libjpeg-dev libffi-dev libssl-dev \
         nodejs npm optipng jpegoptim thrift-compiler libpcre3-dev \

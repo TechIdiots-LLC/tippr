@@ -105,9 +105,9 @@ setup(
         "amqp",
         # py-bcrypt works but bcrypt is the modern maintained version
         "bcrypt",
-        # snudown requires compilation with gperf. On Ubuntu: apt install gperf build-essential python3-dev
-        # Using master branch for Python 3.12 compatibility (v1.5.0 uses Py_InitModule3 which is Python 2 only)
-        "snudown @ https://github.com/reddit/snudown/archive/refs/heads/master.zip",
+        # markdown (r2.lib.markdown), in place of reddit's snudown
+        "markdown-it-py",
+        "linkify-it-py",
         "lxml",
         "kazoo",
         "stripe",

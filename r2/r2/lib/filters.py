@@ -27,7 +27,7 @@ import json
 import re
 from collections import Counter
 
-import snudown
+from r2.lib.markdown import render as render_markdown
 from bs4 import BeautifulSoup
 from pylons import tmpl_context as c
 
@@ -267,7 +267,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
         return None
 
     target = kwargs.get("target", None)
-    text = snudown.markdown(_force_utf8(text), nofollow, target)
+    text = render_markdown(text, nofollow, target)
     text = emojify_html(text)
 
     if wrap:
@@ -282,7 +282,7 @@ def markdown_text(text):
     show the syntax ("* item", "[link](https://...)")."""
     if not text:
         return ""
-    html = snudown.markdown(_force_utf8(text), False, None)
+    html = render_markdown(text)
     if isinstance(html, bytes):
         html = html.decode("utf-8")
     # (a space between elements, so list items don't run together; none
@@ -313,14 +313,10 @@ def wikimarkdown(text, include_toc=True, target=None):
     
     nofollow = True
     
-    text = snudown.markdown(_force_utf8(text), nofollow, target,
-                            renderer=snudown.RENDERER_WIKI)
-    
+    text = render_markdown(text, nofollow, target, wiki=True)
+
     # TODO: We should test how much of a load this adds to the app
-    if isinstance(text, bytes):
-        soup = BeautifulSoup(text.decode('utf-8'), 'html.parser')
-    else:
-        soup = BeautifulSoup(text, 'html.parser')
+    soup = BeautifulSoup(text, 'html.parser')
     images = soup.find_all('img')
     
     if images:
