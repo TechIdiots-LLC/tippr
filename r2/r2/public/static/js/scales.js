@@ -56,8 +56,17 @@ r.scales = {
     }
     $panel.empty()
     var hidden = false
+    // the scales behind "more scales": as they last opened or folded them,
+    // or open when one of them has their tip
+    var more = _.filter(res.scales, function(scale) { return scale.more })
+    var moreOpen = $panel.data('more-open')
+    if (moreOpen === undefined) {
+      moreOpen = _.some(more, function(scale) { return scale.mine })
+    }
     _.each(res.scales, function(scale) {
       var $row = $('<div class="scale">').attr('data-scale', scale.name)
+        .toggleClass('scale-more', !!scale.more)
+        .toggleClass('scale-folded', !!scale.more && !moreOpen)
       var $left = self.side(scale, -1, scale.left, res.can_tip)
       var $right = self.side(scale, 1, scale.right, res.can_tip)
       var $beam = $('<div class="scale-beam" aria-hidden="true">')
@@ -81,6 +90,12 @@ r.scales = {
       $row.append($left, $beam, $right, $count)
       $panel.append($row)
     })
+
+    if (more.length) {
+      $panel.append($('<a href="javascript: void 0;" class="scales-more">')
+        .attr('aria-expanded', moreOpen ? 'true' : 'false')
+        .text(moreOpen ? r._('fewer scales') : r._('more scales')))
+    }
 
     var $note = $('<p class="scales-note">')
     if (res.is_poster) {
@@ -145,6 +160,16 @@ $(function() {
   $(document).on('click', '.scales-panel .scale-side', function(e) {
     e.preventDefault()
     r.scales.tip($(this).thing(), $(this))
+  })
+
+  $(document).on('click', '.scales-panel .scales-more', function(e) {
+    e.preventDefault()
+    var $panel = $(this).closest('.scales-panel')
+    var open = $(this).attr('aria-expanded') !== 'true'
+    $panel.data('more-open', open)
+    $panel.find('.scale-more').toggleClass('scale-folded', !open)
+    $(this).attr('aria-expanded', open ? 'true' : 'false')
+      .text(open ? r._('fewer scales') : r._('more scales'))
   })
 
   $(document).on('click', '.scales-panel .scales-report', function(e) {

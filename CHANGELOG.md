@@ -39,8 +39,10 @@
   table under the box shows every option, including strikethrough, superscript, headings, task lists, code blocks
   and tables, and reads properly in night mode; /help/formatting is rewritten to match.
 - **Scales: tip a post toward what it's like.** Up and down votes rank posts; a post's new "scales" link (beside
-  "share") opens three scales to tip instead: helpful ↔ unhelpful, human-made ↔ probably AI, and light ↔ serious.
-  Each member tips each scale once, and can change sides or take the tip back. A scale's tally (how many tipped
+  "share") opens scales to tip instead: helpful ↔ unhelpful, human-made ↔ probably AI and beginner-friendly ↔
+  in-depth, and behind "more scales", practical ↔ just for fun, well-sourced ↔ opinion and calm ↔ heated (open
+  already when you've tipped one of those). Each member tips each scale once, and can change sides or take the tip
+  back. A scale's tally (how many tipped
   each way, and a bar of the split) shows once you've tipped it, so the first tips don't steer everyone else, and
   the poster sees all of theirs. Scales are opinions, not reports: they don't rank posts, don't go to moderators,
   and "probably AI" sits beside the poster's own AI label without changing it; the panel points to "report" for

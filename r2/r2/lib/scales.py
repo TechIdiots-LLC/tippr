@@ -15,9 +15,9 @@
 """Scales: what the community thinks a post is like.
 
 Up and down votes rank posts; scales describe them. Each scale has two
-sides (helpful or unhelpful, human-made or probably AI, light or serious),
-and a member can tip each one toward a side, change their mind, or take
-the tip back. A scale's tally is shown to a member once they've tipped it
+sides (helpful or unhelpful, human-made or probably AI, beginner-friendly or
+in-depth, and three more behind "more scales"), and a member can tip each
+one toward a side, change their mind, or take the tip back. A scale's tally is shown to a member once they've tipped it
 (so the first few tips don't steer everyone else's), and to the poster.
 
 Scales are opinions, not reports: none of them asks moderators to act
@@ -42,12 +42,18 @@ LEFT = -1
 RIGHT = 1
 SIDES = (LEFT, RIGHT)
 
-# name: (left side, right side)
+# name: (left side, right side); the panel shows the first SHOWN_FIRST and
+# the rest behind "more scales"
 SCALES = OrderedDict([
     ("helpful", (N_("helpful"), N_("unhelpful"))),
     ("made", (N_("human-made"), N_("probably AI"))),
-    ("tone", (N_("light"), N_("serious"))),
+    ("level", (N_("beginner-friendly"), N_("in-depth"))),
+    ("purpose", (N_("practical"), N_("just for fun"))),
+    # whether it backs up what it says, not whether it's right
+    ("sources", (N_("well-sourced"), N_("opinion"))),
+    ("tone", (N_("calm"), N_("heated"))),
 ])
+SHOWN_FIRST = 3
 
 _db = {}
 
@@ -146,7 +152,7 @@ def summary(link, account):
     is_poster = bool(account and link.author_id == account._id)
     counts = tallies(link)
     scales = []
-    for name, (left, right) in SCALES.items():
+    for i, (name, (left, right)) in enumerate(SCALES.items()):
         side = mine.get(name, 0)
         shown = bool(side) or is_poster
         scales.append({
@@ -156,6 +162,8 @@ def summary(link, account):
             "mine": side,
             "tally": ({"left": counts[name][LEFT],
                        "right": counts[name][RIGHT]} if shown else None),
+            # behind "more scales"
+            "more": i >= SHOWN_FIRST,
         })
     return {
         "scales": scales,

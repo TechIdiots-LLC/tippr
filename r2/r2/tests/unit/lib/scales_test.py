@@ -86,6 +86,14 @@ class TestScales(TipprTestCase):
         # only that scale's
         self.assertIsNone(self.scale(after, "tone")["tally"])
 
+    def test_three_shown_first(self):
+        summary = scales.summary(self.post, self.alice)
+        self.assertEqual([s["name"] for s in summary["scales"]],
+                         ["helpful", "made", "level",
+                          "purpose", "sources", "tone"])
+        self.assertEqual([s["more"] for s in summary["scales"]],
+                         [False, False, False, True, True, True])
+
     def test_poster_sees_tallies_but_cant_tip(self):
         scales.tip(self.post, self.alice, "tone", scales.LEFT)
         summary = scales.summary(self.post, self.poster)
