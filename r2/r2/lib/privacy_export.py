@@ -132,7 +132,8 @@ class UserDataExporter:
             pref_attrs = [
                 'pref_lang', 'pref_content_langs', 'pref_over_18',
                 'pref_show_stylesheets', 'pref_show_flair', 'pref_show_link_flair',
-                'pref_no_profanity', 'pref_label_nsfw', 'pref_private_feeds',
+                'pref_no_profanity', 'pref_label_nsfw', 'pref_nsfw_in_listings',
+                'pref_private_feeds',
                 'pref_hide_ups', 'pref_hide_downs', 'pref_min_link_score',
                 'pref_min_comment_score', 'pref_num_comments', 'pref_numsites',
                 'pref_compress', 'pref_domain_details', 'pref_newwindow',

@@ -297,6 +297,15 @@ listing_api_doc = partial(
 class VaultListingController(ListingController):
     private_referrer = False
 
+    def build_listing(self, *a, **kw):
+        # the front page and /v/all leave NSFW posts out unless the member
+        # chose to see them there (and is over 18), so those pages can
+        # carry ads; an NSFW vault still shows its own (r2.models.builder)
+        c.leave_out_nsfw = (isinstance(c.site, (DefaultVault, AllSR)) and
+                            not (c.user_is_loggedin and
+                                 c.user.pref_nsfw_in_listings))
+        return ListingController.build_listing(self, *a, **kw)
+
     def _build_og_title(self, max_length=256):
         vault_fragment = "/v/" + c.site.name
         title = c.site.title.strip()

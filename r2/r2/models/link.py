@@ -411,6 +411,10 @@ class Link(Thing, Printable):
             return True
         if not c.over18:
             return False
+        # the front page and /v/all, for members who didn't choose to see
+        # NSFW posts there (r2.controllers.listingcontroller)
+        if getattr(c, "leave_out_nsfw", False):
+            return False
         # no ads next to adult content (r2.lib.ad_settings)
         c.page_nsfw = True
         return True

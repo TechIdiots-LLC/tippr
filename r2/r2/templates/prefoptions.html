@@ -188,6 +188,12 @@ action = add_vault(action, vault_path=False)
           ${_("(Don't show thumbnails next to anything labeled NSFW)")}
         </span>
       %endif
+      <br>
+      ${checkbox(_("show NSFW posts on the front page and /v/all"), "nsfw_in_listings", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
+      &#32;
+      <span class="details">
+        ${_("(they're always shown in their own vaults)")}
+      </span>
     </td>
   </tr>
   <tr>

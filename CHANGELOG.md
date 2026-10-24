@@ -3,6 +3,10 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **NSFW posts stay off the front page and /v/all unless a member asks for them:** being over 18 used to put
+  every NSFW post in those listings, which also took the ads off those pages. A new preference, "show NSFW posts on
+  the front page and /v/all" (off by default, and only for members who said they're over 18), brings them back;
+  NSFW vaults and their posts are shown in the vault itself as before.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

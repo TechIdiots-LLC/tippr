@@ -104,6 +104,9 @@ class Account(Thing):
                      pref_organic = True,
                      pref_no_profanity = True,
                      pref_label_nsfw = True,
+                     # NSFW posts on the front page and /v/all too (over 18
+                     # only); off, those pages can carry ads
+                     pref_nsfw_in_listings = False,
                      # which AI-labelled posts to show (r2.lib.ai_content.PREFS)
                      pref_ai_content = 'show',
                      pref_show_stylesheets = True,

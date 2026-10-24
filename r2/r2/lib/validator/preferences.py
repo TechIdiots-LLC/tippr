@@ -92,6 +92,7 @@ PREFS_VALIDATORS = dict(
     pref_show_link_flair=VBoolean('show_link_flair'),
     pref_no_profanity=VBoolean('no_profanity'),
     pref_label_nsfw=VBoolean('label_nsfw'),
+    pref_nsfw_in_listings=VBoolean('nsfw_in_listings'),
     pref_ai_content=VOneOf('ai_content', ai_content.PREFS,
                            default=ai_content.PREF_SHOW),
     pref_show_promote=VBoolean('show_promote'),
@@ -176,6 +177,7 @@ def filter_prefs(prefs, user):
 
     if not prefs.get("pref_over_18") or not user.pref_over_18:
         prefs['pref_no_profanity'] = True
+        prefs['pref_nsfw_in_listings'] = False
 
     if prefs.get("pref_no_profanity") or user.pref_no_profanity:
         prefs['pref_label_nsfw'] = True
