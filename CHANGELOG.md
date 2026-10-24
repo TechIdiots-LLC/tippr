@@ -20,6 +20,8 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
+- **Removed posts and comments were hard to read for moderators:** their salmon background left the grey tagline and
+  buttons at 1.4:1. They're a pale red with a red edge now.
 - **The unread message count was unreadable in night mode:** night mode's link colour turned it teal on its orange
   badge; it's white again.
 - _...Add new stuff here..._

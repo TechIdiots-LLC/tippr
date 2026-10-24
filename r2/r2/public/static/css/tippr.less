@@ -4539,7 +4539,12 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 }
 
 .suspicious { background-color: #f6e69f }
-.thing.spam { background-color: #FA8072 }
+// removed things, as moderators see them: a pale red with a red edge (the
+// salmon reddit used left the grey tagline and buttons unreadable, 1.4:1)
+.thing.spam {
+    background-color: #fde4e1;
+    box-shadow: inset 3px 0 0 #e0645a;
+}
 
 .comment.spam > .child, .message.spam > .child {
     background-color: @tp-surface;
