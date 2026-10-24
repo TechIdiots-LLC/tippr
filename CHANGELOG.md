@@ -20,7 +20,10 @@
   `install/requirements.txt` (moved from `docker/`), the pinned list the Docker image uses, in one go, instead of
   about 40 packages in groups at whatever versions were newest that day (and baseplate and formenergy-observability
   from their branches' tips). `TIPPR_BASEPLATE_PIP_URL` and `TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL` still install
-  another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`.
+  another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`. The
+  packages pinned to a URL (the baseplate and formenergy-observability forks) are always reinstalled, since pip keeps
+  an installed package of the same name and version even when it came from elsewhere, and the installer then checks
+  that the packages fit together, as paster does, failing the install (so an update rolls back) if they don't.
 - **An account's status, from its /admin/users page:** its staff permission (none, employee, sponsor or admin: the
   same employees list as /admin/config, with its checks, so no one removes their own admin permission), and whether
   it's one of the site's own accounts (a test account, a bot). The system user, AutoModerator and feed bots count as

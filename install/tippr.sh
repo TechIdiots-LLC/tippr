@@ -780,10 +780,22 @@ else
     if sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip show psycopg2-binary >/dev/null 2>&1; then
         sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip uninstall -y psycopg2-binary psycopg2 || true
     fi
+    # The ones pinned to a URL (tippr's baseplate and formenergy-observability
+    # forks, at fixed commits) are reinstalled whatever is there: pip keeps
+    # an installed package of the same name and version, even one from
+    # elsewhere (formenergy-observability 0.3.2 from PyPI needs an older
+    # packaging, and paster then refuses to start the consumers and jobs).
+    url_pinned=$(mktemp)
+    grep -E '^[A-Za-z0-9_.-]+ @ ' "$TIPPR_SRC/tippr/install/requirements.txt" > "$url_pinned"
+    chmod a+r "$url_pinned"
     if sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps \
-            -r "$TIPPR_SRC/tippr/install/requirements.txt"; then
+            -r "$TIPPR_SRC/tippr/install/requirements.txt" &&
+       sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps --force-reinstall \
+            -r "$url_pinned"; then
+        rm -f "$url_pinned"
         record_built requirements
     else
+        rm -f "$url_pinned"
         echo "ERROR: the Python packages didn't install (see above)" >&2
         exit 1
     fi
@@ -838,6 +850,16 @@ function install_tippr_repo {
 }
 
 install_tippr_repo tippr/r2
+
+# paster (the consumers, the jobs, tippr-run) checks that every package r2
+# needs is there at a version it accepts, and won't start otherwise, while
+# the web app runs regardless: check the same here, so a mismatch fails the
+# install (and an update rolls back) instead of quietly stopping the queues
+if ! sudo -u $TIPPR_USER $TIPPR_VENV/bin/python -c \
+        "import pkg_resources; pkg_resources.require('r2')"; then
+    echo "ERROR: the Python packages don't fit together (see above); the queues and jobs wouldn't start" >&2
+    exit 1
+fi
 # Only install the external `i18n` package if its setup.py contains a
 # valid version string. Some historical `i18n` checkouts have an empty
 # version which breaks modern packaging tools; in that case skip the
