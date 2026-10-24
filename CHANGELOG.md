@@ -46,6 +46,8 @@
 - **The admin mode page on a remembered computer looked unfinished:** "forget this computer" was a grey button with
   its explanation wrapping beside it, and the heading still asked for a one-time code. It's now a link under the
   main button with the explanation below it, and the heading asks for the password only.
+- **The unread message count was unreadable in night mode:** night mode's link colour turned it teal on its orange
+  badge; it's white again.
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
