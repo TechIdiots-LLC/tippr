@@ -34,6 +34,13 @@ source $RUNDIR/install.cfg
 
 source /etc/lsb-release
 
+# a frontend (TIPPR_ROLE=frontend, docs/SERVERS.md) uses its backend's
+# databases, queue and cache: it only needs nginx, and psql
+if [ "$TIPPR_ROLE" = "frontend" ]; then
+    apt-get install $APTITUDE_OPTIONS nginx postgresql-client
+    exit 0
+fi
+
 if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     ###########################################################################
     # Ubuntu 24.04 - Updated package names

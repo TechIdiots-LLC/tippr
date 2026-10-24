@@ -403,6 +403,23 @@ def site_answers(domain, seconds=CHECK_SECONDS):
     return False
 
 
+def backend_answers():
+    """Whether a backend (TIPPR_ROLE=backend, which serves no pages) is
+    back: the app loads and reaches its database."""
+    return run(["/usr/local/bin/tippr-run", "-c",
+                "from pylons import app_globals as g; "
+                "g.dbm.get_engine('main').connect().close()"],
+               timeout=CHECK_SECONDS) == 0
+
+
+def came_back(conf, domain):
+    """Whether this server works again after installing: its pages, or on
+    a backend, its app and database."""
+    if conf.get("TIPPR_ROLE") == "backend":
+        return backend_answers()
+    return site_answers(domain)
+
+
 def install(src, user, domain, progress=None):
     """Run the installer (tippr-firstboot) from the code now in src."""
     shutil.copyfile(os.path.join(src, "tippr", "proxmox", "tippr-firstboot"),
@@ -445,7 +462,7 @@ def update(conf, ini, status, request):
     ok = install(src, user, domain, status.progress)
     if ok:
         status.set("checking")
-        ok = site_answers(domain)
+        ok = came_back(conf, domain)
     if ok:
         shutil.rmtree(os.path.join(WORK, version), ignore_errors=True)
         status.set("done", "%s is kept as %s, to go back by hand"
@@ -458,7 +475,7 @@ def update(conf, ini, status, request):
         shutil.rmtree(failed)
     os.rename(src, failed)
     os.rename(old, src)
-    if install(src, user, domain, status.progress) and site_answers(domain):
+    if install(src, user, domain, status.progress) and came_back(conf, domain):
         status.set("rolled_back", "%s didn't come up, so the old version is "
                    "back; the new code is in %s (see %s)"
                    % (version, failed, LOG))

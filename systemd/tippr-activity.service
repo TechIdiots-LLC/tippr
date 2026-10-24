@@ -18,7 +18,7 @@ Environment=PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_tippr
 Environment=OTEL_SDK_DISABLED=true
 ExecStartPre=+/bin/mkdir -p /tmp/prometheus_tippr
 ExecStartPre=+/bin/chown @TIPPR_USER@:@TIPPR_GROUP@ /tmp/prometheus_tippr
-ExecStart=@TIPPR_VENV@/bin/baseplate-serve --bind 127.0.0.1:9002 @TIPPR_SRC@/activity/tippr.ini
+ExecStart=@TIPPR_VENV@/bin/baseplate-serve --bind @TIPPR_ACTIVITY_BIND@:9002 @TIPPR_SRC@/activity/tippr.ini
 Restart=on-failure
 TimeoutStartSec=120
 

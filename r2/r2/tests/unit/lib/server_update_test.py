@@ -121,6 +121,17 @@ class TestUpdater(TipprTestCase):
                     st_uid=uid, st_mode=mode)):
                 self.assertIsNone(self.updater.read_conf(path))
 
+    def test_how_a_server_is_checked_after_installing(self):
+        # pages (one server, a frontend), or a backend's app and database
+        # (it serves none; docs/SERVERS.md)
+        with patch.object(self.updater, "site_answers", lambda d: "site") as _, \
+                patch.object(self.updater, "backend_answers", lambda: "backend"):
+            self.assertEqual(self.updater.came_back({}, "x.example"), "site")
+            self.assertEqual(self.updater.came_back(
+                {"TIPPR_ROLE": "frontend"}, "x.example"), "site")
+            self.assertEqual(self.updater.came_back(
+                {"TIPPR_ROLE": "backend"}, "x.example"), "backend")
+
     def _release(self, tarball_bytes, sums):
         def download(url, dest):
             with open(dest, "wb") as f:

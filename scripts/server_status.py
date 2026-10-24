@@ -51,6 +51,7 @@ def main():
         "TIPPR_INI", os.path.join(SRC, "r2", "run.ini"))
     config = settings(ini)
     state = server_status.collect(name=config.get("server_name") or None,
+                                  role=config.get("server_role") or None,
                                   src=SRC)
     if "--print" in sys.argv:
         print(json.dumps(state, indent=1, sort_keys=True))

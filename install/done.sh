@@ -96,3 +96,26 @@ steps:
 
     sudo systemctl start tippr-job-update_tipprs tippr-job-update_vault_names
 CONCLUSION
+
+# split over servers (docs/SERVERS.md)
+case "$TIPPR_ROLE" in
+    backend)
+        cat <<BACKEND
+
+This server is the backend: the databases, queue, search, cache, queue
+processors and scheduled jobs. It serves no pages; its frontends do. Copy
+$TIPPR_CLUSTER_FILE to each frontend (the same path, root's, mode 600)
+before installing there with TIPPR_ROLE=frontend, and again whenever a
+password or setting in it changes here. Let only $TIPPR_FRONTEND_ALLOW reach
+ports 5432, 9042, 5672, 2181, 9200, 11211 and 9002.
+BACKEND
+        ;;
+    frontend)
+        cat <<FRONTEND
+
+This server is a frontend, using the backend at $TIPPR_BACKEND_HOST: it
+serves pages and live comments; the backend has the data, the queue
+processors and the scheduled jobs. Put it behind the site's load balancer.
+FRONTEND
+        ;;
+esac

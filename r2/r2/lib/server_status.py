@@ -126,18 +126,41 @@ def _disks():
 
 
 def _services():
+    """The SERVICES installed here, and their states. One that's turned off
+    and stopped is left out: this server doesn't run it (a frontend's
+    databases, a backend's web app; docs/SERVERS.md)."""
     result = []
     for unit, label in SERVICES:
         try:
             out = subprocess.run(
                 ["systemctl", "show", unit + ".service",
-                 "-p", "LoadState", "-p", "ActiveState", "--value"],
+                 "-p", "LoadState", "-p", "ActiveState",
+                 "-p", "UnitFileState", "--value"],
                 capture_output=True, text=True, timeout=5).stdout.split()
         except (OSError, subprocess.SubprocessError):
             continue
-        if len(out) >= 2 and out[0] == "loaded":
-            result.append(dict(unit=unit, label=label, state=out[1]))
+        if len(out) < 2 or out[0] != "loaded":
+            continue
+        if out[1] == "inactive" and _turned_off(unit, out[2:3]):
+            continue
+        result.append(dict(unit=unit, label=label, state=out[1]))
     return result
+
+
+def _turned_off(unit, file_state):
+    """Whether unit is disabled. Ones made from init scripts (Cassandra's,
+    ZooKeeper's) say "generated" instead, so ask is-enabled for those."""
+    if file_state and file_state[0] in ("disabled", "masked"):
+        return True
+    if file_state and file_state[0] != "generated":
+        return False
+    try:
+        return subprocess.run(
+            ["systemctl", "is-enabled", unit + ".service"],
+            capture_output=True, text=True,
+            timeout=5).stdout.strip().endswith("disabled")
+    except (OSError, subprocess.SubprocessError):
+        return False
 
 
 def _version(src):
@@ -152,8 +175,9 @@ def _version(src):
     return version, commit
 
 
-def collect(name=None, src=None):
-    """This server's state (a dict, as stored)."""
+def collect(name=None, src=None, role=None):
+    """This server's state (a dict, as stored). role: all, backend or
+    frontend (server_role, from the installer; docs/SERVERS.md)."""
     src = src or os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
     version, commit = _version(src)
@@ -166,6 +190,7 @@ def collect(name=None, src=None):
         id=server_id(),
         name=name or socket.gethostname(),
         host=socket.gethostname(),
+        role=role or "all",
         version=version,
         commit=commit,
         reported=int(time.time()),

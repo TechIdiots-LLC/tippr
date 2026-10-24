@@ -135,23 +135,86 @@ PTH
 done
 
 ###############################################################################
+# This server's role (docs/SERVERS.md)
+###############################################################################
+# all (one server), backend or frontend (install.cfg), decided before
+# anything is installed: a frontend has no databases of its own. Remembered
+# in the secrets file like the other settings, so later runs (updates) keep
+# it.
+TIPPR_SECRETS_FILE=${TIPPR_SECRETS_FILE:-/etc/tippr/secrets.env}
+function remembered {
+    [ -f "$TIPPR_SECRETS_FILE" ] && \
+        grep -E "^$1=" "$TIPPR_SECRETS_FILE" | tail -n 1 | cut -d= -f2-
+    true
+}
+TIPPR_ROLE=${TIPPR_ROLE:-$(remembered TIPPR_ROLE)}
+TIPPR_ROLE=${TIPPR_ROLE:-all}
+TIPPR_BACKEND_LISTEN=${TIPPR_BACKEND_LISTEN:-$(remembered TIPPR_BACKEND_LISTEN)}
+TIPPR_FRONTEND_ALLOW=${TIPPR_FRONTEND_ALLOW:-$(remembered TIPPR_FRONTEND_ALLOW)}
+case "$TIPPR_ROLE" in
+    all) ;;
+    backend)
+        if [ -z "$TIPPR_BACKEND_LISTEN" ] || [ -z "$TIPPR_FRONTEND_ALLOW" ]; then
+            echo "ERROR: TIPPR_ROLE=backend needs TIPPR_BACKEND_LISTEN (the address frontends reach it on) and TIPPR_FRONTEND_ALLOW (their address range): Cassandra, OpenSearch, memcached and the activity service have no password" >&2
+            exit 1
+        fi
+        ;;
+    frontend)
+        # the backend's shared passwords, signing secrets, media storage and
+        # address (written by the backend's install); anything given to this
+        # run comes first
+        if [ ! -f "$TIPPR_CLUSTER_FILE" ]; then
+            echo "ERROR: TIPPR_ROLE=frontend needs the backend's $TIPPR_CLUSTER_FILE copied here first (same path, root's, mode 600)" >&2
+            exit 1
+        fi
+        while IFS= read -r line || [ -n "$line" ]; do
+            name=${line%%=*}
+            [[ "$name" =~ ^TIPPR_[A-Z0-9_]+$ ]] || continue
+            [ -z "${!name}" ] && export "$line"
+        done < "$TIPPR_CLUSTER_FILE"
+        TIPPR_BACKEND_HOST=${TIPPR_BACKEND_HOST:-$(remembered TIPPR_BACKEND_HOST)}
+        if [ -z "$TIPPR_BACKEND_HOST" ]; then
+            echo "ERROR: TIPPR_ROLE=frontend needs TIPPR_BACKEND_HOST (the backend's address)" >&2
+            exit 1
+        fi
+        ;;
+    *)
+        echo "ERROR: TIPPR_ROLE is all, backend or frontend, not '$TIPPR_ROLE'" >&2
+        exit 1
+        ;;
+esac
+# where this server finds the databases, queue, search and cache: its own
+# (all, backend) or the backend's
+if [ "$TIPPR_ROLE" = "frontend" ]; then
+    SERVICE_HOST=$TIPPR_BACKEND_HOST
+else
+    SERVICE_HOST=127.0.0.1
+fi
+export TIPPR_ROLE TIPPR_BACKEND_LISTEN TIPPR_FRONTEND_ALLOW TIPPR_BACKEND_HOST
+echo "tippr: installing as $TIPPR_ROLE"
+
+###############################################################################
 # Install prerequisites
 ###############################################################################
 
 # install primary packages
 $RUNDIR/install_apt.sh
 
-# install cassandra from datastax
-$RUNDIR/install_cassandra.sh
+# the databases, queue and search: not on a frontend (which only needs nginx
+# from install_services.sh)
+if [ "$TIPPR_ROLE" != "frontend" ]; then
+    # install cassandra from datastax
+    $RUNDIR/install_cassandra.sh
 
-# install zookeeper
-$RUNDIR/install_zookeeper.sh
+    # install zookeeper
+    $RUNDIR/install_zookeeper.sh
+fi
 
-# install services (rabbitmq, postgres, memcached, etc.)
-$RUNDIR/install_services.sh
+# install services (rabbitmq, postgres, memcached, etc.; a frontend: nginx)
+TIPPR_ROLE=$TIPPR_ROLE $RUNDIR/install_services.sh
 
 # install opensearch (TIPPR_SEARCH=opensearch)
-if [ "$TIPPR_SEARCH" = "opensearch" ]; then
+if [ "$TIPPR_SEARCH" = "opensearch" ] && [ "$TIPPR_ROLE" != "frontend" ]; then
     $RUNDIR/install_opensearch.sh
 fi
 
@@ -164,6 +227,10 @@ if [ ! -d $TIPPR_SRC ]; then
 fi
 
 function copy_systemd {
+    # the activity service ("here now" counts): on a backend its frontends
+    # ask it too (the firewall keeps the port to them)
+    local activity_bind=127.0.0.1
+    [ "$TIPPR_ROLE" = "backend" ] && activity_bind=0.0.0.0
     if [ -d "${1}/systemd" ]; then
         echo "Copying and templating systemd units from ${1}/systemd to /etc/systemd/system/..."
         # Iterate over files to perform variable substitution before installation
@@ -178,6 +245,7 @@ function copy_systemd {
                 -e "s|@TIPPR_VENV@|$TIPPR_VENV|g" \
                 -e "s|@TIPPR_ROOT@|$TIPPR_SRC/tippr/r2|g" \
                 -e "s|@TIPPR_INI@|$TIPPR_SRC/tippr/r2/run.ini|g" \
+                -e "s|@TIPPR_ACTIVITY_BIND@|$activity_bind|g" \
                 -e "s|\${TIPPR_INI}|$TIPPR_SRC/tippr/r2/run.ini|g" \
                 -e "s|\"\${TIPPR_INI}\"|\"$TIPPR_SRC/tippr/r2/run.ini\"|g" \
                 -e "s|\${TIPPR_ROOT}|$TIPPR_SRC/tippr/r2|g" \
@@ -414,11 +482,42 @@ case "$TIPPR_MEDIA_STORAGE" in
         exit 1
         ;;
 esac
+# split over servers: media one server writes (thumbnails, uploads) must be
+# there for the others to serve
+if [ "$TIPPR_ROLE" != "all" ] && [ "$TIPPR_MEDIA_STORAGE" != "s3" ]; then
+    echo "ERROR: TIPPR_ROLE=$TIPPR_ROLE needs media in object storage (TIPPR_MEDIA_STORAGE=s3, docs/STORAGE.md), which every server reaches" >&2
+    exit 1
+fi
 
-# memcached (install.cfg): remembered like the storage settings
+# this server's role and addresses (decided above)
+tippr_secret TIPPR_ROLE true
+tippr_secret TIPPR_BACKEND_LISTEN true
+tippr_secret TIPPR_FRONTEND_ALLOW true
+tippr_secret TIPPR_BACKEND_HOST true
+
+# memcached (install.cfg): remembered like the storage settings. A backend
+# also listens on the address its frontends reach it on (it can't be just
+# localhost, as an all-in-one install's was); a frontend uses the backend's.
 function default_memcached_mb { echo auto; }
-function default_memcached_server { echo 127.0.0.1:11211; }
+function default_memcached_server { echo "$SERVICE_HOST:11211"; }
 function default_memcached_listen { echo 127.0.0.1; }
+case "$TIPPR_ROLE" in
+    backend)
+        TIPPR_MEMCACHED_LISTEN=${TIPPR_MEMCACHED_LISTEN:-$(remembered TIPPR_MEMCACHED_LISTEN)}
+        case "$TIPPR_MEMCACHED_LISTEN" in
+            ""|127.0.0.1|localhost)
+                TIPPR_MEMCACHED_LISTEN="127.0.0.1,$TIPPR_BACKEND_LISTEN" ;;
+        esac
+        TIPPR_MEMCACHED_ALLOW=${TIPPR_MEMCACHED_ALLOW:-$TIPPR_FRONTEND_ALLOW}
+        ;;
+    frontend)
+        TIPPR_MEMCACHED_SERVER=${TIPPR_MEMCACHED_SERVER:-$(remembered TIPPR_MEMCACHED_SERVER)}
+        case "$TIPPR_MEMCACHED_SERVER" in
+            ""|127.0.0.1:*|localhost:*)
+                TIPPR_MEMCACHED_SERVER="$TIPPR_BACKEND_HOST:11211" ;;
+        esac
+        ;;
+esac
 tippr_secret TIPPR_MEMCACHED_MB default_memcached_mb
 tippr_secret TIPPR_MEMCACHED_SERVER default_memcached_server
 tippr_secret TIPPR_MEMCACHED_LISTEN default_memcached_listen
@@ -456,7 +555,7 @@ if ! [[ "$TIPPR_MEMCACHED_SERVER" =~ ^[A-Za-z0-9.:_-]+:[0-9]+$ ]]; then
     exit 1
 fi
 case "$TIPPR_MEMCACHED_LISTEN" in
-    127.0.0.1|localhost) ;;
+    127.0.0.1|localhost|::1) ;;
     *)
         # memcached has no password: only open it to the frontends' range
         if [ -z "$TIPPR_MEMCACHED_ALLOW" ]; then
@@ -465,20 +564,66 @@ case "$TIPPR_MEMCACHED_LISTEN" in
         fi
         ;;
 esac
+SIGNING_SECRETS="SECRET FEEDSECRET ADMINSECRET WEBSOCKET WEBSOCKET_ADMIN MEDIA_EMBED
+                 ACTION_NAME EMAIL_NOTIFICATIONS CACHE_POISONING
+                 ADSERVER_CLICK_URL_SECRET REQUEST_SIGNATURE_SECRET
+                 TRACKING_SECRET"
+# a frontend uses the backend's passwords and secrets (cluster.env): new ones
+# here would lock it out of the databases and sign what the others reject
+if [ "$TIPPR_ROLE" = "frontend" ]; then
+    for name in TIPPR_DB_PASSWORD TIPPR_AMQP_PASSWORD TIPPR_ZOOKEEPER_PASSWORD; do
+        if [ -z "${!name}" ]; then
+            echo "ERROR: $TIPPR_CLUSTER_FILE has no $name: copy it again from the backend" >&2
+            exit 1
+        fi
+    done
+    for secret in $SIGNING_SECRETS; do
+        name="TIPPR_SECRET_${secret}"
+        if [ -z "${!name}" ]; then
+            echo "ERROR: $TIPPR_CLUSTER_FILE has no $name: copy it again from the backend" >&2
+            exit 1
+        fi
+    done
+fi
 tippr_secret TIPPR_AMQP_PASSWORD random_password
 tippr_secret TIPPR_ZOOKEEPER_PASSWORD existing_zookeeper_password
 tippr_secret TIPPR_ADMIN_PASSWORD random_password
-for secret in SECRET FEEDSECRET ADMINSECRET WEBSOCKET WEBSOCKET_ADMIN MEDIA_EMBED \
-              ACTION_NAME EMAIL_NOTIFICATIONS CACHE_POISONING \
-              ADSERVER_CLICK_URL_SECRET \
-              REQUEST_SIGNATURE_SECRET TRACKING_SECRET; do
+for secret in $SIGNING_SECRETS; do
     tippr_secret "TIPPR_SECRET_${secret}" random_secret
 done
+
+# A backend writes what its frontends share with it: its address, the
+# passwords and signing secrets, and the settings every server's ini must
+# agree on. Copy it to each frontend (same path) before installing there,
+# and again after changing one of these here.
+if [ "$TIPPR_ROLE" = "backend" ]; then
+    install -m 0600 /dev/null "$TIPPR_CLUSTER_FILE"
+    {
+        echo "# Generated by install/tippr.sh on the backend ($(hostname)):"
+        echo "# copy to each frontend's $TIPPR_CLUSTER_FILE (docs/SERVERS.md)."
+        echo "TIPPR_BACKEND_HOST=$TIPPR_BACKEND_LISTEN"
+        for name in TIPPR_DOMAIN TIPPR_DB_PASSWORD TIPPR_AMQP_PASSWORD \
+                TIPPR_ZOOKEEPER_PASSWORD TIPPR_SEARCH TIPPR_ENVIRONMENT \
+                TIPPR_MEDIA_STORAGE TIPPR_S3_ENDPOINT TIPPR_S3_REGION \
+                TIPPR_S3_KEY_ID TIPPR_S3_SECRET TIPPR_S3_MEDIA_BUCKET \
+                TIPPR_S3_UPLOADS_BUCKET TIPPR_S3_USE_ACLS TIPPR_MEDIA_ORIGIN \
+                TIPPR_MEDIA_ORIGIN_HOST TIPPR_AUTOMODERATOR_NAME \
+                TIPPR_PAGE_CACHE_SECONDS TIPPR_WEB_UPDATES TIPPR_RELEASE_REPO \
+                TIPPR_SITE_NAME TIPPR_SITE_DESCRIPTION TIPPR_CONTACT_EMAIL; do
+            [ -n "${!name}" ] && echo "${name}=${!name}"
+        done
+        for secret in $SIGNING_SECRETS; do
+            name="TIPPR_SECRET_${secret}"
+            echo "${name}=${!name}"
+        done
+    } > "$TIPPR_CLUSTER_FILE"
+fi
 
 # psql and scripts/compute_time_listings read the database password from here
 cat > "$TIPPR_HOME/.pgpass" <<PGPASS
 localhost:5432:*:${TIPPR_USER}:${TIPPR_DB_PASSWORD}
 127.0.0.1:5432:*:${TIPPR_USER}:${TIPPR_DB_PASSWORD}
+${SERVICE_HOST}:5432:*:${TIPPR_USER}:${TIPPR_DB_PASSWORD}
 PGPASS
 chown "$TIPPR_USER:$TIPPR_GROUP" "$TIPPR_HOME/.pgpass"
 chmod 0600 "$TIPPR_HOME/.pgpass"
@@ -493,7 +638,7 @@ if [ -d "$TIPPR_SRC/websockets" ]; then
 [app:main]
 factory = reddit_service_websockets.app:make_app
 
-amqp.endpoint = localhost:5672
+amqp.endpoint = ${SERVICE_HOST}:5672
 amqp.vhost = /
 amqp.username = tippr
 amqp.password = $(echo "$TIPPR_AMQP_PASSWORD" | sed 's/%/%%/g')
@@ -602,47 +747,60 @@ done
 # Configure Services
 ###############################################################################
 
-# Configure Cassandra
-$RUNDIR/setup_cassandra.sh
+# the databases, cache and queue: not on a frontend, which uses its backend's
+if [ "$TIPPR_ROLE" != "frontend" ]; then
+    # Configure Cassandra
+    $RUNDIR/setup_cassandra.sh
 
-# Configure PostgreSQL
-$RUNDIR/setup_postgres.sh
+    # Configure PostgreSQL
+    $RUNDIR/setup_postgres.sh
 
-# memcached's memory and address (TIPPR_MEMCACHED_*, install.cfg). Ubuntu's
-# default is 64 MB, small for a busy site.
-if [ -f /etc/memcached.conf ]; then
-    if [ "$TIPPR_MEMCACHED_MB" = "auto" ]; then
-        memcached_mb=$(( $(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo) / 4 ))
-        [ "$memcached_mb" -lt 64 ] && memcached_mb=64
-        [ "$memcached_mb" -gt 1024 ] && memcached_mb=1024
+    # memcached's memory and address (TIPPR_MEMCACHED_*, install.cfg). Ubuntu's
+    # default is 64 MB, small for a busy site.
+    if [ -f /etc/memcached.conf ]; then
+        if [ "$TIPPR_MEMCACHED_MB" = "auto" ]; then
+            memcached_mb=$(( $(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo) / 4 ))
+            [ "$memcached_mb" -lt 64 ] && memcached_mb=64
+            [ "$memcached_mb" -gt 1024 ] && memcached_mb=1024
+        else
+            memcached_mb=$TIPPR_MEMCACHED_MB
+        fi
+        memcached_before=$(md5sum < /etc/memcached.conf)
+        sed -i -E "s/^-m [0-9]+/-m $memcached_mb/" /etc/memcached.conf
+        grep -qE '^-m ' /etc/memcached.conf || echo "-m $memcached_mb" >> /etc/memcached.conf
+        # one -l line: this server only, or the address frontends reach it on
+        sed -i -E '/^-l /d' /etc/memcached.conf
+        if [ "$TIPPR_MEMCACHED_LISTEN" = "localhost" ] || [ "$TIPPR_MEMCACHED_LISTEN" = "127.0.0.1" ]; then
+            echo "-l 127.0.0.1" >> /etc/memcached.conf
+        else
+            echo "-l $TIPPR_MEMCACHED_LISTEN" >> /etc/memcached.conf
+        fi
+        if [ "$(md5sum < /etc/memcached.conf)" != "$memcached_before" ]; then
+            echo "memcached: ${memcached_mb} MB, listening on $TIPPR_MEMCACHED_LISTEN"
+            systemctl restart memcached || true
+        fi
+    fi
+
+    # Configure mcrouter (optional; see TIPPR_BUILD_MCROUTER in install.cfg)
+    if [ "$TIPPR_BUILD_MCROUTER" = "1" ]; then
+        $RUNDIR/setup_mcrouter.sh
     else
-        memcached_mb=$TIPPR_MEMCACHED_MB
+        echo "Skipping mcrouter build (TIPPR_BUILD_MCROUTER=$TIPPR_BUILD_MCROUTER); r2 uses memcached directly."
     fi
-    memcached_before=$(md5sum < /etc/memcached.conf)
-    sed -i -E "s/^-m [0-9]+/-m $memcached_mb/" /etc/memcached.conf
-    grep -qE '^-m ' /etc/memcached.conf || echo "-m $memcached_mb" >> /etc/memcached.conf
-    # one -l line: this server only, or the address frontends reach it on
-    sed -i -E '/^-l /d' /etc/memcached.conf
-    if [ "$TIPPR_MEMCACHED_LISTEN" = "localhost" ] || [ "$TIPPR_MEMCACHED_LISTEN" = "127.0.0.1" ]; then
-        echo "-l 127.0.0.1" >> /etc/memcached.conf
-    else
-        echo "-l $TIPPR_MEMCACHED_LISTEN" >> /etc/memcached.conf
-    fi
-    if [ "$(md5sum < /etc/memcached.conf)" != "$memcached_before" ]; then
-        echo "memcached: ${memcached_mb} MB, listening on $TIPPR_MEMCACHED_LISTEN"
-        systemctl restart memcached || true
-    fi
-fi
 
-# Configure mcrouter (optional; see TIPPR_BUILD_MCROUTER in install.cfg)
-if [ "$TIPPR_BUILD_MCROUTER" = "1" ]; then
-    $RUNDIR/setup_mcrouter.sh
+    # Configure RabbitMQ
+    $RUNDIR/setup_rabbitmq.sh
 else
-    echo "Skipping mcrouter build (TIPPR_BUILD_MCROUTER=$TIPPR_BUILD_MCROUTER); r2 uses memcached directly."
+    # a frontend made from the Proxmox template (or once an all-in-one
+    # install) has them installed: stop them, so they take no memory.
+    # (Cassandra's and ZooKeeper's are init scripts, for which disable
+    # --now only disables: stop first. Ones not installed just fail.)
+    for unit in cassandra zookeeper postgresql rabbitmq-server memcached \
+            redis-server opensearch; do
+        systemctl stop "$unit.service" >/dev/null 2>&1 || true
+        systemctl disable "$unit.service" >/dev/null 2>&1 || true
+    done
 fi
-
-# Configure RabbitMQ
-$RUNDIR/setup_rabbitmq.sh
 
 ###############################################################################
 # Install and configure the tippr code
@@ -1039,6 +1197,22 @@ function storage_settings {
     fi
     true
 }
+# where a frontend finds its backend's databases, Cassandra, queue,
+# ZooKeeper, search and activity counts (TIPPR_ROLE=frontend); one server
+# keeps example.ini's local addresses
+function service_settings {
+    [ "$SERVICE_HOST" = "127.0.0.1" ] && return 0
+    local db
+    for db in main comment comment2 email authorize award hc traffic; do
+        echo "${db}_db = tippr, $SERVICE_HOST, *, *, *, *, *"
+    done
+    echo "cassandra_seeds = $SERVICE_HOST:9042"
+    echo "amqp_host = $SERVICE_HOST:5672"
+    echo "zookeeper_connection_string = $SERVICE_HOST:2181"
+    echo "opensearch_url = http://$SERVICE_HOST:9200"
+    echo "activity_endpoint = $SERVICE_HOST:9002"
+}
+
 # the memcached the site uses (TIPPR_MEMCACHED_SERVER): with several
 # frontends, the same one for all, so what one writes the others see
 function cache_settings {
@@ -1052,10 +1226,12 @@ function cache_settings {
     else
         echo "automoderator_account ="
     fi
-    # this server's name on /admin/servers (r2.lib.server_status)
+    # this server's name on /admin/servers (r2.lib.server_status), and what
+    # it does there (all, backend or frontend; docs/SERVERS.md)
     if [ -n "$TIPPR_SERVER_NAME" ]; then
         echo "server_name = $TIPPR_SERVER_NAME"
     fi
+    echo "server_role = $TIPPR_ROLE"
     # where /admin/servers looks for releases, and whether it can update
     # (r2.lib.releases, r2.lib.server_update)
     echo "release_repo = $TIPPR_RELEASE_REPO"
@@ -1085,6 +1261,7 @@ $(site_settings)
 $(proxy_settings)
 $(storage_settings)
 $(cache_settings)
+$(service_settings)
 
 db_pass = $(ini_value "$TIPPR_DB_PASSWORD")
 amqp_pass = $(ini_value "$TIPPR_AMQP_PASSWORD")
@@ -1302,6 +1479,8 @@ TIPPR_RELEASE_REPO=$TIPPR_RELEASE_REPO
 TIPPR_USER=$TIPPR_USER
 TIPPR_SRC=$TIPPR_SRC
 TIPPR_INI=$TIPPR_SRC/tippr/r2/run.ini
+# all, backend or frontend: how it checks the site came back
+TIPPR_ROLE=$TIPPR_ROLE
 UPDATESCONF
     chown root:root /etc/tippr/updates.conf
     chmod 0644 /etc/tippr/updates.conf
@@ -1318,8 +1497,13 @@ TIPPRSERVE
 
 # Create a systemd unit for tippr-serve that uses the installer helper
 # script so systemd runs paster with the correct PYTHONPATH and venv.
+# (not on a backend: its frontends serve the pages)
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl enable --now tippr-paster.service || true
+    if [ "$TIPPR_ROLE" = "backend" ]; then
+        systemctl disable --now tippr-paster.service 2>/dev/null || true
+    else
+        systemctl enable --now tippr-paster.service || true
+    fi
 fi
 
 ###############################################################################
@@ -1698,9 +1882,15 @@ fi
 # link the ini file for the Flask click tracker
 ln -nsf $TIPPR_SRC/tippr/r2/development.ini $TIPPR_SRC/tippr/scripts/production.ini
 
-nginx -t
-systemctl enable nginx.service 2>/dev/null || true
-service nginx restart
+# a backend serves no pages (its frontends do)
+if [ "$TIPPR_ROLE" = "backend" ]; then
+    systemctl disable --now nginx.service 2>/dev/null || true
+    systemctl reset-failed nginx.service 2>/dev/null || true
+else
+    nginx -t
+    systemctl enable nginx.service 2>/dev/null || true
+    service nginx restart
+fi
 
 ###############################################################################
 # Let's Encrypt
@@ -1708,7 +1898,8 @@ service nginx restart
 # nginx now answers http-01 challenges, so request the certificate, then
 # switch nginx over to it. certbot's timer renews it and reloads nginx.
 # (Behind an external proxy, that proxy has the certificate.)
-if [ -n "$TIPPR_LETSENCRYPT_EMAIL" ] && [ -z "$TIPPR_TLS_CERT" ] && [ -z "$TIPPR_EXTERNAL_PROXY" ]; then
+if [ -n "$TIPPR_LETSENCRYPT_EMAIL" ] && [ -z "$TIPPR_TLS_CERT" ] && [ -z "$TIPPR_EXTERNAL_PROXY" ] && \
+        [ "$TIPPR_ROLE" != "backend" ]; then
     apt-get install $APTITUDE_OPTIONS certbot
     if certbot certonly --webroot -w /var/www/letsencrypt \
             -d "$TIPPR_DOMAIN" --email "$TIPPR_LETSENCRYPT_EMAIL" \
@@ -1726,18 +1917,29 @@ fi
 # websocket service
 ###############################################################################
  
-# Create a systemd unit for websockets (preferred on modern systems)
+# Create a systemd unit for websockets (preferred on modern systems). On
+# each frontend (each passes on every live update, from the backend's
+# queue), not on a backend.
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl enable --now tippr-websockets.service || service tippr-websockets restart || true
+    if [ "$TIPPR_ROLE" = "backend" ]; then
+        systemctl disable --now tippr-websockets.service 2>/dev/null || true
+    else
+        systemctl enable --now tippr-websockets.service || service tippr-websockets restart || true
+    fi
 fi
 
 ###############################################################################
 # activity service
 ###############################################################################
 
-# Create a systemd unit for activity service
+# Create a systemd unit for activity service. One for the whole site, so
+# every frontend counts the same visitors: on the backend.
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl enable --now tippr-activity.service || service tippr-activity restart || true
+    if [ "$TIPPR_ROLE" = "frontend" ]; then
+        systemctl disable --now tippr-activity.service 2>/dev/null || true
+    else
+        systemctl enable --now tippr-activity.service || service tippr-activity restart || true
+    fi
 fi
 
 ###############################################################################
@@ -1856,15 +2058,18 @@ done
 ###############################################################################
 
 # the initial database setup should be done by one process rather than a bunch
-# vying with eachother to get there first
-tippr-run -c 'print("ok done")'
+# vying with eachother to get there first (on the backend, which has the
+# databases, before any frontend)
+if [ "$TIPPR_ROLE" != "frontend" ]; then
+    tippr-run -c 'print("ok done")'
 
-# Build the search index the first time (later changes go through search_q).
-# To rebuild it from scratch:
-#   tippr-run -c 'from pylons import app_globals as g; g.search.rebuild_index(recreate=True)'
-if [ "$TIPPR_SEARCH" = "opensearch" ] && \
-        ! curl -fsS -o /dev/null http://127.0.0.1:9200/tippr_links; then
-    tippr-run -c 'from pylons import app_globals as g; g.search.rebuild_index()'
+    # Build the search index the first time (later changes go through
+    # search_q). To rebuild it from scratch:
+    #   tippr-run -c 'from pylons import app_globals as g; g.search.rebuild_index(recreate=True)'
+    if [ "$TIPPR_SEARCH" = "opensearch" ] && \
+            ! curl -fsS -o /dev/null http://127.0.0.1:9200/tippr_links; then
+        tippr-run -c 'from pylons import app_globals as g; g.search.rebuild_index()'
+    fi
 fi
 
 ###############################################################################
@@ -1913,28 +2118,56 @@ TIPPR_TIMERS=(
     # this server's state for /admin/servers, every minute (on every server)
     tippr-job-server_status.timer
 )
+# A frontend runs the queue processors and scheduled jobs on its backend:
+# only the timers every server has (its state for /admin/servers, and
+# updates from there, below).
+if [ "$TIPPR_ROLE" = "frontend" ]; then
+    FRONTEND_OFF=(tippr-consumers.service tippr-backup.path)
+    for timer in "${TIPPR_TIMERS[@]}"; do
+        [ "$timer" = "tippr-job-server_status.timer" ] || FRONTEND_OFF+=("$timer")
+    done
+    TIPPR_TIMERS=(tippr-job-server_status.timer)
+fi
 
 ###############################################################################
 # Firewall (optional)
 ###############################################################################
+# what a backend's frontends reach (TIPPR_ROLE=backend, docs/SERVERS.md):
+# PostgreSQL, Cassandra, RabbitMQ, ZooKeeper, OpenSearch, memcached and the
+# activity service. Several have no password, so only from their range.
+BACKEND_PORTS="5432 9042 5672 2181 9200 11211 9002"
 if [ "$TIPPR_FIREWALL" = "1" ]; then
     apt-get install $APTITUDE_OPTIONS ufw
     ufw allow "${TIPPR_SSH_PORT}/tcp"
-    ufw allow 80/tcp
-    ufw allow 443/tcp
+    # pages: not on a backend
+    if [ "$TIPPR_ROLE" != "backend" ]; then
+        ufw allow 80/tcp
+        ufw allow 443/tcp
+    fi
+    if [ "$TIPPR_ROLE" = "backend" ]; then
+        for port in $BACKEND_PORTS; do
+            ufw allow from "$TIPPR_FRONTEND_ALLOW" to any port "$port" proto tcp
+        done
     # a shared cache server (TIPPR_MEMCACHED_LISTEN): the frontends only
-    if [ -n "$TIPPR_MEMCACHED_ALLOW" ]; then
+    elif [ -n "$TIPPR_MEMCACHED_ALLOW" ]; then
         ufw allow from "$TIPPR_MEMCACHED_ALLOW" to any port 11211 proto tcp
     fi
     ufw --force enable
+elif [ "$TIPPR_ROLE" = "backend" ]; then
+    echo "NOTE: this backend takes its frontends' connections on ports ${BACKEND_PORTS// /, }; Cassandra, OpenSearch, memcached and the activity service have no password, so let only $TIPPR_FRONTEND_ALLOW reach them (the Proxmox firewall, or TIPPR_FIREWALL=1 with ufw; docs/SERVERS.md)"
 elif [ -n "$TIPPR_MEMCACHED_ALLOW" ]; then
     echo "NOTE: memcached listens on $TIPPR_MEMCACHED_LISTEN; let only $TIPPR_MEMCACHED_ALLOW reach port 11211 (TIPPR_FIREWALL=1 does it with ufw)"
 fi
 
 # ok, now start everything else up
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"
-    systemctl enable --now tippr-backup.path
+    if [ "$TIPPR_ROLE" = "frontend" ]; then
+        systemctl disable --now "${FRONTEND_OFF[@]}" 2>/dev/null || true
+        systemctl enable tippr.target "${TIPPR_TIMERS[@]}"
+    else
+        systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"
+        systemctl enable --now tippr-backup.path
+    fi
     if [ "$TIPPR_WEB_UPDATES" = "1" ]; then
         systemctl enable --now tippr-update.timer
     else
@@ -1949,24 +2182,27 @@ fi
 # Finished with install script
 ###############################################################################
 # Initialize policy wiki pages (Terms of Use, Privacy Policy, etc.)
-echo "Ensuring application account exists..."
-tippr-run $TIPPR_SRC/tippr/scripts/create_default_user.py || echo "Note: create_default_user.py skipped"
-echo "Initializing policy wiki pages..."
-tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Policy wiki pages initialization skipped (can be run manually later)"
-# starter vaults and front page defaults (then only defaults new since the
-# last run, so ones an admin took off stay off)
-echo "Creating starter vaults..."
-tippr-run $TIPPR_SRC/tippr/scripts/create_default_vaults.py || echo "Note: starter vaults skipped (run scripts/create_default_vaults.py later)"
-# starter feeds for them (TIPPR_STARTER_FEEDS; then only feeds new since the
-# last run, so ones an admin removed stay removed)
-echo "Adding starter feeds (TIPPR_STARTER_FEEDS=$TIPPR_STARTER_FEEDS)..."
-FEEDS_STARTER="$TIPPR_STARTER_FEEDS" tippr-run $TIPPR_SRC/tippr/scripts/import_feeds.py || echo "Note: starter feeds skipped (FEEDS_STARTER=1 tippr-run scripts/import_feeds.py later)"
-# starter awards (trophies); existing ones are left alone
-echo "Creating starter awards..."
-tippr-run $TIPPR_SRC/tippr/scripts/create_default_awards.py || echo "Note: starter awards skipped (run scripts/create_default_awards.py later)"
-# which vaults are like which, for the explore page (then daily, from
-# tippr-job-vault_similarity)
-tippr-run -c "from r2.lib import vault_similarity; vault_similarity.run()" || echo "Note: vault similarity skipped (tippr-job-vault_similarity runs it daily)"
+# (on the backend, or the one server: a frontend shares its backend's)
+if [ "$TIPPR_ROLE" != "frontend" ]; then
+    echo "Ensuring application account exists..."
+    tippr-run $TIPPR_SRC/tippr/scripts/create_default_user.py || echo "Note: create_default_user.py skipped"
+    echo "Initializing policy wiki pages..."
+    tippr-run $TIPPR_SRC/tippr/scripts/init_policy_wiki_pages.py || echo "Note: Policy wiki pages initialization skipped (can be run manually later)"
+    # starter vaults and front page defaults (then only defaults new since the
+    # last run, so ones an admin took off stay off)
+    echo "Creating starter vaults..."
+    tippr-run $TIPPR_SRC/tippr/scripts/create_default_vaults.py || echo "Note: starter vaults skipped (run scripts/create_default_vaults.py later)"
+    # starter feeds for them (TIPPR_STARTER_FEEDS; then only feeds new since the
+    # last run, so ones an admin removed stay removed)
+    echo "Adding starter feeds (TIPPR_STARTER_FEEDS=$TIPPR_STARTER_FEEDS)..."
+    FEEDS_STARTER="$TIPPR_STARTER_FEEDS" tippr-run $TIPPR_SRC/tippr/scripts/import_feeds.py || echo "Note: starter feeds skipped (FEEDS_STARTER=1 tippr-run scripts/import_feeds.py later)"
+    # starter awards (trophies); existing ones are left alone
+    echo "Creating starter awards..."
+    tippr-run $TIPPR_SRC/tippr/scripts/create_default_awards.py || echo "Note: starter awards skipped (run scripts/create_default_awards.py later)"
+    # which vaults are like which, for the explore page (then daily, from
+    # tippr-job-vault_similarity)
+    tippr-run -c "from r2.lib import vault_similarity; vault_similarity.run()" || echo "Note: vault similarity skipped (tippr-job-vault_similarity runs it daily)"
+fi
 
 # print this out here. if vagrant's involved, it's gonna do more steps
 # afterwards and then re-run this script but that's ok.

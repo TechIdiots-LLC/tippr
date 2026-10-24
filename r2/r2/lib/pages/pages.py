@@ -43,7 +43,7 @@ from babel.numbers import format_currency
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c
-from pylons.i18n import _, ungettext
+from pylons.i18n import N_, _, ungettext
 
 from r2.config import feature
 from r2.config.extensions import is_api
@@ -4291,6 +4291,9 @@ class AdminServerStatus(Templated):
     DISK_WARN = 85      # percent full
     MEMORY_WARN = 90    # percent used
     LOAD_WARN = 1.5     # 5-minute load per CPU
+    # a server's part when the site is split over several (one that does
+    # everything shows none; docs/SERVERS.md)
+    ROLE_NAMES = {"backend": N_("backend"), "frontend": N_("frontend")}
 
     def __init__(self):
         from r2.lib import server_status

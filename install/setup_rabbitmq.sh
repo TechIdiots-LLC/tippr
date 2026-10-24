@@ -32,15 +32,18 @@ source $RUNDIR/install.cfg
 # Configure RabbitMQ
 ###############################################################################
 # r2 and the websockets service are the only clients, so AMQP and the
-# management UI listen on localhost only. (epmd and Erlang distribution,
-# ports 4369/25672, need the Erlang cookie; leave them to the firewall.)
-# Upgrades re-run this: RabbitMQ restarts (about 20 seconds of the site's
-# downtime) only when the file changes.
+# management UI listen on localhost only; a backend (TIPPR_ROLE=backend,
+# docs/SERVERS.md) also takes AMQP from its frontends, on the address they
+# reach it on (the tippr account has a password). (epmd and Erlang
+# distribution, ports 4369/25672, need the Erlang cookie; leave them to the
+# firewall.) Upgrades re-run this: RabbitMQ restarts (about 20 seconds of
+# the site's downtime) only when the file changes.
 RABBIT_CONF=/etc/rabbitmq/rabbitmq.conf
 rabbit_new_conf=$(mktemp)
-cat > "$rabbit_new_conf" <<RABBITCONF
+sed '/^$/d' > "$rabbit_new_conf" <<RABBITCONF
 # Managed by tippr install/setup_rabbitmq.sh
 listeners.tcp.default = 127.0.0.1:5672
+$([ "$TIPPR_ROLE" = "backend" ] && echo "listeners.tcp.frontends = $TIPPR_BACKEND_LISTEN:5672")
 management.tcp.ip = 127.0.0.1
 management.tcp.port = 15672
 RABBITCONF

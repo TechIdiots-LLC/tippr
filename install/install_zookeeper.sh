@@ -57,8 +57,17 @@ if [ -f "$ZOO_CFG" ]; then
         sed -i "s#^dataDir=.*#dataDir=$ZOO_DATA#" "$ZOO_CFG"
         restart_zookeeper=1
     fi
-    if ! grep -q '^clientPortAddress=' "$ZOO_CFG"; then
-        echo 'clientPortAddress=127.0.0.1' >> "$ZOO_CFG"
+    # a backend (TIPPR_ROLE=backend, docs/SERVERS.md): every address, for
+    # its frontends (r2's nodes need its password; the firewall keeps the
+    # rest to them)
+    if [ "$TIPPR_ROLE" = "backend" ]; then
+        zk_address=0.0.0.0
+    else
+        zk_address=127.0.0.1
+    fi
+    if ! grep -qx "clientPortAddress=$zk_address" "$ZOO_CFG"; then
+        sed -i '/^clientPortAddress=/d' "$ZOO_CFG"
+        echo "clientPortAddress=$zk_address" >> "$ZOO_CFG"
         restart_zookeeper=1
     fi
     if [ "$restart_zookeeper" = "1" ]; then

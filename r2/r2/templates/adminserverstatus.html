@@ -110,6 +110,10 @@
       %if s.get('host') and s.get('host') != s.get('name'):
         &#32;&middot; ${s['host']}
       %endif
+      ## split over servers (docs/SERVERS.md)
+      %if s.get('role') in thing.ROLE_NAMES:
+        &#32;&middot; ${_(thing.ROLE_NAMES[s['role']])}
+      %endif
       </small>
     </h2>
     %if s['warnings']:

@@ -39,6 +39,33 @@ if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     # Ubuntu 24.04 - Use cqlsh (installed via apt with Cassandra)
     ###########################################################################
 
+    # Where clients connect (CQL, 9042): this server only, or on a backend
+    # (TIPPR_ROLE=backend, docs/SERVERS.md) every address, so its frontends
+    # can, telling them TIPPR_BACKEND_LISTEN. Cassandra has no password
+    # here: the firewall keeps it to the frontends (TIPPR_FRONTEND_ALLOW).
+    CASSANDRA_YAML=/etc/cassandra/cassandra.yaml
+    if [ -f "$CASSANDRA_YAML" ]; then
+        if [ "$TIPPR_ROLE" = "backend" ]; then
+            rpc_address=0.0.0.0
+            broadcast="broadcast_rpc_address: $TIPPR_BACKEND_LISTEN"
+        else
+            rpc_address=localhost
+            broadcast=""
+        fi
+        yaml_before=$(md5sum < "$CASSANDRA_YAML")
+        sed -i -E "s/^rpc_address:.*/rpc_address: $rpc_address/" "$CASSANDRA_YAML"
+        sed -i -E '/^broadcast_rpc_address:/d' "$CASSANDRA_YAML"
+        [ -n "$broadcast" ] && echo "$broadcast" >> "$CASSANDRA_YAML"
+        if [ "$(md5sum < "$CASSANDRA_YAML")" != "$yaml_before" ]; then
+            echo "Cassandra: clients on $rpc_address; restarting"
+            systemctl restart cassandra
+            for i in $(seq 1 120); do
+                nc -z localhost 9042 2>/dev/null && break
+                sleep 2
+            done
+        fi
+    fi
+
     # Verify Cassandra is actually accepting connections before running setup.
     # If this fails the keyspace will be silently missing and the app will 404.
     echo "Verifying Cassandra CQL port is open before running setup..."

@@ -98,3 +98,31 @@ fi
 # read the checkout
 sudo -u postgres env LC_ALL=C psql tippr -v ON_ERROR_STOP=1 \
     < "$RUNDIR/postgres_functions.sql"
+
+# Who can connect: this server only, or on a backend (TIPPR_ROLE=backend,
+# docs/SERVERS.md) its frontends too, on the address they reach it on, from
+# their address range (TIPPR_FRONTEND_ALLOW), with the tippr password.
+# PostgreSQL restarts only when this changes.
+PG_CONF_DIR=$(dirname "$(sudo -u postgres env LC_ALL=C psql -Atc 'SHOW config_file;')")
+PG_HBA=$(sudo -u postgres env LC_ALL=C psql -Atc 'SHOW hba_file;')
+PG_LISTEN_FILE=$PG_CONF_DIR/conf.d/tippr-listen.conf
+if [ "$TIPPR_ROLE" = "backend" ]; then
+    pg_listen="listen_addresses = 'localhost,$TIPPR_BACKEND_LISTEN'"
+else
+    pg_listen=""
+fi
+pg_before=$(cat "$PG_LISTEN_FILE" "$PG_HBA" 2>/dev/null | md5sum)
+if [ -n "$pg_listen" ]; then
+    install -d -o postgres -g postgres "$PG_CONF_DIR/conf.d"
+    echo "$pg_listen" > "$PG_LISTEN_FILE"
+else
+    rm -f "$PG_LISTEN_FILE"
+fi
+sed -i '/# tippr-frontends$/d' "$PG_HBA"
+if [ "$TIPPR_ROLE" = "backend" ]; then
+    echo "host tippr tippr $TIPPR_FRONTEND_ALLOW scram-sha-256 # tippr-frontends" >> "$PG_HBA"
+fi
+if [ "$(cat "$PG_LISTEN_FILE" "$PG_HBA" 2>/dev/null | md5sum)" != "$pg_before" ]; then
+    echo "PostgreSQL: listening on ${TIPPR_BACKEND_LISTEN:-localhost} for $TIPPR_ROLE; restarting"
+    systemctl restart postgresql
+fi

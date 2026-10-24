@@ -3,6 +3,15 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **A site can be split over several servers:** the installer's `TIPPR_ROLE` makes a server the **backend**
+  (PostgreSQL, Cassandra, RabbitMQ, ZooKeeper, OpenSearch, memcached, the "here now" counts, the queue processors
+  and the scheduled jobs) or a **frontend** (the pages and live comments), any number of which, on any servers,
+  share one backend behind a load balancer. `all`, one server doing everything, stays the default. The backend
+  opens its services to the frontends' address range and writes `/etc/tippr/cluster.env`, the passwords, signing
+  secrets and shared settings a frontend installs from; the Proxmox template makes either from `firstboot.env`.
+  Media has to be in object storage. `/admin/servers` shows each server's role and leaves out the services it
+  doesn't run, and updating a backend checks its app and database rather than its (absent) pages. Members' data
+  exports and `/admin/backups` don't work across servers yet. See docs/SERVERS.md.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

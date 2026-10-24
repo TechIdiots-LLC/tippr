@@ -45,6 +45,11 @@ if [ -f /etc/tippr/firstboot.env ]; then
 fi
 
 domain=${1:-${TIPPR_DOMAIN:-}}
+# a frontend (TIPPR_ROLE=frontend, docs/SERVERS.md): its backend's
+CLUSTER_FILE=${TIPPR_CLUSTER_FILE:-/etc/tippr/cluster.env}
+if [ -z "$domain" ] && [ -f "$CLUSTER_FILE" ]; then
+    domain=$(grep -E '^TIPPR_DOMAIN=' "$CLUSTER_FILE" | tail -n 1 | cut -d= -f2- || true)
+fi
 if [ -z "$domain" ]; then
     fqdn=$(hostname -f 2>/dev/null || hostname)
     case "$fqdn" in
@@ -75,15 +80,26 @@ if [ -f "$PENDING" ]; then
         # shellcheck disable=SC2086
         systemctl stop $units || true
     fi
-    # Start ZooKeeper empty: anything in it came from the template build,
-    # ACL'd to that build's password (a new site has nothing there to keep)
-    systemctl stop zookeeper || true
-    rm -rf /var/lib/zookeeper/version-2
-    systemctl start zookeeper
-    for i in $(seq 60); do
-        nc -z 127.0.0.1 2181 2>/dev/null && break
-        sleep 1
-    done
+    if [ "${TIPPR_ROLE:-}" = "frontend" ]; then
+        # a frontend uses its backend's databases (docs/SERVERS.md): stop
+        # the template's now, before they take the memory the install needs
+        # (the installer turns them off for good)
+        for unit in cassandra opensearch zookeeper postgresql \
+                rabbitmq-server memcached redis-server; do
+            systemctl stop "$unit" 2>/dev/null || true
+        done
+    else
+        # Start ZooKeeper empty: anything in it came from the template
+        # build, ACL'd to that build's password (a new site has nothing
+        # there to keep)
+        systemctl stop zookeeper || true
+        rm -rf /var/lib/zookeeper/version-2
+        systemctl start zookeeper
+        for i in $(seq 60); do
+            nc -z 127.0.0.1 2181 2>/dev/null && break
+            sleep 1
+        done
+    fi
     # The template has no /etc/tippr/secrets.env, so the installer makes new
     # passwords and secrets for this container. A retry after a failed first
     # boot keeps the ones that attempt made, which PostgreSQL and RabbitMQ
@@ -101,8 +117,22 @@ cd "$SRC"
 TIPPR_YES=1 TIPPR_USER=${TIPPR_USER:-tippr} TIPPR_DOMAIN=$domain \
     ./install-tippr.sh </dev/null
 
-admin_password=$(grep -E '^TIPPR_ADMIN_PASSWORD=' /etc/tippr/secrets.env | cut -d= -f2-)
+role=$(grep -E '^TIPPR_ROLE=' /etc/tippr/secrets.env | tail -n 1 | cut -d= -f2- || true)
 umask 077
+if [ "$role" = "frontend" ]; then
+    # the site's accounts are on its backend
+    backend=$(grep -E '^TIPPR_BACKEND_HOST=' /etc/tippr/secrets.env | tail -n 1 | cut -d= -f2- || true)
+    cat > "$LOGIN_FILE" <<LOGIN
+This container is a frontend for https://$domain/, using the backend at
+$backend (docs/SERVERS.md). Add it to the load balancer in front of the
+site; log in with the site's admin account, which the backend's
+$LOGIN_FILE has.
+LOGIN
+    rm -f "$PENDING" /etc/systemd/system-preset/10-tippr-firstboot.preset
+    echo "tippr-firstboot: done (frontend); see $LOGIN_FILE"
+    exit 0
+fi
+admin_password=$(grep -E '^TIPPR_ADMIN_PASSWORD=' /etc/tippr/secrets.env | cut -d= -f2-)
 cat > "$LOGIN_FILE" <<LOGIN
 tippr is set up at https://$domain/
 
@@ -113,5 +143,13 @@ Password:      $admin_password
 set up two-factor authentication under preferences -> security; admin mode
 needs it. Then see /admin/site, /admin/email and /admin/backups.
 LOGIN
+if [ "$role" = "backend" ]; then
+    cat >> "$LOGIN_FILE" <<LOGIN
+
+This container is the backend (docs/SERVERS.md): it serves no pages
+itself. Copy $CLUSTER_FILE to each frontend (the same path, mode 600)
+before its first boot, then add the frontends to the load balancer.
+LOGIN
+fi
 rm -f "$PENDING" /etc/systemd/system-preset/10-tippr-firstboot.preset
 echo "tippr-firstboot: done; login details are in $LOGIN_FILE"

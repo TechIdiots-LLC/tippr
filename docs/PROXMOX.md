@@ -235,25 +235,16 @@ this way; others say so on their card and are upgraded by hand.
 ## Moving to more containers
 
 A container made from the template holds everything, which suits most
-sites. To spread a site over several containers later:
+sites. The same template also makes a **backend** container (the
+databases, queue, cache, queue processors and jobs) and any number of
+**frontend** containers (the pages), with `TIPPR_ROLE` in each one's
+`firstboot.env`: [SERVERS.md](SERVERS.md) has the steps. Media has to be
+in S3-compatible storage first, e.g. Garage in its own container
+([STORAGE.md](STORAGE.md)).
 
-- **App containers** (web, consumers and jobs) are interchangeable. Run
-  several behind a load balancer (HAProxy, or an nginx container) to
-  share the load, with `TIPPR_EXTERNAL_PROXY` set to its address.
-  Scheduled jobs take a ZooKeeper lock first (`scripts/run-locked`), so
-  each still runs on one container at a time.
-- **The data stores** scale their own way: PostgreSQL with replicas,
-  Cassandra and OpenSearch by adding nodes to their clusters.
-  memcached, RabbitMQ and ZooKeeper are small and can share one container.
-- **Media** (uploaded images) lives on each app container's disk by
-  default, so with several app containers move it to shared S3-compatible
-  storage first, e.g. Garage in its own container:
-  [STORAGE.md](STORAGE.md).
-
-[ARCHITECTURE.md](ARCHITECTURE.md) has the full table of roles. To move
-the data, export from the all-in-one container with `--offline` and import
-and restore on the new app container ([BACKUP.md](BACKUP.md)). Restore
-writes to wherever the new container's ini points.
+To move an all-in-one site's data to a new backend, export from the old
+container with `--offline` and import and restore on the backend
+([BACKUP.md](BACKUP.md)).
 
 ## Notes
 

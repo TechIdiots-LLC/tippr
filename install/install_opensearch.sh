@@ -63,8 +63,10 @@ node.name: $(hostname -s)
 path.data: /var/lib/opensearch
 path.logs: /var/log/opensearch
 
-# Only tippr on this machine talks to OpenSearch.
-network.host: 127.0.0.1
+# Only tippr on this machine talks to OpenSearch; on a backend
+# (TIPPR_ROLE=backend, docs/SERVERS.md) its frontends too, on the address
+# they reach it on (no password: the firewall keeps it to them).
+network.host: $([ "$TIPPR_ROLE" = "backend" ] && echo "[\"127.0.0.1\", \"$TIPPR_BACKEND_LISTEN\"]" || echo "127.0.0.1")
 http.port: 9200
 discovery.type: single-node
 
