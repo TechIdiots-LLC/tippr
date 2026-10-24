@@ -16,6 +16,8 @@
 ## /admin/servers: each server's last report (r2.lib.server_status)
 
 <%!
+  from r2.lib.filters import unsafe, websafe
+
   def size(n):
       return "%.1f GB" % ((n or 0) / 1024.0 ** 3)
 %>
@@ -39,12 +41,12 @@
     <p>${_("No release of %(repo)s has an installer yet.") % dict(repo=thing.release_repo)}</p>
   %else:
     <p>
-      ${_("The newest release is")}
-      <a href="${thing.latest_release['url']}" target="_blank" rel="noopener"><strong>${thing.latest_release['version']}</strong></a>
+      ${_("The newest release is")}&#32;
+      <a href="${thing.latest_release['url']}" target="_blank" rel="noopener"><strong>${thing.latest_release['version']}</strong></a>&#32;
       %if thing.latest_release['published']:
-        <small>(${thing.latest_release['published'][:10]})</small>
+        <small>(${thing.latest_release['published'][:10]})</small>&#32;
       %endif
-      &middot;
+      &middot;&#32;
       %if thing.outdated:
         <strong>${_("an update is available for %(n)s of your servers") % dict(n=len(thing.outdated))}</strong>
       %else:
@@ -52,7 +54,7 @@
       %endif
     </p>
     %if thing.latest_prerelease:
-      <p><small>${_("A pre-release is out too:")}
+      <p><small>${_("A pre-release is out too:")}&#32;
         <a href="${thing.latest_prerelease['url']}" target="_blank" rel="noopener">${thing.latest_prerelease['version']}</a></small></p>
     %endif
     <p><small>${_("Read the release's notes before updating: anything that needs doing by hand is in them.")}</small></p>
@@ -62,8 +64,8 @@
   %if thing.update_request:
     <% req = thing.update_request %>
     <p class="server-update-request">
-      ${_("%(user)s asked for %(version)s %(time)s ago%(backup)s.") % dict(user=req.get('requested_by'), version=req.get('version'), time=req['age'], backup=_(", with a backup first") if req.get('backup') else "")}
-      ${_("Each server updates within a minute or so of its turn, one at a time; the site is down on each for a few minutes while it does. Its state is on its card below.")}
+      ${_("%(user)s asked for %(version)s %(time)s ago%(backup)s.") % dict(user=req.get('requested_by'), version=req.get('version'), time=req['age'], backup=_(", with a backup first") if req.get('backup') else "")}&#32;
+      ${_("Each server updates within a minute or so of its turn, one at a time; the site is down on each for a few minutes while it does. Its state is on its card below.")}&#32;
       %if thing.update_watch:
         ${_("This page keeps itself up to date until it's done, including while the site is down.")}
       %endif
@@ -103,10 +105,10 @@
   <div class="server-card ${'server-stale' if s['stale'] else ''} ${'server-warn' if s['warnings'] else ''}"
        data-server="${s['id']}">
     <h2>
-      ${s.get('name')}
+      ${s.get('name')}&#32;
       <small><code>${s['id']}</code>
       %if s.get('host') and s.get('host') != s.get('name'):
-        &middot; ${s['host']}
+        &#32;&middot; ${s['host']}
       %endif
       </small>
     </h2>
@@ -119,9 +121,9 @@
     %endif
     <table class="lined-table borderless">
       <tr><td>${_("version")}</td>
-          <td>${s.get('version') or '?'}
+          <td>${s.get('version') or '?'}&#32;
             %if s.get('commit'):
-              <small>(<code>${s['commit']}</code>)</small>
+              <small>(<code>${s['commit']}</code>)</small>&#32;
             %endif
             %if s['update_available']:
               <span class="server-update-available">${_("%(version)s is out") % dict(version=thing.latest_release['version'])}</span>
@@ -132,13 +134,13 @@
         <% running = u.get('state') in thing.update_active_states %>
         <tr><td>${_("update")}</td>
             <td class="server-update-state server-update-${u.get('state')}">
-              <strong>${_(thing.update_states.get(u.get('state'), u.get('state') or '?'))}</strong>
-              ${_("to %(version)s") % dict(version=u.get('version'))}
+              <strong>${_(thing.update_states.get(u.get('state'), u.get('state') or '?'))}</strong>&#32;
+              ${_("to %(version)s") % dict(version=u.get('version'))}&#32;
               %if u.get('from_version'):
-                <small>${_("(from %(version)s)") % dict(version=u['from_version'])}</small>
+                <small>${_("(from %(version)s)") % dict(version=u['from_version'])}</small>&#32;
               %endif
               %if running and u.get('step_age'):
-                <small>&middot; ${_("for %(time)s") % dict(time=u['step_age'])}</small>
+                &#32;<small>&middot; ${_("for %(time)s") % dict(time=u['step_age'])}</small>
               %endif
               %if u.get('message'):
                 <br><small>${u['message']}</small>
@@ -146,7 +148,8 @@
               %if u.get('log'):
                 ## open while it runs: its latest lines are the progress
                 <details ${'open' if running else ''}><summary><small>${_("log")}</small></summary>
-                  <pre class="server-update-log">${"\n".join(u['log'])}</pre></details>
+                  ## (&#10;: the page's space compression would join the lines)
+                  <pre class="server-update-log">${unsafe("&#10;".join(websafe(line) for line in u['log']))}</pre></details>
               %endif
             </td></tr>
       %elif thing.update_request and not s['stale']:
@@ -158,11 +161,11 @@
       <tr><td>${_("reported")}</td>
           <td>${_("%(time)s ago") % dict(time=thing._duration(s['age']))}
             %if s['uptime_text']:
-              &middot; ${_("up %(time)s") % dict(time=s['uptime_text'])}
+              &#32;&middot; ${_("up %(time)s") % dict(time=s['uptime_text'])}
             %endif
           </td></tr>
       <tr><td>${_("load")}</td>
-          <td>${" / ".join("%.2f" % x for x in s.get('load') or [])}
+          <td>${" / ".join("%.2f" % x for x in s.get('load') or [])}&#32;
             <small>${_("(1, 5 and 15 minutes, on %(n)s CPUs)") % dict(n=s.get('cpus'))}</small></td></tr>
       <% m = s.get('memory') or {} %>
       <tr><td>${_("memory")}</td>
@@ -170,7 +173,7 @@
             %if m.get('total'):
               ${_("%(used)s of %(total)s used (%(p)s%%)") % dict(used=size(m['used']), total=size(m['total']), p=s['memory_percent'])}
               %if m.get('swap_total'):
-                <small>&middot; ${_("swap %(used)s of %(total)s") % dict(used=size(m['swap_used']), total=size(m['swap_total']))}</small>
+                &#32;<small>&middot; ${_("swap %(used)s of %(total)s") % dict(used=size(m['swap_used']), total=size(m['swap_total']))}</small>
               %endif
             %endif
           </td></tr>
@@ -178,7 +181,7 @@
         <tr><td>${_("disk")} <code>${d['path']}</code></td>
             <td>
               <span class="server-bar"><span style="width: ${d['percent']}%"
-                class="${'server-bar-warn' if d['percent'] >= thing.DISK_WARN else ''}"></span></span>
+                class="${'server-bar-warn' if d['percent'] >= thing.DISK_WARN else ''}"></span></span>&#32;
               ${_("%(used)s of %(total)s used (%(p)s%%), %(free)s free") % dict(used=size(d['used']), total=size(d['total']), p=d['percent'], free=size(d['free']))}
               <br><small>${", ".join(d['labels'])}</small>
             </td></tr>
