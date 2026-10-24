@@ -34,12 +34,22 @@ source $RUNDIR/install.cfg
 # r2 and the websockets service are the only clients, so AMQP and the
 # management UI listen on localhost only. (epmd and Erlang distribution,
 # ports 4369/25672, need the Erlang cookie; leave them to the firewall.)
-cat > /etc/rabbitmq/rabbitmq.conf <<RABBITCONF
+# Upgrades re-run this: RabbitMQ restarts (about 20 seconds of the site's
+# downtime) only when the file changes.
+RABBIT_CONF=/etc/rabbitmq/rabbitmq.conf
+rabbit_new_conf=$(mktemp)
+cat > "$rabbit_new_conf" <<RABBITCONF
 # Managed by tippr install/setup_rabbitmq.sh
 listeners.tcp.default = 127.0.0.1:5672
 management.tcp.ip = 127.0.0.1
 management.tcp.port = 15672
 RABBITCONF
+rabbit_restart=0
+if ! cmp -s "$rabbit_new_conf" "$RABBIT_CONF"; then
+    install -m 0644 "$rabbit_new_conf" "$RABBIT_CONF"
+    rabbit_restart=1
+fi
+rm -f "$rabbit_new_conf"
 
 if ! sudo rabbitmqctl list_vhosts | egrep "^/$"
 then
@@ -54,5 +64,10 @@ fi
 sudo rabbitmqctl change_password tippr "$TIPPR_AMQP_PASSWORD"
 
 sudo rabbitmqctl set_permissions -p / tippr ".*" ".*" ".*"
-sudo rabbitmq-plugins enable rabbitmq_management
-sudo service rabbitmq-server restart
+# (enabling a plugin takes effect without a restart)
+if ! grep -q rabbitmq_management /etc/rabbitmq/enabled_plugins 2>/dev/null; then
+    sudo rabbitmq-plugins enable rabbitmq_management
+fi
+if [ "$rabbit_restart" = 1 ] || ! sudo service rabbitmq-server status >/dev/null 2>&1; then
+    sudo service rabbitmq-server restart
+fi
