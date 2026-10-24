@@ -32,6 +32,10 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
+- **NSFW posts were shown to everyone outside their vault:** on /v/all, the front page and profiles, logged out
+  too (only the vault's own page asked "are you over 18?"; hiding them elsewhere was reddit's safe_search
+  experiment, never on). They're shown only to people who said they're over 18 now, and a page showing any has
+  no AdSense ads, which Google doesn't allow next to adult content.
 - **Every page loaded a tracking pixel nothing used, and on Docker it was missing:** reddit counted pageviews from
   the pixel's log, which nothing reads now that tippr counts them as it serves them, and Caddy had no route for it,
   so every page had a 404. Pages no longer load it (`tracker_url` is blank), and Caddy answers the remaining pixels

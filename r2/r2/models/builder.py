@@ -34,7 +34,6 @@ from pylons import app_globals as g
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
-from r2.config import feature
 from r2.config.extensions import API_TYPES, RSS_TYPES
 from r2.lib import ai_content, hooks
 from r2.lib.comment_tree import (
@@ -761,17 +760,22 @@ class SearchBuilder(IDBuilder):
         # show NSFW to API and RSS users unless obey_over18=true
         is_api_or_rss = (c.render_style in API_TYPES
                          or c.render_style in RSS_TYPES)
+        # on the site, only for people who said they're over 18 (the
+        # preference, or the "are you over 18?" page): reddit's safe_search
+        # feature, which was never on, so /v/all, the front page and profiles
+        # showed NSFW posts to everyone, logged out too
         if is_api_or_rss:
             include_over18 = not c.obey_over18 or c.over18
-        elif feature.is_enabled('safe_search'):
-            include_over18 = c.over18
         else:
-            include_over18 = True
+            include_over18 = c.over18
 
         is_nsfw = (item.over_18 or
             (hasattr(item, 'vault') and item.vault.over_18))
         if is_nsfw and not include_over18:
             return False
+        if is_nsfw:
+            # no ads next to adult content (r2.lib.ad_settings)
+            c.page_nsfw = True
 
         return True
 
