@@ -29,6 +29,14 @@
 //     comes back when approved; its own comment is distinguished; locking
 //     the thread stops members replying, unlocking lets them; a member it
 //     bans can't comment until the ban is lifted; the log lists it all
+//   - support: bob and carol write to the admins from the contact page (a
+//     question and a privacy request); visual_admin turns on admin mode
+//     with a code from its authenticator app (made here from the seed's
+//     secret), finds both in /admin/support, takes bob's, leaves a staff
+//     note and replies, and lets visual_support (an employee) answer
+//     general questions only, who then sees bob's ticket and not carol's;
+//     bob's answer comes from the admin team, not a named admin, without
+//     the note, and his reply goes back to the ticket
 //
 // On each page: no JavaScript errors, no failed requests to the site, no
 // sideways scrolling at phone width, and no text that can't be read on its
@@ -39,6 +47,7 @@
 //        [VISUAL_OUT=dir] [VISUAL_RESOLVE=127.0.0.1] [CHROME=path] \
 //        [PLAYWRIGHT=path to playwright-core] node docker/visual-test.mjs
 
+import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -217,6 +226,19 @@ async function eventually(where, what, test, seconds = 90) {
   return false;
 }
 
+// After an action: reload until the page shows its effect, for up to 30
+// seconds (another web worker can answer with what it had a moment
+// before), and say how long it took when it wasn't straight away.
+async function settles(where, what, load, test, seconds = 30) {
+  const started = Date.now();
+  const ok = await eventually(where, what, async () => {
+    await load();
+    return (await test()) || "not yet";
+  }, seconds);
+  const took = Math.round((Date.now() - started) / 1000);
+  if (ok && took >= 2) console.log(`${where}: showed after ${took}s`);
+}
+
 const thing = (page, fullname) => page.locator(`.thing[data-fullname="${fullname}"]`).first();
 const arrows = (page, fullname) => page.locator(`.thing[data-fullname="${fullname}"] > .midcol`).first();
 const visibleScore = async (page, fullname, comment) => {
@@ -280,6 +302,39 @@ async function tryComment(s, text) {
     const shown = [...f.querySelectorAll(".error, .status")].filter((e) => e.offsetParent && e.innerText.trim());
     return shown.length ? shown.map((e) => e.innerText.trim()).join(" / ") : null;
   });
+}
+
+// The code an authenticator app shows for a base32 secret (RFC 6238, as
+// r2/lib/totp.py makes them).
+function totp(secret) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const ch of secret.replace(/=+$/, "")) bits += alphabet.indexOf(ch).toString(2).padStart(5, "0");
+  const key = Buffer.from(bits.match(/.{8}/g).map((b) => parseInt(b, 2)));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000 / 30)));
+  const hmac = createHmac("sha1", key).update(counter).digest();
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  return String((hmac.readUInt32BE(offset) & 0x7fffffff) % 1000000).padStart(6, "0");
+}
+
+// Write to the admins from the contact page: open the topic, and its link
+// opens the message form with the subject filled in.
+async function contactAdmins(s, topic, linkText, text) {
+  await s.page.goto(`${BASE}/contact`, READY);
+  await s.page.getByText(topic, { exact: true }).click();
+  await Promise.all([s.page.waitForURL(/\/message\/compose/, READY), s.page.getByText(linkText, { exact: true }).click()]);
+  const form = s.page.locator("form#compose-message");
+  const subject = await form.locator("input[name=subject]").inputValue();
+  await form.locator("textarea[name=text]").fill(text);
+  await Promise.all([
+    s.page.waitForResponse((r) => r.url().includes("/compose"), { timeout: 30000 }),
+    form.locator("button#send").click(),
+  ]);
+  await check(`${s.name} writes to the admins`, async () =>
+    /delivered/.test(await form.locator(".status").innerText().catch(() => "")),
+    "the form should say the message was delivered");
+  return subject;
 }
 
 let post;  // the post's fullname (tippr's posts are t1_, not reddit's t3_)
@@ -439,32 +494,30 @@ try {
   await check("removed comment (as visual_mod)", async () => /removed by visual_mod/.test((await seen(mod.page, c5) || {}).text || ""),
               'the moderator should see "removed by visual_mod" on it');
   await shoot(mod, "thread-removed");
-  await fresh(visitor);
-  await check("removed comment (logged out)", async () => !(await seen(visitor.page, c5)), "visitors shouldn't see it");
+  await settles("removed comment (logged out)", "visitors shouldn't see it", () => fresh(visitor),
+                async () => !(await seen(visitor.page, c5)));
   await modAction(mod, c5, "approve");
-  await fresh(visitor);
-  await check("approved comment (logged out)", async () => !!(await seen(visitor.page, c5)), "visitors should see it again");
+  await settles("approved comment (logged out)", "visitors should see it again", () => fresh(visitor),
+                async () => !!(await seen(visitor.page, c5)));
 
   // a moderator's comment, distinguished as the moderator's
   const note = await comment(mod, post, "Moderator note: please keep the discussion civil.");
   await mod.page.reload(READY);
   await modAction(mod, note, "distinguish");
-  await fresh(visitor);
-  await check("distinguished comment (logged out)", async () =>
-    (await thing(visitor.page, note).locator(":scope > .entry .tagline .moderator").count()) > 0,
-    "it should be marked as a moderator's");
+  await settles("distinguished comment (logged out)", "it should be marked as a moderator's", () => fresh(visitor),
+                async () => (await thing(visitor.page, note).locator(":scope > .entry .tagline .moderator").count()) > 0);
   await shoot(visitor, "thread-mod-note");
 
   // lock the thread: members are told, and can't reply (the reply links stay,
   // as the kind that explains it's locked); unlock and they can
   await mod.page.reload(READY);
   await modAction(mod, post, "lock");
-  await bob.page.reload(READY);
-  await check("locked thread (as visual_bob)", async () =>
+  await settles("locked thread (as visual_bob)",
+                "members should be told it's locked, with no comment box and no working reply links",
+                () => bob.page.reload(READY), async () =>
     (await bob.page.getByText("This post is locked").count()) > 0 &&
     !(await bob.page.locator(".commentarea > form.usertext").count()) &&
-    !(await bob.page.locator(".thing.comment > .entry .flat-list a:not(.locked-error)", { hasText: /^reply$/ }).count()),
-    "members should be told it's locked, with no comment box and no working reply links");
+    !(await bob.page.locator(".thing.comment > .entry .flat-list a:not(.locked-error)", { hasText: /^reply$/ }).count()));
   await shoot(bob, "thread-locked");
   await shoot(mod, "thread-locked");
   await mod.page.reload(READY);
@@ -530,6 +583,98 @@ try {
     await s.context.close();
   }
   await visitor.context.close();
+
+  // ---- support: members write to the admins, staff answer ----
+  // bob asks a general question, carol makes a privacy request, both from
+  // the contact page
+  const bobSubject = await contactAdmins(bob, "message the admins", "Send the admins a message",
+                                         "Hello admins, a question from the browser test.");
+  const carolSubject = await contactAdmins(carol, "privacy and your data", "Send a privacy request",
+                                           "A privacy request from the browser test.");
+  await shoot(bob, "contact-sent");
+
+  // the admin turns on admin mode (password and a code from the app) and
+  // finds both in the queue
+  const admin = await session("visual_admin", "desktop");
+  await admin.page.goto(`${BASE}/adminon?dest=${encodeURIComponent("/admin/support")}`, READY);
+  await shoot(admin, "adminon");
+  await admin.page.fill("#adminon input[name=password]", accounts.visual_admin.password);
+  await admin.page.fill("#adminon input[name=otp]", totp(accounts.visual_admin.totp));
+  await Promise.all([admin.page.waitForURL(/\/admin\/support/, { timeout: 30000, ...READY }),
+                     admin.page.click("#adminon button[type=submit]")]);
+  const ticketLink = (page, subject) => page.locator("a", { hasText: subject.replace(/^\[\w+\]\s*/, "") }).first();
+  await eventually("support queue (as visual_admin)", "both requests should be in the queue", async () => {
+    await admin.page.goto(`${BASE}/admin/support?view=all`, READY);
+    const found = [await ticketLink(admin.page, bobSubject).count(), await ticketLink(admin.page, carolSubject).count()];
+    return (found[0] > 0 && found[1] > 0) || `found ${found}`;
+  });
+  await shoot(admin, "support-queue");
+
+  // bob's ticket: take it, a note for the staff, a reply as the admin team
+  await ticketLink(admin.page, bobSubject).click();
+  await admin.page.waitForLoadState("domcontentloaded");
+  const ticketUrl = admin.page.url();
+  const post_ = (action) => admin.page.waitForResponse((r) => r.url().includes(`/api/${action}`), { timeout: 30000 });
+  // (taking, notes and replies reload the ticket page themselves)
+  const andReload = (action, click) => Promise.all([post_(action), admin.page.waitForNavigation(READY), click]);
+  await andReload("support_assign", admin.page.getByRole("button", { name: "take this" }).click());
+  const staffNote = "Staff only: checked the account, nothing unusual.";
+  await admin.page.fill("form.support-note-form textarea[name=note]", staffNote);
+  await andReload("support_note", admin.page.click("form.support-note-form button"));
+  const answer = "Thanks for writing. This is the admin team's answer from the browser test.";
+  const replyForm = admin.page.locator("form[action='/api/support_reply']");
+  await replyForm.locator("textarea[name=text]").fill(answer);
+  await andReload("support_reply", replyForm.locator("button[type=submit]").click());
+  await check("support ticket (as visual_admin)", async () => {
+    const text = await admin.page.locator(".content").first().innerText();
+    return text.includes(staffNote) && text.includes(answer);
+  }, "the ticket should show the staff note and the reply");
+  await shoot(admin, "support-ticket");
+
+  // the admin lets visual_support read and answer general questions only
+  await admin.page.goto(`${BASE}/admin/support/staff`, READY);
+  {
+    const form = admin.page.locator("form.support-staff-form", { has: admin.page.locator("input[name=username][value=visual_support]") });
+    await form.locator("select[name=perm_general]").selectOption("reply");
+    await Promise.all([post_("support_staff"), form.locator("button[type=submit]").click()]);
+  }
+  await admin.page.reload(READY);
+  await shoot(admin, "support-staff");
+
+  // visual_support (an employee with two-factor on) sees bob's general
+  // question, not carol's privacy request
+  const helper = await session("visual_support", "desktop");
+  await helper.page.goto(`${BASE}/admin/support?view=all`, READY);
+  await check("support queue (as visual_support)", async () =>
+    (await ticketLink(helper.page, bobSubject).count()) > 0 && !(await ticketLink(helper.page, carolSubject).count()),
+    "an employee allowed general questions should see bob's and not carol's privacy request");
+  await shoot(helper, "support-queue");
+  await helper.context.close();
+
+  // bob gets the answer from the admin team, not from a named admin, and
+  // without the staff note; his reply goes back to the ticket
+  await eventually("bob's inbox", "the admins' answer should arrive", async () => {
+    await bob.page.goto(`${BASE}/message/inbox/`, READY);
+    return (await bob.page.getByText(answer).count()) > 0 || "not there";
+  });
+  await check("bob's inbox", async () => {
+    const text = await bob.page.locator(".content").first().innerText();
+    return !text.includes("visual_admin") && !text.includes(staffNote);
+  }, "the answer shouldn't name the admin or show the staff note");
+  await shoot(bob, "inbox-answer");
+  {
+    const msg = bob.page.locator(".thing.message", { hasText: answer }).first();
+    await msg.locator(":scope > .entry .flat-list a", { hasText: /^reply$/ }).first().click();
+    const form = msg.locator("form.usertext").first();
+    await form.locator("textarea[name=text]").fill("Thanks, that answers it.");
+    await Promise.all([bob.page.waitForResponse((r) => r.url().includes("/api/comment"), { timeout: 30000 }),
+                       form.locator("button.save").first().click()]);
+  }
+  await eventually("support ticket after bob's reply", "his reply should be on the ticket", async () => {
+    await admin.page.goto(ticketUrl, READY);
+    return (await admin.page.getByText("Thanks, that answers it.").count()) > 0 || "not there";
+  });
+  await admin.context.close();
 
   // the thread, as each of them sees it (their own votes on the arrows)
   for (const s of [alice, bob, carol, dave]) {

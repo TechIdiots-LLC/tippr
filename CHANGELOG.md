@@ -7,7 +7,10 @@
   the post and the comments, changing and undoing votes, with the arrows and scores checked. A fifth account,
   moderator of the test vault only, handles a member's report from the queue, removes and approves a comment,
   distinguishes its own, locks and unlocks the thread, and bans and unbans a member, each checked as the moderator,
-  the members and logged-out visitors see it, and in the moderation log. Every page is checked
+  the members and logged-out visitors see it, and in the moderation log. And support requests: two members write to
+  the admins from the contact page; an admin turns on admin mode with a two-factor code, takes one, notes and replies,
+  and gives an employee one category, who sees only that; the member gets the answer from the admin team, without the
+  admin's name or the staff note, and their reply reaches the ticket. Every page is checked
   for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
   screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
   docs/RELEASING.md.

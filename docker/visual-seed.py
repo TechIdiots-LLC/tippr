@@ -15,17 +15,26 @@
 """Part of docker/visual-test.mjs's run (docker/smoke-test.sh with
 VISUAL_TEST=1): the accounts the browser test acts as. Run with paster run.
 
+For a throwaway test site only: it makes a site admin (visual_admin) whose
+password and two-factor secret it prints.
+
 Ordinary members, not admins or moderators, so the test covers what members
-can do: they post, comment and vote in the browser like anyone else. They're
-approved contributors of /v/visualtest (made here, owned by the admin), so
-brand-new accounts aren't held back by the comment and submit rate limits,
-and the one who posts has the post karma that skips the captcha. carol and
-dave use night mode, so the pages are seen in both themes. visual_mod is a
-moderator of /v/visualtest and nothing else, for the moderator tools.
+can do: they post, comment, vote and write to the admins in the browser like
+anyone else. They're approved contributors of /v/visualtest (made here,
+owned by the admin), so brand-new accounts aren't held back by the comment
+and submit rate limits, and they have the post karma that skips the captcha
+(for posting and for messages). carol and dave use night mode, so the pages
+are seen in both themes. visual_mod is a moderator of /v/visualtest and
+nothing else, for the moderator tools.
+
+The support queue's staff: visual_admin, an admin (for admin mode), and
+visual_support, an employee whose support categories the test grants on
+/admin/support/staff. Both need two-factor sign-in, so each gets an
+authenticator app whose secret is printed for the test to make codes with.
 
 Prints one line, "VISUAL_SEED " and the accounts as JSON
-({name: {password, nightmode}}). Safe to re-run: existing accounts get new
-passwords.
+({name: {password, nightmode, [totp]}}). Safe to re-run: existing accounts
+get new passwords and secrets.
 """
 
 import json
@@ -34,6 +43,7 @@ import secrets
 
 from pylons import app_globals as g
 
+from r2.lib import support, totp, two_factor, user_admin
 from r2.lib.db import queries
 from r2.lib.db.thing import NotFound
 from r2.models import Account, Vault
@@ -50,6 +60,8 @@ MEMBERS = {
 }
 # a moderator of /v/visualtest only: an ordinary account otherwise, not staff
 MODERATOR = "visual_mod"
+# the support queue's staff: name -> place on the employees list
+STAFF = {"visual_admin": "admin", "visual_support": "employee"}
 
 admin = Account._by_name(os.environ.get("TIPPR_ADMIN_USER") or "tippr")
 
@@ -65,14 +77,20 @@ except NotFound:
     vault.add_moderator(admin)
     queries.new_Vault(vault)
 
-accounts = {}
-for name, nightmode in MEMBERS.items():
-    password = secrets.token_urlsafe(18)
+
+def account_named(name, password):
     try:
         account = Account._by_name(name)
         account.password = bcrypt_password(password)
     except NotFound:
         account = register(name, password, "127.0.0.1")
+    return account
+
+
+accounts = {}
+for name, nightmode in MEMBERS.items():
+    password = secrets.token_urlsafe(18)
+    account = account_named(name, password)
     account.pref_nightmode = nightmode
     account._commit()
     if not vault.is_contributor(account):
@@ -83,13 +101,25 @@ for name, nightmode in MEMBERS.items():
     if vault.is_banned(account):
         vault.remove_banned(account)
     vault.add_subscriber(account)
+    # posting and messaging skip the captcha (captcha_exempt_link_karma)
+    needed = g.live_config["captcha_exempt_link_karma"] - account.link_karma
+    if needed > 0:
+        account.incr_karma("link", vault, needed)
+        account._commit()
     accounts[name] = {"password": password, "nightmode": nightmode}
 
-# the one who posts skips the captcha (captcha_exempt_link_karma)
-poster = Account._by_name("visual_alice")
-needed = g.live_config["captcha_exempt_link_karma"] - poster.link_karma
-if needed > 0:
-    poster.incr_karma("link", vault, needed)
-    poster._commit()
+for name, level in STAFF.items():
+    password = secrets.token_urlsafe(18)
+    account = account_named(name, password)
+    account._commit()
+    error = user_admin.set_staff_level(account, admin, level)
+    if error:
+        raise SystemExit("visual-seed: can't make %s %s: %s" % (name, level, error))
+    two_factor.remove_all(account)
+    secret = totp.generate_secret()
+    two_factor.add_totp(account, secret, name="visual test")
+    # the test grants the support categories itself (/admin/support/staff)
+    support.set_permissions(account, {}, admin)
+    accounts[name] = {"password": password, "nightmode": False, "totp": secret}
 
 print("VISUAL_SEED " + json.dumps({"vault": VAULT, "accounts": accounts}))

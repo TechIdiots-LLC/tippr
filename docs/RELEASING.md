@@ -33,7 +33,15 @@ comment it removes must show "removed by" to it and vanish for visitors,
 and come back when approved; its distinguished comment must be marked as a
 moderator's; locking the thread must stop members replying and unlocking
 let them again; a member it bans can't comment until the ban is lifted;
-and the moderation log must list all of it. Every page they see is checked for JavaScript errors, failed
+and the moderation log must list all of it. Then support: two members write
+to the admins from the contact page, a question and a privacy request; an
+admin turns on admin mode with a code from its authenticator app, finds
+both on /admin/support, takes the question, leaves a note for the staff and
+replies, and gives an employee the general category only, who must then see
+the question and not the privacy request; the member must get the answer
+from the admin team, without the admin's name or the note, and their reply
+must reach the ticket. (The seed makes that admin, with a two-factor secret
+it prints: run it on throwaway test sites only.) Every page they see is checked for JavaScript errors, failed
 requests, sideways scrolling at phone width and text that can't be read on
 its background, and saved as a screenshot at desktop and phone width, in
 the light and the night theme. The screenshots are kept with the run (the
