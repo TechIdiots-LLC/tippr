@@ -2,9 +2,26 @@
 
 ## master
 ### ✨ Features and improvements
+- **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
+  in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
+  the post and the comments, changing and undoing votes, with the arrows and scores checked. Every page is checked
+  for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
+  screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
+  docs/RELEASING.md.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
+- **Updating could leave the queues and jobs stopped:** the installer installs the pinned Python packages, but pip
+  kept a package already installed under the same name and version even when it came from elsewhere, and an older
+  formenergy-observability from PyPI then conflicted with the pinned `packaging`: the pages worked, but paster refused
+  to start the consumers and jobs. The packages pinned to a URL (the baseplate and formenergy-observability forks) are
+  now always reinstalled, and the installer checks that the packages fit together, as paster does, failing the install
+  (so an update rolls back) if they don't.
+- **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
+  box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
+  reply.
+- **The unread message count was unreadable in night mode:** night mode's link colour turned it teal on its orange
+  badge; it's white again.
 - _...Add new stuff here..._
 
 ## 0.20.0
@@ -20,10 +37,7 @@
   `install/requirements.txt` (moved from `docker/`), the pinned list the Docker image uses, in one go, instead of
   about 40 packages in groups at whatever versions were newest that day (and baseplate and formenergy-observability
   from their branches' tips). `TIPPR_BASEPLATE_PIP_URL` and `TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL` still install
-  another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`. The
-  packages pinned to a URL (the baseplate and formenergy-observability forks) are always reinstalled, since pip keeps
-  an installed package of the same name and version even when it came from elsewhere, and the installer then checks
-  that the packages fit together, as paster does, failing the install (so an update rolls back) if they don't.
+  another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`.
 - **An account's status, from its /admin/users page:** its staff permission (none, employee, sponsor or admin: the
   same employees list as /admin/config, with its checks, so no one removes their own admin permission), and whether
   it's one of the site's own accounts (a test account, a bot). The system user, AutoModerator and feed bots count as
@@ -35,12 +49,6 @@
 - **A clearer "Translating" help page** (/help/translate): how to fix a translation as numbered steps, the file to
   edit on its own line, links to Poedit and Lokalize, and what to put in an issue as a list. The trophies help page
   lists Early Member among the awards the site gives.
-- **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
-  in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
-  the post and the comments, changing and undoing votes, with the arrows and scores checked. Every page is checked
-  for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
-  screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
-  docs/RELEASING.md.
 - **Updates say the site is down for "a few minutes"** (on /admin/servers and in the updater) instead of 5–10.
 
 ### 🐞 Bug fixes
@@ -52,11 +60,6 @@
 - **The admin mode page on a remembered computer looked unfinished:** "forget this computer" was a grey button with
   its explanation wrapping beside it, and the heading still asked for a one-time code. It's now a link under the
   main button with the explanation below it, and the heading asks for the password only.
-- **The unread message count was unreadable in night mode:** night mode's link colour turned it teal on its orange
-  badge; it's white again.
-- **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
-  box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
-  reply.
 - **Docker: a container could fail to start alongside the others** ("No such file or directory:
   /config/docker.update.tmp"): every container writes the shared config in /config as it starts, through one
   temporary file name, so one could rename it away while another was still writing it. Each now uses a temporary
