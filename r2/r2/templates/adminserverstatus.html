@@ -83,7 +83,7 @@
   %elif thing.web_updates and thing.all_releases:
     <form action="/post/server_update" method="post" class="pretty-form server-update-form"
           data-confirm="${_('Update the servers to this release? Each one goes down for a few minutes while it updates, one at a time. Make a Proxmox snapshot first if you can.')}"
-          onsubmit="return confirm(this.getAttribute('data-confirm')) &amp;&amp; post_form(this, 'server_update')">
+          onsubmit="return window.confirm(this.getAttribute('data-confirm')) &amp;&amp; post_form(this, 'server_update')">
       <input type="hidden" name="do" value="update">
       <select name="version">
         %for r in thing.all_releases:
@@ -195,7 +195,8 @@
           </td></tr>
     </table>
     <form action="/post/forget_server" method="post" class="pretty-form"
-          onsubmit="return confirm('${_("Forget this server? It comes back if it reports again.")}') &amp;&amp; post_form(this, 'forget_server')">
+          data-confirm="${_("Forget this server? It comes back if it reports again.")}"
+          onsubmit="return window.confirm(this.getAttribute('data-confirm')) &amp;&amp; post_form(this, 'forget_server')">
       <input type="hidden" name="server" value="${s['id']}">
       <button class="btn" type="submit">${_("forget")}</button>
       <span class="status"></span>

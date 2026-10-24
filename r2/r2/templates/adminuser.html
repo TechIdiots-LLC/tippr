@@ -219,8 +219,11 @@
       </td></tr>
     %endif
     <tr><td>${_("delete account")}</td><td>
+      ## window.confirm: the form's own "confirm" checkbox would be confirm
+      ## inside its onsubmit
       <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
-            onsubmit="return confirm('${_("Delete %(name)s? This cannot be undone.") % dict(name=a.name)}') &amp;&amp; post_form(this, 'admin_user');">
+            data-confirm="${_("Delete %(name)s? This cannot be undone.") % dict(name=a.name)}"
+            onsubmit="return window.confirm(this.getAttribute('data-confirm')) &amp;&amp; post_form(this, 'admin_user');">
         <input type="hidden" name="username" value="${a.name}">
         <input type="hidden" name="do" value="delete_account">
         <select name="posts">

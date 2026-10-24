@@ -6,6 +6,12 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Deleting an account on /admin/users gave "forbidden":** the form's "delete for good" checkbox is named `confirm`,
+  which inside the form's own submit handler hid the browser's `confirm()`, so its "are you sure?" threw an error
+  and the browser sent the form as a plain page instead, which the site refused. It asks and deletes again. The
+  other admin forms that ask first (forgetting a server, updating, flushing the cache, payments) use the same
+  safer call, and the two that put translated text straight into their script (deleting an account, forgetting a
+  server) no longer break on a translation with an apostrophe.
 
 ## 0.21.0
 ### ✨ Features and improvements

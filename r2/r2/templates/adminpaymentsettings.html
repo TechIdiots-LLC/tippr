@@ -58,7 +58,7 @@
 <%def name="row_action(payment, action, label, confirm=None)">
   <form action="/api/payment_action" method="post" class="pretty-form payment-row-action"
         %if confirm:
-          onsubmit="return confirm(${scriptsafe_dumps(confirm)}) && post_form(this, 'payment_action');"
+          onsubmit="return window.confirm(${scriptsafe_dumps(confirm)}) && post_form(this, 'payment_action');"
         %else:
           onsubmit="return post_form(this, 'payment_action');"
         %endif
