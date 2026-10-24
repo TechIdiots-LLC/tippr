@@ -2,6 +2,13 @@
 
 ## master
 ### ✨ Features and improvements
+- _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.20.0
+### ✨ Features and improvements
 - **Upgrades are much quicker:** about 1½ minutes of downtime instead of 6½ on a test install. A release's installer
   tarball already holds its built Cython modules, translations and static files, but upgrades threw them away and
   built them again; now each build is fingerprinted (`scripts/build-fingerprint`: its inputs' contents, not file
@@ -14,10 +21,8 @@
   about 40 packages in groups at whatever versions were newest that day (and baseplate and formenergy-observability
   from their branches' tips). `TIPPR_BASEPLATE_PIP_URL` and `TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL` still install
   another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`.
-- _...Add new stuff here..._
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 
 ## 0.19.0
 ### ✨ Features and improvements
