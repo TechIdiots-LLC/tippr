@@ -46,6 +46,9 @@
 - **The admin mode page on a remembered computer looked unfinished:** "forget this computer" was a grey button with
   its explanation wrapping beside it, and the heading still asked for a one-time code. It's now a link under the
   main button with the explanation below it, and the heading asks for the password only.
+- **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
+  box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
+  reply.
 - **Docker: a container could fail to start alongside the others** ("No such file or directory:
   /config/docker.update.tmp"): every container writes the shared config in /config as it starts, through one
   temporary file name, so one could rename it away while another was still writing it. Each now uses a temporary
