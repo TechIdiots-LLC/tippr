@@ -12,6 +12,13 @@
 		file_server
 	}
 
+	# the tracking pixels pages may load (sponsored links, embeds): an
+	# empty answer, as the installer's nginx gives a blank image
+	handle /pixel/* {
+		header Cache-Control "no-cache"
+		respond 204
+	}
+
 	@websocket {
 		header Connection *Upgrade*
 		header Upgrade websocket
