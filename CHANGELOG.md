@@ -9,11 +9,6 @@
 
 ## 0.21.0
 ### ✨ Features and improvements
-
-### 🐞 Bug fixes
-
-## 0.20.1
-### ✨ Features and improvements
 - **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
   in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
   the post and the comments, changing and undoing votes, with the arrows and scores checked. A fifth account,
