@@ -7,6 +7,11 @@
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 
+## 0.20.2
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
+
 ## 0.20.1
 ### ✨ Features and improvements
 - **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
