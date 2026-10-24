@@ -23,6 +23,11 @@
 //   - they vote on the post and the comments, change and undo votes; the
 //     arrows must show each voter's vote at once and after reloading, and
 //     the scores must follow (votes are counted by the vote queues)
+//   - scales: bob and carol tip the post's scales (three shown, three more
+//     behind "more scales"), seeing a scale's tally only once they've
+//     tipped it; bob changes his mind and takes a tip back; tips stay after
+//     reloading; alice, the poster, sees the tallies and can't tip; a
+//     visitor is asked to log in
 //   - visual_mod, a moderator of the test vault and nothing else: a member's
 //     report reaches its reports queue and clears when approved; a comment
 //     it removes shows "removed by" to it and vanishes for visitors, and
@@ -267,6 +272,39 @@ async function vote(s, fullname, dir, expect) {
               `the arrows should show "${expect}" straight away, not "${await voteState(s.page, fullname)}"`);
 }
 
+// A post's scales panel (scales.js): opened, how many scales show, one
+// scale's state, and tipping one (waiting for the site to take it, and for
+// the panel to redraw from its answer).
+const scaleRow = (s, fullname, scale) =>
+  thing(s.page, fullname).locator(`:scope > .entry .scales-panel .scale[data-scale="${scale}"]`);
+async function openScales(s, fullname) {
+  const t = thing(s.page, fullname);
+  if (!(await t.locator(":scope > .entry .scales-panel").count())) {
+    await t.locator(":scope > .entry .scales-toggle").first().click();
+  }
+  await t.locator(":scope > .entry .scales-panel .scale").first().waitFor({ timeout: 30000 });
+}
+const visibleScales = (s, fullname) =>
+  thing(s.page, fullname).locator(":scope > .entry .scales-panel .scale:visible").count();
+const scaleState = (s, fullname, scale) => scaleRow(s, fullname, scale).evaluate((row) => ({
+  mine: row.querySelector(".scale-tipped")?.textContent || null,
+  tally: row.querySelector(".scale-count").textContent,
+  disabled: row.querySelector(".scale-side").disabled,
+}));
+async function tipScale(s, fullname, scale, side) {
+  await Promise.all([
+    s.page.waitForResponse((r) => r.url().includes("/api/tip_scale"), { timeout: 30000 }),
+    scaleRow(s, fullname, scale).locator(side === "left" ? ".scale-left" : ".scale-right").click(),
+  ]);
+  await s.page.waitForTimeout(300);
+}
+async function scaleShows(where, s, fullname, scale, mine, tally) {
+  await check(where, async () => {
+    const st = await scaleState(s, fullname, scale);
+    return st.mine === mine && st.tally === tally;
+  }, `"${scale}" should show ${mine ? `"${mine}" tipped` : "no tip"} and the tally "${tally}"`);
+}
+
 // A moderator's button on a post or comment ("remove", "lock", ...), with
 // its "are you sure?" answered (confirm: the answer's text), waiting for the
 // site to take it. (Some buttons have a hidden copy: the visible one is
@@ -460,6 +498,52 @@ try {
     const a = await visibleScore(bob.page, c1, true), b = await visibleScore(bob.page, c2, true);
     return (a === "4 points" && b === "0 points") || `${a} / ${b}`;
   });
+
+  // ---- scales: members tip the post toward what it's like ----
+  // bob and carol see three scales and no tallies until they tip; carol
+  // opens "more scales"; bob changes his mind and takes a tip back; tips
+  // stay after reloading; alice, the poster, sees the tallies and can't tip
+  await openScales(bob, post);
+  await check("scales (as bob)", async () => (await visibleScales(bob, post)) === 3,
+              'three scales should show, the rest behind "more scales"');
+  await check("scales before tipping (as bob)", async () => (await scaleState(bob, post, "helpful")).tally === "",
+              "the tally should be hidden until he tips");
+  await tipScale(bob, post, "helpful", "left");
+  await scaleShows("bob tips helpful", bob, post, "helpful", "helpful", "1 tip · 1 / 0");
+  await openScales(carol, post);
+  await check("scales before tipping (as carol)", async () => (await scaleState(carol, post, "helpful")).tally === "",
+              "bob's tip shouldn't show until she tips");
+  await tipScale(carol, post, "helpful", "right");
+  await scaleShows("carol tips unhelpful", carol, post, "helpful", "unhelpful", "2 tips · 1 / 1");
+  await thing(carol.page, post).locator(":scope > .entry .scales-more").click();
+  await check('"more scales" (as carol)', async () => (await visibleScales(carol, post)) === 6,
+              "all six scales should show");
+  await tipScale(carol, post, "tone", "left");
+  await scaleShows("carol tips calm", carol, post, "tone", "calm", "1 tip · 1 / 0");
+  await shoot(carol, "scales");
+  await tipScale(bob, post, "helpful", "right");
+  await scaleShows("bob changes to unhelpful", bob, post, "helpful", "unhelpful", "2 tips · 0 / 2");
+  await tipScale(bob, post, "helpful", "right");
+  await scaleShows("bob takes his tip back", bob, post, "helpful", null, "");
+  await tipScale(bob, post, "helpful", "left");
+  await bob.page.reload(READY);
+  await openScales(bob, post);
+  await scaleShows("bob's tip after reloading", bob, post, "helpful", "helpful", "2 tips · 1 / 1");
+  await shoot(bob, "scales");
+  await openScales(alice, post);
+  await check("scales (as alice, the poster)", async () => {
+    const s = await scaleState(alice, post, "helpful");
+    return s.tally === "2 tips · 1 / 1" && s.disabled;
+  }, "she should see the tally and not be able to tip");
+  const passerby = await session(null, "desktop");
+  await passerby.page.goto(postUrl, READY);
+  await thing(passerby.page, post).locator(":scope > .entry .scales-toggle").first().click();
+  await passerby.page.waitForTimeout(1000);
+  await check("scales (logged out)", async () =>
+    !(await passerby.page.locator(".scales-panel").count()) &&
+    (await passerby.page.locator(".login-popup:visible, .modal:visible").count()) > 0,
+    "a visitor should be asked to log in, not shown the scales");
+  await passerby.context.close();
 
   // ---- moderation: visual_mod moderates /v/visualtest and nothing else ----
   const mod = await session("visual_mod", "desktop");
