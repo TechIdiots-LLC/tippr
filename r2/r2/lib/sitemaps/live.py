@@ -18,7 +18,8 @@ By default ("recent" on /admin/site) they're made on request and cached
 for an hour:
 
   /sitemap.xml           the index, pointing at the two below
-  /sitemaps/vaults.xml   public vaults, most subscribed first
+  /sitemaps/vaults.xml   the front page, then public vaults, most subscribed
+                         first
   /sitemaps/posts.xml    the newest posts in public vaults
 
 Set to "every post", the site serves the complete sitemaps that
@@ -82,8 +83,12 @@ def _listable(vault):
 
 
 def listable_vaults():
-    """(path, None) for each listable vault, most subscribed first."""
+    """(path, None) for the front page, then each listable vault, most
+    subscribed first. (The front page first: without it, the first page a
+    search engine was told about was a default vault's, and it showed
+    /v/tippr for the site's own name.)"""
     from r2.models import Vault
+    yield ("/", None)
     query = Vault._query(Vault.c.type == ("public", "restricted", "archived"),
                          Vault.c._spam == False,
                          sort=(desc("_downs"), desc("_ups")),

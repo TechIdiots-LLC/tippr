@@ -68,3 +68,19 @@ class CompleteSitemapsTest(unittest.TestCase):
         complete.build()
         self.assertEqual(complete.part_names(), ["vaults-1", "posts-1"])
         self.assertNotIn(complete._key("posts-3"), self.cache)
+
+
+class ListableVaultsTest(unittest.TestCase):
+    def test_front_page_first(self):
+        from r2.models import Vault
+        books = mock.Mock(type="public", _spam=False, over_18=False,
+                          quarantine=False)
+        books.name = "books"
+        nsfw = mock.Mock(type="public", _spam=False, over_18=True,
+                         quarantine=False)
+        nsfw.name = "nsfw"
+        with mock.patch.object(Vault, "_query"), \
+                mock.patch.object(live, "fetch_things2",
+                                  return_value=iter([books, nsfw])):
+            self.assertEqual(list(live.listable_vaults()),
+                             [("/", None), ("/v/books/", None)])
