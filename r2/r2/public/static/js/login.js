@@ -124,6 +124,11 @@ r.login.ui = {
             eventName: 'arrow',
             description: r._('You need to be logged in to vote on things.')
         };
+      } else if ($el.hasClass('scales-toggle')) {
+        return {
+            eventName: 'scales',
+            description: r._('You need to be logged in to tip the scales.')
+        };
       } else if ($el.hasClass('give-gold')) {
         return {
             eventName: 'give-gold',

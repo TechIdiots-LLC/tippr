@@ -82,6 +82,7 @@ class UserDataExporter:
             'saved': self._collect_saved(),
             'hidden': self._collect_hidden(),
             'votes': self._collect_votes(),
+            'scale_tips': self._collect_scale_tips(),
             'subscriptions': self._collect_subscriptions(),
             'friends': self._collect_friends(),
             'blocked': self._collect_blocked(),
@@ -350,6 +351,15 @@ class UserDataExporter:
             self.errors.append(f"Error collecting votes: {str(e)}")
             return {'upvoted': [], 'downvoted': []}
     
+    def _collect_scale_tips(self):
+        """How they tipped posts' scales (r2.lib.scales)."""
+        try:
+            from r2.lib import scales
+            return scales.export(self.account)
+        except Exception as e:
+            self.errors.append(f"Error collecting scale tips: {str(e)}")
+            return []
+
     def _things(self, query, limit):
         """Load the Things for the first `limit` fullnames in a query.
 

@@ -1,0 +1,120 @@
+// The contents of this file are subject to the Common Public Attribution
+// License Version 1.0 (the "License"); you may not use this file except in
+// compliance with the License. You may obtain a copy of the License at
+// https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+//
+// Software distributed under the License is distributed on an "AS IS" basis,
+// WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+// the specific language governing rights and limitations under the License.
+//
+// The Original Code is Tippr.
+//
+// The Initial Developer of the Original Code is TechIdiots LLC.
+// Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+///////////////////////////////////////////////////////////////////////////////
+
+// A post's scales panel (scales.js, r2.lib.scales): each scale is a row of
+// its two sides with a beam between them showing how it was tipped
+// (each side's share), once the member may see it
+
+.scales-panel {
+    max-width: 500px;
+    margin: 6px 0 4px;
+    padding: 8px 10px;
+    border: 1px solid @tp-border;
+    border-radius: 4px;
+    background: @tp-surface;
+    color: @tp-text;
+    font-size: @tp-font-xs;
+
+    .scale {
+        display: grid;
+        grid-template-columns: minmax(80px, auto) 1fr minmax(80px, auto);
+        grid-template-areas: "left beam right" "count count count";
+        align-items: center;
+        gap: 2px 8px;
+        margin-bottom: 8px;
+    }
+
+    .scale-left { grid-area: left; }
+    .scale-right { grid-area: right; }
+    .scale-beam { grid-area: beam; }
+
+    .scale-side {
+        margin: 0;  // overrides .entry button
+        padding: 3px 8px;
+        border: 1px solid @tp-line;
+        border-radius: 3px;
+        background: @tp-subtle;
+        color: @tp-text;
+        font-size: @tp-font-xs;
+        cursor: pointer;
+
+        &:hover:not([disabled]), &:focus {
+            border-color: @tp-border-accent;
+        }
+
+        &.scale-tipped {
+            border-color: @tp-accent;
+            background: @tp-tint;
+            font-weight: bold;
+        }
+
+        &[disabled] {
+            cursor: default;
+            opacity: 0.7;
+        }
+    }
+
+    // the left side's share of the tips, from the left
+    .scale-beam {
+        height: 6px;
+        border-radius: 3px;
+        background: @tp-gray-strong;
+        overflow: hidden;
+    }
+
+    // tipped: the left side's share in its colour, the right side's in its
+    // own, as the up and down arrows are
+    .scale-beam-tipped {
+        background: @tp-downvote;
+    }
+
+    .scale-beam-hidden {
+        background: repeating-linear-gradient(90deg, @tp-gray-strong 0 6px,
+                                              transparent 6px 10px);
+    }
+
+    .scale-fill {
+        display: block;
+        height: 100%;
+        background: @tp-accent;
+    }
+
+    .scale-count {
+        grid-area: count;
+        text-align: center;
+        color: @tp-text-muted;
+        font-size: @tp-font-xxs;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .scales-note {
+        margin: 0;
+        color: @tp-text-muted;
+    }
+}
+
+@media (max-width: 600px) {
+    .scales-panel {
+        max-width: 100%;
+        box-sizing: border-box;
+
+        .scale {
+            grid-template-columns: minmax(70px, auto) 1fr minmax(70px, auto);
+        }
+    }
+}

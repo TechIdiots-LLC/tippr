@@ -389,6 +389,39 @@ class ApiController(TipprController):
         return {"count": count, "fuzzed": bool(fuzzed)}
 
     @csrf_exempt
+    @json_validate(VUser(), link=VByName("link_id", thing_cls=Link))
+    def POST_scales(self, responder, link):
+        """A post's scales, as its "scales" panel shows them to this member
+        (r2.lib.scales). A POST, so no cache keeps one member's answer."""
+        from r2.lib import scales
+        response.headers["Cache-Control"] = "private, no-store"
+        if not link or link._deleted or not link.vault_slow.can_view(c.user):
+            return {"error": "not found"}
+        return scales.summary(link, c.user)
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        link=VByName("link_id", thing_cls=Link),
+        scale=nop("scale"),
+        side=VInt("side", min=-1, max=1),
+    )
+    def POST_tip_scale(self, responder, link, scale, side):
+        """Tip one of a post's scales toward a side (side -1 or 1), or take
+        the tip back (0), and answer with the post's scales as POST_scales
+        does."""
+        from r2.lib import scales
+        response.headers["Cache-Control"] = "private, no-store"
+        if not link or not link.vault_slow.can_view(c.user):
+            return {"error": "not found"}
+        if scale not in scales.SCALES or side is None:
+            return {"error": "no such scale"}
+        if not scales.can_tip(link, c.user):
+            return {"error": "can't tip"}
+        scales.tip(link, c.user, scale, side)
+        return scales.summary(link, c.user)
+
+    @csrf_exempt
     @json_validate(user=VUname(("user",)))
     def POST_check_username(self, responder, user):
         """

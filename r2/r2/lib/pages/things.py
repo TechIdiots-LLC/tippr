@@ -105,6 +105,10 @@ class LinkButtons(PrintableButtons):
                       not thing.disable_comments and
                       not thing._deleted)
 
+        # what the community thinks the post is like (r2.lib.scales)
+        show_scales = (not thing._deleted and thing.promoted is None and
+                       not thing.vault.quarantine)
+
         # if they are the author, can they edit it?
         thing_editable = getattr(thing, 'editable', True)
         thing_takendown = getattr(thing, 'admin_takedown', False)
@@ -205,6 +209,7 @@ class LinkButtons(PrintableButtons):
                                   show_givegold=show_givegold,
                                   show_comments = comments,
                                   show_share=show_share,
+                                  show_scales=show_scales,
                                   # promotion
                                   promoted = thing.promoted,
                                   is_link = True,
