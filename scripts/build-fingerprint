@@ -1,0 +1,137 @@
+#!/bin/bash
+# The contents of this file are subject to the Common Public Attribution
+# License Version 1.0 (the "License"); you may not use this file except in
+# compliance with the License. You may obtain a copy of the License at
+# https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+#
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+# the specific language governing rights and limitations under the License.
+#
+# The Original Code is Tippr.
+#
+# The Initial Developer of the Original Code is TechIdiots LLC.
+# Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+# Fingerprints for the slow build steps (Cython modules, translations,
+# static files), so a step whose inputs haven't changed since it last ran
+# isn't run again. The Docker image (and so a release's installer tarball)
+# records them as it builds; install/tippr.sh, which upgrades re-run, checks
+# them and skips what the release already built, and records what it builds
+# itself, so a re-run skips it too.
+#
+# A fingerprint is the SHA-256 of the step's input files (names and
+# contents, not dates: a tarball's or a fresh checkout's dates say nothing),
+# and the step only counts as done while its outputs are there too.
+#
+# usage: build-fingerprint SRC STEP check|record
+#   SRC   the directory with tippr/ and i18n/ (e.g. /home/tippr/src)
+#   STEP  pyx, i18n, static, or what PYTHON's venv has installed (kept
+#         there): requirements (install/requirements.txt) and r2
+# check exits 0 when the step is done for its current inputs; record notes
+# that it is. PYTHON (default python3) is the Python the modules are for.
+set -euo pipefail
+
+src=$1 step=$2 action=$3
+r2=$src/tippr/r2
+i18n=$src/i18n
+stamps=$src/tippr/.build-fingerprints
+python=${PYTHON:-python3}
+
+# sha256 of every file find(1) lists under a directory: path and contents
+function hash_files {
+    local dir=$1; shift
+    [ -d "$dir" ] || { echo "-"; return; }
+    (cd "$dir" && find "$@" -type f ! -path '*/__pycache__/*' ! -name '*.pyc' -print0 \
+        | LC_ALL=C sort -z | xargs -0 -r sha256sum) | sha256sum | cut -d' ' -f1
+}
+
+function inputs {
+    case $1 in
+        pyx)
+            # the modules, the hand-written C they use, how they're built,
+            # and which Python they're built for
+            hash_files "$r2" . \( -name '*.pyx' -o -name '*.pxd' -o -path './r2/lib/c/*' \
+                -o -path ./setup.py -o -path ./pyproject.toml \) ! -path './build/*'
+            "$python" -c 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))'
+            ;;
+        i18n)
+            hash_files "$i18n" . \( -name '*.po' -o -path ./gendata.py -o -path ./Makefile \)
+            ;;
+        requirements)
+            # the Python packages installed in the venv
+            hash_files "$src/tippr/install" . -path ./requirements.txt
+            "$python" -c 'import sys; print(sys.version)'
+            ;;
+        r2)
+            # r2 installed in the venv (pip install -e, which builds the
+            # Cython extensions again): its packaging and the modules
+            hash_files "$r2" . \( -path ./setup.py -o -path ./pyproject.toml \
+                -o -path ./setup.cfg \)
+            inputs pyx
+            ;;
+        static)
+            # what the stylesheets and scripts are built from, and the
+            # translations the scripts carry (not what builds and the
+            # running site write there: Cython's C and modules, compiled
+            # templates, make i18n's strings)
+            hash_files "$r2" r2/public r2/lib r2/templates Makefile Makefile.py \
+                ! -name '*.so' ! -name '*.c' ! -name '*.html.py' \
+                ! -name generated_strings.py ! -name names.json
+            hash_files "$src/tippr/scripts" . -name lessc.js
+            inputs i18n
+            ;;
+        *)
+            echo "build-fingerprint: unknown step $1" >&2
+            exit 2
+            ;;
+    esac
+}
+
+function outputs_there {
+    case $1 in
+        pyx)
+            local pyx
+            while IFS= read -r -d '' pyx; do
+                compgen -G "${pyx%.pyx}.*so" >/dev/null || return 1
+            done < <(find "$r2/r2" -name '*.pyx' -print0)
+            ;;
+        i18n)
+            local po
+            while IFS= read -r -d '' po; do
+                [ -s "${po%.po}.mo" ] || return 1
+            done < <(find "$i18n/tippr_i18n" -name '*.po' -print0)
+            ;;
+        static)
+            [ -s "$(readlink -f "$r2/build/public/static/tippr.css")" ]
+            ;;
+        requirements)
+            "$python" -m pip --version >/dev/null 2>&1
+            ;;
+        r2)
+            # installed, from this tree (found without importing it)
+            [ "$("$python" -c 'import importlib.util as u; s = u.find_spec("r2"); print(s.submodule_search_locations[0] if s else "")' 2>/dev/null)" = "$r2/r2" ]
+            ;;
+    esac
+}
+
+# what a venv has installed is the venv's, not the tree's (a release's
+# tarball was built with another venv)
+if [ "$step" = r2 ] || [ "$step" = requirements ]; then
+    stamps=$("$python" -c 'import sys; print(sys.prefix)')/.build-fingerprints
+fi
+
+fingerprint=$(inputs "$step" | sha256sum | cut -d' ' -f1)
+case $action in
+    check)
+        [ "$(cat "$stamps/$step" 2>/dev/null)" = "$fingerprint" ] && outputs_there "$step"
+        ;;
+    record)
+        mkdir -p "$stamps"
+        echo "$fingerprint" > "$stamps/$step"
+        ;;
+    *)
+        echo "usage: build-fingerprint SRC pyx|i18n|static|requirements|r2 check|record" >&2
+        exit 2
+        ;;
+esac

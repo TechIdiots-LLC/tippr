@@ -83,8 +83,8 @@ jobs:
 
       - name: Install tippr via installer (non-interactive)
         env:
-          # Prefer develop branch of baseplate for these smoke runs
-          TIPPR_BASEPLATE_PIP_URL: "git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@develop#egg=baseplate"
+          # (the Python packages are install/requirements.txt's, as on a
+          # real install: no baseplate override)
           # Ensure a non-root runtime user exists in the installer
           TIPPR_USER: "runner"
           # During CI, copy the checked-out workspace into the installer destination

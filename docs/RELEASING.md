@@ -129,7 +129,8 @@ On Windows, build from a checkout made with `core.symlinks=true` (or inside
 WSL). A Windows checkout turns the repository's symlinked images into text
 files, which breaks the sprite build.
 
-The Python packages are pinned in `docker/requirements.txt` and installed
-exactly as listed (`--no-deps`). To update them, upgrade a working install
-and freeze it again, as the file's header explains. Then check the image
-with `docker/smoke-test.sh`.
+The Python packages are pinned in `install/requirements.txt` and installed
+exactly as listed (`--no-deps`), by the image and by the installer alike, so
+every install of a release runs the versions it was tested with. To update
+them, upgrade a working install and freeze it again, as the file's header
+explains. Then check the image with `docker/smoke-test.sh`.

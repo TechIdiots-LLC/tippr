@@ -77,7 +77,7 @@ RUN python3.12 -m venv $VIRTUAL_ENV \
     && pip install --no-cache-dir --upgrade pip 'setuptools<81' wheel
 
 # Pinned dependencies first, so code changes don't reinstall them
-COPY docker/requirements.txt /tmp/requirements.txt
+COPY install/requirements.txt /tmp/requirements.txt
 # --no-deps: the list is a complete freeze of a working install, which pip's
 # resolver would reject (the installer forces a newer packaging than some
 # packages declare)
@@ -113,7 +113,12 @@ RUN cp example.ini run.ini \
     && (make static LESSC="node /opt/tippr/src/tippr/scripts/lessc.js" \
         || make static LESSC="node /opt/tippr/src/tippr/scripts/lessc.js") \
     && test -s "$(readlink -f build/public/static/tippr.css)" \
-    && rm -f run.ini
+    && rm -f run.ini \
+    && for step in i18n pyx static; do \
+           bash /opt/tippr/src/tippr/scripts/build-fingerprint /opt/tippr/src $step record; \
+       done
+# (the fingerprints go in the release's installer tarball: an upgrade from it
+# skips building what's built here, scripts/build-fingerprint)
 
 ###############################################################################
 # Runtime

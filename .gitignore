@@ -11,6 +11,7 @@ r2/data/
 # build outputs
 *.so
 build/
+.build-fingerprints/
 dist/
 r2/r2.egg-info/
 r2/r2/lib/generated_strings.py

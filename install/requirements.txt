@@ -1,5 +1,7 @@
-# Python packages for the Docker image (docker/Dockerfile), pinned to the
-# versions of a working install. Regenerate from an installed site with:
+# Python packages, pinned to the versions of a working install: the Docker
+# image (docker/Dockerfile) and the installer (install/tippr.sh) both install
+# exactly these (--no-deps), so every install of a release runs what it was
+# tested with. Regenerate from an installed site with:
 #   pip freeze --exclude-editable | grep -v psycopg2-binary
 
 alembic==1.20.0

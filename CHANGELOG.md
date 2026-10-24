@@ -2,6 +2,18 @@
 
 ## master
 ### ✨ Features and improvements
+- **Upgrades are much quicker:** about 1½ minutes of downtime instead of 6½ on a test install. A release's installer
+  tarball already holds its built Cython modules, translations and static files, but upgrades threw them away and
+  built them again; now each build is fingerprinted (`scripts/build-fingerprint`: its inputs' contents, not file
+  dates) and skipped while its inputs are unchanged, by the release or by an earlier run. The translations a release
+  carries become a git checkout in place instead of being moved aside and cloned again (which also stops an
+  `i18n.old-<date>` folder being left on each update), r2 is reinstalled only when its packaging or Cython modules
+  change, and RabbitMQ restarts only when its settings do.
+- **Every install runs the Python packages the release was tested with:** the installer installs
+  `install/requirements.txt` (moved from `docker/`), the pinned list the Docker image uses, in one go, instead of
+  about 40 packages in groups at whatever versions were newest that day (and baseplate and formenergy-observability
+  from their branches' tips). `TIPPR_BASEPLATE_PIP_URL` and `TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL` still install
+  another on top, but are empty by default. The old `psycopg2-binary` is replaced by the pinned `psycopg2`.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

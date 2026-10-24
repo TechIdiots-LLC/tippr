@@ -245,20 +245,30 @@ function clone_tippr_repo {
 
 # The translations aren't tied to a tippr release, so every install (first
 # boot and upgrades re-run this script too) brings them up to date with the
-# repository's default branch, even when the checkout already exists. A copy
-# that isn't a git checkout (from an old install) can't be updated, so it is
-# moved aside and cloned again. If the update fails (e.g. no network), the
-# existing translations are kept.
+# repository's default branch, even when the checkout already exists. If the
+# update fails (e.g. no network), the existing translations are kept.
 function update_i18n_repo {
     local destination=$TIPPR_SRC/i18n
     local repo_spec=TechIdiots-LLC/tippr-i18n
     local url=https://github.com/$repo_spec.git
     local git="sudo -u $TIPPR_USER -H git -C $destination"
 
+    # A release's copy (the installer tarball has no .git) becomes a
+    # checkout where it is, keeping its compiled catalogs: when the
+    # repository hasn't changed since the release, they needn't be compiled
+    # again (scripts/build-fingerprint). If that fails, it's moved aside and
+    # cloned as before.
     if [ -d "$destination" ] && ! $git rev-parse --git-dir >/dev/null 2>&1; then
-        local old="$destination.old-$(date +%Y%m%d%H%M%S)"
-        echo "$destination is not a git checkout; moving it to $old"
-        mv "$destination" "$old"
+        echo "Making $destination a git checkout"
+        if ! { $git init --quiet && $git remote add origin "$url" &&
+                $git fetch --quiet --depth 1 origin &&
+                $git remote set-head origin --auto >/dev/null &&
+                $git reset --quiet --hard origin/HEAD; }; then
+            local old="$destination.old-$(date +%Y%m%d%H%M%S)"
+            echo "could not; moving it to $old"
+            rm -rf "$destination/.git"
+            mv "$destination" "$old"
+        fi
     fi
 
     if [ ! -d "$destination" ]; then
@@ -276,6 +286,20 @@ function update_i18n_repo {
     else
         echo "WARNING: could not update the translations; keeping the existing ones"
     fi
+}
+
+# The slow build steps (Cython modules, translations, static files) are
+# skipped when their inputs haven't changed since they were built: by the
+# release (a tarball from the Docker image records them) or by an earlier
+# run of this script (scripts/build-fingerprint).
+function built_already {
+    sudo -u $TIPPR_USER PYTHON="$TIPPR_VENV/bin/python" \
+        bash "$TIPPR_SRC/tippr/scripts/build-fingerprint" "$TIPPR_SRC" "$1" check 2>/dev/null
+}
+
+function record_built {
+    sudo -u $TIPPR_USER PYTHON="$TIPPR_VENV/bin/python" \
+        bash "$TIPPR_SRC/tippr/scripts/build-fingerprint" "$TIPPR_SRC" "$1" record || true
 }
 
 function clone_tippr_service_repo {
@@ -737,100 +761,47 @@ fi
 # setuptools 81 deprecates and later versions remove. r2/pyproject.toml pins
 # the same for building r2.
 sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip 'setuptools<81' wheel
-sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade 'packaging>=23.1'
+# (not --upgrade: install/requirements.txt pins the version below)
+sudo -u $TIPPR_USER "$BOOT_PY" -m pip install 'packaging>=23.1'
 
-# Install `baseplate` early so packages that inspect/import it at build time
-# (e.g., r2) can detect it. Prefer a local checkout at $TIPPR_SRC/tippr-baseplate.py
-# when available, otherwise use the configured TIPPR_BASEPLATE_PIP_URL or
-# fall back to PyPI.
+# The Python packages, at the versions the release was built and tested
+# with: install/requirements.txt, the list the Docker image installs too.
+# It's a complete freeze, installed as listed (--no-deps) in one go: pip's
+# resolver would reject it (some packages declare an older `packaging` than
+# the others need), and installing packages one group at a time let each
+# install pull in whatever versions were newest that day. Upgrades skip it
+# when this venv has installed the same list (scripts/build-fingerprint).
+if built_already requirements; then
+    echo "Python packages: already installed from this list"
+else
+    # psycopg2 is built from source (libpq-dev); earlier installs had the
+    # binary wheel too, which provides the same module, so removing it
+    # removes psycopg2's files: both go, and the list installs psycopg2 again
+    if sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip show psycopg2-binary >/dev/null 2>&1; then
+        sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip uninstall -y psycopg2-binary psycopg2 || true
+    fi
+    if sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps \
+            -r "$TIPPR_SRC/tippr/install/requirements.txt"; then
+        record_built requirements
+    else
+        echo "ERROR: the Python packages didn't install (see above)" >&2
+        exit 1
+    fi
+fi
+
+# Another baseplate or formenergy-observability on top, to work on one
+# (install.cfg): a checkout at $TIPPR_SRC/tippr-baseplate.py (editable), or
+# a pip requirement
 if [ -d "$TIPPR_SRC/tippr-baseplate.py" ]; then
     echo "Installing local baseplate from $TIPPR_SRC/tippr-baseplate.py"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install -e "$TIPPR_SRC/tippr-baseplate.py"
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps -e "$TIPPR_SRC/tippr-baseplate.py"
 elif [ -n "$TIPPR_BASEPLATE_PIP_URL" ]; then
     echo "Installing baseplate from $TIPPR_BASEPLATE_PIP_URL"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install "$TIPPR_BASEPLATE_PIP_URL"
-else
-    echo "Installing baseplate from PyPI"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install baseplate
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps "$TIPPR_BASEPLATE_PIP_URL"
 fi
-
-# If provided, prefer a fork of `formenergy-observability` that supports
-# modern `packaging`, install it early so it cannot force a downgrade of
-# `packaging` during later bulk installs.
 if [ -n "$TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL" ]; then
     echo "Installing formenergy-observability from $TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install "$TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL" || true
-fi
-
-# Install baseplate and other runtime dependencies
-# Installation order/options:
-# 1. If `TIPPR_BASEPLATE_PIP_URL` is set, install baseplate from that pip
-#    spec (supports git+ URLs, file://, or local editable installs).
-# 2. Else if `TIPPR_BASEPLATE_REPO` is set, install from the given fork
-#    (legacy behavior).
-# 3. Otherwise install `baseplate` from PyPI.
-if [ -n "$TIPPR_BASEPLATE_PIP_URL" ]; then
-    echo "Installing baseplate from pip spec: $TIPPR_BASEPLATE_PIP_URL"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
-        "$TIPPR_BASEPLATE_PIP_URL" \
-        "gunicorn" \
-        "whoosh" \
-        "PasteScript" \
-        "pyramid-mako" \
-        "Paste" \
-        "PasteDeploy" \
-        "pylibmc" \
-        "simplejson" \
-        "pytz" \
-        "pytest" \
-        "Babel" \
-        "Cython" \
-        "raven" \
-        "Flask" \
-        "GeoIP" \
-        "pika>=1.3.2,<2" \
-        "sentry-sdk"
-elif [ -n "$TIPPR_BASEPLATE_REPO" ]; then
-    echo "Installing baseplate from fork: $TIPPR_BASEPLATE_REPO"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
-        "git+https://github.com/$TIPPR_BASEPLATE_REPO.git@main#egg=baseplate" \
-        "gunicorn" \
-        "whoosh" \
-        "PasteScript" \
-        "pyramid-mako" \
-        "Paste" \
-        "PasteDeploy" \
-        "pylibmc" \
-        "simplejson" \
-        "pytz" \
-        "pytest" \
-        "Babel" \
-        "Cython" \
-        "raven" \
-        "Flask" \
-        "GeoIP" \
-        "pika>=1.3.2,<2" \
-        "sentry-sdk"
-else
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
-        "baseplate" \
-        "gunicorn" \
-        "whoosh" \
-        "PasteScript" \
-        "pyramid-mako" \
-        "Paste" \
-        "PasteDeploy" \
-        "pylibmc" \
-        "simplejson" \
-        "pytz" \
-        "pytest" \
-        "Babel" \
-        "Cython" \
-        "raven" \
-        "Flask" \
-        "GeoIP" \
-        "pika>=1.3.2,<2" \
-        "sentry-sdk"
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps "$TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL"
 fi
 
 # Create a writable directory for Prometheus multiprocess mode if needed
@@ -841,54 +812,29 @@ if [ ! -d "$PROMETHEUS_DIR" ]; then
     chown $TIPPR_USER:$TIPPR_GROUP "$PROMETHEUS_DIR"
     chmod 0775 "$PROMETHEUS_DIR"
 fi
-# Additional packages that `r2` currently lists as runtime/test deps.
-# Install them into the venv as the tippr user. Some packages require
-# system libs (e.g. libpq-dev, libxml2-dev); failures will be reported
-# but won't abort the installer.
-sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install \
-    bcrypt \
-    beautifulsoup4 \
-    boto3 \
-    captcha \
-    cassandra-driver \
-    cqlsh \
-    chardet \
-    httpagentparser \
-    kazoo \
-    lxml \
-    stripe \
-    tinycss2 \
-    unidecode \
-    PyYAML \
-    Pillow \
-    python-snappy \
-    pylibmc \
-    whoosh \
-    webtest \
-    mock \
-    pytest \
-    coverage \
-    "snudown @ https://github.com/reddit/snudown/archive/refs/heads/master.zip" || true
-
-# Prefer psycopg2-binary to avoid requiring system postgres headers during
-# install; if you need the real psycopg2 build from source, install
-# libpq-dev and python3-dev on the host instead.
-sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install psycopg2-binary || true
-
-# Ensure `packaging` remains at a modern version — some packages may pull
-# older versions during bulk installs. Force-reinstall without deps to keep
-# the build-toolchain compatible for later editable installs.
-sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --upgrade --force-reinstall --no-deps 'packaging>=23.1' || true
 
 function install_tippr_repo {
+    # r2's install builds its Cython extensions again (half a minute): not
+    # when this venv has it installed from the same packaging and modules
+    if [ "$1" = tippr/r2 ] && built_already r2; then
+        echo "r2: already installed in $TIPPR_VENV for this code"
+        return
+    fi
     pushd $TIPPR_SRC/$1
-    # Ensure build-toolchain is pinned so metadata generation won't fail
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --upgrade --force-reinstall --no-deps pip 'setuptools<81' wheel 'packaging>=23.1' || true
+    # a build toolchain metadata generation works with (already there from
+    # install/requirements.txt, so normally nothing to do)
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps 'setuptools<81' wheel 'packaging>=23.1' || true
 
     sudo -u $TIPPR_USER $TIPPR_VENV/bin/python setup.py build
-    # --no-build-isolation uses the venv's packages (like baseplate) instead of isolated env
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-build-isolation -e .
+    # --no-build-isolation uses the venv's packages (like baseplate) instead
+    # of isolated env; --no-deps, as the Docker image does: its dependencies
+    # are install/requirements.txt's, at the versions tested together
+    local installed=0
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-build-isolation --no-deps -e . && installed=1
     popd
+    if [ "$1" = tippr/r2 ] && [ "$installed" = 1 ]; then
+        record_built r2
+    fi
 }
 
 install_tippr_repo tippr/r2
@@ -931,7 +877,11 @@ if [ "${SKIP_I18N}" != "1" ]; then
     # Use venv's python for make commands. -k keeps going past a catalog
     # msgfmt rejects, so one broken language doesn't leave every language
     # after it uncompiled (the site shows those in English).
-    if ! sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" make -k -C $TIPPR_SRC/i18n clean all; then
+    if built_already i18n; then
+        echo "Translations: already compiled for these catalogs"
+    elif sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" make -k -C $TIPPR_SRC/i18n clean all; then
+        record_built i18n
+    else
         echo "WARNING: some translations failed to compile (see above); those languages show in English"
     fi
 else
@@ -942,8 +892,14 @@ fi
 # so that the proper language-specific static files can be generated and after
 # plugins are installed so all the static files are available.
 pushd $TIPPR_SRC/tippr/r2
-# Use venv's python for make commands
-sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC" make clean pyx
+# Use venv's python for make commands. From scratch (clean): make goes by
+# file dates, and a module whose .pyx is older than an old build is missed.
+if built_already pyx; then
+    echo "Cython modules: already built for this code"
+else
+    sudo -u $TIPPR_USER PATH="$TIPPR_VENV/bin:$PATH" PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC" make clean pyx
+    record_built pyx
+fi
 
 plugin_str=$(echo -n "$TIPPR_AVAILABLE_PLUGINS" | tr " " ,)
 if [ ! -f development.update ]; then
@@ -1179,17 +1135,22 @@ if [ "$TIPPR_ENVIRONMENT" = "production" ]; then
             NODE_PATH="$TIPPR_NODE_TOOLS/node_modules" \
             make static LESSC="node $TIPPR_SRC/tippr/scripts/lessc.js"
     }
-    # Rebuild from scratch: outputs from an earlier failed build (e.g. empty
-    # CSS) would otherwise look up to date.
-    sudo -u $TIPPR_USER PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC/tippr/r2" \
-        PATH="$TIPPR_VENV/bin:/usr/bin:/bin" make clean_static
-    # make can miss files that the same run copies into build/, so a first
-    # build on a clean tree may need a second pass.
-    make_static || make_static
-    # fail the install rather than serve empty stylesheets
-    if [ ! -s "$(readlink -f build/public/static/tippr.css)" ]; then
-        echo "ERROR: the static build produced an empty tippr.css" >&2
-        exit 1
+    if built_already static; then
+        echo "Static files: already built for this code and these translations"
+    else
+        # Rebuild from scratch: outputs from an earlier failed build (e.g.
+        # empty CSS) would otherwise look up to date.
+        sudo -u $TIPPR_USER PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC/tippr/r2" \
+            PATH="$TIPPR_VENV/bin:/usr/bin:/bin" make clean_static
+        # make can miss files that the same run copies into build/, so a
+        # first build on a clean tree may need a second pass.
+        make_static || make_static
+        # fail the install rather than serve empty stylesheets
+        if [ ! -s "$(readlink -f build/public/static/tippr.css)" ]; then
+            echo "ERROR: the static build produced an empty tippr.css" >&2
+            exit 1
+        fi
+        record_built static
     fi
     # nginx serves them from /srv/www/static (snippets/tippr-static.conf),
     # where it can read them. New files are added and old ones kept: with
