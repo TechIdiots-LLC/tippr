@@ -16,7 +16,7 @@
 ## /admin/support: the support queue (r2.lib.support)
 <%!
   from urllib.parse import urlencode
-  from r2.lib.utils import timesince
+  from r2.lib.template_helpers import simplified_timesince
 %>
 
 <%def name="name_of(account_id)">
@@ -80,12 +80,12 @@
           <td>${name_of(t['assignee_id'])}</td>
           <td>
             %if t['last_staff_id']:
-              ${name_of(t['last_staff_id'])}, ${timesince(t['last_staff_at'])} ${_("ago")}
+              ${name_of(t['last_staff_id'])}, ${simplified_timesince(t['last_staff_at'])}
             %else:
               &mdash;
             %endif
           </td>
-          <td>${timesince(t['updated'])} ${_("ago")}</td>
+          <td>${simplified_timesince(t['updated'])}</td>
         </tr>
       %endfor
     </table>

@@ -16,7 +16,7 @@
 ## /admin/support/activity: what the support staff have done lately
 ## (r2.lib.support), in the categories the viewer may see
 <%!
-  from r2.lib.utils import timesince
+  from r2.lib.template_helpers import simplified_timesince
 %>
 
 <%def name="name_of(account_id)">
@@ -74,7 +74,7 @@
   <table class="lined-table support-activity">
     %for e in thing.events:
       <tr>
-        <td>${timesince(e['time'])} ${_("ago")}</td>
+        <td>${simplified_timesince(e['time'])}</td>
         <td>${name_of(e['actor_id'])}</td>
         <td>${thing.describe(e)}</td>
         <td><a href="/admin/support/${e['ticket_id']}">${e['subject'] or _("(no subject)")}</a></td>

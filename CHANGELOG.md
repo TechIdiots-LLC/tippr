@@ -23,6 +23,8 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
+- **The support pages said "254 milliseconds ago":** they say "just now" for the last minute, as the rest of the
+  site does.
 - **Search results showed the wrong descriptions:** a vault's page described the whole site (its link previews
   already used the vault's own description), and a post's showed its markdown (`* item`, `[link](https://...)`).
   A vault's page now has its own description, and a post's or comment's reads as plain text.

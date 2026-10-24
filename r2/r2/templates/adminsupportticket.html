@@ -16,7 +16,7 @@
 ## /admin/support/<id>: one ticket (r2.lib.support)
 <%!
   from r2.lib.filters import safemarkdown, unsafe
-  from r2.lib.utils import timesince
+  from r2.lib.template_helpers import simplified_timesince
 %>
 
 <%def name="name_of(account_id)">
@@ -103,7 +103,7 @@
         <p class="support-message-head">
           <strong>${name_of(item['actor_id'])}</strong>
           &#32;<small>${_("(a note for the staff; the member doesn't see it)")}</small>
-          &#32;&middot;&#32;${timesince(date)} ${_("ago")}
+          &#32;&middot;&#32;${simplified_timesince(date)}
         </p>
         <div class="md">${unsafe(safemarkdown(item['detail'] or ''))}</div>
       </div>
@@ -116,7 +116,7 @@
           %if staff:
             &#32;<small>${_("(staff; the member sees %(acct)s)") % dict(acct=g.admin_message_acct)}</small>
           %endif
-          &#32;&middot;&#32;${timesince(m._date)} ${_("ago")}
+          &#32;&middot;&#32;${simplified_timesince(m._date)}
         </p>
         <div class="md">${unsafe(safemarkdown(m.body))}</div>
       </div>
@@ -154,7 +154,7 @@
         <td><a href="/admin/support/${o['id']}">${o['subject'] or _("(no subject)")}</a></td>
         <td>${_(thing.category_names.get(o['category'], o['category']))}</td>
         <td>${_(thing.status_names.get(o['status'], o['status']))}</td>
-        <td>${timesince(o['updated'])} ${_("ago")}</td>
+        <td>${simplified_timesince(o['updated'])}</td>
       </tr>
     %endfor
   </table>
