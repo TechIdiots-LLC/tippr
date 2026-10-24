@@ -35,6 +35,12 @@
 - **A clearer "Translating" help page** (/help/translate): how to fix a translation as numbered steps, the file to
   edit on its own line, links to Poedit and Lokalize, and what to put in an issue as a list. The trophies help page
   lists Early Member among the awards the site gives.
+- **A browser test in the release workflow:** after the smoke test, four ordinary members (not admins) use the site
+  in Chrome: one posts through the submit form, the others reply to each other down a thread, and they all vote on
+  the post and the comments, changing and undoing votes, with the arrows and scores checked. Every page is checked
+  for JavaScript errors, failed requests, sideways scrolling on a phone and unreadable text, and saved as a
+  screenshot at desktop and phone width in both themes (the run's `screenshots-VERSION` artifact). See
+  docs/RELEASING.md.
 - **Updates say the site is down for "a few minutes"** (on /admin/servers and in the updater) instead of 5–10.
 
 ### 🐞 Bug fixes

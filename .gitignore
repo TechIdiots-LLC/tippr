@@ -39,3 +39,7 @@ r2/r2/lib/utils/comment_tree_utils.c
 
 # vagrant
 .vagrant/
+
+# the release browser test (docker/visual-test.mjs)
+docker/visual-results/
+docker/visual-seed.json

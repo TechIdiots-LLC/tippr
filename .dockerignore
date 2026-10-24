@@ -15,3 +15,5 @@ r2/production.ini
 r2/r2/public/static/names.json
 node_modules
 dist
+docker/visual-results
+docker/visual-seed.json

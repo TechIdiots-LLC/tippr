@@ -18,7 +18,24 @@ whole compose stack from it. `docker/smoke-test.sh` then checks:
 - that the admin can log in and post, and the post reaches its listing
   and search (the queue consumers and indexer work);
 - that GeoIP lookups work;
+- that ordinary members can use the site in a browser (the browser test,
+  below);
 - that no background container logs an error.
+
+The browser test (`docker/visual-test.mjs`, with accounts from
+`docker/visual-seed.py`) drives Chrome as four ordinary members, not
+admins: one posts through the submit form, the others reply to each other
+four levels down a thread, and they all vote on the post and the comments,
+changing and undoing votes. The arrows must show each person's vote at once
+and after reloading, and the scores must follow once the vote queues have
+counted them. Every page they see is checked for JavaScript errors, failed
+requests, sideways scrolling at phone width and text that can't be read on
+its background, and saved as a screenshot at desktop and phone width, in
+the light and the night theme. The screenshots are kept with the run (the
+`screenshots-VERSION` artifact) to look through before publishing;
+`report.json` there lists what failed, and faint text as warnings. To run it
+against a local stack: `VISUAL_TEST=1 PLAYWRIGHT=<playwright-core dir>
+bash docker/smoke-test.sh`.
 
 A second job builds the Proxmox template from the installer tarball
 (`proxmox/build-template.sh`). It then boots it the way a new container

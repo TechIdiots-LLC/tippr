@@ -98,8 +98,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # the browser test drives the runner's own Chrome (no browser download)
+      - name: Install the browser test's Playwright
+        run: npm install --no-audit --no-fund --prefix /tmp/playwright playwright-core@1.48.2
+
       - name: Smoke test the compose stack
         working-directory: docker
+        env:
+          VISUAL_TEST: "1"
+          PLAYWRIGHT: /tmp/playwright/node_modules/playwright-core
         run: |
           cat > .env <<ENV
           TIPPR_DOMAIN=tippr.test
@@ -118,6 +125,16 @@ jobs:
         if: failure()
         working-directory: docker
         run: docker compose logs --no-color --tail 200
+
+      # every page the browser test saw, at desktop and phone width, light
+      # and night (report.json lists what failed, and faint text as warnings)
+      - name: Upload the browser test's screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ needs.release-check.outputs.version }}
+          path: docker/visual-results
+          if-no-files-found: ignore
 
       - name: Check the Docker Hub secrets
         if: needs.release-check.outputs.publish == 'true'

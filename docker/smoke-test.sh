@@ -18,7 +18,9 @@
 # setup container, and check that the site answers over HTTPS. Leaves the
 # stack running; "docker compose down -v" removes it. SMOKE_ADDRESS: the
 # address the published ports are on (default 127.0.0.1; under
-# Docker-in-Docker, the docker service's).
+# Docker-in-Docker, the docker service's). VISUAL_TEST=1 adds the browser
+# test (visual-test.mjs), with its screenshots in VISUAL_OUT
+# (default visual-results).
 set -euo pipefail
 cd "$(dirname "$0")"
 # (|| true: a setting left out of .env isn't an error)
@@ -65,6 +67,24 @@ docker compose exec -T web rm -f /srv/www/media/smoke.txt
 # log in, post, and check the consumers handled it (listing, search)
 docker compose exec -T web /opt/tippr/venv/bin/python \
     /opt/tippr/src/tippr/docker/smoke-post.py
+
+# VISUAL_TEST=1: ordinary members use the site in a browser (visual-test.mjs;
+# needs node, Chrome and playwright-core, PLAYWRIGHT=its directory), and
+# every page is checked and saved as a screenshot in VISUAL_OUT
+if [ "${VISUAL_TEST:-}" = "1" ]; then
+    echo "browser test..."
+    docker compose exec -T web sh -c 'cd /opt/tippr/src/tippr/r2 &&
+        /opt/tippr/venv/bin/paster --plugin=r2 run run.ini \
+            /opt/tippr/src/tippr/docker/visual-seed.py' \
+        | sed -n 's/^VISUAL_SEED //p' > visual-seed.json
+    [ -s visual-seed.json ] || { echo "the browser test's accounts weren't made"; exit 1; }
+    port=""
+    [ "$https_port" = "443" ] || port=":$https_port"
+    VISUAL_BASE="https://$domain$port" VISUAL_SEED=visual-seed.json \
+        VISUAL_RESOLVE="$address" VISUAL_OUT="${VISUAL_OUT:-visual-results}" \
+        node visual-test.mjs
+    rm -f visual-seed.json
+fi
 # give the consumers and jobs a minute, then fail on any traceback
 sleep 60
 if docker compose logs --no-color consumers jobs websockets activity geoip \
