@@ -26,6 +26,8 @@
 - **Clicking "reply" on a comment threw a JavaScript error** ("e is not defined", from reddit's code): the reply
   box still opened, but the comment's hidden replies weren't shown with it, and the error was reported on every
   reply.
+- **A vault's NSFW setting was hard to find:** it's labelled "NSFW: viewers must be 18 or older" on the vault form
+  now, instead of "viewers must be over eighteen years old" (and the /v/all option gains its missing "in").
 - **The support pages said "254 milliseconds ago":** they say "just now" for the last minute, as the rest of the
   site does.
 - **Search results showed the wrong descriptions:** a vault's page described the whole site (its link previews
