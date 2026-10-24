@@ -121,8 +121,8 @@ tippr.target`) cover them all.
 - `tippr-paster.service`: the web app (gunicorn on 127.0.0.1:8001).
 - `tippr-websockets.service`, `tippr-activity.service`: live updates and
   activity counts.
-- `gunicorn-click.service`, `gunicorn-geoip.service`: click tracking and
-  geoip.
+- `gunicorn-geoip.service`: geoip. (Clicks on sponsored posts go through
+  the web app's `/click`.)
 - `tippr-consumers.service` starts the `tippr-consumer-<queue>@<n>.service`
   queue processors. The number per queue comes from the files in
   `$TIPPR_HOME/consumer-count.d`; apply a change with

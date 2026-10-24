@@ -243,6 +243,8 @@ def add_trackers(items, vault, adserver_click_urls=None):
             tracking_name_fields.append(vault.name)
 
         tracking_name = '-'.join(tracking_name_fields)
+        # (counted as shown and clicked by r2.lib.ad_traffic)
+        item.tracking_name = tracking_name
 
         # construct the impression pixel url
         pixel_mac = hmac.new(

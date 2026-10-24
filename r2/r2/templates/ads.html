@@ -33,6 +33,6 @@
 <% ads = ad_settings.page_ads() %>
 % if ads and ads["sidebar"]:
   <div class="sidebar-ad adsense-ad">
-    ${adsense_unit(ads, ads["adsense_sidebar_slot"])}
+    ${adsense_unit(ads, ads["adsense_sidebar_slot"], where='sidebar')}
   </div>
 % endif

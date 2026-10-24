@@ -45,6 +45,26 @@ class RedirectController(BaseController):
             abort(400)
         return self.redirect(str(dest))
 
+    def GET_click(self):
+        """A click on a sponsored post: counted (r2.lib.ad_traffic), then
+        on to its address, which must be the one signed with the post's
+        tracking name (r2.lib.promote.add_trackers). In place of reddit's
+        separate click tracker (scripts/tracker.py)."""
+        from pylons import response
+
+        from r2.lib import ad_traffic
+        url = request.GET.get("url", "")
+        tracking_name = request.GET.get("id", "")
+        if not ad_traffic.valid_click(url, tracking_name,
+                                      request.GET.get("hash", "")):
+            abort(403)
+        ad_traffic.count_click(tracking_name)
+        response.status_int = 302
+        response.headers["Location"] = url
+        response.headers["Cache-Control"] = "no-cache, no-store"
+        response.headers["Pragma"] = "no-cache"
+        return ""
+
     def GET_user_redirect(self, username, rest=None):
         user = chkuser(username)
         if not user:

@@ -57,7 +57,7 @@
       ${a}
       %if infeed_after and (i + 1) % infeed_after == 0 and i + 1 < len(thing.things):
         <div class="infeed-ad adsense-ad">
-          ${adsense_unit(infeed_ads, infeed_ads['adsense_listing_slot'], infeed_ads['adsense_listing_layout_key'] or None)}
+          ${adsense_unit(infeed_ads, infeed_ads['adsense_listing_slot'], infeed_ads['adsense_listing_layout_key'] or None, where='listing')}
         </div>
       %endif
   %endfor

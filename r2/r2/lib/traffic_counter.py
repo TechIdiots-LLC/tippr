@@ -82,9 +82,9 @@ def _visitors_table():
         return _METADATA.tables["traffic_visitors"]
     return sa.Table(
         "traffic_visitors", _METADATA,
-        # site, vault or lang
+        # a _TARGETS kind (site, vault, lang, ad, ...)
         sa.Column("kind", sa.String, primary_key=True),
-        # the vault's name or the language ("" for the site)
+        # its key there (the vault, the language, the ad; "" for the site)
         sa.Column("key", sa.String, primary_key=True),
         sa.Column("interval", sa.String, primary_key=True),
         sa.Column("period", sa.DateTime, primary_key=True),
@@ -96,13 +96,21 @@ def _ensure_tables(engine):
     global _tables_ready
     if _tables_ready:
         return
-    from r2.models.traffic import (PageviewsByLanguage, PageviewsByVault,
+    from r2.models.traffic import (AdImpressionsByCodename,
+                                   ClickthroughsByCodename,
+                                   PageviewsByLanguage, PageviewsByVault,
                                    PageviewsByVaultAndPath,
-                                   SitewidePageviews)
+                                   SitewidePageviews,
+                                   TargetedClickthroughsByCodename,
+                                   TargetedImpressionsByCodename)
     table = _visitors_table()
     for t in (table, SitewidePageviews.__table__, PageviewsByVault.__table__,
               PageviewsByLanguage.__table__,
-              PageviewsByVaultAndPath.__table__):
+              PageviewsByVaultAndPath.__table__,
+              AdImpressionsByCodename.__table__,
+              ClickthroughsByCodename.__table__,
+              TargetedImpressionsByCodename.__table__,
+              TargetedClickthroughsByCodename.__table__):
         t.create(bind=engine, checkfirst=True)
     _tables_ready = True
 
@@ -198,6 +206,10 @@ def record_request(request, response, c):
             scopes.append(("vault", site.name))
         lang = (c.lang or "en").split("-")[0]
         scopes.append(("lang", lang))
+        # the AdSense units the page showed, one each (templates/adsense.html;
+        # r2.lib.ad_traffic)
+        for unit in getattr(c, "adsense_units", None) or ():
+            scopes.append(("ad", "adsense_" + unit))
         # listing pages by vault ("" for the front page): what sponsored
         # posts are shown on, so the ad inventory is predicted from these
         # (r2.lib.inventory.update_prediction_data)
@@ -239,11 +251,18 @@ def _flush_now(engine, pending):
 
 
 _TARGETS = {
-    # kind: (table, key column or None, unique column, total column)
-    "site": ("traffic_aggregate", None),
-    "vault": ('"traffic_Vaults"', "vault"),
-    "lang": ("traffic_lang", "lang"),
-    "srpath": ("traffic_srpaths", "srpath"),
+    # kind: (table, key columns); a key of two columns is recorded as
+    # "first\tsecond"
+    "site": ("traffic_aggregate", ()),
+    "vault": ('"traffic_Vaults"', ("vault",)),
+    "lang": ("traffic_lang", ("lang",)),
+    "srpath": ("traffic_srpaths", ("srpath",)),
+    # ads (r2.lib.ad_traffic): by sponsored post or AdSense unit, and by
+    # campaign and the vault it showed in
+    "ad": ("traffic_thing", ("fullname",)),
+    "click": ("traffic_click", ("fullname",)),
+    "adtarget": ("traffic_thingtarget", ("fullname", "vault")),
+    "clicktarget": ("traffic_clicktarget", ("fullname", "vault")),
 }
 
 
@@ -252,7 +271,11 @@ def _write(engine, pending):
     visitors = _visitors_table()
     with engine.begin() as conn:
         for (kind, key, hour), (pageviews, keys) in pending.items():
-            table, key_column = _TARGETS[kind]
+            table, key_columns = _TARGETS[kind]
+            key_values = key.split("\t") if key_columns else []
+            if len(key_values) != len(key_columns):
+                continue
+            key_params = {"key%d" % i: v for i, v in enumerate(key_values)}
             for interval in INTERVALS:
                 period = period_start(hour, interval)
                 rows = [dict(kind=kind, key=key, interval=interval,
@@ -263,8 +286,8 @@ def _write(engine, pending):
                             .values(rows).on_conflict_do_nothing()
                             .returning(visitors.c.visitor))
                     new = len(conn.execute(stmt).fetchall())
-                key_cols = ("%s, " % key_column) if key_column else ""
-                key_vals = ":key, " if key_column else ""
+                key_cols = "".join("%s, " % col for col in key_columns)
+                key_vals = "".join(":%s, " % p for p in sorted(key_params))
                 conflict = ("%sdate, interval" % key_cols)
                 conn.execute(sa.text(
                     'INSERT INTO %s (%sdate, interval, "unique", total) '
@@ -273,7 +296,7 @@ def _write(engine, pending):
                     '"unique" = COALESCE(%s."unique", 0) + EXCLUDED."unique", '
                     'total = COALESCE(%s.total, 0) + EXCLUDED.total'
                     % (table, key_cols, key_vals, conflict, table, table)),
-                    dict(key=key, date=period, interval=interval, new=new,
+                    dict(key_params, date=period, interval=interval, new=new,
                          pageviews=pageviews))
 
 

@@ -31,7 +31,7 @@
 
 <%def name="sidetables()">
   <table class="traffic-table">
-  <caption>${_("top adverts")}</caption>
+  <caption>${_("top adverts this month")}</caption>
   <thead>
   <tr>
     <th scope="col">${_("ad")}</th>
@@ -53,5 +53,7 @@
 </%def>
 
 <%def name="tables()">
+  ## (r2.lib.ad_traffic)
+  <p>${_("Sponsored posts count an impression when the site shows one in a listing, and a click when someone follows it. AdSense units count each one the site puts on a page; whether Google filled it, and its clicks and earnings, are in your AdSense account.")}</p>
   ${thing.totals}
 </%def>

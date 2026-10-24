@@ -1339,28 +1339,16 @@ cp $TIPPR_SRC/tippr/r2/r2/public/static/pixel.png /srv/www/pixel
 if [ ! -d /etc/gunicorn.d ]; then
     mkdir -p /etc/gunicorn.d
 fi
-if [ ! -f /etc/gunicorn.d/click.conf ]; then
-    cat > /etc/gunicorn.d/click.conf <<CLICK
-CONFIG = {
-    "mode": "wsgi",
-    "working_dir": "$TIPPR_SRC/tippr/scripts",
-    "user": "$TIPPR_USER",
-    "group": "$TIPPR_USER",
-    "python": "$TIPPR_VENV/bin/python",
-    "args": (
-        "--bind=unix:/var/opt/tippr/click.sock",
-        "--workers=1",
-        "tracker:application",
-    ),
-}
-CLICK
-fi
 
-# Create a per-app systemd service for the click server so it can be managed
-# under systemd on modern systems. Only create/enable when systemd is present.
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    systemctl enable --now gunicorn-click.service || true
+# Clicks on sponsored posts (/click) are the site's own now
+# (r2.controllers.redirect, r2.lib.ad_traffic): take reddit's separate
+# click server off installs that had it
+if [ -e /etc/systemd/system/gunicorn-click.service ]; then
+    systemctl disable --now gunicorn-click.service 2>/dev/null || true
+    rm -f /etc/systemd/system/gunicorn-click.service
+    systemctl daemon-reload || true
 fi
+rm -f /etc/gunicorn.d/click.conf /var/opt/tippr/click.sock
 
 ###############################################################################
 # nginx
@@ -1416,9 +1404,6 @@ map $http_upgrade $tippr_upstream {
 map $http_x_forwarded_proto $tippr_external_proto {
     default https;
     http    http;
-}
-upstream click_server {
-    server unix:/var/opt/tippr/click.sock fail_timeout=0;
 }
 UPSTREAMS
 
@@ -1573,11 +1558,6 @@ location /pixel/ {
     add_header Last-Modified "";
     add_header Pragma "no-cache";
     expires -1;
-}
-
-location /click {
-    access_log /var/log/nginx/traffic/traffic.log directlog;
-    proxy_pass http://click_server;
 }
 
 location /.well-known/acme-challenge/ {

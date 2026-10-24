@@ -6780,6 +6780,8 @@ class ApiController(TipprController):
         promote.add_trackers(listing.things, c.site)
         promote.update_served(listing.things)
         if listing.things:
+            from r2.lib import ad_traffic
+            ad_traffic.count_impressions(listing.things, c.site)
             w = listing.things[0]
             w.num = ""
             return responsive(w.render(), space_compress=True)

@@ -18,8 +18,12 @@
 
 ## One ad unit. In-feed units pass their layout key; "in-article" instead of
 ## a key makes it an in-article unit (whose colours can be set in AdSense).
-<%def name="adsense_unit(ads, slot, layout_key=None)">
-  <% c.adsense_used = True %>
+<%def name="adsense_unit(ads, slot, layout_key=None, where='sidebar')">
+  <%
+    c.adsense_used = True
+    # counted on /traffic/adverts (r2.lib.traffic_counter, ad_traffic)
+    c.adsense_units = (getattr(c, "adsense_units", None) or []) + [where]
+  %>
   <ins class="adsbygoogle"
        style="display:block${'; text-align:center' if layout_key == 'in-article' else ''}"
        data-ad-client="${ads['adsense_client']}"
@@ -47,6 +51,9 @@
     from r2.lib import ad_settings
     ads = ad_settings.page_ads()
   %>
+  %if ads and ads["adsense_mode"] == "auto":
+    <% c.adsense_units = (getattr(c, "adsense_units", None) or []) + ["auto"] %>
+  %endif
   %if ads and (c.adsense_used or ads["adsense_mode"] == "auto"):
     <script async crossorigin="anonymous"
             src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ads['adsense_client']}"></script>

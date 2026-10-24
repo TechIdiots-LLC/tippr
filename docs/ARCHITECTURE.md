@@ -83,7 +83,8 @@ rebuilt.
   gold expiry, subscriber counts, vault similarity (Explore), the X-Year
   Club trophies, and sold ads (promos and their metrics).
 - **Services**: `tippr-websockets` (live updates), `tippr-activity` (who's
-  here counts), click/pixel trackers and geoip on gunicorn.
+  here counts) and geoip on gunicorn. Ads are counted by the web app
+  (r2.lib.ad_traffic, with its /click for sponsored posts).
 - **Backups**: `tippr-backup.path` starts `tippr-backup.service` for
   requests made on /admin/backups.
 

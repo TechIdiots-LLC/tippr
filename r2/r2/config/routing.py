@@ -85,6 +85,9 @@ def make_map(config):
     mc('/adminoff', controller='forms', action='adminoff')
     mc('/submit', controller='front', action='submit')
 
+    # a click on a sponsored post (r2.lib.ad_traffic)
+    mc('/click', controller='redirect', action='click')
+
     # redirect old urls to the new
     ABOUT_BASE = "https://about.tippr.net/"
     mc('/about', controller='redirect', action='redirect', dest=ABOUT_BASE, 

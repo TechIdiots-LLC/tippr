@@ -56,6 +56,11 @@
   says so and keeps checking, then catches up when it's back; it stops once every server has finished. Servers
   that haven't started yet say they're waiting. (The updater that runs an update is the one already installed, so
   the progress reports start with the update after this one.)
+- **/traffic/adverts counts ads:** it read tables reddit filled from its ad servers' logs, which nothing filled
+  here. The site counts them itself now: a sponsored post when it's shown in a listing (by post, and by campaign
+  and vault for its traffic page) and when it's clicked, and each AdSense unit it puts on a page (sidebar, in-feed,
+  or Auto ads pages). What Google filled the units with, and their clicks and earnings, stay in the AdSense
+  account. Bots aren't counted.
 
 ### 🐞 Bug fixes
 - **/admin/servers ran words together, and an update's log was one long paragraph:** the page's space compression
@@ -63,6 +68,10 @@
   and took the line breaks out of the log; both read properly now.
 - **/traffic/languages and the "top vaults" table were empty:** they listed last month, the newest reddit's batch
   traffic pipeline had finished; tippr counts as pages are viewed, so they list this month, and say so.
+- **Clicking a sponsored post failed:** its link goes through /click, served by reddit's separate click tracker,
+  which was never ported to Python 3 (every click was an error) and which Docker installs didn't have at all. /click
+  is part of the site now: it checks the link's signature, counts the click and sends the browser on. Updating
+  removes the old click server (`gunicorn-click`).
 - **Updating could leave the queues and jobs stopped:** the installer installs the pinned Python packages, but pip
   kept a package already installed under the same name and version even when it came from elsewhere, and an older
   formenergy-observability from PyPI then conflicted with the pinned `packaging`: the pages worked, but paster refused

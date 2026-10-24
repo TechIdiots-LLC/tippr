@@ -344,15 +344,15 @@ class AdvertTrafficSummary(TipprTraffic):
 
         columns = [
             dict(color=COLORS.UPVOTE_ORANGE,
-                 title=_("total impressions by day"),
+                 title=_("sponsored post impressions by day"),
                  shortname=_("impressions")),
             dict(color=COLORS.DOWNVOTE_BLUE,
-                 title=_("total clicks by day"),
+                 title=_("sponsored post clicks by day"),
                  shortname=_("clicks")),
         ]
 
         self.totals = TimeSeriesChart("traffic-ad-totals",
-                                      _("ad totals"),
+                                      _("sponsored post totals"),
                                       "day",
                                       columns,
                                       data,
@@ -401,6 +401,12 @@ class AdvertTrafficSummary(TipprTraffic):
         be done in batch upstream.
 
         """
+
+        from r2.lib import ad_traffic
+        if code.startswith(ad_traffic.ADSENSE_PREFIX):
+            unit = code[len(ad_traffic.ADSENSE_PREFIX):]
+            name = ad_traffic.ADSENSE_UNITS.get(unit)
+            return _(name) if name else code
 
         if not things:
             things = AdvertTrafficSummary.get_things([code])
