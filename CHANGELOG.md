@@ -6,6 +6,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Listings with NSFW posts still had AdSense ads:** 0.20.1's fix took ads off pages that show NSFW posts only for
+  search results; the front page, /v/all, other listings and profiles kept them. (Those listings already showed NSFW
+  posts only to people who said they're over 18; that part of the 0.20.1 note applied to search.)
 
 ## 0.20.2
 ### ✨ Features and improvements

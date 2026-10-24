@@ -407,7 +407,13 @@ class Link(Thing, Printable):
             return True
 
         is_nsfw = wrapped.over_18 or wrapped.vault.over_18
-        return c.over18 or not is_nsfw
+        if not is_nsfw:
+            return True
+        if not c.over18:
+            return False
+        # no ads next to adult content (r2.lib.ad_settings)
+        c.page_nsfw = True
+        return True
 
     cache_ignore = {
         'vault',
