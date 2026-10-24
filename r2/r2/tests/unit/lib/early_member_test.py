@@ -22,7 +22,8 @@ from r2.lib import early_member
 
 def account(id, name=None, **kw):
     props = dict(_id=id, _deleted=False, _spam=False, _banned=False,
-                 feed_bot=False, registration_ip="203.0.113.1")
+                 feed_bot=False, internal_account=False,
+                 registration_ip="203.0.113.1")
     props.update(kw)
     a = mock.Mock(**props)
     a.name = name or "member%d" % id
@@ -45,6 +46,13 @@ class EarlyMemberTest(unittest.TestCase):
                     account(6), account(7), account(8)]
         places = early_member.first_members(accounts, 3)
         self.assertEqual([a._id for a in places], [3, 6, 7])
+
+    def test_internal_accounts_take_no_place(self):
+        # marked on /admin/users (a test account, a bot)
+        accounts = [account(1), account(2, internal_account=True),
+                    account(3), account(4)]
+        places = early_member.first_members(accounts, 3)
+        self.assertEqual([a._id for a in places], [1, 3, 4])
 
     def test_deleted_keep_their_place(self):
         gone = account(2, _deleted=True)
