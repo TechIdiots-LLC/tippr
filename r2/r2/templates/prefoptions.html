@@ -105,7 +105,7 @@
   %elif thing.error_style_override:
     <p class="error">${_("we couldn't save the custom stylesheet preference. please see the error below")}</p>
   %elif thing.generic_error == "TWO_FACTOR_REQUIRED":
-    <p class="error">${_("your preferences weren't saved: enter your two-factor code with them")}</p>
+    <p class="error">${_("your preferences weren't saved: they locked again while you were away. Save them again now.")}</p>
   %elif thing.generic_error:
     <p class="error">${_("your preferences couldn't be saved")}</p>
   %endif
@@ -615,10 +615,6 @@ action = add_vault(action, vault_path=False)
 
   <tr>
     <td>
-      %if getattr(thing, "ask_code", False):
-        <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" size="10" placeholder="${_('two-factor code')}"
-               ${'data-otp-optional="1"' if getattr(thing, "code_optional", False) else ''}>
-      %endif
       <input type="submit" class="btn" value="${_('save options')}"/>
     </td>
   </tr>

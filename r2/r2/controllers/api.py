@@ -6421,12 +6421,14 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         otp=nop("otp"),
+        dest=VDestination(default="/prefs/security"),
     )
-    def POST_two_factor_unlock(self, form, jquery, otp):
-        """Preferences, security: one code (or a passkey) that unlocks the
-        page's changes for two_factor.RECENT_MINUTES, instead of a code
-        field on every form. Turning two-factor off still wants one typed
-        then."""
+    def POST_two_factor_unlock(self, form, jquery, otp, dest):
+        """A locked preferences page (r2.lib.pages.PrefsUnlock): one code
+        (or a passkey) that unlocks preferences while they're in use
+        (two_factor.prefs_locked), instead of a code field on every form,
+        then back to the page. Turning two-factor off still wants one
+        typed then."""
         from r2.lib import two_factor
         if not two_factor.enabled(c.user):
             return
@@ -6434,7 +6436,7 @@ class ApiController(TipprController):
             c.errors.add(errors.WRONG_OTP, field="otp")
             form.has_errors("otp", errors.WRONG_OTP)
             return
-        form.redirect("/prefs/security")
+        form.redirect(dest)
 
     @staticmethod
     def _show_recovery_codes(account):

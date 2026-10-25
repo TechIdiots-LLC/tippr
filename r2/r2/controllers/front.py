@@ -1770,6 +1770,9 @@ class FormsController(TipprController):
               verified=VBoolean("verified"))
     def GET_prefs(self, location='', verified=False):
         """Preference page"""
+        locked = prefs_unlock(location or "options")
+        if locked:
+            return locked
         content = None
         infotext = None
         if not location or location == 'options':

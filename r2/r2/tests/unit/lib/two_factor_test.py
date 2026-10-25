@@ -107,6 +107,39 @@ class TestTwoFactor(TipprTestCase):
         self.cache[key] = int(time.time()) - 5   # not yet expired from cache
         self.assertEqual(two_factor.recent_minutes_left(self.account), 1)
 
+    def test_security_and_update_are_always_locked(self):
+        self.assertTrue(two_factor.prefs_locked(self.account, "security"))
+        self.assertTrue(two_factor.prefs_locked(self.account, "update"))
+        self.assertFalse(two_factor.prefs_locked(self.account, "options"))
+        self.assertFalse(two_factor.prefs_locked(self.account, "privacy"))
+
+    def test_otp_settings_locks_every_preferences_page(self):
+        self.account.pref_otp_settings = True
+        for page in ("options", "privacy", "friends", "apps", "security"):
+            self.assertTrue(two_factor.prefs_locked(self.account, page))
+
+    def test_nothing_locked_without_two_factor_or_from_an_app(self):
+        self.account.pref_otp_settings = True
+        self.c.oauth_user = MagicMock()
+        self.assertFalse(two_factor.prefs_locked(self.account, "security"))
+        self.c.oauth_user = None
+        self.account.otp_secret = ""
+        self.assertFalse(two_factor.prefs_locked(self.account, "security"))
+
+    def test_preferences_stay_unlocked_while_in_use(self):
+        two_factor.mark_recent(self.account)
+        key = two_factor._session_key(self.account)
+        self.cache[key] = int(time.time()) + 30
+        self.assertFalse(two_factor.prefs_locked(self.account, "security"))
+        # opening a page keeps them unlocked another RECENT_MINUTES
+        self.assertEqual(two_factor.recent_minutes_left(self.account),
+                         two_factor.RECENT_MINUTES)
+        # and a code entered on one counts on the forms
+        self.assertFalse(two_factor.needs_code(self.account, "password"))
+        # another login session starts locked
+        self.request.cookies = {"session": "another-login"}
+        self.assertTrue(two_factor.prefs_locked(self.account, "security"))
+
     def stored_account(self, stored):
         """use_recovery_code reads the account afresh: stored is that copy."""
         models = MagicMock()

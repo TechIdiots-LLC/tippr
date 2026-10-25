@@ -1,0 +1,46 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+## A locked preferences page (r2.lib.pages.PrefsUnlock): one code, or a
+## passkey (passkey.js offers it on the code field), opens it, and the rest
+## of preferences, for as long as they're in use
+
+<%namespace file="utils.html" import="error_field"/>
+
+<div class="prefs-unlock">
+  <h1>${_("unlock your preferences")}</h1>
+  <p>
+    %if thing.everything:
+      ${_("You chose to keep your preferences locked until you confirm it's you.")}
+    %else:
+      ${_("Changing your password, email address, two-factor sign-in or linked accounts needs you to confirm it's you first.")}
+    %endif
+  </p>
+  <form action="/post/two_factor_unlock" method="post" class="pretty-form two-factor-unlock"
+        onsubmit="return post_form(this, 'two_factor_unlock')">
+    <input type="hidden" name="dest" value="${thing.dest}">
+    %if thing.has_app:
+      <p>${_("Enter a code from your authenticator app (or a recovery code).")}</p>
+    %else:
+      <p>${_("Confirm it's you with your passkey (or a recovery code).")}</p>
+    %endif
+    <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
+           maxlength="40" size="10" placeholder="${_('two-factor code')}" autofocus>
+    <button class="btn otp-submit" type="submit">${_("unlock")}</button>
+    ${error_field("WRONG_OTP", "otp")}
+    <span class="status"></span>
+  </form>
+  <p><small>${_("They stay unlocked while you use them, and lock again %(minutes)s minutes after you last opened one.") % dict(minutes=thing.minutes)}</small></p>
+</div>

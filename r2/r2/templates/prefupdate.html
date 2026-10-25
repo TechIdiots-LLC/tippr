@@ -26,16 +26,19 @@
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 
-## the two-factor code, when the account has it (r2.lib.two_factor)
+## the two-factor code, when one is needed now (r2.lib.two_factor): never on
+## /prefs/update, which asks for it when it opens (PrefsUnlock), but /verify
+## shows the email form too
 <%def name="otp_field()">
-  %if thing.two_factor:
+  %if thing.needs_code:
   <div class="spacer">
-    <%utils:round_field title="${_('two-factor code')}" description="${_('(required)') if thing.needs_code else _('(entered a moment ago)')}">
-      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12"
-             ${'data-otp-optional="1"' if not thing.needs_code else ''}>
+    <%utils:round_field title="${_('two-factor code')}" description="${_('(required)')}">
+      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12">
       ${error_field("TWO_FACTOR_REQUIRED", "otp")}
     </%utils:round_field>
   </div>
+  %else:
+  ${error_field("TWO_FACTOR_REQUIRED", "otp", "div")}
   %endif
 </%def>
 

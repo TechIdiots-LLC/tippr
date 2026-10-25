@@ -19,6 +19,13 @@
   tippr-backup, and it shows the backend's backups and progress, passed both ways every 10 seconds by
   `tippr-backup-relay.timer` on the backend. Another server copying a split site's backups with a transfer key
   can't go through a frontend (the files are on the backend), so the page says to copy the folder instead.
+- **Preferences unlock once, like admin mode:** with two-factor on, preferences ask for the code (or a passkey) when
+  you open them, rather than on each form: the security page and the password and email page always, and every
+  preferences page (options, privacy, friends, blocked, apps) when you choose "also ask for a code before opening
+  any of your preferences" on the security page, which replaces asking on each save. Once unlocked their forms need
+  no code, and they stay unlocked while you use them, locking again 15 minutes after you last open one; a form saved
+  after that says to reload the page and unlock them again. Turning two-factor off and deleting your account still
+  ask for a code then.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

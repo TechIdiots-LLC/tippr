@@ -31,7 +31,7 @@ from r2.controllers.tippr_base import TipprController
 from r2.lib import amqp
 from r2.lib.base import abort
 from r2.lib.errors import errors
-from r2.lib.pages import PrefsPage, Templated
+from r2.lib.pages import PrefsPage, Templated, prefs_unlock
 from r2.lib.template_helpers import get_domain
 from r2.lib.validator import (
     VAdmin,
@@ -58,6 +58,9 @@ class PrivacyController(TipprController):
     @validate(VUser())
     def GET_privacy_settings(self):
         """Render the privacy settings page."""
+        locked = prefs_unlock("privacy")
+        if locked:
+            return locked
         # Get user's privacy requests
         requests = PrivacyRequest.by_account(c.user)
         
@@ -174,6 +177,9 @@ class PrivacyController(TipprController):
     )
     def GET_download_export(self, token):
         """Download a completed data export."""
+        locked = prefs_unlock("privacy")
+        if locked:
+            return locked
         if not token:
             abort(400)
         

@@ -64,6 +64,11 @@ ACTIONS = {
     "post": "pref_otp_post",
 }
 
+# the ones on preferences pages, which ask for the code when the page opens
+# (prefs_locked) instead of on each form
+PREFS_ACTIONS = ("password", "email", "linked_logins", "two_factor_prefs",
+                 "settings")
+
 
 MAX_METHODS = 10  # per account, of each kind
 PASSKEY_TOKEN_SECONDS = 120  # a passkey check counts as a code this long
@@ -453,6 +458,29 @@ def needs_code(account, action):
     if pref and not getattr(account, pref, False):
         return False
     return not recent(account)
+
+
+# the preferences pages whose changes always need a code (password and
+# email, two-factor and linked logins): locked whatever the member chose
+ALWAYS_LOCKED_PREFS = ("security", "update")
+
+
+def prefs_locked(account, page):
+    """Whether a preferences page (/prefs/<page>) shows its unlock form
+    instead, until a code is entered (r2.lib.pages.prefs_unlock): every
+    one with pref_otp_settings, the ALWAYS_LOCKED_PREFS otherwise. Once
+    entered, its forms need no code of their own (they accept a recent
+    one), and each page opened keeps it unlocked another RECENT_MINUTES,
+    so it doesn't lock again while it's being used."""
+    if not enabled(account) or from_app():
+        return False
+    if (page not in ALWAYS_LOCKED_PREFS and
+            not getattr(account, "pref_otp_settings", False)):
+        return False
+    if recent(account):
+        mark_recent(account)
+        return False
+    return True
 
 
 ###############################################################################

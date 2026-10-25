@@ -1979,6 +1979,10 @@ class UserListListingController(ListingController):
                      uri_variants=['/prefs/friends', '/prefs/blocked',
                          '/api/v1/me/friends', '/api/v1/me/blocked'])
     def GET_user_prefs(self, where, **kw):
+        if request.path.startswith("/prefs/"):
+            locked = prefs_unlock(where)
+            if locked:
+                return locked
         self.where = where
 
         self.listing_cls = None

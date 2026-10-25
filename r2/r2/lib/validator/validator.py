@@ -48,6 +48,7 @@ from r2.lib.errors import (
     UserRequiredException,
     VerifiedUserRequiredException,
     errors,
+    error_list,
 )
 from r2.lib.filters import (
     _force_utf8,
@@ -2977,7 +2978,14 @@ class VTwoFactor(Validator):
             return
         if not two_factor.needs_code(c.user, self.action):
             return
-        if not two_factor.check_code(c.user, code):
+        if not code and self.action in two_factor.PREFS_ACTIONS:
+            # preferences ask once, when the page opens (prefs_locked): no
+            # field to type it in, so say how to unlock them again
+            error = TipprError(errors.TWO_FACTOR_REQUIRED, fields=self.param)
+            error.i18n_message = error_list[errors.PREFS_LOCKED_AGAIN]
+            c.errors.add_error(error)
+            self.has_errors = True
+        elif not two_factor.check_code(c.user, code):
             self.set_error(errors.TWO_FACTOR_REQUIRED)
 
     def param_docs(self):

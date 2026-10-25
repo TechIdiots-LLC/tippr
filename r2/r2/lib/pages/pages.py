@@ -1296,6 +1296,31 @@ class PrefsPage(Tippr):
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
 
+class PrefsUnlock(Templated):
+    """A locked preferences page: the two-factor code (or a passkey) first
+    (r2.lib.two_factor.prefs_locked), then back to the page."""
+    def __init__(self, dest):
+        from r2.lib import two_factor
+        self.dest = dest
+        self.has_app = two_factor.has_authenticator_app(c.user)
+        # (all of preferences, or this page, whose changes always ask)
+        self.everything = getattr(c.user, "pref_otp_settings", False)
+        self.minutes = two_factor.RECENT_MINUTES
+        Templated.__init__(self)
+
+
+def prefs_unlock(page):
+    """The unlock page, rendered, if the preferences page `page` is locked
+    for this member (r2.lib.two_factor.prefs_locked); else None, and the
+    page shows as usual. (Only web pages: the same listings as JSON
+    don't change anything.)"""
+    from r2.lib import two_factor
+    if (not c.user_is_loggedin or c.render_style != "html" or
+            not two_factor.prefs_locked(c.user, page)):
+        return None
+    return PrefsPage(content=PrefsUnlock(dest=request.fullpath)).render()
+
+
 class PrefOptions(Templated):
     """Preference form for updating language and display options"""
     def __init__(self, done=False, error_style_override=None, generic_error=None):
@@ -1310,16 +1335,7 @@ class PrefOptions(Templated):
                     theme.checked = True
 
         feature_autoexpand_media_previews = feature.is_enabled("autoexpand_media_previews")
-        # saving asks for the two-factor code, if the member chose that
-        from r2.lib import two_factor
-        ask_code = (c.user_is_loggedin and two_factor.enabled(c.user) and
-                    getattr(c.user, "pref_otp_settings", False))
-        # (one entered in the last few minutes counts: the field may be
-        # left empty, passkey.js)
-        code_optional = ask_code and not two_factor.needs_code(c.user,
-                                                               "settings")
-        Templated.__init__(self, done=done, ask_code=ask_code,
-                code_optional=code_optional,
+        Templated.__init__(self, done=done,
                 error_style_override=error_style_override,
                 feature_autoexpand_media_previews=feature_autoexpand_media_previews,
                 generic_error=generic_error, themes=themes, use_other_theme=use_other_theme)
@@ -1356,10 +1372,9 @@ class PrefSecurity(Templated):
         # code (r2.controllers.linked_logins)
         self.passkey_created = request.GET.get("passkey") == "created"
         self.recovered = bool(request.GET.get("recovered")) and self.two_factor
-        # one code unlocks the page's changes for a while (two_factor.recent)
-        self.minutes_left = (two_factor.recent_minutes_left(c.user)
-                             if self.two_factor else 0)
-        self.unlocked = bool(self.minutes_left)
+        # the page opens unlocked (PrefsUnlock), for this long after the
+        # last preferences page
+        self.minutes = two_factor.RECENT_MINUTES
         self.new_codes = two_factor.take_new_codes(c.user)
         self.codes_left = two_factor.recovery_codes_left(c.user)
         self.device_days = two_factor.DEVICE_DAYS
@@ -1440,9 +1455,9 @@ class PrefUpdate(Templated):
         self.verify = verify
         self.dest = dest
         self.subscribe = subscribe or is_promoted
-        # changing either needs the two-factor code (r2.lib.two_factor)
+        # changing either needs the two-factor code (r2.lib.two_factor),
+        # unless one was entered a moment ago
         from r2.lib import two_factor
-        self.two_factor = two_factor.enabled(c.user)
         self.needs_code = two_factor.needs_code(c.user, "password")
         Templated.__init__(self)
 

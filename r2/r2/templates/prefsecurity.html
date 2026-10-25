@@ -31,13 +31,6 @@
 <%namespace file="utils.html" import="error_field, _md"/>
 <%namespace name="utils" file="utils.html"/>
 
-## the two-factor code, on forms that need one (r2.lib.two_factor)
-<%def name="otp_field()">
-  <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
-         maxlength="40" size="10" placeholder="${_('two-factor code')}">
-  ${error_field("TWO_FACTOR_REQUIRED", "otp")}
-</%def>
-
 ## the recovery codes just made, shown once
 <%def name="new_recovery_codes()">
   <div id="recovery-codes" class="recovery-codes recovery-codes-new">
@@ -59,9 +52,9 @@
 % if thing.two_factor:
     <p class="two-factor-state">
       %if thing.has_app:
-        ${_md("two-factor authentication is **on**. you're asked for a code from one of your methods when changing your password or email address, and when linking or unlinking a sign-in.")}
+        ${_md("two-factor authentication is **on**. you're asked for a code from one of your methods before changing your password, email address or linked sign-ins, and before opening this page.")}
       %else:
-        ${_md("two-factor authentication is **on**. you're asked to confirm it's you with your passkey when changing your password or email address, and when linking or unlinking a sign-in.")}
+        ${_md("two-factor authentication is **on**. you're asked to confirm it's you with your passkey before changing your password, email address or linked sign-ins, and before opening this page.")}
       %endif
     </p>
 
@@ -85,28 +78,11 @@
       ${new_recovery_codes()}
     %endif
 
-    ## one code unlocks the changes on this page for a while (POST_two_factor_unlock)
-    %if thing.unlocked:
-      <p class="two-factor-unlocked">
-        ${_("Unlocked: you can make changes here for %(minutes)s more minutes.") % dict(minutes=thing.minutes_left)}
-      </p>
-    %else:
-      <form action="/post/two_factor_unlock" method="post" class="pretty-form two-factor-unlock"
-            onsubmit="return post_form(this, 'two_factor_unlock')">
-        %if thing.has_app:
-          <p>${_("To change anything here, enter a code from your authenticator app first. It counts for 15 minutes.")}</p>
-        %else:
-          ## no app, so no codes to type: the passkey (passkey.js turns the
-          ## field into "use a passkey", with a recovery code as the fallback)
-          <p>${_("To change anything here, confirm it's you with your passkey first. It counts for 15 minutes.")}</p>
-        %endif
-        <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
-               maxlength="40" size="10" placeholder="${_('two-factor code')}">
-        <button class="btn otp-submit" type="submit">${_("unlock")}</button>
-        ${error_field("WRONG_OTP", "otp")}
-        <span class="status"></span>
-      </form>
-    %endif
+    ## the page opens unlocked (r2.lib.pages.PrefsUnlock asks for the code
+    ## first), so its forms need no code of their own
+    <p class="two-factor-unlocked">
+      ${_("Unlocked: your preferences lock again %(minutes)s minutes after you last open one.") % dict(minutes=thing.minutes)}
+    </p>
 
     ## the methods: authenticator apps and passkeys, each removable
     <div id="two-factor-methods" class="two-factor-methods">
@@ -121,7 +97,6 @@
             &#32;&middot; ${_("last used %(when)s") % dict(when=m["used"])}
           %endif
         </small></td>
-        %if thing.unlocked:
         <td>
           <form action="/post/remove_two_factor_method" method="post" class="pretty-form"
                 onsubmit="return post_form(this, 'remove_two_factor_method')">
@@ -135,11 +110,10 @@
             <span class="status"></span>
           </form>
         </td>
-        %endif
       </tr>
     %endfor
     </table>
-    %if thing.unlocked and len(thing.methods) == 1:
+    %if len(thing.methods) == 1:
       <p><small>${_("Deleting your only method turns two-factor off, so it needs your password too.")}</small></p>
     %endif
     %if thing.has_passkey:
@@ -156,10 +130,8 @@
     %endif
     </div>
 
-    %if thing.unlocked:
-      <h2>${_("add a method")}</h2>
-      ${add_methods()}
-    %endif
+    <h2>${_("add a method")}</h2>
+    ${add_methods()}
 
     %if not thing.new_codes:
     <div id="recovery-codes" class="recovery-codes">
@@ -172,39 +144,35 @@
           <strong>${_("You have none left: make new ones now.")}</strong>
         %endif
       </p>
-      %if thing.unlocked:
       <form action="/post/new_recovery_codes" method="post" onsubmit="return post_form(this, 'new_recovery_codes')" class="pretty-form">
         <button class="btn" type="submit">${_("make new recovery codes")}</button>
         ${error_field("TWO_FACTOR_REQUIRED", "otp")}
         <span class="status"></span>
         <p><small>${_("Making new ones stops the old ones working.")}</small></p>
       </form>
-      %endif
     </div>
     %endif
 
     <form action="/post/two_factor_prefs" method="post" onsubmit="return post_form(this, 'two_factor_prefs')" class="two-factor-prefs">
     <h2>${_("also ask for a code")}</h2>
-      <% disabled = "" if thing.unlocked else "disabled" %>
       <p>
-        <input type="checkbox" name="otp_login" id="otp_login" ${"checked" if c.user.pref_otp_login else ""} ${disabled}>
+        <input type="checkbox" name="otp_login" id="otp_login" ${"checked" if c.user.pref_otp_login else ""}>
         <label for="otp_login">${_("when logging in, with your password or a linked account (Google, GitHub...)")}</label>
         <br><small>${_("you can choose to skip it for %(days)s days on a device you trust") % dict(days=thing.device_days)}</small>
       </p>
       <p>
-        <input type="checkbox" name="otp_settings" id="otp_settings" ${"checked" if c.user.pref_otp_settings else ""} ${disabled}>
-        <label for="otp_settings">${_("when saving your preferences")}</label>
+        <input type="checkbox" name="otp_settings" id="otp_settings" ${"checked" if c.user.pref_otp_settings else ""}>
+        <label for="otp_settings">${_("before opening any of your preferences")}</label>
+        <br><small>${_("otherwise only this page and your password and email address are locked")}</small>
       </p>
       <p>
-        <input type="checkbox" name="otp_post" id="otp_post" ${"checked" if c.user.pref_otp_post else ""} ${disabled}>
+        <input type="checkbox" name="otp_post" id="otp_post" ${"checked" if c.user.pref_otp_post else ""}>
         <label for="otp_post">${_("when submitting a post")}</label>
       </p>
-      <p><small>${_("a code you enter counts for 15 minutes, so you aren't asked again and again. apps you've allowed (OAuth) aren't asked.")}</small></p>
-      %if thing.unlocked:
-        <button class="btn" type="submit">${_("save")}</button>
-        ${error_field("TWO_FACTOR_REQUIRED", "otp")}
-        <span class="status"></span>
-      %endif
+      <p><small>${_("a code you enter counts for %(minutes)s minutes, and your preferences stay unlocked while you use them, so you aren't asked again and again. apps you've allowed (OAuth) aren't asked.") % dict(minutes=thing.minutes)}</small></p>
+      <button class="btn" type="submit">${_("save")}</button>
+      ${error_field("TWO_FACTOR_REQUIRED", "otp")}
+      <span class="status"></span>
     </form>
 
     ## the browsers that skip the code ("don't ask on this device",
@@ -317,10 +285,6 @@
   %if thing.just_linked:
     <p class="linked-logins-done">${_("Linked. You can now sign in with it on the login page.")}</p>
   %endif
-  <% ask_code = thing.two_factor and not thing.unlocked %>
-  %if ask_code:
-    <p>${_("Linking or unlinking needs your two-factor code (one you entered in the last 15 minutes counts).")}</p>
-  %endif
   <table class="linked-logins-table">
   %for p in thing.linked:
     <tr>
@@ -336,11 +300,7 @@
           <form action="/post/unlink_login" method="post" class="pretty-form"
                 onsubmit="return post_form(this, 'unlink_login')">
             <input type="hidden" name="provider" value="${p['provider']}">
-            %if ask_code:
-              ${otp_field()}
-            %else:
-              ${error_field("TWO_FACTOR_REQUIRED", "otp")}
-            %endif
+            ${error_field("TWO_FACTOR_REQUIRED", "otp")}
             <button class="btn" type="submit">${_("unlink")}</button>
             <span class="status"></span>
           </form>
@@ -352,11 +312,7 @@
           <form action="/post/start_link_login" method="post" class="pretty-form"
                 onsubmit="return post_form(this, 'start_link_login')">
             <input type="hidden" name="provider" value="${p['provider']}">
-            %if ask_code:
-              ${otp_field()}
-            %else:
-              ${error_field("TWO_FACTOR_REQUIRED", "otp")}
-            %endif
+            ${error_field("TWO_FACTOR_REQUIRED", "otp")}
             <button class="btn" type="submit">${_("link %(provider)s") % dict(provider=p["name"])}</button>
             <span class="status"></span>
           </form>
