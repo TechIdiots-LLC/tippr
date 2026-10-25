@@ -16,7 +16,7 @@
 """Compatibility layer for `pylons.configuration`.
 
 Provides a PylonsConfig class that mimics the original Pylons configuration
-object for migration to Pyramid.
+object, as r2 uses it.
 """
 import os
 import copy

@@ -16,7 +16,7 @@
 """Compatibility layer for `pylons.wsgiapp`.
 
 Provides a lightweight `PylonsApp` fallback that establishes the
-minimal objects expected by `r2` middleware for migration to Pyramid.
+minimal objects expected by `r2` middleware.
 """
 import traceback
 from types import SimpleNamespace

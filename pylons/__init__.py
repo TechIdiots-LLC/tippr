@@ -17,7 +17,7 @@
 
 Provides simple LocalStack objects for `config`, `app_globals`, `tmpl_context`, and
 `translator`, and a small url pushable object. This is intentionally lightweight
-and intended to be replaced by Pyramid-specific code during migration.
+and is r2's own framework now, built on WebOb (docs/ARCHITECTURE.md).
 """
 import threading
 from typing import Any, List

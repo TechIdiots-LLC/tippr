@@ -110,18 +110,6 @@ def get_lang():
         if lang:
             return lang
 
-    # Pyramid fallback: return a list like ['en'] to match existing callers
-    try:
-        from pyramid.threadlocal import get_current_request
-        from pyramid.i18n import get_locale_name
-        req = get_current_request()
-        if req is not None:
-            loc = get_locale_name(req)
-            if loc:
-                return [loc]
-    except Exception:
-        pass
-
     return None
 
 

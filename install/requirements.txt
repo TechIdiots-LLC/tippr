@@ -110,7 +110,6 @@ pylibmc==1.6.3
 pyOpenSSL==26.4.0
 pyparsing==3.3.3
 pyramid==2.1
-pyramid-mako==1.1.0
 pyrate-limiter==3.9.0
 pytest==8.4.2
 python-dateutil==2.9.0.post0

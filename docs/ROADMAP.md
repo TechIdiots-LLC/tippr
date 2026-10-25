@@ -38,9 +38,10 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
 - **Shims removed.** `BeautifulSoup.py`, `baseplate/`, `pycassa/`,
   `weberror/`, `Captcha/`, `cassandra.disabled/` and `l2cs.py` are gone
   (r2 uses bs4, the real baseplate 2.x and `r2.lib.db.cassandra_compat`),
-  as are the installer's venv patches. Left: `pylons/`, which is
-  effectively r2's web framework now (moving to Pyramid or similar is its
-  own project).
+  as are the installer's venv patches, and the unused Pyramid pieces.
+  `pylons/` stays: a small replacement for the Pylons API on WebOb and
+  Routes, it's r2's own web framework now. (Moving to Pyramid isn't
+  planned: it would mean rewriting every controller for no gain.)
 - **Admin pages:** the site's name, description, images, SEO and Google
   Analytics (`/admin/site`), live config (`/admin/config`), email, Google
   AdSense, spam protection, backups, recent errors, API apps, feed bots,
@@ -71,6 +72,14 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    private services: ad images stored on the server when there's no
    bucket, inventory from the site's own traffic counts, and impressions
    and clicks counted by the site.
+2. **Phase out Paste.** It's maintenance-only, and PasteScript (`paster`)
+   still uses `pkg_resources`, which keeps setuptools pinned below 81.
+   First the scheduled jobs, queue processors and `tippr-run` run scripts
+   without `paster`; then `paste.registry`'s proxies behind `c`, `g` and
+   `request` become contextvars in `pylons/`, and the small middleware
+   pieces in `r2/config/middleware.py` (cascade, static files, error
+   documents) our own, so Paste and the pin can go. PasteDeploy, which
+   reads the ini, can stay.
 
 ## Then
 

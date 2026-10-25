@@ -34,8 +34,10 @@ on port 80 and takes client addresses from that proxy's `X-Forwarded-For`.
   templates, static files.
 - It runs under **gunicorn** (`tippr-paster.service`) with `run.ini`.
 - r2 was written for Pylons. The `pylons/` package in this repo is a small
-  reimplementation of the Pylons API on WebOb and Paste, and is effectively
-  r2's web framework now. Moving to Pyramid is a planned project.
+  replacement for the Pylons API, built on WebOb (requests and responses)
+  and Routes (URLs), and is r2's own web framework now. Paste, which r2
+  still uses for `paster` and a few pieces of middleware, is being phased
+  out ([ROADMAP.md](ROADMAP.md)).
 - Configuration is the ini, generated with `make ini` from:
   - `example.ini`, the defaults;
   - `development.update`, the site's settings;

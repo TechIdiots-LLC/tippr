@@ -14,7 +14,7 @@
 ###############################################################################
 
 # Pylons controllers.core compatibility shim
-# Provides WSGIController base class for Pyramid migration
+# Provides the WSGIController base class r2's controllers build on
 
 import inspect
 import logging

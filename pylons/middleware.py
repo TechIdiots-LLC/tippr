@@ -16,7 +16,7 @@
 """Compatibility layer for `pylons.middleware`.
 
 Provides minimal fallback implementations for middleware components
-that were previously provided by Pylons, to support migration to Pyramid.
+that were previously provided by Pylons.
 """
 from webob import Response
 
@@ -25,8 +25,8 @@ def ErrorHandler(app, global_conf, **errorware):
     """No-op error handler for environments where WebError / EvalException
     are not available. Simply returns the wrapped app unchanged.
 
-    In production, error handling should be done via Pyramid's exception
-    views or other WSGI middleware.
+    In production, r2's own error middleware (r2.config.middleware) handles
+    errors.
     """
     return app
 

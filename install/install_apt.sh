@@ -95,7 +95,7 @@ memcached
 PACKAGES
 
     # Note: Python packages are installed via pip in the venv created by tippr.sh
-    # The following packages are installed there: pyramid-mako, Paste, PasteDeploy,
+    # The following packages are installed there: Paste, PasteDeploy,
     # pylibmc, simplejson, pytest, baseplate, gunicorn, PasteScript
 
 else

@@ -44,7 +44,7 @@ jobs:
       - name: Install Python dependencies (common)
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install pyramid pyramid-mako cassandra-driver simplejson Paste PasteDeploy Pylons pytest pylibmc
+          pip install cassandra-driver simplejson Paste PasteDeploy Pylons pytest pylibmc
 
       - name: Build and install (with the compiled Cython modules)
         run: |
