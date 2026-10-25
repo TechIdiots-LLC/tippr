@@ -556,7 +556,7 @@ try {
     const t = thing(carol.page, c3);
     await t.locator(":scope > .entry .flat-list a", { hasText: /^report$/ }).first().click();
     const form = t.locator("form.report-action-form").first();
-    await form.locator("input[name=reason][value=spam]").check();
+    await form.locator("input[name=reason][value=\"Spam or vote manipulation\"]").check();
     await Promise.all([
       carol.page.waitForResponse((r) => r.url().includes("/api/report"), { timeout: 30000 }),
       form.locator("button.submit-action-thing").click(),
