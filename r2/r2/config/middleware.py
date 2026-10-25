@@ -151,7 +151,7 @@ class DomainMiddleware:
         except ValueError:
             pass
 
-        # localhost is exempt so paster run/shell will work
+        # localhost is exempt so tippr-run and tippr-shell will work
         # media_domain doesn't need special processing since it's just ads
         is_media_only_domain = (is_subdomain(domain, g.media_domain) and
                                 g.domain != g.media_domain)
@@ -422,7 +422,7 @@ class TestVariablesMiddleware:
     2. Saving the registry state for later restoration
     3. Returning a unique request ID that can be used to restore state
 
-    Only paste.fixture's requests (tests, and paster run scripts) get it:
+    Only paste.fixture's requests (tests, and tippr-run scripts) get it:
     each saved state is kept for good, so open to anyone it would let
     visitors use up the server's memory.
     """

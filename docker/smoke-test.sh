@@ -74,7 +74,7 @@ docker compose exec -T web /opt/tippr/venv/bin/python \
 if [ "${VISUAL_TEST:-}" = "1" ]; then
     echo "browser test..."
     docker compose exec -T web sh -c 'cd /opt/tippr/src/tippr/r2 &&
-        /opt/tippr/venv/bin/paster --plugin=r2 run run.ini \
+        /opt/tippr/venv/bin/python -m r2.commands run.ini \
             /opt/tippr/src/tippr/docker/visual-seed.py' \
         | sed -n 's/^VISUAL_SEED //p' > visual-seed.json
     [ -s visual-seed.json ] || { echo "the browser test's accounts weren't made"; exit 1; }

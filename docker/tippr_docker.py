@@ -26,7 +26,7 @@ role. docker/docker-compose.yml runs one container per role.
     websockets    live updates (port 9001)
     activity      "users here now" counts (thrift, port 9002)
     geoip         country lookups for visitors' IP addresses (port 5000)
-    run ARGS      paster run, like tippr-run (e.g. run -c 'print(1)')
+    run ARGS      like tippr-run (e.g. run -c 'print(1)')
     shell         an interactive shell with the app loaded
     config        only write the configuration (and print where it is)
 
@@ -316,8 +316,9 @@ handler = reddit_service_websockets.socketserver:WebSocketHandler
 # Roles
 ###############################################################################
 
-def paster_run(*args):
-    return [VENV + "/bin/paster", "--plugin=r2", "run", INI] + list(args)
+def tippr_run(*args):
+    """A script or Python code with the app loaded (r2.commands)."""
+    return [VENV + "/bin/python", "-m", "r2.commands", INI] + list(args)
 
 
 def wait_for(name, host, port, timeout=600):
@@ -391,10 +392,10 @@ def setup(values):
                    "create_default_awards.py",
                    "create_default_vaults.py"):
         log("running " + script)
-        subprocess.run(paster_run(SRC + "/tippr/scripts/" + script),
+        subprocess.run(tippr_run(SRC + "/tippr/scripts/" + script),
                        cwd=R2, env=child_env, check=True)
     log("building the search index")
-    subprocess.run(paster_run("-c", "from pylons import app_globals as g; "
+    subprocess.run(tippr_run("-c", "from pylons import app_globals as g; "
                               "g.search.rebuild_index()"), cwd=R2, check=False)
     log("setup finished. Log in as %s; the password is TIPPR_ADMIN_PASSWORD "
         "in %s/secrets.env" % (child_env["TIPPR_ADMIN_USER"], CONFIG_DIR))
@@ -594,10 +595,10 @@ def main():
             "geoip_service:application"])
     elif role == "run":
         os.chdir(R2)
-        os.execv(VENV + "/bin/paster", paster_run(*args))
+        os.execv(VENV + "/bin/python", tippr_run(*args))
     elif role == "shell":
         os.chdir(R2)
-        os.execv(VENV + "/bin/paster", paster_run("--shell", *args))
+        os.execv(VENV + "/bin/python", tippr_run("--shell", *args))
     else:
         sys.exit("tippr: unknown role %r (try: help)" % role)
 

@@ -10,7 +10,7 @@ Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
 # run-locked: on one server at a time when several share the site
-ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked update_promos @TIPPR_VENV@/bin/paster --plugin=r2 run ${TIPPR_INI} -c 'from r2.lib import promote; promote.Run()'
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked update_promos @TIPPR_VENV@/bin/python -m r2.commands ${TIPPR_INI} -c 'from r2.lib import promote; promote.Run()'
 
 Nice=10
 

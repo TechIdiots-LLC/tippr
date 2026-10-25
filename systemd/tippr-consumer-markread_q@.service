@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=@TIPPR_VENV@/bin/paster --plugin=r2 run --proctitle markread_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c 'consume_mark_all_read()'
+ExecStart=@TIPPR_VENV@/bin/python -m r2.commands --proctitle markread_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c 'consume_mark_all_read()'
 Restart=always
 Nice=10
 

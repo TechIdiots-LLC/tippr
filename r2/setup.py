@@ -145,8 +145,6 @@ setup(
     entry_points="""
     [paste.app_factory]
     main=r2:make_app
-    [paste.paster_command]
-    run = r2.commands:RunCommand
     [paste.filter_app_factory]
     gzip = r2.lib.gzipper:make_gzip_middleware
     [r2.provider.media]

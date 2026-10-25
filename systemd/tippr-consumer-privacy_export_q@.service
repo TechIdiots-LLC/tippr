@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=@TIPPR_VENV@/bin/paster --plugin=r2 run --proctitle privacy_export_q%i ${TIPPR_INI} -c 'from r2.lib.privacy_export_consumer import consume_privacy_exports; consume_privacy_exports()'
+ExecStart=@TIPPR_VENV@/bin/python -m r2.commands --proctitle privacy_export_q%i ${TIPPR_INI} -c 'from r2.lib.privacy_export_consumer import consume_privacy_exports; consume_privacy_exports()'
 Restart=always
 Nice=10
 

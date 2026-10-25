@@ -826,7 +826,7 @@ class SolrSearchProvider(SearchProvider):
     
     def run_changed(self, drain=False, min_size=int(getattr(g, 'solr_min_batch', 500)), limit=1000, sleep_time=10, 
             use_safe_get=False, verbose=False):
-        '''Run by `cron` (through `paster run`) on a schedule to send Things to Solr
+        '''Run by `cron` (through `tippr-run`) on a schedule to send Things to Solr
         '''
         if use_safe_get:
             SolrSearchUploader.use_safe_get = True

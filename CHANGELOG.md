@@ -38,6 +38,11 @@
   other. A vault with its own rules lists those first and the site's in a menu, as before. Each reason is kept in
   English on the report and shown to moderators in their own language; reports made before keep their wording.
   Reporting from a vault's rules page no longer fails.
+- **The jobs and queue processors run without `paster`:** they, `tippr-run` and `tippr-shell` load the app with
+  `python -m r2.commands`, and `tippr-serve` (development) runs gunicorn with reloading, so PasteScript is no longer
+  installed. It's the first step in phasing out Paste (docs/ROADMAP.md); Pyramid, which tippr never used, is gone from
+  r2's requirements. Commands written as `paster --plugin=r2 run INI ...` become `tippr-run ...`, or
+  `python -m r2.commands INI ...` from the app's folder.
 
 ### 🐞 Bug fixes
 - **The report form was hard to read in night mode:** its box stayed light yellow under night mode's light text. It

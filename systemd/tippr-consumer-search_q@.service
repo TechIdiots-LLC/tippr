@@ -9,7 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
-ExecStart=@TIPPR_VENV@/bin/paster --plugin=r2 run --proctitle search_q%i ${TIPPR_INI} -c 'from pylons import app_globals; app_globals.search.run_changed()'
+ExecStart=@TIPPR_VENV@/bin/python -m r2.commands --proctitle search_q%i ${TIPPR_INI} -c 'from pylons import app_globals; app_globals.search.run_changed()'
 Restart=always
 Nice=10
 

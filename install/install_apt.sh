@@ -96,7 +96,7 @@ PACKAGES
 
     # Note: Python packages are installed via pip in the venv created by tippr.sh
     # The following packages are installed there: Paste, PasteDeploy,
-    # pylibmc, simplejson, pytest, baseplate, gunicorn, PasteScript
+    # pylibmc, simplejson, pytest, baseplate, gunicorn
 
 else
     ###########################################################################

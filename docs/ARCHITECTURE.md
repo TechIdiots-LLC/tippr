@@ -36,8 +36,9 @@ on port 80 and takes client addresses from that proxy's `X-Forwarded-For`.
 - r2 was written for Pylons. The `pylons/` package in this repo is a small
   replacement for the Pylons API, built on WebOb (requests and responses)
   and Routes (URLs), and is r2's own web framework now. Paste, which r2
-  still uses for `paster` and a few pieces of middleware, is being phased
-  out ([ROADMAP.md](ROADMAP.md)).
+  still uses for a few pieces of middleware, is being phased out
+  ([ROADMAP.md](ROADMAP.md)); the jobs, queue processors and `tippr-run`
+  load the app with `r2.commands` (`python -m r2.commands`), not `paster`.
 - Configuration is the ini, generated with `make ini` from:
   - `example.ini`, the defaults;
   - `development.update`, the site's settings;

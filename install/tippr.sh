@@ -915,9 +915,10 @@ else
 fi
 
 # Now upgrade pip/setuptools/wheel and packaging
-# setuptools stays below 81: paste.script (paster) imports pkg_resources, which
-# setuptools 81 deprecates and later versions remove. r2/pyproject.toml pins
-# the same for building r2.
+# setuptools stays below 81: baseplate, the OpenTelemetry instrumentation and
+# pyramid (the activity service) import pkg_resources, which setuptools 81
+# deprecates and later versions remove. r2/pyproject.toml pins the same for
+# building r2.
 sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip 'setuptools<81' wheel
 # (not --upgrade: install/requirements.txt pins the version below)
 sudo -u $TIPPR_USER "$BOOT_PY" -m pip install 'packaging>=23.1'
@@ -942,7 +943,7 @@ else
     # forks, at fixed commits) are reinstalled whatever is there: pip keeps
     # an installed package of the same name and version, even one from
     # elsewhere (formenergy-observability 0.3.2 from PyPI needs an older
-    # packaging, and paster then refuses to start the consumers and jobs).
+    # packaging, which then broke the consumers and jobs).
     url_pinned=$(mktemp)
     grep -E '^[A-Za-z0-9_.-]+ @ ' "$TIPPR_SRC/tippr/install/requirements.txt" > "$url_pinned"
     chmod a+r "$url_pinned"
@@ -1009,10 +1010,9 @@ function install_tippr_repo {
 
 install_tippr_repo tippr/r2
 
-# paster (the consumers, the jobs, tippr-run) checks that every package r2
-# needs is there at a version it accepts, and won't start otherwise, while
-# the web app runs regardless: check the same here, so a mismatch fails the
-# install (and an update rolls back) instead of quietly stopping the queues
+# Check that every package r2 needs is there at a version it accepts, so a
+# mismatch fails the install (and an update rolls back) rather than the
+# queues and jobs failing later
 if ! sudo -u $TIPPR_USER $TIPPR_VENV/bin/python -c \
         "import pkg_resources; pkg_resources.require('r2')"; then
     echo "ERROR: the Python packages don't fit together (see above); the queues and jobs wouldn't start" >&2
@@ -1123,7 +1123,7 @@ fi
 # Generated passwords and signing secrets. "make ini" merges this file over
 # development.update, so local edits to development.update never collide
 # with the generated values. It is rewritten from $TIPPR_SECRETS_FILE on
-# every install; '%' is doubled because paster interpolates the ini.
+# every install; '%' is doubled because PasteDeploy interpolates the ini.
 # Settings that follow TIPPR_ENVIRONMENT. In production the debug flag must be
 # off: its error pages allow remote code execution.
 # Every request reaches r2 through the local nginx, which sets
@@ -1378,10 +1378,11 @@ function helper-script() {
     chmod 755 $1
 }
 
-# Create a Python script for tippr-run that bypasses paster's plugin discovery
+# The Python script behind tippr-run (r2.commands, which the jobs and queue
+# processors run too)
 cat > $TIPPR_VENV/bin/tippr-run-cmd <<PYCMD
 #!/usr/bin/env python3
-"""Direct invocation of r2's RunCommand, bypassing paster plugin discovery."""
+"""tippr-run: r2.commands with the repo's own packages first."""
 import sys
 import os
 
@@ -1393,16 +1394,15 @@ sys.path.insert(0, tippr_root)
 sys.path.insert(0, r2_dir)
 os.chdir(r2_dir)
 
-from r2.commands import RunCommand
-cmd = RunCommand('run')
+from r2.commands import main
 # Args: config file + any additional args
-cmd.run(sys.argv[1:])
+main(sys.argv[1:])
 PYCMD
 chmod +x $TIPPR_VENV/bin/tippr-run-cmd
 
 helper-script /usr/local/bin/tippr-run <<TIPPRRUN
 #!/bin/bash
-# Direct invocation of r2 RunCommand. Run as root, it switches to
+# A script or Python code with the app loaded (r2.commands). Run as root, it switches to
 # $TIPPR_USER (keeping the environment, e.g. FEEDS_ADD=1): files it writes,
 # such as compiled templates and media, must belong to the user the site
 # runs as.
@@ -1492,12 +1492,12 @@ helper-script /usr/local/bin/tippr-serve <<TIPPRSERVE
 #!/bin/bash
 cd $TIPPR_SRC/tippr/r2
 export PYTHONPATH="$TIPPR_SRC/tippr:$TIPPR_SRC:\$PYTHONPATH"
-exec $TIPPR_VENV/bin/paster serve --reload run.ini
+# the address tippr-paster.service uses (stop it first), for nginx
+exec $TIPPR_VENV/bin/gunicorn --paste run.ini --bind 127.0.0.1:8001 --reload
 TIPPRSERVE
 
-# Create a systemd unit for tippr-serve that uses the installer helper
-# script so systemd runs paster with the correct PYTHONPATH and venv.
-# (not on a backend: its frontends serve the pages)
+# The web app (gunicorn, tippr-paster.service); not on a backend: its
+# frontends serve the pages
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     if [ "$TIPPR_ROLE" = "backend" ]; then
         systemctl disable --now tippr-paster.service 2>/dev/null || true

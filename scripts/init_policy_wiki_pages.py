@@ -299,5 +299,5 @@ def main(root_dir=None):
 if __name__ == '__main__':
     sys.exit(main())
 else:
-    # When loaded via tippr-run or paster run, execute main automatically
+    # When loaded via tippr-run, execute main automatically
     main()

@@ -659,7 +659,7 @@ class Globals:
 
         log = logging.getLogger('tippr')
 
-        # when we're a script (paster run) just set up super simple logging
+        # when we're a script (tippr-run) just set up super simple logging
         if self.running_as_script:
             log.setLevel(logging.INFO)
             log.addHandler(logging.StreamHandler())

@@ -48,8 +48,8 @@ time psql -F"\t" -A -t -d newvault -U $USER -h $LINKDBHOST \
                         d.key, d.value
                    from tippr_data_link d
                   where d.key = 'url' ) to 'tippr_data_link.dump'"
-cat tippr_data_link.dump tippr_thing_link.dump | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "join_links()" > links.joined
-cat links.joined | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/migrate/mr_domains.py -c "write_permacache()"
+cat tippr_data_link.dump tippr_thing_link.dump | sort -T. -S200m | python -m r2.commands $INI r2/lib/migrate/mr_domains.py -c "join_links()" > links.joined
+cat links.joined | python -m r2.commands $INI r2/lib/migrate/mr_domains.py -c "time_listings()" | sort -T. -S200m | python -m r2.commands $INI r2/lib/migrate/mr_domains.py -c "write_permacache()"
 """
 
 import sys

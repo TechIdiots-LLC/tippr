@@ -13,7 +13,7 @@
 # Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 """Part of docker/visual-test.mjs's run (docker/smoke-test.sh with
-VISUAL_TEST=1): the accounts the browser test acts as. Run with paster run.
+VISUAL_TEST=1): the accounts the browser test acts as. Run with tippr-run.
 
 For a throwaway test site only: it makes a site admin (visual_admin) whose
 password and two-factor secret it prints.

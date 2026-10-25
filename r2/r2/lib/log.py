@@ -222,9 +222,9 @@ class RavenErrorReporter(Reporter):
 
         if g.running_as_script:
             # scripts are run like:
-            # paster run INIFILE -c "python code to execute"
+            # tippr-run -c "python code to execute"
             # OR
-            # paster run INIFILE script.py
+            # tippr-run script.py
             # either way sys.argv[-1] will tell us the entry point to the error
             culprit = 'script: "%s"' % sys.argv[-1]
         else:

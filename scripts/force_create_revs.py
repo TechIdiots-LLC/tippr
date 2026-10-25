@@ -89,5 +89,5 @@ def main():
 if __name__ == '__main__':
     main()
 else:
-    # When loaded via tippr-run or paster run, execute main automatically
+    # When loaded via tippr-run, execute main automatically
     main()

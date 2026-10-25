@@ -72,14 +72,16 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    private services: ad images stored on the server when there's no
    bucket, inventory from the site's own traffic counts, and impressions
    and clicks counted by the site.
-2. **Phase out Paste.** It's maintenance-only, and PasteScript (`paster`)
-   still uses `pkg_resources`, which keeps setuptools pinned below 81.
-   First the scheduled jobs, queue processors and `tippr-run` run scripts
-   without `paster`; then `paste.registry`'s proxies behind `c`, `g` and
-   `request` become contextvars in `pylons/`, and the small middleware
-   pieces in `r2/config/middleware.py` (cascade, static files, error
-   documents) our own, so Paste and the pin can go. PasteDeploy, which
-   reads the ini, can stay.
+2. **Phase out Paste.** It's maintenance-only. Done: the scheduled jobs,
+   queue processors, `tippr-run` and `tippr-serve` run without `paster`
+   (`r2.commands`, gunicorn), so PasteScript is gone. Next:
+   `paste.registry`'s proxies behind `c`, `g` and `request` become
+   contextvars in `pylons/`, and the small middleware pieces in
+   `r2/config/middleware.py` (cascade, static files, error documents) our
+   own, so Paste can go. PasteDeploy, which reads the ini, can stay.
+   setuptools stays below 81 until baseplate, the OpenTelemetry
+   instrumentation and pyramid (the activity service) stop importing
+   `pkg_resources`.
 
 ## Then
 

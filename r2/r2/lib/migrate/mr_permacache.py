@@ -32,7 +32,7 @@ storage failure in Cassandra
 cat > mr_permacache <<HERE
 #!/bin/sh
 cd ~/reddit/r2
-paster run staging.ini ./mr_permacache.py -c "\\$1"
+python -m r2.commands staging.ini ./mr_permacache.py -c "\\$1"
 HERE
 chmod u+x mr_permacache
 

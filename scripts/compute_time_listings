@@ -96,7 +96,7 @@ function tippr {
     done
     shift $((OPTIND-1))
 
-    cmd="paster --plugin=r2 run $TIPPR_INI $TIPPR_ROOT/r2/lib/mr_top.py -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
+    cmd="python -m r2.commands $TIPPR_INI $TIPPR_ROOT/r2/lib/mr_top.py -c \"$@ # $THING_CLS $INTERVAL $TIMES\""
 
     if [ "$njobs" = "1" ]; then
         sh -c "$cmd" # just execute it directly
