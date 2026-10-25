@@ -29,6 +29,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The report form was hard to read in night mode:** its box stayed light yellow under night mode's light text. It
+  now uses night mode's dark notice colours, as does the list of reasons on a reported post.
 - **Deleting an account on /admin/users gave "forbidden":** the form's "delete for good" checkbox is named `confirm`,
   which inside the form's own submit handler hid the browser's `confirm()`, so its "are you sure?" threw an error
   and the browser sent the form as a plain page instead, which the site refused. It asks and deletes again. The
