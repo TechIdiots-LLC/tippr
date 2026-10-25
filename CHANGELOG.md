@@ -10,8 +10,11 @@
   opens its services to the frontends' address range and writes `/etc/tippr/cluster.env`, the passwords, signing
   secrets and shared settings a frontend installs from; the Proxmox template makes either from `firstboot.env`.
   Media has to be in object storage. `/admin/servers` shows each server's role and leaves out the services it
-  doesn't run, and updating a backend checks its app and database rather than its (absent) pages. Members' data
-  exports and `/admin/backups` don't work across servers yet. See docs/SERVERS.md.
+  doesn't run, and updating a backend checks its app and database rather than its (absent) pages. See
+  docs/SERVERS.md.
+- **Members' data exports are kept in PostgreSQL:** rather than on the disk of the server whose queue processor
+  made them, so on a split site any frontend gives a member theirs, and old ones are cleared (the files on disk
+  never were). Exports made before still download.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

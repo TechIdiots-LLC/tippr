@@ -22,12 +22,13 @@ data export files for users.
 """
 
 import os
+import tempfile
 import traceback
 from datetime import datetime
 
 from pylons import app_globals as g
 
-from r2.lib import amqp
+from r2.lib import amqp, privacy_export_store
 from r2.lib.privacy_export import UserDataExporter, _contact
 from r2.models import Account, Message
 from r2.models.privacy import (
@@ -38,18 +39,9 @@ from r2.models.privacy import (
 )
 
 
-# Directory to store export files
+# Where exports were kept before the database (r2.lib.privacy_export_store):
+# those still download, and cleanup_expired_exports clears them
 EXPORT_DIRECTORY = '/var/lib/tippr/privacy_exports'
-
-
-def ensure_export_directory():
-    """Ensure the export directory exists."""
-    if not os.path.exists(EXPORT_DIRECTORY):
-        try:
-            os.makedirs(EXPORT_DIRECTORY, mode=0o750)
-        except OSError as e:
-            g.log.error("Failed to create export directory: %s", e)
-            raise
 
 
 def process_export_request(request_id):
@@ -94,25 +86,27 @@ def process_export_request(request_id):
         
         g.log.info("Generating data export for user: %s", account.name)
         
-        # Ensure export directory exists
-        ensure_export_directory()
-        
-        # Create the exporter and generate the file
+        # Create the exporter and generate the file, then keep it in the
+        # database (r2.lib.privacy_export_store), where whichever server
+        # the member downloads it from finds it
         exporter = UserDataExporter(account)
-        export_path = exporter.export_to_file(EXPORT_DIRECTORY)
-        
-        # Get file size
-        file_size = os.path.getsize(export_path)
-        
-        g.log.info("Data export generated: %s (%d bytes)", export_path, file_size)
-        
+        with tempfile.TemporaryDirectory() as work:
+            export_path = exporter.export_to_file(work)
+            with open(export_path, "rb") as f:
+                data = f.read()
+        file_size = len(data)
+
+        g.log.info("Data export generated for %s (%d bytes)",
+                   account.name, file_size)
+
         # Create the download record
         export_file = DataExportFile.create(
             account=account,
             request=privacy_request,
-            file_path=export_path,
+            file_path=privacy_export_store.STORED,
             file_size=file_size,
         )
+        privacy_export_store.save(export_file.download_token, data)
         
         # Mark the request as completed
         privacy_request.mark_completed(

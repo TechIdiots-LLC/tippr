@@ -185,22 +185,29 @@ class PrivacyController(TipprController):
         if not export_file.can_download(c.user):
             abort(403)
         
-        # Check if file exists
-        if not os.path.exists(export_file.file_path):
+        # The ZIP: in the database (r2.lib.privacy_export_store), or for an
+        # export from before, on this server's disk
+        from r2.lib import privacy_export_store
+        if export_file.file_path == privacy_export_store.STORED:
+            data = privacy_export_store.load(export_file.download_token)
+        elif os.path.exists(export_file.file_path):
+            with open(export_file.file_path, 'rb') as f:
+                data = f.read()
+        else:
+            data = None
+        if data is None:
             abort(404)
-        
+
         # Record download
         export_file.record_download()
-        
+
         # Serve the file
         from pylons import response
         response.content_type = 'application/zip'
         response.headers['Content-Disposition'] = (
             f'attachment; filename="tippr_data_export_{c.user.name}.zip"'
         )
-        
-        with open(export_file.file_path, 'rb') as f:
-            return f.read()
+        return data
 
     @json_validate(VUser())
     def GET_privacy_requests_json(self, responder):
