@@ -26,6 +26,12 @@
   no code, and they stay unlocked while you use them, locking again 15 minutes after you last open one; a form saved
   after that says to reload the page and unlock them again. Turning two-factor off and deleting your account still
   ask for a code then.
+- **New report reasons, following the content policy:** spam or vote manipulation, harassment or threats, hateful
+  content, someone's personal information, sexual content involving minors, other illegal content, impersonation,
+  malware, phishing or scams, breaking the site's rules (named for the site, rather than "breaking tippr"), and
+  other. A vault with its own rules lists those first and the site's in a menu, as before. Each reason is kept in
+  English on the report and shown to moderators in their own language; reports made before keep their wording.
+  Reporting from a vault's rules page no longer fails.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

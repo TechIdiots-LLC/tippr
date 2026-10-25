@@ -22,6 +22,9 @@
 ## Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 ## TechIdiots LLC. All Rights Reserved.
 ###############################################################################
+<%!
+    from r2.lib import site_info
+%>
 <%namespace file="utils.html" import="error_field" />
 
 <%def name="report_form_base(fullname, rules_page_link)">
@@ -75,9 +78,9 @@
                             value="site_reason_selected">
                     <div class="report-reason-display">
                         <select name="site_reason">
-                            %for rule in system_rules:
-                                <option value="${rule}">
-                                    ${_("Tippr rule: %(rule_name)s" % dict(rule_name=rule))}
+                            %for value, label in system_rules:
+                                <option value="${value}">
+                                    ${_("%(site_name)s rule: %(rule_name)s") % dict(site_name=site_info.policy_values()["SITE_NAME"], rule_name=label)}
                                 </option>
                             %endfor
                         </select>
@@ -98,8 +101,8 @@
             rules_page_link="/help/contentpolicy"
             >
         <ol class="report-reason-list">
-            %for rule in system_rules:
-                ${self.report_form_reason(rule)}
+            %for value, label in system_rules:
+                ${self.report_form_reason(value, label)}
             %endfor
             ${self.report_form_reason_other()}
         </ol>
@@ -107,7 +110,7 @@
             %if vault_name:
                 ${_("Reports go to community moderators anonymously")}
             %else:
-                ${_("Reports go to Tippr admins")}
+                ${_("Reports go to the %(site_name)s admins") % dict(site_name=site_info.policy_values()["SITE_NAME"])}
             %endif
         </div>
     </%self:report_form_base>
@@ -135,11 +138,11 @@
     </li>
 </%def>
 
-<%def name="report_form_reason(rule)">
+<%def name="report_form_reason(rule, label=None)">
     <li class="report-reason-item">
         <label>
           <input type="radio" name="reason" value="${rule}">
-          <div class="report-reason-display">${rule}</div>
+          <div class="report-reason-display">${label or rule}</div>
         </label>
     </li>
 </%def>

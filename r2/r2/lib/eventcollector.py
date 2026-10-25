@@ -478,7 +478,7 @@ class EventQueue:
         request, context: Should be pylons.request & pylons.c respectively
 
         """
-        from r2.models.rules import OLD_SITEWIDE_RULES, SITEWIDE_RULES, VaultRules
+        from r2.models.rules import OLD_SITEWIDE_RULES, VaultRules, sitewide_rules
 
         event = Event(
             topic="report_events",
@@ -486,7 +486,8 @@ class EventQueue:
             request=request,
             context=context,
         )
-        if reason in OLD_SITEWIDE_RULES or reason in SITEWIDE_RULES:
+        if (reason in OLD_SITEWIDE_RULES or
+                reason in dict(sitewide_rules())):
             process_notes = "SITE_RULES"
         else:
             if vault and VaultRules.get_rule(vault, reason):

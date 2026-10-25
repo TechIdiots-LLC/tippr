@@ -38,10 +38,10 @@
       ${_("why are you reporting this?")}
     </span>
     <ol>
-      %for rule in thing.rules:
+      %for value, label in thing.rules:
         <li>
           <label>
-            <input type="radio" name="reason" value="${rule}">${rule}
+            <input type="radio" name="reason" value="${value}">${label}
           </label>
         </li>
       %endfor
@@ -50,8 +50,8 @@
           <label>
             <input type="radio" name="reason" value="site_reason_selected">
             <select name="site_reason">
-              %for rule in thing.system_rules:
-                <option value="${rule}">${_("tippr rule: %(rule_name)s" % dict(rule_name=rule))}</option>
+              %for value, label in thing.system_rules:
+                <option value="${value}">${_("%(site_name)s rule: %(rule_name)s") % dict(site_name=thing.site_name, rule_name=label)}</option>
               %endfor
             </select>
           </label>
@@ -59,7 +59,7 @@
       %endif
       <li>
         <label>
-          <input type="radio" name="reason" value="other">${_("other (max %(num)s characters):") % dict(num=100)}
+          <input type="radio" name="reason" value="other">${_("Other (max %(num)s characters):") % dict(num=100)}
         </label>
         <input name="other_reason" value="" maxlength="100" type="text" disabled>
       </li>

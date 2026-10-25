@@ -54,8 +54,8 @@
               </optgroup>
             %endif
             <optgroup label="Site Rules">
-              %for rule in thing.system_rules:
-                <option value="${rule}">${rule}</option>
+              %for value, label in thing.system_rules:
+                <option value="${value}">${label}</option>
               %endfor
             </optgroup>
             <option value="other">${_("Other")}</option>

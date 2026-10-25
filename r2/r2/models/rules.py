@@ -29,24 +29,51 @@ from datetime import datetime
 
 import pytz
 from r2.lib.db.cassandra_compat import UTF8_TYPE
-from pylons.i18n import _
+from pylons.i18n import N_, _
 
 from r2.lib.db import tdb_cassandra
 
+# the reasons reports were made with before SITEWIDE_RULES: still counted as
+# the site's rules (r2.lib.eventcollector)
 OLD_SITEWIDE_RULES = [
-    _("spam"),
-    _("vote manipulation"),
-    _("personal information"),
-    _("sexualizing minors"),
-    _("breaking tippr"),
+    "spam",
+    "vote manipulation",
+    "personal information",
+    "sexualizing minors",
+    "breaking tippr",
+    "Spam",
+    "Personal and confidential information",
+    "Threatening, harassing, or inciting violence",
 ]
 
+# what anyone can report anything for, following the content policy
+# (docs/policies/CONTENT_POLICY.md); %(site_name)s is the site's own name
 SITEWIDE_RULES = [
-    _("Spam"),
-    _("Personal and confidential information"),
-    _("Threatening, harassing, or inciting violence"),
+    N_("Spam or vote manipulation"),
+    N_("Harassment or threats"),
+    N_("Hateful content"),
+    N_("Someone's personal information"),
+    N_("Sexual content involving minors"),
+    N_("Other illegal content"),
+    N_("Impersonation"),
+    N_("Malware, phishing or scams"),
+    N_("Breaking %(site_name)s"),
 ]
 MAX_RULES_PER_VAULT = 10
+
+
+def sitewide_rules():
+    """SITEWIDE_RULES as (value, label) pairs: the value in English, as a
+    report keeps it, the label in the reader's language."""
+    from r2.lib import site_info
+    names = dict(site_name=site_info.policy_values()["SITE_NAME"])
+    return [(rule % names, _(rule) % names) for rule in SITEWIDE_RULES]
+
+
+def reason_label(reason):
+    """A report's reason to show: one of SITEWIDE_RULES in the reader's
+    language, anything else (a vault's rule, "other" text) as it is."""
+    return dict(sitewide_rules()).get(reason, reason)
 
 
 class VaultRules(tdb_cassandra.View):

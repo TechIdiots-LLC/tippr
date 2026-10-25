@@ -31,6 +31,7 @@
    from r2.lib.strings import strings
    from r2.models import Link
    from r2.models.promo import PROMOTE_STATUS
+   from r2.models.rules import reason_label
    from r2.lib import ai_content
  %>
 
@@ -322,9 +323,9 @@
   %if thing.mod_reports:
     <li class="report-reason-title">${_("moderator reports:")}</li>
     %for reason, user in thing.mod_reports:
-      <li class="report-reason mod-report" title="${reason}">${user}:
+      <li class="report-reason mod-report" title="${reason_label(reason)}">${user}:
       %if reason:
-        ${reason}
+        ${reason_label(reason)}
       %else:
         ${_("<no reason>")}
       %endif
@@ -335,9 +336,9 @@
   %if thing.user_reports:
     <li class="report-reason-title">${_("user reports:")}</li>
     %for reason, count in thing.user_reports:
-      <li class="report-reason" title="${reason}">${count}:
+      <li class="report-reason" title="${reason_label(reason)}">${count}:
       %if reason:
-        ${reason}
+        ${reason_label(reason)}
       %else:
         ${_("<no reason>")}
       %endif

@@ -111,8 +111,7 @@ from r2.lib.utils import trunc_string as _truncate
 from r2.lib.wrapped import CachedTemplate, Templated, Wrapped
 from r2.models import (
     LINK_FLAIR,
-    OLD_SITEWIDE_RULES,
-    SITEWIDE_RULES,
+    sitewide_rules,
     USER_FLAIR,
     Account,
     All,
@@ -3491,13 +3490,16 @@ class ReportForm(CachedTemplate):
         if (vault and
                 feature.is_enabled("Vault_rules", vault=vault.name)):
             for rule in VaultRules.get_rules(vault, self.kind):
-                self.rules.append(rule["short_name"])
+                self.rules.append((rule["short_name"], rule["short_name"]))
             if self.rules:
-                self.system_rules = SITEWIDE_RULES
+                # the vault's own first, the site's in a menu
+                self.system_rules = sitewide_rules()
                 self.rules_page_link = "/v/%s/about/rules" % vault.name
         if not self.rules:
-            self.rules = OLD_SITEWIDE_RULES
+            self.rules = sitewide_rules()
             self.rules_page_link = "/help/contentpolicy"
+        from r2.lib import site_info
+        self.site_name = site_info.policy_values()["SITE_NAME"]
 
         Templated.__init__(self)
 
@@ -3505,12 +3507,12 @@ class ReportForm(CachedTemplate):
 class VaultReportForm(CachedTemplate):
     def __init__(self, thing=None, filter_by_kind=True, **kw):
         self.rules = []
-        self.system_rules = SITEWIDE_RULES
+        self.system_rules = sitewide_rules()
         self.thing_fullname = thing._fullname
         self.kind = None
         vault = None
 
-        if isinstance(thing, Comment, Link):
+        if isinstance(thing, (Comment, Link)):
             vault = thing.vault_slow
             self.vault_name = vault.name
             if filter_by_kind:
@@ -3528,7 +3530,7 @@ class VaultReportForm(CachedTemplate):
 class ReportFormTemplates(Templated):
     def __init__(self):
         super().__init__(
-            system_rules=SITEWIDE_RULES,
+            system_rules=sitewide_rules(),
             rules_page_link="/help/contentpolicy",
         )
 
@@ -4788,7 +4790,7 @@ class Rules(Templated):
         self.can_edit = c.user_is_loggedin and (c.user_is_admin or
             c.site.is_moderator_with_perms(c.user, 'config'))
         self.rules = VaultRules.get_rules(c.site)
-        self.site_rules = SITEWIDE_RULES
+        self.site_rules = [value for value, label in sitewide_rules()]
         self.kind_labels = kind_labels
         Templated.__init__(self)
 
