@@ -23,6 +23,12 @@ manifest.json and from job.json in the backup folder.
 Another tippr server can copy this server's backups with a transfer key
 made here; only a hash of the key is kept (site settings group "backups",
 which backups leave out).
+
+On a frontend (docs/SERVERS.md) the backups, and tippr-backup, are on the
+backend: requests go to ZooKeeper (ZK_QUEUE) instead, and the list and
+progress come from what the backend publishes there (ZK_STATE), both
+through scripts/backup_relay.py on the backend. Another server can't copy
+a split site's backups through a frontend (the files aren't there).
 """
 
 import datetime
@@ -30,95 +36,126 @@ import hashlib
 import hmac
 import json
 import os
-import re
 import secrets
 import time
 
 from pylons import app_globals as g
 
-from r2.lib import site_settings
+from r2.lib import backup_files, site_settings
+from r2.lib.backup_files import (
+    DEFAULT_BACKUP_DIR,
+    NAME_RE,
+    QUEUE_DIR,
+)
 
-DEFAULT_BACKUP_DIR = "/var/lib/tippr/backups"
-QUEUE_DIR = "/var/lib/tippr/backup-queue"
-JOB_FILE = "job.json"
-NAME_RE = re.compile(r"^tippr-backup-\d{8}-\d{6}$")
 # must match scripts/tippr_backup.py
 CHUNK_SIZE = 16 * 1024 * 1024
 TRANSFER_KEY_DAYS = 7
 SETTINGS_GROUP = "backups"
 
+# a frontend's requests, and the backend's backups and progress
+# (scripts/backup_relay.py), in ZooKeeper
+ZK_QUEUE = "/tippr/backups/queue"
+ZK_STATE = "/tippr/backups/state"
+# the relay publishes every few seconds: older means it isn't running
+STATE_FRESH_SECONDS = 600
+
+
+def remote():
+    """Whether the backups are on another server: this one is a frontend,
+    and they're on its backend (docs/SERVERS.md)."""
+    return g.config.get("server_role") == "frontend"
+
+
+def _state():
+    """What the backend last published, or {}."""
+    try:
+        data, _stat = g.zookeeper.get(ZK_STATE)
+        return json.loads(data.decode("utf-8"))
+    except Exception:
+        return {}
+
 
 def backup_dir():
+    if remote():
+        return _state().get("backup_dir") or DEFAULT_BACKUP_DIR
     return g.config.get("backup_dir") or DEFAULT_BACKUP_DIR
 
 
 def service_installed():
     """Whether tippr-backup.path is set up to run requests (the installer
-    makes the queue folder)."""
+    makes the queue folder), here or, from a frontend, on the backend."""
+    if remote():
+        return time.time() - _state().get("updated", 0) < STATE_FRESH_SECONDS
     return os.path.isdir(QUEUE_DIR) and os.access(QUEUE_DIR, os.W_OK)
-
-
-def _read_json(path):
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return None
 
 
 def list_backups():
     """The backups in backup_dir, newest first (each its manifest)."""
-    root = backup_dir()
-    try:
-        names = sorted((n for n in os.listdir(root) if NAME_RE.match(n)),
-                       reverse=True)
-    except OSError:
-        return []
-    result = []
-    for name in names:
-        manifest = _read_json(os.path.join(root, name, "manifest.json"))
-        result.append(manifest or {"name": name, "state": "unknown"})
-    return result
+    if remote():
+        return _state().get("backups") or []
+    return backup_files.backups(backup_dir())
 
 
 def get_backup(name):
     if not NAME_RE.match(name or ""):
         return None
-    return _read_json(os.path.join(backup_dir(), name, "manifest.json"))
+    if remote():
+        return next((b for b in list_backups() if b.get("name") == name),
+                    None)
+    return backup_files.read_json(
+        os.path.join(backup_dir(), name, "manifest.json"))
 
 
 def job_status():
     """The request being run, or the last one (job.json)."""
-    return _read_json(os.path.join(backup_dir(), JOB_FILE))
+    if remote():
+        return _state().get("job")
+    return backup_files.job(backup_dir())
 
 
 def pending_requests():
-    try:
-        entries = sorted(e for e in os.listdir(QUEUE_DIR)
-                         if e.endswith(".json"))
-    except OSError:
-        return []
-    result = []
-    for entry in entries:
-        request = _read_json(os.path.join(QUEUE_DIR, entry))
-        if request:
-            request.pop("key", None)
-            result.append(request)
+    if not remote():
+        return backup_files.pending()
+    # the ones the backend has, and any it hasn't picked up yet
+    result = list(_state().get("pending") or [])
+    for request in _zk_queued():
+        request.pop("key", None)
+        result.append(request)
     return result
 
 
+def _zk_queued():
+    try:
+        names = sorted(g.zookeeper.get_children(ZK_QUEUE))
+    except Exception:
+        return []
+    found = []
+    for name in names:
+        try:
+            data, _stat = g.zookeeper.get("%s/%s" % (ZK_QUEUE, name))
+            found.append(json.loads(data.decode("utf-8")))
+        except Exception:
+            continue
+    return found
+
+
 def queue_request(action, requested_by, **fields):
-    """Hand a request to tippr-backup.service."""
+    """Hand a request to tippr-backup.service (on a frontend, through
+    ZooKeeper to the backend's)."""
     request = dict(fields, action=action, requested_by=requested_by,
                    requested=datetime.datetime.utcnow().isoformat() + "Z")
     name = "%d-%s" % (time.time() * 1000, secrets.token_hex(4))
-    tmp = os.path.join(QUEUE_DIR, name + ".tmp")
-    # it may hold another server's transfer key: owner only
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump(request, f)
-    # the path unit watches *.json, so it only sees the finished file
-    os.rename(tmp, os.path.join(QUEUE_DIR, name + ".json"))
+    if remote():
+        # (it may hold another server's transfer key: the app's nodes are
+        # for its own ZooKeeper login only)
+        zk = g.zookeeper
+        acl = [zk.make_acl(read=True, write=True, create=True, delete=True)]
+        zk.ensure_path(ZK_QUEUE, acl=acl)
+        zk.create("%s/%s" % (ZK_QUEUE, name),
+                  json.dumps(request).encode("utf-8"), acl=acl)
+        return
+    backup_files.write_request(QUEUE_DIR, name, request)
 
 
 ###############################################################################
@@ -174,7 +211,9 @@ def check_transfer_key(key):
 
 def read_chunk(name, path, offset):
     """Up to CHUNK_SIZE bytes of one file of a finished backup, or None if
-    there's no such file."""
+    there's no such file (or, on a frontend, the files aren't here)."""
+    if remote():
+        return None
     manifest = get_backup(name)
     if not manifest or manifest.get("state") != "done":
         return None

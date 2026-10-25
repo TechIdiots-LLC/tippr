@@ -3925,6 +3925,8 @@ class AdminBackups(Templated):
         self.busy = bool(self.pending) or bool(
             self.job and self.job.get("state") == "running")
         self.transfer_key = backups.transfer_key_info()
+        # a frontend: the backups are on its backend (docs/SERVERS.md)
+        self.remote = backups.remote()
         self.domain = g.domain
         Templated.__init__(self)
 

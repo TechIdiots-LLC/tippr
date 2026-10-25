@@ -15,6 +15,10 @@
 - **Members' data exports are kept in PostgreSQL:** rather than on the disk of the server whose queue processor
   made them, so on a split site any frontend gives a member theirs, and old ones are cleared (the files on disk
   never were). Exports made before still download.
+- **`/admin/backups` works on a split site:** on a frontend its requests go through ZooKeeper to the backend's
+  tippr-backup, and it shows the backend's backups and progress, passed both ways every 10 seconds by
+  `tippr-backup-relay.timer` on the backend. Another server copying a split site's backups with a transfer key
+  can't go through a frontend (the files are on the backend), so the page says to copy the folder instead.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

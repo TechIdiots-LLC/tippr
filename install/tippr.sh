@@ -2168,6 +2168,13 @@ if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
         systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"
         systemctl enable --now tippr-backup.path
     fi
+    # /admin/backups on the frontends reaches a backend's tippr-backup
+    # through ZooKeeper (scripts/backup_relay.py)
+    if [ "$TIPPR_ROLE" = "backend" ]; then
+        systemctl enable --now tippr-backup-relay.timer
+    else
+        systemctl disable --now tippr-backup-relay.timer 2>/dev/null || true
+    fi
     if [ "$TIPPR_WEB_UPDATES" = "1" ]; then
         systemctl enable --now tippr-update.timer
     else

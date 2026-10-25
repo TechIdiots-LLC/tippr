@@ -101,16 +101,18 @@ backend, which has none, that the app reaches its database. The order
 isn't fixed, so read a release's notes for anything that needs the backend
 first.
 
-## Not on several servers yet
+## Backups and data exports
 
-Two features still keep files on one server's disk, so on a split site:
-
-- **Members' data exports** (`/prefs/privacy`) are made by a queue
-  processor on the backend and downloaded from a frontend, which doesn't
-  have them.
-- **`/admin/backups`** asks for a backup on the server that shows the
-  page, a frontend, which has no databases. Back up on the backend with
-  `sudo tippr-backup export` instead ([BACKUP.md](BACKUP.md)).
+- **`/admin/backups`** works from any frontend: its requests go through
+  ZooKeeper to the backend, where tippr-backup makes the backups, and the
+  list and progress come back the same way (`tippr-backup-relay.timer` on
+  the backend passes them every 10 seconds). The backups are on the
+  backend's disk (`backup_dir`). One thing doesn't work across servers:
+  **another server copying a split site's backups** with a transfer key,
+  since the frontend it would ask doesn't have the files. Copy the backup
+  folder from the backend with scp or rsync instead ([BACKUP.md](BACKUP.md)).
+- **Members' data exports** (`/prefs/privacy`) are kept in PostgreSQL, so
+  any frontend gives a member the export the backend made.
 
 ## More backends later
 

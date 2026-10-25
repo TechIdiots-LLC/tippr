@@ -1,0 +1,11 @@
+[Unit]
+Description=pass /admin/backups requests between a backend and its frontends, every 10 seconds
+PartOf=tippr.target
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=10s
+AccuracySec=1s
+
+[Install]
+WantedBy=tippr.target

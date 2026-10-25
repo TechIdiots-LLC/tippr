@@ -1,0 +1,12 @@
+[Unit]
+Description=pass /admin/backups requests from the frontends to tippr-backup, and its progress back
+Documentation=file://@TIPPR_SRC@/tippr/docs/SERVERS.md
+After=network.target zookeeper.service
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/backup_relay.py ${TIPPR_INI}

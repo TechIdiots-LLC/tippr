@@ -200,6 +200,10 @@
 <p>
   ${_("Lets another tippr server copy this server's backups, and ask it to make new ones. Give it to the new server's admin. It expires after 7 days; only one exists at a time, and backups never include it.")}
 </p>
+%if thing.remote:
+  ## (r2.lib.backups: the files are on the backend, not this frontend)
+  <p class="error">${_("This site is split over several servers, and its backups are on the backend, which another server can't reach through this page. To move them, copy the backup folder from the backend (scp or rsync).")}</p>
+%endif
 <% key = thing.transfer_key %>
 %if key and not key["expired"]:
   <p>${_("A key is active, made by %(user)s; it expires %(when)s.") % dict(user=key.get("created_by"), when=utc(key["expires"]))}</p>
