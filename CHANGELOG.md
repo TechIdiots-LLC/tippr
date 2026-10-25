@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.22.0
+### ✨ Features and improvements
 - **A site can be split over several servers:** the installer's `TIPPR_ROLE` makes a server the **backend**
   (PostgreSQL, Cassandra, RabbitMQ, ZooKeeper, OpenSearch, memcached, the "here now" counts, the queue processors
   and the scheduled jobs) or a **frontend** (the pages and live comments), any number of which, on any servers,
@@ -34,7 +40,6 @@
   Reporting from a vault's rules page no longer fails.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **The report form was hard to read in night mode:** its box stayed light yellow under night mode's light text. It
   now uses night mode's dark notice colours, as does the list of reasons on a reported post.
 - **A post or comment a moderator had reported broke the page for its moderators:** the reports queue and the
