@@ -312,16 +312,35 @@ async function scaleShows(where, s, fullname, scale, mine, tally) {
 // for the action's own request, /api/<label>: a thread page also posts on
 // its own (/api/here_now when it opens, live comments), and taking one of
 // those for the action reloaded the page before the action was sent.
+// The buttons only work once the page's scripts have run: a page opened
+// with READY (the HTML, not yet the scripts) is waited on first, and a click
+// that neither asks "are you sure?" nor sends the request is tried again.
 async function modAction(s, fullname, label, confirm = "yes") {
   const t = thing(s.page, fullname);
   const endpoint = new RegExp(`/api/${label}(?:[./?]|$)`);
-  const done = s.page.waitForResponse((r) => endpoint.test(r.url()) && r.request().method() === "POST",
-                                      { timeout: 30000 });
-  await t.locator(":scope > .entry :is(a, button):visible", { hasText: new RegExp(`^${label}$`) }).first().click();
-  await s.page.waitForTimeout(500);
-  const answer = t.locator(":scope > .entry .flat-list a:visible", { hasText: new RegExp(`^${confirm}$`) });
-  if (await answer.count()) await answer.first().click();
-  await done;
+  const isAction = (r) => endpoint.test(r.url()) && r.method() === "POST";
+  let sent = false;
+  const onRequest = (r) => { if (isAction(r)) sent = true; };
+  s.page.on("request", onRequest);
+  const done = s.page.waitForResponse((r) => isAction(r.request()), { timeout: 30000 });
+  try {
+    // (not for ever: a live comments connection can hold "load" up)
+    await s.page.waitForLoadState("load", { timeout: 10000 }).catch(() => {});
+    const button = t.locator(":scope > .entry :is(a, button):visible", { hasText: new RegExp(`^${label}$`) }).first();
+    const answer = t.locator(":scope > .entry .flat-list a:visible", { hasText: new RegExp(`^${confirm}$`) }).first();
+    for (let attempt = 0; attempt < 3 && !sent; attempt++) {
+      await button.click();
+      // the "are you sure?" (most buttons), or the request itself (no question)
+      const asked = await answer.waitFor({ state: "visible", timeout: 4000 }).then(() => true, () => false);
+      if (asked) {
+        await answer.click();
+        break;
+      }
+    }
+    await done;
+  } finally {
+    s.page.off("request", onRequest);
+  }
 }
 
 // What a page says about a thing: shown at all, its classes, its text.
