@@ -3,6 +3,8 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **One panel at a time under a post or comment:** share, scales and report opened one under another; opening one
+  now closes the others there (clicking the same link again still closes its own).
 - **Gold on /admin/users, including permanent gold:** an account's page shows its gold (until a date, permanent, or
   none) and lets an admin give or take months (up to 120 at once), make it permanent, or remove it (with a reason,
   after ticking to confirm), each recorded under the account's admin actions. Permanent gold doesn't run out: the

@@ -125,6 +125,8 @@ $(function() {
     if (!$reportForm.hasClass('active')) {
       return;
     }
+    // the only panel open under it (share, scales)
+    r.ui.closeThingPanels($thing, 'report');
 
     // Automatically focus the radio input when this changes.
     // known bug: doesn't work if user selects the existing value.

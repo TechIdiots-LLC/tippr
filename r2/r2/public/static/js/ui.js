@@ -225,6 +225,25 @@ r.ui.isSmallScreen = function() {
           : $(window).width() < 736;
 }
 
+/*
+ * The panels a post's or comment's links open under it (share, scales,
+ * report): one at a time, so opening one closes the others on that thing.
+ * except: the one being opened ('share', 'scales' or 'report').
+ */
+r.ui.closeThingPanels = function($thing, except) {
+  if (except !== 'share' && r.ui.activeShareMenu &&
+      r.ui.activeShareMenu.options.$thing[0] === $thing[0]) {
+    r.ui.activeShareMenu.close()
+  }
+  if (except !== 'scales' && r.scales &&
+      r.scales.panelFor($thing).length) {
+    r.scales.close($thing, $thing.find('.scales-toggle').first())
+  }
+  if (except !== 'report') {
+    $thing.children('.entry').find('.reportform.active').removeClass('active')
+  }
+}
+
 r.ui.TimeTextScrollListener = r.ScrollUpdater.extend({
     initialize: function(options) {
         this.timeText = options.timeText

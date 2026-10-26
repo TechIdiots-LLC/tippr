@@ -507,6 +507,9 @@
         }
       }
 
+      // the only panel open under it (scales, report)
+      r.ui.closeThingPanels($parentThing, 'share');
+
       var shareTo = function(name, label) {
         return {
           name: name,

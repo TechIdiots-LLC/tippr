@@ -35,6 +35,7 @@ r.scales = {
 
   open: function($thing, $toggle) {
     var self = this
+    r.ui.closeThingPanels($thing, 'scales')
     var $panel = $('<div class="scales-panel" role="region">')
       .attr('aria-label', r._('scales'))
       .text(r._('loading…'))
