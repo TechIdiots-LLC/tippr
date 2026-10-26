@@ -954,7 +954,11 @@ else
         # which installing it doesn't remove
         retired=$(grep -vE '^\s*(#|$)' "$TIPPR_SRC/tippr/install/requirements-retired.txt" 2>/dev/null |
                   while read -r name; do
-                      sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip show -q "$name" >/dev/null 2>&1 && echo "$name"
+                      # (an if, so a package that isn't there doesn't end
+                      # the loop, and with set -e the installer, with an error)
+                      if sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip show -q "$name" >/dev/null 2>&1; then
+                          echo "$name"
+                      fi
                   done)
         if [ -n "$retired" ]; then
             echo "Python packages no longer used, removing: $(echo $retired)"
