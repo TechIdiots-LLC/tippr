@@ -4,12 +4,9 @@
 # tested with. Regenerate from an installed site with:
 #   pip freeze --exclude-editable | grep -v psycopg2-binary
 
-alembic==1.20.0
 amqp==5.4.1
-annotated-types==0.8.0
-antlr4-python3-runtime==4.13.2
 babel==2.18.0
-baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@5bff9528ddbff27548a92ebcb6822348bfa3dcaf
+baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@79c6b174e7292bf710596644136367a484ffee65
 bcrypt==5.0.0
 beautifulsoup4==4.15.0
 blinker==1.9.0
@@ -23,22 +20,13 @@ cffi==2.1.1
 chardet==7.6.0
 charset-normalizer==3.5.2
 click==8.5.0
-coloredlogs==14.0
 coverage==7.16.2
 cramjam==2.14.0
 cryptography==50.0.2
 Cython==3.3.0
-dagster==1.13.26
-dagster-pipes==1.13.26
-dagster-shared==1.13.26
 Deprecated==3.0.0
-docstring_parser==0.18.0
 emoji==2.16.0
-filelock==4.2.0
 Flask==3.1.3
-# the fork that allows a current packaging (as install.cfg uses)
-formenergy-observability @ git+https://github.com/TechIdiots-LLC/tippr-formenergy-observability.git@1270c0432ba2aa009676910c4d0d949aaca16a8d
-fsspec==2026.9.0
 GeoIP==1.3.2
 geomet==1.1.0
 gevent==26.9.0
@@ -46,10 +34,8 @@ gevent-websocket==0.10.1
 googleapis-common-protos==1.75.0
 greenlet==3.5.6
 grpcio==1.84.0
-grpcio-health-checking==1.62.3
 gunicorn==26.2.0
 httpagentparser==1.9.9
-humanfriendly==10.0
 idna==3.20
 importlib_metadata==8.0.0
 iniconfig==2.3.1
@@ -74,19 +60,15 @@ opentelemetry-exporter-otlp-proto-http==1.28.2
 opentelemetry-instrumentation==0.49b2
 opentelemetry-instrumentation-logging==0.49b2
 opentelemetry-instrumentation-requests==0.49b2
-opentelemetry-instrumentation-sqlalchemy==0.49b2
 opentelemetry-instrumentation-threading==0.49b2
 opentelemetry-proto==1.28.2
 opentelemetry-sdk==1.28.2
 opentelemetry-semantic-conventions==0.49b2
 opentelemetry-util-http==0.49b2
-# setuptools needs packaging 24.2+, formenergy-observability below 25
-packaging==24.2
+packaging==26.3
 PasteDeploy==3.1.0
-pathlib_abc==0.5.2
 pika==1.4.4
 pillow==12.3.0
-platformdirs==4.13.3
 pluggy==1.7.0
 posix_ipc==1.3.2
 prometheus_client==0.26.0
@@ -96,8 +78,6 @@ pyasn1==0.6.4
 pyasn1_modules==0.4.2
 pycparser==3.11
 pycryptodome==4.0.0
-pydantic==2.14.1
-pydantic_core==2.50.1
 Pygments==2.21.0
 pylibmc==1.6.3
 pyOpenSSL==26.4.0
@@ -105,7 +85,6 @@ pyparsing==3.3.3
 pyrate-limiter==3.9.0
 pytest==8.4.2
 python-dateutil==2.9.0.post0
-python-dotenv==1.2.4
 python-json-logger==2.0.7
 python-snappy==0.7.3
 pytz==2026.5
@@ -115,7 +94,6 @@ redis==8.1.0
 regex==2026.9.29
 repoze-lru==0.8
 requests==2.34.2
-rich==15.0.0
 Routes==2.5.1
 s3transfer==0.19.2
 sentry-sdk==2.72.0
@@ -125,25 +103,15 @@ six==1.17.0
 soupsieve==3.0.3
 SQLAlchemy==2.1.4
 stripe==16.0.0
-structlog==26.1.0
-tabulate==0.10.0
 thrift==0.25.0
 thrift-unofficial==0.19.0
 tinycss2==1.5.1
-tomli==2.5.0
-tomlkit==0.15.2
-toposort==1.10
-tqdm==4.70.1
-typing-inspection==0.4.4
 typing_extensions==4.16.0
-tzdata==2026.5
 uc-micro-py==2.0.0
 Unidecode==1.4.0
-universal_pathlib==0.3.10
 urllib3==2.8.0
 vine==5.1.0
 waitress==3.0.2
-watchdog==6.0.0
 webauthn==3.0.1
 webencodings==0.6.1
 WebOb==1.8.11

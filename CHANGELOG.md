@@ -13,6 +13,9 @@
 - **Paste is no longer used:** the error pages, static files and per-request objects (`c`, `g`, `request`) it
   provided are tippr's own now (`r2/config/middleware.py`, `pylons/`); PasteDeploy, which reads the ini, stays.
   Updating a server, from /admin/servers or with the installer, uninstalls Paste.
+- **About 30 fewer Python packages:** baseplate no longer needs formenergy-observability, which brought in Dagster (a
+  data pipeline framework) and capped `packaging` below 25; the two tracing helpers it used are in baseplate now.
+  Updating a server uninstalls them, and `packaging` is current (26.3).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

@@ -22,3 +22,35 @@ zope.deprecation
 # baseplate's pyramid instrumentation, an extra now
 opentelemetry-instrumentation-pyramid
 opentelemetry-instrumentation-wsgi
+# formenergy-observability, which baseplate no longer needs (its tracing
+# helpers are in baseplate), and Dagster and the rest it brought (0.25.0)
+formenergy-observability
+dagster
+dagster-pipes
+dagster-shared
+alembic
+annotated-types
+antlr4-python3-runtime
+coloredlogs
+docstring_parser
+filelock
+fsspec
+grpcio-health-checking
+humanfriendly
+opentelemetry-instrumentation-sqlalchemy
+pathlib_abc
+platformdirs
+pydantic
+pydantic_core
+python-dotenv
+rich
+structlog
+tabulate
+tomli
+tomlkit
+toposort
+tqdm
+typing-inspection
+tzdata
+universal_pathlib
+watchdog

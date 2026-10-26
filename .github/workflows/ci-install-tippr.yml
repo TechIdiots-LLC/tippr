@@ -78,8 +78,6 @@ jobs:
           if [ -d ./tippr-baseplate.py ]; then
             /home/runner/venv/bin/pip install -e ./tippr-baseplate.py
           fi
-          # Install a packaging-compatible formenergy-observability fork early
-          /home/runner/venv/bin/pip install 'git+https://github.com/TechIdiots-LLC/tippr-formenergy-observability.git@main#egg=formenergy-observability' || true
 
       - name: Install tippr via installer (non-interactive)
         env:

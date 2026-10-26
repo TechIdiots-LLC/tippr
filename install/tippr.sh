@@ -937,11 +937,9 @@ else
     if sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip show psycopg2-binary >/dev/null 2>&1; then
         sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip uninstall -y psycopg2-binary psycopg2 || true
     fi
-    # The ones pinned to a URL (tippr's baseplate and formenergy-observability
-    # forks, at fixed commits) are reinstalled whatever is there: pip keeps
-    # an installed package of the same name and version, even one from
-    # elsewhere (formenergy-observability 0.3.2 from PyPI needs an older
-    # packaging, which then broke the consumers and jobs).
+    # The ones pinned to a URL (tippr's baseplate fork, at a fixed commit)
+    # are reinstalled whatever is there: pip keeps an installed package of
+    # the same name and version, even one from elsewhere.
     url_pinned=$(mktemp)
     grep -E '^[A-Za-z0-9_.-]+ @ ' "$TIPPR_SRC/tippr/install/requirements.txt" > "$url_pinned"
     chmod a+r "$url_pinned"
@@ -972,7 +970,7 @@ else
     fi
 fi
 
-# Another baseplate or formenergy-observability on top, to work on one
+# Another baseplate on top, to work on one
 # (install.cfg): a checkout at $TIPPR_SRC/tippr-baseplate.py (editable), or
 # a pip requirement
 if [ -d "$TIPPR_SRC/tippr-baseplate.py" ]; then
@@ -981,10 +979,6 @@ if [ -d "$TIPPR_SRC/tippr-baseplate.py" ]; then
 elif [ -n "$TIPPR_BASEPLATE_PIP_URL" ]; then
     echo "Installing baseplate from $TIPPR_BASEPLATE_PIP_URL"
     sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps "$TIPPR_BASEPLATE_PIP_URL"
-fi
-if [ -n "$TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL" ]; then
-    echo "Installing formenergy-observability from $TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL"
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps "$TIPPR_FORMENERGY_OBSERVABILITY_PIP_URL"
 fi
 
 # Create a writable directory for Prometheus multiprocess mode if needed
