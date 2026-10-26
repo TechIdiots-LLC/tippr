@@ -96,6 +96,14 @@ config_after=$(cat "$OPENSEARCH_YML" "$OPENSEARCH_HEAP_OPTIONS" \
 
 systemctl daemon-reload
 systemctl enable opensearch
+# The package's Performance Analyzer agent (opensearch-performance-analyzer,
+# metrics for OpenSearch's own tools) isn't used, and fails to start here,
+# leaving a failed unit; turned off on every install, since a package
+# upgrade enables it again.
+if systemctl list-unit-files opensearch-performance-analyzer.service >/dev/null 2>&1; then
+    systemctl disable --now opensearch-performance-analyzer.service 2>/dev/null || true
+    systemctl reset-failed opensearch-performance-analyzer.service 2>/dev/null || true
+fi
 # Restarting takes the search index offline while it reloads, so only do it
 # when the settings changed or it isn't running.
 if [ "$config_before" != "$config_after" ] || ! systemctl is-active --quiet opensearch; then

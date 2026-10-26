@@ -49,6 +49,9 @@
   now uses night mode's dark notice colours, as does the list of reasons on a reported post.
 - **A post or comment a moderator had reported broke the page for its moderators:** the reports queue and the
   vault's listings gave an error while showing who reported it and why. They show the moderators' reports again.
+- **`systemctl --failed` listed OpenSearch's Performance Analyzer:** the OpenSearch package turns on its metrics agent,
+  which tippr doesn't use and which fails to start, so a server always had a failed unit. The installer turns it off
+  (on every install, as a package upgrade turns it on again); search itself was never affected.
 - **Deleting an account on /admin/users gave "forbidden":** the form's "delete for good" checkbox is named `confirm`,
   which inside the form's own submit handler hid the browser's `confirm()`, so its "are you sure?" threw an error
   and the browser sent the form as a plain page instead, which the site refused. It asks and deletes again. The
