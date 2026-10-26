@@ -18,7 +18,8 @@
  * the post where a member tips each scale toward one side (clicking the
  * side again takes the tip back). A scale's tally shows once they've
  * tipped it, to the poster, and to the vault's moderators; under
- * bar_min tips it's listed rather than drawn. Logged out, the link asks
+ * bar_min tips it's listed rather than drawn. "see the results" shows them
+ * all, giving up tipping that post. Logged out, the link asks
  * them to log in (login.js).
  */
 r.scales = {
@@ -88,8 +89,16 @@ r.scales = {
       $note.text(r._('How others have tipped your post.') + ' ')
     } else if (res.sees_all) {
       $note.text(r._('As a moderator, you see every scale’s tips without tipping.') + ' ')
+    } else if (res.seen) {
+      $note.text(r._('You saw the results, so you can’t tip this post’s scales.') + ' ')
     } else if (hidden && res.can_tip) {
-      $note.text(r._('Tip a scale to see how others tipped it.') + ' ')
+      // or every tally now, giving up tipping this post (see)
+      $note.append(document.createTextNode(
+                     r._('Tip a scale to see how others tipped it, or') + ' '),
+                   $('<a href="javascript: void 0;" class="scales-see">')
+                     .text(r._('see the results')),
+                   document.createTextNode(' ' +
+                     r._('(you can’t tip after).') + ' '))
     }
     if (!res.is_poster && $thing.find('.reportbtn').length) {
       $note.append(document.createTextNode(r._('Breaks a rule?') + ' '),
@@ -163,6 +172,18 @@ r.scales = {
       .fail(function() {
         $row.find('.scale-side').prop('disabled', false)
       })
+  },
+
+  // every tally now, after asking: it ends their tipping on this post
+  see: function($thing) {
+    var self = this
+    if (!window.confirm(r._('See how everyone tipped this post? You won’t be able to tip its scales or change your tips afterwards.'))) {
+      return
+    }
+    this.post('see_scales', {link_id: $thing.data('fullname')})
+      .done(function(res) {
+        self.render($thing, self.panelFor($thing), res)
+      })
   }
 }
 
@@ -183,6 +204,11 @@ $(function() {
   $(document).on('click', '.scales-panel .scale-side', function(e) {
     e.preventDefault()
     r.scales.tip($(this).thing(), $(this))
+  })
+
+  $(document).on('click', '.scales-panel .scales-see', function(e) {
+    e.preventDefault()
+    r.scales.see($(this).thing())
   })
 
   $(document).on('click', '.scales-panel .scales-report', function(e) {

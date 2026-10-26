@@ -417,9 +417,27 @@ class ApiController(TipprController):
             return {"error": "not found"}
         if scale not in scales.SCALES or side is None:
             return {"error": "no such scale"}
-        if not scales.can_tip(link, c.user):
+        if not scales.may_tip(link, c.user):
             return {"error": "can't tip"}
         scales.tip(link, c.user, scale, side)
+        return scales.summary(link, c.user,
+                              sees_all=self._sees_all_scales(link))
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        link=VByName("link_id", thing_cls=Link),
+    )
+    def POST_see_scales(self, responder, link):
+        """See every tally of a post's scales without tipping, which ends
+        this member's tipping on it (r2.lib.scales.see_results); answers
+        as POST_scales does."""
+        from r2.lib import scales
+        response.headers["Cache-Control"] = "private, no-store"
+        if not link or link._deleted or not link.vault_slow.can_view(c.user):
+            return {"error": "not found"}
+        if scales.can_tip(link, c.user):
+            scales.see_results(link, c.user)
         return scales.summary(link, c.user,
                               sees_all=self._sees_all_scales(link))
 

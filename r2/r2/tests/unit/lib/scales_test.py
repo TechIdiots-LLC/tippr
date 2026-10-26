@@ -110,6 +110,32 @@ class TestScales(TipprTestCase):
         self.assertEqual(exported[0]["scale"], "helpful")
         self.assertEqual(exported[0]["tipped_toward"], "helpful")
 
+    def test_seeing_the_results_ends_tipping(self):
+        scales.tip(self.post, self.bob, "tone", scales.RIGHT)
+        scales.tip(self.post, self.alice, "made", scales.LEFT)
+        self.assertTrue(scales.may_tip(self.post, self.alice))
+        scales.see_results(self.post, self.alice)
+        scales.see_results(self.post, self.alice)  # once is kept
+        summary = scales.summary(self.post, self.alice)
+        self.assertTrue(summary["seen"])
+        self.assertFalse(summary["can_tip"])
+        self.assertFalse(scales.may_tip(self.post, self.alice))
+        # every tally, and the tip made before still counts and shows
+        self.assertEqual(self.scale(summary, "tone")["tally"],
+                         {"left": 0, "right": 1})
+        self.assertEqual(self.scale(summary, "made")["mine"], scales.LEFT)
+        self.assertEqual(scales.tips_by(self.post, self.alice),
+                         {"made": scales.LEFT})
+        self.assertEqual(scales.tallies(self.post)["made"],
+                         {scales.LEFT: 1, scales.RIGHT: 0})
+        # nobody else is affected
+        self.assertTrue(scales.may_tip(self.post, self.bob))
+        self.assertFalse(scales.summary(self.post, self.bob)["seen"])
+        # it's in their data export
+        exported = scales.export(self.alice)
+        self.assertEqual(len([t for t in exported if "saw_results_at" in t]),
+                         1)
+
     def test_moderators_see_every_tally(self):
         scales.tip(self.post, self.bob, "tone", scales.RIGHT)
         mod = account(3)

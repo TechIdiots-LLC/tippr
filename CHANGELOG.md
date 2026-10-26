@@ -47,6 +47,9 @@
   - Each side shows its count beside its label, in the colour it has on the bar, with "75% deep dive · 4 tips" under
     it. With fewer than three tips there's no bar (one tip filled it with one colour): "1 tip so far: human-made".
   - A vault's moderators, and admins in admin mode, see every scale's tallies without tipping.
+  - "See the results" shows a member every tally of a post without tipping, after asking: it ends their tipping on
+    that post (tips they made before stay and count, and they can't tip or change one after). It's in their data
+    export.
 - **A check for media storage:** `tippr-run scripts/check_media_storage.py` saves a test file the way uploads are
   saved, checks it's in the bucket (with S3 storage) and not on the disk, fetches it from `/media/` through nginx, and
   deletes it: the last step of moving media to a bucket (docs/STORAGE.md).

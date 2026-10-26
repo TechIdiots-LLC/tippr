@@ -25,6 +25,9 @@ moderators and admins in admin mode, whose job is to read them. With
 fewer than BAR_MIN tips the panel names them rather than drawing a bar,
 since one person's tip isn't the community's view.
 
+A member who'd rather not tip can "see results" instead: every tally, at
+the price of tipping that post (they can't tip or change a tip after).
+
 Scales are opinions, not reports: none of them asks moderators to act
 (breaking a rule is what "report" is for), none changes a post's ranking,
 and "AI-generated" is the community's view, beside the poster's own AI
@@ -69,6 +72,9 @@ RETIRED = {
 }
 # fewer tips than this are listed, not drawn as a bar (scales.js)
 BAR_MIN = 3
+# kept in the tips table under this name (no scale has it) once a member
+# has seen a post's results without tipping (see_results)
+SEEN = "_seen"
 
 _db = {}
 
@@ -132,8 +138,8 @@ def tip(link, account, scale, side):
                 side=side, created=datetime.now(g.tz)))
 
 
-def tips_by(link, account):
-    """{scale: side} for the scales account has tipped on link."""
+def _rows_by(link, account):
+    """{scale: side} of account's rows on link (SEEN among them)."""
     if not account:
         return {}
     tips = _table()
@@ -143,6 +149,33 @@ def tips_by(link, account):
                 tips.c.link_id == link._id,
                 tips.c.account_id == account._id)))
         return {scale: side for scale, side in rows}
+
+
+def tips_by(link, account):
+    """{scale: side} for the scales account has tipped on link."""
+    return {scale: side for scale, side in _rows_by(link, account).items()
+            if scale != SEEN}
+
+
+def has_seen(link, account):
+    """Whether account chose to see link's results (see_results)."""
+    return SEEN in _rows_by(link, account)
+
+
+def may_tip(link, account):
+    """can_tip, unless they've seen the results (POST_tip_scale)."""
+    return can_tip(link, account) and not has_seen(link, account)
+
+
+def see_results(link, account):
+    """Show account every tally of link, which ends their tipping on it:
+    the tips they made stay, and they can't tip or change one after."""
+    if has_seen(link, account):
+        return
+    with _engine().begin() as conn:
+        conn.execute(_table().insert().values(
+            link_id=link._id, account_id=account._id, scale=SEEN, side=0,
+            created=datetime.now(g.tz)))
 
 
 def tallies(link):
@@ -165,13 +198,15 @@ def summary(link, account, sees_all=False):
     scale's sides, their own tip, and the tally where they may see it.
     sees_all: every tally, untipped (the vault's moderators, admins in
     admin mode; POST_scales decides)."""
-    mine = tips_by(link, account)
+    rows = _rows_by(link, account)
+    seen = SEEN in rows
+    mine = {scale: side for scale, side in rows.items() if scale != SEEN}
     is_poster = bool(account and link.author_id == account._id)
     counts = tallies(link)
     scales = []
     for name, (left, right) in SCALES.items():
         side = mine.get(name, 0)
-        shown = bool(side) or is_poster or sees_all
+        shown = bool(side) or is_poster or sees_all or seen
         scales.append({
             "name": name,
             "left": _(left),
@@ -182,8 +217,10 @@ def summary(link, account, sees_all=False):
         })
     return {
         "scales": scales,
-        "can_tip": can_tip(link, account),
+        "can_tip": can_tip(link, account) and not seen,
         "is_poster": is_poster,
+        # chose to see the results, so can't tip any more
+        "seen": seen,
         "sees_all": bool(sees_all) and not is_poster,
         "bar_min": BAR_MIN,
     }
@@ -202,6 +239,10 @@ def export(account, limit=1000):
             .limit(limit))
         found = []
         for link_id, scale, side, created in rows:
+            if scale == SEEN:
+                found.append({"post_id": to36(link_id),
+                              "saw_results_at": created.isoformat()})
+                continue
             left, right = (SCALES.get(scale) or
                            RETIRED.get(scale, (scale, scale)))
             found.append({
