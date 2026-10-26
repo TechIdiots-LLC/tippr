@@ -80,7 +80,8 @@ _IMAGE_PREVIEW_TEMPLATE = """
 
 
 def _image_to_str(image):
-    s = io.StringIO()
+    """The image's file (bytes), in its format."""
+    s = io.BytesIO()
     image.save(s, image.format)
     return s.getvalue()
 

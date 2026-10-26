@@ -24,6 +24,8 @@
 - **Domain listings (/domain/example.com) redirected to a broken address:** every one went to
   `/domain/b'example.com'/` instead of listing the domain's posts. They list them again, and an international domain
   name still goes to its `xn--` form.
+- **Uploading an app's icon (/prefs/apps) gave an error:** the resized icon was written as text, which Python 3
+  refuses, so no app could have an icon. It's saved as a PNG again.
 
 ## 0.24.0
 ### ✨ Features and improvements

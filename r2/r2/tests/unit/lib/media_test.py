@@ -24,9 +24,13 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
+import io
 import unittest
 from unittest.mock import patch
 
+from PIL import Image
+
+from r2.lib import media
 from r2.lib.media import _get_scrape_url
 from r2.models import Link
 
@@ -77,3 +81,19 @@ https://example.com
 https://www.tippr.net/a.jpg/b''')
         url = _get_scrape_url(post)
         self.assertEqual(url, 'https://example.com')
+
+
+class TestUploadIcon(unittest.TestCase):
+    def test_icon_is_a_small_png(self):
+        image = Image.new("RGB", (300, 200), (200, 30, 30))
+        data = io.BytesIO()
+        image.save(data, "JPEG")
+        with patch.object(media, "g") as g:
+            g.media_provider.put.side_effect = lambda category, name, content: content
+            png = media.upload_icon(data.getvalue(), (72, 72))
+        icon = Image.open(io.BytesIO(png))
+        self.assertEqual(icon.format, "PNG")
+        self.assertEqual(icon.size, (72, 48))
+        category, name, _ = g.media_provider.put.call_args[0]
+        self.assertEqual(category, "icons")
+        self.assertTrue(name.endswith(".png"))
