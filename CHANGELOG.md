@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.25.0
+### ✨ Features and improvements
 - **One panel at a time under a post or comment:** share, scales and report opened one under another; opening one
   now closes the others there (clicking the same link again still closes its own).
 - **Gold on /admin/users, including permanent gold:** an account's page shows its gold (until a date, permanent, or
@@ -22,7 +28,6 @@
   which nothing needs any more, are uninstalled on update, and so is Whoosh, a search library nothing used.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **The API documentation by OAuth scope (/dev/api/oauth) gave an error:** endpoints any OAuth client may use are
   listed under "any" scope, which Python 3 couldn't sort with the scope names. It lists them first, as "any", again.
 - **Domain listings (/domain/example.com) redirected to a broken address:** every one went to
