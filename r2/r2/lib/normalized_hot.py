@@ -105,3 +105,45 @@ def normalized_hot(vault_ids, obey_age_limit=True, ageweight=None):
     ret = list(itertools.islice(generator, MAX_LINKS))
     timer.stop()
     return ret
+
+
+# how far down /v/all's hot list a post from another vault may be pulled up
+# to break a run of one vault's posts (spread_vaults)
+SPREAD_WINDOW = 30
+
+
+def spread_vaults(links, window=SPREAD_WINDOW):
+    """links, [(fullname, vault id)] in hot order, as fullnames in nearly
+    the same order but with no two in a row from the same vault while
+    another vault's post is within `window` places. /v/all ranks every
+    post together, so a run of new posts in one vault (a feed's) would
+    otherwise fill it; the front page and multis mix vaults already
+    (normalized_hot)."""
+    pending = list(links)
+    out = []
+    last = None
+    while pending:
+        pick = 0
+        for i, (name, vault_id) in enumerate(pending[:window]):
+            if vault_id != last:
+                pick = i
+                break
+        name, last = pending.pop(pick)
+        out.append(name)
+    return out
+
+
+def all_hot(site):
+    """/v/all's hot listing (AllSR, AllMinus), spread_vaults, kept a minute
+    as the query it's made from is."""
+    from pylons import tmpl_context as c
+    key = "all_hot_spread:%s:%s" % (site.path, bool(c.user_is_loggedin and
+                                                     c.user.gold))
+    names = g.gencache.get(key)
+    if names is None:
+        q = site.get_links("hot", "all")
+        q._limit = MAX_LINKS
+        names = spread_vaults([(link._fullname, link.vault_id)
+                               for link in q])
+        g.gencache.set(key, names, time=60)
+    return names

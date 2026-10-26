@@ -50,6 +50,9 @@
   - "See the results" shows a member every tally of a post without tipping, after asking: it ends their tipping on
     that post (tips they made before stay and count, and they can't tip or change one after). It's in their data
     export.
+- **/v/all mixes vaults:** it ranks every post together, so a feed's run of new posts in one vault filled it (the
+  front page and multis mix vaults already). Its hot listing now never puts two posts from the same vault next to
+  each other while another vault's post is within 30 places.
 - **A check for media storage:** `tippr-run scripts/check_media_storage.py` saves a test file the way uploads are
   saved, checks it's in the bucket (with S3 storage) and not on the disk, fetches it from `/media/` through nginx, and
   deletes it: the last step of moving media to a bucket (docs/STORAGE.md).

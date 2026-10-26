@@ -50,7 +50,7 @@ from r2.lib.menus import (
     menu,
 )
 from r2.lib.strings import plurals
-from r2.lib.normalized_hot import normalized_hot
+from r2.lib.normalized_hot import all_hot, normalized_hot
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.rising import get_rising, normalized_rising
@@ -525,6 +525,9 @@ class HotController(ListingWithPromos):
         elif isinstance(c.site, MultiVault):
             return normalized_hot(c.site.kept_vault_ids, obey_age_limit=False,
                                   ageweight=c.site.ageweight)
+        elif isinstance(c.site, AllSR):
+            # one ranking for every vault, with runs of one vault spread out
+            return all_hot(c.site)
         else:
             sticky_fullnames = c.site.sticky_fullnames
             if sticky_fullnames:
