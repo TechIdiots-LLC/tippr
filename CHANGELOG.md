@@ -3,14 +3,50 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Account activity lists where your account is used from:** it only recorded logins, and a login cookie lasts for
+  months, so the page was usually empty. Visits are recorded too now, at most once an hour for each address, kept 100
+  days as before. A visit from a private network address (a home or office network reaching the site directly) isn't
+  kept, and the page now says so instead of showing an empty table; an empty list says when visits will appear. The
+  privacy policy's information list names this (account activity, 100 days, seen by you and the site's
+  administrators, private addresses not kept), and the "accessing tippr from" line names no site.
+- **/v/all mixes vaults:** it ranks every post together, so a feed's run of new posts in one vault filled it (the
+  front page and multis mix vaults already). Its hot listing now never puts two posts from the same vault next to
+  each other while another vault's post is within 30 places.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 
 ## 0.23.0
 ### ✨ Features and improvements
+- **Scales describe what kind of post it is, and are easier to read:**
+  - Six scales, all shown at once (no "more scales"): human-made ↔ AI-generated, quick overview ↔ deep dive,
+    practical ↔ thought piece, data-driven ↔ personal experience, matter-of-fact ↔ passionate and niche ↔ broad. Each
+    is two ends of one difference, not a verdict: votes say whether a post is good, so helpful ↔ unhelpful is gone, as
+    are beginner-friendly ↔ in-depth, practical ↔ just for fun and well-sourced ↔ opinion. Tips on human-made ↔ AI and
+    the tone scale carry over; tips on the retired scales are kept (and in members' data exports) but not shown.
+  - Each side shows its count beside its label, in the colour it has on the bar, with "75% deep dive · 4 tips" under
+    it. With fewer than three tips there's no bar (one tip filled it with one colour): "1 tip so far: human-made".
+  - A vault's moderators, and admins in admin mode, see every scale's tallies without tipping.
+  - "See the results" shows a member every tally of a post without tipping, after asking: it ends their tipping on
+    that post (tips they made before stay and count, and they can't tip or change one after). It's in their data
+    export.
+- **A check for media storage:** `tippr-run scripts/check_media_storage.py` saves a test file the way uploads are
+  saved, checks it's in the bucket (with S3 storage) and not on the disk, fetches it from `/media/` through nginx, and
+  deletes it: the last step of moving media to a bucket (docs/STORAGE.md).
+- **The jobs and queue processors run without `paster`:** they, `tippr-run` and `tippr-shell` load the app with
+  `python -m r2.commands`, and `tippr-serve` (development) runs gunicorn with reloading, so PasteScript is no longer
+  installed. It's the first step in phasing out Paste (docs/ROADMAP.md); Pyramid, which tippr never used, is gone from
+  r2's requirements. Commands written as `paster --plugin=r2 run INI ...` become `tippr-run ...`, or
+  `python -m r2.commands INI ...` from the app's folder.
 
 ### 🐞 Bug fixes
+- **Deleting media in a bucket failed:** the bucket list from the ini (`s3_media_buckets`) was read back as the text
+  `('tippr-media',)`, so working out which bucket a media address belongs to gave the bucket name `('tippr-media'` and
+  S3 refused it. Uploads and serving weren't affected; deleting or hiding media (and the new storage check's clean-up)
+  work again.
+- **`systemctl --failed` listed OpenSearch's Performance Analyzer:** the OpenSearch package turns on its metrics agent,
+  which tippr doesn't use and which fails to start, so a server always had a failed unit. The installer turns it off
+  (on every install, as a package upgrade turns it on again); search itself was never affected.
 
 ## 0.22.0
 ### ✨ Features and improvements
@@ -43,48 +79,12 @@
   other. A vault with its own rules lists those first and the site's in a menu, as before. Each reason is kept in
   English on the report and shown to moderators in their own language; reports made before keep their wording.
   Reporting from a vault's rules page no longer fails.
-- **Scales describe what kind of post it is, and are easier to read:**
-  - Six scales, all shown at once (no "more scales"): human-made ↔ AI-generated, quick overview ↔ deep dive,
-    practical ↔ thought piece, data-driven ↔ personal experience, matter-of-fact ↔ passionate and niche ↔ broad. Each
-    is two ends of one difference, not a verdict: votes say whether a post is good, so helpful ↔ unhelpful is gone, as
-    are beginner-friendly ↔ in-depth, practical ↔ just for fun and well-sourced ↔ opinion. Tips on human-made ↔ AI and
-    the tone scale carry over; tips on the retired scales are kept (and in members' data exports) but not shown.
-  - Each side shows its count beside its label, in the colour it has on the bar, with "75% deep dive · 4 tips" under
-    it. With fewer than three tips there's no bar (one tip filled it with one colour): "1 tip so far: human-made".
-  - A vault's moderators, and admins in admin mode, see every scale's tallies without tipping.
-  - "See the results" shows a member every tally of a post without tipping, after asking: it ends their tipping on
-    that post (tips they made before stay and count, and they can't tip or change one after). It's in their data
-    export.
-- **Account activity lists where your account is used from:** it only recorded logins, and a login cookie lasts for
-  months, so the page was usually empty. Visits are recorded too now, at most once an hour for each address, kept 100
-  days as before. A visit from a private network address (a home or office network reaching the site directly) isn't
-  kept, and the page now says so instead of showing an empty table; an empty list says when visits will appear. The
-  privacy policy's information list names this (account activity, 100 days, seen by you and the site's
-  administrators, private addresses not kept), and the "accessing tippr from" line names no site.
-- **/v/all mixes vaults:** it ranks every post together, so a feed's run of new posts in one vault filled it (the
-  front page and multis mix vaults already). Its hot listing now never puts two posts from the same vault next to
-  each other while another vault's post is within 30 places.
-- **A check for media storage:** `tippr-run scripts/check_media_storage.py` saves a test file the way uploads are
-  saved, checks it's in the bucket (with S3 storage) and not on the disk, fetches it from `/media/` through nginx, and
-  deletes it: the last step of moving media to a bucket (docs/STORAGE.md).
-- **The jobs and queue processors run without `paster`:** they, `tippr-run` and `tippr-shell` load the app with
-  `python -m r2.commands`, and `tippr-serve` (development) runs gunicorn with reloading, so PasteScript is no longer
-  installed. It's the first step in phasing out Paste (docs/ROADMAP.md); Pyramid, which tippr never used, is gone from
-  r2's requirements. Commands written as `paster --plugin=r2 run INI ...` become `tippr-run ...`, or
-  `python -m r2.commands INI ...` from the app's folder.
 
 ### 🐞 Bug fixes
 - **The report form was hard to read in night mode:** its box stayed light yellow under night mode's light text. It
   now uses night mode's dark notice colours, as does the list of reasons on a reported post.
 - **A post or comment a moderator had reported broke the page for its moderators:** the reports queue and the
   vault's listings gave an error while showing who reported it and why. They show the moderators' reports again.
-- **Deleting media in a bucket failed:** the bucket list from the ini (`s3_media_buckets`) was read back as the text
-  `('tippr-media',)`, so working out which bucket a media address belongs to gave the bucket name `('tippr-media'` and
-  S3 refused it. Uploads and serving weren't affected; deleting or hiding media (and the new storage check's clean-up)
-  work again.
-- **`systemctl --failed` listed OpenSearch's Performance Analyzer:** the OpenSearch package turns on its metrics agent,
-  which tippr doesn't use and which fails to start, so a server always had a failed unit. The installer turns it off
-  (on every install, as a package upgrade turns it on again); search itself was never affected.
 - **Deleting an account on /admin/users gave "forbidden":** the form's "delete for good" checkbox is named `confirm`,
   which inside the form's own submit handler hid the browser's `confirm()`, so its "are you sure?" threw an error
   and the browser sent the form as a plain page instead, which the site refused. It asks and deletes again. The
