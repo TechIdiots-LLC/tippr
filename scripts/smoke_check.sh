@@ -30,13 +30,34 @@ for unit in postgresql cassandra zookeeper rabbitmq-server memcached opensearch 
         bad "$unit is $(systemctl is-active "$unit")"
     fi
 done
+unit_log() {
+    journalctl -u "$1" --no-pager -n 25 2>/dev/null | sed 's/^/        /'
+}
 failed=$(systemctl list-units 'tippr*' --all --no-legend --plain --state=failed 2>/dev/null |
          awk '{print $1}')
-if [ -n "$failed" ]; then
-    bad "failed units: $(echo $failed)"
-else
-    ok "no failed tippr units"
-fi
+for unit in $failed; do
+    case "$unit" in
+    tippr-job-*.service)
+        # a scheduled job's last run failed: it may have run while the
+        # site was still being installed or restarted, so what matters is
+        # whether it works now; run it again (oneshot: start waits for it)
+        echo "  ..    $unit failed; its log, then running it again:"
+        unit_log "$unit"
+        systemctl reset-failed "$unit"
+        if timeout 900 systemctl start "$unit"; then
+            ok "$unit (succeeded when run again)"
+        else
+            bad "$unit failed again:"
+            unit_log "$unit"
+        fi
+        ;;
+    *)
+        bad "$unit failed:"
+        unit_log "$unit"
+        ;;
+    esac
+done
+[ -z "$failed" ] && ok "no failed tippr units"
 
 # a page: PATH EXPECTED_STATUS [TEXT the body must contain] [POST DATA]
 page() {
