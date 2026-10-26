@@ -69,7 +69,7 @@ from r2.lib.errors import (
     errors,
     tippr_http_error,
 )
-from r2.lib.filters import _force_unicode, _force_utf8, scriptsafe_dumps
+from r2.lib.filters import _force_utf8, scriptsafe_dumps
 from r2.lib.loid import LoId
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.strings import strings
@@ -366,7 +366,9 @@ def set_vault():
     if not vault_name and isinstance(c.site, DefaultVault) and domain:
         # Redirect IDN to their IDNA name if necessary
         try:
-            idna = _force_unicode(domain).encode("idna")
+            # PATH_INFO has the URL's bytes as latin-1 (WSGI)
+            name = domain.encode("latin-1").decode("utf-8")
+            idna = name.encode("idna").decode("ascii")
             if idna != domain:
                 path_info = request.environ["PATH_INFO"]
                 path = "/domain/{}{}".format(idna, path_info)

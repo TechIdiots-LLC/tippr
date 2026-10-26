@@ -15,6 +15,9 @@
 - _...Add new stuff here..._
 - **The API documentation by OAuth scope (/dev/api/oauth) gave an error:** endpoints any OAuth client may use are
   listed under "any" scope, which Python 3 couldn't sort with the scope names. It lists them first, as "any", again.
+- **Domain listings (/domain/example.com) redirected to a broken address:** every one went to
+  `/domain/b'example.com'/` instead of listing the domain's posts. They list them again, and an international domain
+  name still goes to its `xn--` form.
 
 ## 0.24.0
 ### ✨ Features and improvements
