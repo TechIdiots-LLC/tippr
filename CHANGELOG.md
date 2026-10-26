@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.24.0
+### ✨ Features and improvements
 - **Current setuptools, without pkg_resources:** setuptools 81 deprecated `pkg_resources` and later versions remove it,
   and tippr was held below 81 by what still imported it: tippr's baseplate (now `importlib.metadata`), OpenTelemetry's
   instrumentation before 0.49 (now 1.28.2 / 0.49b2, which needs protobuf 5), the test setup's PasteScript import, and
@@ -22,7 +28,6 @@
   each other while another vault's post is within 30 places.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 
 ## 0.23.0
 ### ✨ Features and improvements
