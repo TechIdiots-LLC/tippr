@@ -34,6 +34,16 @@ SORTS = {
     "posts": lambda f: f["posted"],
 }
 
+# with no sort given: the newest feeds first (the order added, backwards)
+DEFAULT_SORT = "added"
+
+
+def default_order(sort):
+    """The way a sort goes until it's turned round: newest first for the
+    order added, A to Z (or smallest first) for the rest."""
+    return "desc" if sort == "added" else "asc"
+
+
 # what the search looks in
 SEARCHED = ("feed_title", "url", "vault_name", "bot_name", "title_prefix")
 
@@ -54,13 +64,14 @@ class FeedView:
     STATUSES = STATUSES
 
     def __init__(self, everything, q="", vault="", bot="", status="all",
-                 sort="added", order="asc"):
+                 sort=DEFAULT_SORT, order=None):
         self.q = (q or "").strip()
         self.vault = (vault or "").strip()
         self.bot = (bot or "").strip()
         self.status = status if status in STATUSES else "all"
-        self.sort = sort if sort in SORTS else "added"
-        self.order = "desc" if order == "desc" else "asc"
+        self.sort = sort if sort in SORTS else DEFAULT_SORT
+        self.order = (order if order in ("asc", "desc")
+                      else default_order(self.sort))
         # the menus: every vault and bot a feed has
         self.vault_names = sorted({f["vault_name"] for f in everything
                                    if f["vault_name"]}, key=str.lower)
@@ -86,14 +97,17 @@ class FeedView:
         query = dict(q=self.q, vault=self.vault, bot=self.bot,
                      status=self.status, sort=self.sort, order=self.order)
         query.update(changes)
-        defaults = dict(status="all", sort="added", order="asc")
+        defaults = dict(status="all", sort=DEFAULT_SORT,
+                        order=default_order(query["sort"] or DEFAULT_SORT))
         query = {k: v for k, v in query.items()
                  if v and v != defaults.get(k)}
         return "/admin/feeds" + ("?" + urlencode(query) if query else "")
 
     def sort_link(self, sort):
-        """A column heading's link: by it, or the other way round when it's
-        already the sort."""
-        order = ("desc" if self.sort == sort and self.order == "asc"
-                 else "asc")
+        """A column heading's link: by it (its usual way, default_order),
+        or the other way round when it's already the sort."""
+        if self.sort == sort:
+            order = "asc" if self.order == "desc" else "desc"
+        else:
+            order = default_order(sort)
         return self.link(sort=sort, order=order)

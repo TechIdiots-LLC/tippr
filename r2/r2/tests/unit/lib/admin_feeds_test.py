@@ -43,22 +43,27 @@ class TestFeedView(TipprTestCase):
     def ids(self, **kw):
         return [f["id"] for f in FeedView([dict(f) for f in FEEDS], **kw).feeds]
 
-    def test_everything_in_the_order_added(self):
-        self.assertEqual(self.ids(), [1, 2, 3, 4])
+    def found(self, **kw):
+        """Which feeds a search or filter shows, whatever their order."""
+        return sorted(self.ids(**kw))
+
+    def test_newest_first_until_sorted_otherwise(self):
+        self.assertEqual(self.ids(), [4, 3, 2, 1])
+        self.assertEqual(self.ids(sort="added", order="asc"), [1, 2, 3, 4])
 
     def test_search(self):
         # in titles (Tech News), vaults (worldnews) and bots (news_bot)
-        self.assertEqual(self.ids(q="news"), [1, 2, 3])
-        self.assertEqual(self.ids(q="WORLDNEWS"), [3])
-        self.assertEqual(self.ids(q="4.example"), [4])
+        self.assertEqual(self.found(q="news"), [1, 2, 3])
+        self.assertEqual(self.found(q="WORLDNEWS"), [3])
+        self.assertEqual(self.found(q="4.example"), [4])
 
     def test_filters(self):
-        self.assertEqual(self.ids(vault="technology"), [2, 4])
-        self.assertEqual(self.ids(bot="feed_bot"), [3, 4])
-        self.assertEqual(self.ids(status="paused"), [2])
-        self.assertEqual(self.ids(status="errors"), [3])
-        self.assertEqual(self.ids(status="never"), [4])
-        self.assertEqual(self.ids(status="active", vault="technology"), [4])
+        self.assertEqual(self.found(vault="technology"), [2, 4])
+        self.assertEqual(self.found(bot="feed_bot"), [3, 4])
+        self.assertEqual(self.found(status="paused"), [2])
+        self.assertEqual(self.found(status="errors"), [3])
+        self.assertEqual(self.found(status="never"), [4])
+        self.assertEqual(self.found(status="active", vault="technology"), [4])
         page = FeedView(FEEDS)
         self.assertEqual(page.counts, dict(all=4, active=3, paused=1,
                                            errors=1, never=1))
@@ -68,8 +73,8 @@ class TestFeedView(TipprTestCase):
         self.assertEqual(self.ids(sort="posts", order="desc"), [2, 1, 3, 4])
         self.assertEqual(self.ids(sort="title"), [4, 1, 2, 3])
         self.assertEqual(self.ids(sort="checked"), [4, 1, 2, 3])
-        # anything else is the order added
-        self.assertEqual(self.ids(sort="nonsense", status="bogus"), [1, 2, 3, 4])
+        # anything else is newest first
+        self.assertEqual(self.ids(sort="nonsense", status="bogus"), [4, 3, 2, 1])
 
     def test_links_keep_the_view(self):
         page = FeedView(FEEDS, vault="sports", sort="posts")
@@ -80,3 +85,8 @@ class TestFeedView(TipprTestCase):
         self.assertEqual(page.sort_link("title"),
                          "/admin/feeds?vault=sports&sort=title")
         self.assertEqual(FeedView(FEEDS).link(), "/admin/feeds")
+        # "added" turned round, and back to the default (no query)
+        self.assertEqual(FeedView(FEEDS).sort_link("added"),
+                         "/admin/feeds?order=asc")
+        self.assertEqual(FeedView(FEEDS, order="asc").sort_link("added"),
+                         "/admin/feeds")

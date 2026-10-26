@@ -4130,8 +4130,8 @@ class AdminDomain(Templated):
 class AdminFeeds(Templated, FeedView):
     """Feeds posted to vaults by bot accounts (r2.lib.feeds), searched,
     filtered and sorted by the page's query (r2.lib.feed_view)."""
-    def __init__(self, q="", vault="", bot="", status="all", sort="added",
-                 order="asc"):
+    def __init__(self, q="", vault="", bot="", status="all", sort=None,
+                 order=None):
         from r2.lib import feeds
         everything = feeds.all_feeds()
         vault_ids = {f["vault_id"] for f in everything}

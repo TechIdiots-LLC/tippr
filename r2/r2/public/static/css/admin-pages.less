@@ -128,9 +128,31 @@
 .admin-feeds {
     .admin-feeds-table { width: 100%; }
     .admin-feeds-table td { vertical-align: top; }
+    // long addresses and error messages wrap, rather than widening the
+    // table past the page (names and dates stay whole)
+    .admin-feeds-table td:first-child { min-width: 16em; }
+    .admin-feeds-table td:first-child a,
+    .admin-feeds-table small.error {
+        overflow-wrap: anywhere;
+    }
+    .admin-feeds-table small.error { display: inline-block; max-width: 20em; }
+    // check now, pause, delete, edit: two by two
+    .admin-feed-actions {
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: 4px;
+        justify-content: start;
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+    .admin-feed-actions .admin-feed-action,
+    .admin-feed-actions .admin-feed-edit-toggle { margin: 0; align-self: start; }
     .admin-feed-disabled td { color: var(--tp-text-muted); }
     .admin-feed-action { display: inline-block; margin: 2px 4px 2px 0; }
     .admin-feed-edit-toggle { margin: 2px 4px 2px 0; }
+    // the add form, folded over the list once there are feeds
+    .admin-feeds-add summary { cursor: pointer; margin: 6px 0; }
+    .admin-feeds-add summary h2 { display: inline; }
     // a feed's settings, the table's width under its row
     .admin-feed-edit-row td {
         background: var(--tp-subtle);

@@ -80,6 +80,12 @@
   ${_("So a new feed doesn't flood its vault, the first check posts only its newest %(first)d items; later checks post at most the newest %(per)d. Items left over are skipped, not posted later.") % dict(first=thing.first_fetch, per=thing.per_fetch)}
 </small></p>
 
+## adding one, before the list (open while there are none)
+<details class="admin-feeds-add" ${'open' if not thing.total else ''}>
+  <summary><h2>${_("Add a feed")}</h2></summary>
+  ${feed_form('add')}
+</details>
+
 ## a column heading that sorts by it (again: the other way round)
 <%def name="sort_heading(sort, label)">
   <th><a href="${thing.sort_link(sort)}" class="admin-feeds-sort ${'selected' if thing.sort == sort else ''}">${label}${(' ▲' if thing.order == 'asc' else ' ▼') if thing.sort == sort else ''}</a></th>
@@ -125,7 +131,7 @@
   <table class="lined-table admin-feeds-table">
     <tr>
       ${sort_heading('title', _("feed"))}${sort_heading('vault', _("vault"))}${sort_heading('bot', _("posted by"))}
-      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}<th></th>
+      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}${sort_heading('added', _("added"))}<th></th>
     </tr>
     %for f in thing.feeds:
       <%
@@ -180,6 +186,12 @@
         </td>
         <td>${f['posted']}</td>
         <td>
+          %if f['created']:
+            <span title="${f['created'].strftime('%Y-%m-%d %H:%M UTC')}">${timesince(f['created'])} ${_("ago")}</span>
+          %endif
+        </td>
+        <td>
+          <div class="admin-feed-actions">
           ${action(f['id'], 'check', _('check now'))}
           %if f['enabled']:
             ${action(f['id'], 'disable', _('pause'))}
@@ -190,12 +202,13 @@
           <button type="button" class="btn admin-feed-edit-toggle"
                   aria-expanded="false" aria-controls="admin-feed-edit-${f['id']}"
                   onclick="var row = document.getElementById('admin-feed-edit-${f['id']}'); row.hidden = !row.hidden; this.setAttribute('aria-expanded', String(!row.hidden));">${_("edit")}</button>
+          </div>
         </td>
       </tr>
       ## its settings, under it the width of the table: the address, the
       ## vault it posts to, the bot, how often, the labels
       <tr class="admin-feed-edit-row" id="admin-feed-edit-${f['id']}" hidden>
-        <td colspan="7">
+        <td colspan="8">
           ${feed_form('edit', f, vault_name, bot_name)}
           <p><small>${_("Changing the vault moves where new items go; posts already made stay where they are.")}</small></p>
         </td>
@@ -207,7 +220,4 @@
 %else:
   <p>${_("No feeds yet.")}</p>
 %endif
-
-<h2>${_("Add a feed")}</h2>
-${feed_form('add')}
 </div>
