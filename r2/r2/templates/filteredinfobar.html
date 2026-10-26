@@ -36,7 +36,7 @@
   </div>
 
   <ul class="vaults">
-  %for vault in c.site.exclude_srs:
+  %for vault in c.site.exclude_vaults:
     <li data-name="${vault.name}">
       <a href="/v/${vault.name}" data-name="${vault.name}">/v/${vault.name}</a>
       <button class="remove-vault">${_('remove')}</button>

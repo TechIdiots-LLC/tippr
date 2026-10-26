@@ -1132,3 +1132,4 @@
 - Python 3 fixes across the codebase: image uploads, the hardcache, route arguments, generators, multi-vault
   listings (/v/mod), canonical links and more.
 
+- **"Exclude custom vaults" (/me/f/all) gave "you broke tippr" to gold members:** its sidebar asked for the\n  filtered vaults by their name from before vaults were renamed. It lists them again, to add to or remove.
