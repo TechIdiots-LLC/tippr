@@ -218,7 +218,8 @@ class AdminTools:
         
         if account.gold_expiration > now and not account.gold:
             self.engolden(account)
-        elif account.gold_expiration <= now and account.gold:
+        elif (account.gold_expiration <= now and account.gold and
+              not getattr(account, "gold_permanent", False)):
             self.degolden(account)
 
         account._commit()     
@@ -241,6 +242,22 @@ class AdminTools:
     def degolden(self, account):
         Award.take_away("tippr_gold", account)
         account.gold = False
+        account._commit()
+
+    def make_gold_permanent(self, account):
+        """Gold that doesn't expire (an admin's, /admin/users): kept whatever
+        gold_expiration says, by update_gold_users and refunds."""
+        account.gold_permanent = True
+        if not account.gold:
+            self.engolden(account)
+        account._commit()
+
+    def remove_gold(self, account):
+        """No gold: permanent or not, and none left to run out."""
+        account.gold_permanent = False
+        account.gold_expiration = datetime.now(g.display_tz)
+        if account.gold:
+            self.degolden(account)
         account._commit()
 
     def admin_list(self):
@@ -307,6 +324,8 @@ def update_gold_users():
                   "patronage.") % {'gold_email': site_info.gold_support()}
 
     for account in all_gold_users():
+        if getattr(account, "gold_permanent", False):
+            continue  # an admin's gold for good: no expiry, no warnings
         days_left = (account.gold_expiration - now).days
         if days_left < 0:
             if account.pref_coin_autorenew:

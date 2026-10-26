@@ -2580,7 +2580,13 @@ class ProfileBar(Templated):
         self.show_private_gold_info = (self.show_private_info and
             (user.gold or user.gold_coins > 0 or user.num_gildings > 0))
 
-        if self.show_users_gold_expiration:
+        # gold an admin gave for good (/admin/users) has no end
+        self.gold_permanent = bool(getattr(user, "gold_permanent", False) and
+                                   user.gold)
+        gold_days_left = None
+        if self.show_users_gold_expiration and self.gold_permanent:
+            self.gold_remaining = _("permanent")
+        elif self.show_users_gold_expiration:
             gold_days_left = (user.gold_expiration -
                               datetime.datetime.now(g.tz)).days
 
@@ -2620,7 +2626,8 @@ class ProfileBar(Templated):
                 self.goldlink = "/gold/about"
                 self.giftmsg = _("get extra features and help support tippr "
                                  "with a tippr gold subscription")
-            elif gold_days_left < 7 and not user.gold_will_autorenew:
+            elif (gold_days_left is not None and gold_days_left < 7 and
+                  not user.gold_will_autorenew):
                 self.goldlink = "/gold/about"
                 self.giftmsg = _("renew your tippr gold")
 
@@ -4033,6 +4040,9 @@ class AdminUser(Templated):
         self.timeout_until = (account.timeout_expiration
                               if getattr(account, "in_timeout", False) else None)
         self.registration_ip = getattr(account, "registration_ip", None)
+        # "permanent", the date it runs out, or None
+        self.gold = user_admin.gold_state(account)
+        self.max_gold_months = user_admin.MAX_GOLD_MONTHS
         # updated at most daily (Account.update_last_visit)
         from r2.models.last_modified import LastModified
         try:
@@ -4509,13 +4519,6 @@ class AdminAntispam(Templated):
         self.ct_account = cleantalk_stats.account_status(
             settings.get("cleantalk_auth_key"))
         self.flagged = cleantalk_scan.flagged_accounts()
-        Templated.__init__(self)
-
-
-class AdminGold(Templated):
-    """The admin interface for giving or taking days of gold for a user."""
-    def __init__(self, recipient):
-        self.recipient = recipient
         Templated.__init__(self)
 
 

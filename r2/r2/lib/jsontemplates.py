@@ -564,7 +564,9 @@ class IdentityJsonTemplate(ThingJsonTemplate):
         elif attr == "link_karma":
             return display_link_karma(thing.link_karma)
         elif attr == "gold_expiration":
-            if not thing.gold:
+            # (permanent gold has no end)
+            if (not thing.gold or getattr(thing, "gold_permanent", False) or
+                    not getattr(thing, "gold_expiration", None)):
                 return None
             return calendar.timegm(thing.gold_expiration.utctimetuple())
         elif attr == "timeout_expiration_utc":

@@ -171,6 +171,8 @@ class Account(Thing):
                      pref_show_promote = None,
                      gold = False,
                      gold_charter = False,
+                     # an admin gave gold for good (/admin/users): it doesn't expire
+                     gold_permanent = False,
                      gold_coins = 0,
                      num_gildings=0,
                      cake_expiration=None,

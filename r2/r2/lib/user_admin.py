@@ -373,9 +373,13 @@ ACTION_NAMES = {
     "set_status": "internal status changed",
     "set_staff": "staff permission changed",
     "set_internal": "internal account changed",
+    "give_gold": "gold given or taken",
+    "permanent_gold": "permanent gold given",
+    "remove_gold": "gold removed",
 }
 MAX_CONTENT = 1000      # posts, and comments, acted on by the content tools
 MAX_TIMEOUT_DAYS = 365
+MAX_GOLD_MONTHS = 120   # given or taken at once (give_gold)
 
 
 def _log(account, admin, action, detail=None):
@@ -605,6 +609,37 @@ def delete_account(account, admin, delete_posts, reason):
         reason or "no reason",
         "%d posts and comments deleted" % deleted if delete_posts
         else "posts and comments kept"))
+
+
+def gold_state(account):
+    """"permanent", the date gold runs out, or None (no gold)."""
+    if not getattr(account, "gold", False):
+        return None
+    if getattr(account, "gold_permanent", False):
+        return "permanent"
+    return getattr(account, "gold_expiration", None)
+
+
+def give_gold(account, admin, months):
+    """Gold for months more (or, negative, fewer): what /admin/gold did.
+    Permanent gold stays permanent."""
+    from r2.models import admintools
+    admintools.adjust_gold_expiration(account, months=months)
+    _log(account, admin, "give_gold", "%+d months" % months)
+
+
+def make_gold_permanent(account, admin):
+    """Gold that doesn't run out (models.admintools.make_gold_permanent)."""
+    from r2.models import admintools
+    admintools.make_gold_permanent(account)
+    _log(account, admin, "permanent_gold")
+
+
+def remove_gold(account, admin, reason=None):
+    """No gold, permanent or not."""
+    from r2.models import admintools
+    admintools.remove_gold(account)
+    _log(account, admin, "remove_gold", reason or None)
 
 
 def reset_two_factor(account, admin, reason=None):

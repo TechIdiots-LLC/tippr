@@ -75,14 +75,49 @@
   </td></tr>
   <tr><td>${_("two-factor")}</td><td>${_("on") if two_factor.enabled(a) else _("off")}</td></tr>
   <tr><td>${_("gold")}</td><td>
-    %if getattr(a, 'gold', False):
-      ${_("yes")}
-      %if getattr(a, 'gold_expiration', None):
-        ${_("(until %(date)s)") % dict(date=a.gold_expiration.strftime('%Y-%m-%d'))}
-      %endif
+    %if thing.gold == "permanent":
+      <strong>${_("permanent")}</strong>
+      <small>${_("(given by an admin: it doesn't run out)")}</small>
+    %elif thing.gold:
+      ${_("yes, until %(date)s") % dict(date=thing.gold.strftime('%Y-%m-%d'))}
     %else:
       ${_("no")}
     %endif
+    ## months more or fewer, for good, or none (r2.lib.user_admin)
+    <div class="admin-user-gold">
+      %if thing.gold != "permanent":
+        <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+              onsubmit="return post_form(this, 'admin_user');">
+          <input type="hidden" name="username" value="${a.name}">
+          <input type="hidden" name="do" value="give_gold">
+          <input type="number" name="months" value="1" min="-${thing.max_gold_months}"
+                 max="${thing.max_gold_months}" style="width: 5em"> ${_("months")}
+          <button class="btn" type="submit">${_("give")}</button>
+          <small>${_("(negative to take some away)")}</small>
+          <span class="status"></span>
+        </form>
+        <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+              onsubmit="return post_form(this, 'admin_user');">
+          <input type="hidden" name="username" value="${a.name}">
+          <input type="hidden" name="do" value="permanent_gold">
+          <button class="btn" type="submit">${_("make it permanent")}</button>
+          <span class="status"></span>
+        </form>
+      %endif
+      %if thing.gold:
+        <form action="/api/admin_user" method="post" class="pretty-form admin-user-action"
+              onsubmit="return post_form(this, 'admin_user');">
+          <input type="hidden" name="username" value="${a.name}">
+          <input type="hidden" name="do" value="remove_gold">
+          <input type="text" name="reason" size="24" maxlength="500"
+                 placeholder="${_('reason (logged, optional)')}">
+          <label><input type="checkbox" name="confirm" value="yes"> ${_("yes")}</label>
+          <button class="btn" type="submit">${_("remove gold")}</button>
+          <span class="status"></span>
+        </form>
+      %endif
+      <small>${_("Each is recorded under admin actions below. Gold bought or given by members adds to the date as usual; permanent gold ignores the date.")}</small>
+    </div>
   </td></tr>
 </table>
 

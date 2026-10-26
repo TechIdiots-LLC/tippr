@@ -117,12 +117,17 @@
   %if thing.show_users_gold_expiration or thing.show_private_gold_info:
     <div class="rounded gold-accent gold-expiration-info">
       %if hasattr(thing, "gold_remaining"):
-        <div class="gold-remaining" title="${thing.user.gold_expiration.strftime('%Y-%m-%d')}">
+        <div class="gold-remaining" title="${'' if thing.gold_permanent else thing.user.gold_expiration.strftime('%Y-%m-%d')}">
           <span class="karma">
             ${thing.gold_remaining}
           </span>
           <br>
-          ${_("of tippr gold remaining")}
+          %if thing.gold_permanent:
+            ## gold an admin gave for good (/admin/users)
+            ${_("gold, with no end date")}
+          %else:
+            ${_("of tippr gold remaining")}
+          %endif
           <br>
           <a href="/gold/about">${_("view gold features/benefits")}</a>
         </div>

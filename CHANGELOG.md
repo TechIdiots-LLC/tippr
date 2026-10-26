@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Gold on /admin/users, including permanent gold:** an account's page shows its gold (until a date, permanent, or
+  none) and lets an admin give or take months (up to 120 at once), make it permanent, or remove it (with a reason,
+  after ticking to confirm), each recorded under the account's admin actions. Permanent gold doesn't run out: the
+  daily expiry job and refunds leave it, and members' profiles and `/api/me` show it with no end date. The old
+  `/admin/gold` form, which only added or took months, now goes to /admin/users.
 - **/admin/feeds can be searched, filtered and sorted:** a search box (titles, addresses, vaults, bots and title
   prefixes), menus of the vaults and bots the feeds use, and a status filter (active, paused, with errors, never
   checked, each with its count), and every column heading sorts by it (again for the other way round). It shows when

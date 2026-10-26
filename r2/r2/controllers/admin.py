@@ -38,7 +38,6 @@ from r2.lib.pages import (
     AdminErrors,
     AdminFeeds,
     AdminPrivacy,
-    AdminGold,
     AdminLiveConfig,
     AdminLoginSettings,
     AdminServerStatus,
@@ -79,7 +78,12 @@ class AdminToolController(TipprController):
         recipient=nop('recipient'),
     )
     def GET_gold(self, recipient):
-        return AdminPage(content=AdminGold(recipient)).render()
+        """Gold is given, made permanent or taken on the account's page on
+        /admin/users now."""
+        from urllib.parse import quote
+        if recipient:
+            return self.redirect("/admin/users/" + quote(recipient.strip()))
+        return self.redirect("/admin/users")
 
     @validate(VAdmin())
     def GET_email(self):

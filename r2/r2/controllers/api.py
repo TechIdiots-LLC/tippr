@@ -5351,7 +5351,8 @@ class ApiController(TipprController):
                          "remove_content", "spam_content", "delete_content",
                          "reverify_email", "remove_email", "reset_2fa",
                          "delete_account", "set_status", "set_staff",
-                         "set_internal")),
+                         "set_internal", "give_gold", "permanent_gold",
+                         "remove_gold")),
         days=VInt("days", min=0, max=365, num_default=0),
         reason=VLength("reason", max_length=500, empty_error=None),
         confirm=nop("confirm"),
@@ -5360,9 +5361,12 @@ class ApiController(TipprController):
         note=VLength("note", max_length=1000, empty_error=None),
         level=VOneOf("level", ("none", "employee", "sponsor", "admin")),
         internal=VBoolean("internal"),
+        # (not coerce: a typo like 999 is refused, not turned into 120)
+        months=VInt("months", min=-120, max=120, coerce=False),
     )
     def POST_admin_user(self, form, jquery, username, do, days, reason,
-                        confirm, posts, status, note, level, internal):
+                        confirm, posts, status, note, level, internal,
+                        months):
         """Act on an account from /admin/users (r2.lib.user_admin)."""
         from r2.lib import user_admin
         from r2.lib.db.thing import NotFound
@@ -5397,6 +5401,32 @@ class ApiController(TipprController):
             return
         if do == "set_internal":
             user_admin.set_internal(account, c.user, internal)
+            form.refresh()
+            return
+        # gold, for anyone (admins and themselves too): months more or fewer,
+        # permanent, or none
+        if do == "give_gold":
+            if (errors.BAD_NUMBER, "months") in c.errors:
+                form.set_text(".status", _("give between -%(max)d and %(max)d months") % dict(max=120))
+                return
+            if not months:
+                form.set_text(".status", _("give a number of months (negative to take some away)"))
+                return
+            if not account.gold and months < 0:
+                form.set_text(".status", _("they have no gold to take"))
+                return
+            user_admin.give_gold(account, c.user, months)
+            form.refresh()
+            return
+        if do == "permanent_gold":
+            user_admin.make_gold_permanent(account, c.user)
+            form.refresh()
+            return
+        if do == "remove_gold":
+            if confirm != "yes":
+                form.set_text(".status", _("tick the box to confirm"))
+                return
+            user_admin.remove_gold(account, c.user, (reason or "").strip())
             form.refresh()
             return
         if account.name in g.admins or account._id == c.user._id:

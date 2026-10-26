@@ -1001,7 +1001,8 @@ def days_from_months(months):
 
 def subtract_gold_days(user, days):
     user.gold_expiration -= timedelta(days=days)
-    if user.gold_expiration < datetime.now(g.display_tz):
+    if (user.gold_expiration < datetime.now(g.display_tz) and
+            not getattr(user, "gold_permanent", False)):
         admintools.degolden(user)
     user._commit()
 
