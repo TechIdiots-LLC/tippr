@@ -13,6 +13,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The API documentation by OAuth scope (/dev/api/oauth) gave an error:** endpoints any OAuth client may use are
+  listed under "any" scope, which Python 3 couldn't sort with the scope names. It lists them first, as "any", again.
 
 ## 0.24.0
 ### ✨ Features and improvements

@@ -29,6 +29,12 @@
     from r2.controllers.api_docs import section_info
     from r2.models.token import OAuth2Scope
     from r2.lib.db.thing import thing_types
+
+    def none_first(key):
+        """A sort key for scopes, None (endpoints any OAuth client may use,
+        OAuth2Scope.scope_info) first, as Python 2 sorted it: Python 3
+        won't compare None with the scope names."""
+        return (key is not None, key or "")
 %>
 
 <%def name="api_method_id(uri, method)">${method}_${uri.replace('/', '_').strip('_')}</%def>
@@ -48,7 +54,7 @@
   <strong>API methods</strong>
   ${mode_selector('section')}
   <ul>
-  %for section in sorted(api):
+  %for section in sorted(api, key=none_first):
     <li>
       <a href="#section_${section}" class="section">${section_info[section]['title']}</a>
       <ul>
@@ -72,9 +78,9 @@
   <strong>API methods</strong>
   ${mode_selector('oauth')}
   <ul>
-  %for scope, keys in sorted(oauth_index.items()):
+  %for scope, keys in sorted(oauth_index.items(), key=lambda item: none_first(item[0])):
     <li>
-      <a href="#scope_${scope}" class="section">${scope}</a>
+      <a href="#scope_${scope}" class="section">${scope or "any"}</a>
       <ul>
         %for section, uri, method in sorted(keys):
           <li>
@@ -211,7 +217,7 @@ of this behaviour, add a `raw_json=1` parameter to your request.
   </div>
 
   <div class="section methods">
-    %for section in sorted(api):
+    %for section in sorted(api, key=none_first):
       %if thing.mode == 'oauth':
         ${scope_header(section)}
       %else:
