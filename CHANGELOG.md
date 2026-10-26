@@ -38,6 +38,9 @@
   other. A vault with its own rules lists those first and the site's in a menu, as before. Each reason is kept in
   English on the report and shown to moderators in their own language; reports made before keep their wording.
   Reporting from a vault's rules page no longer fails.
+- **A check for media storage:** `tippr-run scripts/check_media_storage.py` saves a test file the way uploads are
+  saved, checks it's in the bucket (with S3 storage) and not on the disk, fetches it from `/media/` through nginx, and
+  deletes it: the last step of moving media to a bucket (docs/STORAGE.md).
 - **The jobs and queue processors run without `paster`:** they, `tippr-run` and `tippr-shell` load the app with
   `python -m r2.commands`, and `tippr-serve` (development) runs gunicorn with reloading, so PasteScript is no longer
   installed. It's the first step in phasing out Paste (docs/ROADMAP.md); Pyramid, which tippr never used, is gone from

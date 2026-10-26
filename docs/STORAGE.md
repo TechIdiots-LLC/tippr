@@ -143,6 +143,12 @@ Do it in this order, so the site keeps working throughout:
 
        sudo env MEDIA_BUCKET=tippr-media TIPPR_ALLOW_MUTATE=1 tippr-run /home/tippr/src/tippr/scripts/migrate_media_to_s3.py
 
+5. **Check it.** This saves a test file the way uploads are saved, checks
+   it's in the bucket and not on the disk, fetches it from `/media/`
+   through nginx, then deletes it:
+
+       sudo tippr-run /home/tippr/src/tippr/scripts/check_media_storage.py
+
 Check a few images on the site, then `/srv/www/media` can be archived.
 
 ### Going back
