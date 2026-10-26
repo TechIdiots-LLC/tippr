@@ -72,11 +72,8 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    private services: ad images stored on the server when there's no
    bucket, inventory from the site's own traffic counts, and impressions
    and clicks counted by the site.
-2. **Dependency updates merged automatically.** The packages are current
-   (Paste and formenergy-observability are gone, OpenTelemetry 1.45,
-   Pillow 13); next is CI that tests the exact pinned packages and loads
-   the site after installing, so Dependabot's patch updates can be merged
-   once it passes. Then Python 3.13, which needs legacy-cgi for WebOb.
+2. **Python 3.13.** The packages are current and Dependabot keeps them
+   so; 3.13 needs legacy-cgi for WebOb (the `cgi` module is gone).
 
 ## Then
 

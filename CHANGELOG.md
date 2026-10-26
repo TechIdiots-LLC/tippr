@@ -16,6 +16,10 @@
 - **A check that a server's tippr is up:** `scripts/smoke_check.sh` checks the services the server runs, a few pages
   (the front page, login, the API, an error page, a POST) and the web app's log, and says what failed. The
   installer's CI runs it after installing, so an install that finishes with a broken site fails.
+- **Package updates from Dependabot:** weekly pull requests for newer Python packages and GitHub Actions, with
+  packages that move together (OpenTelemetry, boto3 and botocore, grpcio and protobuf) in one. CI installs the exact
+  pins as a release would and tests them, and patch updates that pass are merged automatically, once master's
+  ruleset requires the checks (`.github/workflows/dependabot-automerge.yml`).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

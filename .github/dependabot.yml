@@ -1,0 +1,37 @@
+# Weekly pull requests for newer Python packages (install/requirements.txt,
+# installed exactly, with --no-deps) and GitHub Actions. The CI checks
+# install the pins as a release would and test them; patch updates that
+# pass are merged automatically (dependabot-automerge.yml), the rest wait
+# for review.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /install
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels: [dependencies]
+    groups:
+      # pinned to each other's exact versions: they only move together
+      opentelemetry:
+        patterns: ["opentelemetry-*"]
+      aws:
+        patterns: ["boto3", "botocore", "s3transfer"]
+      grpc-protobuf:
+        patterns: ["grpcio*", "protobuf", "googleapis-common-protos"]
+      # the rest's patch releases in one pull request a week
+      patch:
+        update-types: [patch]
+    ignore:
+      # botocore needs python-dateutil below 3
+      - dependency-name: python-dateutil
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]
+    groups:
+      actions:
+        patterns: ["*"]

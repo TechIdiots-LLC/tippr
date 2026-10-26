@@ -1,0 +1,55 @@
+# Turns on auto-merge for Dependabot's patch updates (and GitHub Actions
+# updates short of a major version): GitHub merges them once the required
+# checks pass, and never if one fails. Everything else waits for review.
+#
+# Needs, in Settings: "Allow auto-merge" (General), and a ruleset (Rules >
+# Rulesets) for master that requires the "test" and
+# "Run install/tippr.sh (smoke)" checks. Without required checks GitHub
+# would merge at once, so this does nothing until master has them (it
+# looks for a ruleset: this workflow's token can't read classic branch
+# protection rules).
+
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check master requires the CI checks
+        id: protected
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          checks=$(gh api "repos/${{ github.repository }}/rules/branches/master" \
+                     --jq '[.[] | select(.type == "required_status_checks")] | length' 2>/dev/null || echo 0)
+          legacy=$(gh api "repos/${{ github.repository }}/branches/master/protection/required_status_checks" \
+                     --jq '.contexts | length' 2>/dev/null || echo 0)
+          if [ "${checks:-0}" -gt 0 ] || [ "${legacy:-0}" -gt 0 ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::master has no required status checks; not enabling auto-merge"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable auto-merge
+        if: >-
+          steps.protected.outputs.ok == 'true' && (
+            steps.meta.outputs.update-type == 'version-update:semver-patch' || (
+              steps.meta.outputs.package-ecosystem == 'github_actions' &&
+              steps.meta.outputs.update-type == 'version-update:semver-minor'))
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
