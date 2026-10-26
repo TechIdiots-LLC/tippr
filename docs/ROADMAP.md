@@ -72,13 +72,11 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    private services: ad images stored on the server when there's no
    bucket, inventory from the site's own traffic counts, and impressions
    and clicks counted by the site.
-2. **Current packages.** Paste is gone: the error pages, static files and
-   per-request objects (`c`, `g`, `request`) are r2's own
-   (`r2/config/middleware.py`, `pylons/`), and PasteDeploy, which reads
-   the ini, stays. Next: newer OpenTelemetry, protobuf and
-   python-json-logger through the baseplate fork, Pillow 13, and CI that
-   tests the exact pinned packages, so dependency updates can be merged
-   automatically once it passes.
+2. **Dependency updates merged automatically.** The packages are current
+   (Paste and formenergy-observability are gone, OpenTelemetry 1.45,
+   Pillow 13); next is CI that tests the exact pinned packages and loads
+   the site after installing, so Dependabot's patch updates can be merged
+   once it passes. Then Python 3.13, which needs legacy-cgi for WebOb.
 
 ## Then
 

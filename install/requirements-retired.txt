@@ -54,3 +54,8 @@ typing-inspection
 tzdata
 universal_pathlib
 watchdog
+# current OpenTelemetry doesn't need importlib_metadata (0.25.0)
+importlib_metadata
+zipp
+# whoosh, a search library nothing imports (0.25.0)
+Whoosh

@@ -16,6 +16,10 @@
 - **About 30 fewer Python packages:** baseplate no longer needs formenergy-observability, which brought in Dagster (a
   data pipeline framework) and capped `packaging` below 25; the two tracing helpers it used are in baseplate now.
   Updating a server uninstalls them, and `packaging` is current (26.3).
+- **Current Python packages:** OpenTelemetry 1.45 (was 1.28), protobuf 7, Pillow 13, wrapt 2, grpcio 1.85, pytest 9,
+  and python-json-logger 4 and pyrate-limiter 4 through tippr's baseplate (which now needs Python 3.10 or newer);
+  the rest are at their newest too. python-dateutil stays at 2.9, as botocore needs. importlib_metadata and zipp,
+  which nothing needs any more, are uninstalled on update, and so is Whoosh, a search library nothing used.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
