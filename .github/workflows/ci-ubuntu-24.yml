@@ -41,18 +41,27 @@ jobs:
           # Configure Cassandra (create keyspace and tables)
           sudo install/setup_cassandra.sh
 
-      - name: Install Python dependencies (common)
+      # exactly install/requirements.txt, as the installer and the Docker
+      # image install it (--no-deps), so a change to a pin (a Dependabot
+      # update, say) is what these tests run against
+      - name: Install the pinned Python packages
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install cassandra-driver simplejson PasteDeploy pytest pylibmc
-          # tippr's baseplate fork, as install/requirements.txt pins it (the one on
-          # PyPI needs pkg_resources, which current setuptools doesn't have)
-          pip install "$(grep -E '^baseplate @ ' install/requirements.txt)"
+          python -m pip install --upgrade pip
+          pip install --no-deps -r install/requirements.txt
+          # the ones pinned to a URL, whatever was there (as tippr.sh does)
+          grep -E '^[A-Za-z0-9_.-]+ @ ' install/requirements.txt > url-pinned.txt
+          pip install --no-deps --force-reinstall -r url-pinned.txt
 
-      - name: Build and install (with the compiled Cython modules)
+      - name: Build and install r2 (with the compiled Cython modules)
         run: |
-          python -m pip install --upgrade pip setuptools wheel cython
-          pip install -e r2/
+          cd r2
+          python setup.py build
+          pip install --no-build-isolation --no-deps -e .
+
+      - name: Check the packages fit together
+        run: |
+          pip check
+          python scripts/check_requirements.py r2
 
       - name: Verify r2 package installation
         run: |
@@ -64,7 +73,7 @@ jobs:
           DATABASE_URL: "postgresql://tippr:password@127.0.0.1/tippr"
         run: |
           # Run only unit tests for now - functional tests require full WSGI app setup
-          python -m pytest r2/r2/tests/unit -v --tb=short
+          python -m pytest r2/r2/tests/unit r2/r2/tests/test_pylons_shim.py -v --tb=short
 
       - name: Archive test logs
         if: failure()
