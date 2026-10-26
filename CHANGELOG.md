@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/feeds can be searched, filtered and sorted:** a search box (titles, addresses, vaults, bots and title
+  prefixes), menus of the vaults and bots the feeds use, and a status filter (active, paused, with errors, never
+  checked, each with its count), and every column heading sorts by it (again for the other way round). The view is
+  in the page's address, so it can be bookmarked and stays after a save. A feed's edit form opens the width of the
+  table under it, with every setting, including the vault it posts to (new items go to the new vault; posts already
+  made stay where they are).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

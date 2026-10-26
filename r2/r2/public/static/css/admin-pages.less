@@ -130,7 +130,24 @@
     .admin-feeds-table td { vertical-align: top; }
     .admin-feed-disabled td { color: var(--tp-text-muted); }
     .admin-feed-action { display: inline-block; margin: 2px 4px 2px 0; }
-    .admin-feed-edit summary { cursor: pointer; margin-top: 4px; }
+    .admin-feed-edit-toggle { margin: 2px 4px 2px 0; }
+    // a feed's settings, the table's width under its row
+    .admin-feed-edit-row td {
+        background: var(--tp-subtle);
+        padding: 8px 10px;
+    }
+    // search, filters and the count, over the table
+    .admin-feeds-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
+        margin: 8px 0;
+    }
+    // sortable column headings; the current one bold, with its direction
+    .admin-feeds-sort { color: inherit; text-decoration: none; }
+    .admin-feeds-sort:hover { text-decoration: underline; }
+    .admin-feeds-sort.selected { font-weight: bold; }
     .admin-feed-form th { text-align: left; padding-right: 1em; vertical-align: top; }
     .admin-feed-form td { padding-bottom: 6px; }
 }

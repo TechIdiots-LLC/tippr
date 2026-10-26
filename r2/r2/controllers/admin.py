@@ -206,10 +206,13 @@ class AdminToolController(TipprController):
             return self.abort404()
         return AdminPage(content=AdminDomain(domain)).render()
 
-    @validate(VAdmin())
-    def GET_feeds(self):
-        """Feeds posted to vaults by bot accounts (r2.lib.feeds)."""
-        return AdminPage(content=AdminFeeds()).render()
+    @validate(VAdmin(), q=nop("q"), vault=nop("vault"), bot=nop("bot"),
+              status=nop("status"), sort=nop("sort"), order=nop("order"))
+    def GET_feeds(self, q, vault, bot, status, sort, order):
+        """Feeds posted to vaults by bot accounts (r2.lib.feeds): searched,
+        filtered and sorted by the query (AdminFeeds)."""
+        return AdminPage(content=AdminFeeds(q, vault, bot, status, sort,
+                                            order)).render()
 
     @validate(VAdmin(), show=nop("show"))
     def GET_apps(self, show):

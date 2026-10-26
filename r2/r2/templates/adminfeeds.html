@@ -80,18 +80,59 @@
   ${_("So a new feed doesn't flood its vault, the first check posts only its newest %(first)d items; later checks post at most the newest %(per)d. Items left over are skipped, not posted later.") % dict(first=thing.first_fetch, per=thing.per_fetch)}
 </small></p>
 
+## a column heading that sorts by it (again: the other way round)
+<%def name="sort_heading(sort, label)">
+  <th><a href="${thing.sort_link(sort)}" class="admin-feeds-sort ${'selected' if thing.sort == sort else ''}">${label}${(' ▲' if thing.order == 'asc' else ' ▼') if thing.sort == sort else ''}</a></th>
+</%def>
+
+%if thing.total:
+  ## searching and filtering: a GET form, so a view has its own address
+  <form action="/admin/feeds" method="get" class="admin-feeds-filter">
+    <input type="search" name="q" value="${thing.q}" size="24"
+           placeholder="${_('search titles, addresses, vaults, bots')}">
+    <select name="vault">
+      <option value="">${_("every vault")}</option>
+      %for name in thing.vault_names:
+        <option value="${name}" ${'selected' if name.lower() == thing.vault.lower() else ''}>/v/${name}</option>
+      %endfor
+    </select>
+    <select name="bot">
+      <option value="">${_("every bot")}</option>
+      %for name in thing.bot_names:
+        <option value="${name}" ${'selected' if name.lower() == thing.bot.lower() else ''}>${name}</option>
+      %endfor
+    </select>
+    <%
+      status_names = dict(all=_("all"), active=_("active"), paused=_("paused"),
+                          errors=_("with errors"), never=_("never checked"))
+    %>
+    <select name="status">
+      %for s in thing.STATUSES:
+        <option value="${s}" ${'selected' if s == thing.status else ''}>${status_names[s]} (${thing.counts[s]})</option>
+      %endfor
+    </select>
+    <input type="hidden" name="sort" value="${thing.sort}">
+    <input type="hidden" name="order" value="${thing.order}">
+    <button class="btn" type="submit">${_("show")}</button>
+    %if thing.q or thing.vault or thing.bot or thing.status != 'all':
+      <a href="${thing.link(q='', vault='', bot='', status='all')}">${_("clear")}</a>
+    %endif
+    <small>${_("%(shown)d of %(total)d feeds") % dict(shown=len(thing.feeds), total=thing.total)}</small>
+  </form>
+%endif
+
 %if thing.feeds:
   <table class="lined-table admin-feeds-table">
     <tr>
-      <th>${_("feed")}</th><th>${_("vault")}</th><th>${_("posted by")}</th>
-      <th>${_("every")}</th><th>${_("last checked")}</th><th>${_("posts")}</th><th></th>
+      ${sort_heading('title', _("feed"))}${sort_heading('vault', _("vault"))}${sort_heading('bot', _("posted by"))}
+      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}<th></th>
     </tr>
     %for f in thing.feeds:
       <%
         vault = thing.vaults.get(f['vault_id'])
         bot = thing.accounts.get(f['account_id'])
-        vault_name = vault.name if vault else ''
-        bot_name = bot.name if bot else ''
+        vault_name = f['vault_name']
+        bot_name = f['bot_name']
       %>
       <tr class="${'' if f['enabled'] else 'admin-feed-disabled'}">
         <td>
@@ -146,14 +187,23 @@
             ${action(f['id'], 'enable', _('resume'))}
           %endif
           ${action(f['id'], 'delete', _('delete'))}
-          <details class="admin-feed-edit">
-            <summary>${_("edit")}</summary>
-            ${feed_form('edit', f, vault_name, bot_name)}
-          </details>
+          <button type="button" class="btn admin-feed-edit-toggle"
+                  aria-expanded="false" aria-controls="admin-feed-edit-${f['id']}"
+                  onclick="var row = document.getElementById('admin-feed-edit-${f['id']}'); row.hidden = !row.hidden; this.setAttribute('aria-expanded', String(!row.hidden));">${_("edit")}</button>
+        </td>
+      </tr>
+      ## its settings, under it the width of the table: the address, the
+      ## vault it posts to, the bot, how often, the labels
+      <tr class="admin-feed-edit-row" id="admin-feed-edit-${f['id']}" hidden>
+        <td colspan="7">
+          ${feed_form('edit', f, vault_name, bot_name)}
+          <p><small>${_("Changing the vault moves where new items go; posts already made stay where they are.")}</small></p>
         </td>
       </tr>
     %endfor
   </table>
+%elif thing.total:
+  <p>${_("No feeds match.")} <a href="${thing.link(q='', vault='', bot='', status='all')}">${_("Show them all")}</a></p>
 %else:
   <p>${_("No feeds yet.")}</p>
 %endif

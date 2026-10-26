@@ -63,6 +63,7 @@ from r2.lib.filters import (
     websafe_json,
     wikimarkdown,
 )
+from r2.lib.feed_view import FeedView
 from r2.lib.ip_events import ips_by_account_id
 from r2.lib.memoize import memoize
 from r2.lib.menus import (
@@ -4126,23 +4127,33 @@ class AdminDomain(Templated):
         Templated.__init__(self)
 
 
-class AdminFeeds(Templated):
-    """Feeds posted to vaults by bot accounts (r2.lib.feeds)."""
-    def __init__(self):
+class AdminFeeds(Templated, FeedView):
+    """Feeds posted to vaults by bot accounts (r2.lib.feeds), searched,
+    filtered and sorted by the page's query (r2.lib.feed_view)."""
+    def __init__(self, q="", vault="", bot="", status="all", sort="added",
+                 order="asc"):
         from r2.lib import feeds
-        self.feeds = feeds.all_feeds()
-        vault_ids = {f["vault_id"] for f in self.feeds}
-        account_ids = {f["account_id"] for f in self.feeds}
+        everything = feeds.all_feeds()
+        vault_ids = {f["vault_id"] for f in everything}
+        account_ids = {f["account_id"] for f in everything}
         self.vaults = (Vault._byID(vault_ids, data=True, return_dict=True,
                                    ignore_missing=True) if vault_ids else {})
         self.accounts = (Account._byID(account_ids, data=True,
                                        return_dict=True, ignore_missing=True)
                          if account_ids else {})
+        for f in everything:
+            v = self.vaults.get(f["vault_id"])
+            a = self.accounts.get(f["account_id"])
+            f["vault_name"] = v.name if v else ""
+            f["bot_name"] = a.name if a else ""
+        FeedView.__init__(self, everything, q, vault, bot, status, sort,
+                          order)
         self.min_interval = feeds.MIN_INTERVAL_MINUTES
         self.default_interval = feeds.DEFAULT_INTERVAL_MINUTES
         self.first_fetch = feeds.FIRST_FETCH_POSTS
         self.per_fetch = feeds.MAX_POSTS_PER_FETCH
         Templated.__init__(self)
+
 
 
 class AdminApps(Templated):
