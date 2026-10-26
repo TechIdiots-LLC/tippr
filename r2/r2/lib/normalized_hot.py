@@ -23,6 +23,7 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
+import hashlib
 import heapq
 import itertools
 from datetime import datetime, timedelta
@@ -133,12 +134,20 @@ def spread_vaults(links, window=SPREAD_WINDOW):
     return out
 
 
+def _all_hot_key(site, gold):
+    """One cache entry per set of vaults left out: every member's filtered
+    /all has the same path (/me/f/all) but not the same vaults, and only
+    gold members' are left out (AllMinus.get_links)."""
+    excluded = sorted(getattr(site, "exclude_vault_ids", ())) if gold else []
+    ids = ",".join(str(vault_id) for vault_id in excluded)
+    return "all_hot_spread:" + hashlib.md5(ids.encode()).hexdigest()
+
+
 def all_hot(site):
     """/v/all's hot listing (AllSR, AllMinus), spread_vaults, kept a minute
     as the query it's made from is."""
     from pylons import tmpl_context as c
-    key = "all_hot_spread:%s:%s" % (site.path, bool(c.user_is_loggedin and
-                                                     c.user.gold))
+    key = _all_hot_key(site, bool(c.user_is_loggedin and c.user.gold))
     names = g.gencache.get(key)
     if names is None:
         q = site.get_links("hot", "all")

@@ -1133,3 +1133,4 @@
   listings (/v/mod), canonical links and more.
 
 - **"Exclude custom vaults" (/me/f/all) gave "you broke tippr" to gold members:** its sidebar asked for the\n  filtered vaults by their name from before vaults were renamed. It lists them again, to add to or remove.
+- **Filtering a vault out of /all didn't take effect for a minute, and could show someone else's filter:** the\n  spread-out /v/all hot list was cached by the page's address, which is /me/f/all for every member. It's cached by\n  the vaults left out now.

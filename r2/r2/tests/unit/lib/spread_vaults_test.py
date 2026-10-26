@@ -14,7 +14,9 @@
 ###############################################################################
 """/v/all's hot list with runs of one vault spread out."""
 
-from r2.lib.normalized_hot import spread_vaults
+from types import SimpleNamespace
+
+from r2.lib.normalized_hot import _all_hot_key, spread_vaults
 from r2.tests import TipprTestCase
 
 
@@ -39,3 +41,22 @@ class TestSpreadVaults(TipprTestCase):
         links = [(str(i), i % 3 == 0) for i in range(50)]
         self.assertEqual(sorted(spread_vaults(links)),
                          sorted(name for name, _ in links))
+
+
+class TestAllHotKey(TipprTestCase):
+    def test_each_filter_has_its_own_cache(self):
+        mine = SimpleNamespace(path="/me/f/all", exclude_vault_ids=[5, 2])
+        theirs = SimpleNamespace(path="/me/f/all", exclude_vault_ids=[7])
+        same_as_mine = SimpleNamespace(path="/me/f/all", exclude_vault_ids=[2, 5])
+        self.assertNotEqual(_all_hot_key(mine, True), _all_hot_key(theirs, True))
+        self.assertEqual(_all_hot_key(mine, True), _all_hot_key(same_as_mine, True))
+
+    def test_no_filter_shares_all(self):
+        all_site = SimpleNamespace(path="/v/all")
+        empty_filter = SimpleNamespace(path="/me/f/all", exclude_vault_ids=[])
+        self.assertEqual(_all_hot_key(all_site, False), _all_hot_key(empty_filter, True))
+
+    def test_filter_ignored_without_gold(self):
+        mine = SimpleNamespace(path="/me/f/all", exclude_vault_ids=[5, 2])
+        self.assertEqual(_all_hot_key(mine, False),
+                         _all_hot_key(SimpleNamespace(path="/v/all"), False))
