@@ -914,12 +914,10 @@ else
     fi
 fi
 
-# Now upgrade pip/setuptools/wheel and packaging
-# setuptools stays below 81: the OpenTelemetry instrumentation and pyramid
-# (the activity service) import pkg_resources, which setuptools 81
-# deprecates and later versions remove. r2/pyproject.toml pins the same for
-# building r2.
-sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip 'setuptools<81' wheel
+# Now upgrade pip/setuptools/wheel and packaging (nothing tippr runs needs
+# setuptools' pkg_resources any more, so any version does; the list below
+# pins the one tested)
+sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip setuptools wheel
 # (not --upgrade: install/requirements.txt pins the version below)
 sudo -u $TIPPR_USER "$BOOT_PY" -m pip install 'packaging>=23.1'
 
@@ -952,6 +950,16 @@ else
        sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps --force-reinstall \
             -r "$url_pinned"; then
         rm -f "$url_pinned"
+        # and the packages that left the list (requirements-retired.txt),
+        # which installing it doesn't remove
+        retired=$(grep -vE '^\s*(#|$)' "$TIPPR_SRC/tippr/install/requirements-retired.txt" 2>/dev/null |
+                  while read -r name; do
+                      sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip show -q "$name" >/dev/null 2>&1 && echo "$name"
+                  done)
+        if [ -n "$retired" ]; then
+            echo "Python packages no longer used, removing: $(echo $retired)"
+            sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip uninstall -y $retired || true
+        fi
         record_built requirements
     else
         rm -f "$url_pinned"
@@ -994,7 +1002,7 @@ function install_tippr_repo {
     pushd $TIPPR_SRC/$1
     # a build toolchain metadata generation works with (already there from
     # install/requirements.txt, so normally nothing to do)
-    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps 'setuptools<81' wheel 'packaging>=23.1' || true
+    sudo -u $TIPPR_USER $TIPPR_VENV/bin/pip install --no-deps setuptools wheel 'packaging>=23.1' || true
 
     sudo -u $TIPPR_USER $TIPPR_VENV/bin/python setup.py build
     # --no-build-isolation uses the venv's packages (like baseplate) instead
@@ -1013,8 +1021,8 @@ install_tippr_repo tippr/r2
 # Check that every package r2 needs is there at a version it accepts, so a
 # mismatch fails the install (and an update rolls back) rather than the
 # queues and jobs failing later
-if ! sudo -u $TIPPR_USER $TIPPR_VENV/bin/python -c \
-        "import pkg_resources; pkg_resources.require('r2')"; then
+if ! sudo -u $TIPPR_USER $TIPPR_VENV/bin/python \
+        $TIPPR_SRC/tippr/scripts/check_requirements.py r2; then
     echo "ERROR: the Python packages don't fit together (see above); the queues and jobs wouldn't start" >&2
     exit 1
 fi

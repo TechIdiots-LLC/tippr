@@ -79,9 +79,8 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    contextvars in `pylons/`, and the small middleware pieces in
    `r2/config/middleware.py` (cascade, static files, error documents) our
    own, so Paste can go. PasteDeploy, which reads the ini, can stay.
-   setuptools stays below 81 until the OpenTelemetry
-   instrumentation and pyramid (the activity service) stop importing
-   `pkg_resources`.
+   Nothing tippr runs imports `pkg_resources` any more, so setuptools is
+   current (no `setuptools<81`).
 
 ## Then
 

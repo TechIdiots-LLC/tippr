@@ -32,7 +32,6 @@ from unittest.mock import MagicMock, patch
 
 from baseplate.lib import events as baseplate_events
 import paste.fixture
-import paste.script.appinstall
 from importlib.metadata import version, PackageNotFoundError
 import pylons
 from paste.deploy import loadapp
@@ -51,7 +50,6 @@ conf_dir = os.path.dirname(os.path.dirname(here_dir))
 sys.path.insert(0, conf_dir)
 # conf_dir added to sys.path above
 version('Paste')  # Verify Paste is installed
-version('PasteScript')  # Verify PasteScript is installed
 
 
 from pylons import app_globals as g

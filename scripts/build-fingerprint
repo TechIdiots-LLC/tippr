@@ -59,8 +59,8 @@ function inputs {
             hash_files "$i18n" . \( -name '*.po' -o -path ./gendata.py -o -path ./Makefile \)
             ;;
         requirements)
-            # the Python packages installed in the venv
-            hash_files "$src/tippr/install" . -path ./requirements.txt
+            # the Python packages installed in the venv, and the ones removed
+            hash_files "$src/tippr/install" . \( -path ./requirements.txt -o -path ./requirements-retired.txt \)
             "$python" -c 'import sys; print(sys.version)'
             ;;
         r2)

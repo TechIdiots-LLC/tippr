@@ -73,7 +73,7 @@ jobs:
           ln -sf python /home/runner/venv/bin/python3 || true
           # Verify the venv works (can import stdlib modules including math)
           /home/runner/venv/bin/python -c "import sys, os, math; print('venv created successfully with Python', sys.version)"
-          /home/runner/venv/bin/pip install --upgrade pip 'setuptools<81' wheel 'packaging>=23.1'
+          /home/runner/venv/bin/pip install --upgrade pip setuptools wheel 'packaging>=23.1'
           # Install the local baseplate checkout editable so builds find it
           if [ -d ./tippr-baseplate.py ]; then
             /home/runner/venv/bin/pip install -e ./tippr-baseplate.py

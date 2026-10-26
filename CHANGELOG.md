@@ -3,6 +3,14 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Current setuptools, without pkg_resources:** setuptools 81 deprecated `pkg_resources` and later versions remove it,
+  and tippr was held below 81 by what still imported it: tippr's baseplate (now `importlib.metadata`), OpenTelemetry's
+  instrumentation before 0.49 (now 1.28.2 / 0.49b2, which needs protobuf 5), the test setup's PasteScript import, and
+  Pyramid 2.1, which only the activity service's HTTP gateway uses and tippr never runs (it's an optional extra of the
+  activity service now). The installer's package check uses `importlib.metadata` (`scripts/check_requirements.py`),
+  and the pins in the installer, Docker image, builds and CI are gone. Packages a release no longer uses are listed
+  in `install/requirements-retired.txt`, and the installer, and so an update from /admin/servers, removes them: this
+  one removes PasteScript, Pyramid and what came with it.
 - **Account activity lists where your account is used from:** it only recorded logins, and a login cookie lasts for
   months, so the page was usually empty. Visits are recorded too now, at most once an hour for each address, kept 100
   days as before. A visit from a private network address (a home or office network reaching the site directly) isn't

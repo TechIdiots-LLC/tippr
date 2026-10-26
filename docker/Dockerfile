@@ -74,7 +74,7 @@ ENV TIPPR_HOME=/opt/tippr \
     VIRTUAL_ENV=/opt/tippr/venv \
     PATH=/opt/tippr/venv/bin:/opt/tippr/node-tools/node_modules/.bin:$PATH
 RUN python3.12 -m venv $VIRTUAL_ENV \
-    && pip install --no-cache-dir --upgrade pip 'setuptools<81' wheel
+    && pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Pinned dependencies first, so code changes don't reinstall them
 COPY install/requirements.txt /tmp/requirements.txt

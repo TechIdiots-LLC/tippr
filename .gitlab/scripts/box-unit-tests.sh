@@ -14,9 +14,11 @@ install/setup_cassandra.sh
 
 python3 -m venv /opt/ci-venv
 export PATH=/opt/ci-venv/bin:$PATH
-pip install --upgrade pip 'setuptools<81' wheel cython
-pip install cassandra-driver simplejson Paste PasteDeploy \
-    Pylons pytest pylibmc
+pip install --upgrade pip setuptools wheel cython
+pip install cassandra-driver simplejson Paste PasteDeploy pytest pylibmc
+# tippr's baseplate fork, as install/requirements.txt pins it (the one on PyPI
+# needs pkg_resources, which current setuptools doesn't have)
+pip install "$(grep -E '^baseplate @ ' install/requirements.txt)"
 pip install -e r2/
 python -c "import r2; print('r2 loaded from:', r2.__file__)"
 

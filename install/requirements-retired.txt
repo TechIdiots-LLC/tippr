@@ -1,0 +1,21 @@
+# Python packages earlier releases installed that nothing uses now. The
+# installer uninstalls any of these it finds after installing
+# requirements.txt, so a server updated from /admin/servers (or by
+# re-running the installer) doesn't keep them. A name goes here when it
+# leaves requirements.txt, unless something else still needs it.
+
+# paster, replaced by r2.commands (0.23.0)
+PasteScript
+# only the activity service's HTTP gateway used pyramid, and tippr doesn't
+# run it; pyramid 2.1 needs pkg_resources (setuptools<82)
+pyramid
+pyramid-mako
+hupper
+plaster
+plaster-pastedeploy
+translationstring
+venusian
+zope.deprecation
+# baseplate's pyramid instrumentation, an extra now
+opentelemetry-instrumentation-pyramid
+opentelemetry-instrumentation-wsgi
