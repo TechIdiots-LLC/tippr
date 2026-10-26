@@ -619,11 +619,13 @@ if [ "$TIPPR_ROLE" = "backend" ]; then
     } > "$TIPPR_CLUSTER_FILE"
 fi
 
-# psql and scripts/compute_time_listings read the database password from here
+# psql and scripts/compute_time_listings read the database password from
+# here. The entries are for the database role, tippr (setup_postgres.sh,
+# db_user), which is the Linux user's name only when TIPPR_USER is tippr.
 cat > "$TIPPR_HOME/.pgpass" <<PGPASS
-localhost:5432:*:${TIPPR_USER}:${TIPPR_DB_PASSWORD}
-127.0.0.1:5432:*:${TIPPR_USER}:${TIPPR_DB_PASSWORD}
-${SERVICE_HOST}:5432:*:${TIPPR_USER}:${TIPPR_DB_PASSWORD}
+localhost:5432:*:tippr:${TIPPR_DB_PASSWORD}
+127.0.0.1:5432:*:tippr:${TIPPR_DB_PASSWORD}
+${SERVICE_HOST}:5432:*:tippr:${TIPPR_DB_PASSWORD}
 PGPASS
 chown "$TIPPR_USER:$TIPPR_GROUP" "$TIPPR_HOME/.pgpass"
 chmod 0600 "$TIPPR_HOME/.pgpass"

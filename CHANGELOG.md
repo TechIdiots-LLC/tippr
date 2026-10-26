@@ -33,6 +33,9 @@
 - **Filtering a vault out of /all didn't take effect for a minute, and could show someone else's filter:** the
   spread-out /v/all hot list was cached by the page's address, which is /me/f/all for every member. It's cached by
   the vaults left out now.
+- **Top and controversial listings never updated when tippr runs as a user other than `tippr`:** the database
+  password file named the Linux user instead of the database's, so the job that computes them couldn't connect and
+  failed every 15 minutes. Updating rewrites the file.
 
 ## 0.25.0
 ### ✨ Features and improvements
