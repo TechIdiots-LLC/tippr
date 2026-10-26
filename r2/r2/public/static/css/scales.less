@@ -29,15 +29,23 @@
 
     .scale {
         display: grid;
-        grid-template-columns: minmax(80px, auto) 1fr minmax(80px, auto);
+        // the same widths on every row, so the beams line up
+        grid-template-columns: 12em 1fr 12em;
         grid-template-areas: "left beam right" "count count count";
         align-items: center;
         gap: 2px 8px;
         margin-bottom: 8px;
     }
 
-    .scale-left { grid-area: left; }
-    .scale-right { grid-area: right; }
+    .scale-left { grid-area: left; justify-self: start; }
+    .scale-right { grid-area: right; justify-self: end; }
+
+    // each side's count, in its colour on the beam
+    .scale-side-count {
+        font-weight: bold;
+    }
+    .scale-left .scale-side-count { color: @tp-accent; }
+    .scale-right .scale-side-count { color: @tp-downvote; }
     .scale-beam { grid-area: beam; }
 
     .scale-side {
@@ -100,16 +108,6 @@
         &:empty {
             display: none;
         }
-    }
-
-    // the scales behind "more scales", until it's opened
-    .scale.scale-folded {
-        display: none;
-    }
-
-    .scales-more {
-        display: inline-block;
-        margin-bottom: 6px;
     }
 
     .scales-note {

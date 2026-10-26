@@ -15,14 +15,19 @@
 """Scales: what the community thinks a post is like.
 
 Up and down votes rank posts; scales describe them. Each scale has two
-sides (helpful or unhelpful, human-made or probably AI, beginner-friendly or
-in-depth, and three more behind "more scales"), and a member can tip each
-one toward a side, change their mind, or take the tip back. A scale's tally is shown to a member once they've tipped it
-(so the first few tips don't steer everyone else's), and to the poster.
+sides, the two ends of one kind of difference (human-made or AI-generated, a
+quick overview or a deep dive...), so they describe what kind of post it
+is rather than how good it is (votes say that). A member can tip each
+one toward a side, change their mind, or take the tip back. A scale's
+tally is shown to a member once they've tipped it (so the first few tips
+don't steer everyone else's), to the poster, and to the vault's
+moderators and admins in admin mode, whose job is to read them. With
+fewer than BAR_MIN tips the panel names them rather than drawing a bar,
+since one person's tip isn't the community's view.
 
 Scales are opinions, not reports: none of them asks moderators to act
 (breaking a rule is what "report" is for), none changes a post's ranking,
-and "probably AI" is the community's view, beside the poster's own AI
+and "AI-generated" is the community's view, beside the poster's own AI
 label (r2.lib.ai_content), not a change to it.
 
 Tips are a PostgreSQL table, so they move with backups; tallies are
@@ -42,18 +47,28 @@ LEFT = -1
 RIGHT = 1
 SIDES = (LEFT, RIGHT)
 
-# name: (left side, right side); the panel shows the first SHOWN_FIRST and
-# the rest behind "more scales"
+# name: (left side, right side), each pair two ends of one difference, not
+# good and bad. A name is what tips are kept under: a scale whose sides
+# change meaning gets a new name (helpful, level, purpose and sources were
+# retired so; their tips are kept but no longer shown)
 SCALES = OrderedDict([
-    ("helpful", (N_("helpful"), N_("unhelpful"))),
-    ("made", (N_("human-made"), N_("probably AI"))),
-    ("level", (N_("beginner-friendly"), N_("in-depth"))),
-    ("purpose", (N_("practical"), N_("just for fun"))),
-    # whether it backs up what it says, not whether it's right
-    ("sources", (N_("well-sourced"), N_("opinion"))),
-    ("tone", (N_("calm"), N_("heated"))),
+    ("made", (N_("human-made"), N_("AI-generated"))),
+    ("depth", (N_("quick overview"), N_("deep dive"))),
+    ("nature", (N_("practical"), N_("thought piece"))),
+    # how it backs up what it says, not whether it's right
+    ("evidence", (N_("data-driven"), N_("personal experience"))),
+    ("tone", (N_("matter-of-fact"), N_("passionate"))),
+    ("scope", (N_("niche"), N_("broad"))),
 ])
-SHOWN_FIRST = 3
+# the retired ones' sides, for members' data exports of tips made then
+RETIRED = {
+    "helpful": ("helpful", "unhelpful"),
+    "level": ("beginner-friendly", "in-depth"),
+    "purpose": ("practical", "just for fun"),
+    "sources": ("well-sourced", "opinion"),
+}
+# fewer tips than this are listed, not drawn as a bar (scales.js)
+BAR_MIN = 3
 
 _db = {}
 
@@ -145,16 +160,18 @@ def tallies(link):
     return found
 
 
-def summary(link, account):
+def summary(link, account, sees_all=False):
     """What a post's scales panel shows account (None: logged out): each
-    scale's sides, their own tip, and the tally where they may see it."""
+    scale's sides, their own tip, and the tally where they may see it.
+    sees_all: every tally, untipped (the vault's moderators, admins in
+    admin mode; POST_scales decides)."""
     mine = tips_by(link, account)
     is_poster = bool(account and link.author_id == account._id)
     counts = tallies(link)
     scales = []
-    for i, (name, (left, right)) in enumerate(SCALES.items()):
+    for name, (left, right) in SCALES.items():
         side = mine.get(name, 0)
-        shown = bool(side) or is_poster
+        shown = bool(side) or is_poster or sees_all
         scales.append({
             "name": name,
             "left": _(left),
@@ -162,13 +179,13 @@ def summary(link, account):
             "mine": side,
             "tally": ({"left": counts[name][LEFT],
                        "right": counts[name][RIGHT]} if shown else None),
-            # behind "more scales"
-            "more": i >= SHOWN_FIRST,
         })
     return {
         "scales": scales,
         "can_tip": can_tip(link, account),
         "is_poster": is_poster,
+        "sees_all": bool(sees_all) and not is_poster,
+        "bar_min": BAR_MIN,
     }
 
 
@@ -185,7 +202,8 @@ def export(account, limit=1000):
             .limit(limit))
         found = []
         for link_id, scale, side, created in rows:
-            left, right = SCALES.get(scale, (scale, scale))
+            left, right = (SCALES.get(scale) or
+                           RETIRED.get(scale, (scale, scale)))
             found.append({
                 "post_id": to36(link_id),
                 "scale": scale,

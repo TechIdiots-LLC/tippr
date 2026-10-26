@@ -17,8 +17,9 @@
  * A post's scales (r2.lib.scales): its "scales" link opens a panel under
  * the post where a member tips each scale toward one side (clicking the
  * side again takes the tip back). A scale's tally shows once they've
- * tipped it, and to the poster. Logged out, the link asks them to log in
- * (login.js).
+ * tipped it, to the poster, and to the vault's moderators; under
+ * bar_min tips it's listed rather than drawn. Logged out, the link asks
+ * them to log in (login.js).
  */
 r.scales = {
   post: function(action, data) {
@@ -56,33 +57,24 @@ r.scales = {
     }
     $panel.empty()
     var hidden = false
-    // the scales behind "more scales": as they last opened or folded them,
-    // or open when one of them has their tip
-    var more = _.filter(res.scales, function(scale) { return scale.more })
-    var moreOpen = $panel.data('more-open')
-    if (moreOpen === undefined) {
-      moreOpen = _.some(more, function(scale) { return scale.mine })
-    }
     _.each(res.scales, function(scale) {
       var $row = $('<div class="scale">').attr('data-scale', scale.name)
-        .toggleClass('scale-more', !!scale.more)
-        .toggleClass('scale-folded', !!scale.more && !moreOpen)
-      var $left = self.side(scale, -1, scale.left, res.can_tip)
-      var $right = self.side(scale, 1, scale.right, res.can_tip)
+      var $left = self.side(scale, -1, scale.left, res.can_tip,
+                            scale.tally && scale.tally.left)
+      var $right = self.side(scale, 1, scale.right, res.can_tip,
+                             scale.tally && scale.tally.right)
       var $beam = $('<div class="scale-beam" aria-hidden="true">')
       var $count = $('<div class="scale-count">')
       if (scale.tally) {
         var total = scale.tally.left + scale.tally.right
-        if (total) {
+        // a bar only once there are enough tips to mean something: one
+        // person's tip would fill it with one colour
+        if (total >= (res.bar_min || 1)) {
           $beam.addClass('scale-beam-tipped')
           $beam.append($('<span class="scale-fill">')
             .css('width', Math.round(scale.tally.left / total * 100) + '%'))
         }
-        $count.text(total ? r.P_('%(num)s tip', '%(num)s tips', total)
-                              .format({num: total}) +
-                            ' · ' + scale.tally.left + ' / ' +
-                            scale.tally.right
-                          : r._('no tips yet'))
+        $count.text(self.describe(scale, total, res.bar_min || 1))
       } else {
         hidden = true
         $beam.addClass('scale-beam-hidden')
@@ -91,15 +83,11 @@ r.scales = {
       $panel.append($row)
     })
 
-    if (more.length) {
-      $panel.append($('<a href="javascript: void 0;" class="scales-more">')
-        .attr('aria-expanded', moreOpen ? 'true' : 'false')
-        .text(moreOpen ? r._('fewer scales') : r._('more scales')))
-    }
-
     var $note = $('<p class="scales-note">')
     if (res.is_poster) {
       $note.text(r._('How others have tipped your post.') + ' ')
+    } else if (res.sees_all) {
+      $note.text(r._('As a moderator, you see every scale’s tips without tipping.') + ' ')
     } else if (hidden && res.can_tip) {
       $note.text(r._('Tip a scale to see how others tipped it.') + ' ')
     }
@@ -113,15 +101,50 @@ r.scales = {
     }
   },
 
-  side: function(scale, side, label, canTip) {
+  // a side's button, with its count beside the label where the tally shows
+  side: function(scale, side, label, canTip, count) {
     var mine = scale.mine === side
-    return $('<button type="button" class="scale-side">')
+    var $button = $('<button type="button" class="scale-side">')
       .addClass(side < 0 ? 'scale-left' : 'scale-right')
       .toggleClass('scale-tipped', mine)
       .attr('aria-pressed', mine ? 'true' : 'false')
       .attr('data-side', side)
       .prop('disabled', !canTip)
-      .text(label)
+      .append($('<span class="scale-side-label">').text(label))
+    if (typeof count === 'number') {
+      $button.append(' ', $('<span class="scale-side-count">').text(count))
+    }
+    return $button
+  },
+
+  // the line under a scale: "75% human-made · 4 tips", or with fewer than
+  // barMin tips, who tipped which way ("1 tip so far: human-made")
+  describe: function(scale, total, barMin) {
+    var left = scale.tally.left, right = scale.tally.right
+    if (!total) {
+      return r._('no tips yet')
+    }
+    var tips = r.P_('%(num)s tip', '%(num)s tips', total).format({num: total})
+    if (total < barMin) {
+      var parts = []
+      if (left) {
+        parts.push(left === total ? scale.left
+                   : r._('%(num)s %(side)s').format({num: left, side: scale.left}))
+      }
+      if (right) {
+        parts.push(right === total ? scale.right
+                   : r._('%(num)s %(side)s').format({num: right, side: scale.right}))
+      }
+      return r.P_('%(num)s tip so far', '%(num)s tips so far', total)
+               .format({num: total}) + ': ' + parts.join(', ')
+    }
+    if (left === right) {
+      return r._('evenly split') + ' · ' + tips
+    }
+    var winner = left > right ? scale.left : scale.right
+    var percent = Math.round(Math.max(left, right) / total * 100)
+    return r._('%(percent)s %(side)s').format({percent: percent + '%',
+                                               side: winner}) + ' · ' + tips
   },
 
   tip: function($thing, $button) {
@@ -160,16 +183,6 @@ $(function() {
   $(document).on('click', '.scales-panel .scale-side', function(e) {
     e.preventDefault()
     r.scales.tip($(this).thing(), $(this))
-  })
-
-  $(document).on('click', '.scales-panel .scales-more', function(e) {
-    e.preventDefault()
-    var $panel = $(this).closest('.scales-panel')
-    var open = $(this).attr('aria-expanded') !== 'true'
-    $panel.data('more-open', open)
-    $panel.find('.scale-more').toggleClass('scale-folded', !open)
-    $(this).attr('aria-expanded', open ? 'true' : 'false')
-      .text(open ? r._('fewer scales') : r._('more scales'))
   })
 
   $(document).on('click', '.scales-panel .scales-report', function(e) {

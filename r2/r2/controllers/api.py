@@ -397,7 +397,8 @@ class ApiController(TipprController):
         response.headers["Cache-Control"] = "private, no-store"
         if not link or link._deleted or not link.vault_slow.can_view(c.user):
             return {"error": "not found"}
-        return scales.summary(link, c.user)
+        return scales.summary(link, c.user,
+                              sees_all=self._sees_all_scales(link))
 
     @json_validate(
         VUser(),
@@ -419,7 +420,14 @@ class ApiController(TipprController):
         if not scales.can_tip(link, c.user):
             return {"error": "can't tip"}
         scales.tip(link, c.user, scale, side)
-        return scales.summary(link, c.user)
+        return scales.summary(link, c.user,
+                              sees_all=self._sees_all_scales(link))
+
+    @staticmethod
+    def _sees_all_scales(link):
+        """Every tally, without tipping: the post's vault's moderators and
+        admins in admin mode (r2.lib.scales.summary)."""
+        return bool(c.user_is_admin or link.vault_slow.is_moderator(c.user))
 
     @csrf_exempt
     @json_validate(user=VUname(("user",)))

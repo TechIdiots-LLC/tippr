@@ -38,6 +38,15 @@
   other. A vault with its own rules lists those first and the site's in a menu, as before. Each reason is kept in
   English on the report and shown to moderators in their own language; reports made before keep their wording.
   Reporting from a vault's rules page no longer fails.
+- **Scales describe what kind of post it is, and are easier to read:**
+  - Six scales, all shown at once (no "more scales"): human-made ↔ AI-generated, quick overview ↔ deep dive,
+    practical ↔ thought piece, data-driven ↔ personal experience, matter-of-fact ↔ passionate and niche ↔ broad. Each
+    is two ends of one difference, not a verdict: votes say whether a post is good, so helpful ↔ unhelpful is gone, as
+    are beginner-friendly ↔ in-depth, practical ↔ just for fun and well-sourced ↔ opinion. Tips on human-made ↔ AI and
+    the tone scale carry over; tips on the retired scales are kept (and in members' data exports) but not shown.
+  - Each side shows its count beside its label, in the colour it has on the bar, with "75% deep dive · 4 tips" under
+    it. With fewer than three tips there's no bar (one tip filled it with one colour): "1 tip so far: human-made".
+  - A vault's moderators, and admins in admin mode, see every scale's tallies without tipping.
 - **A check for media storage:** `tippr-run scripts/check_media_storage.py` saves a test file the way uploads are
   saved, checks it's in the bucket (with S3 storage) and not on the disk, fetches it from `/media/` through nginx, and
   deletes it: the last step of moving media to a bucket (docs/STORAGE.md).

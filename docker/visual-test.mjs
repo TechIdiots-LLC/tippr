@@ -23,10 +23,10 @@
 //   - they vote on the post and the comments, change and undo votes; the
 //     arrows must show each voter's vote at once and after reloading, and
 //     the scores must follow (votes are counted by the vote queues)
-//   - scales: bob and carol tip the post's scales (three shown, three more
-//     behind "more scales"), seeing a scale's tally only once they've
-//     tipped it; bob changes his mind and takes a tip back; tips stay after
-//     reloading; alice, the poster, sees the tallies and can't tip; a
+//   - scales: bob and carol tip the post's scales (all six shown), seeing a
+//     scale's tally only once they've tipped it; bob changes his mind and
+//     takes a tip back; tips stay after reloading; alice, the poster, sees
+//     the tallies and can't tip; visual_mod sees them without tipping; a
 //     visitor is asked to log in
 //   - visual_mod, a moderator of the test vault and nothing else: a member's
 //     report reaches its reports queue and clears when approved; a comment
@@ -287,7 +287,7 @@ async function openScales(s, fullname) {
 const visibleScales = (s, fullname) =>
   thing(s.page, fullname).locator(":scope > .entry .scales-panel .scale:visible").count();
 const scaleState = (s, fullname, scale) => scaleRow(s, fullname, scale).evaluate((row) => ({
-  mine: row.querySelector(".scale-tipped")?.textContent || null,
+  mine: row.querySelector(".scale-tipped .scale-side-label")?.textContent || null,
   tally: row.querySelector(".scale-count").textContent,
   disabled: row.querySelector(".scale-side").disabled,
 }));
@@ -500,40 +500,42 @@ try {
   });
 
   // ---- scales: members tip the post toward what it's like ----
-  // bob and carol see three scales and no tallies until they tip; carol
-  // opens "more scales"; bob changes his mind and takes a tip back; tips
-  // stay after reloading; alice, the poster, sees the tallies and can't tip
+  // bob and carol see all six scales and no tallies until they tip; bob
+  // changes his mind and takes a tip back; tips stay after reloading;
+  // alice, the poster, sees the tallies and can't tip (fewer than three tips
+  // are listed, not drawn as a bar)
   await openScales(bob, post);
-  await check("scales (as bob)", async () => (await visibleScales(bob, post)) === 3,
-              'three scales should show, the rest behind "more scales"');
-  await check("scales before tipping (as bob)", async () => (await scaleState(bob, post, "helpful")).tally === "",
-              "the tally should be hidden until he tips");
-  await tipScale(bob, post, "helpful", "left");
-  await scaleShows("bob tips helpful", bob, post, "helpful", "helpful", "1 tip · 1 / 0");
-  await openScales(carol, post);
-  await check("scales before tipping (as carol)", async () => (await scaleState(carol, post, "helpful")).tally === "",
-              "bob's tip shouldn't show until she tips");
-  await tipScale(carol, post, "helpful", "right");
-  await scaleShows("carol tips unhelpful", carol, post, "helpful", "unhelpful", "2 tips · 1 / 1");
-  await thing(carol.page, post).locator(":scope > .entry .scales-more").click();
-  await check('"more scales" (as carol)', async () => (await visibleScales(carol, post)) === 6,
+  await check("scales (as bob)", async () => (await visibleScales(bob, post)) === 6,
               "all six scales should show");
+  await check("scales before tipping (as bob)", async () => (await scaleState(bob, post, "made")).tally === "",
+              "the tally should be hidden until he tips");
+  await tipScale(bob, post, "made", "left");
+  await scaleShows("bob tips human-made", bob, post, "made", "human-made", "1 tip so far: human-made");
+  await openScales(carol, post);
+  await check("scales before tipping (as carol)", async () => (await scaleState(carol, post, "made")).tally === "",
+              "bob's tip shouldn't show until she tips");
+  await tipScale(carol, post, "made", "right");
+  await scaleShows("carol tips AI-generated", carol, post, "made", "AI-generated",
+                   "2 tips so far: 1 human-made, 1 AI-generated");
   await tipScale(carol, post, "tone", "left");
-  await scaleShows("carol tips calm", carol, post, "tone", "calm", "1 tip · 1 / 0");
+  await scaleShows("carol tips matter-of-fact", carol, post, "tone", "matter-of-fact",
+                   "1 tip so far: matter-of-fact");
   await shoot(carol, "scales");
-  await tipScale(bob, post, "helpful", "right");
-  await scaleShows("bob changes to unhelpful", bob, post, "helpful", "unhelpful", "2 tips · 0 / 2");
-  await tipScale(bob, post, "helpful", "right");
-  await scaleShows("bob takes his tip back", bob, post, "helpful", null, "");
-  await tipScale(bob, post, "helpful", "left");
+  await tipScale(bob, post, "made", "right");
+  await scaleShows("bob changes to AI-generated", bob, post, "made", "AI-generated",
+                   "2 tips so far: AI-generated");
+  await tipScale(bob, post, "made", "right");
+  await scaleShows("bob takes his tip back", bob, post, "made", null, "");
+  await tipScale(bob, post, "made", "left");
   await bob.page.reload(READY);
   await openScales(bob, post);
-  await scaleShows("bob's tip after reloading", bob, post, "helpful", "helpful", "2 tips · 1 / 1");
+  await scaleShows("bob's tip after reloading", bob, post, "made", "human-made",
+                   "2 tips so far: 1 human-made, 1 AI-generated");
   await shoot(bob, "scales");
   await openScales(alice, post);
   await check("scales (as alice, the poster)", async () => {
-    const s = await scaleState(alice, post, "helpful");
-    return s.tally === "2 tips · 1 / 1" && s.disabled;
+    const s = await scaleState(alice, post, "made");
+    return s.tally === "2 tips so far: 1 human-made, 1 AI-generated" && s.disabled;
   }, "she should see the tally and not be able to tip");
   const passerby = await session(null, "desktop");
   await passerby.page.goto(postUrl, READY);
@@ -549,6 +551,14 @@ try {
   const mod = await session("visual_mod", "desktop");
   const visitor = await session(null, "desktop");
   const fresh = (s) => s.page.goto(`${postUrl}?t=${Date.now()}`, READY);  // past any page cache
+
+  // the vault's moderator sees the scales' tallies without tipping
+  await fresh(mod);
+  await openScales(mod, post);
+  await check("scales (as visual_mod)", async () => {
+    const s = await scaleState(mod, post, "made");
+    return (s.mine === null && s.tally === "2 tips so far: 1 human-made, 1 AI-generated") || JSON.stringify(s);
+  }, "a moderator should see the tally without tipping");
 
   // a member's report reaches the moderator, who approves it from the queue
   await carol.page.reload(READY);
