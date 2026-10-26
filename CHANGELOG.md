@@ -13,6 +13,9 @@
   and python-json-logger 4 and pyrate-limiter 4 through tippr's baseplate (which now needs Python 3.10 or newer);
   the rest are at their newest too. python-dateutil stays at 2.9, as botocore needs. importlib_metadata and zipp,
   which nothing needs any more, are uninstalled on update, and so is Whoosh, a search library nothing used.
+- **A check that a server's tippr is up:** `scripts/smoke_check.sh` checks the services the server runs, a few pages
+  (the front page, login, the API, an error page, a POST) and the web app's log, and says what failed. The
+  installer's CI runs it after installing, so an install that finishes with a broken site fails.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

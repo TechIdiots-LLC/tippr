@@ -23,7 +23,8 @@ checks they're all present before starting.
 ## Testing changes
 
 The `ci-install-tippr.yml` workflow (and the GitLab pipeline) run the whole
-installer on a fresh Ubuntu 24.04 runner. Before that, try it on a fresh VM
+installer on a fresh Ubuntu 24.04 runner; the GitHub one then runs
+`scripts/smoke_check.sh` against the installed site. Before that, try it on a fresh VM
 or container, with a `.local` domain for a development install:
 
 ```bash

@@ -92,6 +92,12 @@ jobs:
           # pipe a single 'Y' to answer the final confirmation prompt.
           sudo -E bash -c "printf 'Y\n' | ./install/tippr.sh"
 
+      # the services this install runs are up, pages answer (the front page,
+      # login, the API, an error page, a POST) and nothing logged a traceback
+      - name: Smoke check the installed site
+        run: |
+          sudo /home/runner/src/tippr/scripts/smoke_check.sh
+
       # copied first: some of /var/log is readable by root only
       - name: Collect installer logs on failure
         if: failure()

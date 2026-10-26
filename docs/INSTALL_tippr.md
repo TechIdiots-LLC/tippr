@@ -83,6 +83,16 @@ the admin account, plus the site's signing secrets. It keeps them in
 
 ## After installing
 
+To check the services are up and the site answers (after an update too):
+
+```bash
+sudo /home/tippr/src/tippr/scripts/smoke_check.sh   # TIPPR_HOME/src/tippr
+```
+
+It checks each service this server runs, a few pages (the front page,
+login, the API, an error page) and the web app's log, and says what
+failed. Then:
+
 1. **DNS.** Point the domain at the server. For a test site, add a hosts
    entry on your computer, e.g. `192.168.1.50 tippr.local`.
 2. **Log in** as the admin account. In production, set up two-factor
