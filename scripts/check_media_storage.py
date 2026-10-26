@@ -94,13 +94,19 @@ def main():
             if not same:
                 problems.append("nginx gave %s for /media/" % resp.status_code)
     finally:
-        provider.purge(url)
+        # deleting goes through the same code as deleting a member's
+        # media, so it's checked too
+        try:
+            provider.purge(url)
+            print("deleted the test file")
+        except Exception as e:
+            print("  deleting it: failed (%s: %s)" % (type(e).__name__, e))
+            problems.append("couldn't delete media (%s)" % name)
         if not s3:
             try:
                 os.remove(os.path.join(MEDIA_DIR, name))
             except OSError:
                 pass
-        print("deleted the test file")
 
     if problems:
         print("PROBLEMS: %s" % "; ".join(problems))

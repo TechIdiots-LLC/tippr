@@ -160,11 +160,22 @@ def bucket_and_key(url):
     return None, None
 
 
+def _setting_list(name):
+    """A comma-separated setting as a list; the ini's bucket lists
+    (s3_media_buckets) come parsed already, as a tuple."""
+    value = g.config.get(name)
+    if value is None:
+        value = getattr(g, name, None)
+    if isinstance(value, (list, tuple)):
+        return [str(v).strip() for v in value]
+    return ("" if value is None else str(value)).split(",")
+
+
 def configured_buckets():
     names = []
     for setting in ("s3_media_buckets", "s3_image_buckets",
                     "s3_client_uploads_bucket"):
-        for name in _setting(setting).split(","):
+        for name in _setting_list(setting):
             name = name.strip()
             if name and name not in names:
                 names.append(name)

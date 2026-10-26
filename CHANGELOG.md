@@ -52,6 +52,10 @@
   now uses night mode's dark notice colours, as does the list of reasons on a reported post.
 - **A post or comment a moderator had reported broke the page for its moderators:** the reports queue and the
   vault's listings gave an error while showing who reported it and why. They show the moderators' reports again.
+- **Deleting media in a bucket failed:** the bucket list from the ini (`s3_media_buckets`) was read back as the text
+  `('tippr-media',)`, so working out which bucket a media address belongs to gave the bucket name `('tippr-media'` and
+  S3 refused it. Uploads and serving weren't affected; deleting or hiding media (and the new storage check's clean-up)
+  work again.
 - **`systemctl --failed` listed OpenSearch's Performance Analyzer:** the OpenSearch package turns on its metrics agent,
   which tippr doesn't use and which fails to start, so a server always had a failed unit. The installer turns it off
   (on every install, as a package upgrade turns it on again); search itself was never affected.
