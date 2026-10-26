@@ -9,7 +9,7 @@ amqp==5.4.1
 annotated-types==0.8.0
 antlr4-python3-runtime==4.13.2
 babel==2.18.0
-baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@924c6937d2cc0a509c0835bfd95ed828dd71341e
+baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@97626e8b4806551693b6d2f165757225ffb9938f
 bcrypt==5.0.0
 beautifulsoup4==4.15.0
 blinker==1.9.0

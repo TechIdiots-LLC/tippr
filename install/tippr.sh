@@ -915,8 +915,8 @@ else
 fi
 
 # Now upgrade pip/setuptools/wheel and packaging
-# setuptools stays below 81: baseplate, the OpenTelemetry instrumentation and
-# pyramid (the activity service) import pkg_resources, which setuptools 81
+# setuptools stays below 81: the OpenTelemetry instrumentation and pyramid
+# (the activity service) import pkg_resources, which setuptools 81
 # deprecates and later versions remove. r2/pyproject.toml pins the same for
 # building r2.
 sudo -u $TIPPR_USER "$BOOT_PY" -m pip install --upgrade pip 'setuptools<81' wheel
