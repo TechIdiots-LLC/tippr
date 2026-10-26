@@ -7,6 +7,11 @@
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 
+## 0.23.0
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
+
 ## 0.22.0
 ### ✨ Features and improvements
 - **A site can be split over several servers:** the installer's `TIPPR_ROLE` makes a server the **backend**
