@@ -21,6 +21,11 @@
   name still goes to its `xn--` form.
 - **Uploading an app's icon (/prefs/apps) gave an error:** the resized icon was written as text, which Python 3
   refuses, so no app could have an icon. It's saved as a PNG again.
+- **"Exclude custom vaults" (/me/f/all) gave "you broke tippr" to gold members:** its sidebar asked for the
+  filtered vaults by their name from before vaults were renamed. It lists them again, to add to or remove.
+- **Filtering a vault out of /all didn't take effect for a minute, and could show someone else's filter:** the
+  spread-out /v/all hot list was cached by the page's address, which is /me/f/all for every member. It's cached by
+  the vaults left out now.
 
 ## 0.25.0
 ### ✨ Features and improvements
@@ -1132,5 +1137,3 @@
 - Python 3 fixes across the codebase: image uploads, the hardcache, route arguments, generators, multi-vault
   listings (/v/mod), canonical links and more.
 
-- **"Exclude custom vaults" (/me/f/all) gave "you broke tippr" to gold members:** its sidebar asked for the\n  filtered vaults by their name from before vaults were renamed. It lists them again, to add to or remove.
-- **Filtering a vault out of /all didn't take effect for a minute, and could show someone else's filter:** the\n  spread-out /v/all hot list was cached by the page's address, which is /me/f/all for every member. It's cached by\n  the vaults left out now.
