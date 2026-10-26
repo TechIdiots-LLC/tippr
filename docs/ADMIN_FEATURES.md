@@ -18,7 +18,7 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/awards` — manage awards (list/edit awards).
 - `/admin/awards/:awardcn/:action` — award actions (`give` or `winners`).
 - `/admin/coins` — give a user Give Gold: prepaid months of gold they can gift to others (handler: `AdminToolController.GET_coins`).
-- `/admin/gold` — give/take gold days for a user (handler: `AdminToolController.GET_gold`).
+- `/admin/gold` — redirects to `/admin/users` (or the account given as `?recipient=`), where gold is given now.
 - `/admin/site` — the site's name, description, contact address and header logo. Saved values apply at once on every web process; blank ones fall back to the ini. Also shows how to change the domain (re-run the installer with `TIPPR_DOMAIN`), and the sitemap choice: recent posts (made when asked for), or every post, built each day by `tippr-job-sitemaps` in as many 50,000-address sitemaps as it takes (`r2/lib/sitemaps`).
 - `/admin/antispam` — spam protection: the captcha for untrusted users (tippr's image captcha, Cloudflare Turnstile, hCaptcha, Google reCAPTCHA or none; on posting, messages, new vaults and, optionally, sign-up) and CleanTalk, which checks sign-ups and untrusted users' posts, comments and messages without a challenge. Spam sign-ups are refused; spam content is hidden in the moderators' spam queue. Saving checks the CleanTalk key.
 - `/admin/errors` — recent unhandled errors, grouped by error and code location, with counts and the last traceback (kept in the hardcache; full logs in `journalctl -u tippr-paster`).
@@ -32,8 +32,8 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 - `/admin/vaults` — find any vault (and the newest and banned ones); on a vault's page, make it a front page default or featured, add or remove moderators without an invitation, and ban it (how a vault is removed: everyone but the admins sees a "banned" page; unbanning restores it). Each action is logged there. Admins can create vaults whatever their karma and account age; the `create_vault_*` limits on `/admin/config` are for everyone else.
 - `/admin/privacy` — members' data export requests that are waiting, processing or failed, to send again or cancel, and a form to start an export for a member ([PRIVACY_FEATURES.md](PRIVACY_FEATURES.md)).
 - `/admin/config` — the live settings (staff list, captcha and vault-creation thresholds, sidebar, welcome bar and announcement messages, API app rules, requiring two-factor sign-in for moderators and staff, live comments (new comments appear on open threads, in the vaults whose moderators turn it on in their settings; `r2/lib/live_comments.py`) and more), saved with one button and applied without a restart; every change is logged. Its caching panel shows how memcached and the nginx caches are doing, and can empty memcached.
-- `/admin/users` — every account, newest first a page at a time, or search by name, email or IP; an account's page shows its status, IPs, related accounts and support tickets, and lets admins put it in a timeout or suspend it (gold is given on `/admin/gold`).
-- `/admin/feeds` — the RSS and Atom feeds that post into vaults, with their bot accounts, intervals and last errors ([CONTENT.md](CONTENT.md#feeds)).
+- `/admin/users` — every account, newest first a page at a time, or search by name, email or IP; an account's page shows its status, IPs, related accounts and support tickets, and lets admins put it in a timeout or suspend it, and give or take months of gold (up to 120 at once), make an account's gold permanent (it never expires: the daily expiry job and refunds leave it, `Account.gold_permanent`), or remove it. Every action is recorded in the account's admin log (`r2/lib/user_admin.py`).
+- `/admin/feeds` — the RSS and Atom feeds that post into vaults, with their bot accounts, intervals and last errors, newest first; search them, filter by vault, bot or status (active, paused, with errors, never checked), sort by any column, and edit one in place, including the vault it posts to. The view is in the address (`?q=`, `vault=`, `bot=`, `status=`, `sort=`, `order=`, `r2/lib/feed_view.py`) ([CONTENT.md](CONTENT.md#feeds)).
 - `/admin/apps` — registered API apps: approve, suspend or delete them (new apps can need approval, `apps_require_approval` on /admin/config).
 - `/admin/domains` — banned domains: links to them can't be posted.
 - `/admin/support` — the support queue: messages to the admins (the contact page) become tickets with a category, status and assignee; `/admin/support/staff` grants employees categories to read or answer.
@@ -52,7 +52,6 @@ Note: many admin endpoints require elevated flags (`VAdmin`, `VEmployee`) — en
 ## Admin templates (common)
 Files under `r2/r2/templates/` used by admin pages include:
 - `admincoins.html`
-- `admingold.html`
 - `adminawards.html`
 - `adminawardgive.html`
 - `adminawardwinners.html`

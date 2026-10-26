@@ -1,4 +1,4 @@
-# Default vaults and AI content labels
+# Content: default vaults, feeds, scales, reports and AI labels
 
 ## Starter vaults
 
@@ -55,6 +55,49 @@ FEEDS_ADD=1 tippr-run $TIPPR_HOME/src/tippr/scripts/import_feeds.py
 adds them (without `FEEDS_ADD=1` it only lists what it would add). It's
 safe to re-run: feeds already on a vault are skipped. Feed posts get
 thumbnails like any link post.
+
+On /admin/feeds, feeds are listed newest first; search them, filter them
+by vault, bot or status (active, paused, with errors, never checked), sort
+by any column, and edit one in place. Changing a feed's vault sends its new
+items there; posts it already made stay where they are.
+
+Each run posts its new items one vault at a time in turn (and within a
+vault, one feed at a time), so a run doesn't post a block of one vault's
+items. The front page and multis mix vaults anyway; /v/all ranks every post together, so its hot list also
+keeps two posts from one vault apart while another vault's post is close
+behind.
+
+## Scales and reports
+
+**Scales** describe what kind of post it is, not how good it is (votes say
+that). Each is two ends of one difference, and a member tips it toward a
+side, changes their mind or takes the tip back:
+
+| Scale | Sides |
+|---|---|
+| made | human-made, AI-generated |
+| depth | quick overview, deep dive |
+| nature | practical, thought piece |
+| evidence | data-driven, personal experience |
+| tone | matter-of-fact, passionate |
+| scope | niche, broad |
+
+A scale's tally shows once the member has tipped it, so the first tips
+don't steer everyone else; "see the results" shows them all, at the price
+of tipping that post. The poster, the vault's moderators and admins (in
+admin mode) see every tally. Fewer than three tips are listed rather than
+drawn as a bar. Scales don't rank posts or go to moderators. Tips are kept
+in PostgreSQL (`scale_tips`) and are in members' data exports
+(`r2/lib/scales.py`).
+
+**Reports** go to the vault's moderators. The reasons follow the
+[content policy](policies/CONTENT_POLICY.md): spam or vote manipulation,
+harassment or threats, hateful content, someone's personal information,
+sexual content involving minors, other illegal content, impersonation,
+malware, phishing or scams, breaking the site's rules, and "other" with a
+short note. A vault's own rules come first. A report keeps its reason in
+English, and moderators see it in their own language
+(`r2/models/rules.py`).
 
 ## AI content labels
 
