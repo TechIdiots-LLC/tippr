@@ -10,13 +10,6 @@
   after ticking to confirm), each recorded under the account's admin actions. Permanent gold doesn't run out: the
   daily expiry job and refunds leave it, and members' profiles and `/api/me` show it with no end date. The old
   `/admin/gold` form, which only added or took months, now goes to /admin/users.
-- **/admin/feeds can be searched, filtered and sorted:** a search box (titles, addresses, vaults, bots and title
-  prefixes), menus of the vaults and bots the feeds use, and a status filter (active, paused, with errors, never
-  checked, each with its count), and every column heading sorts by it (again for the other way round). It shows when
-  each feed was added, newest first until another sort is chosen. The view is in the page's address, so it can be
-  bookmarked and stays after a save. "Add a feed" is over the list now, and a feed's edit form opens the width of the
-  table under it, with every setting, including the vault it posts to (new items go to the new vault; posts already
-  made stay where they are). Long addresses and error messages wrap, so the table fits the page.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
@@ -42,6 +35,13 @@
 - **/v/all mixes vaults:** it ranks every post together, so a feed's run of new posts in one vault filled it (the
   front page and multis mix vaults already). Its hot listing now never puts two posts from the same vault next to
   each other while another vault's post is within 30 places.
+- **/admin/feeds can be searched, filtered and sorted:** a search box (titles, addresses, vaults, bots and title
+  prefixes), menus of the vaults and bots the feeds use, and a status filter (active, paused, with errors, never
+  checked, each with its count), and every column heading sorts by it (again for the other way round). It shows when
+  each feed was added, newest first until another sort is chosen. The view is in the page's address, so it can be
+  bookmarked and stays after a save. "Add a feed" is over the list now, and a feed's edit form opens the width of the
+  table under it, with every setting, including the vault it posts to (new items go to the new vault; posts already
+  made stay where they are). Long addresses and error messages wrap, so the table fits the page.
 
 ### 🐞 Bug fixes
 
