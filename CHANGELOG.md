@@ -3,19 +3,6 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
-
-### 🐞 Bug fixes
-- _...Add new stuff here..._
-
-## 0.25.0
-### ✨ Features and improvements
-- **One panel at a time under a post or comment:** share, scales and report opened one under another; opening one
-  now closes the others there (clicking the same link again still closes its own).
-- **Gold on /admin/users, including permanent gold:** an account's page shows its gold (until a date, permanent, or
-  none) and lets an admin give or take months (up to 120 at once), make it permanent, or remove it (with a reason,
-  after ticking to confirm), each recorded under the account's admin actions. Permanent gold doesn't run out: the
-  daily expiry job and refunds leave it, and members' profiles and `/api/me` show it with no end date. The old
-  `/admin/gold` form, which only added or took months, now goes to /admin/users.
 - **Paste is no longer used:** the error pages, static files and per-request objects (`c`, `g`, `request`) it
   provided are tippr's own now (`r2/config/middleware.py`, `pylons/`); PasteDeploy, which reads the ini, stays.
   Updating a server, from /admin/servers or with the installer, uninstalls Paste.
@@ -28,13 +15,26 @@
   which nothing needs any more, are uninstalled on update, and so is Whoosh, a search library nothing used.
 
 ### 🐞 Bug fixes
-- **The API documentation by OAuth scope (/dev/api/oauth) gave an error:** endpoints any OAuth client may use are
-  listed under "any" scope, which Python 3 couldn't sort with the scope names. It lists them first, as "any", again.
+- _...Add new stuff here..._
 - **Domain listings (/domain/example.com) redirected to a broken address:** every one went to
   `/domain/b'example.com'/` instead of listing the domain's posts. They list them again, and an international domain
   name still goes to its `xn--` form.
 - **Uploading an app's icon (/prefs/apps) gave an error:** the resized icon was written as text, which Python 3
   refuses, so no app could have an icon. It's saved as a PNG again.
+
+## 0.25.0
+### ✨ Features and improvements
+- **One panel at a time under a post or comment:** share, scales and report opened one under another; opening one
+  now closes the others there (clicking the same link again still closes its own).
+- **Gold on /admin/users, including permanent gold:** an account's page shows its gold (until a date, permanent, or
+  none) and lets an admin give or take months (up to 120 at once), make it permanent, or remove it (with a reason,
+  after ticking to confirm), each recorded under the account's admin actions. Permanent gold doesn't run out: the
+  daily expiry job and refunds leave it, and members' profiles and `/api/me` show it with no end date. The old
+  `/admin/gold` form, which only added or took months, now goes to /admin/users.
+
+### 🐞 Bug fixes
+- **The API documentation by OAuth scope (/dev/api/oauth) gave an error:** endpoints any OAuth client may use are
+  listed under "any" scope, which Python 3 couldn't sort with the scope names. It lists them first, as "any", again.
 
 ## 0.24.0
 ### ✨ Features and improvements

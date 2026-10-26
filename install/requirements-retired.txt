@@ -7,7 +7,7 @@
 # paster, replaced by r2.commands (0.23.0)
 PasteScript
 # Paste: its error pages, static files and registry are in r2 and pylons/
-# now (0.25.0); PasteDeploy, which reads the ini, stays
+# now (0.26.0); PasteDeploy, which reads the ini, stays
 Paste
 # only the activity service's HTTP gateway used pyramid, and tippr doesn't
 # run it; pyramid 2.1 needs pkg_resources (setuptools<82)
@@ -23,7 +23,7 @@ zope.deprecation
 opentelemetry-instrumentation-pyramid
 opentelemetry-instrumentation-wsgi
 # formenergy-observability, which baseplate no longer needs (its tracing
-# helpers are in baseplate), and Dagster and the rest it brought (0.25.0)
+# helpers are in baseplate), and Dagster and the rest it brought (0.26.0)
 formenergy-observability
 dagster
 dagster-pipes
@@ -54,8 +54,8 @@ typing-inspection
 tzdata
 universal_pathlib
 watchdog
-# current OpenTelemetry doesn't need importlib_metadata (0.25.0)
+# current OpenTelemetry doesn't need importlib_metadata (0.26.0)
 importlib_metadata
 zipp
-# whoosh, a search library nothing imports (0.25.0)
+# whoosh, a search library nothing imports (0.26.0)
 Whoosh
