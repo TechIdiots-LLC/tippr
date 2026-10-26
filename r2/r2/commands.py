@@ -34,8 +34,6 @@ import argparse
 import os
 import sys
 
-import paste.fixture
-import paste.registry
 from paste.deploy import loadapp
 
 from r2.lib.log import RavenErrorReporter
@@ -63,23 +61,10 @@ def load_app(config_file):
     here_dir = os.getcwd()
     sys.path.insert(0, here_dir)
 
-    # Load the wsgi app first so that everything is initialized right
+    # loading it sets up config and g for everything outside a request
+    # (pylons' shared objects)
     wsgiapp = loadapp("config:%s" % config_file, relative_to=here_dir,
                       global_conf={"running_as_script": "true"})
-    test_app = paste.fixture.TestApp(wsgiapp)
-
-    # Query the test app to setup the environment
-    request_id = int(test_app.get("/_test_vars").body)
-
-    # Disable restoration during test_app requests
-    test_app.pre_request_hook = lambda self: \
-        paste.registry.restorer.restoration_end()
-    test_app.post_request_hook = lambda self: \
-        paste.registry.restorer.restoration_begin(request_id)
-
-    # Restore the state of the Pylons special objects
-    # (StackedObjectProxies)
-    paste.registry.restorer.restoration_begin(request_id)
 
     # the settings saved on /admin/site and /admin/config: web processes
     # apply them on their first request (BaseController), which scripts,

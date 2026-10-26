@@ -6,6 +6,9 @@
 
 # paster, replaced by r2.commands (0.23.0)
 PasteScript
+# Paste: its error pages, static files and registry are in r2 and pylons/
+# now (0.25.0); PasteDeploy, which reads the ini, stays
+Paste
 # only the activity service's HTTP gateway used pyramid, and tippr doesn't
 # run it; pyramid 2.1 needs pkg_resources (setuptools<82)
 pyramid

@@ -95,7 +95,7 @@ memcached
 PACKAGES
 
     # Note: Python packages are installed via pip in the venv created by tippr.sh
-    # The following packages are installed there: Paste, PasteDeploy,
+    # The following packages are installed there: PasteDeploy,
     # pylibmc, simplejson, pytest, baseplate, gunicorn
 
 else

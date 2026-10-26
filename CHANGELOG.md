@@ -10,6 +10,9 @@
   after ticking to confirm), each recorded under the account's admin actions. Permanent gold doesn't run out: the
   daily expiry job and refunds leave it, and members' profiles and `/api/me` show it with no end date. The old
   `/admin/gold` form, which only added or took months, now goes to /admin/users.
+- **Paste is no longer used:** the error pages, static files and per-request objects (`c`, `g`, `request`) it
+  provided are tippr's own now (`r2/config/middleware.py`, `pylons/`); PasteDeploy, which reads the ini, stays.
+  Updating a server, from /admin/servers or with the installer, uninstalls Paste.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

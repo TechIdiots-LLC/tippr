@@ -31,9 +31,8 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from baseplate.lib import events as baseplate_events
-import paste.fixture
-from importlib.metadata import version, PackageNotFoundError
 import pylons
+import webtest
 from paste.deploy import loadapp
 from pylons import url
 from pylons.i18n.translation import _get_translator
@@ -49,7 +48,6 @@ conf_dir = os.path.dirname(os.path.dirname(here_dir))
 
 sys.path.insert(0, conf_dir)
 # conf_dir added to sys.path above
-version('Paste')  # Verify Paste is installed
 
 
 from pylons import app_globals as g
@@ -214,14 +212,7 @@ class TipprTestCase(TestCase):
         self.addCleanup(reset_test_mode)
         TipprApp.test_mode = True
 
-        self.app = paste.fixture.TestApp(wsgiapp)
-        test_response = self.app.get("/_test_vars")
-        request_id = int(test_response.body)
-        self.app.pre_request_hook = lambda self: \
-            paste.registry.restorer.restoration_end()
-        self.app.post_request_hook = lambda self: \
-            paste.registry.restorer.restoration_begin(request_id)
-        paste.registry.restorer.restoration_begin(request_id)
+        self.app = webtest.TestApp(wsgiapp)
 
     def assert_same_dict(self, data, expected_data, prefix=None):
         prefix = prefix or []

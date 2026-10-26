@@ -92,3 +92,29 @@ def test_request_locals_are_per_thread():
     assert seen == {'first': 'first', 'second_start': shared,
                     'second': 'second'}
     assert pylons.tmpl_context._current_obj() is shared
+
+
+def test_replace_object_swaps_this_requests_object():
+    # set_lang swaps the translator setup_app_env pushed; the request's
+    # end then pops it, leaving the shared one
+    shared = pylons.translator._current_obj()
+    pylons._begin_request()
+    pylons.translator._push_object('default')
+    pylons.translator._replace_object('de')
+    assert pylons.translator._current_obj() == 'de'
+    pylons.translator._replace_object('fr')
+    assert pylons.translator._current_obj() == 'fr'
+    pylons.translator._pop_object()
+    assert pylons.translator._current_obj() is shared
+    pylons._end_request()
+    assert pylons.translator._current_obj() is shared
+
+
+def test_replace_object_pushes_when_the_request_has_none():
+    shared = pylons.translator._current_obj()
+    pylons._begin_request()
+    pylons.translator._replace_object('de')
+    assert pylons.translator._current_obj() == 'de'
+    pylons.translator._pop_object()
+    pylons._end_request()
+    assert pylons.translator._current_obj() is shared

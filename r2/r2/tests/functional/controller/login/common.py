@@ -123,9 +123,8 @@ class LoginRegBase:
 
     def find_headers(self, res, name):
         """Find header in res"""
-        for k, v in res.headers:
-            if k == name.lower():
-                yield v
+        for value in res.headers.getall(name):
+            yield value
 
     def assert_headers(self, res, name, test):
         """Assert header value with test (lambda function or value)"""

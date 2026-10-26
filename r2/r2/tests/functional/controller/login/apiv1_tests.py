@@ -55,7 +55,7 @@ class APIV1LoginTests(LoginRegBase, TipprControllerTestCase):
         }
 
     def assert_success(self, res):
-        self.assertEqual(res.status, 200)
+        self.assertEqual(res.status_int, 200)
         body = res.body
         body = json.loads(body)
         self.assertTrue("json" in body)
@@ -67,7 +67,7 @@ class APIV1LoginTests(LoginRegBase, TipprControllerTestCase):
         self.assertTrue("cookie" in data)
 
     def assert_failure(self, res, code=None):
-        self.assertEqual(res.status, 200)
+        self.assertEqual(res.status_int, 200)
         body = res.body
         body = json.loads(body)
         self.assertTrue("json" in body)
@@ -77,7 +77,7 @@ class APIV1LoginTests(LoginRegBase, TipprControllerTestCase):
         self.assertFalse(bool(data))
 
     def assert_403_response(self, res, calling):
-        self.assertEqual(res.status, 403)
+        self.assertEqual(res.status_int, 403)
         self.simple_event.assert_any_call(calling)
         self.assert_headers(
             res,

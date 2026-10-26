@@ -50,7 +50,7 @@ class DelMsgTest(TipprControllerTestCase):
         with self.mock_del_msg(message):
             res = self.do_del_msg(message.name)
 
-            self.assertEqual(res.status, 200)
+            self.assertEqual(res.status_int, 200)
             self.assertTrue(message.del_on_recipient)
 
     def test_del_msg_failure_with_link(self):
@@ -62,7 +62,7 @@ class DelMsgTest(TipprControllerTestCase):
         with self.mock_del_msg(link):
             res = self.do_del_msg(link.name)
 
-            self.assertEqual(res.status, 200)
+            self.assertEqual(res.status_int, 200)
             self.assertFalse(link.del_on_recipient)
 
     def test_del_msg_failure_with_null_msg(self):
@@ -75,7 +75,7 @@ class DelMsgTest(TipprControllerTestCase):
         with self.mock_del_msg(message, False):
             res = self.do_del_msg(message.name)
 
-            self.assertEqual(res.status, 200)
+            self.assertEqual(res.status_int, 200)
             self.assertFalse(message.del_on_recipient)
 
     def test_del_msg_failure_with_sender(self):
@@ -88,7 +88,7 @@ class DelMsgTest(TipprControllerTestCase):
         with self.mock_del_msg(message):
             res = self.do_del_msg(message.name)
 
-            self.assertEqual(res.status, 200)
+            self.assertEqual(res.status_int, 200)
             self.assertFalse(message.del_on_recipient)
 
     def mock_del_msg(self, thing, ret=True):

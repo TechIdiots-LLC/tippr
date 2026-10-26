@@ -72,15 +72,13 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    private services: ad images stored on the server when there's no
    bucket, inventory from the site's own traffic counts, and impressions
    and clicks counted by the site.
-2. **Phase out Paste.** It's maintenance-only. Done: the scheduled jobs,
-   queue processors, `tippr-run` and `tippr-serve` run without `paster`
-   (`r2.commands`, gunicorn), so PasteScript is gone. Next:
-   `paste.registry`'s proxies behind `c`, `g` and `request` become
-   contextvars in `pylons/`, and the small middleware pieces in
-   `r2/config/middleware.py` (cascade, static files, error documents) our
-   own, so Paste can go. PasteDeploy, which reads the ini, can stay.
-   Nothing tippr runs imports `pkg_resources` any more, so setuptools is
-   current (no `setuptools<81`).
+2. **Current packages.** Paste is gone: the error pages, static files and
+   per-request objects (`c`, `g`, `request`) are r2's own
+   (`r2/config/middleware.py`, `pylons/`), and PasteDeploy, which reads
+   the ini, stays. Next: newer OpenTelemetry, protobuf and
+   python-json-logger through the baseplate fork, Pillow 13, and CI that
+   tests the exact pinned packages, so dependency updates can be merged
+   automatically once it passes.
 
 ## Then
 

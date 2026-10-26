@@ -115,6 +115,17 @@ class _ThreadAwareStack:
         # never let a request pop the shared objects underneath it
         return layer.pop() if layer else None
 
+    def _replace_object(self, obj: Any) -> None:
+        """Swap the top object for `obj` (paste.registry's replace): this
+        request's, or the shared one outside a request. Only pushes when
+        there is nothing of its own to swap."""
+        layer = self._layer()
+        stack = self._base if layer is None else layer
+        if stack:
+            stack[-1] = obj
+        else:
+            stack.append(obj)
+
 
 class LocalStack(_ThreadAwareStack):
     """A tiny stack-like holder that forwards attribute and item access to the

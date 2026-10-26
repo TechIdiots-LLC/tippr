@@ -27,7 +27,7 @@ import gzip
 import io
 import wsgiref.headers
 
-from paste.util.mimeparse import desired_matches, parse_mime_type
+from webob.acceptparse import create_accept_encoding_header
 
 ENCODABLE_CONTENT_TYPES = {
     "application/json",
@@ -120,9 +120,9 @@ class GzipMiddleware:
             return False
 
         # make sure this is one of the content-types we're allowed to encode
-        content_type = headers["Content-Type"]
-        type, subtype, params = parse_mime_type(content_type)
-        if "{}/{}".format(type, subtype) not in ENCODABLE_CONTENT_TYPES:
+        content_type = headers["Content-Type"] or ""
+        mime_type = content_type.split(";", 1)[0].strip().lower()
+        if mime_type not in ENCODABLE_CONTENT_TYPES:
             return False
 
         return True
@@ -147,7 +147,8 @@ class GzipMiddleware:
     @staticmethod
     def request_accepts_gzip(environ):
         accept_encoding = environ.get("HTTP_ACCEPT_ENCODING", "identity")
-        return "gzip" in desired_matches(["gzip"], accept_encoding)
+        offers = create_accept_encoding_header(accept_encoding)
+        return bool(offers.acceptable_offers(["gzip"]))
 
     def __call__(self, environ, start_response):
         app_iter = self.app(environ, self._start_response)

@@ -27,6 +27,7 @@
 
 import importlib
 import itertools
+import os
 import re
 import tempfile
 import urllib.error
@@ -37,14 +38,9 @@ from threading import Lock
 import simplejson
 
 import webob.exc
+import webob.static
 import webob.util
-from paste.cascade import Cascade
 from paste.deploy.converters import asbool
-from paste.errordocument import StatusBasedForward
-from paste.recursive import RecursiveMiddleware
-from paste.registry import RegistryManager
-from paste.request import path_info_split
-from paste.urlparser import StaticURLParser
 
 from pylons.middleware import ErrorHandler
 from pylons.wsgiapp import PylonsApp
@@ -71,7 +67,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
     if not asbool(global_conf.get('debug')):
         codes.append(500)
     if code in codes:
-        # StatusBasedForward expects a relative URL (no SCRIPT_NAME)
+        # a URL relative to the app (no SCRIPT_NAME)
         d = dict(code = code, message = message)
 
         exception = environ.get('r2.controller.exception')
@@ -100,16 +96,55 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
         return url
 
 
-# from pylons < 1.0
-def ErrorDocuments(app, global_conf, mapper, **kw):
-    """Wraps the app in error docs using Paste RecursiveMiddleware and
-    ErrorDocumentsMiddleware
-    """
-    if global_conf is None:
-        global_conf = {}
+class ErrorDocuments:
+    """The error page for an error response: when `mapper` gives a URL for
+    the response's status, its body is dropped and the same request is run
+    again at that URL (/error/document/...), keeping the status and the
+    first response's headers (the error page's replace them, cookies are
+    added). This was Paste's StatusBasedForward and RecursiveMiddleware.
 
-    return RecursiveMiddleware(StatusBasedForward(
-        app, global_conf=global_conf, mapper=mapper, **kw))
+    error_mapper marks the request (pylons.error_call), so an error page's
+    own error isn't forwarded again.
+    """
+
+    def __init__(self, app, global_conf, mapper, **kw):
+        self.app = app
+        self.global_conf = global_conf or {}
+        self.mapper = mapper
+        self.params = kw
+
+    def __call__(self, environ, start_response):
+        forward = []
+
+        def change_response(status, headers, exc_info=None):
+            code, _, message = status.partition(" ")
+            url = self.mapper(int(code), message, environ, self.global_conf,
+                              **self.params)
+            if url:
+                forward.append((url, status, list(headers)))
+                return lambda data: None
+            return start_response(status, headers, exc_info)
+
+        app_iter = self.app(environ, change_response)
+        if not forward:
+            return app_iter
+        if hasattr(app_iter, "close"):
+            app_iter.close()
+
+        url, status, kept_headers = forward[0]
+
+        def keep_status(error_status, headers, exc_info=None):
+            for name, value in headers:
+                if name.lower() != "set-cookie":
+                    kept_headers[:] = [(n, v) for n, v in kept_headers
+                                       if n.lower() != name.lower()]
+                kept_headers.append((name, value))
+            return start_response(status, kept_headers, exc_info)
+
+        path, _, query = url.partition("?")
+        environ["PATH_INFO"] = path
+        environ["QUERY_STRING"] = query
+        return self.app(environ, keep_status)
 
 
 class ProfilingMiddleware:
@@ -228,6 +263,15 @@ class VaultMiddleware:
         return self.app(environ, start_response)
 
 
+def path_info_split(path_info):
+    """'/domain/example.com/hot' -> ('domain', '/example.com/hot')."""
+    path_info = path_info.lstrip("/")
+    if not path_info:
+        return None, ""
+    first, sep, rest = path_info.partition("/")
+    return first, sep + rest
+
+
 class DomainListingMiddleware:
     def __init__(self, app):
         self.app = app
@@ -284,17 +328,49 @@ class FullPathMiddleware:
             environ['FULLPATH'] += '?' + qs
         return self.app(environ, start_response)
 
-class StaticTestMiddleware:
-    def __init__(self, app, static_path, domain):
+class StaticFiles:
+    """Serves GET and HEAD requests for files under `directories` (the
+    first one that has the path) and passes everything else on to `app`.
+    nginx serves these on a real site; this is for the app on its own
+    (tippr-serve). It was Paste's StaticURLParser and Cascade."""
+
+    def __init__(self, app, directories):
         self.app = app
+        self.directories = [os.path.abspath(d) for d in directories]
+
+    def find(self, path_info):
+        parts = [part for part in path_info.split("/") if part]
+        if not parts or ".." in parts:
+            return None
+        for directory in self.directories:
+            path = os.path.join(directory, *parts)
+            if os.path.isfile(path):
+                return path
+        return None
+
+    def __call__(self, environ, start_response):
+        if environ.get("REQUEST_METHOD") in ("GET", "HEAD"):
+            path = self.find(environ.get("PATH_INFO", ""))
+            if path:
+                return webob.static.FileApp(path)(environ, start_response)
+        return self.app(environ, start_response)
+
+
+class StaticTestMiddleware:
+    """Requests to the static domain get the static files (debug without
+    uncompressedJS, where nothing else serves them)."""
+
+    def __init__(self, app, static_dir, static_path, domain):
+        self.app = app
+        self.static_files = StaticFiles(webob.exc.HTTPNotFound(), [static_dir])
         self.static_path = static_path
         self.domain = domain
 
     def __call__(self, environ, start_response):
-        if environ['HTTP_HOST'] == self.domain:
+        if environ.get('HTTP_HOST') == self.domain:
             environ['PATH_INFO'] = self.static_path.rstrip('/') + environ['PATH_INFO']
-            return self.app(environ, start_response)
-        raise webob.exc.HTTPNotFound()
+            return self.static_files(environ, start_response)
+        return self.app(environ, start_response)
 
 
 _HTML = [("Content-Type", "text/html; charset=UTF-8")]
@@ -414,40 +490,6 @@ class SafetyMiddleware:
         return self.app(environ, safe_start_response)
 
 
-class TestVariablesMiddleware:
-    """Middleware to handle /_test_vars endpoint for Pylons test infrastructure.
-
-    This middleware provides support for paste.fixture.TestApp by:
-    1. Intercepting requests to /_test_vars
-    2. Saving the registry state for later restoration
-    3. Returning a unique request ID that can be used to restore state
-
-    Only paste.fixture's requests (tests, and tippr-run scripts) get it:
-    each saved state is kept for good, so open to anyone it would let
-    visitors use up the server's memory.
-    """
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        from paste.evalexception.middleware import get_debug_count
-        from paste import registry
-
-        if (environ.get('PATH_INFO') == '/_test_vars' and
-                environ.get('paste.testing')):
-            # Get a unique request ID for this test
-            request_id = get_debug_count(environ)
-
-            # Save the registry state so it can be restored later
-            registry.restorer.save_registry_state(environ)
-
-            # Return the request ID as the response body
-            start_response('200 OK', [('Content-Type', 'text/plain')])
-            return [str(request_id).encode('utf-8')]
-
-        return self.app(environ, start_response)
-
-
 class TipprApp(PylonsApp):
 
     test_mode = False
@@ -558,28 +600,18 @@ def make_app(global_conf, full_stack=True, **app_conf):
         # debug is disabled)
         app = ErrorDocuments(app, global_conf, error_mapper, **app_conf)
 
-    # Establish the Registry for this application
-    app = RegistryManager(app)
-
-    # Add test variables middleware for paste.fixture.TestApp support
-    # This must come after RegistryManager so it has access to paste.registry
-    app = TestVariablesMiddleware(app)
-
-    # Static files
-    static_app = StaticURLParser(config['pylons.paths']['static_files'])
-    static_cascade = [static_app, app]
-
+    # Static files (plugins' first, when they're served uncompressed)
+    static_dir = config['pylons.paths']['static_files']
+    static_dirs = [static_dir]
     if config['r2.plugins'] and g.config['uncompressedJS']:
-        plugin_static_apps = Cascade([StaticURLParser(plugin.static_dir)
-                                      for plugin in config['r2.plugins']])
-        static_cascade.insert(0, plugin_static_apps)
-    app = Cascade(static_cascade)
+        static_dirs[:0] = [plugin.static_dir for plugin in config['r2.plugins']]
+    app = StaticFiles(app, static_dirs)
 
     app = FullPathMiddleware(app)
 
     if not g.config['uncompressedJS'] and g.config['debug']:
-        static_fallback = StaticTestMiddleware(static_app, g.config['static_path'], g.config['static_domain'])
-        app = Cascade([static_fallback, app])
+        app = StaticTestMiddleware(app, static_dir, g.config['static_path'],
+                                   g.config['static_domain'])
 
     app = SafetyMiddleware(app)
 

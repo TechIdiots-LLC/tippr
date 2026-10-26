@@ -44,7 +44,7 @@ class PostLoginRegTests(LoginRegBase, TipprControllerTestCase):
     def assert_success(self, res):
         # On sucess, we redirect the user to the provided "dest" parameter
         # that has been added in make_qs
-        self.assertEqual(res.status, 302)
+        self.assertEqual(res.status_int, 302)
         self.assert_headers(
             res,
             "Location",
@@ -59,7 +59,7 @@ class PostLoginRegTests(LoginRegBase, TipprControllerTestCase):
     def assert_failure(self, res, code=None):
         # counterintuitively, failure to login will return a 200
         # (compared to a redirect).
-        self.assertEqual(res.status, 200)
+        self.assertEqual(res.status_int, 200)
         # recaptcha is done entirely in JS
         if code != "BAD_CAPTCHA":
             self.assertTrue(error_list[code] in _force_unicode(res.body))

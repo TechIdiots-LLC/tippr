@@ -66,10 +66,9 @@ def _get_translator(lang, graceful_fail=False, **kwargs):
 
 
 def set_lang(lang, graceful_fail=False, fallback_lang=None, **kwargs):
-    """Set the i18n language used"""
-    registry = pylons.request.environ['paste.registry']
+    """Set the i18n language used (for this request, during one)"""
     if not lang:
-        registry.replace(pylons.translator, NullTranslations())
+        pylons.translator._replace_object(NullTranslations())
     else:
         translator = _get_translator(lang, graceful_fail = graceful_fail, **kwargs)
         base_lang, is_dialect, dialect = lang.partition("-")
@@ -84,7 +83,7 @@ def set_lang(lang, graceful_fail=False, fallback_lang=None, **kwargs):
             fallback_translator = _get_translator(fallback_lang,
                                                   graceful_fail=True)
             translator.add_fallback(fallback_translator)
-        registry.replace(pylons.translator, translator)
+        pylons.translator._replace_object(translator)
 
 
 def load_data(lang_path, domain, extension='data'):

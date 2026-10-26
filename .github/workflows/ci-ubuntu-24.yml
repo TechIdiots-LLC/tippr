@@ -44,7 +44,7 @@ jobs:
       - name: Install Python dependencies (common)
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install cassandra-driver simplejson Paste PasteDeploy pytest pylibmc
+          pip install cassandra-driver simplejson PasteDeploy pytest pylibmc
           # tippr's baseplate fork, as install/requirements.txt pins it (the one on
           # PyPI needs pkg_resources, which current setuptools doesn't have)
           pip install "$(grep -E '^baseplate @ ' install/requirements.txt)"

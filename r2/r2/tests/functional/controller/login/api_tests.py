@@ -31,10 +31,10 @@ class LoginRegTests(LoginRegBase, TipprControllerTestCase):
     CONTROLLER = "api"
 
     def assert_success(self, res):
-        self.assertEqual(res.status, 200)
+        self.assertEqual(res.status_int, 200)
         self.assertTrue("error" not in res)
 
     def assert_failure(self, res, code=None):
-        self.assertEqual(res.status, 200)
+        self.assertEqual(res.status_int, 200)
         self.assertTrue("error" in res)
         self.assertTrue(code in res)
