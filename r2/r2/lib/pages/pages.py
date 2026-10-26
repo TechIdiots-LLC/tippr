@@ -6172,6 +6172,11 @@ class UserIPHistory(Templated):
     def __init__(self):
         self.my_apps = OAuth2Client._by_user_grouped(c.user)
         self.ips = ips_by_account_id(c.user._id)
+        # a private network address, which isn't recorded (set_account_ip)
+        try:
+            self.private_here = ip_address(request.ip).is_private
+        except ValueError:
+            self.private_here = False
 
         if not c.user_is_admin:
             self.ips = [

@@ -1090,6 +1090,13 @@ class MinimalController(BaseController):
 
         if self.should_update_last_visit():
             c.user.update_last_visit(c.start_time)
+            # and where it was used from, for account activity (hourly)
+            try:
+                from r2.models.ip import note_visit
+                note_visit(c.user._id, request.ip, c.start_time)
+            except Exception:
+                g.log.exception("couldn't record the visit IP for %s",
+                                c.user.name)
 
         hooks.get_hook("tippr.request.end").call()
 

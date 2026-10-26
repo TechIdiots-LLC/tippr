@@ -50,6 +50,12 @@
   - "See the results" shows a member every tally of a post without tipping, after asking: it ends their tipping on
     that post (tips they made before stay and count, and they can't tip or change one after). It's in their data
     export.
+- **Account activity lists where your account is used from:** it only recorded logins, and a login cookie lasts for
+  months, so the page was usually empty. Visits are recorded too now, at most once an hour for each address, kept 100
+  days as before. A visit from a private network address (a home or office network reaching the site directly) isn't
+  kept, and the page now says so instead of showing an empty table; an empty list says when visits will appear. The
+  privacy policy's information list names this (account activity, 100 days, seen by you and the site's
+  administrators, private addresses not kept), and the "accessing tippr from" line names no site.
 - **/v/all mixes vaults:** it ranks every post together, so a feed's run of new posts in one vault filled it (the
   front page and multis mix vaults already). Its hot listing now never puts two posts from the same vault next to
   each other while another vault's post is within 30 places.

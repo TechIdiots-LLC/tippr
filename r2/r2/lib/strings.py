@@ -150,7 +150,7 @@ string_dict = dict(
     archived_post_message = _("This is an archived post. You won't be able to vote or comment."),
     locked_post_message = _("This post is locked. You won't be able to comment."),
     account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices."),
-    your_current_ip_is = _("You are currently accessing tippr from this IP address: %(address)s."),
+    your_current_ip_is = _("You are currently visiting from this IP address: %(address)s."),
     account_activity_apps_blurb = _("""
 These apps are authorized to access your account. Signing out of all sessions
 will revoke access from all apps. You may also revoke access from individual

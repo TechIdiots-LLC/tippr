@@ -48,7 +48,7 @@ Users can request a complete export of their personal data, which includes:
 - **Subscriptions**: List of subscribed communities
 - **Saved and hidden items, friends and blocked users**
 - **OAuth Applications**: Connected third-party applications
-- **IP History**: Login IP addresses and timestamps (for verification purposes)
+- **IP History**: the IP addresses the account was used from (logins, and visits at most hourly) and when, from the last 100 days
 
 The export is a ZIP file with two files:
 - `README.txt` - what's in the export and how to read it

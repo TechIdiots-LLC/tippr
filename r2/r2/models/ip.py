@@ -158,3 +158,23 @@ def set_account_ip(account_id, ip, date=None):
     m.insert(IPsByAccount._cf, str(account_id), {date: ip}, ttl=CF_TTL)
     m.insert(AccountsByIP._cf, ip, {date: str(account_id)}, ttl=CF_TTL)
     m.send()
+
+
+# a logged-in member's address is recorded at most this often (note_visit)
+VISIT_RECORD_SECONDS = 3600
+
+
+def note_visit(account_id, ip, date=None):
+    """A logged-in request from ip: recorded (set_account_ip) at most once
+    every VISIT_RECORD_SECONDS for each account and address, so account
+    activity shows where an account is used from, not only where it last
+    logged in (a login cookie can last for months)."""
+    try:
+        if ip_address(ip).is_private:
+            return
+    except ValueError:
+        return
+    key = "account_ip_seen:%s:%s" % (account_id, ip)
+    if not g.gencache.add(key, 1, time=VISIT_RECORD_SECONDS):
+        return
+    set_account_ip(account_id, ip, date)

@@ -38,6 +38,10 @@
 <p>${strings.account_activity_blurb}</p>
 
 <p>${strings.your_current_ip_is % ip_format}</p>
+%if thing.private_here:
+  ## (r2.models.ip.set_account_ip skips them)
+  <p>${_("That's a private network address (such as a home or office network reaching the site directly), so these visits aren't listed here: only visits from the internet are.")}</p>
+%endif
 <table>
     <thead>
         <tr>
@@ -59,6 +63,9 @@
             <td>${org}</td>
         </tr>
         % endfor
+        %if not thing.ips:
+        <tr><td colspan="4">${_("No visits recorded yet. Each address your account is used from appears here within the hour, and is kept 100 days.")}</td></tr>
+        %endif
     </tbody>
 </table>
 </div>

@@ -26,6 +26,7 @@ We collect information you provide directly, including:
 When you use the Services, we automatically collect certain information:
 
 - **Log Data**: IP address, browser type, operating system, referrer URLs, pages viewed, and access times.
+- **Account Activity**: The IP addresses your account is used from (when you log in, and at most once an hour while you're logged in), with the times. They're kept for 100 days, to help protect your account and fight abuse: you can see them on your account activity page, and so can the site's administrators. Addresses on private networks (such as a home or office network reaching the site directly) aren't kept.
 - **Device Information**: Device type, unique device identifiers, and mobile network information.
 - **Cookies and Similar Technologies**: We use cookies, pixels, and local storage to collect information about your browsing activities. See Section 6 for more details.
 - **Usage Information**: Features you use, actions you take, and time spent on the Services.
