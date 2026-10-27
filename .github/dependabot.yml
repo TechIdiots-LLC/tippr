@@ -10,7 +10,6 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
-    labels: [dependencies]
     groups:
       # pinned to each other's exact versions: they only move together
       opentelemetry:
@@ -31,7 +30,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    labels: [dependencies]
     groups:
       actions:
         patterns: ["*"]
