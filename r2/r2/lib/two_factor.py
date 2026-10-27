@@ -40,6 +40,7 @@ import hashlib
 import hmac
 import secrets
 import time
+import urllib.parse
 from datetime import datetime, timedelta
 
 import sqlalchemy as sa
@@ -48,6 +49,8 @@ from pylons import request
 from pylons import tmpl_context as c
 
 RECENT_MINUTES = 15
+# what can't be undone wants a code entered more recently than that (fresh)
+FRESH_MINUTES = 5
 DEVICE_DAYS = 30
 DEVICE_COOKIE = "tippr_otp_device"
 RECOVERY_CODES = 10
@@ -425,17 +428,45 @@ def _session_key(account, session=None):
     return "otp:recent_%s_%s" % (account._id36, digest)
 
 
-def mark_recent(account, session=None):
+def mark_recent(account, session=None, extend_only=False):
     """A code was just entered in this login session (or in session, the
-    login cookie just set, for a code typed while signing in)."""
+    login cookie just set, for a code typed while signing in). With
+    extend_only, a page in use keeps the last one counting longer (it
+    isn't a new code, so fresh() doesn't change)."""
+    now = int(time.time())
     # kept: when it runs out (for "unlocked for N more minutes")
-    g.gencache.set(_session_key(account, session),
-                   int(time.time()) + RECENT_MINUTES * 60,
+    g.gencache.set(_session_key(account, session), now + RECENT_MINUTES * 60,
                    time=RECENT_MINUTES * 60)
+    if not extend_only:
+        g.gencache.set(_session_key(account, session) + "_at", now,
+                       time=RECENT_MINUTES * 60)
 
 
 def recent(account):
     return bool(g.gencache.get(_session_key(account)))
+
+
+def fresh(account):
+    """A code (or passkey) was entered in this login session in the last
+    FRESH_MINUTES: for what can't be undone (deleting the account,
+    turning two-factor off), which recent() isn't enough for."""
+    at = g.gencache.get(_session_key(account) + "_at")
+    return bool(at) and at >= int(time.time()) - FRESH_MINUTES * 60
+
+
+def confirmed(account, fresh_only=False):
+    """Whether this session has confirmed it's the member: two-factor off,
+    or a code entered recently (fresh(), for fresh_only)."""
+    if not enabled(account):
+        return True
+    return fresh(account) if fresh_only else recent(account)
+
+
+def confirm_path(dest, purpose):
+    """The "confirm it's you" page (r2.lib.pages.TwoFactorConfirm), coming
+    back to dest."""
+    return "/two_factor/confirm?" + urllib.parse.urlencode(
+        {"dest": dest, "purpose": purpose})
 
 
 def recent_minutes_left(account):
@@ -478,7 +509,7 @@ def prefs_locked(account, page):
             not getattr(account, "pref_otp_settings", False)):
         return False
     if recent(account):
-        mark_recent(account)
+        mark_recent(account, extend_only=True)
         return False
     return True
 

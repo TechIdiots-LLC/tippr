@@ -1842,9 +1842,30 @@ class FormsController(TipprController):
         if c.user.name not in g.admins:
             return self.abort404()
 
+        # two-factor first, on the "confirm it's you" page, unless this
+        # session did lately (or this computer is remembered)
+        from r2.lib import two_factor
+        if not (two_factor.confirmed(c.user) or c.otp_cached):
+            return self.redirect(two_factor.confirm_path(request.fullpath, "admin"))
+
         return InterstitialPage(
             _("turn admin on"),
             content=AdminInterstitial(dest=dest)).render()
+
+    @validate(VUser(),
+              dest=VDestination(),
+              purpose=VOneOf("purpose", TwoFactorConfirm.PURPOSES, default="prefs"))
+    def GET_two_factor_confirm(self, dest, purpose):
+        """"Confirm it's you" (r2.lib.pages.TwoFactorConfirm), then on to
+        dest: straight there if this session already has."""
+        from r2.lib import two_factor
+        fresh_only = purpose in ("delete", "disable")
+        if two_factor.confirmed(c.user, fresh_only=fresh_only):
+            return self.redirect(dest)
+        content = TwoFactorConfirm(dest=dest, purpose=purpose)
+        if purpose == "admin":
+            return InterstitialPage(_("confirm it's you"), content=content).render()
+        return PrefsPage(content=content, title=_("confirm it's you")).render()
 
     @validate(VAdmin(),
               dest=VDestination())

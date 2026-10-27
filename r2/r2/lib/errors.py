@@ -151,6 +151,7 @@ error_list = dict((
         ('OTP_ALREADY_ENABLED', _('two-factor authentication is already enabled')),
         ('TWO_FACTOR_REQUIRED', _('enter the code from your authenticator app (or a recovery code)')),
         ('PREFS_LOCKED_AGAIN', _('your preferences locked again while you were away: reload the page to unlock them, then try again')),
+        ('CONFIRM_AGAIN', _("confirm it's you again first (two-factor): it's been more than a few minutes")),
         ('WRONG_OTP', _("that code didn't work. Codes follow the clock, so check that your phone sets its time automatically.")),
         ('TWO_FACTOR_NEEDED_FOR_STAFF', _('turn on two-factor authentication (preferences, security) to use these tools')),
         ('BAD_IMAGE', _('image problem')),

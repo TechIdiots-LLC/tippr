@@ -82,6 +82,7 @@ def make_map(config):
     mc('/logout', controller='forms', action='logout')
     mc('/verify', controller='forms', action='verify')
     mc('/adminon', controller='forms', action='adminon')
+    mc('/two_factor/confirm', controller='forms', action='two_factor_confirm')
     mc('/adminoff', controller='forms', action='adminoff')
     mc('/submit', controller='front', action='submit')
 

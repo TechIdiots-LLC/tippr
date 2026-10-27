@@ -196,23 +196,26 @@
       <p><small>${_("Nobody is logged out. To end the logins themselves, use \"log out of all other sessions\" on the account activity page.")}</small></p>
     </form>
 
-    ## turning it off wants the password and a code typed then (VFreshOneTimePassword)
-    <details class="two-factor-off">
+    ## turning it off wants the password and two-factor confirmed in the
+    ## last few minutes, on the "confirm it's you" page (VFreshTwoFactor)
+    <% from r2.lib import two_factor %>
+    <% fresh = two_factor.confirmed(c.user, fresh_only=True) %>
+    <details class="two-factor-off" id="two-factor-off" ${"open" if request.GET.get("off") else ""}>
     <summary>${_("turn off two-factor authentication…")}</summary>
     <form action="/post/disable_otp" method="post" onsubmit="return post_form(this, 'disable_otp')" id="pref-otp-off">
-    ${_md("to turn it off (removing every method and the recovery codes), enter your password and a code.", wrap=True)}
+    ${_md("to turn it off (removing every method and the recovery codes), enter your password.", wrap=True)}
+    %if not fresh:
+      <p class="two-factor-confirm-first">
+        <a href="${two_factor.confirm_path('/prefs/security?off=1#two-factor-off', 'disable')}">${_("confirm it's you")}</a>
+        &#32;${_("(two-factor) first: then you have %(minutes)s minutes to turn it off.") % dict(minutes=two_factor.FRESH_MINUTES)}
+      </p>
+    %endif
 
     <%utils:round_field title="${_('password')}" description="${_('(required)')}">
       <input type="password" name="password" />
       ${error_field("WRONG_PASSWORD", "password")}
     </%utils:round_field>
-
-    <%utils:round_field title="${_('two-factor code')}" description="${_('(required)')}">
-      <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="40" />
-      ${error_field("WRONG_PASSWORD", "otp")}
-      ${error_field("NO_OTP_SECRET", "otp")}
-      ${error_field("RATELIMIT", "otp")}
-    </%utils:round_field>
+    ${error_field("CONFIRM_AGAIN", "otp")}
 
     <input type="submit" value="${_("turn off")}">
     </form>

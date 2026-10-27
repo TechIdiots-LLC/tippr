@@ -120,7 +120,7 @@ when its result changes (`TIPPR_ALERT_WEBHOOK`, `TIPPR_ALERT_COMMAND`).
 
 ## Admin pages
 
-With admin mode on (`/adminon`, which requires TOTP in production):
+With admin mode on (`/adminon`, which wants two-factor confirmed on "confirm it's you" in production):
 
 | Page | For |
 |---|---|
@@ -179,10 +179,12 @@ See [ADMIN_FEATURES.md](ADMIN_FEATURES.md).
 ## Accounts and security
 
 - **Two-factor sign-in:** authenticator apps, passkeys and recovery codes
-  (`r2/lib/two_factor.py`, `r2/lib/passkeys.py`). Preferences unlock once
-  with a code, like admin mode: the security page and the password and
-  email page always, every preferences page if the member chooses, and
-  they stay unlocked while in use ([ADMIN_FEATURES.md](ADMIN_FEATURES.md)).
+  (`r2/lib/two_factor.py`, `r2/lib/passkeys.py`). Once signed in, a code is
+  asked for in one place, "confirm it's you" (`/two_factor/confirm`): for
+  preferences (the security page and the password and email page always,
+  every page if the member chooses; they stay unlocked while in use) and
+  admin mode, and within the last 5 minutes for deleting the account or
+  turning two-factor off ([ADMIN_FEATURES.md](ADMIN_FEATURES.md)).
 - **Account activity** (`/account-activity`): the addresses an account is
   used from, recorded at login and at most hourly while logged in
   (`r2/models/ip.py`), kept 100 days; private network addresses aren't

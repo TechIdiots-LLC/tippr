@@ -211,3 +211,38 @@ class TestTwoFactor(TipprTestCase):
         self.assertTrue(two_factor.staff_tools_closed(self.account))
         self.account.otp_secret = "SECRET"
         self.assertFalse(two_factor.staff_tools_closed(self.account))
+
+    def test_fresh_is_a_code_entered_in_the_last_few_minutes(self):
+        self.assertFalse(two_factor.fresh(self.account))
+        two_factor.mark_recent(self.account)
+        self.assertTrue(two_factor.fresh(self.account))
+        at = two_factor._session_key(self.account) + "_at"
+        self.cache[at] = int(time.time()) - two_factor.FRESH_MINUTES * 60 - 1
+        self.assertFalse(two_factor.fresh(self.account))
+        # still recent, though: preferences and admin mode count it
+        self.assertTrue(two_factor.recent(self.account))
+
+    def test_opening_preferences_doesnt_make_it_fresh(self):
+        two_factor.mark_recent(self.account)
+        at = two_factor._session_key(self.account) + "_at"
+        old = int(time.time()) - two_factor.FRESH_MINUTES * 60 - 1
+        self.cache[at] = old
+        self.assertFalse(two_factor.prefs_locked(self.account, "security"))
+        self.assertEqual(self.cache[at], old)
+        self.assertFalse(two_factor.fresh(self.account))
+
+    def test_confirmed(self):
+        self.assertFalse(two_factor.confirmed(self.account))
+        two_factor.mark_recent(self.account)
+        self.assertTrue(two_factor.confirmed(self.account))
+        self.assertTrue(two_factor.confirmed(self.account, fresh_only=True))
+        self.request.cookies = {"session": "another-login"}
+        self.assertFalse(two_factor.confirmed(self.account, fresh_only=True))
+        # nothing to confirm without two-factor
+        self.account.otp_secret = ""
+        self.assertTrue(two_factor.confirmed(self.account, fresh_only=True))
+
+    def test_confirm_path(self):
+        self.assertEqual(two_factor.confirm_path("/prefs/privacy#delete-account", "delete"),
+                         "/two_factor/confirm?dest=%2Fprefs%2Fprivacy%23delete-account"
+                         "&purpose=delete")

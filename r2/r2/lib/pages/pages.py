@@ -1296,17 +1296,32 @@ class PrefsPage(Tippr):
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
 
-class PrefsUnlock(Templated):
-    """A locked preferences page: the two-factor code (or a passkey) first
-    (r2.lib.two_factor.prefs_locked), then back to the page."""
-    def __init__(self, dest):
+class TwoFactorConfirm(Templated):
+    """"Confirm it's you": the one place a two-factor code (or a passkey)
+    is asked for once signed in, then back to dest. purpose says what for:
+    "prefs" (a locked preferences page, r2.lib.two_factor.prefs_locked),
+    "admin" (admin mode), "delete" (deleting the account) or "disable"
+    (turning two-factor off); those last two need it fresh
+    (two_factor.fresh), the others recent."""
+    PURPOSES = ("prefs", "admin", "delete", "disable")
+
+    def __init__(self, dest, purpose="prefs"):
         from r2.lib import two_factor
         self.dest = dest
+        self.purpose = purpose
         self.has_app = two_factor.has_authenticator_app(c.user)
         # (all of preferences, or this page, whose changes always ask)
         self.everything = getattr(c.user, "pref_otp_settings", False)
-        self.minutes = two_factor.RECENT_MINUTES
+        self.minutes = (two_factor.FRESH_MINUTES if purpose in ("delete", "disable")
+                        else two_factor.RECENT_MINUTES)
         Templated.__init__(self)
+
+
+class PrefsUnlock(TwoFactorConfirm):
+    """A locked preferences page: the two-factor code (or a passkey) first
+    (r2.lib.two_factor.prefs_locked), then back to the page."""
+    def __init__(self, dest):
+        TwoFactorConfirm.__init__(self, dest, purpose="prefs")
 
 
 def prefs_unlock(page):

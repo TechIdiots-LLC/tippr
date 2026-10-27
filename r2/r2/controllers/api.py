@@ -26,7 +26,7 @@ import csv
 import json
 import re
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from pylons import app_globals as g
 from pylons import request, response
@@ -1658,7 +1658,7 @@ class ApiController(TipprController):
                    deactivate_message = VLength("deactivate_message", max_length=500),
                    username = VRequired("user", errors.NOT_USER),
                    user = VThrottledLogin(["user", "passwd"]),
-                   otp = VFreshOneTimePassword("otp", required=False),
+                   otp = VFreshTwoFactor("otp"),
                    content = VOneOf("content", ("keep", "delete"),
                                     default="keep"),
                    confirm = VBoolean("confirm"))
@@ -1666,8 +1666,10 @@ class ApiController(TipprController):
                              user, otp, content, confirm):
         """Delete the currently logged in account.
 
-        A valid username/password and confirmation must be supplied, and a
-        two-factor code (`otp`) if the account uses two-factor sign-in. An
+        A valid username/password and confirmation must be supplied, and,
+        if the account uses two-factor sign-in, a two-factor confirmation in
+        the last few minutes (the website's "confirm it's you" page, or a
+        code as `otp`). An
         optional `deactivate_message` may be supplied to explain the reason the
         account is to be deleted. With `content=delete` the account's posts and
         comments are deleted too (otherwise they stay, by [deleted]).
@@ -1684,8 +1686,7 @@ class ApiController(TipprController):
         if not (form.has_errors('ratelimit', errors.RATELIMIT) or
                 form.has_errors("user", errors.NOT_USER) or
                 form.has_errors("passwd", errors.WRONG_PASSWORD) or
-                form.has_errors("otp", errors.WRONG_PASSWORD,
-                                errors.RATELIMIT) or
+                form.has_errors("otp", errors.CONFIRM_AGAIN) or
                 form.has_errors("deactivate_message", errors.TOO_LONG) or
                 form.has_errors("confirm", errors.CONFIRM)):
             if content == "delete":
@@ -6207,32 +6208,32 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VVerifyPassword("password", fatal=False),
-        VOneTimePassword("otp",
-                         required=not g.disable_require_admin_otp),
-        remember=VBoolean("remember"),
         dest=VDestination(),
     )
-    def POST_adminon(self, form, jquery, remember, dest):
+    def POST_adminon(self, form, jquery, dest):
+        """Admin mode on. With two-factor (as production requires), once
+        this session has confirmed it's you: GET /adminon sends you to the
+        "confirm it's you" page first (or this computer is remembered).
+        Without it (disable_require_admin_otp), with the password."""
         if c.user.name not in g.admins:
             self.abort403()
 
-        if form.has_errors('password', errors.WRONG_PASSWORD):
-            return
-
         # the site requires two-factor for staff (r2.lib.two_factor)
         from r2.lib import two_factor
-        if two_factor.staff_tools_closed(c.user):
+        if two_factor.staff_tools_closed(c.user) or not (
+                two_factor.enabled(c.user) or g.disable_require_admin_otp):
             c.errors.add(errors.TWO_FACTOR_NEEDED_FOR_STAFF, field="password")
             form.has_errors("password", errors.TWO_FACTOR_NEEDED_FOR_STAFF)
             return
 
-        if form.has_errors("otp", errors.WRONG_PASSWORD,
-                                  errors.NO_OTP_SECRET,
-                                  errors.RATELIMIT):
+        if two_factor.enabled(c.user):
+            if not (two_factor.confirmed(c.user) or c.otp_cached):
+                # it's been a while since the page opened: confirm again
+                again = "/adminon?" + urlencode({"dest": dest or "/"})
+                form.redirect(two_factor.confirm_path(again, "admin"))
+                return
+        elif form.has_errors("password", errors.WRONG_PASSWORD):
             return
-
-        if remember:
-            self.remember_otp(c.user)
 
         self.enable_admin_mode(c.user)
         form.redirect(dest)
@@ -6414,17 +6415,18 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VVerifyPassword("password", fatal=False),
-        VFreshOneTimePassword("otp", required=True),
+        VFreshTwoFactor("otp"),
     )
     def POST_disable_otp(self, form, jquery):
-        """Turn two-factor off: every method goes (and the recovery codes)."""
+        """Turn two-factor off: every method goes (and the recovery codes).
+        Needs the password and a two-factor confirmation in the last few
+        minutes (or a code as `otp`)."""
         from r2.lib import two_factor
         if form.has_errors("password", errors.WRONG_PASSWORD):
             return
-
-        if form.has_errors("otp", errors.WRONG_PASSWORD,
-                                  errors.NO_OTP_SECRET,
-                                  errors.RATELIMIT):
+        if not two_factor.enabled(c.user):
+            return
+        if form.has_errors("otp", errors.CONFIRM_AGAIN):
             return
 
         two_factor.remove_all(c.user)
@@ -6486,13 +6488,15 @@ class ApiController(TipprController):
         VModhash(),
         otp=nop("otp"),
         dest=VDestination(default="/prefs/security"),
+        remember=VBoolean("remember"),
     )
-    def POST_two_factor_unlock(self, form, jquery, otp, dest):
-        """A locked preferences page (r2.lib.pages.PrefsUnlock): one code
-        (or a passkey) that unlocks preferences while they're in use
-        (two_factor.prefs_locked), instead of a code field on every form,
-        then back to the page. Turning two-factor off still wants one
-        typed then."""
+    def POST_two_factor_unlock(self, form, jquery, otp, dest, remember):
+        """"Confirm it's you" (r2.lib.pages.TwoFactorConfirm): one code (or
+        a passkey) for preferences while they're in use
+        (two_factor.prefs_locked), admin mode, and, for a few minutes,
+        deleting the account or turning two-factor off, instead of a code
+        field on each form; then back to dest. remember: this computer
+        skips the code for admin mode and signing in for a while."""
         from r2.lib import two_factor
         if not two_factor.enabled(c.user):
             return
@@ -6500,6 +6504,8 @@ class ApiController(TipprController):
             c.errors.add(errors.WRONG_OTP, field="otp")
             form.has_errors("otp", errors.WRONG_OTP)
             return
+        if remember:
+            self.remember_otp(c.user)
         form.redirect(dest)
 
     @staticmethod

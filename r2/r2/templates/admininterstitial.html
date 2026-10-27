@@ -38,11 +38,15 @@
   title="${_('Are you one of us?')}"
 </%def>
 
+## two-factor was confirmed on the "confirm it's you" page before this one
+## (GET /adminon sends you there first), or this computer is remembered:
+## nothing more to type. Without two-factor (disable_require_admin_otp),
+## the password.
 <%def name="interstitial_title()">
-  %if c.otp_cached:
-    ${_('Enter your password')}
+  %if two_factor.enabled(c.user):
+    ${_('Turn admin mode on')}
   %else:
-    ${_('Enter your password and one-time code')}
+    ${_('Enter your password')}
   %endif
 </%def>
 
@@ -53,28 +57,20 @@
   <form action="/post/adminon" method="post"
       onsubmit="return post_form(this, 'adminon')" id="adminon">
     <div class="spacer">
-      <%utils:round_field title="${_('password')}" description="${_('(required)')}" css_class="adminpasswordform">
       % if thing.dest:
           <input type="hidden" name="dest" value="${thing.dest}" />
       % endif
+      % if two_factor.enabled(c.user):
+        % if c.otp_cached and not two_factor.confirmed(c.user):
+        ## "remember this computer" (forget it below)
+        <p class="admin-otp-remembered">${_("This computer is remembered, so you don't need a one-time code.")}</p>
+        % endif
+        ${error_field("TWO_FACTOR_NEEDED_FOR_STAFF", "password")}
+      % else:
+      <%utils:round_field title="${_('password')}" description="${_('(required)')}" css_class="adminpasswordform">
       <input type="password" name="password" tabindex="1" autofocus />
       ${error_field("WRONG_PASSWORD", "password")}
       ${error_field("TWO_FACTOR_NEEDED_FOR_STAFF", "password")}
-      </%utils:round_field>
-
-      % if c.otp_cached:
-      ## passed two-factor recently on this computer ("remember this
-      ## computer"): no code needed (forget it below)
-      <p class="admin-otp-remembered">${_("This computer is remembered, so you don't need a one-time code.")}</p>
-      % elif not g.disable_require_admin_otp or two_factor.enabled(c.user):
-      <%utils:round_field title="${_('one-time verification code')}" description="${_('(required)')}" css_class="adminpasswordform">
-      <input type="text" name="otp" maxlength="40" tabindex="1" required autocomplete="one-time-code" />
-      ${error_field("WRONG_PASSWORD", "otp")}
-      ${error_field("NO_OTP_SECRET", "otp")}
-      ${error_field("RATELIMIT", "otp")}
-
-      <label>
-          <input type="checkbox" name="remember" tabindex="1"> ${_("remember this computer")}</label>
       </%utils:round_field>
       % endif
 

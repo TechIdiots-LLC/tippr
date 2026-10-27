@@ -2949,18 +2949,25 @@ class VOneTimePassword(Validator):
         self.set_error(errors.WRONG_PASSWORD)
 
 
-class VFreshOneTimePassword(VOneTimePassword):
-    """A two-factor code typed now, for things that can't be undone (deleting
-    your account): a browser that passed two-factor recently (the otp
-    cookie) still has to give one. Accounts without two-factor pass."""
+class VFreshTwoFactor(Validator):
+    """For what can't be undone (deleting your account, turning two-factor
+    off): the member confirmed it's them on the "confirm it's you" page in
+    the last few minutes (r2.lib.two_factor.fresh), or sends a code with
+    the request (for the API). Neither a remembered computer nor an older
+    code counts. Accounts without two-factor pass. Error CONFIRM_AGAIN."""
 
-    def run(self, password):
-        cached = c.otp_cached
-        c.otp_cached = False
-        try:
-            return VOneTimePassword.run(self, password)
-        finally:
-            c.otp_cached = cached
+    def run(self, code):
+        from r2.lib import two_factor
+        if not c.user_is_loggedin or two_factor.confirmed(c.user, fresh_only=True):
+            return
+        if code and two_factor.check_code(c.user, code):
+            return
+        self.set_error(errors.CONFIRM_AGAIN)
+
+    def param_docs(self):
+        return {self.param: "a two-factor code, if the account uses two-factor "
+                            "sign-in and hasn't confirmed it in the last few "
+                            "minutes on the website"}
 
 
 class VTwoFactor(Validator):

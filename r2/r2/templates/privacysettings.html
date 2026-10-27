@@ -129,12 +129,15 @@
       <input name="passwd" id="delete-password" type="password" autocomplete="current-password">
       ${error_field("WRONG_PASSWORD", "passwd")}
 
-      %if two_factor.enabled(c.user):
-        <label for="delete-otp">${_("two-factor code")}</label>
-        <input name="otp" id="delete-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="40">
-        ${error_field("WRONG_PASSWORD", "otp")}
-        ${error_field("RATELIMIT", "otp")}
+      ## two-factor: confirmed on the "confirm it's you" page in the last few
+      ## minutes (VFreshTwoFactor), not a code typed here
+      %if not two_factor.confirmed(c.user, fresh_only=True):
+        <p class="two-factor-confirm-first">
+          <a href="${two_factor.confirm_path('/prefs/privacy#delete-account', 'delete')}">${_("confirm it's you")}</a>
+          &#32;${_("(two-factor) first: then you have %(minutes)s minutes to delete your account.") % dict(minutes=two_factor.FRESH_MINUTES)}
+        </p>
       %endif
+      ${error_field("CONFIRM_AGAIN", "otp")}
 
       <label class="privacy-confirm">
         <input type="checkbox" name="confirm"> ${_("I understand my account can't be recovered.")}
