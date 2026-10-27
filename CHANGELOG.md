@@ -25,6 +25,10 @@
   your password and a code on its own page (with two-factor it's one button once confirmed; "remember this computer"
   is on the confirm page). Deleting your account and turning two-factor off no longer have a code box: they need a
   confirmation from the last 5 minutes, and link to the page when it's older (the API still takes `otp`).
+- **The browser test on every push:** members logging in, posting, replying, voting, tipping scales, moderating and
+  writing to the admins, in real browsers at desktop and phone width, light and night, with every page checked for
+  errors and unreadable text, used to run only before a release; CI runs it on every push and pull request too
+  (`ci-docker.yml`, screenshots kept as an artifact). Its admin step follows "confirm it's you".
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

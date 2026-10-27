@@ -1,0 +1,75 @@
+# Builds the Docker image (tippr:release) and tests the compose stack with
+# it: docker/smoke-test.sh, then the browser test (docker/visual-test.mjs:
+# members logging in, posting, replying, voting, tipping scales,
+# moderating, writing to the admins; every page checked for errors,
+# failed requests, sideways scrolling and unreadable text, and saved as a
+# screenshot in docker/visual-results). Used by ci-docker.yml on every push
+# and by release.yml before publishing.
+
+name: Test the compose stack
+description: Build the image and run the smoke and browser tests against it
+
+inputs:
+  version:
+    description: the VERSION build argument
+    required: true
+  i18n-ref:
+    description: tippr-i18n branch or tag built into the image
+    default: master
+  websockets-ref:
+    description: tippr-service-websockets branch or tag
+    default: master
+  activity-ref:
+    description: tippr-service-activity branch or tag
+    default: master
+
+runs:
+  using: composite
+  steps:
+    - uses: docker/setup-buildx-action@v4
+
+    - name: Build the image
+      uses: docker/build-push-action@v7
+      with:
+        context: .
+        file: docker/Dockerfile
+        load: true
+        tags: tippr:release
+        build-args: |
+          VERSION=${{ inputs.version }}
+          REVISION=${{ github.sha }}
+          I18N_REF=${{ inputs.i18n-ref }}
+          WEBSOCKETS_REF=${{ inputs.websockets-ref }}
+          ACTIVITY_REF=${{ inputs.activity-ref }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # the browser test drives the runner's own Chrome (no browser download)
+    - name: Install the browser test's Playwright
+      shell: bash
+      run: npm install --no-audit --no-fund --prefix /tmp/playwright playwright-core@1.48.2
+
+    - name: Smoke test the compose stack, and the browser test
+      shell: bash
+      working-directory: docker
+      env:
+        VISUAL_TEST: "1"
+        PLAYWRIGHT: /tmp/playwright/node_modules/playwright-core
+      run: |
+        cat > .env <<ENV
+        TIPPR_DOMAIN=tippr.test
+        TIPPR_DB_PASSWORD=$(openssl rand -hex 16)
+        TIPPR_AMQP_PASSWORD=$(openssl rand -hex 16)
+        TIPPR_TLS=internal
+        TIPPR_IMAGE=tippr
+        TIPPR_VERSION=release
+        TIPPR_ENVIRONMENT=production
+        TIPPR_CASSANDRA_HEAP=1G
+        TIPPR_OPENSEARCH_HEAP=512m
+        ENV
+        if ! bash smoke-test.sh; then
+          echo "::group::the stack's logs"
+          docker compose logs --no-color --tail 200
+          echo "::endgroup::"
+          exit 1
+        fi

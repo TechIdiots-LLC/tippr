@@ -80,51 +80,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v4
-
-      - name: Build the image
-        uses: docker/build-push-action@v7
+      # the image, the smoke test and the browser test (shared with
+      # ci-docker.yml)
+      - name: Build and test the compose stack
+        uses: ./.github/actions/stack-test
         with:
-          context: .
-          file: docker/Dockerfile
-          load: true
-          tags: tippr:release
-          build-args: |
-            VERSION=${{ needs.release-check.outputs.version }}
-            REVISION=${{ github.sha }}
-            I18N_REF=${{ env.I18N_REF }}
-            WEBSOCKETS_REF=${{ env.WEBSOCKETS_REF }}
-            ACTIVITY_REF=${{ env.ACTIVITY_REF }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # the browser test drives the runner's own Chrome (no browser download)
-      - name: Install the browser test's Playwright
-        run: npm install --no-audit --no-fund --prefix /tmp/playwright playwright-core@1.48.2
-
-      - name: Smoke test the compose stack
-        working-directory: docker
-        env:
-          VISUAL_TEST: "1"
-          PLAYWRIGHT: /tmp/playwright/node_modules/playwright-core
-        run: |
-          cat > .env <<ENV
-          TIPPR_DOMAIN=tippr.test
-          TIPPR_DB_PASSWORD=$(openssl rand -hex 16)
-          TIPPR_AMQP_PASSWORD=$(openssl rand -hex 16)
-          TIPPR_TLS=internal
-          TIPPR_IMAGE=tippr
-          TIPPR_VERSION=release
-          TIPPR_ENVIRONMENT=production
-          TIPPR_CASSANDRA_HEAP=1G
-          TIPPR_OPENSEARCH_HEAP=512m
-          ENV
-          bash smoke-test.sh
-
-      - name: Show logs after a failure
-        if: failure()
-        working-directory: docker
-        run: docker compose logs --no-color --tail 200
+          version: ${{ needs.release-check.outputs.version }}
+          i18n-ref: ${{ env.I18N_REF }}
+          websockets-ref: ${{ env.WEBSOCKETS_REF }}
+          activity-ref: ${{ env.ACTIVITY_REF }}
 
       # every page the browser test saw, at desktop and phone width, light
       # and night (report.json lists what failed, and faint text as warnings)

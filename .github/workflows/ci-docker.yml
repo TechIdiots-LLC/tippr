@@ -1,0 +1,36 @@
+# The Docker image and the compose stack on every push and pull request:
+# the smoke test, and the browser test, members using the site in real
+# browsers (docker/visual-test.mjs). The same steps run before a release
+# (release.yml); here nothing is published.
+
+name: CI — Docker stack and browser test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  stack:
+    name: Docker stack and browser test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build and test the compose stack
+        uses: ./.github/actions/stack-test
+        with:
+          version: ci-${{ github.sha }}
+
+      # every page the browser test saw, at desktop and phone width, light
+      # and night (report.json lists what failed, and faint text as warnings)
+      - name: Upload the browser test's screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-${{ github.sha }}
+          path: docker/visual-results
+          if-no-files-found: ignore
