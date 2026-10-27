@@ -1,7 +1,9 @@
 [Unit]
 Description=place new comments in the precomputed comment trees
 PartOf=tippr.target
-After=network.target
+After=network.target postgresql.service cassandra.service zookeeper.service rabbitmq-server.service memcached.service
+# keep restarting while the data stores come up (wait-for-stores)
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -10,8 +12,11 @@ Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
 Environment=type=commentstree_q
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
 ExecStart=@TIPPR_VENV@/bin/python -m r2.commands --proctitle ${type}%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/db/queries.py -c "run_commentstree(qname='${type}')"
 Restart=always
+RestartSec=5
+TimeoutStartSec=360
 Nice=10
 
 [Install]

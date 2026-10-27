@@ -3,6 +3,11 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Comes back by itself after a reboot:** the web app, queue consumers and scheduled jobs wait for PostgreSQL,
+  Cassandra, ZooKeeper, RabbitMQ, memcached and OpenSearch to answer before starting (`scripts/wait-for-stores`;
+  the backend's on a frontend). They used to start at once, fail while Cassandra was still coming up, and after five
+  quick failures systemd stopped trying, so the site stayed down until someone restarted it. A service that fails
+  anyway is now restarted every 5 seconds, without a limit.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

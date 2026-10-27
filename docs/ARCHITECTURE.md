@@ -110,6 +110,10 @@ rebuilt.
 
 `tippr.target` covers the web app, consumers, jobs and services. Use
 `tippr-start`, `tippr-stop` and `tippr-restart` for all of them at once.
+After a reboot, the web app, consumers and jobs wait for the data stores
+to answer first (`scripts/wait-for-stores`, up to 5 minutes, the backend's
+on a frontend), and a service that fails anyway is restarted every 5
+seconds rather than given up on.
 
 ## Admin pages
 

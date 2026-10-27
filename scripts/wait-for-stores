@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""Wait until the data stores tippr needs accept connections:
+
+    wait-for-stores [INI] [--timeout SECONDS]
+
+The web app, the queue consumers and the jobs run it first (ExecStartPre),
+so after a reboot they start once PostgreSQL, Cassandra, ZooKeeper,
+RabbitMQ, memcached and OpenSearch (when it's the search provider) are
+up, rather than failing until systemd gives up on them. Cassandra in
+particular starts a minute or so before it answers. The addresses are the ini's (TIPPR_INI, from
+/etc/default/tippr, by default), so on a frontend it waits for the
+backend's. Exits 1 if one still isn't reachable after the timeout (5
+minutes), and the unit's restart takes it from there.
+
+Only the standard library, so it starts fast and needs nothing installed.
+"""
+
+import argparse
+import configparser
+import os
+import socket
+import sys
+import time
+import urllib.parse
+
+
+def stores(ini):
+    """{name: [(host, port), ...]}: a store is up when any of its
+    addresses takes a connection."""
+    config = configparser.ConfigParser(interpolation=None, strict=False)
+    config.read(ini)
+    get = lambda key, default="": config.get("DEFAULT", key, fallback=default).strip()
+
+    def addresses(value, port):
+        found = []
+        for item in value.split(","):
+            item = item.strip().split("/", 1)[0]  # zookeeper's /chroot
+            if not item:
+                continue
+            host, _, item_port = item.partition(":")
+            found.append((host, int(item_port) if item_port.isdigit() else port))
+        return found
+
+    main_db = get("main_db").split(",")
+    result = {
+        "PostgreSQL": addresses(main_db[1] if len(main_db) > 1 else "", 5432),
+        # the driver connects on 9042 whatever port the seeds name
+        "Cassandra": [(host, 9042) for host, _ in addresses(get("cassandra_seeds"), 9042)],
+        "ZooKeeper": addresses(get("zookeeper_connection_string"), 2181),
+        "RabbitMQ": addresses(get("amqp_host"), 5672),
+        "memcached": addresses(get("lockcaches").split(",")[0], 11211),
+    }
+    if get("search_provider") == "opensearch":
+        url = urllib.parse.urlsplit(get("opensearch_url", "http://127.0.0.1:9200"))
+        result["OpenSearch"] = [(url.hostname or "127.0.0.1", url.port or 9200)]
+    return {name: addrs for name, addrs in result.items() if addrs}
+
+
+# CQL (native protocol v4) OPTIONS: Cassandra opens its port a little
+# before it answers, and answers this (SUPPORTED, opcode 6) once it does
+CQL_OPTIONS = b"\x04\x00\x00\x00\x05\x00\x00\x00\x00"
+
+
+def answers(name, sock):
+    if name != "Cassandra":
+        return True
+    sock.sendall(CQL_OPTIONS)
+    reply = sock.recv(9)
+    return len(reply) >= 5 and reply[4] == 6
+
+
+def reachable(name, addresses):
+    for host, port in addresses:
+        try:
+            with socket.create_connection((host, port), timeout=3) as sock:
+                if answers(name, sock):
+                    return True
+        except OSError:
+            pass
+    return False
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("ini", nargs="?", default=os.environ.get("TIPPR_INI"))
+    parser.add_argument("--timeout", type=float, default=300)
+    args = parser.parse_args()
+    if not args.ini or not os.path.exists(args.ini):
+        print("wait-for-stores: no ini (%r); not waiting" % args.ini)
+        return 0
+
+    waiting = stores(args.ini)
+    deadline = time.monotonic() + args.timeout
+    announced = set()
+    while waiting:
+        for name in list(waiting):
+            if reachable(name, waiting[name]):
+                if name in announced:
+                    print("wait-for-stores: %s is up" % name)
+                del waiting[name]
+            elif name not in announced:
+                print("wait-for-stores: waiting for %s (%s)" % (
+                    name, ", ".join("%s:%d" % a for a in waiting[name])))
+                announced.add(name)
+        if waiting and time.monotonic() > deadline:
+            print("wait-for-stores: gave up after %ds on %s" % (
+                args.timeout, ", ".join(waiting)), file=sys.stderr)
+            return 1
+        if waiting:
+            time.sleep(2)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

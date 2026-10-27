@@ -1,6 +1,6 @@
 [Unit]
 Description=recompute time-limited %i listings (top/controversial this hour/day/week/month/year)
-After=network.target postgresql.service
+After=network.target postgresql.service postgresql.service cassandra.service zookeeper.service rabbitmq-server.service memcached.service
 
 [Service]
 Type=oneshot
@@ -8,6 +8,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
 # run-locked: on one server at a time when several share the site
 ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked compute_time_listings-%i @TIPPR_SRC@/tippr/scripts/compute_time_listings %i year "['hour', 'day', 'week', 'month', 'year']"
 

@@ -1,7 +1,9 @@
 [Unit]
 Description=update links by vault precomputed queries, one shard (instance n = shard n-1)
 PartOf=tippr.target
-After=network.target
+After=network.target postgresql.service cassandra.service zookeeper.service rabbitmq-server.service memcached.service
+# keep restarting while the data stores come up (wait-for-stores)
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -9,8 +11,11 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
 ExecStart=@TIPPR_VENV@/bin/python -m r2.commands --proctitle vault_query_shard_q%i ${TIPPR_INI} @TIPPR_ROOT@/r2/lib/voting.py -c "consume_vault_query_queue(qname=query_shard_queue('vault', %i))"
 Restart=always
+RestartSec=5
+TimeoutStartSec=360
 Nice=10
 
 [Install]

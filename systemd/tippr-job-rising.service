@@ -1,7 +1,7 @@
 [Unit]
 Description=update the rising pages
 
-After=network.target
+After=network.target postgresql.service cassandra.service zookeeper.service rabbitmq-server.service memcached.service
 
 [Service]
 Type=oneshot
@@ -9,6 +9,7 @@ User=@TIPPR_USER@
 Group=@TIPPR_GROUP@
 EnvironmentFile=-/etc/default/tippr
 WorkingDirectory=@TIPPR_ROOT@
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
 # run-locked: on one server at a time when several share the site
 ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked rising @TIPPR_VENV@/bin/python -m r2.commands ${TIPPR_INI} -c 'from r2.lib import rising; rising.set_rising()'
 
