@@ -3317,12 +3317,15 @@ class VMultiByPath(Validator):
         try:
             multi = LabeledMulti._byID(path)
         except tdb_cassandra.NotFound:
-            if self.require_edit and path.startswith('/user/') and len(path.split('/')) >= 5:
-                owner_name = path.split('/')[2]
-                kind = path.split('/')[3]
-                if kind == 'f' and owner_name.lower() == c.user.name.lower():
-                    multi = LabeledMulti.create(path, c.user)
-                    return multi
+            # a member's own filter (/user/<name>/f/all or /f/mod) the first
+            # time they change it: the page creates it when it opens, but
+            # one quick enough can add a vault before that's done
+            parts = path.split('/')
+            if (self.require_edit and 'f' in self.kinds and c.user_is_loggedin
+                    and len(parts) == 5 and parts[3] == 'f'
+                    and parts[4] in ('all', 'mod')
+                    and parts[2] == c.user.name.lower()):
+                return LabeledMulti.create(path, c.user)
             return self.set_error('MULTI_NOT_FOUND', code=404)
 
         if not multi or multi.kind not in self.kinds:
