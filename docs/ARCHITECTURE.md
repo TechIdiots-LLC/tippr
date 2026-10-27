@@ -104,7 +104,8 @@ rebuilt.
   here counts) and geoip on gunicorn. Ads are counted by the web app
   (r2.lib.ad_traffic, with its /click for sponsored posts).
 - **Backups**: `tippr-backup.path` starts `tippr-backup.service` for
-  requests made on /admin/backups. On a split site, `tippr-backup-relay.timer`
+  requests made on /admin/backups. `tippr-backup-daily.timer` makes one every
+  night and copies it to an S3 bucket when one is set (`backup_s3_bucket`). On a split site, `tippr-backup-relay.timer`
   on the backend passes a frontend's requests to it and its backups and
   progress back, through ZooKeeper ([SERVERS.md](SERVERS.md)).
 

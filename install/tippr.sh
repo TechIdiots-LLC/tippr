@@ -536,6 +536,20 @@ tippr_secret TIPPR_RELEASE_REPO default_release_repo
 # where tippr-monitor sends alerts ("off" for none)
 tippr_secret TIPPR_ALERT_WEBHOOK true
 tippr_secret TIPPR_ALERT_COMMAND true
+# the daily backup and its off-site copy (docs/BACKUP.md); "off" clears one
+function default_backup_schedule { echo daily; }
+function default_backup_keep { echo 7; }
+tippr_secret TIPPR_BACKUP_SCHEDULE default_backup_schedule
+tippr_secret TIPPR_BACKUP_KEEP default_backup_keep
+for setting in TIPPR_BACKUP_S3_BUCKET TIPPR_BACKUP_S3_PREFIX TIPPR_BACKUP_S3_KEEP \
+        TIPPR_BACKUP_S3_ENDPOINT TIPPR_BACKUP_S3_REGION TIPPR_BACKUP_S3_KEY_ID \
+        TIPPR_BACKUP_S3_SECRET; do
+    tippr_secret $setting true
+done
+if ! [[ "$TIPPR_BACKUP_SCHEDULE" =~ ^(daily|off)$ ]]; then
+    echo "ERROR: TIPPR_BACKUP_SCHEDULE is daily or off, not '$TIPPR_BACKUP_SCHEDULE'" >&2
+    exit 1
+fi
 if ! [[ "$TIPPR_WEB_UPDATES" =~ ^[01]$ ]]; then
     echo "ERROR: TIPPR_WEB_UPDATES is 1 or 0, not '$TIPPR_WEB_UPDATES'" >&2
     exit 1
@@ -1208,6 +1222,20 @@ function storage_settings {
     fi
     true
 }
+# the daily backups kept, and the bucket they're copied to (tippr_backup.py's
+# Offsite); "off" leaves a setting out
+function backup_settings {
+    local name key value
+    echo "backup_keep = $TIPPR_BACKUP_KEEP"
+    for name in BUCKET:backup_s3_bucket PREFIX:backup_s3_prefix KEEP:backup_s3_keep \
+            ENDPOINT:backup_s3_endpoint_url REGION:backup_s3_region \
+            KEY_ID:backup_s3_key_id SECRET:backup_s3_secret; do
+        key="TIPPR_BACKUP_S3_${name%%:*}"
+        value=${!key}
+        [ -n "$value" ] && [ "$value" != off ] && echo "${name#*:} = $(ini_value "$value")"
+    done
+    true
+}
 # where a frontend finds its backend's databases, Cassandra, queue,
 # ZooKeeper, search and activity counts (TIPPR_ROLE=frontend); one server
 # keeps example.ini's local addresses
@@ -1271,6 +1299,7 @@ $(environment_settings)
 $(site_settings)
 $(proxy_settings)
 $(storage_settings)
+$(backup_settings)
 $(cache_settings)
 $(service_settings)
 
@@ -2198,6 +2227,12 @@ if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
     else
         systemctl enable tippr.target tippr-consumers.service "${TIPPR_TIMERS[@]}"
         systemctl enable --now tippr-backup.path
+    fi
+    # the daily backup runs where the data is (the one server, or the backend)
+    if [ "$TIPPR_ROLE" != "frontend" ] && [ "$TIPPR_BACKUP_SCHEDULE" = "daily" ]; then
+        systemctl enable --now tippr-backup-daily.timer
+    else
+        systemctl disable --now tippr-backup-daily.timer 2>/dev/null || true
     fi
     # /admin/backups on the frontends reaches a backend's tippr-backup
     # through ZooKeeper (scripts/backup_relay.py)

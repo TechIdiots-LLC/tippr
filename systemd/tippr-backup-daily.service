@@ -1,0 +1,18 @@
+[Unit]
+Description=the daily backup, and its copy in the off-site bucket (tippr-backup scheduled)
+Documentation=file://@TIPPR_SRC@/tippr/docs/BACKUP.md
+# Not part of tippr.target, like tippr-backup.service. Not named tippr-job-*,
+# so the smoke check reports one that failed instead of running it again.
+After=network.target postgresql.service cassandra.service zookeeper.service
+
+[Service]
+Type=oneshot
+# root: pg_dump with the site's credentials, reading media and secrets
+User=root
+EnvironmentFile=-/etc/default/tippr
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/tippr_backup.py --ini @TIPPR_INI@ scheduled
+# a large site's backup can take hours
+TimeoutStartSec=infinity
+Nice=10
+IOSchedulingClass=idle

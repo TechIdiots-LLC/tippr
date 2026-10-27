@@ -56,6 +56,62 @@ work itself, so /admin/backups writes a request file into
 `/var/lib/tippr/backup-queue`, and `tippr-backup.path` starts the service.
 The page shows progress and the last request's log.
 
+## Daily backups and the off-site copy
+
+Every night at about 03:30, `tippr-backup-daily.timer` makes a backup (on
+the one server, or the backend of a split site), with the site up, and
+keeps the newest 7 of these in `backup_dir`. Backups made on
+/admin/backups are never removed by it. A night the server was off is made
+up when it's back. If one fails, the smoke check reports it, and
+tippr-monitor sends an alert.
+
+A backup on the server it backs up is lost with that server, so copy them
+somewhere else: give the installer an S3 bucket, and each daily backup is
+uploaded there too, as one file, keeping the newest 30.
+
+```bash
+sudo TIPPR_BACKUP_S3_BUCKET=tippr-backups ./install-tippr.sh
+```
+
+| Setting | Default | |
+|---|---|---|
+| `TIPPR_BACKUP_SCHEDULE` | `daily` | `off` stops the daily backups |
+| `TIPPR_BACKUP_KEEP` | `7` | daily backups kept on the server |
+| `TIPPR_BACKUP_S3_BUCKET` | (none) | the bucket for the copies |
+| `TIPPR_BACKUP_S3_PREFIX` | the domain | the folder in it, so several sites can share one bucket |
+| `TIPPR_BACKUP_S3_KEEP` | `30` | copies kept in the bucket |
+| `TIPPR_BACKUP_S3_ENDPOINT`, `_REGION`, `_KEY_ID`, `_SECRET` | the media storage's (`TIPPR_S3_*`) | another S3 service or key |
+
+They're remembered like the installer's other settings; `off` clears one.
+In the ini they're `backup_keep` and `backup_s3_*`.
+
+The bucket holds the database, members' emails and the signing secrets:
+keep it private, and give it a key of its own. With Garage, for example:
+
+```bash
+garage bucket create tippr-backups
+garage key create tippr-backups
+garage bucket allow --read --write tippr-backups --key tippr-backups
+```
+
+and give that key's ID and secret as `TIPPR_BACKUP_S3_KEY_ID` and
+`TIPPR_BACKUP_S3_SECRET` (the media key then can't reach the backups, nor
+this one the media).
+
+From the command line:
+
+```bash
+sudo tippr-backup list --remote          # what's in the bucket
+sudo tippr-backup upload NAME            # copy one made by hand there too
+sudo tippr-backup fetch NAME             # download one into backup_dir
+sudo tippr-backup restore /var/lib/tippr/backups/NAME
+```
+
+`fetch` checks every file against the backup's manifest (size and SHA-256)
+and removes the download if one doesn't match. On a new server after
+losing the old one: install tippr with the same `TIPPR_BACKUP_S3_*`
+settings, then `fetch` and `restore` the newest.
+
 ## Moving to a new server
 
 1. **Install tippr on the new server** with the installer, as usual. For a

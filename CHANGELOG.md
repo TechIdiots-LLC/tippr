@@ -15,6 +15,11 @@
 - **The account switcher is for gold members and admins:** it's still a choice in preferences (reading
   features), greyed out for everyone else with a link to gold, and their saved choice is kept for when they get it.
   Any account in the switcher counts, so switching to an alt without gold doesn't leave you stuck on it.
+- **Daily backups, and a copy off the server:** a backup every night (the newest 7 kept), on every install unless
+  `TIPPR_BACKUP_SCHEDULE=off`. With `TIPPR_BACKUP_S3_BUCKET` each is also uploaded to that S3 bucket (Garage, MinIO,
+  AWS...), under a folder of its own (`TIPPR_BACKUP_S3_PREFIX`, the domain by default), keeping the newest 30, with
+  its own key if you like. `tippr-backup list --remote`, `fetch` and `upload` work with the bucket; `fetch` checks
+  every file before you restore it. A failed backup sets off an alert. Backups used to be made only by hand.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

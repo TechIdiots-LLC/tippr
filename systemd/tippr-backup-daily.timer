@@ -1,0 +1,11 @@
+[Unit]
+Description=Back the site up every night (TIPPR_BACKUP_SCHEDULE)
+
+[Timer]
+OnCalendar=*-*-* 03:30
+RandomizedDelaySec=30min
+# a night missed (the server was off) is made up at the next boot
+Persistent=true
+
+[Install]
+WantedBy=timers.target

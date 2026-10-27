@@ -26,6 +26,16 @@ Installed as `tippr-backup` (run as root):
                                         server (its /admin/backups makes
                                         the transfer key)
     tippr-backup process-queue          run requests made on /admin/backups
+    tippr-backup scheduled              the daily backup (tippr-backup-daily):
+                                        export, copy it to the bucket, and
+                                        remove old daily ones
+    tippr-backup list --remote          list the backups in the bucket
+    tippr-backup upload NAME            copy a backup to the bucket
+    tippr-backup fetch NAME             download one from the bucket, to
+                                        restore it
+
+The bucket is the off-site copy (backup_s3_bucket in the ini): each backup
+is one tar there, <backup_s3_prefix, the domain by default>/<name>.tar.
 
 A backup is a folder holding everything that can't be rebuilt:
 
@@ -53,8 +63,8 @@ nobody else. The web app reads them to list them and to send them to
 another server that presents the transfer key; it can read all of this
 data anyway.
 
-This script uses only the venv's cassandra-driver, kazoo and requests, not
-r2, so it works when the app can't start.
+This script uses only the venv's cassandra-driver, kazoo, requests and (for
+the bucket) boto3, not r2, so it works when the app can't start.
 """
 
 import argparse
@@ -73,6 +83,7 @@ import socket
 import subprocess
 import sys
 import tarfile
+import threading
 import time
 
 FORMAT_VERSION = 1
@@ -967,6 +978,174 @@ def human_size(n):
 
 
 ###############################################################################
+# Scheduled backups, and the off-site copy in S3
+###############################################################################
+
+# requested_by of the daily backups (tippr-backup-daily.timer): the only
+# ones pruned, so backups made on /admin/backups stay until deleted there
+SCHEDULED_BY = "schedule"
+
+
+class Offsite:
+    """Backups copied to an S3 bucket (backup_s3_bucket), so losing the
+    server doesn't lose them: each is one tar of its folder (whose files
+    are compressed already), <backup_s3_prefix><name>.tar. The connection
+    is the media storage's (S3KEY_ID, s3_endpoint_url...) unless
+    backup_s3_* say otherwise."""
+
+    def __init__(self, config):
+        self.bucket = config.get("backup_s3_bucket")
+        prefix = config.get("backup_s3_prefix") or (config.get("domain") or "tippr")
+        self.prefix = prefix.rstrip("/") + "/"
+        endpoint = (config.get("backup_s3_endpoint_url") or
+                    config.get("s3_endpoint_url"))
+        self.settings = {
+            "endpoint_url": endpoint or None,
+            "region_name": (config.get("backup_s3_region") or
+                            config.get("s3_region") or None),
+            "aws_access_key_id": (config.get("backup_s3_key_id") or
+                                  config.get("S3KEY_ID") or None),
+            "aws_secret_access_key": (config.get("backup_s3_secret") or
+                                      config.get("S3SECRET_KEY") or None),
+        }
+        # self-hosted services (Garage, MinIO) want path-style addresses
+        self.addressing = (config.get("s3_addressing_style") or
+                           ("path" if endpoint else "auto"))
+        self._client = None
+
+    @property
+    def enabled(self):
+        return bool(self.bucket)
+
+    def client(self):
+        if self._client is None:
+            import boto3
+            from botocore.config import Config as BotoConfig
+            self._client = boto3.client("s3", config=BotoConfig(
+                s3={"addressing_style": self.addressing},
+                retries={"max_attempts": 5}), **self.settings)
+        return self._client
+
+    def key(self, name):
+        return self.prefix + name + ".tar"
+
+    def upload(self, path):
+        """Stream the backup folder up as a tar (no copy on disk)."""
+        from boto3.s3.transfer import TransferConfig
+        name = os.path.basename(path.rstrip("/"))
+        read_fd, write_fd = os.pipe()
+        failed = []
+
+        def write_tar():
+            try:
+                with os.fdopen(write_fd, "wb") as out:
+                    with tarfile.open(fileobj=out, mode="w|") as tar:
+                        tar.add(path, arcname=name)
+            except Exception as e:  # including the upload giving up (EPIPE)
+                failed.append(e)
+
+        writer = threading.Thread(target=write_tar, daemon=True)
+        writer.start()
+        # 64 MB parts: up to 640 GB in S3's 10,000 parts
+        with os.fdopen(read_fd, "rb") as reader:
+            self.client().upload_fileobj(
+                reader, self.bucket, self.key(name),
+                Config=TransferConfig(multipart_chunksize=64 * 1024 * 1024))
+        writer.join()
+        if failed:
+            raise BackupError("couldn't read %s: %s" % (path, failed[0]))
+        log("copied %s to s3://%s/%s" % (name, self.bucket, self.key(name)))
+
+    def backups(self):
+        """[{name, size, modified}], newest first."""
+        found = []
+        pages = self.client().get_paginator("list_objects_v2").paginate(
+            Bucket=self.bucket, Prefix=self.prefix)
+        for page in pages:
+            for obj in page.get("Contents", []):
+                name = obj["Key"][len(self.prefix):]
+                if name.endswith(".tar") and NAME_RE.match(name[:-4]):
+                    found.append({"name": name[:-4], "size": obj["Size"],
+                                  "modified": obj["LastModified"].isoformat()})
+        return sorted(found, key=lambda b: b["name"], reverse=True)
+
+    def prune(self, keep):
+        for old in self.backups()[keep:]:
+            self.client().delete_object(Bucket=self.bucket, Key=self.key(old["name"]))
+            log("removed %s from the bucket (keeping the newest %d)" % (old["name"], keep))
+
+    def fetch(self, name, backup_dir):
+        """Download a backup into backup_dir and check its files against
+        its manifest; returns its path."""
+        if not NAME_RE.match(name):
+            raise BackupError("no backup %r" % name)
+        dest = os.path.join(backup_dir, name)
+        if os.path.exists(dest):
+            raise BackupError("%s is here already" % dest)
+        body = self.client().get_object(Bucket=self.bucket, Key=self.key(name))["Body"]
+        private_dir(backup_dir)
+        try:
+            with tarfile.open(fileobj=body, mode="r|") as tar:
+                for member in tar:
+                    parts = member.name.split("/")
+                    if (parts[0] != name or ".." in parts or
+                            not (member.isfile() or member.isdir())):
+                        raise BackupError("unexpected %r in the download" % member.name)
+                    tar.extract(member, backup_dir, filter="data")
+            check_files(dest)
+        except Exception:
+            shutil.rmtree(dest, ignore_errors=True)
+            raise
+        for dirpath, dirnames, filenames in os.walk(dest):
+            private_dir(dirpath)
+            for filename in filenames:
+                private_file(os.path.join(dirpath, filename))
+        log("fetched %s into %s" % (name, dest))
+        return dest
+
+
+def check_files(path):
+    """Every file the manifest lists is there, the same size and hash."""
+    with open(os.path.join(path, "manifest.json")) as f:
+        manifest = json.load(f)
+    if manifest.get("state") != "done" or "files" not in manifest:
+        raise BackupError("%s didn't finish (state: %s)"
+                          % (path, manifest.get("state")))
+    for info in manifest["files"]:
+        full = os.path.join(path, info["path"])
+        if (not os.path.isfile(full) or os.path.getsize(full) != info["size"]
+                or file_sha256(full) != info["sha256"]):
+            raise BackupError("%s is missing or damaged" % info["path"])
+
+
+def prune_local(config, keep):
+    """Keep the newest `keep` finished daily backups; daily ones that
+    failed go once a newer one has finished. Others are left alone."""
+    finished = 0
+    for m in list_backups(config):  # newest first
+        if m.get("requested_by") != SCHEDULED_BY:
+            continue
+        if m.get("state") == "done":
+            finished += 1
+            if finished <= keep:
+                continue
+        elif m.get("state") != "failed" or not finished:
+            continue
+        shutil.rmtree(os.path.join(config.backup_dir, m["name"]), ignore_errors=True)
+        log("removed %s (keeping the newest %d daily backups)" % (m["name"], keep))
+
+
+def scheduled_backup(config):
+    """tippr-backup-daily: a backup, its copy in the bucket, and pruning."""
+    path = Export(config, requested_by=SCHEDULED_BY).run()
+    offsite = Offsite(config)
+    if offsite.enabled:
+        offsite.upload(path)
+        offsite.prune(int(config.get("backup_s3_keep") or 30))
+    prune_local(config, int(config.get("backup_keep") or 7))
+
+
+###############################################################################
 # Listing and the /admin/backups queue
 ###############################################################################
 
@@ -1072,7 +1251,16 @@ def main():
                              "copy; use this when moving servers)")
     export.add_argument("--dest", help="folder to write the backup into "
                                        "(default: backup_dir from the ini)")
-    sub.add_parser("list", help="list the backups in backup_dir")
+    listing = sub.add_parser("list", help="list the backups in backup_dir")
+    listing.add_argument("--remote", action="store_true",
+                         help="the ones in the bucket (backup_s3_bucket) instead")
+    sub.add_parser("scheduled", help="the daily backup: export, copy to the "
+                                     "bucket, remove old ones")
+    upload = sub.add_parser("upload", help="copy a backup to the bucket")
+    upload.add_argument("name")
+    fetch = sub.add_parser("fetch", help="download a backup from the bucket "
+                                         "into backup_dir")
+    fetch.add_argument("name")
     restore = sub.add_parser(
         "restore", help="replace this site's data with a backup")
     restore.add_argument("path", help="the backup folder")
@@ -1101,6 +1289,14 @@ def main():
     global OWNER
     OWNER = (config.uid, config.gid)
 
+    if args.command == "list" and args.remote:
+        offsite = Offsite(config)
+        if not offsite.enabled:
+            print("no bucket (backup_s3_bucket) is set", file=sys.stderr)
+            return 1
+        for b in offsite.backups():
+            print("%-32s %10s %s" % (b["name"], human_size(b["size"]), b["modified"]))
+        return 0
     if args.command == "list":
         for m in list_backups(config):
             print("%-32s %-8s %s" % (m.get("name"), m.get("state"),
@@ -1129,6 +1325,21 @@ def main():
             Export(config, offline=args.offline, dest=args.dest).run()
         elif args.command == "process-queue":
             process_queue(config)
+        elif args.command == "scheduled":
+            scheduled_backup(config)
+        elif args.command in ("upload", "fetch"):
+            offsite = Offsite(config)
+            if not offsite.enabled:
+                raise BackupError("no bucket (backup_s3_bucket) is set")
+            if args.command == "upload":
+                path = os.path.join(config.backup_dir, args.name)
+                if not (NAME_RE.match(args.name) and os.path.isdir(path)):
+                    raise BackupError("no backup %r" % args.name)
+                check_files(path)
+                offsite.upload(path)
+            else:
+                path = offsite.fetch(args.name, config.backup_dir)
+                print("restore it with: tippr-backup restore %s" % path)
         elif args.command == "restore":
             return confirm_and_restore(config, args.path, args.yes)
         elif args.command == "import":
