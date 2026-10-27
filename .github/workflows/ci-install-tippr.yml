@@ -11,10 +11,10 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache APT archives
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('install/install_apt.sh') }}
@@ -22,7 +22,7 @@ jobs:
             ${{ runner.os }}-apt-
 
       - name: Cache pip and pip wheels
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip
@@ -32,7 +32,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Cache source checkouts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /home/runner/src
           key: ${{ runner.os }}-src-${{ github.ref }}
@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-src-
 
       - name: Cache mcrouter build (/opt/mcrouter)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /opt/mcrouter
           key: ${{ runner.os }}-mcrouter-${{ github.ref }}
@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os }}-mcrouter-
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-${{ github.ref }}
@@ -56,7 +56,7 @@ jobs:
             ${{ runner.os }}-ccache-
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -109,7 +109,7 @@ jobs:
 
       - name: Archive installer logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installer-logs
           path: installer-logs/
