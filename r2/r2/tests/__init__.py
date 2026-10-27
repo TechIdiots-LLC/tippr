@@ -236,12 +236,20 @@ class TipprTestCase(TestCase):
         Also mocks `domain` and `to_epoch_milliseconds` as it makes writing
         tests easier since we pass in mock data to the events as well.
         """
-        p = patch.object(eventcollector.json, "dumps", lambda x: x)
+        # (the event collector's json only: patching json.dumps itself made
+        # it return dicts everywhere, Mako compiling templates included)
+        import json
+        p = patch.object(eventcollector, "json",
+                         MagicMock(dumps=lambda x: x, loads=json.loads))
         p.start()
         self.addCleanup(p.stop)
 
         amqp = MockAmqp(self)
-        self.amqp = self.autopatch(g.events, "queue", amqp)
+        self.amqp = amqp
+        # g.events is the counting queue (r2.lib.activity_counter), which
+        # passes events on only with an events_collector_url: these test
+        # the events themselves, so the collector's queue, into amqp
+        self.patch_g(events=eventcollector.EventQueue(queue=amqp))
 
         self.domain_mock = self.autopatch(eventcollector, "domain")
 
@@ -326,6 +334,17 @@ class TipprControllerTestCase(TipprTestCase):
         # The same is true for _by_name on Vault and Account
         self.Vault_by_name = self.autopatch(Vault, "_by_name")
         self.account_by_name = self.autopatch(Account, "_by_name")
+        # no vaults in the page's header (no database, and what earlier
+        # tests left cached isn't a vault the page can show)
+        self.autopatch(Vault, "default_vaults", return_value=[])
+        self.autopatch(Vault, "user_vaults", return_value=[])
+
+        # nothing goes to RabbitMQ: what would be queued is kept here
+        from r2.lib import amqp
+        self.queued = MockAmqp(self)
+        self.autopatch(amqp, "add_item", self.queued.add_item)
+        self.autopatch(amqp, "add_kw",
+                       lambda routing_key, **kw: self.queued.add_item(routing_key, kw))
 
         # mock out any Memcached side effects
         self.patch_g(

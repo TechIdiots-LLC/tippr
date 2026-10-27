@@ -150,6 +150,12 @@ def create_table(table, index_commands=None):
     t = table
     if g.db_create_tables:
         engine = get_engine_from_table(t)
+        if not isinstance(engine, sa.engine.Engine):
+            # no database: the unit tests' stand-in (app_globals'
+            # load_db_params). Inspecting it only worked when something
+            # had imported sqlalchemy.orm first, so tests loaded or not
+            # depending on which ran first.
+            return
         try:
             with engine.connect() as conn:
                 if not sa.inspect(engine).has_table(t.name):

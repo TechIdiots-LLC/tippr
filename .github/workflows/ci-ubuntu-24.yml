@@ -68,12 +68,13 @@ jobs:
           python -c "import r2; print('r2 loaded from:', r2.__file__)"
           python -c "import r2.lib.db.sorts as s; print('epoch_seconds present:', hasattr(s,'epoch_seconds'))"
 
-      - name: Run unit tests (r2)
+      - name: Run the tests (r2, unit and functional)
         env:
           DATABASE_URL: "postgresql://tippr:password@127.0.0.1/tippr"
         run: |
-          # Run only unit tests for now - functional tests require full WSGI app setup
-          python -m pytest r2/r2/tests/unit r2/r2/tests/test_pylons_shim.py -v --tb=short
+          # the functional ones run requests through the whole app (WebTest),
+          # with the stores mocked; r2/setup.cfg collects *_tests.py too
+          python -m pytest r2/r2/tests -v --tb=short
 
       - name: Archive test logs
         if: failure()

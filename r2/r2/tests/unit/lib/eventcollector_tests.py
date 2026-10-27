@@ -331,7 +331,7 @@ class TestEventCollector(TipprTestCase):
         )
 
     def test_message_event(self):
-        self.patch_liveconfig("events_collector_modmail_sample_rate", 1.0)
+        self.patch_liveconfig("events_collector_message_sample_rate", 1.0)
         message = MagicMock(name="message", _date=FAKE_DATE)
         first_message = MagicMock(name="first_message")
         message_cls = self.autopatch(models, "Message")

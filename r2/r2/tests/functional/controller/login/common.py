@@ -23,12 +23,10 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 import contextlib
-import unittest
 from unittest.mock import MagicMock, patch
 
-from pylons import app_globals as g
-
-from r2.lib.validator import VThrottledLogin, VUname, validator
+from r2.lib import antispam
+from r2.lib.validator import VThrottledLogin, VUname
 from r2.models import Account, NotFound
 
 
@@ -58,16 +56,27 @@ class LoginRegBase:
             "passwd2": passwd2,
         }, **kw)
 
+    @staticmethod
+    def mock_account(name="test", cookie="cookievaluehere"):
+        """A stand-in account, logged in with cookie."""
+        account = MagicMock()
+        account.name = name
+        account.make_cookie.return_value = cookie
+        account.modhash.return_value = "modhashvaluehere"
+        # without two-factor (a MagicMock's attributes are all truthy, so it
+        # would look like an account with it, sent to /logins/otp)
+        account.otp_secret = ""
+        account.two_factor_methods = 0
+        return account
+
     def mock_login(self, name="test", cookie="cookievaluehere"):
         """Context manager for mocking login.
 
         Patches VThrottledLogin to always return a mock with the provided
         name and cookie value
         """
-        account = MagicMock()
-        account.name = name
-        account.make_cookie.return_value = cookie
-        return patch.object(VThrottledLogin, "run", return_value=account)
+        return patch.object(VThrottledLogin, "run",
+                            return_value=self.mock_account(name, cookie))
 
     def mock_register(self):
         """Context manager for mocking out registration.
@@ -78,27 +87,25 @@ class LoginRegBase:
         """
         from r2.controllers import login
         stack = contextlib.ExitStack()
-        stack.enter_context(patch.object(login, "register"))
+        stack.enter_context(patch.object(login, "register",
+                                         return_value=self.mock_account()))
         stack.enter_context(patch.object(VUname, "run", return_value="test"))
         # ensure this user does not currently exist
         stack.enter_context(patch.object(Account, "_by_name", side_effect=NotFound))
+        # no sign-up captcha (failed_captcha turns it back on)
+        stack.enter_context(patch.object(antispam, "captcha_on_register",
+                                         return_value=False))
         return stack
 
     def failed_captcha(self):
         """Context manager for mocking a failed captcha."""
         stack = contextlib.ExitStack()
-        # ensure that a captcha is needed
+        # ensure that a captcha is needed (r2.lib.antispam, VCaptcha)
         stack.enter_context(patch.object(
-            validator,
-            "need_provider_captcha",
-            return_value=True,
-        ))
+            antispam, "captcha_on_register", return_value=True))
         # ensure that the captcha is invalid
         stack.enter_context(patch.object(
-            g.captcha_provider,
-            "validate_captcha",
-            return_value=False,
-        ))
+            antispam, "verify_captcha", return_value=False))
         return stack
 
     def disabled_captcha(self):
@@ -109,16 +116,10 @@ class LoginRegBase:
         stack = contextlib.ExitStack()
         # ensure that a captcha is not needed
         stack.enter_context(patch.object(
-            validator,
-            "need_provider_captcha",
-            return_value=False,
-        ))
+            antispam, "captcha_on_register", return_value=False))
         # ensure that the captcha is unused
         stack.enter_context(patch.object(
-            g.captcha_provider,
-            "validate_captcha",
-            side_effect=AssertionError,
-        ))
+            antispam, "verify_captcha", side_effect=AssertionError))
         return stack
 
     def find_headers(self, res, name):
@@ -165,7 +166,6 @@ class LoginRegBase:
             res = self.do_register()
             self.assert_failure(res, "USERNAME_TAKEN")
 
-    @unittest.skip("registration captcha is unfinished")
     def test_captcha_blocking(self):
         with contextlib.ExitStack() as stack:
             stack.enter_context(self.mock_register())
@@ -173,7 +173,6 @@ class LoginRegBase:
             res = self.do_register()
             self.assert_failure(res, "BAD_CAPTCHA")
 
-    @unittest.skip("registration captcha is unfinished")
     def test_captcha_disabling(self):
         with contextlib.ExitStack() as stack:
             stack.enter_context(self.mock_register())
