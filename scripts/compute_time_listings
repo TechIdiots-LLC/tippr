@@ -56,11 +56,15 @@ function clean_up {
     rm -f $THING_DUMP $DATA_DUMP
 }
 
-if [ -e $THING_DUMP ]; then
-    echo cannot start because $THING_DUMP exists
-    ls -l $THING_DUMP
-    exit 1
+# One run at a time: the lock goes with the process however it ends (even
+# killed), unlike the dump files, which a killed run leaves behind and
+# which used to stop every later run. Holding the lock, any dump is stale.
+exec 9> "$TMPDIR/$THING_CLS-$INTERVAL.lock"
+if ! flock -n 9; then
+    echo "another $THING_CLS $INTERVAL run is going; leaving it to finish"
+    exit 0
 fi
+rm -f $THING_DUMP $DATA_DUMP
 touch $THING_DUMP
 
 # since we're in charge of this run now, we have to clean up afterwards

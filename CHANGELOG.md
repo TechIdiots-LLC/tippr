@@ -6,6 +6,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Top and controversial listings could stop updating for good after a crash:** a run of their job that was killed
+  (a reboot, or running out of memory) left its temporary files behind, and every later run refused to start while
+  they were there. The job uses a lock that ends with the process instead, and clears what a killed run left.
 
 ## 0.26.0
 ### ✨ Features and improvements
