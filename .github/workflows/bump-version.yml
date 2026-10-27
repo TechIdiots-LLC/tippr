@@ -27,14 +27,14 @@ jobs:
     name: Bump version PR
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Bump version and changelog
         id: bump
         run: python tools/bump_version.py "${{ inputs.version }}" "${{ inputs.preid }}"
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         with:
           commit-message: Release v${{ steps.bump.outputs.version }}
           branch: release-v${{ steps.bump.outputs.version }}

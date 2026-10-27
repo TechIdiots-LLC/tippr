@@ -46,7 +46,7 @@ jobs:
       prerelease: ${{ steps.check.outputs.prerelease }}
       image: ${{ steps.check.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: check
         run: |
           version=$(tr -d '[:space:]' < VERSION)
@@ -78,12 +78,12 @@ jobs:
     # Docker Hub credentials (only used when publishing)
     environment: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Build the image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile
@@ -130,7 +130,7 @@ jobs:
       # and night (report.json lists what failed, and faint text as warnings)
       - name: Upload the browser test's screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots-${{ needs.release-check.outputs.version }}
           path: docker/visual-results
@@ -149,7 +149,7 @@ jobs:
 
       - name: Log in to Docker Hub
         if: needs.release-check.outputs.publish == 'true'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -174,7 +174,7 @@ jobs:
           bash docker/make-bundles.sh "${{ needs.release-check.outputs.version }}" \
               "${{ needs.release-check.outputs.image }}" tippr:release dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tippr-${{ needs.release-check.outputs.version }}
           path: dist/*
@@ -184,7 +184,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Make room (the template build needs ~20 GB)
         run: |
@@ -193,7 +193,7 @@ jobs:
           docker system prune -af >/dev/null
           df -h /
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tippr-${{ needs.release-check.outputs.version }}
           path: dist
@@ -214,7 +214,7 @@ jobs:
           sudo bash proxmox/test-template.sh \
               "proxmox-dist/tippr-${{ needs.release-check.outputs.version }}-proxmox-amd64.tar.zst"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tippr-${{ needs.release-check.outputs.version }}-proxmox
           path: proxmox-dist/*.tar.zst
@@ -226,9 +226,9 @@ jobs:
     runs-on: ubuntu-24.04
     environment: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: tippr-${{ needs.release-check.outputs.version }}*
           merge-multiple: true
