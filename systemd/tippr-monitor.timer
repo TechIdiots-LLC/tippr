@@ -1,0 +1,13 @@
+[Unit]
+Description=Run tippr-monitor every 5 minutes
+PartOf=tippr.target
+
+[Timer]
+# after boot, time for the services to come up (wait-for-stores) first
+OnBootSec=10min
+# 5 minutes after each check ends, so checks never overlap
+OnUnitInactiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=tippr.target

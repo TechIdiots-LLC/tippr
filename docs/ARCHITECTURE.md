@@ -113,7 +113,9 @@ rebuilt.
 After a reboot, the web app, consumers and jobs wait for the data stores
 to answer first (`scripts/wait-for-stores`, up to 5 minutes, the backend's
 on a frontend), and a service that fails anyway is restarted every 5
-seconds rather than given up on.
+seconds rather than given up on. `tippr-monitor.timer` runs
+`scripts/smoke_check.sh` every 5 minutes on every server and sends an alert
+when its result changes (`TIPPR_ALERT_WEBHOOK`, `TIPPR_ALERT_COMMAND`).
 
 ## Admin pages
 

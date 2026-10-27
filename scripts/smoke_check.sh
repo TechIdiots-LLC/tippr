@@ -7,10 +7,12 @@
 # enabled, so it suits every TIPPR_ROLE) and that no tippr unit has failed,
 # then, where nginx runs, that a few pages answer as they should, and that
 # the web app logged no traceback meanwhile. Prints what failed and exits 1
-# if anything did. CI runs it after the installer (ci-install-tippr.yml).
+# if anything did. CI runs it after the installer (ci-install-tippr.yml),
+# and tippr-monitor every 5 minutes, from root's own copy
+# (/usr/local/sbin/tippr-smoke-check, with TIPPR_INI set).
 
 here=$(cd "$(dirname "$0")/.." && pwd)
-ini="$here/r2/run.ini"
+ini=${TIPPR_INI:-$here/r2/run.ini}
 domain=${1:-$(sed -n 's/^domain *= *//p' "$ini" 2>/dev/null | head -1)}
 domain=${domain:-tippr.local}
 started=$(date '+%Y-%m-%d %H:%M:%S')

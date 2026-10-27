@@ -1,0 +1,11 @@
+[Unit]
+Description=check this server's tippr and tell someone when that changes (tippr-monitor)
+After=network-online.target
+
+[Service]
+Type=oneshot
+# root, for the smoke check's journal and unit checks; root's own copies
+# of the scripts (install/tippr.sh), so the site's user can't change them
+EnvironmentFile=-/etc/default/tippr
+ExecStart=/usr/bin/python3 /usr/local/sbin/tippr-monitor
+Nice=10

@@ -8,6 +8,10 @@
   the backend's on a frontend). They used to start at once, fail while Cassandra was still coming up, and after five
   quick failures systemd stopped trying, so the site stayed down until someone restarted it. A service that fails
   anyway is now restarted every 5 seconds, without a limit.
+- **Alerts when a server's tippr stops working:** every 5 minutes each server runs the smoke check, and when it starts
+  failing (and every 6 hours while it does, and when it recovers) says what failed to a webhook (Discord, Slack,
+  ntfy or any URL taking JSON) and/or a command such as `mail`: the installer's `TIPPR_ALERT_WEBHOOK` and
+  `TIPPR_ALERT_COMMAND`. `tippr-stop` stops it too, so maintenance doesn't page anyone.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

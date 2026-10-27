@@ -91,7 +91,15 @@ sudo /home/tippr/src/tippr/scripts/smoke_check.sh   # TIPPR_HOME/src/tippr
 
 It checks each service this server runs, a few pages (the front page,
 login, the API, an error page) and the web app's log, and says what
-failed. Then:
+failed. Every server also runs it every 5 minutes
+(`tippr-monitor.timer`) and can tell you when it starts failing, every 6
+hours while it does, and when it's working again: give the installer
+`TIPPR_ALERT_WEBHOOK` (a Discord or Slack webhook, an ntfy topic, or any URL
+taking JSON) and/or `TIPPR_ALERT_COMMAND` (a command such as `mail`; see
+`install.cfg`). Without them, failures are only in `journalctl -u
+tippr-monitor`.
+
+Then:
 
 1. **DNS.** Point the domain at the server. For a test site, add a hosts
    entry on your computer, e.g. `192.168.1.50 tippr.local`.
