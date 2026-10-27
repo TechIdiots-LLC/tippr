@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.26.0
+### ✨ Features and improvements
 - **Paste is no longer used:** the error pages, static files and per-request objects (`c`, `g`, `request`) it
   provided are tippr's own now (`r2/config/middleware.py`, `pylons/`); PasteDeploy, which reads the ini, stays.
   Updating a server, from /admin/servers or with the installer, uninstalls Paste.
@@ -22,7 +28,6 @@
   ruleset requires the checks (`.github/workflows/dependabot-automerge.yml`).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Domain listings (/domain/example.com) redirected to a broken address:** every one went to
   `/domain/b'example.com'/` instead of listing the domain's posts. They list them again, and an international domain
   name still goes to its `xn--` form.
