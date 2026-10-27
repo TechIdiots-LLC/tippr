@@ -814,6 +814,9 @@ class VSavedCategory(Validator):
         }
 
 
+vault_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
+
+
 class VVaultName(VRequired):
     def __init__(self, item, allow_language_vaults=False, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_VAULT_NAME, *a, **kw)
