@@ -38,6 +38,8 @@
 - **Signed API requests failed:** a request carrying a signature header (the v1 mobile API's request signing,
   `/api/v1/login` and `/api/v1/register`) gave an error under Python 3, and a signed body could never match, since its
   bytes were signed as text (`b'...'`). Both are signed as sent again.
+- **A multi's or filter's vault list said "x" instead of "remove"** once the page's script took it over, and lost the
+  vault names on its items. They match the page as it loads.
 
 ## 0.26.0
 ### ✨ Features and improvements

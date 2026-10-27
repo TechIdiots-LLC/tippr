@@ -219,7 +219,13 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
 r.multi.MultiVaultItem = Backbone.View.extend({
     tagName: 'li',
 
-    template: _.template('<a href="/v/<%- vault_name %>">/v/<%- vault_name %></a><button class="remove-vault">x</button>'),
+    // as the page renders them (multiinfobar.html, filteredinfobar.html),
+    // which this list replaces when it starts
+    attributes: function() {
+        return {'data-name': this.model.get('name')}
+    },
+
+    template: _.template('<a href="/v/<%- vault_name %>">/v/<%- vault_name %></a><button class="remove-vault"><%- remove %></button>'),
 
     events: {
         'click .remove-vault': 'removeVault'
@@ -227,7 +233,8 @@ r.multi.MultiVaultItem = Backbone.View.extend({
 
     render: function() {
         this.$el.append(this.template({
-            vault_name: this.model.get('name')
+            vault_name: this.model.get('name'),
+            remove: r._('remove')
         }))
 
         if (r.config.logged) {

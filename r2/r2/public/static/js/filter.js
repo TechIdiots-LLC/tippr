@@ -30,7 +30,8 @@ r.filter.Filter = r.multi.MultiVault.extend({
 r.filter.FilteredVaultItem = r.multi.MultiVaultItem.extend({
     render: function() {
         this.$el.append(this.template({
-            vault_name: this.model.get('name')
+            vault_name: this.model.get('name'),
+            remove: r._('remove')
         }))
         return this
     }
