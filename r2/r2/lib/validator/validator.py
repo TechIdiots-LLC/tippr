@@ -814,9 +814,6 @@ class VSavedCategory(Validator):
         }
 
 
-vault_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
-
-
 class VVaultName(VRequired):
     def __init__(self, item, allow_language_vaults=False, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_VAULT_NAME, *a, **kw)
@@ -1905,8 +1902,8 @@ class VThrottledLogin(VRequired):
                                 field='ratelimit', code=429)
                             g.stats.event_count('login.throttle', rl.category)
                             return False
-                    except ratelimit.RatelimitError:
-                        pass
+                    except ratelimit.RatelimitError as e:
+                        g.log.info("ratelimitcache error (login): %s", e)
 
             try:
                 str(password)
@@ -3343,6 +3340,7 @@ class VMultiByPath(Validator):
         }
 
 
+vault_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
 class VVaultList(Validator):
 
     def __init__(self, param, limit=20, allow_language_vaults=True):
