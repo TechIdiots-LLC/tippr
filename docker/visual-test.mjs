@@ -44,6 +44,9 @@
 //     general questions only, who then sees bob's ticket and not carol's;
 //     bob's answer comes from the admin team, not a named admin, without
 //     the note, and his reply goes back to the ticket
+//   - gold: visual_gold filters the test vault out of /all (/me/f/all) and
+//     back, and can use the account switcher, which bob, without gold,
+//     sees greyed out; a domain listing shows alice's post
 //
 // On each page: no JavaScript errors, no failed requests to the site, no
 // sideways scrolling at phone width, and no text that can't be read on its
@@ -799,6 +802,45 @@ try {
     return (await admin.page.getByText("Thanks, that answers it.").count()) > 0 || "not there";
   });
   await admin.context.close();
+
+  // gold's pages, as visual_gold: filtered /all (/me/f/all), filtering the
+  // test vault out and back; the account switcher in preferences, which
+  // bob, without gold, sees greyed out
+  const gold = await session("visual_gold", "desktop");
+  await gold.page.goto(`${BASE}/me/f/all`, READY);
+  await shoot(gold, "filtered-all");
+  await check("filtered /all (visual_gold)",
+              async () => (await gold.page.locator(".filtered-details").count()) > 0,
+              "the page should have the box for the vaults filtered out");
+  const filtered = (page) => page.locator(`.filtered-details .vaults li[data-name="${VAULT}"]`);
+  await gold.page.fill(".filtered-details .add-vault .vault-name", VAULT);
+  await gold.page.click(".filtered-details .add-vault button.add");
+  await settles("filtered /all (visual_gold)", `${VAULT} should be filtered out, and alice's post with it`,
+    () => gold.page.goto(`${BASE}/me/f/all?t=${Date.now()}`, READY),
+    async () => (await filtered(gold.page).count()) > 0 && (await thing(gold.page, post).count()) === 0);
+  await shoot(gold, "filtered-all-vault");
+  await filtered(gold.page).locator(".remove-vault").click();
+  await settles("filtered /all (visual_gold)", `${VAULT} should be back`,
+    () => gold.page.goto(`${BASE}/me/f/all?t=${Date.now()}`, READY),
+    async () => (await filtered(gold.page).count()) === 0);
+  await gold.page.goto(`${BASE}/prefs/`, READY);
+  await check("preferences (visual_gold)",
+              async () => !(await gold.page.locator("input#account_switcher").isDisabled()),
+              "a gold member should be able to turn the account switcher on");
+  await shoot(gold, "prefs");
+  await bob.page.goto(`${BASE}/prefs/`, READY);
+  await check("preferences (visual_bob)",
+              async () => await bob.page.locator("input#account_switcher").isDisabled(),
+              "the account switcher is for gold members: bob's should be greyed out");
+  await gold.context.close();
+
+  // a domain listing: alice's post, a text post, under self.<vault>
+  // (domain listings once redirected to a broken address)
+  await settles("domain listing", "alice's post should be listed under its domain",
+    () => bob.page.goto(`${BASE}/domain/self.${VAULT}/?t=${Date.now()}`, READY),
+    async () => (await thing(bob.page, post).count()) > 0, 90);
+  await shoot(bob, "domain-listing");
+  await bob.page.goto(postUrl, READY);  // (the thread, next)
 
   // the thread, as each of them sees it (their own votes on the arrows)
   for (const s of [alice, bob, carol, dave]) {

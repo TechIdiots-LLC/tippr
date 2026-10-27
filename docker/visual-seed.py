@@ -25,7 +25,8 @@ owned by the admin), so brand-new accounts aren't held back by the comment
 and submit rate limits, and they have the post karma that skips the captcha
 (for posting and for messages). carol and dave use night mode, so the pages
 are seen in both themes. visual_mod is a moderator of /v/visualtest and
-nothing else, for the moderator tools.
+nothing else, for the moderator tools. visual_gold has (permanent) gold, for
+gold's pages.
 
 The support queue's staff: visual_admin, an admin (for admin mode), and
 visual_support, an employee whose support categories the test grants on
@@ -46,7 +47,7 @@ from pylons import app_globals as g
 from r2.lib import support, totp, two_factor, user_admin
 from r2.lib.db import queries
 from r2.lib.db.thing import NotFound
-from r2.models import Account, Vault
+from r2.models import Account, Vault, admintools
 from r2.models.account import bcrypt_password, register
 
 VAULT = "visualtest"
@@ -60,6 +61,7 @@ MEMBERS = {
 }
 # a moderator of /v/visualtest only: an ordinary account otherwise, not staff
 MODERATOR = "visual_mod"
+GOLD = "visual_gold"
 # the support queue's staff: name -> place on the employees list
 STAFF = {"visual_admin": "admin", "visual_support": "employee"}
 
@@ -107,6 +109,17 @@ for name, nightmode in MEMBERS.items():
         account.incr_karma("link", vault, needed)
         account._commit()
     accounts[name] = {"password": password, "nightmode": nightmode}
+
+# visual_gold: a member with (permanent) gold, for gold's pages: filtered
+# /all (/me/f/all) and the account switcher in preferences
+password = secrets.token_urlsafe(18)
+account = account_named(GOLD, password)
+account._commit()
+if not vault.is_contributor(account):
+    vault.add_contributor(account)
+vault.add_subscriber(account)
+admintools.make_gold_permanent(account)
+accounts[GOLD] = {"password": password, "nightmode": False}
 
 for name, level in STAFF.items():
     password = secrets.token_urlsafe(18)
