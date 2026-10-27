@@ -1902,8 +1902,8 @@ class VThrottledLogin(VRequired):
                                 field='ratelimit', code=429)
                             g.stats.event_count('login.throttle', rl.category)
                             return False
-                    except ratelimit.RatelimitError as e:
-                        g.log.info("ratelimitcache error (login): %s", e)
+                    except ratelimit.RatelimitError:
+                        pass
 
             try:
                 str(password)
@@ -3314,6 +3314,12 @@ class VMultiByPath(Validator):
         try:
             multi = LabeledMulti._byID(path)
         except tdb_cassandra.NotFound:
+            if self.require_edit and path.startswith('/user/') and len(path.split('/')) >= 5:
+                owner_name = path.split('/')[2]
+                kind = path.split('/')[3]
+                if kind == 'f' and owner_name.lower() == c.user.name.lower():
+                    multi = LabeledMulti.create(path, c.user)
+                    return multi
             return self.set_error('MULTI_NOT_FOUND', code=404)
 
         if not multi or multi.kind not in self.kinds:
@@ -3331,7 +3337,6 @@ class VMultiByPath(Validator):
         }
 
 
-vault_path_rx = re.compile(r"\A(/?v/)?(?P<name>.*?)/?\Z")
 class VVaultList(Validator):
 
     def __init__(self, param, limit=20, allow_language_vaults=True):
