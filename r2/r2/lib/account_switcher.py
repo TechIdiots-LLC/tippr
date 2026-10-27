@@ -83,17 +83,37 @@ def _current_session():
     return urllib.parse.unquote(quoted) if quoted else None
 
 
-def accounts():
-    """The other accounts this browser can switch to: [(name, session)],
-    valid ones only, never the current account."""
+def _kept():
+    """[(account, session)] for the jar's valid accounts, not the current
+    one."""
     found = []
     seen = {c.user._id} if c.user_is_loggedin else set()
     for session in _read_jar():
         account = _account_for(session)
         if account and account._id not in seen:
             seen.add(account._id)
-            found.append((account.name, session))
+            found.append((account, session))
     return found
+
+
+def accounts():
+    """The other accounts this browser can switch to: [(name, session)],
+    valid ones only, never the current account."""
+    return [(account.name, session) for account, session in _kept()]
+
+
+def qualifies(account):
+    """Gold members and admins get the switcher."""
+    return bool(account.gold or account.name in g.admins)
+
+
+def allowed():
+    """Whether this browser can use the switcher: the account in use or one
+    of those kept qualifies. Any of them counts, so switching to an account
+    that doesn't qualify (an alt without gold) doesn't strand you there."""
+    if not c.user_is_loggedin:
+        return False
+    return qualifies(c.user) or any(qualifies(account) for account, _s in _kept())
 
 
 def names():

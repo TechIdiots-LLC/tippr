@@ -154,8 +154,12 @@ def _has_authenticator_app(user):
 
 
 def _switch_account_names():
+    """The switcher's other accounts, or None when this browser can't use
+    it (it's for gold members and admins)."""
     # imported here: account_switcher needs r2.models, which needs this
     from r2.lib import account_switcher
+    if not account_switcher.allowed():
+        return None
     return account_switcher.names()
 
 
@@ -230,7 +234,7 @@ def js_config(extra_config=None):
         events_collector_key = g.secrets['events_collector_js_key']
         events_collector_secret = g.secrets['events_collector_js_secret']
 
-    switch_accounts = _switch_account_names() if logged else []
+    switch_accounts = _switch_account_names() if logged else None
 
     config = {
         # is the user logged in?
@@ -313,9 +317,9 @@ def js_config(extra_config=None):
         # (without an authenticator app, the code fields become "use a
         # passkey", with a recovery code as the fallback)
         "two_factor_app": bool(logged and _has_authenticator_app(c.user)),
-        "switch_accounts": switch_accounts,
-        "account_switcher": bool(logged and (c.user.pref_account_switcher or
-                                             switch_accounts)),
+        "switch_accounts": switch_accounts or [],
+        "account_switcher": bool(switch_accounts is not None and
+                                 (c.user.pref_account_switcher or switch_accounts)),
         "user_tags": (user_tags.for_page(c.user)
                       if logged and (c.user.pref_user_tagger or
                                      c.user.pref_user_info_hover)

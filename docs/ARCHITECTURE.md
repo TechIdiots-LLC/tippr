@@ -172,7 +172,8 @@ See [ADMIN_FEATURES.md](ADMIN_FEATURES.md).
   (`r2/lib/payments/`, [gold-payments.md](gold-payments.md)).
 - **Reading features** (preferences): night mode, infinite scroll, keyboard
   navigation, expanding images, filters, user tags, new-comment counts and
-  an account switcher (`public/static/js/enhancements.js`).
+  an account switcher, for gold members and admins
+  (`public/static/js/enhancements.js`, `r2/lib/account_switcher.py`).
 
 ## Accounts and security
 

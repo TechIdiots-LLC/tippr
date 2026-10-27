@@ -190,6 +190,12 @@ def filter_prefs(prefs, user):
     if not (user.gold or user.is_moderator_somewhere):
         prefs['pref_highlight_new_comments'] = True
 
+    # the account switcher's checkbox is greyed out (so not sent) for those
+    # who can't use it: keep what they had, for when they can
+    from r2.lib import account_switcher
+    if not account_switcher.allowed():
+        prefs.pop('pref_account_switcher', None)
+
     # the checkbox is only there while the site has live comments on:
     # otherwise leave the member's choice as it is
     if not g.live_config.get("live_comments"):

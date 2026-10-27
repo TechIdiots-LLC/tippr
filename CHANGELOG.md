@@ -12,6 +12,9 @@
   failing (and every 6 hours while it does, and when it recovers) says what failed to a webhook (Discord, Slack,
   ntfy or any URL taking JSON) and/or a command such as `mail`: the installer's `TIPPR_ALERT_WEBHOOK` and
   `TIPPR_ALERT_COMMAND`. `tippr-stop` stops it too, so maintenance doesn't page anyone.
+- **The account switcher is for gold members and admins:** it's still a choice in preferences (reading
+  features), greyed out for everyone else with a link to gold, and their saved choice is kept for when they get it.
+  Any account in the switcher counts, so switching to an alt without gold doesn't leave you stuck on it.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

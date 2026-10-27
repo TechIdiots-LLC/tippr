@@ -178,6 +178,10 @@ def site_info_text_lengths():
 LOGIN_PROVIDERS = ("google", "facebook", "github", "discord")
 
 
+def switcher_not_allowed():
+    return _("the account switcher is for tippr gold members and admins")
+
+
 def login_settings_validators():
     """/admin/logins' fields, for each provider."""
     validators = {}
@@ -310,6 +314,8 @@ class ApiController(TipprController):
             return {"error": _("wrong username or password")}
         if user._id == c.user._id:
             return {"error": _("that's the account you're using")}
+        if not (account_switcher.allowed() or account_switcher.qualifies(user)):
+            return {"error": switcher_not_allowed()}
         if len(account_switcher.accounts()) >= account_switcher.MAX_ACCOUNTS:
             return {"error": _("you can keep at most %(n)d other accounts") % {
                 "n": account_switcher.MAX_ACCOUNTS}}
@@ -330,6 +336,8 @@ class ApiController(TipprController):
     )
     def POST_switch_account(self, responder, name):
         """Switch to another account kept by the account switcher."""
+        if not account_switcher.allowed():
+            return {"error": switcher_not_allowed()}
         account = account_switcher.switch_to(name)
         if not account:
             return {"error": _("that account isn't available to switch to; add it again")}

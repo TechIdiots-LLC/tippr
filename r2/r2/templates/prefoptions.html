@@ -323,10 +323,17 @@ action = add_vault(action, vault_path=False)
         <span class="details">${_("(new comments appear on a thread while you have it open, in vaults that use them)")}</span>
       </p>
       %endif
+      <%
+        from r2.lib import account_switcher
+        switcher_allowed = account_switcher.allowed()
+      %>
       <p>
-        ${checkbox(_("account switcher"), "account_switcher")}
+        ${checkbox(_("account switcher"), "account_switcher", disabled=not switcher_allowed)}
         &#32;
         <span class="details">${_("(a \"switch account\" menu by your name, to move between your accounts without logging out; logging out forgets them)")}</span>
+        %if not switcher_allowed:
+          &#32;<span class="details tippr-gold">${_wsf("for %(gold_link)s members and admins", gold_link=unsafe('<a href="/gold/about">%s</a>' % _("tippr gold")))}</span>
+        %endif
       </p>
       <p>
         ${checkbox(_("night mode"), "nightmode")}
