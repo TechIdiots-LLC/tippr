@@ -179,7 +179,15 @@ def valid_epoch(platform, epoch, max_age=5 * 60):
     return dt < max_age
 
 
+def _bytes(value):
+    return value if isinstance(value, bytes) else value.encode("utf-8")
+
+
 def epoch_wrap(epoch, payload):
+    # bytes when the payload is (a request body): formatting bytes into a
+    # str would sign their repr, b'...', not them
+    if isinstance(payload, bytes):
+        return ("Epoch:{}|".format(epoch)).encode("utf-8") + payload
     return "Epoch:{}|{}".format(epoch, payload)
 
 
@@ -194,7 +202,7 @@ def versioned_hmac(secret, body, global_version=GLOBAL_TOKEN_VERSION):
     assert global_version <= GLOBAL_TOKEN_VERSION, (
         "Invalid version signing version '%s'!" % global_version
     )
-    return hmac.new(secret, body, hashlib.sha256).hexdigest()
+    return hmac.new(_bytes(secret), _bytes(body), hashlib.sha256).hexdigest()
 
 
 def get_secret_token(platform, version, global_version=GLOBAL_TOKEN_VERSION):
@@ -226,7 +234,7 @@ def is_invalid_token(platform, version):
 def valid_post_signature(request, signature_header=SIGNATURE_BODY_HEADER):
     "Validate that the request has a properly signed body."
     return valid_signature(
-        "Body:{}".format(request.body),
+        b"Body:" + _bytes(request.body or b""),
         request.headers.get(signature_header),
         field="body",
     )

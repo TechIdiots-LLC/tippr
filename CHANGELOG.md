@@ -31,6 +31,9 @@
 - **Top and controversial listings could stop updating for good after a crash:** a run of their job that was killed
   (a reboot, or running out of memory) left its temporary files behind, and every later run refused to start while
   they were there. The job uses a lock that ends with the process instead, and clears what a killed run left.
+- **Signed API requests failed:** a request carrying a signature header (the v1 mobile API's request signing,
+  `/api/v1/login` and `/api/v1/register`) gave an error under Python 3, and a signed body could never match, since its
+  bytes were signed as text (`b'...'`). Both are signed as sent again.
 
 ## 0.26.0
 ### ✨ Features and improvements

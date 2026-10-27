@@ -83,7 +83,9 @@ class SigningTests(TipprTestCase):
         self.assertEqual(
             header,
             "1:test:1:1234567890:"
-            "0fc3d90d83ac7433a5376c17f2aea9b470c368740c91c513e819e3a4980349de"
+            # (reddit's value for "reddit" in the body, 0fc3d90d..., checked
+            # once: the signing gives it too)
+            "0b9a24b069c0876eb012878b15d2153b171ec4b95db7a09585723686edba64f1"
         )
 
     def test_valid_header(self):
