@@ -46,6 +46,9 @@
   bytes were signed as text (`b'...'`). Both are signed as sent again.
 - **A multi's or filter's vault list said "x" instead of "remove"** once the page's script took it over, and lost the
   vault names on its items. They match the page as it loads.
+- **"Remember this computer" can be ticked before using a passkey:** the box sat below the passkey button, and a
+  passkey sends the form as soon as it's used, so there was no chance to tick it. It's now above the button, on the
+  sign-in code page and when turning admin mode on.
 
 ## 0.26.0
 ### ✨ Features and improvements

@@ -70,7 +70,7 @@
         <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
                maxlength="40" tabindex="1" autofocus />
         ${error_field("WRONG_OTP", "otp")}
-        <label>
+        <label class="two-factor-remember">
           <input type="checkbox" name="remember" tabindex="1"> ${_("remember this computer")}</label>
         </%utils:round_field>
         % endif

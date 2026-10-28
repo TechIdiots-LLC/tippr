@@ -176,8 +176,11 @@ r.passkey = {
       }).then(function() { $button.prop('disabled', false) })
     }
     $button.on('click', usePasskey)
+    // "remember this computer" goes above the button: the passkey sends the
+    // form as soon as it's used, so the box has to be ticked before
+    var $remember = $form.find('input[name=remember]').closest('label')
     if (hasApp) {
-      $input.after($button, $status)
+      ($remember.length ? $remember : $input).after($button, $status)
       return
     }
 
@@ -191,6 +194,7 @@ r.passkey = {
         $submit.show()
       })
     $input.hide().before($button, $status, $recovery)
+    $remember.insertBefore($button)
     $submit.hide()
     // sent without a code (the field still hidden): the passkey first.
     // (A capture listener runs before the form's own onsubmit, and stops it.)
