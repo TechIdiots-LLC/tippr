@@ -386,6 +386,18 @@ function totp(secret) {
   return String((hmac.readUInt32BE(offset) & 0x7fffffff) % 1000000).padStart(6, "0");
 }
 
+// Each code is good once (r2/lib/two_factor.py), so a second code for the
+// same app within its 30 seconds waits for the next one.
+const codesUsed = new Map();
+async function freshTotp(secret) {
+  const step = () => Math.floor(Date.now() / 1000 / 30);
+  if (codesUsed.get(secret) === step()) {
+    await new Promise((r) => setTimeout(r, 30500 - (Date.now() % 30000)));
+  }
+  codesUsed.set(secret, step());
+  return totp(secret);
+}
+
 // Write to the admins from the contact page: open the topic, and its link
 // opens the message form with the subject filled in.
 async function contactAdmins(s, topic, linkText, text) {
@@ -722,7 +734,7 @@ try {
   const admin = await session("visual_admin", "desktop");
   await admin.page.goto(`${BASE}/adminon?dest=${encodeURIComponent("/admin/support")}`, READY);
   await shoot(admin, "adminon");
-  await admin.page.fill("#adminon input[name=otp]", totp(accounts.visual_admin.totp));
+  await admin.page.fill("#adminon input[name=otp]", await freshTotp(accounts.visual_admin.totp));
   await Promise.all([admin.page.waitForURL(/\/admin\/support/, { timeout: 30000, ...READY }),
                      admin.page.click("#adminon button[type=submit]")]);
   const ticketLink = (page, subject) => page.locator("a", { hasText: subject.replace(/^\[\w+\]\s*/, "") }).first();
@@ -841,9 +853,14 @@ try {
   await Promise.all([gold.page.waitForURL(/\/logins\/otp/, { timeout: 30000, ...READY }),
                      gold.page.click(".account-switcher-add button[type=submit]")]);
   await shoot(gold, "switcher-two-factor");
-  await gold.page.fill("form[action='/logins/otp'] input[name=otp]", totp(accounts.visual_admin.totp));
-  await Promise.all([gold.page.waitForURL(new RegExp(`/v/${VAULT}/`), { timeout: 30000, ...READY }),
-                     gold.page.click("form[action='/logins/otp'] button[type=submit]")]);
+  await gold.page.fill("form[action='/logins/otp'] input[name=otp]", await freshTotp(accounts.visual_admin.totp));
+  await Promise.all([
+    gold.page.waitForURL(new RegExp(`/v/${VAULT}/`), { timeout: 30000, ...READY }).catch(async (e) => {
+      // (the code page again, or a message: what it said)
+      const said = await gold.page.locator(".payment-status").first().innerText().catch(() => "");
+      throw new Error(`the code page didn't go back to /v/${VAULT}/: ${said.trim() || e.message}`);
+    }),
+    gold.page.click("form[action='/logins/otp'] button[type=submit]")]);
   await check("account switcher (visual_gold)", async () => (await logged(gold.page)) === "visual_admin",
               "after its code, visual_admin should be the account in use");
   await gold.page.click(".account-switcher-toggle");
