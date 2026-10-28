@@ -107,6 +107,14 @@ def qualifies(account):
     return bool(account.gold or account.name in g.admins)
 
 
+def needs_code(account):
+    """Adding account asks for its two-factor code when it has two-factor
+    (whatever it chose for logging in: this is signing in to it from
+    someone's switcher), unless it remembered this computer."""
+    from r2.lib import two_factor
+    return two_factor.enabled(account) and not two_factor.device_remembered(account)
+
+
 def allowed():
     """Whether this browser can use the switcher: the account in use or one
     of those kept qualifies. Any of them counts, so switching to an account

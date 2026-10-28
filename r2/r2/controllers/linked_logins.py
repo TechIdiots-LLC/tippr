@@ -52,14 +52,16 @@ class LinkedLoginsController(TipprController):
         c.no_page_cache = True
 
     @validate(provider=VOneOf("provider", linked_logins.PROVIDER_ORDER),
-              purpose=VOneOf("purpose", ("login", "link"), default="login"),
+              purpose=VOneOf("purpose", ("login", "link", "switch"),
+                             default="login"),
               dest=nop("dest"),
               rem=VBoolean("rem"))
     def GET_start(self, provider, purpose, dest, rem):
-        """Off to the provider to sign in (or to link an account)."""
+        """Off to the provider to sign in (or to link an account, or to add
+        the account it's linked to to the account switcher: "switch")."""
         if not provider:
             return self.abort404()
-        if purpose == "link" and not c.user_is_loggedin:
+        if purpose in ("link", "switch") and not c.user_is_loggedin:
             return self.redirect("/login?dest=/prefs/security")
         if purpose == "login" and c.user_is_loggedin:
             return self.redirect(linked_logins.safe_dest(dest))
@@ -110,6 +112,9 @@ class LinkedLoginsController(TipprController):
 
         account_id = linked_logins.account_id_for(provider,
                                                   identity["subject"])
+        if record["purpose"] == "switch":
+            return self._switch_to_linked(record, provider, name, identity,
+                                          account_id)
         if not account_id:
             # nobody linked it: offer to log in with a password and link it
             token = linked_logins.hold_unlinked(record, provider, identity)
@@ -136,8 +141,48 @@ class LinkedLoginsController(TipprController):
         return self._finish_login(account, record["rem"], record["dest"],
                                   provider, identity["subject"])
 
+    def _switch_to_linked(self, record, provider, name, identity, account_id):
+        """Back from the provider with the account switcher's "sign in
+        with": that outside account's account here joins the switcher, as
+        adding one with its password does (POST /api/switch_add)."""
+        from r2.lib import account_switcher
+        back = linked_logins.safe_dest(record["dest"])
+        if not c.user_is_loggedin:
+            return self.redirect("/login")
+        try:
+            account = Account._byID(account_id, data=True) if account_id else None
+        except NotFound:
+            account = None
+        if not account or account._deleted or account._banned:
+            return _message(_("That %(name)s account isn't linked to an account "
+                              "here. Link it in that account's preferences "
+                              "(security) first.") % {"name": name},
+                            back, _("back"))
+        if account._id == c.user._id:
+            return _message(_("That's the account you're using."), back, _("back"))
+        if not (account_switcher.allowed() or account_switcher.qualifies(account)):
+            return _message(_("The account switcher is for tippr gold members "
+                              "and admins."), back, _("back"))
+        if len(account_switcher.accounts()) >= account_switcher.MAX_ACCOUNTS:
+            return _message(_("You can keep at most %(n)d other accounts.") % {
+                "n": account_switcher.MAX_ACCOUNTS}, back, _("back"))
+        account_switcher.remember_current()
+        record = dict(record, rem=True, switch=True)
+        if account_switcher.needs_code(account):
+            token = linked_logins.hold_for_otp(account, record, provider,
+                                               identity["subject"])
+            return BoringPage(_("sign in"), show_sidebar=False,
+                              content=LinkedLoginOtp(token)).render()
+        return self._finish_login(account, True, record["dest"], provider,
+                                  identity["subject"], switch=True)
+
     def _finish_login(self, account, rem, dest, provider, subject,
-                      code_entered=False):
+                      code_entered=False, switch=False):
+        if switch:
+            # added to the account switcher: the account in use was kept
+            # (account_switcher.remember_current), and admin mode belongs
+            # to it, not this one
+            c.cookies[g.admin_cookie] = Cookie(value="", expires=DELETE)
         c.user = account
         c.user_is_loggedin = True
         self.login(account, rem=rem)
@@ -163,7 +208,8 @@ class LinkedLoginsController(TipprController):
         form sends the browser here; r2.controllers.login)."""
         token = request.cookies.get(linked_logins.OTP_COOKIE)
         held = linked_logins.pending(token)
-        if not held or c.user_is_loggedin:
+        # (logged in: only adding an account to the switcher)
+        if not held or (c.user_is_loggedin and not held.get("switch")):
             return self.redirect("/login")
         if not held.get("dest") and dest:
             held["dest"] = linked_logins.safe_dest(dest)
@@ -348,4 +394,5 @@ class LinkedLoginsController(TipprController):
                                         code_entered=True)
         return self._finish_login(account, held["rem"], held["dest"],
                                   held["provider"], held["subject"],
-                                  code_entered=True)
+                                  code_entered=True,
+                                  switch=held.get("switch", False))

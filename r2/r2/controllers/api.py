@@ -319,11 +319,25 @@ class ApiController(TipprController):
         if len(account_switcher.accounts()) >= account_switcher.MAX_ACCOUNTS:
             return {"error": _("you can keep at most %(n)d other accounts") % {
                 "n": account_switcher.MAX_ACCOUNTS}}
-        from r2.lib import two_factor
-        if (two_factor.login_needs_code(user) and
-                not two_factor.check_code(user, request.params.get("otp"))):
-            return {"error": _("enter that account's two-factor code"),
-                    "need_otp": True}
+        from r2.lib import linked_logins, two_factor
+        if account_switcher.needs_code(user):
+            code = request.params.get("otp")
+            if not code:
+                # its code on the sign-in's own page, /logins/otp (a code, a
+                # passkey or a recovery code), as logging in does; this
+                # account is kept to switch back to
+                account_switcher.remember_current()
+                token = linked_logins.hold_for_otp(
+                    user, {"dest": linked_logins.safe_dest(request.params.get("dest")),
+                           "rem": True, "switch": True}, None, None)
+                c.cookies[linked_logins.OTP_COOKIE] = Cookie(
+                    value=token, httponly=True, secure=True,
+                    expires=datetime.utcnow() + timedelta(
+                        seconds=linked_logins.PENDING_TTL))
+                return {"two_factor": "/logins/otp"}
+            if not two_factor.check_code(user, code):
+                # (scripts can send the code with the password)
+                return {"error": _("that two-factor code didn't work")}
         account_switcher.remember_current()
         self.login(user, rem=True)
         c.cookies[g.admin_cookie] = Cookie(value="", expires=DELETE)

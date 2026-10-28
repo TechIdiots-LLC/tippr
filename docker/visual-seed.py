@@ -114,6 +114,8 @@ for name, nightmode in MEMBERS.items():
 # /all (/me/f/all) and the account switcher in preferences
 password = secrets.token_urlsafe(18)
 account = account_named(GOLD, password)
+# with the account switcher on (the browser test adds visual_admin to it)
+account.pref_account_switcher = True
 account._commit()
 if not vault.is_contributor(account):
     vault.add_contributor(account)

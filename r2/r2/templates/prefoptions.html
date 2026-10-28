@@ -34,6 +34,21 @@
 %>
 <%namespace file="utils.html" import="md, error_field, language_tool, plain_link"/>
 
+## the account switcher, a gold option (also for admins): greyed out with a
+## link to gold for anyone else, whose choice is kept (preferences.py)
+<%def name="switcher_option()">
+  <%
+    from r2.lib import account_switcher
+    allowed = account_switcher.allowed()
+  %>
+  ${checkbox(_("account switcher"), "account_switcher", disabled=not allowed)}
+  &#32;
+  <span class="details">${_("(a \"switch account\" menu by your name, to move between your accounts without logging out; logging out forgets them)")}</span>
+  %if not allowed:
+    &#32;<span class="details tippr-gold">${_wsf("for %(gold_link)s members and admins", gold_link=unsafe('<a href="/gold/about">%s</a>' % _("tippr gold")))}</span>
+  %endif
+</%def>
+
 <%def name="checkbox(text, name, disabled = False, disabled_text = '', prefix = 'pref_')">
     <input name="${name}" id="${name}" type="checkbox"
                %if getattr(c.user, prefix + name):
@@ -323,18 +338,6 @@ action = add_vault(action, vault_path=False)
         <span class="details">${_("(new comments appear on a thread while you have it open, in vaults that use them)")}</span>
       </p>
       %endif
-      <%
-        from r2.lib import account_switcher
-        switcher_allowed = account_switcher.allowed()
-      %>
-      <p>
-        ${checkbox(_("account switcher"), "account_switcher", disabled=not switcher_allowed)}
-        &#32;
-        <span class="details">${_("(a \"switch account\" menu by your name, to move between your accounts without logging out; logging out forgets them)")}</span>
-        %if not switcher_allowed:
-          &#32;<span class="details tippr-gold">${_wsf("for %(gold_link)s members and admins", gold_link=unsafe('<a href="/gold/about">%s</a>' % _("tippr gold")))}</span>
-        %endif
-      </p>
       <p>
         ${checkbox(_("night mode"), "nightmode")}
         &#32;
@@ -559,17 +562,25 @@ action = add_vault(action, vault_path=False)
         <br>
         <% coin_link = unsafe('&#32;<a href="/coins">%s</a>&#32;' % _("Give Gold")) %>
         ${checkbox(_wsf("use a month of my %(coin_link)s to automatically renew my gold if it expires", coin_link=coin_link), "coin_autorenew")}
+        <br>
+        ${switcher_option()}
     </td>
   </tr>
-  %elif c.user.is_moderator_somewhere:
+  %else:
+  ## without gold: what a moderator gets anyway, and the account switcher
+  ## (greyed out, but for admins: r2.lib.account_switcher.allowed)
   <tr class="gold-accent">
     <th>${_("gold options")}</th>
     <td class="prefright">
+      %if c.user.is_moderator_somewhere:
       ${checkbox(_("highlight new comments"), "highlight_new_comments")}
       <% gold_link = unsafe('&#32;<a href="/gold/about">' + _("tippr gold") + '</a>') %>
       &#32;<span class="details">
         (${_wsf("since you don't have %(gold_link)s, this will only apply in vaults you moderate", gold_link=gold_link)})
       </span>
+      <br>
+      %endif
+      ${switcher_option()}
     </td>
   </tr>
   %endif

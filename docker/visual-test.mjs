@@ -46,7 +46,9 @@
 //     the note, and his reply goes back to the ticket
 //   - gold: visual_gold filters the test vault out of /all (/me/f/all) and
 //     back, and can use the account switcher, which bob, without gold,
-//     sees greyed out; a domain listing shows alice's post
+//     sees greyed out; it adds visual_admin to its switcher (that account's
+//     code on the sign-in code page) and switches back; a domain listing
+//     shows alice's post
 //
 // On each page: no JavaScript errors, no failed requests to the site, no
 // sideways scrolling at phone width, and no text that can't be read on its
@@ -826,6 +828,29 @@ try {
   await check("preferences (visual_bob)",
               async () => await bob.page.locator("input#account_switcher").isDisabled(),
               "the account switcher is for gold members: bob's should be greyed out");
+
+  // the account switcher: visual_gold adds visual_admin, which has
+  // two-factor, so its code goes on the sign-in's code page; then it's
+  // visual_admin, with visual_gold to switch back to
+  const logged = (page) => page.evaluate(() => window.r && r.config && r.config.logged);
+  await gold.page.goto(`${BASE}/v/${VAULT}/`, READY);
+  await gold.page.click(".account-switcher-toggle");
+  await shoot(gold, "account-switcher");
+  await gold.page.fill(".account-switcher-add input[name=user]", "visual_admin");
+  await gold.page.fill(".account-switcher-add input[name=passwd]", accounts.visual_admin.password);
+  await Promise.all([gold.page.waitForURL(/\/logins\/otp/, { timeout: 30000, ...READY }),
+                     gold.page.click(".account-switcher-add button[type=submit]")]);
+  await shoot(gold, "switcher-two-factor");
+  await gold.page.fill("form[action='/logins/otp'] input[name=otp]", totp(accounts.visual_admin.totp));
+  await Promise.all([gold.page.waitForURL(new RegExp(`/v/${VAULT}/`), { timeout: 30000, ...READY }),
+                     gold.page.click("form[action='/logins/otp'] button[type=submit]")]);
+  await check("account switcher (visual_gold)", async () => (await logged(gold.page)) === "visual_admin",
+              "after its code, visual_admin should be the account in use");
+  await gold.page.click(".account-switcher-toggle");
+  await Promise.all([gold.page.waitForNavigation(READY),
+                     gold.page.locator(".account-switcher-account", { hasText: "visual_gold" }).click()]);
+  await check("account switcher (visual_admin)", async () => (await logged(gold.page)) === "visual_gold",
+              "switching back should make visual_gold the account in use");
   await gold.context.close();
 
   // a domain listing: alice's post, a text post, under self.<vault>

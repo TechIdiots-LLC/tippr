@@ -163,6 +163,14 @@ def _switch_account_names():
     return account_switcher.names()
 
 
+def _switch_providers():
+    """The sign-in providers on /admin/logins, for the account switcher."""
+    from r2.lib import linked_logins
+    return [[p, _("sign in with %(provider)s") % dict(
+                provider=_(linked_logins.PROVIDERS[p]["name"]))]
+            for p in linked_logins.enabled_providers()]
+
+
 def js_config(extra_config=None):
     logged = c.user_is_loggedin and c.user.name
     user_id = c.user_is_loggedin and c.user._id
@@ -318,6 +326,9 @@ def js_config(extra_config=None):
         # passkey", with a recovery code as the fallback)
         "two_factor_app": bool(logged and _has_authenticator_app(c.user)),
         "switch_accounts": switch_accounts or [],
+        # the switcher's "sign in with Google" (and the like): [id, label]
+        "switch_providers": (_switch_providers()
+                             if switch_accounts is not None else []),
         "account_switcher": bool(switch_accounts is not None and
                                  (c.user.pref_account_switcher or switch_accounts)),
         "user_tags": (user_tags.for_page(c.user)

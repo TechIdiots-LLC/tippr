@@ -12,9 +12,11 @@
   failing (and every 6 hours while it does, and when it recovers) says what failed to a webhook (Discord, Slack,
   ntfy or any URL taking JSON) and/or a command such as `mail`: the installer's `TIPPR_ALERT_WEBHOOK` and
   `TIPPR_ALERT_COMMAND`. `tippr-stop` stops it too, so maintenance doesn't page anyone.
-- **The account switcher is for gold members and admins:** it's still a choice in preferences (reading
-  features), greyed out for everyone else with a link to gold, and their saved choice is kept for when they get it.
-  Any account in the switcher counts, so switching to an alt without gold doesn't leave you stuck on it.
+- **The account switcher is for gold members and admins:** it's in preferences' gold options, greyed out for everyone
+  else with a link to gold, and their saved choice is kept for when they get it. Any account in the switcher counts,
+  so switching to an alt without gold doesn't leave you stuck on it. Adding an account that has two-factor asks for
+  that account's code (or passkey) on the sign-in's code page, and the switcher offers "sign in with Google" and the
+  other sign-ins on /admin/logins, for accounts that linked one.
 - **Daily backups, and a copy off the server:** a backup every night (the newest 7 kept), on every install unless
   `TIPPR_BACKUP_SCHEDULE=off`. With `TIPPR_BACKUP_S3_BUCKET` each is also uploaded to that S3 bucket (Garage, MinIO,
   AWS...), under a folder of its own (`TIPPR_BACKUP_S3_PREFIX`, the domain by default), keeping the newest 30, with

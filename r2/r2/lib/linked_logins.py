@@ -266,7 +266,8 @@ def _state_key(token):
 
 def start(provider, purpose, account=None, dest=None, rem=False):
     """(provider's sign-in address, state token for the cookie). purpose:
-    "login" or "link" (account: who's linking)."""
+    "login", "link" (account: who's linking) or "switch" (the account
+    switcher: signing in to the account it's linked to, kept alongside)."""
     settings = login_settings()
     if provider not in enabled_providers(settings):
         raise LoginError("Signing in with that isn't available.")
@@ -395,7 +396,10 @@ def hold_for_otp(account, record, provider, subject, link_identity=None):
     g.gencache.set(_pending_key(token), {
         "account_id": account._id, "dest": record["dest"],
         "rem": record["rem"], "provider": provider, "subject": subject,
-        "link_identity": link_identity, "tries": 0}, time=PENDING_TTL)
+        "link_identity": link_identity, "tries": 0,
+        # adding an account to the switcher (r2.lib.account_switcher): the
+        # member is logged in to another one, kept to switch back to
+        "switch": bool(record.get("switch"))}, time=PENDING_TTL)
     return token
 
 

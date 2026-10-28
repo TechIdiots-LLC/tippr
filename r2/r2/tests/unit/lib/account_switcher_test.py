@@ -60,3 +60,16 @@ class TestAccountSwitcherAllowed(TipprTestCase):
     def test_not_logged_in(self):
         self.c.user_is_loggedin = False
         self.assertFalse(self.switcher.allowed())
+
+    def test_adding_an_account_with_two_factor_asks_for_its_code(self):
+        from unittest.mock import patch
+        target = account("alt")
+        with patch("r2.lib.two_factor.enabled", return_value=True), \
+                patch("r2.lib.two_factor.device_remembered", return_value=False):
+            self.assertTrue(self.switcher.needs_code(target))
+        # unless it remembered this computer, or has no two-factor
+        with patch("r2.lib.two_factor.enabled", return_value=True), \
+                patch("r2.lib.two_factor.device_remembered", return_value=True):
+            self.assertFalse(self.switcher.needs_code(target))
+        with patch("r2.lib.two_factor.enabled", return_value=False):
+            self.assertFalse(self.switcher.needs_code(target))

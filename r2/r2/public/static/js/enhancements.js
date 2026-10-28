@@ -1089,24 +1089,33 @@ r.enhancements.accountSwitcher = {
       self.$status.text('')
       self.post('switch_add', {user: $form.find('[name=user]').val(),
                                passwd: $form.find('[name=passwd]').val(),
-                               otp: $form.find('[name=otp]').val() || ''})
+                               dest: window.location.pathname + window.location.search})
         .done(function(res) {
           if (res && res.ok) {
             window.location.reload()
+          } else if (res && res.two_factor) {
+            // that account has two-factor: its code (or passkey) on the
+            // sign-in's own page, which comes back here
+            window.location = res.two_factor
           } else {
-            if (res && res.need_otp && !$form.find('[name=otp]').length) {
-              // that account wants its two-factor code at login
-              $('<input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12">')
-                .attr({placeholder: r._('two-factor code'), 'aria-label': r._('two-factor code')})
-                .insertBefore($form.find('button[type=submit]'))
-                .focus()
-            }
             self.$status.text((res && res.error) || r._('couldn\'t add the account'))
           }
         })
         .fail(function() { self.$status.text(r._('couldn\'t add the account')) })
     })
-    $menu.append($form, this.$status,
+    // or with a sign-in provider the account linked (/admin/logins)
+    var $providers = $()
+    var providers = r.config.switch_providers || []
+    if (providers.length) {
+      var here = encodeURIComponent(window.location.pathname + window.location.search)
+      $providers = $('<div class="linked-signin account-switcher-providers"></div>')
+      _.each(providers, function(p) {
+        $('<a class="c-btn"></a>').addClass('linked-signin-' + p[0]).text(p[1])
+          .attr('href', '/logins/start/' + p[0] + '?purpose=switch&dest=' + here)
+          .appendTo($providers)
+      })
+    }
+    $menu.append($form, this.$status, $providers,
       $('<p class="details"></p>').text(
         r._('logging out forgets these accounts')))
       .on('click keydown', function(e) {
