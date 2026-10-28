@@ -154,3 +154,93 @@ class TestLinkedLogins(TipprTestCase):
                   if isinstance(node, ast.Assign) and
                   getattr(node.targets[0], "id", None) == "LOGIN_PROVIDERS"]
         self.assertEqual(listed, [tuple(linked_logins.PROVIDER_ORDER)])
+        extras = [ast.literal_eval(node.value) for node in tree.body
+                  if isinstance(node, ast.Assign) and
+                  getattr(node.targets[0], "id", None) == "LOGIN_EXTRA_SETTINGS"]
+        self.assertEqual(extras, [{p: info["extra_settings"]
+                                   for p, info in linked_logins.PROVIDERS.items()
+                                   if info.get("extra_settings")}])
+
+
+class TestSignInWithApple(TipprTestCase):
+    """Apple's client secret (a token signed with the site's key) and its
+    id_token (checked with Apple's published keys), with keys made here."""
+
+    def setUp(self):
+        import json
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ec, rsa
+        self.json = json
+        self.ec_key = ec.generate_private_key(ec.SECP256R1())
+        pem = self.ec_key.private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption()).decode()
+        self.settings = {"apple_client_id": "net.example.signin", "apple_team_id": "TEAM123",
+                         "apple_key_id": "KEY456", "apple_client_secret": pem}
+        self.rsa_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        numbers = self.rsa_key.public_key().public_numbers()
+        as_b64 = lambda n: linked_logins._b64url(n.to_bytes((n.bit_length() + 7) // 8, "big"))
+        keys = [{"kid": "apple1", "kty": "RSA", "alg": "RS256",
+                 "n": as_b64(numbers.n), "e": as_b64(numbers.e)}]
+        p = patch.object(linked_logins, "_apple_keys", return_value=keys)
+        p.start()
+        self.addCleanup(p.stop)
+
+    def decode(self, part):
+        return self.json.loads(linked_logins._b64url_decode(part))
+
+    def test_client_secret_is_signed_with_the_key(self):
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+        token = linked_logins.apple_client_secret(self.settings, now=1000)
+        header, claims, signature = token.split(".")
+        self.assertEqual(self.decode(header), {"alg": "ES256", "kid": "KEY456"})
+        self.assertEqual(self.decode(claims), {
+            "iss": "TEAM123", "iat": 1000, "exp": 4600,
+            "aud": "https://appleid.apple.com", "sub": "net.example.signin"})
+        raw = linked_logins._b64url_decode(signature)
+        der = encode_dss_signature(int.from_bytes(raw[:32], "big"), int.from_bytes(raw[32:], "big"))
+        # raises if it isn't the key's signature
+        self.ec_key.public_key().verify(der, ("%s.%s" % (header, claims)).encode(),
+                                        ec.ECDSA(hashes.SHA256()))
+
+    def test_a_key_pasted_without_its_line_breaks_still_works(self):
+        self.settings["apple_client_secret"] = " ".join(self.settings["apple_client_secret"].split())
+        self.assertEqual(len(linked_logins.apple_client_secret(self.settings).split(".")), 3)
+
+    def id_token(self, claims, kid="apple1", key=None):
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import padding
+        header = linked_logins._b64url(self.json.dumps({"alg": "RS256", "kid": kid}).encode())
+        body = linked_logins._b64url(self.json.dumps(claims).encode())
+        signature = (key or self.rsa_key).sign(("%s.%s" % (header, body)).encode(),
+                                               padding.PKCS1v15(), hashes.SHA256())
+        return "%s.%s.%s" % (header, body, linked_logins._b64url(signature))
+
+    def claims(self, **kw):
+        return dict({"iss": "https://appleid.apple.com", "aud": "net.example.signin",
+                     "sub": "001234.abcdef", "exp": 2000}, **kw)
+
+    def test_a_good_id_token(self):
+        claims = linked_logins.verify_apple_id_token(
+            self.id_token(self.claims()), "net.example.signin", now=1000)
+        self.assertEqual(claims["sub"], "001234.abcdef")
+
+    def test_bad_id_tokens_are_refused(self):
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        other_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        for token in (self.id_token(self.claims(aud="someone.else")),
+                      self.id_token(self.claims(exp=999)),
+                      self.id_token(self.claims(iss="https://evil.example")),
+                      self.id_token(self.claims(), key=other_key),
+                      self.id_token(self.claims(), kid="unknown"),
+                      "not-a-token"):
+            with self.assertRaises(linked_logins.LoginError):
+                linked_logins.verify_apple_id_token(token, "net.example.signin", now=1000)
+
+    def test_apple_needs_its_team_and_key_ids(self):
+        settings = dict({"apple_enabled": True}, **self.settings)
+        self.assertTrue(linked_logins.configured("apple", settings))
+        settings["apple_key_id"] = ""
+        self.assertFalse(linked_logins.configured("apple", settings))

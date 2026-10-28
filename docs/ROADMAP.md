@@ -82,9 +82,9 @@ tippr today, see [INSTALL_tippr.md](INSTALL_tippr.md) and
    all-in-one template, and an installer role setting (`TIPPR_ROLE`) for
    data store containers.
 2. **More sign-in providers and signing up with one.** Signing in with a
-   linked Google, Facebook, GitHub or Discord account is done
+   linked Google, Facebook, GitHub, Discord or Apple account is done
    (/admin/logins); next is a generic OpenID Connect provider for a site's
-   own sign-in service (Microsoft and Apple later), a table entry each in
+   own sign-in service (Microsoft later), a table entry each in
    `r2/lib/linked_logins.py`. Signing up with one is done too (a username,
    a password and the sign-up form's checks). Instagram no
    longer offers logins to other sites; Meta's is Facebook Login.

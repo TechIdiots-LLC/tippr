@@ -131,7 +131,7 @@ With admin mode on (`/adminon`, which wants two-factor confirmed on "confirm it'
 | `/admin/feeds` | the feeds that post into vaults: search, filter by vault, bot or status, sort, and edit (including the vault a feed posts to) |
 | `/admin/servers` | each server's role, load and services, and updates ([SERVERS.md](SERVERS.md)) |
 | `/admin/payments` | payment providers for gold and ads ([gold-payments.md](gold-payments.md)) |
-| `/admin/logins` | "sign in with Google / Facebook / GitHub / Discord" (linked sign-ins) |
+| `/admin/logins` | "sign in with Google / Facebook / GitHub / Discord / Apple" (linked sign-ins) |
 | `/admin/support` | the support queue (messages to the admins) |
 | `/admin/apps`, `/admin/domains` | API apps, banned domains |
 | `/admin/antispam` | the captcha (built-in, Turnstile, hCaptcha, reCAPTCHA) and CleanTalk |

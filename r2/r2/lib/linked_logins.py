@@ -42,7 +42,9 @@ Links are in PostgreSQL (account_logins), one row per outside account.
 
 import base64
 import hashlib
+import json
 import secrets
+import time
 from datetime import datetime
 from urllib.parse import urlencode
 
@@ -98,13 +100,31 @@ PROVIDERS = {
         "console": "https://discord.com/developers/applications",
         "name_keys": ("username", "global_name"),
     },
+    # Sign in with Apple: no userinfo, who it is comes in the token's signed
+    # id_token; the client secret is a token signed with the site's private
+    # key (apple_client_secret). No scopes, so Apple sends the browser back
+    # with a GET (asking for the name or email makes it a cross-site POST,
+    # which the state cookie isn't sent with): only who it is, as with
+    # GitHub and Discord.
+    "apple": {
+        "name": N_("Apple"),
+        "authorize": "https://appleid.apple.com/auth/authorize",
+        "token": "https://appleid.apple.com/auth/token",
+        "userinfo": None,
+        "scope": "",
+        "pkce": False,
+        "console": "https://developer.apple.com/account/resources/identifiers/list/serviceId",
+        "extra_settings": ("team_id", "key_id"),
+    },
 }
-PROVIDER_ORDER = ["google", "facebook", "github", "discord"]
+PROVIDER_ORDER = ["google", "facebook", "github", "discord", "apple"]
 
 SETTINGS = {}
 for _p in PROVIDER_ORDER:
     SETTINGS.update({_p + "_enabled": False, _p + "_client_id": "",
                      _p + "_client_secret": ""})
+    for _extra in PROVIDERS[_p].get("extra_settings", ()):
+        SETTINGS[_p + "_" + _extra] = ""
 SECRET_SETTINGS = tuple(p + "_client_secret" for p in PROVIDER_ORDER)
 
 STATE_COOKIE = "tippr_login_state"
@@ -141,8 +161,10 @@ def login_settings():
 
 def configured(provider, settings=None):
     settings = settings or login_settings()
+    extra = PROVIDERS[provider].get("extra_settings", ())
     return bool(settings[provider + "_client_id"] and
-                settings[provider + "_client_secret"])
+                settings[provider + "_client_secret"] and
+                all(settings[provider + "_" + name] for name in extra))
 
 
 def enabled_providers(settings=None):
@@ -280,9 +302,13 @@ def start(provider, purpose, account=None, dest=None, rem=False):
         "client_id": settings[provider + "_client_id"],
         "redirect_uri": callback_url(provider),
         "response_type": "code",
-        "scope": info["scope"],
         "state": token,
     }
+    if info["scope"]:
+        params["scope"] = info["scope"]
+    if provider == "apple":
+        # back with a GET (no scopes: see PROVIDERS)
+        params["response_mode"] = "query"
     if info["pkce"]:
         verifier = secrets.token_urlsafe(48)
         record["verifier"] = verifier
@@ -313,7 +339,8 @@ def finish(provider, code, state, cookie_state):
     info = PROVIDERS[provider]
     data = {
         "client_id": settings[provider + "_client_id"],
-        "client_secret": settings[provider + "_client_secret"],
+        "client_secret": (apple_client_secret(settings) if provider == "apple"
+                          else settings[provider + "_client_secret"]),
         "redirect_uri": callback_url(provider),
         "code": code,
         "grant_type": "authorization_code",
@@ -323,16 +350,22 @@ def finish(provider, code, state, cookie_state):
     try:
         response = requests.post(info["token"], data=data, timeout=TIMEOUT,
                                  headers={"Accept": "application/json"})
-        token = response.json().get("access_token") if response.ok else None
+        answer = response.json() if response.ok else {}
+        token = answer.get("access_token")
         if not token:
             g.log.warning("linked logins: %s token exchange failed: %s %s",
                           provider, response.status_code, response.text[:200])
             raise LoginError("%s didn't accept the sign-in. Please try "
                              "again." % info["name"])
-        response = requests.get(info["userinfo"], timeout=TIMEOUT,
-                                headers={"Authorization": "Bearer " + token})
-        response.raise_for_status()
-        person = response.json()
+        if info["userinfo"]:
+            response = requests.get(info["userinfo"], timeout=TIMEOUT,
+                                    headers={"Authorization": "Bearer " + token})
+            response.raise_for_status()
+            person = response.json()
+        else:
+            # Apple: who it is is in the signed id_token
+            person = verify_apple_id_token(answer.get("id_token") or "",
+                                           settings[provider + "_client_id"])
     except (requests.RequestException, ValueError) as e:
         g.log.warning("linked logins: %s failed: %s", provider, e)
         raise LoginError("Couldn't reach %s. Please try again." % info["name"])
@@ -347,6 +380,100 @@ def finish(provider, code, state, cookie_state):
     identity = {"subject": str(subject), "email": person.get("email"),
                 "name": name}
     return record, identity
+
+
+###############################################################################
+# Sign in with Apple: its client secret, and its id_token
+###############################################################################
+
+APPLE_ISSUER = "https://appleid.apple.com"
+APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
+
+
+def _b64url(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _b64url_decode(text):
+    return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
+
+
+def _apple_private_key(text):
+    """The .p8 key as saved: pasted into a one-line field its line breaks
+    may be gone, so the PEM is put back together from its base64."""
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    body = "".join(text.replace("-----BEGIN PRIVATE KEY-----", "")
+                       .replace("-----END PRIVATE KEY-----", "").split())
+    lines = [body[i:i + 64] for i in range(0, len(body), 64)]
+    pem = "-----BEGIN PRIVATE KEY-----\n%s\n-----END PRIVATE KEY-----\n" % "\n".join(lines)
+    return load_pem_private_key(pem.encode("ascii"), password=None)
+
+
+def apple_client_secret(settings, now=None):
+    """The client secret Apple wants: a token (ES256) signed with the
+    site's private key, naming the team, the key and the Services ID; good
+    for an hour (Apple allows up to six months)."""
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+    now = int(now or time.time())
+    header = {"alg": "ES256", "kid": settings["apple_key_id"]}
+    claims = {"iss": settings["apple_team_id"], "iat": now, "exp": now + 3600,
+              "aud": APPLE_ISSUER, "sub": settings["apple_client_id"]}
+    signing_input = "%s.%s" % (_b64url(json.dumps(header).encode()),
+                               _b64url(json.dumps(claims).encode()))
+    key = _apple_private_key(settings["apple_client_secret"])
+    r, s = decode_dss_signature(key.sign(signing_input.encode("ascii"),
+                                         ec.ECDSA(hashes.SHA256())))
+    return signing_input + "." + _b64url(r.to_bytes(32, "big") + s.to_bytes(32, "big"))
+
+
+def _apple_keys():
+    keys = g.gencache.get("linked_logins:apple_keys")
+    if not keys:
+        response = requests.get(APPLE_KEYS_URL, timeout=TIMEOUT)
+        response.raise_for_status()
+        keys = response.json()["keys"]
+        g.gencache.set("linked_logins:apple_keys", keys, time=86400)
+    return keys
+
+
+def verify_apple_id_token(id_token, client_id, now=None):
+    """Apple's id_token, checked (its signature with Apple's published
+    keys, who it's from, who it's for, not expired): its claims ("sub" is
+    who signed in). LoginError when it isn't right."""
+    from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    try:
+        header_b64, claims_b64, signature_b64 = id_token.split(".")
+        header = json.loads(_b64url_decode(header_b64))
+        claims = json.loads(_b64url_decode(claims_b64))
+        signature = _b64url_decode(signature_b64)
+    except (ValueError, TypeError):
+        raise LoginError("Apple's answer couldn't be read. Please try again.")
+    if header.get("alg") != "RS256":
+        raise LoginError("Apple's answer couldn't be checked. Please try again.")
+    key = next((k for k in _apple_keys() if k.get("kid") == header.get("kid")), None)
+    if not key:
+        # (a key Apple has just started using: fetch them again next time)
+        g.gencache.delete("linked_logins:apple_keys")
+        raise LoginError("Apple's answer couldn't be checked. Please try again.")
+    public_key = rsa.RSAPublicNumbers(
+        int.from_bytes(_b64url_decode(key["e"]), "big"),
+        int.from_bytes(_b64url_decode(key["n"]), "big")).public_key()
+    try:
+        public_key.verify(signature, ("%s.%s" % (header_b64, claims_b64)).encode("ascii"),
+                          padding.PKCS1v15(), hashes.SHA256())
+    except InvalidSignature:
+        raise LoginError("Apple's answer couldn't be checked. Please try again.")
+    now = now or time.time()
+    audience = claims.get("aud")
+    audiences = audience if isinstance(audience, list) else [audience]
+    if (claims.get("iss") != APPLE_ISSUER or client_id not in audiences
+            or not isinstance(claims.get("exp"), (int, float)) or claims["exp"] < now):
+        raise LoginError("That Apple sign-in isn't valid here. Please try again.")
+    return claims
 
 
 LINK_COOKIE = "tippr_link_pending"

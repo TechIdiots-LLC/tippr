@@ -32,6 +32,9 @@
   writing to the admins, in real browsers at desktop and phone width, light and night, with every page checked for
   errors and unreadable text, used to run only before a release; CI runs it on every push and pull request too
   (`ci-docker.yml`, screenshots kept as an artifact). Its admin step follows "confirm it's you".
+- **Sign in with Apple:** Apple is offered next to Google, Facebook, GitHub and Discord on /admin/logins. It takes
+  the Services ID, team ID, key ID and the key's .p8 text; tippr signs its own client secret from them and checks
+  Apple's signed answer against Apple's published keys. Apple shares only who signed in, not a name or email.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

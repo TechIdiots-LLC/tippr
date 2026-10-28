@@ -22,7 +22,7 @@
 <h1>${_("sign-in providers")}</h1>
 
 <p>
-  ${_("Members can link a Google, Facebook, GitHub or Discord account to theirs (preferences, security) and then sign in with it instead of their password. It only signs in to accounts that linked it: nothing is matched by email address. Someone signing in with one that isn't linked yet can link it to their account with their password, or, while sign-ups are open, make a new account for it. A member with two-factor sign-in still enters their code. Settings saved here override the ini file and apply immediately.")}
+  ${_("Members can link a Google, Facebook, GitHub, Discord or Apple account to theirs (preferences, security) and then sign in with it instead of their password. It only signs in to accounts that linked it: nothing is matched by email address. Someone signing in with one that isn't linked yet can link it to their account with their password, or, while sign-ups are open, make a new account for it. A member with two-factor sign-in still enters their code. Settings saved here override the ini file and apply immediately.")}
 </p>
 <p>
   ${_("Each provider needs an OAuth app of this site's own: create one in the provider's console, add the redirect address shown below to it, and enter its client ID and secret here.")}
@@ -43,17 +43,39 @@
         </td>
       </tr>
       <tr>
-        <td>${_("client ID")}</td>
+        <td>${_("Services ID") if p["name"] == "apple" else _("client ID")}</td>
         <td>
           <input type="text" name="${p['name']}_client_id" value="${thing.settings[p['name'] + '_client_id']}"
                  autocomplete="off" class="payment-field">
           ${error_field("TOO_LONG", p['name'] + "_client_id", "span")}
         </td>
       </tr>
+      %if p["name"] == "apple":
+      ## Apple's client secret is made from these and its private key
+      %for extra, label in (("team_id", _("team ID")), ("key_id", _("key ID"))):
+      <tr>
+        <td>${label}</td>
+        <td>
+          <input type="text" name="apple_${extra}" value="${thing.settings['apple_' + extra]}"
+                 autocomplete="off" class="payment-field">
+          ${error_field("TOO_LONG", "apple_" + extra, "span")}
+        </td>
+      </tr>
+      %endfor
+      <tr>
+        <td>${_("private key (.p8)")}</td>
+        <td>
+          <textarea name="apple_client_secret" rows="4" class="payment-field" autocomplete="off"
+                    placeholder="${_('saved; leave blank to keep') if thing.secret_is_set['apple_client_secret'] else _('paste the .p8 file\'s text')}"></textarea>
+          ${error_field("TOO_LONG", "apple_client_secret", "span")}
+        </td>
+      </tr>
+      %else:
       <tr>
         <td>${_("client secret")}</td>
         <td>${secret_field(p['name'] + "_client_secret")}</td>
       </tr>
+      %endif
       <tr>
         <td>${_("redirect address")}</td>
         <td>
@@ -67,6 +89,8 @@
             ${_("GitHub, Settings, Developer settings, OAuth Apps: register a new OAuth app (not a GitHub App) with this as its authorization callback URL. Its client ID is shown there; generate a client secret on the same page.")}
           %elif p["name"] == "discord":
             ${_("Discord Developer Portal: create an application, then under OAuth2 add this as a redirect. The client ID and client secret (reset it to see one) are on the same page.")}
+          %elif p["name"] == "apple":
+            ${_("Apple Developer (a paid membership): under Identifiers, an App ID with Sign in with Apple, then a Services ID (its identifier is the Services ID here) with Sign in with Apple configured for this site's domain and this return URL; under Keys, a key with Sign in with Apple (download its .p8 file once, and note its key ID). The team ID is at the top right of the developer site. Apple tells tippr only who signed in, not their name or email.")}
           %endif
           &#32;<a href="${p['console']}" target="_blank" rel="noopener">${_("open the console")}</a>
           </small>

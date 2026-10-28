@@ -175,7 +175,10 @@ def site_info_text_lengths():
 
 # r2.lib.linked_logins.PROVIDER_ORDER (that module opens the database when
 # it's imported, so not here; linked_logins_test checks they match)
-LOGIN_PROVIDERS = ("google", "facebook", "github", "discord")
+LOGIN_PROVIDERS = ("google", "facebook", "github", "discord", "apple")
+# their settings besides the ID and secret (linked_logins.PROVIDERS'
+# extra_settings)
+LOGIN_EXTRA_SETTINGS = {"apple": ("team_id", "key_id")}
 
 
 def switcher_not_allowed():
@@ -188,8 +191,13 @@ def login_settings_validators():
     for p in LOGIN_PROVIDERS:
         validators[p + "_enabled"] = VBoolean(p + "_enabled")
         for field in ("_client_id", "_client_secret"):
-            validators[p + field] = VLength(p + field, max_length=300,
-                                            empty_error=None)
+            # (Apple's "secret" is its private key, a .p8 file's text)
+            validators[p + field] = VLength(
+                p + field, max_length=2000 if p == "apple" else 300,
+                empty_error=None)
+        for extra in LOGIN_EXTRA_SETTINGS.get(p, ()):
+            validators[p + "_" + extra] = VLength(p + "_" + extra, max_length=100,
+                                                  empty_error=None)
     return validators
 
 
