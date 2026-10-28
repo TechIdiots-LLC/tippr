@@ -26,7 +26,7 @@ import csv
 import json
 import re
 from datetime import datetime, timedelta
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlparse
 
 from pylons import app_globals as g
 from pylons import request, response
@@ -6208,13 +6208,15 @@ class ApiController(TipprController):
         VUser(),
         VModhash(),
         VVerifyPassword("password", fatal=False),
+        otp=nop("otp"),
+        remember=VBoolean("remember"),
         dest=VDestination(),
     )
-    def POST_adminon(self, form, jquery, dest):
-        """Admin mode on. With two-factor (as production requires), once
-        this session has confirmed it's you: GET /adminon sends you to the
-        "confirm it's you" page first (or this computer is remembered).
-        Without it (disable_require_admin_otp), with the password."""
+    def POST_adminon(self, form, jquery, otp, remember, dest):
+        """Admin mode on. With two-factor (as production requires), a code
+        or a passkey each time, not the password again (or nothing, on a
+        remembered computer). Without it (disable_require_admin_otp), the
+        password."""
         if c.user.name not in g.admins:
             self.abort403()
 
@@ -6227,11 +6229,13 @@ class ApiController(TipprController):
             return
 
         if two_factor.enabled(c.user):
-            if not (two_factor.confirmed(c.user) or c.otp_cached):
-                # it's been a while since the page opened: confirm again
-                again = "/adminon?" + urlencode({"dest": dest or "/"})
-                form.redirect(two_factor.confirm_path(again, "admin"))
-                return
+            if not c.otp_cached:
+                if not two_factor.check_code(c.user, otp):
+                    c.errors.add(errors.WRONG_OTP, field="otp")
+                    form.has_errors("otp", errors.WRONG_OTP)
+                    return
+                if remember:
+                    self.remember_otp(c.user)
         elif form.has_errors("password", errors.WRONG_PASSWORD):
             return
 
@@ -6488,15 +6492,13 @@ class ApiController(TipprController):
         VModhash(),
         otp=nop("otp"),
         dest=VDestination(default="/prefs/security"),
-        remember=VBoolean("remember"),
     )
-    def POST_two_factor_unlock(self, form, jquery, otp, dest, remember):
+    def POST_two_factor_unlock(self, form, jquery, otp, dest):
         """"Confirm it's you" (r2.lib.pages.TwoFactorConfirm): one code (or
         a passkey) for preferences while they're in use
-        (two_factor.prefs_locked), admin mode, and, for a few minutes,
-        deleting the account or turning two-factor off, instead of a code
-        field on each form; then back to dest. remember: this computer
-        skips the code for admin mode and signing in for a while."""
+        (two_factor.prefs_locked), and, for a few minutes, deleting the
+        account or turning two-factor off, instead of a code field on each
+        form; then back to dest."""
         from r2.lib import two_factor
         if not two_factor.enabled(c.user):
             return
@@ -6504,8 +6506,6 @@ class ApiController(TipprController):
             c.errors.add(errors.WRONG_OTP, field="otp")
             form.has_errors("otp", errors.WRONG_OTP)
             return
-        if remember:
-            self.remember_otp(c.user)
         form.redirect(dest)
 
     @staticmethod

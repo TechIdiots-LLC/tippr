@@ -1300,10 +1300,10 @@ class TwoFactorConfirm(Templated):
     """"Confirm it's you": the one place a two-factor code (or a passkey)
     is asked for once signed in, then back to dest. purpose says what for:
     "prefs" (a locked preferences page, r2.lib.two_factor.prefs_locked),
-    "admin" (admin mode), "delete" (deleting the account) or "disable"
-    (turning two-factor off); those last two need it fresh
-    (two_factor.fresh), the others recent."""
-    PURPOSES = ("prefs", "admin", "delete", "disable")
+    "delete" (deleting the account) or "disable" (turning two-factor off),
+    which need it fresh (two_factor.fresh). (Admin mode asks on its own
+    page: AdminInterstitial.)"""
+    PURPOSES = ("prefs", "delete", "disable")
 
     def __init__(self, dest, purpose="prefs"):
         from r2.lib import two_factor

@@ -715,18 +715,12 @@ try {
                                            "A privacy request from the browser test.");
   await shoot(bob, "contact-sent");
 
-  // the admin turns on admin mode: a code from the app on "confirm it's
-  // you" (/adminon sends it there unless it confirmed lately), then the one
-  // button; and finds both in the queue
+  // the admin turns on admin mode (a code from the app, not the password
+  // again) and finds both in the queue
   const admin = await session("visual_admin", "desktop");
   await admin.page.goto(`${BASE}/adminon?dest=${encodeURIComponent("/admin/support")}`, READY);
-  if (admin.page.url().includes("/two_factor/confirm")) {
-    await shoot(admin, "confirm-admin");
-    await admin.page.fill(".two-factor-unlock input[name=otp]", totp(accounts.visual_admin.totp));
-    await Promise.all([admin.page.waitForURL(/\/adminon/, { timeout: 30000, ...READY }),
-                       admin.page.click(".two-factor-unlock button[type=submit]")]);
-  }
   await shoot(admin, "adminon");
+  await admin.page.fill("#adminon input[name=otp]", totp(accounts.visual_admin.totp));
   await Promise.all([admin.page.waitForURL(/\/admin\/support/, { timeout: 30000, ...READY }),
                      admin.page.click("#adminon button[type=submit]")]);
   const ticketLink = (page, subject) => page.locator("a", { hasText: subject.replace(/^\[\w+\]\s*/, "") }).first();

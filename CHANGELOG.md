@@ -21,10 +21,11 @@
   its own key if you like. `tippr-backup list --remote`, `fetch` and `upload` work with the bucket; `fetch` checks
   every file before you restore it. A failed backup sets off an alert. Backups used to be made only by hand.
 - **Two-factor is asked for in one place:** once signed in, the code (or passkey) is entered on one "confirm it's
-  you" page, and it then counts for 15 minutes everywhere: preferences, and admin mode, which no longer asks for
-  your password and a code on its own page (with two-factor it's one button once confirmed; "remember this computer"
-  is on the confirm page). Deleting your account and turning two-factor off no longer have a code box: they need a
-  confirmation from the last 5 minutes, and link to the page when it's older (the API still takes `otp`).
+  you" page, and it then counts for 15 minutes across preferences. Deleting your account and turning two-factor off
+  no longer have a code box: they need a confirmation from the last 5 minutes, and link to the page when it's older
+  (the API still takes `otp`).
+- **Admin mode asks for your two-factor code, not your password again:** "turn admin on" takes a code or a passkey
+  each time (or nothing on a computer you chose to remember), like preferences' unlock.
 - **The browser test on every push:** members logging in, posting, replying, voting, tipping scales, moderating and
   writing to the admins, in real browsers at desktop and phone width, light and night, with every page checked for
   errors and unreadable text, used to run only before a release; CI runs it on every push and pull request too

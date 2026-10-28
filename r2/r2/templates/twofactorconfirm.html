@@ -15,8 +15,8 @@
 
 ## "Confirm it's you" (r2.lib.pages.TwoFactorConfirm): one code, or a
 ## passkey (passkey.js offers it on the code field), then back to where the
-## member was going: a locked preferences page (PrefsUnlock), admin mode,
-## deleting the account or turning two-factor off
+## member was going: a locked preferences page (PrefsUnlock), deleting the
+## account or turning two-factor off
 
 <%namespace file="utils.html" import="error_field"/>
 
@@ -27,9 +27,7 @@
     <h1>${_("confirm it's you")}</h1>
   %endif
   <p>
-    %if thing.purpose == "admin":
-      ${_("Turning admin mode on needs you to confirm it's you.")}
-    %elif thing.purpose == "delete":
+    %if thing.purpose == "delete":
       ${_("Deleting your account needs you to confirm it's you first.")}
     %elif thing.purpose == "disable":
       ${_("Turning two-factor sign-in off needs you to confirm it's you first.")}
@@ -53,18 +51,11 @@
       ${_("unlock") if thing.purpose == "prefs" else _("confirm")}
     </button>
     ${error_field("WRONG_OTP", "otp")}
-    %if thing.purpose == "admin":
-      ## "remember this computer": admin mode (and signing in) then skip the
-      ## code here for a while (forget it on the admin mode page)
-      <p><label><input type="checkbox" name="remember"> ${_("remember this computer")}</label></p>
-    %endif
     <span class="status"></span>
   </form>
   <p><small>
     %if thing.purpose == "prefs":
       ${_("They stay unlocked while you use them, and lock again %(minutes)s minutes after you last opened one.") % dict(minutes=thing.minutes)}
-    %elif thing.purpose == "admin":
-      ${_("It counts for %(minutes)s minutes, for your preferences too.") % dict(minutes=thing.minutes)}
     %else:
       ${_("Then you have %(minutes)s minutes to finish.") % dict(minutes=thing.minutes)}
     %endif
