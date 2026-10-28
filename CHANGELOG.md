@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.27.0
+### ✨ Features and improvements
 - **Comes back by itself after a reboot:** the web app, queue consumers and scheduled jobs wait for PostgreSQL,
   Cassandra, ZooKeeper, RabbitMQ, memcached and OpenSearch to answer before starting (`scripts/wait-for-stores`;
   the backend's on a frontend). They used to start at once, fail while Cassandra was still coming up, and after five
@@ -37,7 +43,6 @@
   Apple's signed answer against Apple's published keys. Apple shares only who signed in, not a name or email.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Top and controversial listings could stop updating for good after a crash:** a run of their job that was killed
   (a reboot, or running out of memory) left its temporary files behind, and every later run refused to start while
   they were there. The job uses a lock that ends with the process instead, and clears what a killed run left.
