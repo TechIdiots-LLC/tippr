@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.29.0
+### ✨ Features and improvements
 - **/admin/feeds counts the reports on each feed's posts:** a new reports column shows how many reports a feed's posts
   have had, by reason (the rule reported, or "other"), and sorts the most reported first. Reports from before it can
   be counted once with `feeds.recount_reports()` ([CONTENT.md](docs/CONTENT.md#feeds)).
@@ -16,7 +22,6 @@
   again, rather than an undated page they come back to less often.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **Logging out from /v/all works:** logging out goes back to the page you were on if visitors can see it, and that
   check failed on /v/all, /v/mod and the other special vaults with an error page. /v/all and /v/random are kept; the
   others go to the front page.
