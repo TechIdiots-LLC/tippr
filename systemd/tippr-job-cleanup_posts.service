@@ -1,0 +1,16 @@
+[Unit]
+Description=clean up the posts nobody took an interest in, by the rules on /admin/cleanup
+
+After=network.target postgresql.service cassandra.service zookeeper.service rabbitmq-server.service memcached.service
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
+# run-locked: on one server at a time when several share the site
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked cleanup_posts @TIPPR_VENV@/bin/python -m r2.commands ${TIPPR_INI} -c 'from r2.lib import post_cleanup; post_cleanup.run_scheduled()'
+
+Nice=10

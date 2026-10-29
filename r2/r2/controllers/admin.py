@@ -39,6 +39,7 @@ from r2.lib.pages import (
     AdminFeeds,
     AdminPrivacy,
     AdminLiveConfig,
+    AdminPostCleanup,
     AdminLoginSettings,
     AdminServerStatus,
     AdminPage,
@@ -55,6 +56,7 @@ from r2.lib.pages import (
 )
 from r2.lib.validator import (
     VAdmin,
+    VInt,
     VSupportStaff,
     VModhash,
     VUploadLength,
@@ -209,6 +211,14 @@ class AdminToolController(TipprController):
         if not domain:
             return self.abort404()
         return AdminPage(content=AdminDomain(domain)).render()
+
+    @validate(VAdmin(), kind=nop("kind"), days=VInt("days", min=1, max=36500),
+              vault=nop("vault"), bot=nop("bot"))
+    def GET_cleanup(self, kind, days, vault, bot):
+        """The post cleanup's rules and runs, and with kind, the posts that
+        qualify now (r2.lib.post_cleanup)."""
+        return AdminPage(content=AdminPostCleanup(kind, days, vault,
+                                                  bot)).render()
 
     @validate(VAdmin(), q=nop("q"), vault=nop("vault"), bot=nop("bot"),
               status=nop("status"), sort=nop("sort"), order=nop("order"))

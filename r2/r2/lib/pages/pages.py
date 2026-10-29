@@ -4184,6 +4184,44 @@ class AdminFeeds(Templated, FeedView):
         Templated.__init__(self)
 
 
+class AdminPostCleanup(Templated):
+    """/admin/cleanup (r2.lib.post_cleanup): the daily cleanup's rules and
+    recent runs, and a search for the posts that qualify now (kind given),
+    to clean up the ones picked."""
+    def __init__(self, kind=None, days=None, vault_name="", bot_name=""):
+        from r2.lib import post_cleanup
+        from r2.lib.db.thing import NotFound
+        self.settings = post_cleanup.settings()
+        self.runs = post_cleanup.recent_runs()
+        self.max_selected = post_cleanup.MAX_SELECTED
+        self.kind = kind if kind in post_cleanup.KINDS else None
+        self.days = days or self.settings[(self.kind or "feeds") + "_days"]
+        self.vault_name = (vault_name or "").strip().lstrip("/").removeprefix("v/")
+        self.bot_name = (bot_name or "").strip()
+        self.found, self.checked, self.more, self.error = [], 0, False, None
+        self.vaults, self.authors = {}, {}
+        if self.kind:
+            vault = bot = None
+            try:
+                if self.vault_name:
+                    vault = Vault._by_name(self.vault_name)
+                if self.bot_name and self.kind == "feeds":
+                    bot = Account._by_name(self.bot_name)
+            except NotFound:
+                self.error = _("no such vault or bot")
+            if not self.error:
+                self.found, self.checked, self.more = post_cleanup.find(
+                    self.kind, self.days, vault, bot)
+            if self.found:
+                self.vaults = Vault._byID({l.vault_id for l in self.found},
+                                          data=True, return_dict=True,
+                                          ignore_missing=True)
+                self.authors = Account._byID({l.author_id for l in self.found},
+                                             data=True, return_dict=True,
+                                             ignore_missing=True)
+        Templated.__init__(self)
+
+
 
 class AdminApps(Templated):
     """Registered API apps (OAuth2Client), for approving, suspending or

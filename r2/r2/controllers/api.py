@@ -5691,6 +5691,51 @@ class ApiController(TipprController):
     @validatedForm(
         VAdmin(),
         VModhash(),
+        feeds_enabled=VBoolean("feeds_enabled"),
+        feeds_days=VInt("feeds_days", min=7, max=36500),
+        members_enabled=VBoolean("members_enabled"),
+        members_days=VInt("members_days", min=30, max=36500),
+        max_per_run=VInt("max_per_run", min=1, max=10000),
+    )
+    def POST_post_cleanup_settings(self, form, jquery, **values):
+        """Save the daily post cleanup's rules (/admin/cleanup,
+        r2.lib.post_cleanup)."""
+        from r2.lib import post_cleanup
+        if form.has_errors(("feeds_days", "members_days", "max_per_run"),
+                           errors.BAD_NUMBER):
+            return
+        if None in (values["feeds_days"], values["members_days"],
+                    values["max_per_run"]):
+            form.set_text(".status", _("fill in every number"))
+            return
+        post_cleanup.save_settings(values)
+        g.log.info("post_cleanup: %s saved the rules: %r", c.user.name, values)
+        form.set_text(".status", _("saved"))
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
+        kind=VOneOf("kind", ("feeds", "members")),
+        days=VInt("days", min=1, max=36500),
+        ids=VLength("ids", max_length=20000, empty_error=None),
+    )
+    def POST_post_cleanup(self, form, jquery, kind, days, ids):
+        """Clean up the posts picked on /admin/cleanup, each checked again
+        against the search they were found with (r2.lib.post_cleanup)."""
+        from r2.lib import post_cleanup
+        fullnames = [f for f in (ids or "").split(",") if f.strip()]
+        if not (kind and days and fullnames):
+            form.set_text(".status", _("tick the posts to clean up"))
+            return
+        removed, files = post_cleanup.clean_up_picked(fullnames, kind, days,
+                                                      c.user)
+        g.log.info("post_cleanup: %s cleaned up %d of %d picked posts",
+                   c.user.name, removed, len(fullnames))
+        form.refresh()
+
+    @validatedForm(
+        VAdmin(),
+        VModhash(),
         domain=VLength("domain", max_length=255),
         do=VOneOf("do", ("ban", "unban")),
         action=VOneOf("action", ("block", "spam")),

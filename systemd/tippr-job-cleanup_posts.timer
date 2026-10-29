@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-cleanup_posts daily
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*-*-* 04:15:00
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

@@ -6,6 +6,12 @@
 - **/admin/feeds counts the reports on each feed's posts:** a new reports column shows how many reports a feed's posts
   have had, by reason (the rule reported, or "other"), and sorts the most reported first. Reports from before it can
   be counted once with `feeds.recount_reports()` ([CONTENT.md](docs/CONTENT.md#feeds)).
+- **Post cleanup (/admin/cleanup):** posts nobody took an interest in (older than a rule's age, no comments, no votes
+  besides the author's, and not stickied, gilded, promoted, reported or removed) can be cleaned up. Feed bots' posts
+  and members' posts have rules of their own, each off until turned on, and the new nightly `tippr-job-cleanup_posts`
+  runs them up to a posts-a-day cap. A search on the page finds the posts that qualify, to clean up the ones ticked.
+  A cleaned-up post is deleted as its author would delete it, and its thumbnail and preview image go too unless another
+  live post uses the same file.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

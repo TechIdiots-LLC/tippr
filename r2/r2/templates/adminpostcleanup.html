@@ -1,0 +1,150 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+## /admin/cleanup: posts nobody took an interest in (r2.lib.post_cleanup)
+<%!
+  from r2.lib.utils import timesince
+%>
+<%namespace file="utils.html" import="error_field"/>
+
+<div class="admin-post-cleanup">
+<h1>${_("post cleanup")}</h1>
+
+<p>
+  ${_("A post qualifies for cleanup when it's older than its rule's age and has no comments and no votes besides its author's own. Stickied, gilded, promoted and reported posts, and posts a moderator removed, never qualify.")}
+</p>
+<p>
+  ${_("Cleaning up a post deletes it as its author would: it leaves the listings, search and its vault, and its thumbnail and preview image are deleted when no other post uses them. A feed doesn't post the same item again. It can't be undone.")}
+</p>
+
+<h2>${_("daily cleanup")}</h2>
+<form action="/api/post_cleanup_settings" method="post" class="pretty-form medium-text"
+      onsubmit="return post_form(this, 'post_cleanup_settings');">
+  <table class="lined-table borderless payment-settings">
+    <tr>
+      <th>${_("feed bots' posts")}</th>
+      <td>
+        <label><input type="checkbox" name="feeds_enabled" ${'checked' if thing.settings['feeds_enabled'] else ''}>
+          ${_("clean up")}</label>
+        ${_("after")} <input type="number" name="feeds_days" min="7" max="36500" value="${thing.settings['feeds_days']}"> ${_("days")}
+        ${error_field("BAD_NUMBER", "feeds_days", "span")}
+        <br><small>${_("Posts by the accounts that post the feeds on /admin/feeds. 30 to 60 days suits news.")}</small>
+      </td>
+    </tr>
+    <tr>
+      <th>${_("members' posts")}</th>
+      <td>
+        <label><input type="checkbox" name="members_enabled" ${'checked' if thing.settings['members_enabled'] else ''}>
+          ${_("clean up")}</label>
+        ${_("after")} <input type="number" name="members_days" min="30" max="36500" value="${thing.settings['members_days']}"> ${_("days")}
+        ${error_field("BAD_NUMBER", "members_days", "span")}
+        <br><small>${_("Everyone else's posts. Best left off, or at a few years (730 days is two).")}</small>
+      </td>
+    </tr>
+    <tr>
+      <th>${_("each day, at most")}</th>
+      <td>
+        <input type="number" name="max_per_run" min="1" max="10000" value="${thing.settings['max_per_run']}"> ${_("posts")}
+        ${error_field("BAD_NUMBER", "max_per_run", "span")}
+        <br><small>${_("tippr-job-cleanup_posts runs each night; this caps it, so a rule set wrong can't empty the site in one go.")}</small>
+      </td>
+    </tr>
+  </table>
+  <button class="btn" type="submit">${_("save")}</button>
+  <span class="status"></span>
+</form>
+
+<h2>${_("find posts to clean up")}</h2>
+<form action="/admin/cleanup" method="get" class="pretty-form admin-cleanup-search">
+  <select name="kind">
+    <option value="feeds" ${'selected' if thing.kind != 'members' else ''}>${_("feed bots' posts")}</option>
+    <option value="members" ${'selected' if thing.kind == 'members' else ''}>${_("members' posts")}</option>
+  </select>
+  ${_("older than")} <input type="number" name="days" min="1" max="36500" value="${thing.days}"> ${_("days")}
+  ${_("in")} /v/<input type="text" name="vault" size="16" value="${thing.vault_name}" placeholder="${_('any vault')}">
+  ${_("by")} <input type="text" name="bot" size="16" value="${thing.bot_name}" placeholder="${_('any bot')}">
+  <button class="btn" type="submit">${_("find")}</button>
+</form>
+
+%if thing.error:
+  <p class="error">${thing.error}</p>
+%elif thing.kind:
+  %if thing.found:
+    <p>
+      %if thing.more:
+        ${_("The oldest %(n)d posts that qualify (looked at %(checked)d; there are more).") % dict(n=len(thing.found), checked=thing.checked)}
+      %else:
+        ${_("%(n)d posts qualify (looked at %(checked)d).") % dict(n=len(thing.found), checked=thing.checked)}
+      %endif
+    </p>
+    ## the ticked posts go as one comma-separated field
+    <form action="/api/post_cleanup" method="post" class="pretty-form admin-cleanup-found"
+          data-confirm="${_("Clean up the ticked posts? It can't be undone.")}"
+          onsubmit="this.ids.value = Array.prototype.map.call(this.querySelectorAll('input.admin-cleanup-pick:checked'), function(b) { return b.value }).join(','); return this.ids.value !== '' && confirm(this.getAttribute('data-confirm')) && post_form(this, 'post_cleanup');">
+      <input type="hidden" name="kind" value="${thing.kind}">
+      <input type="hidden" name="days" value="${thing.days}">
+      <input type="hidden" name="ids" value="">
+      <table class="lined-table admin-cleanup-table">
+        <tr>
+          <th><input type="checkbox" checked aria-label="${_('tick them all')}"
+                     onclick="var on = this.checked; Array.prototype.forEach.call(this.form.querySelectorAll('input.admin-cleanup-pick'), function(b) { b.checked = on })"></th>
+          <th>${_("post")}</th><th>${_("vault")}</th><th>${_("posted by")}</th><th>${_("posted")}</th>
+        </tr>
+        %for link in thing.found:
+          <%
+            vault = thing.vaults.get(link.vault_id)
+            author = thing.authors.get(link.author_id)
+          %>
+          <tr>
+            <td><input type="checkbox" class="admin-cleanup-pick" value="${link._fullname}" checked></td>
+            <td><a href="${link.make_permalink(vault) if vault else '#'}">${link.title}</a></td>
+            <td>${('/v/' + vault.name) if vault else _("(missing)")}</td>
+            <td>${author.name if author else _("(missing)")}</td>
+            <td><span title="${link._date.strftime('%Y-%m-%d %H:%M UTC')}">${timesince(link._date)} ${_("ago")}</span></td>
+          </tr>
+        %endfor
+      </table>
+      <button class="btn" type="submit">${_("clean up the ticked posts")}</button>
+      <span class="status"></span>
+      <p><small>${_("Each is checked again first: one that got a comment or a vote since is left alone. At most %(n)d at a time.") % dict(n=thing.max_selected)}</small></p>
+    </form>
+  %else:
+    <p>${_("No posts qualify (looked at %(checked)d).") % dict(checked=thing.checked)}</p>
+  %endif
+%endif
+
+<h2>${_("recent cleanups")}</h2>
+%if thing.runs:
+  <table class="lined-table admin-cleanup-runs">
+    <tr><th>${_("started")}</th><th>${_("by")}</th><th>${_("posts")}</th><th>${_("looked at")}</th><th>${_("cleaned up")}</th><th>${_("files deleted")}</th></tr>
+    %for r in thing.runs:
+      <tr>
+        <td><span title="${r['started'].strftime('%Y-%m-%d %H:%M UTC')}">${timesince(r['started'])} ${_("ago")}</span></td>
+        <td>${_("the daily cleanup") if r['trigger'] == 'schedule' else r['trigger']}</td>
+        <td>${{'feeds': _("feed bots'"), 'members': _("members'"), 'picked': _("picked")}.get(r['kind'], r['kind'])}</td>
+        <td>${r['checked']}</td>
+        <td>${r['removed']}</td>
+        <td>${r['files']}</td>
+      </tr>
+      %if r['error']:
+        <tr><td colspan="6"><small class="error">${r['error']}</small></td></tr>
+      %elif not r['finished']:
+        <tr><td colspan="6"><small>${_("still running, or stopped before it finished")}</small></td></tr>
+      %endif
+    %endfor
+  </table>
+%else:
+  <p>${_("None yet.")}</p>
+%endif
+</div>

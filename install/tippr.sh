@@ -2171,6 +2171,9 @@ TIPPR_TIMERS=(
     # builds the complete sitemaps each day; does nothing unless /admin/site
     # asks for every post (r2.lib.sitemaps.complete)
     tippr-job-sitemaps.timer
+    # cleans up the posts nobody took an interest in; does nothing until a
+    # rule is turned on at /admin/cleanup (r2.lib.post_cleanup)
+    tippr-job-cleanup_posts.timer
     # this server's state for /admin/servers, every minute (on every server)
     tippr-job-server_status.timer
     # the smoke check every 5 minutes, alerting when it changes (on every

@@ -96,7 +96,8 @@ rebuilt.
   listings, popular and trending vaults, vault names, broken things,
   hardcache cleanup, trylater, the email queue, feeds (posting new items),
   gold expiry (which skips permanent gold), subscriber counts, vault
-  similarity (Explore), the X-Year Club trophies, sitemaps, server
+  similarity (Explore), the X-Year Club trophies, sitemaps, the post
+  cleanup (r2/lib/post_cleanup.py), server
   reports for /admin/servers, and sold ads (promos and their metrics).
   The jobs and queue consumers load the app with `python -m r2.commands`;
   `tippr-run` and `tippr-shell` do the same for scripts and a prompt.

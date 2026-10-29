@@ -58,6 +58,7 @@ def admin_menu(**kwargs):
         NavButton(menu.admin_vaults, "vaults", vault_path=False),
         NavButton(menu.api_apps, "apps", vault_path=False),
         NavButton(menu.feed_bots, "feeds", vault_path=False),
+        NavButton(menu.post_cleanup, "cleanup", vault_path=False),
         NavButton(menu.domain_bans, "domains", vault_path=False),
     ]
 
