@@ -83,13 +83,23 @@ def _listable(vault):
             not getattr(vault, "quarantine", False))
 
 
+def _newest_post_date():
+    from r2.models import Link
+    query = Link._query(Link.c._spam == False, Link.c._deleted == False,
+                        sort=desc("_date"), limit=1)
+    newest = list(query)
+    return newest[0]._date if newest else None
+
+
 def site_pages():
-    """(path, None) for the site's own public pages: the front page, the
-    vault directory, and the help pages and policies. (The front page
+    """(path, lastmod) for the site's own public pages: the front page,
+    the vault directory, and the help pages and policies. (The front page
     first: without it, the first page a search engine was told about was a
-    default vault's, and it showed /v/tippr for the site's own name.)"""
+    default vault's, and it showed /v/tippr for the site's own name. It
+    changes with each new post, so its lastmod is the newest post's: a
+    page that says it hasn't changed is fetched again less often.)"""
     from r2.lib.help_pages import HELP_PAGES, POLICY_PAGES
-    yield ("/", None)
+    yield ("/", _newest_post_date())
     yield ("/vaults/", None)
     yield ("/help/", None)
     for name in list(HELP_PAGES) + list(POLICY_PAGES):
@@ -107,7 +117,7 @@ def _vaults():
 
 
 def listable_vaults():
-    """(path, None) for the site's own pages (site_pages), then each
+    """The site's own pages (site_pages), then (path, None) for each
     listable vault, most subscribed first."""
     yield from site_pages()
     for vault in _vaults():

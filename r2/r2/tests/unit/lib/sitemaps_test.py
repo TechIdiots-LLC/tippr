@@ -78,10 +78,16 @@ class ListableVaultsTest(unittest.TestCase):
         nsfw = mock.Mock(type="public", _spam=False, over_18=True,
                          quarantine=False)
         nsfw.name = "nsfw"
+        newest = mock.sentinel.newest
         with mock.patch.object(live, "_vaults",
-                               return_value=iter([books, nsfw])):
-            paths = [path for path, _ in live.listable_vaults()]
+                               return_value=iter([books, nsfw])), \
+                mock.patch.object(live, "_newest_post_date",
+                                  return_value=newest):
+            entries = list(live.listable_vaults())
+        paths = [path for path, _ in entries]
         self.assertEqual(paths[:3], ["/", "/vaults/", "/help/"])
+        # the front page changes with each post: dated by the newest
+        self.assertEqual(entries[0], ("/", newest))
         for path in ("/help/faq/", "/help/formatting/",
                      "/help/privacypolicy/", "/help/useragreement/"):
             self.assertIn(path, paths)

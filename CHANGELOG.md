@@ -12,6 +12,8 @@
   runs them up to a posts-a-day cap. A search on the page finds the posts that qualify, to clean up the ones ticked.
   A cleaned-up post is deleted as its author would delete it, and its thumbnail and preview image go too unless another
   live post uses the same file.
+- **The sitemap dates the front page:** its lastmod is the newest post's, so search engines see it changes and fetch it
+  again, rather than an undated page they come back to less often.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
