@@ -6,6 +6,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Logging out from /v/all works:** logging out goes back to the page you were on if visitors can see it, and that
+  check failed on /v/all, /v/mod and the other special vaults with an error page. /v/all and /v/random are kept; the
+  others go to the front page.
 
 ## 0.28.0
 ### ✨ Features and improvements

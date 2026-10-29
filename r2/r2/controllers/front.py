@@ -108,6 +108,10 @@ def _public_page(dest):
             vault = Vault._by_name(match.group("vault"))
         except NotFound:
             return False
+        if isinstance(vault, FakeVault):
+            # /v/all and /v/random are for anyone; /v/mod, /v/friends and
+            # the rest need an account
+            return vault in (All, Random)
         # private and banned vaults, and quarantined ones, aren't open to
         # visitors
         if (vault.type not in ("public", "restricted", "archived",
