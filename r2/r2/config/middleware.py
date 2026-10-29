@@ -193,6 +193,23 @@ class DomainMiddleware:
         if domain == "localhost" or is_media_only_domain:
             return self.app(environ, start_response)
 
+        # The site's other address for the same pages: www. on a site that
+        # lives on its bare domain (no domain_prefix), or the bare domain
+        # on one that lives on www. (domain www.example.com). Moved
+        # permanently to the same page, or search engines split the site
+        # between the two addresses.
+        same_site = (domain == "www." + g.domain and not g.domain_prefix or
+                     g.domain == "www." + domain)
+        if (same_site and environ.get("FULLPATH") and
+                environ.get("REQUEST_METHOD") in ("GET", "HEAD")):
+            # (straight to the https address when there is one, not on
+            # through http's redirect to it)
+            origin = (g.https_endpoint.rstrip("/") if g.https_endpoint
+                      else "%s://%s" % (g.default_scheme, g.domain))
+            redir = origin + environ["FULLPATH"]
+            start_response("301 Moved Permanently", [("Location", redir)])
+            return [b""]
+
         # tell tippr_base to redirect to the appropriate vault for
         # a legacy CNAME
         if not is_subdomain(domain, g.domain):
@@ -205,20 +222,6 @@ class DomainMiddleware:
 
         # figure out what subdomain we're on, if any
         subdomains = domain[:-ignored_suffix_len - 1].split('.')
-
-        # www. on a site that lives on its bare domain (no domain_prefix):
-        # the same page, so moved permanently, or search engines split
-        # the site between the two addresses
-        if (subdomains == ["www"] and not g.domain_prefix and
-                environ.get("FULLPATH") and
-                environ.get("REQUEST_METHOD") in ("GET", "HEAD")):
-            # (straight to the https address when there is one, not on
-            # through http's redirect to it)
-            origin = (g.https_endpoint.rstrip("/") if g.https_endpoint
-                      else "%s://%s" % (g.default_scheme, g.domain))
-            redir = origin + environ["FULLPATH"]
-            start_response("301 Moved Permanently", [("Location", redir)])
-            return [b""]
 
         vault_redirect = None
         prefix_parts = []

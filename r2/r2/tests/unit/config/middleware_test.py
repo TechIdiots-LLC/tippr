@@ -154,10 +154,11 @@ class PathInfoSplitTest(unittest.TestCase):
 
 
 class DomainMiddlewareTest(unittest.TestCase):
-    def call(self, host, path="/v/pics/?sort=new", method="GET", prefix=""):
-        g = mock.Mock(domain="tippr.net", domain_prefix=prefix,
-                      default_scheme="http", https_endpoint="https://tippr.net",
-                      media_domain="tippr.net",
+    def call(self, host, path="/v/pics/?sort=new", method="GET", prefix="",
+             domain="tippr.net"):
+        g = mock.Mock(domain=domain, domain_prefix=prefix,
+                      default_scheme="http", https_endpoint="https://" + domain,
+                      media_domain=domain,
                       reserved_subdomains=["www", "ssl", "oauth"],
                       ignored_subdomains=[], extension_subdomains={})
         app = mock.Mock(return_value=[b"page"])
@@ -184,4 +185,14 @@ class DomainMiddlewareTest(unittest.TestCase):
 
     def test_a_form_sent_to_www_isnt_lost(self):
         body, start, app = self.call("www.tippr.net", method="POST")
+        self.assertEqual(body, [b"page"])
+
+    def test_a_site_on_www_takes_the_bare_domain_to_the_same_page(self):
+        body, start, app = self.call("example.com", domain="www.example.com")
+        start.assert_called_once_with(
+            "301 Moved Permanently",
+            [("Location", "https://www.example.com/v/pics/?sort=new")])
+        app.assert_not_called()
+        # and serves its own address
+        body, start, app = self.call("www.example.com", domain="www.example.com")
         self.assertEqual(body, [b"page"])

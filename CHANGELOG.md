@@ -22,7 +22,9 @@
   others go to the front page.
 - **www. moves to the bare domain:** on a site that lives on its bare domain, www.<domain> served every page as well,
   so search engines split the site between the two addresses (tippr.net's help pages were listed under www). Pages on
-  www now answer 301 Moved Permanently to the same address on the bare domain, over https when the site has it.
+  www now answer 301 Moved Permanently to the same address on the bare domain, over https when the site has it. A
+  site that lives on www (domain www.example.com) does the same the other way: example.com/v/pics/ goes to
+  https://www.example.com/v/pics/, where it went to the front page over http.
 
 ## 0.28.0
 ### ✨ Features and improvements
