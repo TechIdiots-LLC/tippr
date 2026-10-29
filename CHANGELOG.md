@@ -18,6 +18,9 @@
 - **Logging out from /v/all works:** logging out goes back to the page you were on if visitors can see it, and that
   check failed on /v/all, /v/mod and the other special vaults with an error page. /v/all and /v/random are kept; the
   others go to the front page.
+- **www. moves to the bare domain:** on a site that lives on its bare domain, www.<domain> served every page as well,
+  so search engines split the site between the two addresses (tippr.net's help pages were listed under www). Pages on
+  www now answer 301 Moved Permanently to the same address on the bare domain, over https when the site has it.
 
 ## 0.28.0
 ### ✨ Features and improvements

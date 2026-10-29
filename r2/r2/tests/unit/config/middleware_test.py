@@ -17,10 +17,16 @@
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import webob
 
-from r2.config.middleware import ErrorDocuments, StaticFiles, path_info_split
+from r2.config.middleware import (
+    DomainMiddleware,
+    ErrorDocuments,
+    StaticFiles,
+    path_info_split,
+)
 
 
 def app_answering(responses):
@@ -145,3 +151,37 @@ class PathInfoSplitTest(unittest.TestCase):
         self.assertEqual(path_info_split("/a/"), ("a", "/"))
         self.assertEqual(path_info_split("/"), (None, ""))
         self.assertEqual(path_info_split(""), (None, ""))
+
+
+class DomainMiddlewareTest(unittest.TestCase):
+    def call(self, host, path="/v/pics/?sort=new", method="GET", prefix=""):
+        g = mock.Mock(domain="tippr.net", domain_prefix=prefix,
+                      default_scheme="http", https_endpoint="https://tippr.net",
+                      media_domain="tippr.net",
+                      reserved_subdomains=["www", "ssl", "oauth"],
+                      ignored_subdomains=[], extension_subdomains={})
+        app = mock.Mock(return_value=[b"page"])
+        start = mock.Mock()
+        environ = {"HTTP_HOST": host, "FULLPATH": path,
+                   "REQUEST_METHOD": method}
+        body = DomainMiddleware(app, {"pylons.app_globals": g})(environ, start)
+        return body, start, app
+
+    def test_www_moves_to_the_bare_domain(self):
+        body, start, app = self.call("www.tippr.net")
+        start.assert_called_once_with(
+            "301 Moved Permanently",
+            [("Location", "https://tippr.net/v/pics/?sort=new")])
+        app.assert_not_called()
+
+    def test_the_bare_domain_is_served(self):
+        body, start, app = self.call("tippr.net")
+        self.assertEqual(body, [b"page"])
+
+    def test_www_stays_where_the_site_lives_on_it(self):
+        body, start, app = self.call("www.tippr.net", prefix="www")
+        self.assertEqual(body, [b"page"])
+
+    def test_a_form_sent_to_www_isnt_lost(self):
+        body, start, app = self.call("www.tippr.net", method="POST")
+        self.assertEqual(body, [b"page"])

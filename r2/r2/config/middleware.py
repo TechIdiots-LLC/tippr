@@ -206,6 +206,20 @@ class DomainMiddleware:
         # figure out what subdomain we're on, if any
         subdomains = domain[:-ignored_suffix_len - 1].split('.')
 
+        # www. on a site that lives on its bare domain (no domain_prefix):
+        # the same page, so moved permanently, or search engines split
+        # the site between the two addresses
+        if (subdomains == ["www"] and not g.domain_prefix and
+                environ.get("FULLPATH") and
+                environ.get("REQUEST_METHOD") in ("GET", "HEAD")):
+            # (straight to the https address when there is one, not on
+            # through http's redirect to it)
+            origin = (g.https_endpoint.rstrip("/") if g.https_endpoint
+                      else "%s://%s" % (g.default_scheme, g.domain))
+            redir = origin + environ["FULLPATH"]
+            start_response("301 Moved Permanently", [("Location", redir)])
+            return [b""]
+
         vault_redirect = None
         prefix_parts = []
         for subdomain in subdomains[:]:
