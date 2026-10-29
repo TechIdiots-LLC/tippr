@@ -7,6 +7,11 @@
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 
+## 0.28.0
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
+
 ## 0.27.0
 ### ✨ Features and improvements
 - **Comes back by itself after a reboot:** the web app, queue consumers and scheduled jobs wait for PostgreSQL,
