@@ -76,6 +76,13 @@ class TestFeedView(TipprTestCase):
         # anything else is newest first
         self.assertEqual(self.ids(sort="nonsense", status="bogus"), [4, 3, 2, 1])
 
+    def test_most_reported_first(self):
+        reported = [dict(f, reports=n) for f, n in zip(FEEDS, (0, 3, 7, 0))]
+        shown = FeedView(reported, sort="reports").feeds
+        self.assertEqual([f["id"] for f in shown][:2], [3, 2])
+        # (rows without counts count as none)
+        self.assertEqual(self.ids(sort="reports", order="asc")[0], 1)
+
     def test_links_keep_the_view(self):
         page = FeedView(FEEDS, vault="sports", sort="posts")
         self.assertEqual(page.link(), "/admin/feeds?vault=sports&sort=posts")

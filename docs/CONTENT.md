@@ -61,6 +61,14 @@ by vault, bot or status (active, paused, with errors, never checked), sort
 by any column, and edit one in place. Changing a feed's vault sends its new
 items there; posts it already made stay where they are.
 
+The reports column counts the reports made on each feed's posts, by reason
+(the rule reported, or "other" for a reporter's own words), so a feed that
+keeps getting reported for the same thing stands out; sort by it to see the
+most reported first. Counts include reports a moderator later dismissed. To
+count reports made before the column existed:
+`tippr-run -c 'from r2.lib import feeds; print(feeds.recount_reports())'`
+(which counts every reason as written, "other" ones too).
+
 Each run posts its new items one vault at a time in turn (and within a
 vault, one feed at a time), so a run doesn't post a block of one vault's
 items. The front page and multis mix vaults anyway; /v/all ranks every post together, so its hot list also

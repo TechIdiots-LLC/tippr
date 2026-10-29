@@ -2075,10 +2075,12 @@ class ApiController(TipprController):
 
         vault = getattr(thing, 'vault_slow', None)
 
+        category = None
         if reason == "site_reason_selected":
             reason = site_reason
         elif reason == "other":
             reason = other_reason
+            category = "other"
 
         # if it is a message that is being reported, ban it.
         # every user is admin over their own personal inbox
@@ -2109,7 +2111,7 @@ class ApiController(TipprController):
         if not (c.user._spam or
                 c.user.ignorereports or
                 (vault and vault.is_banned(c.user))):
-            Report.new(c.user, thing, reason)
+            Report.new(c.user, thing, reason, category=category)
             admintools.report(thing)
 
         g.events.report_event(

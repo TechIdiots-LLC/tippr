@@ -3,6 +3,9 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **/admin/feeds counts the reports on each feed's posts:** a new reports column shows how many reports a feed's posts
+  have had, by reason (the rule reported, or "other"), and sorts the most reported first. Reports from before it can
+  be counted once with `feeds.recount_reports()` ([CONTENT.md](docs/CONTENT.md#feeds)).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

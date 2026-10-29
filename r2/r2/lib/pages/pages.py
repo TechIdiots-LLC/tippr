@@ -4166,11 +4166,15 @@ class AdminFeeds(Templated, FeedView):
         self.accounts = (Account._byID(account_ids, data=True,
                                        return_dict=True, ignore_missing=True)
                          if account_ids else {})
+        reports = feeds.report_counts()
         for f in everything:
             v = self.vaults.get(f["vault_id"])
             a = self.accounts.get(f["account_id"])
             f["vault_name"] = v.name if v else ""
             f["bot_name"] = a.name if a else ""
+            # reports on its posts: [(reason, count), ...]
+            f["report_reasons"] = reports.get(f["id"], [])
+            f["reports"] = sum(n for _, n in f["report_reasons"])
         FeedView.__init__(self, everything, q, vault, bot, status, sort,
                           order)
         self.min_interval = feeds.MIN_INTERVAL_MINUTES

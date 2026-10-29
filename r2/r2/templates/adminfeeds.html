@@ -131,7 +131,7 @@
   <table class="lined-table admin-feeds-table">
     <tr>
       ${sort_heading('title', _("feed"))}${sort_heading('vault', _("vault"))}${sort_heading('bot', _("posted by"))}
-      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}${sort_heading('added', _("added"))}<th></th>
+      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}${sort_heading('reports', _("reports"))}${sort_heading('added', _("added"))}<th></th>
     </tr>
     %for f in thing.feeds:
       <%
@@ -185,6 +185,22 @@
           %endif
         </td>
         <td>${f['posted']}</td>
+        ## reports on its posts, by reason (the most reported first)
+        <td class="admin-feed-reports">
+          %if f['reports']:
+            <strong>${f['reports']}</strong>
+            <ul>
+              %for reason, n in f['report_reasons'][:5]:
+                <li><small>${_(reason) if reason in ("other", "no reason given") else reason}: ${n}</small></li>
+              %endfor
+              %if len(f['report_reasons']) > 5:
+                <li><small>${_("%(n)d more reasons") % dict(n=len(f['report_reasons']) - 5)}</small></li>
+              %endif
+            </ul>
+          %else:
+            0
+          %endif
+        </td>
         <td>
           %if f['created']:
             <span title="${f['created'].strftime('%Y-%m-%d %H:%M UTC')}">${timesince(f['created'])} ${_("ago")}</span>
@@ -208,7 +224,7 @@
       ## its settings, under it the width of the table: the address, the
       ## vault it posts to, the bot, how often, the labels
       <tr class="admin-feed-edit-row" id="admin-feed-edit-${f['id']}" hidden>
-        <td colspan="8">
+        <td colspan="9">
           ${feed_form('edit', f, vault_name, bot_name)}
           <p><small>${_("Changing the vault moves where new items go; posts already made stay where they are.")}</small></p>
         </td>

@@ -33,6 +33,7 @@ import requests
 import sqlalchemy as sa
 from lxml import etree
 from pylons import app_globals as g
+from sqlalchemy.dialects import postgresql
 
 from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
 
@@ -81,8 +82,21 @@ feed_items = sa.Table(
     sa.Column("seen", sa.DateTime(timezone=True), nullable=False),
 )
 
+# reports on the posts a feed made, by reason: which feeds get reported,
+# and what for (/admin/feeds). Counted as they're made (Report.new), so
+# they include reports a moderator later dismissed.
+feed_reports = sa.Table(
+    "feed_reports", METADATA,
+    sa.Column("feed_id", sa.Integer, primary_key=True),
+    sa.Column("reason", sa.String, primary_key=True),
+    sa.Column("count", sa.Integer, nullable=False, default=0),
+    sa.Column("last", sa.DateTime(timezone=True), nullable=False),
+)
+
 create_table(feeds)
-create_table(feed_items, [index_str(feed_items, "url", "url")])
+create_table(feed_items, [index_str(feed_items, "url", "url"),
+                          index_str(feed_items, "link_id", "link_id")])
+create_table(feed_reports)
 
 
 def _add_new_columns():
@@ -99,6 +113,10 @@ def _add_new_columns():
             if "ai_content" not in have:
                 conn.execute(sa.text("ALTER TABLE feeds ADD COLUMN ai_content "
                                      "varchar"))
+            # (which feed a reported post came from: count_report)
+            conn.execute(sa.text("CREATE INDEX IF NOT EXISTS "
+                                 "idx_link_id_feed_items ON feed_items "
+                                 "(link_id)"))
     except sa.exc.SQLAlchemyError as e:
         g.log.warning("feeds: couldn't add the new columns: %s", e)
 
@@ -250,6 +268,8 @@ def update(feed_id, **values):
 def remove(feed_id):
     with ENGINE.begin() as conn:
         conn.execute(feed_items.delete().where(feed_items.c.feed_id == feed_id))
+        conn.execute(feed_reports.delete().where(
+            feed_reports.c.feed_id == feed_id))
         conn.execute(feeds.delete().where(feeds.c.id == feed_id))
 
 
@@ -442,3 +462,77 @@ def bot_account(name):
         account.feed_bot = True
         account._commit()
     return account
+
+
+###############################################################################
+# Reports on feeds' posts
+###############################################################################
+
+REPORT_REASON_LENGTH = 100
+
+
+def _reason(reason):
+    return (reason or "").strip()[:REPORT_REASON_LENGTH] or "no reason given"
+
+
+def count_report(link, reason):
+    """One more report on link, if a feed posted it, under its reason (the
+    rule reported, or "other" for the reporter's own words)."""
+    with ENGINE.begin() as conn:
+        feed_id = conn.execute(
+            sa.select(feed_items.c.feed_id)
+            .where(feed_items.c.link_id == link._id).limit(1)).scalar()
+        if feed_id is None:
+            return
+        stmt = postgresql.insert(feed_reports).values(
+            feed_id=feed_id, reason=_reason(reason), count=1, last=_now())
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["feed_id", "reason"],
+            set_={"count": feed_reports.c.count + 1,
+                  "last": stmt.excluded.last})
+        conn.execute(stmt)
+
+
+def report_counts():
+    """{feed id: [(reason, count), ...]}, the most reported reason first."""
+    counts = {}
+    with ENGINE.connect() as conn:
+        rows = conn.execute(sa.select(feed_reports.c.feed_id,
+                                      feed_reports.c.reason,
+                                      feed_reports.c.count))
+        for feed_id, reason, count in rows:
+            counts.setdefault(feed_id, []).append((reason, count))
+    for reasons in counts.values():
+        reasons.sort(key=lambda rc: (-rc[1], rc[0]))
+    return counts
+
+
+def recount_reports(batch=500):
+    """Count the reports on feeds' posts again from the reports themselves
+    (for the reports made before feeds counted them):
+      tippr-run -c 'from r2.lib import feeds; print(feeds.recount_reports())'
+    Reasons given in a reporter's own words are each their own reason here
+    (only new reports know they were "other")."""
+    from r2.models import Account, Link
+    from r2.models.report import Report
+    rel = Report.rel(Account, Link)
+    with ENGINE.connect() as conn:
+        feed_of = dict(conn.execute(
+            sa.select(feed_items.c.link_id, feed_items.c.feed_id)
+            .where(feed_items.c.link_id.isnot(None))).all())
+    totals = {}
+    link_ids = list(feed_of)
+    for start in range(0, len(link_ids), batch):
+        ids = link_ids[start:start + batch]
+        for report in rel._query(rel.c._thing2_id == ids, data=True):
+            key = (feed_of[report._thing2_id],
+                   _reason(getattr(report, "reason", None)))
+            count, last = totals.get(key, (0, report._date))
+            totals[key] = (count + 1, max(last, report._date))
+    with ENGINE.begin() as conn:
+        conn.execute(feed_reports.delete())
+        if totals:
+            conn.execute(feed_reports.insert(), [
+                dict(feed_id=feed_id, reason=reason, count=count, last=last)
+                for (feed_id, reason), (count, last) in totals.items()])
+    return sum(count for count, _ in totals.values())

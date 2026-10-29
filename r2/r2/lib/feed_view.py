@@ -32,6 +32,7 @@ SORTS = {
     "checked": lambda f: (f["last_checked"].timestamp()
                           if f["last_checked"] else 0),
     "posts": lambda f: f["posted"],
+    "reports": lambda f: f.get("reports", 0),
 }
 
 # with no sort given: the newest feeds first (the order added, backwards)
@@ -40,8 +41,9 @@ DEFAULT_SORT = "added"
 
 def default_order(sort):
     """The way a sort goes until it's turned round: newest first for the
-    order added, A to Z (or smallest first) for the rest."""
-    return "desc" if sort == "added" else "asc"
+    order added, the most reported first for reports, A to Z (or smallest
+    first) for the rest."""
+    return "desc" if sort in ("added", "reports") else "asc"
 
 
 # what the search looks in

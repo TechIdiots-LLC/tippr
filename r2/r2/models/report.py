@@ -53,7 +53,10 @@ class Report(MultiRelation('report', *REPORT_RELS)):
     _field = 'reported'
 
     @classmethod
-    def new(cls, user, thing, reason=None):
+    def new(cls, user, thing, reason=None, category=None):
+        """category: what the report counts as where reports are counted
+        (r2.lib.feeds.count_report), when not its reason: "other" for a
+        reason in the reporter's own words."""
         from r2.lib.db import queries
 
         # check if this report exists already!
@@ -86,6 +89,15 @@ class Report(MultiRelation('report', *REPORT_RELS)):
         if hasattr(thing, 'author_id'):
             author = Account._byID(thing.author_id, data=True)
             author._incr('reported')
+
+        if isinstance(thing, Link):
+            # counted for its feed, if a feed posted it (/admin/feeds)
+            from r2.lib import feeds
+            try:
+                feeds.count_report(thing, category or reason)
+            except Exception:
+                g.log.exception("feeds: couldn't count a report on %s",
+                                thing._fullname)
 
         if not getattr(thing, "ignore_reports", False):
             # update the reports queue if it exists

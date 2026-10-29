@@ -53,3 +53,11 @@ class TestInterleave(TipprTestCase):
     def test_empty(self):
         self.assertEqual(feeds._interleave([]), [])
         self.assertEqual(feeds._interleave([("v", {"id": 1}, [])]), [])
+
+
+class TestReportReasons(TipprTestCase):
+    def test_reasons_are_trimmed_and_named(self):
+        self.assertEqual(feeds._reason("  spam "), "spam")
+        self.assertEqual(feeds._reason(None), "no reason given")
+        self.assertEqual(feeds._reason(""), "no reason given")
+        self.assertEqual(len(feeds._reason("x" * 500)), feeds.REPORT_REASON_LENGTH)
