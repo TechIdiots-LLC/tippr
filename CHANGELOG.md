@@ -6,6 +6,8 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **A site on www. sends its bare domain to the same page:** with the domain set to www.example.com,
+  example.com/v/pics/ now goes to https://www.example.com/v/pics/ (301), where it went to the front page over http.
 
 ## 0.29.0
 ### ✨ Features and improvements
@@ -27,9 +29,7 @@
   others go to the front page.
 - **www. moves to the bare domain:** on a site that lives on its bare domain, www.<domain> served every page as well,
   so search engines split the site between the two addresses (tippr.net's help pages were listed under www). Pages on
-  www now answer 301 Moved Permanently to the same address on the bare domain, over https when the site has it. A
-  site that lives on www (domain www.example.com) does the same the other way: example.com/v/pics/ goes to
-  https://www.example.com/v/pics/, where it went to the front page over http.
+  www now answer 301 Moved Permanently to the same address on the bare domain, over https when the site has it.
 
 ## 0.28.0
 ### ✨ Features and improvements
