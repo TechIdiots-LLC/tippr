@@ -47,8 +47,8 @@
 //   - gold: visual_gold filters the test vault out of /all (/me/f/all) and
 //     back, and can use the account switcher, which bob, without gold,
 //     sees greyed out; it adds visual_admin to its switcher (that account's
-//     code on the sign-in code page) and switches back; a domain listing
-//     shows alice's post
+//     code on the sign-in code page) and switches back; bob posts a link,
+//     listed under its domain
 //
 // On each page: no JavaScript errors, no failed requests to the site, no
 // sideways scrolling at phone width, and no text that can't be read on its
@@ -870,11 +870,21 @@ try {
               "switching back should make visual_gold the account in use");
   await gold.context.close();
 
-  // a domain listing: alice's post, a text post, under self.<vault>
-  // (domain listings once redirected to a broken address)
-  await settles("domain listing", "alice's post should be listed under its domain",
-    () => bob.page.goto(`${BASE}/domain/self.${VAULT}/?t=${Date.now()}`, READY),
-    async () => (await thing(bob.page, post).count()) > 0, 90);
+  // a domain listing: bob posts a link, which is listed under its domain
+  // (domain listings once redirected to a broken address). Text posts have
+  // no domain listing: their "self.<vault>" goes to the vault.
+  await bob.page.goto(`${BASE}/v/${VAULT}/submit`, READY);
+  await bob.page.fill("#newlink input[name=url]", `https://example.com/tippr-visual-test/${Date.now()}`);
+  await bob.page.fill("#newlink textarea[name=title]", `A link from the browser test ${new Date().toISOString().slice(0, 16)}`);
+  await bob.page.check("#newlink input[name=ai_content][value=human]");
+  await Promise.all([
+    bob.page.waitForURL(/\/comments\//, { timeout: 60000 }),
+    bob.page.click("#newlink button[name=submit]"),
+  ]);
+  const linkPost = await bob.page.locator(".thing.link").first().getAttribute("data-fullname");
+  await settles("domain listing", "bob's link should be listed under example.com",
+    () => bob.page.goto(`${BASE}/domain/example.com/?t=${Date.now()}`, READY),
+    async () => (await thing(bob.page, linkPost).count()) > 0, 90);
   await shoot(bob, "domain-listing");
   await bob.page.goto(postUrl, READY);  // (the thread, next)
 
