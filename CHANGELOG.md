@@ -3,6 +3,7 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Content options come first on /prefs/:** the over-18 setting, which the NSFW media options depend on, now sits at the top in its own box.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

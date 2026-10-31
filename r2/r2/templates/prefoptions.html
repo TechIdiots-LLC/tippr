@@ -147,6 +147,35 @@ action = add_vault(action, vault_path=False)
   </tr>
 
   %if c.user_is_loggedin:
+  ## first: whether you're over 18 decides what else you can see (the NSFW
+  ## media options below need it)
+  <tr>
+    <th>${_("content options")}</th>
+    <td class="prefright">
+      <div class="pref-over-18">
+        ${checkbox(_("I am over eighteen years old and willing to view adult content"), "over_18")}
+        &#32;<span class="details">(${_("required to view some vaults, and for the NSFW options under media")})</span>
+      </div>
+      ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
+      <br/>
+      <div class="ai-content-pref">
+        ${_("posts labelled as made with AI:")}
+        <br/>
+        %for value in ai_content.PREFS:
+          <input id="ai_content_${value}" class="nomargin" type="radio"
+                 name="ai_content" value="${value}"
+                 ${"checked='checked'" if (c.user.pref_ai_content or ai_content.PREF_SHOW) == value else ''}/>
+          <label for="ai_content_${value}">${_(ai_content.PREF_NAMES[value])}</label>
+          <br/>
+        %endfor
+        <span class="details">(${_("posts in vaults that are for AI content are always shown there")})</span>
+      </div>
+      ${checkbox(_("enable private RSS feeds"), "private_feeds")}
+      &#32;<span class="details">
+        ${_("(available from the 'RSS feed' tab in prefs)")}</span>
+    </td>
+  </tr>
+
     %if not c.user.has_subscribed and (c.user.pref_use_global_defaults or c.user.pref_hide_locationbar):
     <tr>
       <th>${_("location options")}</th>
@@ -468,30 +497,6 @@ action = add_vault(action, vault_path=False)
       %endif
     </td>
   </tr>
-  <tr>
-    <th>${_("content options")}</th>
-    <td class="prefright">
-      ${checkbox(_("I am over eighteen years old and willing to view adult content"), "over_18")}
-      &#32;<span class="details">(${_("required to view some vaults")})</span>
-      <br/>
-        ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
-      <br/>
-      <div class="ai-content-pref">
-        ${_("posts labelled as made with AI:")}
-        <br/>
-        %for value in ai_content.PREFS:
-          <input id="ai_content_${value}" class="nomargin" type="radio"
-                 name="ai_content" value="${value}"
-                 ${"checked='checked'" if (c.user.pref_ai_content or ai_content.PREF_SHOW) == value else ''}/>
-          <label for="ai_content_${value}">${_(ai_content.PREF_NAMES[value])}</label>
-          <br/>
-        %endfor
-        <span class="details">(${_("posts in vaults that are for AI content are always shown there")})</span>
-      </div>
-        ${checkbox(_("enable private RSS feeds"), "private_feeds")} 
-       &#32;<span class="details">
-        ${_("(available from the 'RSS feed' tab in prefs)")}</span>
-    </td>
   <tr>
     <th>${_("privacy options")}</th>
     <td class="prefright">
