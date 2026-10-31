@@ -103,6 +103,15 @@ class WSGIController:
             # routes dict themselves.
             result = action(**_route_args(action, routes_dict))
 
+            # What the action returned is the response body before __after__
+            # runs, as in Pylons: post() works on it (the admin bar's
+            # timings, the .js wrapper)
+            if result is not None:
+                if isinstance(result, bytes):
+                    pylons.response.body = result
+                elif isinstance(result, str):
+                    pylons.response.text = result
+
             # Call __after__ hook
             self.__after__()
 
@@ -144,13 +153,6 @@ class WSGIController:
                 elif hasattr(response, 'content'):
                     r.body = getattr(response, 'content')
                 response = r
-
-            # If action returned something, use it as body
-            if result is not None:
-                if isinstance(result, bytes):
-                    response.body = result
-                elif isinstance(result, str):
-                    response.text = result
 
             # Return the WSGI response
             return response(environ, start_response)
