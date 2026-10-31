@@ -6,6 +6,11 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+
+## 0.30.2
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
 - **No ads on admin pages:** pages under /admin, and any page built as an admin page, never show ads. That includes AdSense's auto ads, which placed themselves anywhere on a page, and in-feed ads in listings like the reports.
 
 ## 0.30.1
