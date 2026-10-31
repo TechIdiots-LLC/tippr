@@ -6,6 +6,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **The admin bar's timings show again:** the server and browser timelines under "timings" stayed empty, because the timings were added to the page before the page was in the response. The same order kept the `.js` wrapper from applying.
 
 ## 0.30.0
 ### ✨ Features and improvements
@@ -21,7 +22,6 @@
 - **A site on www. sends its bare domain to the same page:** with the domain set to www.example.com,
   example.com/v/pics/ now goes to https://www.example.com/v/pics/ (301), where it went to the front page over http.
 - **Feeds are checked on time:** a check is stamped as it ends, a few seconds into its run, so at the next run a feed was just short of its interval and waited another. A 15-minute feed was checked every 30 minutes, and an hourly one every 75.
-- **The admin bar's timings show again:** the server and browser timelines under "timings" stayed empty, because the timings were added to the page before the page was in the response. The same order kept the `.js` wrapper from applying.
 
 ## 0.29.0
 ### ✨ Features and improvements
