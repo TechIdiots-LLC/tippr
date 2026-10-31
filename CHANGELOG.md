@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.30.0
+### ✨ Features and improvements
 - **Content options come first on /prefs/:** the over-18 setting, which the NSFW media options depend on, now sits at the top in its own box.
 - **Hide the feed bots' posts:** a content option on /prefs/ leaves the posts made by the site's feed bots (/admin/feeds) out of listings and search. It's off by default.
 - **Domain and vault filters are a gold option:** they move from filters to gold options on /prefs/, beside the account switcher, and apply for gold members and admins. Lists saved without gold are kept but not applied. Keyword and user filters stay free, and the user filter's help now links to /prefs/blocked/.
@@ -12,7 +18,6 @@
 - **Feeds spread out:** each feed is checked once its interval has passed, plus 0 to 15 minutes picked after each check, and tippr-job-feeds runs every 5 minutes instead of 15. Feeds with the same interval, or added together, no longer all go on the same run.
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 - **A site on www. sends its bare domain to the same page:** with the domain set to www.example.com,
   example.com/v/pics/ now goes to https://www.example.com/v/pics/ (301), where it went to the front page over http.
 - **Feeds are checked on time:** a check is stamped as it ends, a few seconds into its run, so at the next run a feed was just short of its interval and waited another. A 15-minute feed was checked every 30 minutes, and an hourly one every 75.
