@@ -34,6 +34,7 @@ back in).
 import re
 
 from pylons import app_globals as g
+from pylons import request
 from pylons import tmpl_context as c
 
 from r2.lib import site_settings
@@ -125,6 +126,8 @@ def ads_allowed_here(nsfw_content=False):
     """Whether this page may show ads at all (any kind)."""
     if g.disable_ads:
         return False
+    if c.admin_page or (request.path or "").startswith("/admin"):
+        return False  # admin pages (AdminPage, /admin/...)
     if c.user_is_loggedin and c.user.gold and c.user.pref_hide_ads:
         return False
     site = c.site

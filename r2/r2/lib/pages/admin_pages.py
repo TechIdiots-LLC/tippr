@@ -93,6 +93,8 @@ class AdminPage(Tippr):
     extra_page_classes = ['admin-page']
 
     def __init__(self, nav_menus = None, *a, **kw):
+        # no ads on admin pages, AdSense's own included (ad_settings)
+        c.admin_page = True
         Tippr.__init__(self, nav_menus = nav_menus, *a, **kw)
 
 class AdminProfileMenu(NavMenu):
