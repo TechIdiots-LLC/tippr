@@ -480,6 +480,12 @@ class OpenSearchLinkQuery(OpenSearchQuery):
         hidden = ai_content.hidden_labels(c.user if c.user_is_loggedin else None)
         if hidden:
             must_not.append({"terms": {"ai_content": list(hidden)}})
+        # and the feed bots' posts, for those who left them out
+        if c.user_is_loggedin and getattr(c.user, "pref_hide_feed_bots", False):
+            from r2.lib import feeds
+            bots = feeds.bot_names()
+            if bots:
+                must_not.append({"terms": {"author": [b.lower() for b in bots]}})
 
         query = {"bool": {"must": must or [{"match_all": {}}],
                           "filter": filter_, "must_not": must_not}}

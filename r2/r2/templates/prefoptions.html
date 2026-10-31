@@ -170,6 +170,9 @@ action = add_vault(action, vault_path=False)
         %endfor
         <span class="details">(${_("posts in vaults that are for AI content are always shown there")})</span>
       </div>
+      ${checkbox(_("hide posts by the site's feed bots"), "hide_feed_bots")}
+      &#32;<span class="details">${_("(the accounts that post news and other feeds automatically; on a quiet site, they may post most of what there is to see)")}</span>
+      <br/>
       ${checkbox(_("enable private RSS feeds"), "private_feeds")}
       &#32;<span class="details">
         ${_("(available from the 'RSS feed' tab in prefs)")}</span>

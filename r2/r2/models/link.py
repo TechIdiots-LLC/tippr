@@ -395,6 +395,11 @@ class Link(Thing, Printable):
                     ai_content.is_hidden(user, self)):
                 return False
 
+            # the user's choice to leave out the feed bots' posts
+            from r2.lib import feeds
+            if feeds.hides(user, self):
+                return False
+
             # the user's filters (keywords, domains, vaults, users)
             if (self.author_id != user._id and
                     listing_filters.hides(user, self, wrapped)):

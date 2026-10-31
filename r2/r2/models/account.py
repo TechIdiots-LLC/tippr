@@ -109,6 +109,9 @@ class Account(Thing):
                      pref_nsfw_in_listings = False,
                      # which AI-labelled posts to show (r2.lib.ai_content.PREFS)
                      pref_ai_content = 'show',
+                     # posts by the feed bots (/admin/feeds) left out of
+                     # listings and search (r2.lib.feeds.hides)
+                     pref_hide_feed_bots = False,
                      pref_show_stylesheets = True,
                      pref_enable_default_themes=False,
                      pref_default_theme_vault=None,

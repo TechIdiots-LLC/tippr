@@ -5,6 +5,9 @@
 # License Version 1.0, as described in the LICENSE file in this repository.
 ###############################################################################
 
+from types import SimpleNamespace
+from unittest.mock import patch
+
 from r2.lib import feeds
 from r2.tests import TipprTestCase
 
@@ -61,3 +64,21 @@ class TestReportReasons(TipprTestCase):
         self.assertEqual(feeds._reason(None), "no reason given")
         self.assertEqual(feeds._reason(""), "no reason given")
         self.assertEqual(len(feeds._reason("x" * 500)), feeds.REPORT_REASON_LENGTH)
+
+
+class TestHideFeedBots(TipprTestCase):
+    def hides(self, pref, author_id):
+        user = SimpleNamespace(pref_hide_feed_bots=pref)
+        fake_c = SimpleNamespace()
+        with patch.object(feeds, "c", fake_c), \
+                patch.object(feeds, "_bot_ids", return_value=[7]) as bots:
+            first = feeds.hides(user, SimpleNamespace(author_id=author_id))
+            # (looked up once a request)
+            feeds.hides(user, SimpleNamespace(author_id=author_id))
+        return first, bots.call_count
+
+    def test_only_the_bots_and_only_when_chosen(self):
+        self.assertEqual(self.hides(True, 7), (True, 1))
+        self.assertEqual(self.hides(True, 8)[0], False)
+        self.assertEqual(self.hides(False, 7), (False, 0))
+        self.assertFalse(feeds.hides(None, SimpleNamespace(author_id=7)))

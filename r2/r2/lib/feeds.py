@@ -33,9 +33,11 @@ import requests
 import sqlalchemy as sa
 from lxml import etree
 from pylons import app_globals as g
+from pylons import tmpl_context as c
 from sqlalchemy.dialects import postgresql
 
 from r2.lib.db.tdb_sql import create_table, index_str, make_metadata
+from r2.lib.memoize import memoize
 
 FIRST_FETCH_POSTS = 3
 MAX_POSTS_PER_FETCH = 5
@@ -237,6 +239,38 @@ def all_feeds():
             if row[col]:
                 row[col] = row[col].astimezone(timezone.utc)
     return rows
+
+
+@memoize("feeds.bot_ids", time=300)
+def _bot_ids():
+    with ENGINE.connect() as conn:
+        return sorted(r[0] for r in conn.execute(
+            sa.select(feeds.c.account_id).distinct()))
+
+
+@memoize("feeds.bot_names", time=300)
+def bot_names():
+    """The names of the accounts that post feeds (for search, which
+    indexes authors by name)."""
+    from r2.models import Account
+    ids = _bot_ids()
+    if not ids:
+        return []
+    return sorted(a.name for a in
+                  Account._byID(ids, data=True, return_dict=False))
+
+
+def hides(user, link):
+    """Whether the user's preference (pref_hide_feed_bots) hides this post:
+    one a feed bot posted. The bots are looked up once a request, and kept
+    a few minutes, so a new feed's bot can take that long to be hidden."""
+    if not user or not getattr(user, "pref_hide_feed_bots", False):
+        return False
+    # (c gives "" for attributes that were never set)
+    ids = getattr(c, "_feed_bot_ids", None)
+    if not isinstance(ids, frozenset):
+        ids = c._feed_bot_ids = frozenset(_bot_ids())
+    return link.author_id in ids
 
 
 def get_feed(feed_id):

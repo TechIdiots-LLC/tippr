@@ -95,6 +95,7 @@ PREFS_VALIDATORS = dict(
     pref_nsfw_in_listings=VBoolean('nsfw_in_listings'),
     pref_ai_content=VOneOf('ai_content', ai_content.PREFS,
                            default=ai_content.PREF_SHOW),
+    pref_hide_feed_bots=VBoolean("hide_feed_bots"),
     pref_show_promote=VBoolean('show_promote'),
     pref_mark_messages_read=VBoolean("mark_messages_read"),
     pref_threaded_messages=VBoolean("threaded_messages"),
