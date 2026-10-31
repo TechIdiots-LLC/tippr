@@ -31,18 +31,19 @@
 </%def>
 
 ## delete, choosing which of its posts go too (post_cleanup.remove_feed)
-<%def name="delete_action(feed_id)">
-  <form action="/api/admin_feed" method="post" class="pretty-form admin-feed-action admin-feed-delete"
+## delete: what happens to its posts is chosen in the row under it
+## (post_cleanup.remove_feed)
+<%def name="delete_form(feed_id)">
+  <form action="/api/admin_feed" method="post" class="pretty-form admin-feed-delete"
         data-confirm="${_("Delete this feed? Deleted posts can't be brought back.")}"
         onsubmit="return confirm(this.getAttribute('data-confirm')) && post_form(this, 'admin_feed');">
     <input type="hidden" name="feed_id" value="${feed_id}">
     <input type="hidden" name="do" value="delete">
-    <select name="posts" aria-label="${_('its posts')}">
-      <option value="">${_("keep its posts")}</option>
-      <option value="quiet">${_("and its posts nobody voted on or commented on")}</option>
-      <option value="all">${_("and all its posts")}</option>
-    </select>
-    <button class="btn" type="submit">${_("delete")}</button>
+    <strong>${_("Delete this feed, and its posts?")}</strong>
+    <label><input type="radio" name="posts" value="" checked> ${_("keep its posts")}</label>
+    <label><input type="radio" name="posts" value="quiet"> ${_("delete its posts nobody voted on or commented on")}</label>
+    <label><input type="radio" name="posts" value="all"> ${_("delete all its posts")}</label>
+    <button class="btn" type="submit">${_("delete the feed")}</button>
     <span class="status"></span>
   </form>
 </%def>
@@ -260,7 +261,9 @@
           <button type="button" class="btn admin-feed-edit-toggle"
                   aria-expanded="false" aria-controls="admin-feed-edit-${f['id']}"
                   onclick="var row = document.getElementById('admin-feed-edit-${f['id']}'); row.hidden = !row.hidden; this.setAttribute('aria-expanded', String(!row.hidden));">${_("edit")}</button>
-          ${delete_action(f['id'])}
+          <button type="button" class="btn admin-feed-edit-toggle"
+                  aria-expanded="false" aria-controls="admin-feed-delete-${f['id']}"
+                  onclick="var row = document.getElementById('admin-feed-delete-${f['id']}'); row.hidden = !row.hidden; this.setAttribute('aria-expanded', String(!row.hidden));">${_("delete")}</button>
           </div>
           %endif
         </td>
@@ -272,6 +275,9 @@
           ${feed_form('edit', f, vault_name, bot_name)}
           <p><small>${_("Changing the vault moves where new items go; posts already made stay where they are.")}</small></p>
         </td>
+      </tr>
+      <tr class="admin-feed-edit-row" id="admin-feed-delete-${f['id']}" hidden>
+        <td colspan="10">${delete_form(f['id'])}</td>
       </tr>
     %endfor
   </table>
