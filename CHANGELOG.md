@@ -5,6 +5,7 @@
 - _...Add new stuff here..._
 - **Content options come first on /prefs/:** the over-18 setting, which the NSFW media options depend on, now sits at the top in its own box.
 - **Hide the feed bots' posts:** a content option on /prefs/ leaves the posts made by the site's feed bots (/admin/feeds) out of listings and search. It's off by default.
+- **Domain and vault filters are a gold option:** they move from filters to gold options on /prefs/, beside the account switcher, and apply for gold members and admins. Lists saved without gold are kept but not applied. Keyword and user filters stay free, and the user filter's help now links to /prefs/blocked/.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

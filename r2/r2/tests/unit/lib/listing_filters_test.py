@@ -13,8 +13,9 @@ from r2.lib import listing_filters
 from r2.tests import TipprTestCase
 
 
-def user(**prefs):
-    u = MagicMock(_id=1)
+def user(gold=True, **prefs):
+    u = MagicMock(_id=1, gold=gold)
+    u.name = "member"
     for kind in ("keywords", "domains", "vaults", "users"):
         setattr(u, "pref_filter_" + kind, prefs.get(kind, ()))
     return u
@@ -85,3 +86,11 @@ class TestHides(TipprTestCase):
         u = user(users=("spammer",))
         self.assertTrue(listing_filters.hides(u, *link(author="Spammer")))
         self.assertFalse(listing_filters.hides(u, *link(author="friend")))
+
+    def test_domains_and_vaults_are_gold(self):
+        u = user(gold=False, domains=("example.com",), vaults=("pics",),
+                 keywords=("cat",))
+        self.assertFalse(listing_filters.hides(
+            u, *link(domain="example.com", vault="pics")))
+        # (the free ones still apply)
+        self.assertTrue(listing_filters.hides(u, *link(title="a cat")))

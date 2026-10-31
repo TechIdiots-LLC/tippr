@@ -15,9 +15,10 @@
 
 """Members' listing filters, like the Reddit Enhancement Suite's filteReddit.
 
-Under "filters" on /prefs a member lists title keywords, domains, vaults and
-users whose posts they don't want in listings. Link.keep_item drops those
-posts (never the member's own). A vault filter doesn't apply on that vault's
+Under "filters" on /prefs a member lists title keywords and users whose
+posts they don't want in listings, and under "gold options" domains and
+vaults (gold_allowed). Link.keep_item drops those posts (never the
+member's own). A vault filter doesn't apply on that vault's
 own page: visiting it is a choice to see it.
 
 Keywords match whole words or phrases in titles, ignoring case. Domains
@@ -27,6 +28,7 @@ kept to MAX_ENTRIES of up to MAX_LENGTH characters.
 
 import re
 
+from pylons import app_globals as g
 from pylons import tmpl_context as c
 
 MAX_ENTRIES = 200
@@ -37,6 +39,11 @@ FILTER_PREFS = (
     "pref_filter_domains",
     "pref_filter_vaults",
     "pref_filter_users",
+)
+# the ones for gold members (gold_allowed)
+GOLD_FILTERS = (
+    "pref_filter_domains",
+    "pref_filter_vaults",
 )
 
 
@@ -68,11 +75,20 @@ def clean_list(text, kind):
     return entries
 
 
+def gold_allowed(user):
+    """Gold members and admins filter by domain and vault (GOLD_FILTERS):
+    gold's "filter /v/all", for every listing. Without gold, a list saved
+    before is kept but not applied."""
+    return bool(user and (user.gold or user.name in g.admins))
+
+
 class _Filters:
     def __init__(self, user):
         self.keywords = list(getattr(user, "pref_filter_keywords", None) or [])
-        self.domains = set(getattr(user, "pref_filter_domains", None) or [])
-        self.vaults = set(getattr(user, "pref_filter_vaults", None) or [])
+        self.domains, self.vaults = set(), set()
+        if gold_allowed(user):
+            self.domains = set(getattr(user, "pref_filter_domains", None) or [])
+            self.vaults = set(getattr(user, "pref_filter_vaults", None) or [])
         self.users = set(getattr(user, "pref_filter_users", None) or [])
         self.keyword_re = None
         if self.keywords:

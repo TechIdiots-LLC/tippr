@@ -49,6 +49,37 @@
   %endif
 </%def>
 
+## the listing filters (r2.lib.listing_filters): (name, label, help) each
+<%def name="filter_fields(fields, disabled=False)">
+  %for name, label, help in fields:
+    <label class="pref-filter ${'disabled' if disabled else ''}">
+      <span class="pref-filter-label">${label}</span>
+      <textarea name="${name}" rows="3" cols="40" spellcheck="false" ${'disabled' if disabled else ''}>${"\n".join(getattr(c.user, "pref_" + name) or ())}</textarea>
+      <span class="details">${help}</span>
+    </label>
+  %endfor
+</%def>
+
+## the domain and vault filters, a gold option (also for admins): greyed
+## out for anyone else, whose lists are kept (preferences.py)
+<%def name="gold_filter_option()">
+  <%
+    from r2.lib import listing_filters
+    allowed = listing_filters.gold_allowed(c.user)
+  %>
+  <div class="pref-filters">
+    <span>${_("filter domains and vaults")}</span>
+    &#32;<span class="details">${_("(their posts are left out of listings, like the filters above)")}</span>
+    %if not allowed:
+      &#32;<span class="details tippr-gold">${_wsf("for %(gold_link)s members and admins", gold_link=unsafe('<a href="/gold/about">%s</a>' % _("tippr gold")))}</span>
+    %endif
+    ${filter_fields([
+        ("filter_domains", _("domains"), _("example.com also hides its subdomains")),
+        ("filter_vaults", _("vaults"), _("still shown when you visit the vault itself")),
+    ], disabled=not allowed)}
+  </div>
+</%def>
+
 <%def name="checkbox(text, name, disabled = False, disabled_text = '', prefix = 'pref_')">
     <input name="${name}" id="${name}" type="checkbox"
                %if getattr(c.user, prefix + name):
@@ -391,20 +422,13 @@ action = add_vault(action, vault_path=False)
         ${_("Posts that match are left out of listings (never your own). One per line, or separated by commas.")}
       </p>
       <%
-        filter_fields = [
-          ("filter_keywords", _("title keywords"), _("whole words or phrases, in any case")),
-          ("filter_domains", _("domains"), _("example.com also hides its subdomains")),
-          ("filter_vaults", _("vaults"), _("still shown when you visit the vault itself")),
-          ("filter_users", _("users"), _("only hides their posts; to stop seeing them altogether, block them")),
-        ]
+        block_link = unsafe('<a href="/prefs/blocked/">%s</a>' % _("block them"))
       %>
-      %for name, label, help in filter_fields:
-        <label class="pref-filter">
-          <span class="pref-filter-label">${label}</span>
-          <textarea name="${name}" rows="3" cols="40" spellcheck="false">${"\n".join(getattr(c.user, "pref_" + name) or ())}</textarea>
-          <span class="details">${help}</span>
-        </label>
-      %endfor
+      ${filter_fields([
+          ("filter_keywords", _("title keywords"), _("whole words or phrases, in any case")),
+          ("filter_users", _("users"), _wsf("only hides their posts; to stop seeing their comments and messages too, %(block_link)s", block_link=block_link)),
+      ])}
+      <p class="details">${_("Domains and vaults are under gold options.")}</p>
     </td>
   </tr>
   <tr>
@@ -572,6 +596,7 @@ action = add_vault(action, vault_path=False)
         ${checkbox(_wsf("use a month of my %(coin_link)s to automatically renew my gold if it expires", coin_link=coin_link), "coin_autorenew")}
         <br>
         ${switcher_option()}
+        ${gold_filter_option()}
     </td>
   </tr>
   %else:
@@ -589,6 +614,7 @@ action = add_vault(action, vault_path=False)
       <br>
       %endif
       ${switcher_option()}
+      ${gold_filter_option()}
     </td>
   </tr>
   %endif

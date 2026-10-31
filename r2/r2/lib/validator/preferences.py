@@ -197,6 +197,11 @@ def filter_prefs(prefs, user):
     if not account_switcher.allowed():
         prefs.pop('pref_account_switcher', None)
 
+    # the domain and vault filters are gold's: without it, keep what's saved
+    if not listing_filters.gold_allowed(user):
+        for pref in listing_filters.GOLD_FILTERS:
+            prefs.pop(pref, None)
+
     # the checkbox is only there while the site has live comments on:
     # otherwise leave the member's choice as it is
     if not g.live_config.get("live_comments"):
