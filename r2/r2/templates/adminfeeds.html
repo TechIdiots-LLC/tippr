@@ -94,7 +94,7 @@
 <h1>${_("Feeds")}</h1>
 
 <p><small>
-  ${_("Post new items from RSS or Atom feeds to vaults, such as your blog's articles or a project's releases, to give the site something to read. Feeds are checked every 15 minutes, each no more often than its own interval.")}
+  ${_("Post new items from RSS or Atom feeds to vaults, such as your blog's articles or a project's releases, to give the site something to read. Feeds are checked every 5 minutes, each when its own interval has passed or up to 15 minutes after, so they don't all go at once.")}
   ${_("So a new feed doesn't flood its vault, the first check posts only its newest %(first)d items; later checks post at most the newest %(per)d. Items left over are skipped, not posted later.") % dict(first=thing.first_fetch, per=thing.per_fetch)}
 </small></p>
 
@@ -182,7 +182,7 @@
           %endif
           %if f.get('removing'):
             <br><strong>${_("being deleted, with its posts")}</strong>
-            <br><small>${_("tippr-job-feeds deletes the rest of its posts every 15 minutes; then the feed goes")}</small>
+            <br><small>${_("tippr-job-feeds deletes the rest of its posts every 5 minutes; then the feed goes")}</small>
           %elif not f['enabled']:
             <br><strong>${_("paused")}</strong>
           %endif

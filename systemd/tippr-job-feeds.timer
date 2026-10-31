@@ -1,9 +1,9 @@
 [Unit]
-Description=Check feeds for new items every 15 minutes
+Description=Check feeds for new items every 5 minutes
 PartOf=tippr.target
 
 [Timer]
-OnCalendar=*:0/15
+OnCalendar=*:0/5
 AccuracySec=1min
 
 [Install]

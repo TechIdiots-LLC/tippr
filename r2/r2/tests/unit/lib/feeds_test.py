@@ -5,6 +5,7 @@
 # License Version 1.0, as described in the LICENSE file in this repository.
 ###############################################################################
 
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -93,3 +94,29 @@ class TestFeedStats(TipprTestCase):
         feeds._add_up(totals, SimpleNamespace(_ups=0, _downs=0, num_comments=0))
         self.assertEqual(totals, dict(posts=3, ups=3, downs=1, comments=2,
                                       interested=1))
+
+
+class TestDue(TipprTestCase):
+    NOW = datetime(2026, 10, 30, 12, 0, tzinfo=timezone.utc)
+
+    def feed(self, _id=1, minutes_ago=None, interval=60):
+        return dict(id=_id, interval_minutes=interval,
+                    last_checked=(self.NOW - timedelta(minutes=minutes_ago)
+                                  if minutes_ago is not None else None))
+
+    def test_never_checked(self):
+        self.assertTrue(feeds.is_due(self.feed(), self.NOW))
+
+    def test_interval_plus_its_jitter(self):
+        f = self.feed(minutes_ago=0)
+        jitter = feeds._jitter(f)
+        self.assertTrue(0 <= jitter <= feeds.JITTER_MINUTES)
+        wait = 60 + jitter - feeds.DUE_SLACK_MINUTES
+        # (a check stamped a few seconds into the last run still counts)
+        self.assertTrue(feeds.is_due(self.feed(minutes_ago=wait), self.NOW))
+        self.assertFalse(feeds.is_due(self.feed(minutes_ago=wait - 1), self.NOW))
+
+    def test_feeds_spread_out(self):
+        jitters = {feeds._jitter(self.feed(_id=i, minutes_ago=0))
+                   for i in range(1, 50)}
+        self.assertGreater(len(jitters), 5)

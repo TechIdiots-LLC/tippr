@@ -9,11 +9,13 @@
 - **The hide button offers more:** on a post, "hide" opens a choice of this post, posts by its author, posts from its domain or posts in its vault. The last three add to your filters on /prefs/ and take the matching posts off the page. Domains and vaults are for gold members, as on /prefs/ (`POST /api/add_filter`).
 - **Votes and comments on /admin/feeds:** a votes column shows, for each feed's posts still up, the upvotes (besides the bot's own), downvotes, comments, and the share of posts that got either. You can sort by votes, comments or interest, least interest first. `tippr-job-feed_stats` adds them up each hour (`feeds.recount_stats`).
 - **Delete a feed with its posts:** deleting a feed on /admin/feeds now offers to delete its posts too, either all of them or the ones nobody voted on or commented on, the way the post cleanup deletes posts. Up to 200 go at once, and tippr-job-feeds deletes the rest every 15 minutes. The feed stays, marked, until they're gone.
+- **Feeds spread out:** each feed is checked once its interval has passed, plus 0 to 15 minutes picked after each check, and tippr-job-feeds runs every 5 minutes instead of 15. Feeds with the same interval, or added together, no longer all go on the same run.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 - **A site on www. sends its bare domain to the same page:** with the domain set to www.example.com,
   example.com/v/pics/ now goes to https://www.example.com/v/pics/ (301), where it went to the front page over http.
+- **Feeds are checked on time:** a check is stamped as it ends, a few seconds into its run, so at the next run a feed was just short of its interval and waited another. A 15-minute feed was checked every 30 minutes, and an hourly one every 75.
 
 ## 0.29.0
 ### ✨ Features and improvements

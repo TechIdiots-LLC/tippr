@@ -15,9 +15,10 @@
 """Feed bots (/admin/feeds): post new items from RSS or Atom feeds to vaults.
 
 Each feed has a vault and an account that posts its items (a bot account,
-named as one, e.g. "techidiots_bot"). tippr-job-feeds checks the feeds that
-are due every 15 minutes and posts new items as link posts, through the same
-path as a member's submission.
+named as one, e.g. "techidiots_bot"). tippr-job-feeds runs every 5 minutes
+and checks the feeds that are due (is_due: their interval, plus up to
+JITTER_MINUTES so they spread out), posting new items as link posts
+through the same path as a member's submission.
 
 So a new feed doesn't flood its vault, the first fetch posts only the newest
 FIRST_FETCH_POSTS items, and later fetches the newest MAX_POSTS_PER_FETCH;
@@ -27,6 +28,7 @@ or failing that its link.
 
 import html
 import re
+import zlib
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -45,6 +47,10 @@ MAX_FEED_BYTES = 5 * 1024 * 1024
 FETCH_TIMEOUT = 20
 MIN_INTERVAL_MINUTES = 15
 DEFAULT_INTERVAL_MINUTES = 60
+# a feed is checked up to this many minutes after its interval, so they
+# spread over tippr-job-feeds' runs (every 5 minutes) instead of bunching
+JITTER_MINUTES = 15
+DUE_SLACK_MINUTES = 1
 USER_AGENT = "tippr-feeds/1.0 (+%s)"
 
 ENGINE = g.dbm.get_engine("main")
@@ -500,6 +506,25 @@ def check(feed):
     return check_feeds([feed]).get(feed["id"], 0)
 
 
+def _jitter(feed):
+    """0 to JITTER_MINUTES, the same for a feed until it's checked again:
+    so feeds added together, or with the same interval, don't all come
+    due on the same run."""
+    key = "%s:%s" % (feed["id"], feed["last_checked"].isoformat())
+    return zlib.crc32(key.encode("utf-8")) % (JITTER_MINUTES + 1)
+
+
+def is_due(feed, now):
+    """Whether its interval, and its jitter, have passed since it was last
+    checked (less DUE_SLACK_MINUTES: a check is stamped when it ends, a
+    little after its run started)."""
+    last = feed["last_checked"]
+    if not last:
+        return True
+    wait = feed["interval_minutes"] + _jitter(feed) - DUE_SLACK_MINUTES
+    return now - last >= timedelta(minutes=wait)
+
+
 def run_due():
     """Check every enabled feed whose interval has passed (tippr-job-feeds),
     after going on with the feeds being deleted with their posts."""
@@ -509,14 +534,8 @@ def run_due():
     except Exception:
         g.log.exception("feeds: couldn't go on deleting feeds' posts")
     now = _now()
-    due = []
-    for feed in all_feeds():
-        if not feed["enabled"]:
-            continue
-        last = feed["last_checked"]
-        if last and now - last < timedelta(minutes=feed["interval_minutes"]):
-            continue
-        due.append(feed)
+    due = [feed for feed in all_feeds()
+           if feed["enabled"] and is_due(feed, now)]
     by_url = {feed["id"]: feed["url"] for feed in due}
     for feed_id, posted in check_feeds(due).items():
         g.log.info("feeds: %s: %d posted", by_url[feed_id], posted)

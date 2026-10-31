@@ -36,7 +36,7 @@ preview).
 ## Feeds
 
 Vaults can fill themselves from RSS and Atom feeds (/admin/feeds): every
-15 minutes `tippr-job-feeds` checks the feeds that are due and posts their
+5 minutes `tippr-job-feeds` checks the feeds that are due and posts their
 new items into each feed's vault, from a bot account, with an optional
 title prefix such as `[NASA]`. A feed can also mark every post it makes
 NSFW and give them an AI label (human-made, AI-assisted or AI-generated,
@@ -56,6 +56,11 @@ adds them (without `FEEDS_ADD=1` it only lists what it would add). It's
 safe to re-run: feeds already on a vault are skipped. Feed posts get
 thumbnails like any link post.
 
+A feed is due when its interval has passed, plus 0 to 15 minutes picked
+afresh after each check (the same for that wait: worked out from the feed
+and when it was last checked), so feeds with the same interval, or added
+together, don't all go on the same run.
+
 On /admin/feeds, feeds are listed newest first; search them, filter them
 by vault, bot or status (active, paused, with errors, never checked), sort
 by any column, and edit one in place. Changing a feed's vault sends its new
@@ -74,7 +79,7 @@ ones nobody voted on or commented on deleted too, or all of them. They
 go as the post cleanup deletes posts: as their author would, with the
 images no other post uses, and listed under recent cleanups on
 /admin/cleanup. Up to 200 go at once; until the rest have (tippr-job-feeds
-deletes 200 more every 15 minutes), the feed stays on the page, paused
+deletes 200 more every 5 minutes), the feed stays on the page, paused
 and marked as being deleted, and then it goes.
 
 The votes column adds up the votes and comments on each feed's posts that
