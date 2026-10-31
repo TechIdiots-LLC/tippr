@@ -387,6 +387,33 @@
       ${self.state_button("unhide", _("unhide"), \
         "change_state(this, 'unhide', hide_thing);", _("unhidden"),
         access_required=False, event_action="unhide")}
+    %elif thing.hide_filters:
+      ## hide this post, or add its author, domain or vault to the listing
+      ## filters (enhancements.js hideMenu, /api/add_filter)
+      <a href="javascript:void(0)" class="hide-menu-toggle"
+         aria-expanded="false">${_("hide")}</a>
+      <span class="hide-menu" hidden>
+        ${self.state_button("hide", _("this post"), \
+           "change_state(this, 'hide', hide_thing);", _("hidden"),
+           access_required=False, event_action="hide")}
+        %for kind, value, locked in thing.hide_filters:
+          <%
+            label = {
+              "users": _("posts by /u/%(name)s"),
+              "domains": _("posts from %(name)s"),
+              "vaults": _("posts in /v/%(name)s"),
+            }[kind] % {"name": value}
+          %>
+          %if locked:
+            <a href="/gold/about" class="hide-filter gold-locked"
+               title="${_('filtering domains and vaults is a tippr gold feature')}">${label} <span class="tippr-gold">(${_("gold")})</span></a>
+          %else:
+            <a href="javascript:void(0)" class="hide-filter"
+               data-kind="${kind}" data-value="${value}">${label}</a>
+          %endif
+        %endfor
+        <span class="hide-menu-status"></span>
+      </span>
     %else:
       ${self.state_button("hide", _("hide"), \
          "change_state(this, 'hide', hide_thing);", _("hidden"),

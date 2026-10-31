@@ -137,6 +137,21 @@ class LinkButtons(PrintableButtons):
                          thing.promoted is None and
                          (is_author or thing.can_ban or c.user_is_admin))
 
+        # the hide button's other choices: (kind, value, gold needed) for
+        # the listing filters (r2.lib.listing_filters)
+        hide_filters = []
+        if (c.user_is_loggedin and not is_author and not thing._deleted and
+                thing.promoted is None):
+            from r2.lib import listing_filters
+            locked = not listing_filters.gold_allowed(c.user)
+            if thing.author and not thing.author._deleted:
+                hide_filters.append(("users", thing.author.name, False))
+            domain = (not thing.is_self and listing_filters.clean_list(
+                [getattr(thing, "domain", "") or ""], "domains"))
+            if domain:
+                hide_filters.append(("domains", domain[0], locked))
+            hide_filters.append(("vaults", thing.vault.name, locked))
+
         show_givegold = thing.can_gild and (
             getattr(c, 'permalink_page', False) or getattr(c, 'profilepage', False)
         )
@@ -190,7 +205,8 @@ class LinkButtons(PrintableButtons):
                                   saved = thing.saved,
                                   editable = editable, 
                                   deleted = thing._deleted,
-                                  hidden = thing.hidden, 
+                                  hidden = thing.hidden,
+                                  hide_filters = hide_filters,
                                   ignore_reports = thing.ignore_reports,
                                   show_delete = show_delete,
                                   show_report = show_report and c.user_is_loggedin,

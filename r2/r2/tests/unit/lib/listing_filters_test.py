@@ -94,3 +94,29 @@ class TestHides(TipprTestCase):
             u, *link(domain="example.com", vault="pics")))
         # (the free ones still apply)
         self.assertTrue(listing_filters.hides(u, *link(title="a cat")))
+
+
+class TestAdd(TipprTestCase):
+    def test_adds_once_tidied(self):
+        u = user(users=("bob",))
+        self.assertEqual(listing_filters.add(u, "users", "/u/Alice"), "alice")
+        self.assertEqual(u.pref_filter_users, ("bob", "alice"))
+        u._commit.reset_mock()
+        self.assertEqual(listing_filters.add(u, "users", "alice"), "alice")
+        self.assertEqual(u.pref_filter_users, ("bob", "alice"))
+        u._commit.assert_not_called()
+
+    def test_domains_and_vaults_need_gold(self):
+        with self.assertRaises(listing_filters.NeedsGold):
+            listing_filters.add(user(gold=False), "vaults", "pics")
+        self.assertEqual(listing_filters.add(user(), "domains",
+                                             "https://www.example.com/a"),
+                         "example.com")
+
+    def test_full_or_nothing(self):
+        u = user(keywords=tuple("w%d" % i
+                                for i in range(listing_filters.MAX_ENTRIES)))
+        with self.assertRaises(listing_filters.FilterFull):
+            listing_filters.add(u, "keywords", "another")
+        self.assertIsNone(listing_filters.add(user(), "users", " , "))
+        self.assertIsNone(listing_filters.add(user(), "nonsense", "x"))

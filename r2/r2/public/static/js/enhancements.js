@@ -1140,7 +1140,75 @@ r.enhancements.accountSwitcher = {
   },
 }
 
+/* the hide button's menu: hide this post (as before), or add its author,
+   domain or vault to the listing filters (/api/add_filter) and take their
+   posts off the page now; the rest are left out from then on */
+
+r.enhancements.hideMenu = {
+  init: function() {
+    $(document).on('click', '.hide-menu-toggle', _.bind(this.toggle, this))
+    $(document).on('click', '.hide-menu .hide-filter[data-kind]',
+                   _.bind(this.add, this))
+  },
+
+  toggle: function(e) {
+    var $toggle = $(e.currentTarget)
+    var $menu = $toggle.siblings('.hide-menu')
+    var open = $menu.prop('hidden')
+    $menu.prop('hidden', !open)
+    $toggle.attr('aria-expanded', open ? 'true' : 'false')
+  },
+
+  add: function(e) {
+    var $link = $(e.currentTarget)
+    var $status = $link.siblings('.hide-menu-status')
+    var kind = $link.data('kind')
+    $.ajax({
+      url: '/api/add_filter.json',
+      type: 'POST',
+      dataType: 'json',
+      data: {kind: kind, value: String($link.data('value')), uh: r.config.modhash},
+    }).done(_.bind(function(res) {
+      if (!res || res.error) {
+        $status.text(res && res.error || r._('couldn\'t save that; try again'))
+        return
+      }
+      // (on a comments page, or the vault's own page, which a vault
+      // filter leaves alone, the posts stay)
+      if ($('body').hasClass('comments-page') ||
+          (res.kind === 'vaults' &&
+           String(r.config.post_site || '').toLowerCase() === res.entry)) {
+        $status.text(r._('added to your filters'))
+        return
+      }
+      this.hideMatching(res.kind, res.entry)
+    }, this)).fail(function() {
+      $status.text(r._('couldn\'t save that; try again'))
+    })
+  },
+
+  // the posts on the page the new entry covers (as r2.lib.listing_filters
+  // matches them: names in any case, a domain's subdomains too)
+  hideMatching: function(kind, entry) {
+    var attr = {users: 'author', domains: 'domain', vaults: 'vault'}[kind]
+    $('.thing.link').filter(function() {
+      var value = String($(this).data(attr) || '').toLowerCase()
+      if (kind === 'domains') {
+        value = value.replace(/^www\./, '')
+        return value === entry ||
+               value.slice(-(entry.length + 1)) === '.' + entry
+      }
+      return value === entry
+    }).fadeOut(function() {
+      $(this).addClass('hidden')
+    })
+  },
+}
+
 $(function() {
+  if (r.config.logged) {
+    r.enhancements.hideMenu.init()
+  }
   if (r.config.account_switcher) {
     r.enhancements.accountSwitcher.init()
   }

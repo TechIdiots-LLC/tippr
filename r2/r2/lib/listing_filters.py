@@ -82,6 +82,35 @@ def gold_allowed(user):
     return bool(user and (user.gold or user.name in g.admins))
 
 
+class NeedsGold(Exception):
+    pass
+
+
+class FilterFull(Exception):
+    pass
+
+
+def add(user, kind, value):
+    """Add one entry to the user's kind filter (the hide button's "posts
+    by ..." options) and return it as kept; None when there's nothing to
+    add. Raises NeedsGold or FilterFull."""
+    pref = "pref_filter_" + kind
+    if pref not in FILTER_PREFS:
+        return None
+    if pref in GOLD_FILTERS and not gold_allowed(user):
+        raise NeedsGold
+    entry = (clean_list(value, kind) or [None])[0]
+    if not entry:
+        return None
+    entries = list(getattr(user, pref, None) or ())
+    if entry not in entries:
+        if len(entries) >= MAX_ENTRIES:
+            raise FilterFull
+        setattr(user, pref, tuple(entries + [entry]))
+        user._commit()
+    return entry
+
+
 class _Filters:
     def __init__(self, user):
         self.keywords = list(getattr(user, "pref_filter_keywords", None) or [])

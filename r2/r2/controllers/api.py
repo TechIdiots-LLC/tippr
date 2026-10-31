@@ -53,6 +53,7 @@ from r2.lib import (
     antispam,
     emailer,
     hooks,
+    listing_filters,
     live_comments,
     media,
     newsletter,
@@ -307,6 +308,27 @@ class ApiController(TipprController):
             return {"tag": "", "background": ""}
         return {"tag": saved["tag"],
                 "background": user_tags.COLORS.get(saved["color"], "")}
+
+    @json_validate(
+        VUser(),
+        VModhash(),
+        kind=VOneOf("kind", ("keywords", "users", "domains", "vaults")),
+        value=VLength("value", listing_filters.MAX_LENGTH, empty_error=None),
+    )
+    def POST_add_filter(self, responder, kind, value):
+        """Add one entry to a listing filter (r2.lib.listing_filters): the
+        hide button's "posts by ..." options. Domains and vaults are for
+        gold members and admins."""
+        try:
+            entry = listing_filters.add(c.user, kind, value) if kind else None
+        except listing_filters.NeedsGold:
+            return {"error": _("filtering domains and vaults is a tippr gold feature")}
+        except listing_filters.FilterFull:
+            return {"error": _("that filter is full (%(n)d entries); remove some in your preferences") % {
+                "n": listing_filters.MAX_ENTRIES}}
+        if not entry:
+            return {"error": _("there's nothing to filter")}
+        return {"kind": kind, "entry": entry}
 
     @json_validate(
         VUser(),
