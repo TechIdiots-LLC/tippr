@@ -69,6 +69,15 @@ count reports made before the column existed:
 `tippr-run -c 'from r2.lib import feeds; print(feeds.recount_reports())'`
 (which counts every reason as written, "other" ones too).
 
+The votes column adds up the votes and comments on each feed's posts that
+are still up: upvotes besides the bot's own, downvotes, comments, and the
+share of its posts that got a vote or a comment at all. Sort by comments
+or interest from its heading; interest goes least first, so the feeds
+nobody reads (and whose posts the post cleanup would take) come to the
+top. `tippr-job-feed_stats` adds them up each hour from the posts
+themselves, so a vote changed or taken back counts as it stands. To count
+now: `tippr-run -c 'from r2.lib import feeds; print(feeds.recount_stats())'`.
+
 Members can leave the feed bots' posts out altogether: "hide posts by the
 site's feed bots" under content options on /prefs (`pref_hide_feed_bots`,
 off by default). Like the AI preference, it applies to listings and search,

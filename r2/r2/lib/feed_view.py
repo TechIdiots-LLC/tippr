@@ -33,7 +33,23 @@ SORTS = {
                           if f["last_checked"] else 0),
     "posts": lambda f: f["posted"],
     "reports": lambda f: f.get("reports", 0),
+    # (feeds not yet counted go with the ones nobody voted on)
+    "votes": lambda f: _stat(f, "ups") - _stat(f, "downs"),
+    "comments": lambda f: _stat(f, "comments"),
+    "interest": lambda f: interest(f) or 0,
 }
+
+
+def _stat(f, name):
+    return (f.get("stats") or {}).get(name, 0)
+
+
+def interest(f):
+    """The share of a feed's posts (still up) with a vote or a comment, 0
+    to 1; None when it has none, or they haven't been counted."""
+    posts = _stat(f, "posts")
+    return _stat(f, "interested") / posts if posts else None
+
 
 # with no sort given: the newest feeds first (the order added, backwards)
 DEFAULT_SORT = "added"
@@ -41,9 +57,11 @@ DEFAULT_SORT = "added"
 
 def default_order(sort):
     """The way a sort goes until it's turned round: newest first for the
-    order added, the most reported first for reports, A to Z (or smallest
-    first) for the rest."""
-    return "desc" if sort in ("added", "reports") else "asc"
+    order added, the most reported, voted or commented on first, the least
+    interest first (the feeds to think about dropping), and A to Z (or
+    smallest first) for the rest."""
+    return ("desc" if sort in ("added", "reports", "votes", "comments")
+            else "asc")
 
 
 # what the search looks in

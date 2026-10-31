@@ -1,0 +1,16 @@
+[Unit]
+Description=add up the votes and comments on the feeds' posts for /admin/feeds
+
+After=network.target postgresql.service cassandra.service zookeeper.service rabbitmq-server.service memcached.service
+
+[Service]
+Type=oneshot
+User=@TIPPR_USER@
+Group=@TIPPR_GROUP@
+EnvironmentFile=-/etc/default/tippr
+WorkingDirectory=@TIPPR_ROOT@
+ExecStartPre=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/wait-for-stores
+# run-locked: on one server at a time when several share the site
+ExecStart=@TIPPR_VENV@/bin/python @TIPPR_SRC@/tippr/scripts/run-locked feed_stats @TIPPR_VENV@/bin/python -m r2.commands ${TIPPR_INI} -c 'from r2.lib import feeds; feeds.recount_stats()'
+
+Nice=10

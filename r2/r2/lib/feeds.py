@@ -95,10 +95,28 @@ feed_reports = sa.Table(
     sa.Column("last", sa.DateTime(timezone=True), nullable=False),
 )
 
+# what members made of a feed's posts (/admin/feeds): votes and comments,
+# added up from the posts by tippr-job-feed_stats (recount_stats), so
+# votes changed or taken back count as they stand
+feed_stats = sa.Table(
+    "feed_stats", METADATA,
+    sa.Column("feed_id", sa.Integer, primary_key=True),
+    # its posts still up (not deleted, removed or cleaned up)
+    sa.Column("posts", sa.Integer, nullable=False, default=0),
+    # upvotes besides the bot's own, and downvotes
+    sa.Column("ups", sa.Integer, nullable=False, default=0),
+    sa.Column("downs", sa.Integer, nullable=False, default=0),
+    sa.Column("comments", sa.Integer, nullable=False, default=0),
+    # posts with a comment or a vote (r2.lib.post_cleanup's "interest")
+    sa.Column("interested", sa.Integer, nullable=False, default=0),
+    sa.Column("updated", sa.DateTime(timezone=True), nullable=False),
+)
+
 create_table(feeds)
 create_table(feed_items, [index_str(feed_items, "url", "url"),
                           index_str(feed_items, "link_id", "link_id")])
 create_table(feed_reports)
+create_table(feed_stats)
 
 
 def _add_new_columns():
@@ -304,6 +322,8 @@ def remove(feed_id):
         conn.execute(feed_items.delete().where(feed_items.c.feed_id == feed_id))
         conn.execute(feed_reports.delete().where(
             feed_reports.c.feed_id == feed_id))
+        conn.execute(feed_stats.delete().where(
+            feed_stats.c.feed_id == feed_id))
         conn.execute(feeds.delete().where(feeds.c.id == feed_id))
 
 
@@ -570,3 +590,59 @@ def recount_reports(batch=500):
                 dict(feed_id=feed_id, reason=reason, count=count, last=last)
                 for (feed_id, reason), (count, last) in totals.items()])
     return sum(count for count, _ in totals.values())
+
+
+###############################################################################
+# Votes and comments (/admin/feeds)
+###############################################################################
+
+def _add_up(totals, link):
+    """Add one of a feed's posts to its totals."""
+    ups = max(link._ups - 1, 0)    # (not the bot's own upvote)
+    downs = link._downs
+    comments = getattr(link, "num_comments", 0) or 0
+    totals["posts"] += 1
+    totals["ups"] += ups
+    totals["downs"] += downs
+    totals["comments"] += comments
+    if ups or downs or comments:
+        totals["interested"] += 1
+
+
+def recount_stats(batch=500):
+    """Add up the votes and comments on every feed's posts (still up) and
+    store them for /admin/feeds; tippr-job-feed_stats does this each hour.
+    Returns the number of posts counted."""
+    from r2.models import Link
+    with ENGINE.connect() as conn:
+        feed_of = dict(conn.execute(
+            sa.select(feed_items.c.link_id, feed_items.c.feed_id)
+            .where(feed_items.c.link_id.isnot(None))).all())
+        feed_ids = [r[0] for r in conn.execute(sa.select(feeds.c.id))]
+    empty = dict(posts=0, ups=0, downs=0, comments=0, interested=0)
+    totals = {feed_id: dict(empty) for feed_id in feed_ids}
+    link_ids = list(feed_of)
+    for start in range(0, len(link_ids), batch):
+        links = Link._byID(link_ids[start:start + batch], data=True,
+                           return_dict=False, ignore_missing=True)
+        for link in links:
+            if link._deleted or link._spam:
+                continue
+            feed_id = feed_of[link._id]
+            if feed_id in totals:
+                _add_up(totals[feed_id], link)
+    now = _now()
+    with ENGINE.begin() as conn:
+        conn.execute(feed_stats.delete())
+        if totals:
+            conn.execute(feed_stats.insert(), [
+                dict(t, feed_id=feed_id, updated=now)
+                for feed_id, t in totals.items()])
+    return sum(t["posts"] for t in totals.values())
+
+
+def stats():
+    """{feed id: its totals (recount_stats)}, as last added up."""
+    with ENGINE.connect() as conn:
+        return {row["feed_id"]: dict(row) for row in
+                conn.execute(sa.select(feed_stats)).mappings()}

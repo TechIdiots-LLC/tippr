@@ -150,8 +150,9 @@ tippr.target`) cover them all.
   (posts new feed items), `tippr-job-email` (sends queued email),
   `tippr-job-update_gold_users` (ends gold when it runs out),
   `tippr-job-vault_similarity` (Explore's recommendations),
-  `tippr-job-year_clubs` (the X-Year Club trophies) and
-  `tippr-job-cleanup_posts` (the post cleanup's rules from /admin/cleanup).
+  `tippr-job-year_clubs` (the X-Year Club trophies),
+  `tippr-job-cleanup_posts` (the post cleanup's rules from /admin/cleanup) and
+  `tippr-job-feed_stats` (the votes and comments on /admin/feeds, hourly).
 
 Not part of `tippr.target`:
 

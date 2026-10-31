@@ -4167,6 +4167,9 @@ class AdminFeeds(Templated, FeedView):
                                        return_dict=True, ignore_missing=True)
                          if account_ids else {})
         reports = feeds.report_counts()
+        votes = feeds.stats()
+        self.stats_updated = max((s["updated"] for s in votes.values()),
+                                 default=None)
         for f in everything:
             v = self.vaults.get(f["vault_id"])
             a = self.accounts.get(f["account_id"])
@@ -4175,6 +4178,9 @@ class AdminFeeds(Templated, FeedView):
             # reports on its posts: [(reason, count), ...]
             f["report_reasons"] = reports.get(f["id"], [])
             f["reports"] = sum(n for _, n in f["report_reasons"])
+            # votes and comments on its posts (feeds.recount_stats), or
+            # None before tippr-job-feed_stats has run
+            f["stats"] = votes.get(f["id"])
         FeedView.__init__(self, everything, q, vault, bot, status, sort,
                           order)
         self.min_interval = feeds.MIN_INTERVAL_MINUTES

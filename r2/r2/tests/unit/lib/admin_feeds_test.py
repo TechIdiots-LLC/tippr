@@ -16,7 +16,7 @@
 
 from datetime import datetime, timezone
 
-from r2.lib.feed_view import FeedView
+from r2.lib.feed_view import FeedView, interest
 from r2.tests import TipprTestCase
 
 
@@ -82,6 +82,23 @@ class TestFeedView(TipprTestCase):
         self.assertEqual([f["id"] for f in shown][:2], [3, 2])
         # (rows without counts count as none)
         self.assertEqual(self.ids(sort="reports", order="asc")[0], 1)
+
+    def test_votes_and_interest(self):
+        def stats(ups, downs, comments, interested, posts):
+            return dict(ups=ups, downs=downs, comments=comments,
+                        interested=interested, posts=posts)
+        counted = [dict(FEEDS[0], stats=stats(10, 2, 1, 4, 5)),
+                   dict(FEEDS[1], stats=stats(3, 0, 9, 9, 9)),
+                   dict(FEEDS[2], stats=stats(0, 0, 0, 0, 0)),
+                   dict(FEEDS[3], stats=None)]
+        ids = lambda **kw: [f["id"] for f in FeedView(counted, **kw).feeds]
+        self.assertEqual(ids(sort="votes")[:2], [1, 2])
+        self.assertEqual(ids(sort="comments")[:2], [2, 1])
+        # the least interest first: none counted, or none of their posts up
+        self.assertEqual(ids(sort="interest")[2:], [1, 2])
+        self.assertEqual(interest(counted[0]), 0.8)
+        self.assertIsNone(interest(counted[2]))
+        self.assertIsNone(interest(counted[3]))
 
     def test_links_keep_the_view(self):
         page = FeedView(FEEDS, vault="sports", sort="posts")

@@ -82,3 +82,14 @@ class TestHideFeedBots(TipprTestCase):
         self.assertEqual(self.hides(True, 8)[0], False)
         self.assertEqual(self.hides(False, 7), (False, 0))
         self.assertFalse(feeds.hides(None, SimpleNamespace(author_id=7)))
+
+
+class TestFeedStats(TipprTestCase):
+    def test_adding_up(self):
+        totals = dict(posts=0, ups=0, downs=0, comments=0, interested=0)
+        feeds._add_up(totals, SimpleNamespace(_ups=1, _downs=0, num_comments=0))
+        feeds._add_up(totals, SimpleNamespace(_ups=4, _downs=1, num_comments=2))
+        # (the bot's own upvote isn't counted; taken back, it's not negative)
+        feeds._add_up(totals, SimpleNamespace(_ups=0, _downs=0, num_comments=0))
+        self.assertEqual(totals, dict(posts=3, ups=3, downs=1, comments=2,
+                                      interested=1))

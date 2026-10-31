@@ -1,0 +1,10 @@
+[Unit]
+Description=Run tippr-job-feed_stats hourly
+PartOf=tippr.target
+
+[Timer]
+OnCalendar=*:40
+Persistent=true
+
+[Install]
+WantedBy=tippr.target

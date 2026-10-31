@@ -16,6 +16,7 @@
 ## /admin/feeds: feeds posted to vaults by bot accounts (r2.lib.feeds)
 <%!
   from r2.lib import ai_content
+  from r2.lib.feed_view import interest
   from r2.lib.utils import timesince
 %>
 
@@ -88,7 +89,11 @@
 
 ## a column heading that sorts by it (again: the other way round)
 <%def name="sort_heading(sort, label)">
-  <th><a href="${thing.sort_link(sort)}" class="admin-feeds-sort ${'selected' if thing.sort == sort else ''}">${label}${(' ▲' if thing.order == 'asc' else ' ▼') if thing.sort == sort else ''}</a></th>
+  <th>${sort_link(sort, label)}</th>
+</%def>
+
+<%def name="sort_link(sort, label)">
+  <a href="${thing.sort_link(sort)}" class="admin-feeds-sort ${'selected' if thing.sort == sort else ''}">${label}${(' ▲' if thing.order == 'asc' else ' ▼') if thing.sort == sort else ''}</a>
 </%def>
 
 %if thing.total:
@@ -124,6 +129,9 @@
       <a href="${thing.link(q='', vault='', bot='', status='all')}">${_("clear")}</a>
     %endif
     <small>${_("%(shown)d of %(total)d feeds") % dict(shown=len(thing.feeds), total=thing.total)}</small>
+    %if thing.stats_updated:
+      <small>· ${_("votes counted %(when)s ago") % dict(when=timesince(thing.stats_updated))}</small>
+    %endif
   </form>
 %endif
 
@@ -131,7 +139,7 @@
   <table class="lined-table admin-feeds-table">
     <tr>
       ${sort_heading('title', _("feed"))}${sort_heading('vault', _("vault"))}${sort_heading('bot', _("posted by"))}
-      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}${sort_heading('reports', _("reports"))}${sort_heading('added', _("added"))}<th></th>
+      ${sort_heading('every', _("every"))}${sort_heading('checked', _("last checked"))}${sort_heading('posts', _("posts"))}${sort_heading('reports', _("reports"))}<th>${sort_link('votes', _("votes"))}<br><small>${sort_link('comments', _("comments"))} · ${sort_link('interest', _("interest"))}</small></th>${sort_heading('added', _("added"))}<th></th>
     </tr>
     %for f in thing.feeds:
       <%
@@ -201,6 +209,20 @@
             0
           %endif
         </td>
+        ## votes and comments on its posts (tippr-job-feed_stats), and the
+        ## share that got either
+        <td class="admin-feed-votes">
+          <% s = f['stats'] %>
+          %if s is None:
+            <small>${_("not counted yet")}</small>
+          %else:
+            <span title="${_("upvotes besides the bot's own, and downvotes")}">+${s['ups']} / -${s['downs']}</span>
+            <br><small>${_("%(n)d comments") % dict(n=s['comments'])}</small>
+            %if s['posts']:
+              <br><small>${_("%(pct)d%% of %(n)d posts had a vote or a comment") % dict(pct=round(100 * interest(f)), n=s['posts'])}</small>
+            %endif
+          %endif
+        </td>
         <td>
           %if f['created']:
             <span title="${f['created'].strftime('%Y-%m-%d %H:%M UTC')}">${timesince(f['created'])} ${_("ago")}</span>
@@ -224,7 +246,7 @@
       ## its settings, under it the width of the table: the address, the
       ## vault it posts to, the bot, how often, the labels
       <tr class="admin-feed-edit-row" id="admin-feed-edit-${f['id']}" hidden>
-        <td colspan="9">
+        <td colspan="10">
           ${feed_form('edit', f, vault_name, bot_name)}
           <p><small>${_("Changing the vault moves where new items go; posts already made stay where they are.")}</small></p>
         </td>

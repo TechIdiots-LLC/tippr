@@ -2174,6 +2174,9 @@ TIPPR_TIMERS=(
     # cleans up the posts nobody took an interest in; does nothing until a
     # rule is turned on at /admin/cleanup (r2.lib.post_cleanup)
     tippr-job-cleanup_posts.timer
+    # adds up the votes and comments on the feeds' posts for /admin/feeds
+    # (r2.lib.feeds.recount_stats)
+    tippr-job-feed_stats.timer
     # this server's state for /admin/servers, every minute (on every server)
     tippr-job-server_status.timer
     # the smoke check every 5 minutes, alerting when it changes (on every
