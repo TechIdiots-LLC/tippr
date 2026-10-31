@@ -69,6 +69,14 @@ count reports made before the column existed:
 `tippr-run -c 'from r2.lib import feeds; print(feeds.recount_reports())'`
 (which counts every reason as written, "other" ones too).
 
+Deleting a feed asks what happens to its posts: kept (the default), the
+ones nobody voted on or commented on deleted too, or all of them. They
+go as the post cleanup deletes posts: as their author would, with the
+images no other post uses, and listed under recent cleanups on
+/admin/cleanup. Up to 200 go at once; until the rest have (tippr-job-feeds
+deletes 200 more every 15 minutes), the feed stays on the page, paused
+and marked as being deleted, and then it goes.
+
 The votes column adds up the votes and comments on each feed's posts that
 are still up: upvotes besides the bot's own, downvotes, comments, and the
 share of its posts that got a vote or a comment at all. Sort by comments

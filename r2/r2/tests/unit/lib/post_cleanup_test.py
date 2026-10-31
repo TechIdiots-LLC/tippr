@@ -167,3 +167,45 @@ class TestFiles(TipprTestCase):
         files, purge, _ = self.clean_up([self.link(thumbnail=None, uid=None)])
         self.assertEqual(files, 0)
         purge.assert_not_called()
+
+
+class TestRemoveFeed(TipprTestCase):
+    FEED = dict(id=5, url="https://feed.example/rss", enabled=True,
+                removing=None)
+
+    def remove(self, which, links, batch=200):
+        feeds = MagicMock()
+        feeds.posted_link_ids.return_value = [l._fullname for l in links]
+        admin = SimpleNamespace(name="admin")
+        with patch("r2.lib.feeds", feeds), \
+                patch("r2.models.Link._byID", return_value=links), \
+                patch("r2.models.Vault._byID", return_value={10: VAULT}), \
+                patch.object(post_cleanup, "REMOVE_BATCH", batch), \
+                patch.object(post_cleanup, "_start"), \
+                patch.object(post_cleanup, "_finish"), \
+                patch.object(post_cleanup, "clean_up",
+                             return_value=0) as clean_up:
+            left = post_cleanup.remove_feed(dict(self.FEED), which, admin)
+        cleaned = [l._fullname for c in clean_up.call_args_list
+                   for l in c.args[0]]
+        return left, cleaned, feeds
+
+    def test_without_its_posts(self):
+        left, cleaned, feeds = self.remove(None, [post(1)])
+        self.assertEqual((left, cleaned), (0, []))
+        feeds.remove.assert_called_once_with(5)
+        feeds.update.assert_not_called()
+
+    def test_the_quiet_ones_oldest_first(self):
+        links = [post(3), post(1), post(2, num_comments=4), post(4, _deleted=True)]
+        left, cleaned, feeds = self.remove("quiet", links)
+        self.assertEqual((left, cleaned), (0, ["t3_1", "t3_3"]))
+        feeds.update.assert_called_once_with(5, enabled=False, removing="quiet")
+        feeds.remove.assert_called_once_with(5)
+
+    def test_all_of_them_a_batch_at_a_time(self):
+        links = [post(1), post(2, num_comments=4), post(3)]
+        left, cleaned, feeds = self.remove("all", links, batch=2)
+        # (the feed stays, marked, until the job has done the rest)
+        self.assertEqual((left, cleaned), (1, ["t3_1", "t3_2"]))
+        feeds.remove.assert_not_called()

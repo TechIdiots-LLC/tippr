@@ -132,7 +132,7 @@
       <tr>
         <td><span title="${r['started'].strftime('%Y-%m-%d %H:%M UTC')}">${timesince(r['started'])} ${_("ago")}</span></td>
         <td>${_("the daily cleanup") if r['trigger'] == 'schedule' else r['trigger']}</td>
-        <td>${{'feeds': _("feed bots'"), 'members': _("members'"), 'picked': _("picked")}.get(r['kind'], r['kind'])}</td>
+        <td>${{'feeds': _("feed bots'"), 'members': _("members'"), 'picked': _("picked"), 'feed': _("a deleted feed's")}.get(r['kind'], r['kind'])}</td>
         <td>${r['checked']}</td>
         <td>${r['removed']}</td>
         <td>${r['files']}</td>

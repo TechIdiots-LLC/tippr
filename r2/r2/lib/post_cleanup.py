@@ -323,6 +323,83 @@ def clean_up_picked(fullnames, kind, days, admin):
     return len(picked), files
 
 
+###############################################################################
+# A feed deleted with its posts (/admin/feeds)
+###############################################################################
+
+# which of its posts go with it
+REMOVE_QUIET = "quiet"    # the ones nobody voted on or commented on
+REMOVE_ALL = "all"
+REMOVE_CHOICES = (REMOVE_QUIET, REMOVE_ALL)
+# posts deleted at a time: in the request that deletes the feed, then by
+# tippr-job-feeds each run (finish_feed_removals) until they're gone
+REMOVE_BATCH = 200
+
+
+def _feed_posts_to_remove(feed):
+    """The feed's posts still to delete for feed["removing"], oldest
+    first."""
+    from r2.lib import feeds
+    from r2.models import Link, Vault
+    links = []
+    ids = feeds.posted_link_ids(feed["id"])
+    for start in range(0, len(ids), BATCH):
+        links.extend(Link._byID(ids[start:start + BATCH], data=True,
+                                return_dict=False, ignore_missing=True))
+    links = [l for l in links if not (l._deleted or l._spam)]
+    if feed["removing"] == REMOVE_QUIET:
+        vaults = Vault._byID({l.vault_id for l in links}, data=True,
+                             return_dict=True, ignore_missing=True)
+        links = [l for l in links if not _fails(
+            l, vaults.get(l.vault_id), {l.author_id}, "feeds")]
+    return sorted(links, key=lambda l: l._date)
+
+
+def _go_on_removing(feed, trigger):
+    """Delete the next REMOVE_BATCH of the feed's posts, and the feed once
+    none are left. Returns how many are still to go."""
+    from r2.lib import feeds
+    links = _feed_posts_to_remove(feed)
+    batch = links[:REMOVE_BATCH]
+    if batch:
+        run_id = _start(trigger, "feed")
+        try:
+            files = clean_up(batch)
+        except Exception as e:
+            _finish(run_id, len(links), 0, 0, error=str(e)[:500])
+            raise
+        _finish(run_id, len(links), len(batch), files)
+    left = len(links) - len(batch)
+    if not left:
+        feeds.remove(feed["id"])
+        g.log.info("post_cleanup: feed %s deleted with its posts (%s)",
+                   feed["url"], feed["removing"])
+    return left
+
+
+def remove_feed(feed, which, admin):
+    """Delete a feed from /admin/feeds, with its posts (which: one of
+    REMOVE_CHOICES) or without (None). The posts go REMOVE_BATCH at a time;
+    until they all have, the feed stays, paused and marked. Returns how
+    many are still to go."""
+    from r2.lib import feeds
+    if which not in REMOVE_CHOICES:
+        feeds.remove(feed["id"])
+        return 0
+    feeds.update(feed["id"], enabled=False, removing=which)
+    return _go_on_removing(dict(feed, enabled=False, removing=which),
+                           admin.name)
+
+
+def finish_feed_removals():
+    """Go on with the feeds being deleted with their posts (tippr-job-feeds,
+    before it checks the feeds)."""
+    from r2.lib import feeds
+    for feed in feeds.all_feeds():
+        if feed.get("removing"):
+            _go_on_removing(feed, "schedule")
+
+
 def recent_runs(n=RUNS_SHOWN):
     with ENGINE.connect() as conn:
         rows = conn.execute(sa.select(runs).order_by(runs.c.id.desc())

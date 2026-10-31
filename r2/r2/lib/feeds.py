@@ -72,6 +72,10 @@ feeds = sa.Table(
     sa.Column("over_18", sa.Boolean, nullable=False, default=False,
               server_default=sa.false()),
     sa.Column("ai_content", sa.String, nullable=True),
+    # deleted with its posts, which are still going (r2.lib.post_cleanup
+    # remove_feed): "quiet" (the posts nobody voted on or commented on) or
+    # "all"; the feed goes once they have
+    sa.Column("removing", sa.String, nullable=True),
 )
 
 feed_items = sa.Table(
@@ -132,6 +136,9 @@ def _add_new_columns():
                                      "boolean NOT NULL DEFAULT false"))
             if "ai_content" not in have:
                 conn.execute(sa.text("ALTER TABLE feeds ADD COLUMN ai_content "
+                                     "varchar"))
+            if "removing" not in have:
+                conn.execute(sa.text("ALTER TABLE feeds ADD COLUMN removing "
                                      "varchar"))
             # (which feed a reported post came from: count_report)
             conn.execute(sa.text("CREATE INDEX IF NOT EXISTS "
@@ -327,6 +334,15 @@ def remove(feed_id):
         conn.execute(feeds.delete().where(feeds.c.id == feed_id))
 
 
+def posted_link_ids(feed_id):
+    """The ids of the posts the feed made."""
+    with ENGINE.connect() as conn:
+        return [r[0] for r in conn.execute(
+            sa.select(feed_items.c.link_id)
+            .where(feed_items.c.feed_id == feed_id)
+            .where(feed_items.c.link_id.isnot(None)))]
+
+
 def _seen_keys(conn, feed_id):
     rows = conn.execute(sa.select(feed_items.c.item_key, feed_items.c.url)
                         .where(feed_items.c.feed_id == feed_id))
@@ -485,7 +501,13 @@ def check(feed):
 
 
 def run_due():
-    """Check every enabled feed whose interval has passed (tippr-job-feeds)."""
+    """Check every enabled feed whose interval has passed (tippr-job-feeds),
+    after going on with the feeds being deleted with their posts."""
+    from r2.lib import post_cleanup
+    try:
+        post_cleanup.finish_feed_removals()
+    except Exception:
+        g.log.exception("feeds: couldn't go on deleting feeds' posts")
     now = _now()
     due = []
     for feed in all_feeds():

@@ -22,10 +22,27 @@
 
 <%def name="action(feed_id, what, label)">
   <form action="/api/admin_feed" method="post" class="pretty-form admin-feed-action"
-        onsubmit="return ${"confirm('%s') &&" % _("Delete this feed? Its posts stay.") if what == 'delete' else ''} post_form(this, 'admin_feed');">
+        onsubmit="return post_form(this, 'admin_feed');">
     <input type="hidden" name="feed_id" value="${feed_id}">
     <input type="hidden" name="do" value="${what}">
     <button class="btn" type="submit">${label}</button>
+    <span class="status"></span>
+  </form>
+</%def>
+
+## delete, choosing which of its posts go too (post_cleanup.remove_feed)
+<%def name="delete_action(feed_id)">
+  <form action="/api/admin_feed" method="post" class="pretty-form admin-feed-action admin-feed-delete"
+        data-confirm="${_("Delete this feed? Deleted posts can't be brought back.")}"
+        onsubmit="return confirm(this.getAttribute('data-confirm')) && post_form(this, 'admin_feed');">
+    <input type="hidden" name="feed_id" value="${feed_id}">
+    <input type="hidden" name="do" value="delete">
+    <select name="posts" aria-label="${_('its posts')}">
+      <option value="">${_("keep its posts")}</option>
+      <option value="quiet">${_("and its posts nobody voted on or commented on")}</option>
+      <option value="all">${_("and all its posts")}</option>
+    </select>
+    <button class="btn" type="submit">${_("delete")}</button>
     <span class="status"></span>
   </form>
 </%def>
@@ -163,7 +180,10 @@
                           ([_(ai_content.LABEL_NAMES[f['ai_content']])]
                            if f['ai_content'] in ai_content.LABEL_NAMES else []))}</small>
           %endif
-          %if not f['enabled']:
+          %if f.get('removing'):
+            <br><strong>${_("being deleted, with its posts")}</strong>
+            <br><small>${_("tippr-job-feeds deletes the rest of its posts every 15 minutes; then the feed goes")}</small>
+          %elif not f['enabled']:
             <br><strong>${_("paused")}</strong>
           %endif
         </td>
@@ -229,6 +249,7 @@
           %endif
         </td>
         <td>
+          %if not f.get('removing'):
           <div class="admin-feed-actions">
           ${action(f['id'], 'check', _('check now'))}
           %if f['enabled']:
@@ -236,11 +257,12 @@
           %else:
             ${action(f['id'], 'enable', _('resume'))}
           %endif
-          ${action(f['id'], 'delete', _('delete'))}
           <button type="button" class="btn admin-feed-edit-toggle"
                   aria-expanded="false" aria-controls="admin-feed-edit-${f['id']}"
                   onclick="var row = document.getElementById('admin-feed-edit-${f['id']}'); row.hidden = !row.hidden; this.setAttribute('aria-expanded', String(!row.hidden));">${_("edit")}</button>
+          ${delete_action(f['id'])}
           </div>
+          %endif
         </td>
       </tr>
       ## its settings, under it the width of the table: the address, the

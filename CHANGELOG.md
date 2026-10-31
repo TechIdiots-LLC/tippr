@@ -8,6 +8,7 @@
 - **Domain and vault filters are a gold option:** they move from filters to gold options on /prefs/, beside the account switcher, and apply for gold members and admins. Lists saved without gold are kept but not applied. Keyword and user filters stay free, and the user filter's help now links to /prefs/blocked/.
 - **The hide button offers more:** on a post, "hide" opens a choice of this post, posts by its author, posts from its domain or posts in its vault. The last three add to your filters on /prefs/ and take the matching posts off the page. Domains and vaults are for gold members, as on /prefs/ (`POST /api/add_filter`).
 - **Votes and comments on /admin/feeds:** a votes column shows, for each feed's posts still up, the upvotes (besides the bot's own), downvotes, comments, and the share of posts that got either. You can sort by votes, comments or interest, least interest first. `tippr-job-feed_stats` adds them up each hour (`feeds.recount_stats`).
+- **Delete a feed with its posts:** deleting a feed on /admin/feeds now offers to delete its posts too, either all of them or the ones nobody voted on or commented on, the way the post cleanup deletes posts. Up to 200 go at once, and tippr-job-feeds deletes the rest every 15 minutes. The feed stays, marked, until they're gone.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

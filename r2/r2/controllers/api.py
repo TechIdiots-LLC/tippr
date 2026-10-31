@@ -5637,11 +5637,16 @@ class ApiController(TipprController):
         over_18=VBoolean("over_18"),
         # "" leaves the posts unlabelled
         ai_label=VOneOf("ai_content", (None, "") + ai_content.LABELS),
+        # on delete: which of its posts go too (post_cleanup.REMOVE_CHOICES;
+        # "" none)
+        posts=VOneOf("posts", (None, "", "quiet", "all")),
     )
     def POST_admin_feed(self, form, jquery, do, feed_id, url, vault_name,
-                        bot_name, interval, title_prefix, over_18, ai_label):
+                        bot_name, interval, title_prefix, over_18, ai_label,
+                        posts):
         """Add, edit, check now, enable, disable or delete a feed
-        (/admin/feeds, r2.lib.feeds)."""
+        (/admin/feeds, r2.lib.feeds), on delete with its posts or the ones
+        nobody voted on or commented on."""
         from r2.lib import feeds
         from r2.lib.db.thing import NotFound
         if not do:
@@ -5701,13 +5706,18 @@ class ApiController(TipprController):
         if not feed:
             form.set_text(".status", _("no such feed"))
             return
+        if feed.get("removing"):
+            form.set_text(".status", _("its posts are being deleted"))
+            return
         if do == "check":
             feeds.check(feed)
         elif do in ("enable", "disable"):
             feeds.update(feed["id"], enabled=(do == "enable"))
         elif do == "delete":
-            feeds.remove(feed["id"])
-        g.log.info("admin_feed: %s %s %s", c.user.name, do, feed["url"])
+            from r2.lib import post_cleanup
+            post_cleanup.remove_feed(feed, posts or None, c.user)
+        g.log.info("admin_feed: %s %s %s%s", c.user.name, do, feed["url"],
+                   " with posts (%s)" % posts if do == "delete" and posts else "")
         form.refresh()
 
     @validatedForm(
