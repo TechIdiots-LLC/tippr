@@ -6,6 +6,11 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+
+## 0.30.1
+### ✨ Features and improvements
+
+### 🐞 Bug fixes
 - **The admin bar's timings show again:** the server and browser timelines under "timings" stayed empty, because the timings were added to the page before the page was in the response. The same order kept the `.js` wrapper from applying.
 
 ## 0.30.0
