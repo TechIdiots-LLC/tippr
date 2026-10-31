@@ -6,13 +6,13 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **No ads on admin pages:** pages under /admin, and any page built as an admin page, never show ads. That includes AdSense's auto ads, which placed themselves anywhere on a page, and in-feed ads in listings like the reports.
 
 ## 0.30.1
 ### ✨ Features and improvements
 
 ### 🐞 Bug fixes
 - **The admin bar's timings show again:** the server and browser timelines under "timings" stayed empty, because the timings were added to the page before the page was in the response. The same order kept the `.js` wrapper from applying.
-- **No ads on admin pages:** pages under /admin, and any page built as an admin page, never show ads. That includes AdSense's auto ads, which placed themselves anywhere on a page, and in-feed ads in listings like the reports.
 
 ## 0.30.0
 ### ✨ Features and improvements
