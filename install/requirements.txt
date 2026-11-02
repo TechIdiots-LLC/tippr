@@ -65,7 +65,7 @@ opentelemetry-instrumentation-threading==0.66b1
 opentelemetry-proto==1.45.1
 opentelemetry-sdk==1.45.1
 opentelemetry-semantic-conventions==0.66b1
-opentelemetry-util-http==0.66b1
+opentelemetry-util-http==0.66b2
 packaging==26.3
 PasteDeploy==3.1.0
 pika==1.4.4
