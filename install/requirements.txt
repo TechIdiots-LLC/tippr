@@ -10,8 +10,8 @@ baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@7f57e13
 bcrypt==5.0.0
 beautifulsoup4==4.15.0
 blinker==1.9.0
-boto3==1.43.118
-botocore==1.43.118
+boto3==1.43.122
+botocore==1.43.122
 captcha==0.7.1
 cassandra-driver==3.30.1
 cbor2==6.1.5
@@ -24,7 +24,7 @@ coverage==7.17.0
 cramjam==2.14.0
 cryptography==50.0.2
 Cython==3.3.0
-Deprecated==3.0.0
+Deprecated==3.0.1
 emoji==2.16.0
 Flask==3.1.3
 GeoIP==1.3.2
@@ -33,7 +33,7 @@ gevent==26.9.0
 gevent-websocket==0.10.1
 googleapis-common-protos==1.76.0
 greenlet==3.5.6
-grpcio==1.85.0
+grpcio==1.85.1
 gunicorn==26.2.0
 httpagentparser==1.9.9
 idna==3.20
