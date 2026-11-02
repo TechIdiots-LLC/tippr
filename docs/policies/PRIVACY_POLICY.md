@@ -26,6 +26,7 @@ We collect information you provide directly, including:
 When you use the Services, we automatically collect certain information:
 
 - **Log Data**: IP address, browser type, operating system, referrer URLs, pages viewed, and access times.
+- **Approximate Location**: The country your IP address is in, used for our traffic statistics and to decide whether to ask for consent to analytics (see Section 6.3). We don't determine your precise location.
 - **Account Activity**: The IP addresses your account is used from (when you log in, and at most once an hour while you're logged in), with the times. They're kept for 100 days, to help protect your account and fight abuse: you can see them on your account activity page, and so can the site's administrators. Addresses on private networks (such as a home or office network reaching the site directly) aren't kept.
 - **Device Information**: Device type, unique device identifiers, and mobile network information.
 - **Cookies and Similar Technologies**: We use cookies, pixels, and local storage to collect information about your browsing activities. See Section 6 for more details.
@@ -130,6 +131,8 @@ We retain your information for as long as your account is active or as needed to
 - Backup and disaster recovery;
 - Enforcing our terms.
 
+Backups are copies of the whole site, and the site's administrators may keep them away from our servers too (for example, a downloaded copy kept in secure storage), so that the site can be recovered. They are protected like the site itself, and information deleted from the site remains in a backup until that backup is deleted.
+
 ## 6. Cookies and Tracking Technologies
 
 ### 6.1 Types of Cookies
@@ -149,9 +152,9 @@ You can manage cookies through:
 
 ### 6.3 Analytics
 
-**Our own counting.** To show traffic statistics to the site's administrators and moderators, we count page views, unique visitors and actions such as sign-ups, posts, comments and votes. We keep only the totals, not a record of what each person did. To show how many people are on a community or a thread right now ("here now"), we briefly count visitors by account, or by a random identifier kept in a cookie for visitors who aren't signed in, and forget them after about 15 minutes. Small numbers are shown approximately so they can't single anyone out.
+**Our own counting.** To show traffic statistics to the site's administrators and moderators, we count page views, unique visitors and actions such as sign-ups, posts, comments and votes. We keep only the totals, not a record of what each person did. Page views are also counted by the country your IP address is in, which we look up on our own servers (or receive from our content delivery network, when we use one); we keep the totals for each country, not your address or your country. To show how many people are on a community or a thread right now ("here now"), we briefly count visitors by account, or by a random identifier kept in a cookie for visitors who aren't signed in, and forget them after about 15 minutes. Small numbers are shown approximately so they can't single anyone out.
 
-**Google Analytics.** If we use Google Analytics, it loads only for visitors who allow it when we ask, and never for browsers sending a Do Not Track or Global Privacy Control signal. It sets cookies and sends Google information about your visit, such as the pages you view, your browser and device, and events such as signing in, posting, commenting, voting or sharing (not your username or what you post). IP addresses are anonymized. Google's use of this information is described in [Google's Privacy Policy](https://policies.google.com/privacy). You can change your choice at any time as described in Section 6.2.
+**Google Analytics.** If we use Google Analytics, it never loads for browsers sending a Do Not Track or Global Privacy Control signal. Where the law requires your consent, including the European Economic Area, the United Kingdom and Switzerland, it loads only if you allow it when we ask. We may ask every visitor, or only visitors where consent is required; to tell where that is, we look up the country of your IP address on our own servers, ask you if it can't be told, and remember the result in a cookie for a day. It sets cookies and sends Google information about your visit, such as the pages you view, your browser and device, and events such as signing in, posting, commenting, voting or sharing (not your username or what you post). IP addresses are anonymized. Google's use of this information is described in [Google's Privacy Policy](https://policies.google.com/privacy). You can change your choice at any time as described in Section 6.2.
 
 ## 7. Data Security
 
