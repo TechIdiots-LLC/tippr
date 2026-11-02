@@ -56,6 +56,23 @@ work itself, so /admin/backups writes a request file into
 `/var/lib/tippr/backup-queue`, and `tippr-backup.path` starts the service.
 The page shows progress and the last request's log.
 
+### Downloading a backup
+
+Each finished backup on /admin/backups has a **download** link. It sends
+the backup's folder as one uncompressed `.tar` (most of what's in it is
+compressed already), put together as it's sent, so a large backup doesn't
+need room for a second copy on the server. It holds the whole database and
+`secrets.json`, so keep it somewhere safe. To use it again, unpack it into
+`backup_dir` as root, and it's listed on /admin/backups to restore:
+
+```bash
+sudo tar -xf tippr-backup-20261101-120000.tar -C /var/lib/tippr/backups
+```
+
+The files keep their owner and permissions. On a site split over several
+servers, the backups are on the backend, so a frontend doesn't offer the
+link; copy them from the backend instead.
+
 ## Daily backups and the off-site copy
 
 Every night at about 03:30, `tippr-backup-daily.timer` makes a backup (on

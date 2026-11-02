@@ -24,6 +24,14 @@ class Page(WSGIController):
             "</body>", "<script>r.timings = []</script></body>")
 
 
+class Download(WSGIController):
+    def GET_file(self):
+        # sent as it's made (a backup download)
+        pylons.response.content_type = "application/x-tar"
+        pylons.response.app_iter = (b"chunk%d" % i for i in range(3))
+        pylons.response.content_length = 18
+
+
 class TestActionResult(unittest.TestCase):
     def setUp(self):
         pylons.response._push_object(PylonsResponse())
@@ -36,3 +44,10 @@ class TestActionResult(unittest.TestCase):
         self.assertEqual(
             response.text,
             "<html><body>the page<script>r.timings = []</script></body></html>")
+
+    def test_a_streamed_response(self):
+        request = Request.blank("/")
+        request.environ["pylons.routes_dict"] = {"action": "GET_file"}
+        response = request.get_response(Download())
+        self.assertEqual(response.body, b"chunk0chunk1chunk2")
+        self.assertEqual(response.content_length, 18)

@@ -4,6 +4,7 @@
 ### ✨ Features and improvements
 - _...Add new stuff here..._
 - **Replace the site's images from /admin/images.** Every image tippr is built with (the voting arrows, buttons, icons and the rest) can be replaced by an upload, so a site can have its own look without editing files or rebuilding. Replacements go to the media store and apply at once on every web process, including images packed into the stylesheets' sprite sheets; "use the original" goes back. Award images stay on /admin/awards, and the logo, favicon and share image on /admin/site.
+- **Download a backup from /admin/backups.** Each finished backup has a download link that sends it as one .tar file, made as it's sent, to keep a copy somewhere else. Unpacked into the backup folder, it's listed again to restore ([BACKUP.md](docs/BACKUP.md#downloading-a-backup)).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

@@ -23,6 +23,8 @@
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
 
+from pylons import app_globals as g
+from pylons import response
 from pylons import tmpl_context as c
 from pylons.i18n import _
 
@@ -188,6 +190,23 @@ class AdminToolController(TipprController):
     @validate(VAdmin())
     def GET_backups(self):
         return AdminPage(content=AdminBackups()).render()
+
+    @validate(VAdmin(), name=nop("name"))
+    def GET_backup_download(self, name):
+        """A finished backup as one .tar file, sent as it's read
+        (r2.lib.backups.download)."""
+        from r2.lib import backups
+        found = backups.download(name)
+        if not found:
+            return self.abort404()
+        size, chunks = found
+        g.log.info("backups: %s downloaded %s", c.user.name, name)
+        response.content_type = "application/x-tar"
+        response.headers["Content-Disposition"] = (
+            'attachment; filename="%s.tar"' % name)
+        response.headers["Cache-Control"] = "no-store"
+        response.app_iter = chunks
+        response.content_length = size
 
     @validate(VAdmin())
     def GET_errors(self):

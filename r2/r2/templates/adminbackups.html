@@ -133,6 +133,10 @@
         </td>
         <td>
           %if b.get("state") == "done":
+            %if not thing.remote:
+              <a class="btn backup-download" download
+                 href="/admin/backups/download?name=${b.get('name')}">${_("download")}</a>
+            %endif
             ${action_form("restore", _("restore"), name=b.get("name"), confirm_domain=True)}
           %endif
           %if b.get("state") != "running":
@@ -143,6 +147,9 @@
     %endfor
   </table>
   <p><small>${_("Restore replaces all of this site's data with the backup and keeps this server's own passwords; type this site's domain to confirm. Everyone is logged out unless the backup came from this site.")}</small></p>
+  %if not thing.remote:
+    <p><small>${_("Download saves a backup as one .tar file, to keep somewhere else. It holds the site's whole database, so keep it safe. To use it again, unpack it into the backup folder (tar -xf, as root) and it's listed here to restore.")}</small></p>
+  %endif
 %else:
   <p>${_("No backups yet.")}</p>
 %endif

@@ -37,6 +37,7 @@ import hmac
 import json
 import os
 import secrets
+import tarfile
 import time
 
 from pylons import app_globals as g
@@ -223,6 +224,79 @@ def read_chunk(name, path, offset):
     with open(full, "rb") as f:
         f.seek(max(0, offset))
         return f.read(CHUNK_SIZE)
+
+
+###############################################################################
+# Downloading a backup (/admin/backups)
+###############################################################################
+
+DOWNLOAD_CHUNK = 1024 * 1024
+
+
+def download(name):
+    """A finished backup as one uncompressed tar (its folder: the manifest
+    and every file it lists; most are compressed already), made as it's
+    sent: (size, chunks), or None if there's no such backup here (or, on a
+    frontend, the files aren't here). Unpacked into backup_dir, it's a
+    backup again, to restore from /admin/backups."""
+    if remote():
+        return None
+    manifest = get_backup(name)
+    if not manifest or manifest.get("state") != "done":
+        return None
+    folder = os.path.join(backup_dir(), name)
+    paths = ["manifest.json"] + [f["path"] for f in manifest.get("files", ())]
+    entries = []
+    for path in paths:
+        full = os.path.normpath(os.path.join(folder, path))
+        if not full.startswith(folder + os.sep):
+            return None  # (a manifest naming files outside its folder)
+        try:
+            stat = os.stat(full)
+        except OSError:
+            return None
+        info = tarfile.TarInfo(name + "/" + path.replace(os.sep, "/"))
+        info.size = stat.st_size
+        info.mtime = int(stat.st_mtime)
+        info.mode = stat.st_mode & 0o777
+        # whose they are, so unpacked as root they're the site's again
+        info.uid, info.gid = stat.st_uid, stat.st_gid
+        info.uname, info.gname = _owner_names(stat)
+        entries.append((full, info, info.tobuf(format=tarfile.PAX_FORMAT)))
+    size = sum(len(header) + _padded(info.size)
+               for _full, info, header in entries) + 2 * tarfile.BLOCKSIZE
+
+    def chunks():
+        for full, info, header in entries:
+            yield header
+            left = info.size
+            with open(full, "rb") as f:
+                while left > 0:
+                    data = f.read(min(DOWNLOAD_CHUNK, left))
+                    if not data:
+                        # (shorter than when it was measured: the tar has
+                        # to keep the size its header gives)
+                        data = b"\0" * min(DOWNLOAD_CHUNK, left)
+                    left -= len(data)
+                    yield data
+            yield b"\0" * (_padded(info.size) - info.size)
+        yield b"\0" * (2 * tarfile.BLOCKSIZE)
+
+    return size, chunks()
+
+
+def _owner_names(stat):
+    try:
+        import grp
+        import pwd
+        return (pwd.getpwuid(stat.st_uid).pw_name,
+                grp.getgrgid(stat.st_gid).gr_name)
+    except (ImportError, KeyError):
+        return "", ""
+
+
+def _padded(size):
+    return -(-size // tarfile.BLOCKSIZE) * tarfile.BLOCKSIZE
 
 
 def public_summary(manifest):
