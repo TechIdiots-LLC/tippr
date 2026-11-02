@@ -1,7 +1,5 @@
 # {{SITE_NAME}} User Agreement
 
-*Effective Date: January 22, 2026*
-
 *Last Revised: January 22, 2026*
 
 This User Agreement ("Agreement") between you and {{OPERATOR}} ("Company," "we," "us," or "our") sets out the terms and conditions that govern your use of [{{DOMAIN}}]({{SITE_URL}}) and related services (collectively, the "Services").
@@ -167,7 +165,7 @@ Any disputes arising from this Agreement will be resolved through binding arbitr
 
 ## 15. Changes to This Agreement
 
-We may update this Agreement from time to time. If we make material changes, we will notify you by posting the revised Agreement on the Services with an updated effective date. Your continued use of the Services after changes become effective constitutes your acceptance of the revised Agreement.
+We may update this Agreement from time to time. If we make material changes, we will notify you by posting the revised Agreement on the Services with an updated "Last Revised" date. Your continued use of the Services after changes become effective constitutes your acceptance of the revised Agreement.
 
 ## 16. General Terms
 

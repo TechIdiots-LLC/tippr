@@ -8,6 +8,7 @@
 - **Google Analytics can ask for consent only where it's required.** /admin/site has a third choice for visitors' consent, "ask where it's required": visitors in the EU and the rest of the European Economic Area, the UK and Switzerland see the consent banner (by the country of their IP address, and anyone whose country can't be told), and Google Analytics loads for everyone else.
 - **Traffic by country.** /traffic has a countries tab beside languages: unique visitors and pageviews this month by the country of each visitor's address (from the CDN, or the site's GeoIP service), each with its own hourly, daily and monthly graphs. Counting starts with this version.
 - **The privacy policy covers the new country and backup features:** page views are counted by the country of the visitor's IP address (only totals are kept), Google Analytics may ask for consent only where it's required (with the country lookup and the day-long cookie that remembers it), and downloaded backups can be kept away from the site's servers. Upgrades update the policy page unless it was edited on the wiki.
+- **The policies have one date.** The user agreement, privacy policy, content policy and moderator guidelines no longer show an "Effective Date" beside their "Last Revised" date, which upgrades keep up to date (a revised policy takes effect when it's posted).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

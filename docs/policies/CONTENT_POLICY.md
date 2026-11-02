@@ -1,7 +1,5 @@
 # {{SITE_NAME}} Content Policy
 
-*Effective Date: January 22, 2026*
-
 *Last Revised: January 22, 2026*
 
 {{SITE_NAME}} is a platform for communities to discuss, connect, and share. The following Content Policy governs what is allowed on {{SITE_NAME}} and what is not.

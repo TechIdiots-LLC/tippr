@@ -1,7 +1,5 @@
 # {{SITE_NAME}} Moderator Guidelines
 
-*Effective Date: January 22, 2026*
-
 *Last Revised: January 22, 2026*
 
 Welcome to the {{SITE_NAME}} Moderator Community! This document outlines the expectations, responsibilities, and best practices for moderators on {{SITE_NAME}}.

@@ -1,7 +1,5 @@
 # {{SITE_NAME}} Privacy Policy
 
-*Effective Date: January 22, 2026*
-
 *Last Revised: October 23, 2026*
 
 This Privacy Policy explains how {{OPERATOR}} ("Company," "we," "us," or "our") collects, uses, and shares information about you when you use [{{DOMAIN}}]({{SITE_URL}}) and related services (collectively, the "Services").

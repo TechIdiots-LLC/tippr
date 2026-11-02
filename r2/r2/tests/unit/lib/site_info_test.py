@@ -13,8 +13,6 @@ from r2.tests import TipprTestCase
 TODAY = datetime.date(2026, 10, 19)
 POLICY = """# Privacy Policy
 
-*Effective Date: January 22, 2026*
-
 *Last Revised: January 22, 2026*
 
 We collect very little.
@@ -26,8 +24,8 @@ class TestStampRevised(TipprTestCase):
         text, changed = site_info.stamp_revised(POLICY, None, today=TODAY)
         self.assertTrue(changed)
         self.assertIn("*Last Revised: October 19, 2026*", text)
-        # the effective date isn't touched
-        self.assertIn("*Effective Date: January 22, 2026*", text)
+        # only the date changes
+        self.assertEqual(text, POLICY.replace("January 22", "October 19"))
 
     def test_changed_text_is_dated_today(self):
         current = POLICY.replace("January 22", "March 3")
