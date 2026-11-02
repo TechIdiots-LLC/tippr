@@ -3,6 +3,12 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+
+### 🐞 Bug fixes
+- _...Add new stuff here..._
+
+## 0.31.0
+### ✨ Features and improvements
 - **Replace the site's images from /admin/images.** Every image tippr is built with (the voting arrows, buttons, icons and the rest) can be replaced by an upload, so a site can have its own look without editing files or rebuilding. Replacements go to the media store and apply at once on every web process, including images packed into the stylesheets' sprite sheets; "use the original" goes back. Award images stay on /admin/awards, and the logo, favicon and share image on /admin/site.
 - **Download a backup from /admin/backups.** Each finished backup has a download link that sends it as one .tar file, made as it's sent, to keep a copy somewhere else. Unpacked into the backup folder, it's listed again to restore ([BACKUP.md](docs/BACKUP.md#downloading-a-backup)).
 - **Google Analytics can ask for consent only where it's required.** /admin/site has a third choice for visitors' consent, "ask where it's required": visitors in the EU and the rest of the European Economic Area, the UK and Switzerland see the consent banner (by the country of their IP address, and anyone whose country can't be told), and Google Analytics loads for everyone else.
@@ -11,7 +17,6 @@
 - **The policies have one date.** The user agreement, privacy policy, content policy and moderator guidelines no longer show an "Effective Date" beside their "Last Revised" date, which upgrades keep up to date (a revised policy takes effect when it's posted).
 
 ### 🐞 Bug fixes
-- _...Add new stuff here..._
 
 ## 0.30.2
 ### ✨ Features and improvements
