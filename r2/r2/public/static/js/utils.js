@@ -45,6 +45,11 @@ r.utils = {
     },
 
     staticURL: function (item) {
+        // an image replaced on /admin/images
+        var replaced = r.config.static_overrides || {}
+        if (replaced[item]) {
+            return replaced[item]
+        }
         return r.config.static_root + '/' + item
     },
 

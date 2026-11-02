@@ -29,12 +29,13 @@
    from r2.lib import js
 %>
 <%namespace file="utils.html" import="js_setup, googleanalytics, classes"/>
+<%namespace file="less.html" import="image_overrides"/>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}">
   <head>
-    <link rel="apple-touch-icon" 
-          href="/static/compact/tippr-apple-mobile-device.png"/>
-    <link rel="apple-touch-startup-image" 
-          href="/static/compact/tippr_startimg.png" />
+    <link rel="apple-touch-icon"
+          href="${static('compact/tippr-apple-mobile-device.png')}"/>
+    <link rel="apple-touch-startup-image"
+          href="${static('compact/tippr_startimg.png')}" />
     <link rel="canonical" href="${thing.canonical_link}" />
     %if hasattr(thing, "shortlink"):
       <link rel="shorturl" href="https://${thing.shortlink}" />
@@ -48,6 +49,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
+    ${image_overrides('compact.css')}
 
     ${unsafe(js.use('tippr-init'))}
 

@@ -24,6 +24,7 @@
 ###############################################################################
 
 import hashlib
+import json
 import os
 import re
 import subprocess
@@ -205,9 +206,29 @@ def _rewrite_css(css_filename, sprite_path, images, sprite_size):
     return sprite_line.sub(rewrite_sprite_reference, css)
 
 
+def _write_manifest(manifest_path, sprite_name, images, sprite_size):
+    """Which images went where in the sprite, for the images admins can
+    replace (r2.lib.site_images): the built stylesheet only names the
+    sprite and a position."""
+    manifest = {
+        "sprite": sprite_name,
+        "size": list(sprite_size),
+        "images": [{"files": image.filenames,
+                    "x": image.sprite_location[0],
+                    "y": image.sprite_location[1],
+                    "width": image.width, "height": image.height,
+                    "stretch": image.stretch}
+                   for image in images],
+    }
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=1, sort_keys=True)
+
+
 def spritify(css_filename, sprite_path):
     images = _load_spritable_images(css_filename)
+    manifest_path = os.path.splitext(sprite_path)[0] + ".json"
     sprite, sprite_path = _generate_sprite(images, sprite_path)
+    _write_manifest(manifest_path, sprite_path, images, sprite.size)
     return _rewrite_css(css_filename, sprite_path, images, sprite.size)
 
 

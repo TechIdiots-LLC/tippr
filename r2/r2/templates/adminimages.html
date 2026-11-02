@@ -1,0 +1,105 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0 (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## https://github.com/TechIdiots-LLC/tippr/blob/master/LICENSE.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Tippr.
+##
+## The Initial Developer of the Original Code is TechIdiots LLC.
+## Copyright (c) 2026 TechIdiots LLC. All Rights Reserved.
+###############################################################################
+
+<%
+  tabs = [
+      ("used", _("in use")),
+      ("replaced", _("replaced")),
+      ("unused", _("no use found")),
+      ("all", _("all")),
+  ]
+%>
+
+<%def name="size_text(size)">
+  %if size:
+    ${size[0]}&times;${size[1]}
+  %endif
+</%def>
+
+<div class="admin-images">
+<h1>${_("images")}</h1>
+
+<p>
+  ${_("Replace any of the images the site is built with: the voting arrows, buttons, icons and the rest. A replacement applies right away on every web process, with nothing to rebuild, and is kept with the site's other saved settings, so it moves with backups.")}
+  ${_("The logo, favicon and share image are set on")} <a href="/admin/site">${_("site settings")}</a>${_(", and award images on")} <a href="/admin/awards">${_("awards")}</a>.
+</p>
+<p><small>
+  ${_("Where a stylesheet sets an image's size, the replacement is shown at the original's size, so use one with the same proportions (twice the size looks sharp on high-resolution screens). A replacement also stands in for the image's double-size version (name_2x.png), unless that has its own.")}
+</small></p>
+
+<ul class="images-tabs">
+  %for name, label in tabs:
+    <li class="${'selected' if thing.show == name else ''}">
+      <a href="/admin/images?show=${name}">${label}</a>
+      <span class="images-count">${thing.counts[name]}</span>
+    </li>
+  %endfor
+</ul>
+%if thing.show == "unused":
+  <p><small>${_("No stylesheet uses these, and the code doesn't name them, but code that puts a name together (\"aup%s.png\") can still show one.")}</small></p>
+%endif
+
+<p>
+  <input type="search" class="images-filter" placeholder="${_('filter by name')}"
+         oninput="var q = this.value.toLowerCase(); $('.admin-images .image-card').each(function () { $(this).toggle($(this).data('path').toLowerCase().indexOf(q) >= 0) })">
+</p>
+
+%if not thing.images:
+  <p>${_("No images here.")}</p>
+%endif
+
+<div class="image-grid">
+%for image in thing.images:
+  <div class="image-card ${'replaced' if image['replacement'] else ''}"
+       id="image-${image['anchor']}" data-path="${image['path']}">
+    <div class="image-name"><code>${image['path']}</code></div>
+    <div class="image-previews">
+      <figure>
+        <img src="${image['original']}" alt="">
+        <figcaption>${_("original")} ${size_text(image['size'])}</figcaption>
+      </figure>
+      %if image['replacement']:
+        <figure>
+          <img src="${image['replacement']}" alt="">
+          <figcaption>${_("yours")} ${size_text(image['replacement_size'])}</figcaption>
+        </figure>
+      %endif
+    </div>
+    %if image['in_stylesheet']:
+      <div class="image-where"><small>${_("in the stylesheets")}</small></div>
+    %endif
+    <form action="/admin/images" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="uh" value="${c.modhash}">
+      <input type="hidden" name="path" value="${image['path']}">
+      <input type="hidden" name="show" value="${thing.show}">
+      <input type="file" name="file" aria-label="${_('replace %(name)s') % dict(name=image['path'])}"
+             onchange="if (this.value) { this.form.submit(); }">
+    </form>
+    %if image['replacement']:
+      <form action="/admin/images" method="post">
+        <input type="hidden" name="uh" value="${c.modhash}">
+        <input type="hidden" name="path" value="${image['path']}">
+        <input type="hidden" name="show" value="${thing.show}">
+        <input type="hidden" name="remove" value="1">
+        <button class="btn" type="submit">${_("use the original")}</button>
+      </form>
+    %endif
+    %if image['error']:
+      <div class="error">${image['error']}</div>
+    %endif
+  </div>
+%endfor
+</div>
+</div>

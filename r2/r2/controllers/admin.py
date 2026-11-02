@@ -37,6 +37,7 @@ from r2.lib.pages import (
     AdminDomains,
     AdminErrors,
     AdminFeeds,
+    AdminImages,
     AdminPrivacy,
     AdminLiveConfig,
     AdminPostCleanup,
@@ -131,6 +132,40 @@ class AdminToolController(TipprController):
 
     # the logo's upload address before favicons and share images
     POST_site_logo = POST_site_image
+
+    @validate(VAdmin(), show=nop("show"))
+    def GET_images(self, show):
+        return AdminPage(content=AdminImages(show=show)).render()
+
+    @validate(
+        VAdmin(),
+        VModhash(),
+        file=VUploadLength("file", max_length=1024 * 1024, empty_error=None),
+        path=nop("path"),
+        remove=nop("remove"),
+        show=nop("show"),
+    )
+    def POST_images(self, file, path, remove, show):
+        """Replace one of the site's images (r2.lib.site_images), or go
+        back to the original."""
+        from r2.lib import site_images
+        error = None
+        if path not in site_images.catalogue():
+            error = _("There's no such image.")
+        elif remove:
+            site_images.save(path, None)
+        elif not file:
+            error = _("Choose an image of at most 1 MB.")
+        else:
+            entry, error = site_images.store(path, file)
+            if entry:
+                site_images.save(path, entry)
+        if error:
+            return AdminPage(content=AdminImages(
+                show=show, errors={path: error})).render()
+        query = "?show=%s" % show if show in AdminImages.SHOW else ""
+        return self.redirect("/admin/images%s#image-%s" % (
+            query, AdminImages.anchor(path)))
 
     @validate(VAdmin())
     def GET_ads(self):

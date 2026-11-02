@@ -25,7 +25,7 @@
 
 <%!
    from r2.lib.template_helpers import static
-   from r2.lib import js
+   from r2.lib import js, site_images
 %>
 
 <%def name="less_stylesheet(*names)">
@@ -36,7 +36,17 @@
     %else:
       <link rel="stylesheet" type="text/css" href="${static(name+'.css')}" media="all">
     %endif
+    ${image_overrides(name + '.css')}
   %endfor
+</%def>
+
+## the images replaced on /admin/images that the stylesheet `name` shows
+## (r2.lib.site_images); after it, so they win
+<%def name="image_overrides(name)">
+  <% overrides = site_images.stylesheet_css(name) %>
+  %if overrides:
+    <style>${unsafe(overrides)}</style>
+  %endif
 </%def>
 
 <%def name="less_js()">

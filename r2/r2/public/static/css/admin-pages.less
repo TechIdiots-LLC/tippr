@@ -67,6 +67,42 @@
     label { margin-right: 1em; }
 }
 
+// /admin/images
+.admin-images {
+    .images-tabs { list-style: none; padding: 0; margin: 1em 0 0.5em; }
+    .images-tabs li { display: inline-block; margin-right: 1em; }
+    .images-tabs li.selected a { font-weight: bold; }
+    .images-count { background: var(--tp-accent); color: var(--tp-on-accent);
+                    border-radius: 8px; padding: 0 6px; margin-left: 3px;
+                    font-size: 11px; }
+    .images-filter { width: 260px; max-width: 100%; }
+    .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 10px;
+    }
+    .image-card {
+        padding: 8px;
+        border: 1px solid @tp-border;
+        border-radius: 4px;
+        min-width: 0;
+    }
+    .image-card.replaced { border-color: var(--tp-accent); }
+    .image-name code { word-break: break-all; font-size: 11px; }
+    .image-previews { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; }
+    .image-previews figure { margin: 0; }
+    // a checkered background, so white and transparent images show
+    .image-previews img {
+        display: block;
+        max-width: 96px;
+        max-height: 96px;
+        background: repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 12px 12px;
+    }
+    .image-previews figcaption { font-size: 10px; color: @tp-text-muted; }
+    .image-card form { margin: 4px 0; }
+    .image-card input[type=file] { max-width: 100%; font-size: 11px; }
+}
+
 // /admin/config
 .admin-live-config {
     .live-config-table { width: 100%; }

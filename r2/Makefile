@@ -185,7 +185,7 @@ $(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.
 	$(PYTHON) r2/lib/nymph.py $< $(STATIC_BUILD_DIR)/sprite-$*.png | $(CSS_COMPRESS) | $(CSS_REBASE) > $(STATIC_BUILD_DIR)/$*.css
 
 clean_css:
-	rm -f $(CSS_OUTPUTS)
+	rm -f $(CSS_OUTPUTS) $(SPRITES:.png=.json)
 
 #### JS
 

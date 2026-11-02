@@ -42,7 +42,7 @@ from pylons import tmpl_context as c
 from pylons.i18n import _, ungettext
 
 from r2.config import feature
-from r2.lib import hooks, js, tracking, user_tags
+from r2.lib import hooks, js, site_images, tracking, user_tags
 from r2.lib.cache_poisoning import make_poisoning_report_mac
 from r2.lib.static import static_mtime
 from r2.lib.utils import UrlParser, is_subdomain, timeago, timesince
@@ -62,7 +62,7 @@ static_text_extensions = {
     '.css': 'css',
     '.less': 'css'
 }
-def static(path, absolute=False, mangle_name=True):
+def static(path, absolute=False, mangle_name=True, replaced=True):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -75,6 +75,12 @@ def static(path, absolute=False, mangle_name=True):
     extension = os.path.splitext(filename)[1]
     is_text = extension in static_text_extensions
     should_cache_bust = False
+
+    # an image replaced on /admin/images
+    if replaced and extension.lower() in site_images.IMAGE_EXTENSIONS:
+        replacement = site_images.replacement_url(path)
+        if replacement:
+            return replacement
 
     path_components = []
     actual_filename = None if mangle_name else filename
@@ -300,6 +306,8 @@ def js_config(extra_config=None):
         "events_collector_secret": events_collector_secret,
         "feature_screenview_events": feature.is_enabled('screenview_events'),
         "static_root": static(''),
+        # images replaced on /admin/images (r.utils.staticURL)
+        "static_overrides": site_images.js_overrides(),
         "over_18": bool(c.over18),
         "listing_over_18": listing_over_18,
         "expando_preference": expando_preference,

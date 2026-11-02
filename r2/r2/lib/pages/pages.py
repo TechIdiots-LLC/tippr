@@ -4562,6 +4562,52 @@ class AdminSiteSettings(Templated):
         Templated.__init__(self)
 
 
+class AdminImages(Templated):
+    """The admin interface for replacing the site's images
+    (r2.lib.site_images)."""
+    # which images to list: those in use (in a stylesheet, or named in the
+    # code), the replaced ones, the ones no use was found for, or all
+    SHOW = ("used", "replaced", "unused", "all")
+
+    @staticmethod
+    def anchor(path):
+        return re.sub(r"[^\w-]+", "-", path)
+
+    def __init__(self, show=None, errors=None):
+        from r2.lib import site_images
+        from r2.lib.template_helpers import static
+        self.show = show if show in self.SHOW else "used"
+        self.errors = errors or {}
+        saved = site_images.replacements()
+        in_css = site_images.in_stylesheets()
+        mentioned = site_images.mentioned()
+        self.counts = dict.fromkeys(self.SHOW, 0)
+        self.images = []
+        for path, image in sorted(site_images.catalogue().items()):
+            entry = saved.get(path)
+            used = path in in_css or image.name in mentioned
+            self.counts["all"] += 1
+            self.counts["replaced"] += bool(entry)
+            self.counts["used" if used else "unused"] += 1
+            if not (self.show == "all" or
+                    (self.show == "replaced" and entry) or
+                    (self.show == "used" and used) or
+                    (self.show == "unused" and not used)):
+                continue
+            self.images.append(dict(
+                path=path,
+                anchor=self.anchor(path),
+                folder=image.folder,
+                original=static(path, replaced=False),
+                size=image.size,
+                in_stylesheet=path in in_css,
+                replacement=entry and site_images.replacement_url(path),
+                replacement_size=entry and entry.get("size"),
+                error=self.errors.get(path),
+            ))
+        Templated.__init__(self)
+
+
 class AdminAntispam(Templated):
     """The admin interface for the captcha and CleanTalk
     (r2.lib.antispam)."""
