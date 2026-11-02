@@ -10,8 +10,8 @@ baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@7f57e13
 bcrypt==5.0.0
 beautifulsoup4==4.15.0
 blinker==1.9.0
-boto3==1.43.118
-botocore==1.43.118
+boto3==1.43.122
+botocore==1.43.122
 captcha==0.7.1
 cassandra-driver==3.30.1
 cbor2==6.1.5
