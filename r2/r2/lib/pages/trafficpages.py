@@ -37,7 +37,7 @@ from babel.numbers import format_currency
 from pylons import app_globals as g
 from pylons import request
 from pylons import tmpl_context as c
-from pylons.i18n import _
+from pylons.i18n import N_, _
 
 from r2.lib import promote
 from r2.lib.db.sorts import epoch_seconds
@@ -261,6 +261,36 @@ _CHARTED_ACTIVITY = {
 }
 
 
+# why sign-ups and logins failed (r2.controllers.login's error codes)
+_FAILURE_LABELS = {
+    "BAD_CAPTCHA": N_("captcha wrong or missing"),
+    "SPAM_SIGNUP": N_("refused as spam (CleanTalk)"),
+    "RATELIMIT": N_("too many tries"),
+    "USERNAME_TAKEN": N_("username taken"),
+    "USERNAME_TAKEN_DEL": N_("username of a deleted account"),
+    "USERNAME_TOO_SHORT": N_("username too short"),
+    "USERNAME_INVALID_CHARACTERS": N_("username not allowed"),
+    "BAD_EMAIL": N_("email address not valid"),
+    "SHORT_PASSWORD": N_("password too short"),
+    "BAD_PASSWORD": N_("password not allowed"),
+    "BAD_PASSWORD_MATCH": N_("passwords didn't match"),
+    "SIGNUPS_CLOSED": N_("sign-ups closed"),
+    "NEWSLETTER_NO_EMAIL": N_("newsletter without an email address"),
+    "SPONSOR_NO_EMAIL": N_("advertiser without an email address"),
+    "SIGNATURE": N_("bad app signature"),
+    "NO_SUCH_USER": N_("no such account"),
+    "WRONG_PASSWORD": N_("wrong password"),
+    "BANNED": N_("suspended account"),
+    "TWO_FACTOR_REQUIRED": N_("two-factor code needed"),
+    "LOGGED_IN": N_("already logged in"),
+}
+
+
+def _failure_label(code):
+    label = _FAILURE_LABELS.get(code)
+    return _(label) if label else code.lower().replace("_", " ")
+
+
 def add_activity(pane, kind, key="", public=False):
     """What people did (r2.lib.activity_counter), on a traffic pane: a
     summary for the last day, week and month (pane.activity_summary), a
@@ -294,6 +324,19 @@ def add_activity(pane, kind, key="", public=False):
          for name, n in mod_actions.items()
          if name.startswith(ac.MOD_ACTION_PREFIX)),
         key=lambda item: -item[1])
+    # failed sign-ups and logins by why (the site's own page only)
+    pane.activity_failures = []
+    if kind == "site" and not public:
+        for prefix, caption in (
+                (ac.FAILED_SIGNUP_PREFIX, _("failed sign-ups, 30 days")),
+                (ac.FAILED_LOGIN_PREFIX, _("failed logins, 30 days"))):
+            reasons = sorted(
+                ((_failure_label(name[len(prefix):]), n)
+                 for name, n in mod_actions.items()
+                 if name.startswith(prefix)),
+                key=lambda item: -item[1])
+            if reasons:
+                pane.activity_failures.append((caption, reasons))
     columns = []
     for name, label in metrics:
         column = dict(title=_(label), shortname=_(label))

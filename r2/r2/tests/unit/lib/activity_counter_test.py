@@ -31,12 +31,18 @@ class TestCountEvent(TipprTestCase):
     def test_logins_and_signups(self):
         self.assertEqual(self.event("login_event", "login_attempt", error_msg=None),
                          [("logins", None)])
-        self.assertEqual(self.event("login_event", "login_attempt", "WRONG_PASSWORD"),
-                         [("failed_logins", None)])
+        # failures also by why
+        self.assertEqual(self.event("login_event", "login_attempt", "NO_SUCH_USER"),
+                         [("failed_logins", None),
+                          ("failed_login:NO_SUCH_USER", None)])
         self.assertEqual(self.event("login_event", "register_attempt", error_msg=None),
                          [("signups", None)])
         self.assertEqual(self.event("login_event", "register_attempt", error_msg="BAD_CAPTCHA"),
-                         [("failed_signups", None)])
+                         [("failed_signups", None),
+                          ("failed_signup:BAD_CAPTCHA", None)])
+        # (a hook's error, whatever it says, makes a tidy name)
+        self.assertEqual(self.event("login_event", "login_attempt", "bad thing!")[1],
+                         ("failed_login:BAD_THING_", None))
 
     def test_new_visitor(self):
         self.assertEqual(self.event("loid_event", MagicMock(), "create_loid"),

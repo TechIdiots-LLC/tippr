@@ -1865,6 +1865,10 @@ class VThrottledLogin(VRequired):
                 username = self.vlength.run(username)
                 username = chkuser(username)
 
+            # why it failed, for the traffic pages' failed logins by reason
+            # (r2.lib.activity_counter; the person is told the same thing
+            # whichever it is)
+            c.login_failure = "NO_SUCH_USER"
             if not username:
                 raise AuthenticationFailed
 
@@ -1875,7 +1879,9 @@ class VThrottledLogin(VRequired):
 
             hooks.get_hook("account.spotcheck").call(account=account)
             if account._banned:
+                c.login_failure = "BANNED"
                 raise AuthenticationFailed
+            c.login_failure = "WRONG_PASSWORD"
 
             # if already logged in, you're exempt from your own ratelimit
             # (e.g. to allow account deletion regardless of DoS)

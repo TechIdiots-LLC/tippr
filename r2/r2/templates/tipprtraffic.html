@@ -163,6 +163,16 @@ ${self.tables()}
   </tbody>
   </table>
   % endif
+  % for caption, reasons in getattr(thing, 'activity_failures', None) or ():
+  <table class="traffic-table activity-mod-actions">
+  <caption>${caption}</caption>
+  <tbody>
+  % for reason, n in reasons:
+  <tr><th scope="row">${reason}</th><td>${format_number(n)}</td></tr>
+  % endfor
+  </tbody>
+  </table>
+  % endfor
 </%def>
 
 <%def name="tables()">

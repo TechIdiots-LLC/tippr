@@ -3,6 +3,7 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Why sign-ups and logins failed.** /traffic now lists failed sign-ups and failed logins for the last 30 days by reason: wrong or missing captcha, refused as spam, too many tries, username taken, no such account, wrong password, two-factor code needed and the rest. Only the counts are kept; the person trying is told the same as before (a login to an account that doesn't exist still just says "wrong password"). Counting starts with this version.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

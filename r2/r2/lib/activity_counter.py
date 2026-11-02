@@ -28,6 +28,7 @@ kept for KEEP_HOURS, daily and monthly ones indefinitely.
 """
 
 import os
+import re
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -65,6 +66,16 @@ METRICS = [
 # for the public, on a vault with public traffic: not reports or moderation
 PUBLIC_VAULT_METRICS = ("posts", "comments", "upvotes", "downvotes")
 MOD_ACTION_PREFIX = "mod:"   # mod:removelink and the like, by type
+# failed sign-ups and logins, by why (failed_signup:BAD_CAPTCHA and the
+# like: r2.controllers.login's error codes)
+FAILED_SIGNUP_PREFIX = "failed_signup:"
+FAILED_LOGIN_PREFIX = "failed_login:"
+_reason_re = re.compile(r"[^A-Z0-9_]+")
+
+
+def _reason(error):
+    """An error code fit to be part of a count's name."""
+    return _reason_re.sub("_", str(error).upper())[:40] or "OTHER"
 
 _lock = threading.Lock()
 _pending = {}
@@ -281,9 +292,17 @@ def count_event(event, args, kwargs):
     elif event == "login_event":
         action, error = arg(0, "action_name"), arg(1, "error_msg")
         if action == "login_attempt":
-            count("logins" if error is None else "failed_logins")
+            if error is None:
+                count("logins")
+            else:
+                count("failed_logins")
+                count(FAILED_LOGIN_PREFIX + _reason(error))
         elif action == "register_attempt":
-            count("signups" if error is None else "failed_signups")
+            if error is None:
+                count("signups")
+            else:
+                count("failed_signups")
+                count(FAILED_SIGNUP_PREFIX + _reason(error))
         elif action == "password_reset" and error is None:
             count("password_resets")
     elif event == "vote_event":

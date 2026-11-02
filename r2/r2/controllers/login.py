@@ -76,7 +76,9 @@ def handle_login(
         _event(error='RATELIMIT')
 
     elif responder.has_errors("passwd", errors.WRONG_PASSWORD):
-        _event(error='WRONG_PASSWORD')
+        # (no such account, a banned one, or the wrong password:
+        # VThrottledLogin)
+        _event(error=c.login_failure or 'WRONG_PASSWORD')
 
     elif not _two_factor_ok(responder, user, rem):
         _event(error='TWO_FACTOR_REQUIRED')
