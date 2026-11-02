@@ -275,8 +275,36 @@ def sitemaps_complete():
 
 
 def analytics_consent_required():
-    """Whether visitors are asked before Google Analytics loads."""
+    """Whether visitors are asked before Google Analytics loads (all of
+    them, or those where it's required)."""
     return getattr(g, "analytics_consent", None) != "off"
+
+
+# where analytics need visitors' consent first (ePrivacy rules): the EU and
+# the rest of the European Economic Area, the UK and Switzerland
+CONSENT_COUNTRIES = frozenset((
+    "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR",
+    "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK",
+    "SI", "ES", "SE",
+    "IS", "LI", "NO",
+    "GB", "CH",
+))
+
+
+def analytics_consent_mode():
+    """"ask" (every visitor), "region" (those in CONSENT_COUNTRIES) or
+    "off" (nobody)."""
+    mode = getattr(g, "analytics_consent", None)
+    return mode if mode in ("off", "region") else "ask"
+
+
+def consent_needed_here(country):
+    """Whether a visitor from country (a code, or None when it isn't
+    known: asked, to be safe) is asked before Google Analytics loads."""
+    mode = analytics_consent_mode()
+    if mode == "region":
+        return not country or country.upper() in CONSENT_COUNTRIES
+    return mode == "ask"
 
 
 def announcement():

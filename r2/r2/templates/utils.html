@@ -462,7 +462,9 @@ ${unsafe(txt)}
 ## cookie, and with a signed-in member's account (pref_analytics_consent,
 ## POST /api/analytics_consent), which wins, so it follows them to every
 ## device. Decided here in the browser: pages for logged-out visitors may
-## come from a shared cache.
+## come from a shared cache. With "ask where it's required", the script asks
+## POST /api/analytics_consent_region whether this visitor's country needs
+## asking (r2.lib.site_info.CONSENT_COUNTRIES).
 <%def name="googleanalytics(uitype, is_gold_page=False)">
   <%
     from r2.lib import site_info
@@ -478,7 +480,7 @@ ${unsafe(txt)}
         return;
       }
       var id = ${scriptsafe_dumps(ga_id)};
-      var ask = ${scriptsafe_dumps(site_info.analytics_consent_required())};
+      var mode = ${scriptsafe_dumps(site_info.analytics_consent_mode())};
       var member = ${scriptsafe_dumps(bool(c.user_is_loggedin))};
       var saved = ${scriptsafe_dumps(member_choice)};
       var COOKIE = 'tippr_analytics_consent';
@@ -562,13 +564,52 @@ ${unsafe(txt)}
       } else if (member && !saved && choice) {
         keepWithAccount(choice);   /* the account learns this browser's answer */
       }
-      if (!ask || choice == 'granted') {
-        load();
-      } else if (choice != 'denied') {
+      function ask() {
         if (document.body) {
           showBanner();
         } else {
           document.addEventListener('DOMContentLoaded', showBanner);
+        }
+      }
+
+      /* "region": whether this visitor's country needs asking, from
+         /api/analytics_consent_region (the page itself may be cached for
+         everyone), kept a day; when it can't be told, ask */
+      function whereAsked(then) {
+        var REGION = 'tippr_consent_region';
+        var m = document.cookie.match(/(?:^|; )tippr_consent_region=(ask|no)/);
+        if (m) {
+          return then(m[1] == 'ask');
+        }
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/analytics_consent_region.json');
+        xhr.onload = function() {
+          var asked = true;
+          try {
+            asked = JSON.parse(xhr.responseText).ask !== false;
+          } catch (e) {}
+          document.cookie = REGION + '=' + (asked ? 'ask' : 'no') +
+              '; path=/; max-age=86400; SameSite=Lax' +
+              (location.protocol == 'https:' ? '; Secure' : '');
+          then(asked);
+        };
+        xhr.onerror = function() { then(true); };
+        xhr.send('');
+      }
+
+      if (mode == 'off' || choice == 'granted') {
+        load();
+      } else if (choice != 'denied') {
+        if (mode == 'region') {
+          whereAsked(function(asked) {
+            if (asked) {
+              ask();
+            } else {
+              load();
+            }
+          });
+        } else {
+          ask();
         }
       }
     })();

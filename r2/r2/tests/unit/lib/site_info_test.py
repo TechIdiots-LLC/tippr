@@ -46,3 +46,30 @@ class TestStampRevised(TipprTestCase):
         text, _ = site_info.stamp_revised(
             POLICY, None, today=datetime.date(2026, 11, 5))
         self.assertIn("*Last Revised: November 5, 2026*", text)
+
+
+class TestConsentNeededHere(TipprTestCase):
+    def mode(self, value):
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        p = patch.object(site_info, "g", SimpleNamespace(analytics_consent=value))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_ask_everyone(self):
+        self.mode("")
+        self.assertEqual(site_info.analytics_consent_mode(), "ask")
+        self.assertTrue(site_info.consent_needed_here("US"))
+
+    def test_ask_nobody(self):
+        self.mode("off")
+        self.assertFalse(site_info.consent_needed_here("DE"))
+
+    def test_ask_where_its_required(self):
+        self.mode("region")
+        for country in ("DE", "fr", "GB", "NO", "CH"):
+            self.assertTrue(site_info.consent_needed_here(country), country)
+        for country in ("US", "CA", "AU", "JP"):
+            self.assertFalse(site_info.consent_needed_here(country), country)
+        # a country that can't be told is asked, to be safe
+        self.assertTrue(site_info.consent_needed_here(None))

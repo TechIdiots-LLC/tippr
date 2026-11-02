@@ -423,6 +423,24 @@ class ApiController(TipprController):
         return {"consent": consent}
 
     @csrf_exempt
+    @json_validate()
+    def POST_analytics_consent_region(self, responder):
+        """Whether this visitor is asked before Google Analytics loads, when
+        /admin/site asks only where consent is required: by the country of
+        their address (r2.lib.geoip; site_info.CONSENT_COUNTRIES). Asked by
+        the banner's script, since pages for logged-out visitors can come
+        from a shared cache; a POST, so no cache keeps the answer."""
+        from r2.lib import site_info
+        from r2.lib.geoip import get_request_location
+        country = None
+        if site_info.analytics_consent_mode() == "region":
+            try:
+                country = get_request_location(request, c)
+            except Exception:
+                g.log.exception("analytics consent: no location")
+        return {"ask": site_info.consent_needed_here(country)}
+
+    @csrf_exempt
     @json_validate(link=VByName("link_id", thing_cls=Link))
     def POST_here_now(self, responder, link):
         """Count this visitor as on a thread, and say how many are
@@ -5210,7 +5228,7 @@ class ApiController(TipprController):
         VModhash(),
         signups=VOneOf("signups", ("open", "closed")),
         sitemaps=VOneOf("sitemaps", ("recent", "complete")),
-        analytics_consent=VOneOf("analytics_consent", ("ask", "off")),
+        analytics_consent=VOneOf("analytics_consent", ("ask", "region", "off")),
         **{name: VLength(name, max_length=length, empty_error=None)
            for name, length in site_info_text_lengths().items()}
     )
@@ -5260,7 +5278,8 @@ class ApiController(TipprController):
             values["google_analytics_id"] = match.group(0)
         values["signups"] = "closed" if signups == "closed" else ""
         values["sitemaps"] = "complete" if sitemaps == "complete" else ""
-        values["analytics_consent"] = "off" if analytics_consent == "off" else ""
+        values["analytics_consent"] = (
+            analytics_consent if analytics_consent in ("off", "region") else "")
         site_info.save(values)
         form.set_text(".status", _("saved"))
 
