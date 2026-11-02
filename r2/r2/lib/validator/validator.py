@@ -1780,6 +1780,12 @@ class VUname(VRequired):
             self.set_error(errors.USERNAME_INVALID_CHARACTERS)
             self.set_error(errors.BAD_USERNAME)
             return
+        from r2.lib import reserved_names
+        if reserved_names.is_reserved(user_name):
+            # it would pass for the site's staff (r2.lib.reserved_names)
+            self.set_error(errors.USERNAME_RESERVED)
+            self.set_error(errors.BAD_USERNAME)
+            return
         else:
             try:
                 a = Account._by_name(user_name, True)

@@ -527,6 +527,7 @@ class ApiController(TipprController):
         if not (responder.has_errors("user",
                     errors.USERNAME_TOO_SHORT,
                     errors.USERNAME_INVALID_CHARACTERS,
+                    errors.USERNAME_RESERVED,
                     errors.USERNAME_TAKEN_DEL,
                     errors.USERNAME_TAKEN)):
             # Pylons does not handle 204s correctly.

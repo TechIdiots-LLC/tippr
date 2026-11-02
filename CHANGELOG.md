@@ -4,6 +4,7 @@
 ### ✨ Features and improvements
 - _...Add new stuff here..._
 - **Why sign-ups and logins failed.** /traffic now lists failed sign-ups and failed logins for the last 30 days by reason: wrong or missing captcha, refused as spam, too many tries, username taken, no such account, wrong password, two-factor code needed and the rest. Only the counts are kept; the person trying is told the same as before (a login to an account that doesn't exist still just says "wrong password"). Counting starts with this version.
+- **Usernames that would pass for staff are refused at sign-up.** New accounts can't be called admin, moderator, mod, staff and the like, or the site's own name on its own or joined to them ("tippr_mod", "SupportTeam"), including lookalike spellings ("adm1n", Cyrillic or Greek letters, "a_d_m_i_n"). Ordinary names that merely contain the words are fine ("Team_Rocket", "modern", "badminton_fan"), and the form says so as the name is typed. Admins can add more words on /admin/config (reserved_usernames). Existing accounts, and accounts the site makes itself such as feed bots, keep their names.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

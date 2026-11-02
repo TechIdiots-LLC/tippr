@@ -50,6 +50,7 @@ error_list = dict((
         ('USERNAME_INVALID_CHARACTERS', _('username must contain only letters, numbers, "-", and "_"')),
         ('USERNAME_TAKEN', _('that username is already taken')),
         ('USERNAME_TAKEN_DEL', _('that username is taken by a deleted account')),
+        ('USERNAME_RESERVED', _("that username isn't available: it could be mistaken for the site's staff")),
         ('USER_BLOCKED', _("you can't send to a user that you have blocked")),
         ('NO_THING_ID', _('id not specified')),
         ('TOO_MANY_THING_IDS', _('you provided too many ids')),

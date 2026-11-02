@@ -148,6 +148,9 @@ def handle_register(
     elif responder.has_errors('user', errors.USERNAME_INVALID_CHARACTERS):
         _event(error='USERNAME_INVALID_CHARACTERS')
 
+    elif responder.has_errors('user', errors.USERNAME_RESERVED):
+        _event(error='USERNAME_RESERVED')
+
     elif responder.has_errors('user', errors.USERNAME_TAKEN_DEL):
         _event(error='USERNAME_TAKEN_DEL')
 

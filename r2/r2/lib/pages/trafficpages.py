@@ -268,6 +268,7 @@ _FAILURE_LABELS = {
     "RATELIMIT": N_("too many tries"),
     "USERNAME_TAKEN": N_("username taken"),
     "USERNAME_TAKEN_DEL": N_("username of a deleted account"),
+    "USERNAME_RESERVED": N_("username reserved (looks like staff)"),
     "USERNAME_TOO_SHORT": N_("username too short"),
     "USERNAME_INVALID_CHARACTERS": N_("username not allowed"),
     "BAD_EMAIL": N_("email address not valid"),

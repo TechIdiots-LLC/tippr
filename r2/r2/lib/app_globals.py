@@ -420,6 +420,8 @@ class Globals:
             'global_loid_experiments',
             'precomputed_comment_sorts',
             'mailgun_domains',
+            # more words new usernames can't contain (r2.lib.reserved_names)
+            'reserved_usernames',
         ],
         ConfigValue.str: [
             'listing_chooser_gold_multi',

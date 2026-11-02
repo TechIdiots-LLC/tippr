@@ -63,6 +63,12 @@ COMMON = [
         "show changes sooner, or 0 to stop caching pages at once. nginx's "
         "page cache has to be on (the installer's TIPPR_PAGE_CACHE_SECONDS) "
         "for a value here to do anything there.")),
+    ("reserved_usernames", N_(
+        "More words new usernames can't contain, comma-separated, besides "
+        "the ones that would pass for staff (admin, moderator, mod, staff "
+        "and the like, and the site's name joined to them), which are "
+        "always refused. Lookalike spellings (adm1n, Cyrillic letters) are "
+        "caught too. Existing accounts keep their names.")),
     ("captcha_exempt_link_karma", N_(
         "Accounts with at least this much post karma skip the captcha.")),
     ("captcha_exempt_comment_karma", N_(
