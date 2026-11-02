@@ -22,6 +22,10 @@
 # Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
+from unittest.mock import patch
+
+from pylons import app_globals as g
+
 from r2.tests import TipprControllerTestCase
 
 from .common import LoginRegBase
@@ -38,3 +42,23 @@ class LoginRegTests(LoginRegBase, TipprControllerTestCase):
         self.assertEqual(res.status_int, 200)
         self.assertTrue("error" in res)
         self.assertTrue(code in res)
+
+    def test_check_username(self):
+        # what the sign-up form asks as the name is typed (the address it
+        # uses: templates/login.html, data-validate-url)
+        def check(name):
+            body = self.make_qs(user=name)
+            headers = {"User-Agent": self.user_agent}
+            headers.update(self.additional_headers(headers, body))
+            return self.app.post("/api/check_username.json", params=body,
+                                 headers=headers,
+                                 extra_environ={"REMOTE_ADDR": "1.2.3.4"})
+
+        # (.json is an API request, ratelimited per address with a cache the
+        # tests don't have)
+        with self.mock_register(check_name=True), patch.object(
+                g._current_obj(), "RL_SITEWIDE_ENABLED", False):
+            self.assert_success(check("hannah_b"))
+            for name, code in (("tippr_admin", "USERNAME_RESERVED"),
+                               ("bad!name", "USERNAME_INVALID_CHARACTERS")):
+                self.assert_failure(check(name), code)

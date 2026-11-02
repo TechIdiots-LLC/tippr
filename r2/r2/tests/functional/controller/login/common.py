@@ -78,23 +78,32 @@ class LoginRegBase:
         return patch.object(VThrottledLogin, "run",
                             return_value=self.mock_account(name, cookie))
 
-    def mock_register(self):
+    def mock_register(self, check_name=False):
         """Context manager for mocking out registration.
 
         Within this context, new users can be registered but they will
         be mock objects.  Also all usernames can be registered as the account
         lookup is bypassed and Account._by_name always raises NotFound.
+        check_name: the username goes through VUname's checks (length,
+        characters, reserved names) instead of always passing. The
+        context's value is the mocked register, to see whether an account
+        was made.
         """
         from r2.controllers import login
         stack = contextlib.ExitStack()
-        stack.enter_context(patch.object(login, "register",
-                                         return_value=self.mock_account()))
-        stack.enter_context(patch.object(VUname, "run", return_value="test"))
+        registered = stack.enter_context(patch.object(
+            login, "register", return_value=self.mock_account()))
+        if not check_name:
+            stack.enter_context(patch.object(VUname, "run", return_value="test"))
         # ensure this user does not currently exist
         stack.enter_context(patch.object(Account, "_by_name", side_effect=NotFound))
         # no sign-up captcha (failed_captcha turns it back on)
         stack.enter_context(patch.object(antispam, "captcha_on_register",
                                          return_value=False))
+        # nothing goes to CleanTalk
+        stack.enter_context(patch.object(antispam, "check_signup",
+                                         return_value=(True, None)))
+        stack.registered = registered
         return stack
 
     def failed_captcha(self):
@@ -165,6 +174,46 @@ class LoginRegBase:
         ):
             res = self.do_register()
             self.assert_failure(res, "USERNAME_TAKEN")
+
+    def assert_refused(self, code, user="test", passwd2="test123",
+                       patches=()):
+        """A sign-up refused with code, and no account made. patches:
+        [(object, attribute, return value)] for the attempt."""
+        with contextlib.ExitStack() as stack:
+            mocked = stack.enter_context(self.mock_register(check_name=True))
+            for target, attribute, value in patches:
+                stack.enter_context(patch.object(target, attribute,
+                                                 return_value=value))
+            res = self.do_register(user=user, passwd2=passwd2)
+            self.assert_failure(res, code)
+            self.assertFalse(mocked.registered.called)
+
+    def test_register_with_the_names_checked(self):
+        with self.mock_register(check_name=True) as mocked:
+            res = self.do_register(user="hannah_b")
+            self.assert_success(res)
+            self.assertTrue(mocked.registered.called)
+
+    def test_register_reserved_name(self):
+        # names that would pass for staff (r2.lib.reserved_names)
+        for name in ("admin", "Tippr_Mod", "adm1n", "SupportTeam"):
+            self.assert_refused("USERNAME_RESERVED", user=name)
+
+    def test_register_invalid_characters(self):
+        self.assert_refused("USERNAME_INVALID_CHARACTERS", user="bad!name")
+
+    def test_register_passwords_differ(self):
+        self.assert_refused("BAD_PASSWORD_MATCH", passwd2="something-else")
+
+    def test_register_signups_closed(self):
+        from r2.lib import site_info
+        self.assert_refused("SIGNUPS_CLOSED",
+                            patches=[(site_info, "signups_open", False)])
+
+    def test_register_spam(self):
+        # CleanTalk says no (r2.lib.antispam)
+        self.assert_refused("SPAM_SIGNUP", patches=[
+            (antispam, "check_signup", (False, "spam"))])
 
     def test_captcha_blocking(self):
         with contextlib.ExitStack() as stack:

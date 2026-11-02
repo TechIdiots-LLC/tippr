@@ -146,6 +146,7 @@
       %endif
       %if register:
         ${error_field("SPAM_SIGNUP", "user")}
+        ${error_field("SIGNUPS_CLOSED", "user")}
       %endif
       <% from r2.lib import newsletter %>
       %if register and newsletter.enabled():
@@ -205,8 +206,8 @@
               ${error_field("BAD_USERNAME", "user", kind="span")}
               ${error_field("USERNAME_TAKEN", "user", kind="span")}
               ${error_field("USERNAME_TAKEN_DEL", "user", kind="span")}
-            %endif
               ${error_field("USERNAME_RESERVED", "user", kind="span")}
+            %endif
           </li>
         %if register:
           <li>

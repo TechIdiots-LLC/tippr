@@ -22,8 +22,11 @@
 # Portions created by TechIdiots LLC (Tippr) are Copyright (c) 2026
 # TechIdiots LLC. All Rights Reserved.
 ###############################################################################
+import html
+
 from r2.lib.errors import error_list
 from r2.lib.str import _force_unicode
+from r2.lib.translation import _get_translator
 from r2.models import Vault
 from r2.tests import TipprControllerTestCase
 
@@ -61,8 +64,17 @@ class PostLoginRegTests(LoginRegBase, TipprControllerTestCase):
         # (compared to a redirect).
         self.assertEqual(res.status_int, 200)
         # recaptcha is done entirely in JS
-        if code != "BAD_CAPTCHA":
-            self.assertTrue(error_list[code] in _force_unicode(res.body))
+        body = html.unescape(_force_unicode(res.body))
+        if code == "SIGNUPS_CLOSED":
+            # the page shows its own notice instead of the form
+            self.assertIn('class="signups-closed"', body)
+        elif code != "BAD_CAPTCHA":
+            # as the page has it: quotes unescaped, and in English as the
+            # site's catalog words it (tippr-i18n rewords some)
+            message = error_list[code]
+            english = _get_translator("en", graceful_fail=True).gettext(message)
+            self.assertTrue(message in body or english in body,
+                            "%s isn't on the page" % code)
 
     def make_qs(self, **kw):
         kw['dest'] = self.dest

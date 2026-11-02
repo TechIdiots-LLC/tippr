@@ -8,6 +8,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **A sign-up sent after sign-ups were closed now says so.** The sign-up form had no place for the "not taking new accounts" message, so a form already open when /admin/site closed sign-ups did nothing when sent.
 
 ## 0.31.0
 ### ✨ Features and improvements
