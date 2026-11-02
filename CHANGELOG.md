@@ -9,6 +9,7 @@
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
 - **A sign-up sent after sign-ups were closed now says so.** The sign-up form had no place for the "not taking new accounts" message, so a form already open when /admin/site closed sign-ups did nothing when sent.
+- **Dependabot's passing updates merge on their own again.** The master ruleset's required review held every pull request the auto-merge workflow had cleared; the workflow now gives that review itself (with "Allow GitHub Actions to create and approve pull requests" on, under Settings > Actions > General). OpenTelemetry's patch releases are kept out of the weekly patch group, so its exactly-pinned packages are no longer split across pull requests that each fail CI.
 
 ## 0.31.0
 ### ✨ Features and improvements

@@ -21,6 +21,9 @@ updates:
       # the rest's patch releases in one pull request a week
       patch:
         update-types: [patch]
+        # (not opentelemetry's: its 1.x and 0.x beta packages pin each other
+        # exactly, so split across pull requests none of them pass)
+        exclude-patterns: ["opentelemetry-*"]
     ignore:
       # botocore needs python-dateutil below 3
       - dependency-name: python-dateutil

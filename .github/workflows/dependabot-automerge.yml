@@ -4,7 +4,9 @@
 #
 # Needs, in Settings: "Allow auto-merge" (General), and a ruleset (Rules >
 # Rulesets) for master that requires the "test" and
-# "Run install/tippr.sh (smoke)" checks. Without required checks GitHub
+# "Run install/tippr.sh (smoke)" checks. If the ruleset also requires an
+# approving review, "Allow GitHub Actions to create and approve pull
+# requests" (Actions > General) lets this workflow give it. Without required checks GitHub
 # would merge at once, so this does nothing until master has them (it
 # looks for a ruleset: this workflow's token can't read classic branch
 # protection rules).
@@ -52,4 +54,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: |
+          # the ruleset's required review: from github-actions, which needs
+          # "Allow GitHub Actions to create and approve pull requests"
+          # (Settings > Actions > General)
+          gh pr review --approve "$PR_URL" ||
+            echo "::warning::couldn't approve; the pull request waits for a review"
+          gh pr merge --auto --squash "$PR_URL"
