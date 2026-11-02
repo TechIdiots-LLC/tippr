@@ -54,6 +54,12 @@ _BOT_RE = re.compile(
     r"httpclient|okhttp|java/|go-http|libwww|headless|scrapy|tippr-feeds",
     re.I)
 
+# a geoip lookup this slow (they're cached, so it's the service) pauses
+# looking up countries for a while
+GEOIP_SLOW_SECONDS = 1
+GEOIP_PAUSE_SECONDS = 300
+_geoip_paused_until = 0.0
+
 _lock = threading.Lock()
 # (kind, key, hour) -> [pageviews, {visitor keys}]
 _pending = {}
@@ -98,6 +104,7 @@ def _ensure_tables(engine):
         return
     from r2.models.traffic import (AdImpressionsByCodename,
                                    ClickthroughsByCodename,
+                                   PageviewsByCountry,
                                    PageviewsByLanguage, PageviewsByVault,
                                    PageviewsByVaultAndPath,
                                    SitewidePageviews,
@@ -105,7 +112,7 @@ def _ensure_tables(engine):
                                    TargetedImpressionsByCodename)
     table = _visitors_table()
     for t in (table, SitewidePageviews.__table__, PageviewsByVault.__table__,
-              PageviewsByLanguage.__table__,
+              PageviewsByLanguage.__table__, PageviewsByCountry.__table__,
               PageviewsByVaultAndPath.__table__,
               AdImpressionsByCodename.__table__,
               ClickthroughsByCodename.__table__,
@@ -185,6 +192,30 @@ def record(scopes, visitor, now=None):
         flush()
 
 
+def visitor_country(request, c):
+    """The country code of the visitor's address ("" when it can't be
+    told): from the CDN's header, or the geoip service (r2.lib.geoip,
+    which keeps each address's answer in memcached)."""
+    global _geoip_paused_until
+    via_cdn = getattr(request, "via_cdn", False)
+    if not via_cdn and not getattr(g, "geoip_location", None):
+        return ""  # (no geoip service set up: don't ask, or warn, each time)
+    if not via_cdn and time.time() < _geoip_paused_until:
+        return ""
+    started = time.time()
+    try:
+        from r2.lib.geoip import get_request_location
+        country = get_request_location(request, c)
+    except Exception:
+        g.log.exception("traffic: no location")
+        country = None
+    if time.time() - started > GEOIP_SLOW_SECONDS:
+        # the geoip service is struggling: don't hold pages up for it
+        _geoip_paused_until = time.time() + GEOIP_PAUSE_SECONDS
+    country = (country or "").upper()
+    return country if len(country) == 2 and country.isalpha() else ""
+
+
 def record_request(request, response, c):
     """Count this request if it's a page someone viewed (TipprController
     calls it after each request)."""
@@ -206,6 +237,7 @@ def record_request(request, response, c):
             scopes.append(("vault", site.name))
         lang = (c.lang or "en").split("-")[0]
         scopes.append(("lang", lang))
+        scopes.append(("country", visitor_country(request, c)))
         # the AdSense units the page showed, one each (templates/adsense.html;
         # r2.lib.ad_traffic)
         for unit in getattr(c, "adsense_units", None) or ():
@@ -256,6 +288,7 @@ _TARGETS = {
     "site": ("traffic_aggregate", ()),
     "vault": ('"traffic_Vaults"', ("vault",)),
     "lang": ("traffic_lang", ("lang",)),
+    "country": ("traffic_country", ("country",)),
     "srpath": ("traffic_srpaths", ("srpath",)),
     # ads (r2.lib.ad_traffic): by sponsored post or AdSense unit, and by
     # campaign and the vault it showed in

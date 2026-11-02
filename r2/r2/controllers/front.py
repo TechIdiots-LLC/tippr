@@ -1530,6 +1530,13 @@ class FrontController(TipprController):
         return trafficpages.LanguageTrafficPage(langcode).render()
 
     @validate(VEmployee())
+    def GET_country_traffic(self, country):
+        if country and country != "unknown" and not (
+                len(country) == 2 and country.isalpha()):
+            return self.abort404()
+        return trafficpages.CountryTrafficPage(country).render()
+
+    @validate(VEmployee())
     def GET_advert_traffic(self, code):
         return trafficpages.AdvertTrafficPage(code).render()
 

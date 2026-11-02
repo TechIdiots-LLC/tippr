@@ -108,6 +108,8 @@ def make_map(config):
     mc('/traffic', controller='front', action='site_traffic')
     mc('/traffic/languages/:langcode', controller='front',
        action='lang_traffic', langcode='')
+    mc('/traffic/countries/:country', controller='front',
+       action='country_traffic', country='')
     mc('/traffic/adverts/:code', controller='front',
        action='advert_traffic', code='')
     mc('/traffic/vaults/report', controller='front',

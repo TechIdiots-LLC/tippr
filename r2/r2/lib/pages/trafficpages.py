@@ -66,6 +66,7 @@ class TrafficPage(Tippr):
     def build_toolbars(self):
         main_buttons = [NavButton(menu.sitewide, "/"),
                         NamedButton("languages"),
+                        NamedButton("countries"),
                         NamedButton("adverts")]
 
         toolbar = [PageNameNav("nomenu", title=self.title),
@@ -91,6 +92,18 @@ class LanguageTrafficPage(TrafficPage):
             content = LanguageTraffic(langcode)
         else:
             content = LanguageTrafficSummary()
+
+        TrafficPage.__init__(self, content)
+
+
+class CountryTrafficPage(TrafficPage):
+    """Traffic by the country of visitors' addresses: all of them, or one."""
+
+    def __init__(self, country):
+        if country:
+            content = CountryTraffic(country)
+        else:
+            content = CountryTrafficSummary()
 
         TrafficPage.__init__(self, content)
 
@@ -330,6 +343,19 @@ class LanguageTrafficSummary(Templated):
         Templated.__init__(self)
 
 
+class CountryTrafficSummary(Templated):
+    """An overview of traffic by the country of visitors' addresses
+    (r2.lib.traffic_counter)."""
+
+    def __init__(self):
+        locale = c.locale
+        self.country_summary = [
+            ((code or "unknown", CountryTraffic.get_country_name(code, locale)),
+             data)
+            for code, data in traffic.PageviewsByCountry.top_last_month()]
+        Templated.__init__(self)
+
+
 class AdvertTrafficSummary(TipprTraffic):
     """An overview of traffic for all adverts on the site."""
 
@@ -465,6 +491,26 @@ class LanguageTraffic(TipprTraffic):
             return language_code
         else:
             return lang_locale.get_display_name(locale)
+
+
+class CountryTraffic(TipprTraffic):
+    def __init__(self, country):
+        # ("unknown" in addresses: visitors whose country can't be told)
+        self.country = "" if country == "unknown" else country.upper()
+        TipprTraffic.__init__(self, CountryTraffic.get_country_name(self.country))
+
+    def get_data_for_interval(self, interval, columns):
+        return traffic.PageviewsByCountry.history(interval, self.country)
+
+    @staticmethod
+    def get_country_name(country_code, locale=None):
+        if not country_code:
+            return _("unknown")
+        try:
+            names = (locale or c.locale).territories
+        except AttributeError:
+            return country_code
+        return names.get(country_code.upper(), country_code)
 
 
 class AdvertTraffic(TipprTraffic):

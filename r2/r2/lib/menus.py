@@ -214,6 +214,7 @@ menu =   MenuHandler(hot          = _('hot'),
 
                      sitewide = _('sitewide'),
                      languages = _('languages'),
+                     countries = _('countries'),
                      adverts = _('adverts'),
 
                      whitelist = _("whitelist")

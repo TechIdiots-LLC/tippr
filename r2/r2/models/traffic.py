@@ -485,6 +485,31 @@ class PageviewsByLanguage(Base):
         return top_last_month(cls, "lang")
 
 
+class PageviewsByCountry(Base):
+    """Sitewide pageviews by the country of the visitor's address (r2.lib.geoip;
+    "" when it can't be told)."""
+
+    __tablename__ = "traffic_country"
+
+    country = Column(String(), nullable=False, primary_key=True)
+    date = Column(DateTime(), nullable=False, primary_key=True)
+    interval = Column(String(), nullable=False, primary_key=True)
+    unique_count = Column("unique", Integer())
+    pageview_count = Column("total", BigInteger())
+
+    @classmethod
+    @memoize_traffic(time=300)
+    def history(cls, interval, country):
+        time_points, q = make_history_query(cls, interval)
+        q = q.filter(cls.country == country)
+        return fill_gaps(time_points, q, "unique_count", "pageview_count")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def top_last_month(cls):
+        return top_last_month(cls, "country", num=300)
+
+
 class ClickthroughsByCodename(Base):
     """Clickthrough counts for ads."""
 

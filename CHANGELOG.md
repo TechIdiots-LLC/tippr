@@ -6,6 +6,7 @@
 - **Replace the site's images from /admin/images.** Every image tippr is built with (the voting arrows, buttons, icons and the rest) can be replaced by an upload, so a site can have its own look without editing files or rebuilding. Replacements go to the media store and apply at once on every web process, including images packed into the stylesheets' sprite sheets; "use the original" goes back. Award images stay on /admin/awards, and the logo, favicon and share image on /admin/site.
 - **Download a backup from /admin/backups.** Each finished backup has a download link that sends it as one .tar file, made as it's sent, to keep a copy somewhere else. Unpacked into the backup folder, it's listed again to restore ([BACKUP.md](docs/BACKUP.md#downloading-a-backup)).
 - **Google Analytics can ask for consent only where it's required.** /admin/site has a third choice for visitors' consent, "ask where it's required": visitors in the EU and the rest of the European Economic Area, the UK and Switzerland see the consent banner (by the country of their IP address, and anyone whose country can't be told), and Google Analytics loads for everyone else.
+- **Traffic by country.** /traffic has a countries tab beside languages: unique visitors and pageviews this month by the country of each visitor's address (from the CDN, or the site's GeoIP service), each with its own hourly, daily and monthly graphs. Counting starts with this version.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
