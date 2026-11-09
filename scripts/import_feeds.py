@@ -57,14 +57,13 @@ newest few items of each within 15 minutes.
 """
 
 import os
-import re
 from urllib.parse import urljoin
 
 import requests
 from lxml import html
 
 import r2
-from r2.lib import ai_content, feeds, starter_content
+from r2.lib import ai_content, feed_list, feeds, starter_content
 from r2.lib.db.thing import NotFound
 from r2.models import Vault
 
@@ -73,12 +72,6 @@ DEFAULT_FILE = os.path.join(os.path.dirname(os.path.dirname(
     "starter_feeds.txt")
 FEED_TYPES = ("application/rss+xml", "application/atom+xml",
               "application/rdf+xml")
-URL_RE = re.compile(r"https?://[^\s|<>\"',]+")
-VAULT_RE = re.compile(r"(?:^|[\s|,;])/?v/([A-Za-z0-9_]{2,21})\b")
-PREFIX_RE = re.compile(r"(\[[^\[\]\t|]{1,38}\])")
-NSFW_RE = re.compile(r"(?:^|[\s|,;])nsfw(?=$|[\s|,;])", re.I)
-AI_RE = re.compile(r"(?:^|[\s|,;])ai[:=](%s)(?=$|[\s|,;])"
-                   % "|".join(ai_content.LABELS), re.I)
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; tippr-feeds/1.0)"}
 
 
@@ -113,26 +106,14 @@ def resolve(url):
 
 def read_list(path):
     """[(line number, vault name, address, prefix, nsfw, AI label)]"""
-    entries, vault_name = [], None
+    entries = []
     with open(path, encoding="utf-8") as f:
-        for number, line in enumerate(f, 1):
-            if line.lstrip().startswith("#"):
-                continue
-            vault_match = VAULT_RE.search(" " + line)
-            if vault_match:
-                vault_name = vault_match.group(1)
-            url_match = URL_RE.search(line)
-            if url_match and vault_name:
-                prefix = PREFIX_RE.search(line)
-                rest = line.replace(url_match.group(0), " ")
-                ai_label = AI_RE.search(rest)
-                entries.append((number, vault_name,
-                                url_match.group(0).rstrip(".;)"),
-                                prefix.group(1) if prefix else None,
-                                bool(NSFW_RE.search(rest)),
-                                ai_label.group(1).lower() if ai_label else None))
-            elif url_match:
-                print("SKIPPED  line %-3d no vault before it" % number)
+        for e in feed_list.read_lines(f):
+            if e["vault"]:
+                entries.append((e["number"], e["vault"], e["url"], e["prefix"],
+                                e["over_18"], e["ai_label"]))
+            else:
+                print("SKIPPED  line %-3d no vault before it" % e["number"])
     return entries
 
 

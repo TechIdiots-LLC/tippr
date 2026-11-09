@@ -4183,6 +4183,10 @@ class AdminFeeds(Templated, FeedView):
             f["stats"] = votes.get(f["id"])
         FeedView.__init__(self, everything, q, vault, bot, status, sort,
                           order)
+        self.everything = everything
+        # the import form as it was sent, and what it did or would do
+        # (POST_feeds, r2.lib.feed_list)
+        self.bulk = {}
         self.min_interval = feeds.MIN_INTERVAL_MINUTES
         self.default_interval = feeds.DEFAULT_INTERVAL_MINUTES
         self.first_fetch = feeds.FIRST_FETCH_POSTS

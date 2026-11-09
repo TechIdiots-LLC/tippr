@@ -312,13 +312,13 @@ def get_feed(feed_id):
 
 
 def add(url, vault, account, interval_minutes=DEFAULT_INTERVAL_MINUTES,
-        title_prefix=None, over_18=False, ai_content=None):
+        title_prefix=None, over_18=False, ai_content=None, enabled=True):
     interval = max(MIN_INTERVAL_MINUTES, int(interval_minutes or
                                              DEFAULT_INTERVAL_MINUTES))
     with ENGINE.begin() as conn:
         result = conn.execute(feeds.insert().values(
             url=url, vault_id=vault._id, account_id=account._id,
-            enabled=True, interval_minutes=interval,
+            enabled=bool(enabled), interval_minutes=interval,
             title_prefix=(title_prefix or "").strip() or None,
             over_18=bool(over_18), ai_content=ai_content or None,
             created=_now(), posted=0))

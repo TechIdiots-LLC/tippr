@@ -59,7 +59,9 @@ from r2.lib.pages import (
 )
 from r2.lib.validator import (
     VAdmin,
+    VBoolean,
     VInt,
+    VLength,
     VSupportStaff,
     VModhash,
     VUploadLength,
@@ -281,6 +283,60 @@ class AdminToolController(TipprController):
         filtered and sorted by the query (AdminFeeds)."""
         return AdminPage(content=AdminFeeds(q, vault, bot, status, sort,
                                             order)).render()
+
+    @validate(VAdmin(), q=nop("q"), vault=nop("vault"), bot=nop("bot"),
+              status=nop("status"), sort=nop("sort"), order=nop("order"))
+    def GET_feeds_export(self, q, vault, bot, status, sort, order):
+        """The feeds in this view as a list to import (r2.lib.feed_list)."""
+        from r2.lib import feed_list
+        page = AdminFeeds(q, vault, bot, status, sort, order)
+        g.log.info("admin_feed: %s exported %d feeds", c.user.name,
+                   len(page.feeds))
+        response.content_type = "text/plain"
+        response.charset = "utf-8"
+        response.headers["Content-Disposition"] = (
+            'attachment; filename="feeds.txt"')
+        response.headers["Cache-Control"] = "no-store"
+        return feed_list.export(page.feeds)
+
+    @validate(
+        VAdmin(),
+        VModhash(),
+        file=VUploadLength("file", max_length=1024 * 1024, empty_error=None),
+        text=VLength("list", max_length=1024 * 1024, empty_error=None),
+        default_bot=nop("default_bot"),
+        update=VBoolean("update"),
+        remove=VBoolean("remove"),
+        go=nop("go"),
+        q=nop("q"), vault=nop("vault"), bot=nop("bot"),
+        status=nop("status"), sort=nop("sort"), order=nop("order"),
+    )
+    def POST_feeds(self, file, text, default_bot, update, remove, go, q, vault,
+                   bot, status, sort, order):
+        """Import a list of feeds, or (the "preview" button) show what it
+        would do (r2.lib.feed_list). Only the feeds in this view are removed
+        if they aren't in the list, so a list exported from a filtered view
+        doesn't delete everything outside it."""
+        from r2.lib import feed_list
+        page = AdminFeeds(q, vault, bot, status, sort, order)
+        if file:
+            text = file.decode("utf-8-sig", "replace")
+        bulk = dict(text=text or "", default_bot=default_bot or "",
+                    update=update, remove=remove, result=None, done=False)
+        if not (text or "").strip():
+            bulk["error"] = _("Choose a file or paste a list, of at most 1 MB.")
+        else:
+            bulk["result"] = feed_list.plan(text, default_bot, page.everything,
+                                            update,
+                                            page.feeds if remove else ())
+            if go == "import":
+                feed_list.apply(bulk["result"])
+                bulk["done"] = True
+                g.log.info("admin_feed: %s imported a list: %s", c.user.name,
+                           bulk["result"]["counts"])
+                page = AdminFeeds(q, vault, bot, status, sort, order)
+        page.bulk = bulk
+        return AdminPage(content=page).render()
 
     @validate(VAdmin(), show=nop("show"))
     def GET_apps(self, show):

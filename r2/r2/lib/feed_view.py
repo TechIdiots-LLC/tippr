@@ -123,6 +123,14 @@ class FeedView:
                  if v and v != defaults.get(k)}
         return "/admin/feeds" + ("?" + urlencode(query) if query else "")
 
+    @property
+    def filtered(self):
+        return bool(self.q or self.vault or self.bot or self.status != "all")
+
+    def export_link(self):
+        """This view's feeds as a list to download (r2.lib.feed_list)."""
+        return self.link().replace("/admin/feeds", "/admin/feeds/export", 1)
+
     def sort_link(self, sort):
         """A column heading's link: by it (its usual way, default_order),
         or the other way round when it's already the sort."""

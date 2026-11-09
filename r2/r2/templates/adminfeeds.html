@@ -105,6 +105,104 @@
   ${feed_form('add')}
 </details>
 
+## a list of feeds in and out (r2.lib.feed_list); open with what the form did
+<details class="admin-feeds-add admin-feeds-bulk" ${'open' if thing.bulk else ''}>
+  <summary><h2>${_("Import or export a list")}</h2></summary>
+  %if thing.total:
+    <p>
+      ${_("Export:")}
+      <a href="/admin/feeds/export">${_("all %(n)d feeds") % dict(n=thing.total)}</a>
+      %if thing.filtered:
+        · <a href="${thing.export_link()}">${_("the %(n)d feeds in this view") % dict(n=len(thing.feeds))}</a>
+      %endif
+    </p>
+  %endif
+  <% bulk = thing.bulk %>
+  <form action="/admin/feeds" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="uh" value="${c.modhash}">
+    %for name in ("q", "vault", "bot", "status", "sort", "order"):
+      <input type="hidden" name="${name}" value="${getattr(thing, name)}">
+    %endfor
+    <p><small>
+      ${_("One feed per line: the vault and the address, then, if you like, a [title prefix], nsfw, ai:human, ai:assisted or ai:generated, bot:name, every:minutes and paused, separated by tabs or spaces. A line without a vault uses the vault of the line above; lines starting with # are skipped.")}
+      ${_("The feeds aren't fetched here, so an address that isn't a feed shows as an error after its first check.")}
+    </small></p>
+    <p><input type="file" name="file" accept=".txt,.tsv,text/plain"></p>
+    <p><textarea name="list" rows="8" spellcheck="false" wrap="off"
+                 placeholder="/v/news&#9;[BBC]&#9;https://feeds.bbci.co.uk/news/rss.xml&#9;bot:news_bot&#9;every:60">${bulk.get('text', '')}</textarea></p>
+    <p><label>${_("Lines without bot: are posted by")}
+      <input type="text" name="default_bot" size="20" value="${bulk.get('default_bot') or 'news_bot'}"></label></p>
+    <p><label><input type="checkbox" name="update" ${'checked' if bulk.get('update') else ''}>
+      ${_("Change feeds already on that vault to match their lines (prefix, NSFW, AI label and paused as the line has them; bot and interval if it names them). Otherwise they're left alone.")}</label></p>
+    %if thing.total:
+      <p><label><input type="checkbox" name="remove" ${'checked' if bulk.get('remove') else ''}>
+        %if thing.filtered:
+          ${_("Delete the %(n)d feeds in this view that aren't in the list (feeds outside this view stay). Their posts stay.") % dict(n=len(thing.feeds))}
+        %else:
+          ${_("Delete every feed that isn't in the list. Their posts stay.")}
+        %endif
+      </label></p>
+    %endif
+    <button class="btn" type="submit" name="go" value="preview">${_("preview")}</button>
+    <button class="btn" type="submit" name="go" value="import"
+            data-confirm="${_("Delete the feeds that aren't in this list?")}"
+            onclick="return !(this.form.remove && this.form.remove.checked) || confirm(this.getAttribute('data-confirm'));">${_("import")}</button>
+  </form>
+  %if bulk.get('error'):
+    <p class="error">${bulk['error']}</p>
+  %endif
+  %if bulk.get('result'):
+    <%
+      result = bulk['result']
+      counts = result['counts']
+      action_names = {
+        'add': _("add"), 'change': _("change"), 'remove': _("delete"),
+        'problem': _("problem")}
+      problem_names = dict(
+        no_vault=_("no vault on or above this line"),
+        bad_address=_("not an http(s) address"),
+        no_such_vault=_("no such vault"),
+        ai_label=_("the vault doesn't accept this AI label"),
+        no_bot=_("no bot named"),
+        bad_bot=_("not a valid username for the bot"),
+        bot_suspended=_("that account is suspended or deleted"))
+      change_names = dict(
+        title_prefix=_("title prefix"), over_18=_("NSFW"),
+        ai_content=_("AI label"), enabled=_("paused or resumed"),
+        interval_minutes=_("interval"), bot=_("bot"))
+    %>
+    <h3>${_("Imported") if bulk['done'] else _("Preview: nothing has changed yet")}</h3>
+    <p>${_("%(add)d to add, %(change)d to change, %(same)d left as they are, %(remove)d to delete, %(problem)d with problems") % dict(
+        add=counts.get('add', 0), change=counts.get('change', 0), same=counts.get('same', 0),
+        remove=counts.get('remove', 0), problem=counts.get('problem', 0))}</p>
+    %if result['remove_blocked']:
+      <p class="error">${_("No feeds will be deleted until the list has feeds in it and none of its lines have problems.")}</p>
+    %endif
+    %if any(r['action'] != 'same' for r in result['rows']):
+      <table class="lined-table admin-feeds-report">
+        <tr><th>${_("line")}</th><th></th><th>${_("vault")}</th><th>${_("feed")}</th><th></th></tr>
+        %for r in result['rows']:
+          %if r['action'] != 'same':
+            <tr>
+              <td>${r['number'] or ''}</td>
+              <td class="admin-feeds-report-${r['action']}">${action_names[r['action']]}</td>
+              <td>${'/v/' + r['vault'] if r['vault'] else ''}</td>
+              <td>${r['url']}</td>
+              <td><small>
+                %if r['action'] == 'problem':
+                  ${problem_names[r['problem']]}
+                %elif r['action'] == 'change':
+                  ${", ".join(change_names[name] for name in r['changes'])}
+                %endif
+              </small></td>
+            </tr>
+          %endif
+        %endfor
+      </table>
+    %endif
+  %endif
+</details>
+
 ## a column heading that sorts by it (again: the other way round)
 <%def name="sort_heading(sort, label)">
   <th>${sort_link(sort, label)}</th>
@@ -143,7 +241,7 @@
     <input type="hidden" name="sort" value="${thing.sort}">
     <input type="hidden" name="order" value="${thing.order}">
     <button class="btn" type="submit">${_("show")}</button>
-    %if thing.q or thing.vault or thing.bot or thing.status != 'all':
+    %if thing.filtered:
       <a href="${thing.link(q='', vault='', bot='', status='all')}">${_("clear")}</a>
     %endif
     <small>${_("%(shown)d of %(total)d feeds") % dict(shown=len(thing.feeds), total=thing.total)}</small>
