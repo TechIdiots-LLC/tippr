@@ -17,6 +17,9 @@
 import unittest
 from unittest import mock
 
+import pylibmc
+
+from r2.lib.cache import Permacache
 from r2.lib.sitemaps import complete, live
 
 
@@ -68,6 +71,26 @@ class CompleteSitemapsTest(unittest.TestCase):
         complete.build()
         self.assertEqual(complete.part_names(), ["vaults-1", "posts-1"])
         self.assertNotIn(complete._key("posts-3"), self.cache)
+
+
+class PermacacheTooBigTest(unittest.TestCase):
+    """A value over memcached's limit still comes from Cassandra."""
+    def setUp(self):
+        self.chain = mock.MagicMock()
+        self.chain.get.return_value = None
+        self.chain.set.side_effect = pylibmc.TooBig
+        self.cache = Permacache(self.chain, mock.MagicMock(), mock.MagicMock())
+
+    def test_read(self):
+        with mock.patch.object(self.cache, "_backend_get", return_value=b"big"):
+            self.assertEqual(self.cache.get("k"), b"big")
+        self.chain.delete.assert_called_once_with("k")
+
+    def test_write(self):
+        with mock.patch.object(self.cache, "_backend_set") as written:
+            self.cache.set("k", b"big")
+        written.assert_called_once_with("k", b"big")
+        self.chain.delete.assert_called_once_with("k")
 
 
 class ListableVaultsTest(unittest.TestCase):

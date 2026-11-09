@@ -16,7 +16,7 @@
 
 With "every post" chosen on /admin/site, tippr-job-sitemaps runs build()
 each day: every listable vault and post (r2.lib.sitemaps.live's rules) goes
-into sitemaps of up to 50,000 addresses each (the protocol's limit),
+into sitemaps of up to URLS_PER_SITEMAP addresses each,
 vaults-1, vaults-2, ... and posts-1, posts-2, ..., stored compressed in the
 permacache (Cassandra, so every web server has them). /sitemap.xml then
 lists those and /sitemaps/<name>.xml serves each.
@@ -31,7 +31,8 @@ from pylons import app_globals as g
 from r2.lib.sitemaps import live
 from r2.lib.utils import in_chunks
 
-URLS_PER_SITEMAP = 50000
+# (the protocol allows 50,000, but compressed that is over memcached's 1 MB)
+URLS_PER_SITEMAP = 10000
 INDEX_KEY = "sitemap-complete-index"
 
 

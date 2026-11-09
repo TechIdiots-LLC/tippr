@@ -7,6 +7,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Complete sitemaps too big for memcached no longer fail.** A sitemap part over memcached's 1 MB item size made `/sitemaps/posts-1.xml` an error (pylibmc.TooBig) and stopped that day's rebuild. Anything in the permacache too big to cache is now read from Cassandra instead, and sitemaps are split into parts of 10,000 addresses instead of 50,000, so they fit.
 
 ## 0.32.0
 ### ✨ Features and improvements

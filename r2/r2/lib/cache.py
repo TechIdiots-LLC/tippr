@@ -943,12 +943,21 @@ class Permacache:
         if val is None:
             val = self._backend_get(key)
             if val:
-                self.cache_chain.set(key, val)
+                self._cache(key, val)
         return val
+
+    def _cache(self, key, val):
+        """Put a value in the cache chain. Memcached has a size limit the
+        backend doesn't: a value over it is read from the backend each
+        time, and an older, smaller one mustn't be left behind."""
+        try:
+            self.cache_chain.set(key, val)
+        except pylibmc.TooBig:
+            self.cache_chain.delete(key)
 
     def set(self, key, val):
         self._backend_set(key, val)
-        self.cache_chain.set(key, val)
+        self._cache(key, val)
 
     def set_multi(self, keys, prefix='', time=None):
         # time is sent by sgm but will be ignored
