@@ -14,7 +14,7 @@ boto3==1.43.125
 botocore==1.43.125
 captcha==0.7.1
 cassandra-driver==3.30.1
-cbor2==6.1.5
+cbor2==6.2.0.post2
 certifi==2026.10.23
 cffi==2.1.1
 chardet==7.7.0
