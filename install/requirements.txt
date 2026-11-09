@@ -4,14 +4,14 @@
 # tested with. Regenerate from an installed site with:
 #   pip freeze --exclude-editable | grep -v psycopg2-binary
 
-amqp==5.4.1
+amqp==5.4.2
 babel==2.18.0
 baseplate @ git+https://github.com/TechIdiots-LLC/tippr-baseplate.py.git@7f57e13a8f1016f57e8dc8d59059fa8fc2f96d9c
 bcrypt==5.0.0
 beautifulsoup4==4.15.0
 blinker==1.9.0
-boto3==1.43.122
-botocore==1.43.122
+boto3==1.43.125
+botocore==1.43.125
 captcha==0.7.1
 cassandra-driver==3.30.1
 cbor2==6.1.5
@@ -20,10 +20,10 @@ cffi==2.1.1
 chardet==7.7.0
 charset-normalizer==3.5.2
 click==8.5.0
-coverage==7.17.0
+coverage==7.17.2
 cramjam==2.14.0
 cryptography==50.0.2
-Cython==3.3.0
+Cython==3.3.1
 Deprecated==3.0.1
 emoji==2.16.0
 Flask==3.1.3
@@ -102,7 +102,7 @@ setuptools==84.2.1
 simplejson==4.2.0
 six==1.17.0
 soupsieve==3.0.4
-SQLAlchemy==2.1.6
+SQLAlchemy==2.1.8
 stripe==16.0.0
 thrift==0.25.0
 thrift-unofficial==0.19.0
