@@ -84,7 +84,7 @@ pylibmc==1.6.3
 pyOpenSSL==26.4.0
 pyparsing==3.3.3
 pyrate-limiter==4.5.1
-pytest==9.1.1
+pytest==9.2.0
 python-dateutil==2.9.0.post0
 python-json-logger==4.2.0
 python-snappy==0.7.3
