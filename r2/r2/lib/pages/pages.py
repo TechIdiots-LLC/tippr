@@ -4093,6 +4093,13 @@ class AdminVaults(Templated):
             v, defaults, featured)) for v in vaults]
         self.defaults = vault_admin._vaults(vault_admin.listed_ids("default"))
         self.can_create = c.user.can_create_Vault
+        # this view's vaults as a CSV, when it's something narrower than
+        # the newest; and the import form as it was sent, with what it did
+        # or would do (POST_vaults, r2.lib.vault_list)
+        self.filtered = bool(self.query) or self.show == "banned"
+        self.export_link = "/admin/vaults_export?" + urlencode(
+            dict(view="1", q=self.query, show=self.show))
+        self.bulk = {}
         Templated.__init__(self)
 
 

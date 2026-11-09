@@ -4,6 +4,7 @@
 ### ✨ Features and improvements
 - _...Add new stuff here..._
 - **Import and export feeds as a list on /admin/feeds.** Download all the feeds, or the ones the current search and filters show, as a text file with their vault, bot, interval, prefix, labels and paused state, and import a list back from a file or pasted in. It's the format `scripts/starter_feeds.txt` already uses. Preview shows what a list would do first. Feeds already there are left alone unless you ask for them to be changed to match, and you can delete the feeds not in the list: only those in the current view, never when the list has a line it can't read, and their posts stay.
+- **Import and export vault settings as a CSV on /admin/vaults.** Download every vault's settings, or the ones in the current search, edit them in a spreadsheet, and import them back, from a file or pasted in: title, descriptions, type, link type, AI policy, language, NSFW, front page default and featured. Only the columns in the file change, so a file can be just `name,ai_policy`. Preview shows what a file would do first, and it can optionally create the vaults that don't exist yet. Vaults not in the file are left alone.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

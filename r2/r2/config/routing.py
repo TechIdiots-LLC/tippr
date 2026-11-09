@@ -177,6 +177,7 @@ def make_map(config):
     mc('/admin/users', controller='admintool', action='users')
     mc('/admin/users/:username', controller='admintool', action='user')
     mc('/admin/vaults', controller='admintool', action='vaults')
+    mc('/admin/vaults_export', controller='admintool', action='vaults_export')
     mc('/admin/vaults/:vaultname', controller='admintool', action='vault')
     mc('/admin/support', controller='admintool', action='support')
     mc('/admin/support/staff', controller='admintool', action='support_staff')

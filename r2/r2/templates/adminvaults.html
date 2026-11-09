@@ -26,6 +26,85 @@
   <small>${_("Admins can create vaults whatever their karma and account age; the limits on /admin/config are for everyone else. You'll be its moderator; add others (and take yourself off) on the vault's page here.")}</small>
 </p>
 
+## vaults' settings as a CSV (r2.lib.vault_list); open with what the form did
+<div class="admin-feeds">
+<details class="admin-feeds-add admin-feeds-bulk" ${'open' if thing.bulk else ''}>
+  <summary><h2>${_("Import or export settings (CSV)")}</h2></summary>
+  <p>
+    ${_("Export:")}
+    <a href="/admin/vaults_export">${_("every vault")}</a>
+    %if thing.filtered:
+      · <a href="${thing.export_link}">${_("the %(n)d in this view") % dict(n=len(thing.results))}</a>
+    %endif
+  </p>
+  <% bulk = thing.bulk %>
+  <form action="/admin/vaults" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="uh" value="${c.modhash}">
+    <input type="hidden" name="q" value="${thing.query}">
+    <input type="hidden" name="show" value="${thing.show}">
+    <p><small>
+      ${_("The first row names the columns: name, and any of title, public_description, description (the sidebar), type, link_type, ai_policy, lang, over_18, allow_top, show_media, default and featured (the last five yes or no). A column left out isn't touched, so a file can be just name and one setting. A blank cell leaves that setting alone, except a description, which it empties. Vaults not in the file are left alone.")}
+    </small></p>
+    <p><input type="file" name="file" accept=".csv,.tsv,.txt,text/csv"></p>
+    <p><textarea name="list" rows="8" spellcheck="false" wrap="off"
+                 placeholder="name,title,ai_policy,over_18">${bulk.get('text', '')}</textarea></p>
+    <p><label><input type="checkbox" name="create" ${'checked' if bulk.get('create') else ''}>
+      ${_("Create vaults in the file that don't exist (they need a title; you'll be their moderator). Otherwise they're reported as problems.")}</label></p>
+    <button class="btn" type="submit" name="go" value="preview">${_("preview")}</button>
+    <button class="btn" type="submit" name="go" value="import">${_("import")}</button>
+  </form>
+  %if bulk.get('error'):
+    <p class="error">${bulk['error']}</p>
+  %endif
+  <% result = bulk.get('result') %>
+  %if result and result['error']:
+    <p class="error">${_("That file has no name column.") if result['error'] == 'no_name' else _("That file can't be read as a CSV.")}</p>
+  %elif result:
+    <%
+      counts = result['counts']
+      action_names = dict(create=_("create"), change=_("change"), problem=_("problem"))
+      problem_names = dict(
+        bad_value=_("not a value this column takes"),
+        too_long=_("too long"),
+        repeated=_("this vault is already in the file"),
+        not_a_vault=_("not a vault"),
+        no_such_vault=_("no such vault"),
+        bad_name=_("not a valid vault name"),
+        no_title=_("a new vault needs a title"),
+        banned=_("the vault is banned; unban it first"))
+    %>
+    <h3>${_("Imported") if bulk['done'] else _("Preview: nothing has changed yet")}</h3>
+    <p>${_("%(create)d to create, %(change)d to change, %(same)d left as they are, %(problem)d with problems") % dict(
+        create=counts.get('create', 0), change=counts.get('change', 0),
+        same=counts.get('same', 0), problem=counts.get('problem', 0))}</p>
+    %if result['ignored']:
+      <p class="error">${_("Columns ignored, as they aren't settings this can change:")} ${", ".join(result['ignored'])}</p>
+    %endif
+    %if any(r['action'] != 'same' for r in result['rows']):
+      <table class="lined-table admin-feeds-report">
+        <tr><th>${_("row")}</th><th></th><th>${_("vault")}</th><th></th></tr>
+        %for r in result['rows']:
+          %if r['action'] != 'same':
+            <tr>
+              <td>${r['number']}</td>
+              <td class="admin-feeds-report-${r['action']}">${action_names[r['action']]}</td>
+              <td>${r['name']}</td>
+              <td><small>
+                %if r['action'] == 'problem':
+                  ${problem_names[r['problem']]}${' (%s)' % r['column'] if r['column'] else ''}
+                %else:
+                  ${", ".join(r['changes'])}
+                %endif
+              </small></td>
+            </tr>
+          %endif
+        %endfor
+      </table>
+    %endif
+  %endif
+</details>
+</div>
+
 <form action="/admin/vaults" method="get" class="pretty-form admin-users-search">
   <input type="text" name="q" value="${thing.query}" size="40"
          placeholder="${_('vault name, or the start of one')}" autofocus>

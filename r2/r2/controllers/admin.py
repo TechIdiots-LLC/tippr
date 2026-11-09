@@ -242,6 +242,56 @@ class AdminToolController(TipprController):
         (r2.lib.vault_admin)."""
         return AdminPage(content=AdminVaults(q, show)).render()
 
+    @validate(VAdmin(), view=nop("view"), q=nop("q"), show=nop("show"))
+    def GET_vaults_export(self, view, q, show):
+        """Every vault's settings as a CSV, or (view) the vaults this view
+        shows (r2.lib.vault_list)."""
+        from r2.lib import vault_list
+        if view:
+            vaults = [r["vault"] for r in AdminVaults(q, show).results]
+        else:
+            vaults = vault_list.all_vaults()
+        text = vault_list.export(vaults)
+        g.log.info("vault_admin: %s exported vaults", c.user.name)
+        response.content_type = "text/csv"
+        response.charset = "utf-8"
+        response.headers["Content-Disposition"] = (
+            'attachment; filename="vaults.csv"')
+        response.headers["Cache-Control"] = "no-store"
+        # (Excel reads a CSV as UTF-8 only with this at the start)
+        return "﻿" + text
+
+    @validate(
+        VAdmin(),
+        VModhash(),
+        file=VUploadLength("file", max_length=4 * 1024 * 1024, empty_error=None),
+        text=VLength("list", max_length=4 * 1024 * 1024, empty_error=None),
+        create=VBoolean("create"),
+        go=nop("go"),
+        q=nop("q"),
+        show=nop("show"),
+    )
+    def POST_vaults(self, file, text, create, go, q, show):
+        """Import a CSV of vaults' settings, or (the "preview" button) show
+        what it would do (r2.lib.vault_list)."""
+        from r2.lib import vault_list
+        if file:
+            text = file.decode("utf-8-sig", "replace")
+        text = (text or "").lstrip("﻿")
+        bulk = dict(text=text, create=create, result=None, done=False)
+        if not text.strip():
+            bulk["error"] = _("Choose a file or paste a CSV, of at most 4 MB.")
+        else:
+            bulk["result"] = vault_list.plan(text, create=create)
+            if go == "import" and not bulk["result"]["error"]:
+                vault_list.apply(bulk["result"], c.user)
+                bulk["done"] = True
+                g.log.info("vault_admin: %s imported a CSV: %s", c.user.name,
+                           bulk["result"]["counts"])
+        page = AdminVaults(q, show)
+        page.bulk = bulk
+        return AdminPage(content=page).render()
+
     @validate(VAdmin())
     def GET_vault(self, vaultname):
         from r2.lib.db.thing import NotFound
