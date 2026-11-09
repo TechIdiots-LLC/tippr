@@ -1,8 +1,8 @@
 # Weekly pull requests for newer Python packages (install/requirements.txt,
 # installed exactly, with --no-deps) and GitHub Actions. The CI checks
-# install the pins as a release would and test them; patch updates that
-# pass are merged automatically (dependabot-automerge.yml), the rest wait
-# for review.
+# install the pins as a release would and test them; patch and minor updates
+# that pass are merged automatically (dependabot-automerge.yml), major
+# versions wait for review.
 version: 2
 updates:
   - package-ecosystem: pip
