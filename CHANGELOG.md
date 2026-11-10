@@ -2,6 +2,7 @@
 
 ## master
 ### ✨ Features and improvements
+- **Feed bots' posts stay out of search engines until someone comments.** A post a feed bot made is only a title and a link to a page already on the web, and a site full of them reads to Google as "low value content", the reason AdSense gives for turning sites down. Its page now asks search engines not to index it (noindex), and the sitemaps leave it out, until a person comments on it; then it's indexed like any other post. Members' own posts are indexed as before, and visitors still see every post.
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes

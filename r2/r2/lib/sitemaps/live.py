@@ -126,8 +126,10 @@ def listable_vaults():
 
 
 def listable_posts():
-    """(permalink, date) for each listable post, newest first."""
-    from r2.models import Link, Vault
+    """(permalink, date) for each listable post, newest first. A feed bot's
+    post nobody has commented on is left out (r2.lib.index_rules)."""
+    from r2.lib import index_rules
+    from r2.models import Account, Link, Vault
     query = Link._query(Link.c._spam == False,
                         Link.c._deleted == False,
                         sort=desc("_date"),
@@ -135,12 +137,20 @@ def listable_posts():
     for links in fetch_things2(query, chunk_size=1000, chunks=True):
         links = [link for link in links
                  if link.promoted is None and not link.over_18]
+        if not links:
+            continue
         vaults = Vault._byID({link.vault_id for link in links},
                              data=True, return_dict=True)
+        authors = Account._byID({link.author_id for link in links},
+                                data=True, return_dict=True)
         for link in links:
             vault = vaults.get(link.vault_id)
-            if vault and _listable(vault):
-                yield (link.make_permalink(vault), link._date)
+            if not vault or not _listable(vault):
+                continue
+            if index_rules.waits_for_people(link,
+                                            authors.get(link.author_id)):
+                continue
+            yield (link.make_permalink(vault), link._date)
 
 
 def _first(entries, count):
