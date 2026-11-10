@@ -2,12 +2,17 @@
 
 ## master
 ### ✨ Features and improvements
-- **Feed bots' posts stay out of search engines until someone comments.** A post a feed bot made is only a title and a link to a page already on the web, and a site full of them reads to Google as "low value content", the reason AdSense gives for turning sites down. Its page now asks search engines not to index it (noindex), and the sitemaps leave it out, until a person comments on it; then it's indexed like any other post. Members' own posts are indexed as before, and visitors still see every post.
-- **18+ content is only for members who say they're over 18.** Logged-out visitors no longer see NSFW posts, comments or 18+ vaults anywhere: not in /v/all, search, vault search and suggestions, profiles, RSS or the API. The "are you over 18?" page asks them to log in first instead of setting a cookie, and the old over18 cookie no longer counts. Search engines get the same page instead of skipping it, and the API and RSS of an 18+ vault or post answer 403 to anyone who hasn't said they're over 18. Members say so on that page or in preferences, as before. (The API's `obey_over18` parameter is gone: the rule always applies.)
 - _...Add new stuff here..._
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+
+## 0.34.0
+### ✨ Features and improvements
+- **Feed bots' posts stay out of search engines until someone comments.** A post a feed bot made is only a title and a link to a page already on the web, and a site full of them reads to Google as "low value content", the reason AdSense gives for turning sites down. Its page now asks search engines not to index it (noindex), and the sitemaps leave it out, until a person comments on it; then it's indexed like any other post. Members' own posts are indexed as before, and visitors still see every post.
+- **18+ content is only for members who say they're over 18.** Logged-out visitors no longer see NSFW posts, comments or 18+ vaults anywhere: not in /v/all, search, vault search and suggestions, profiles, RSS or the API. The "are you over 18?" page asks them to log in first instead of setting a cookie, and the old over18 cookie no longer counts. Search engines get the same page instead of skipping it, and the API and RSS of an 18+ vault or post answer 403 to anyone who hasn't said they're over 18. Members say so on that page or in preferences, as before. (The API's `obey_over18` parameter is gone: the rule always applies.)
+
+### 🐞 Bug fixes
 
 ## 0.33.0
 ### ✨ Features and improvements
