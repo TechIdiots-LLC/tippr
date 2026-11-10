@@ -15,14 +15,15 @@
 """Who sees 18+ content (r2.controllers.tippr_base.over18)."""
 
 import types
-import unittest
 from unittest import mock
 
-from r2.controllers import tippr_base
+from r2.tests import TipprControllerTestCase
 
 
-class Over18Test(unittest.TestCase):
+class Over18Test(TipprControllerTestCase):
     def over18(self, logged_in, pref=False, admin=False, cookies=None):
+        # (imported here: the controllers need the test case's setUp first)
+        from r2.controllers import tippr_base
         fake_c = types.SimpleNamespace(
             user_is_loggedin=logged_in, user_is_admin=admin,
             user=types.SimpleNamespace(pref_over_18=pref),
