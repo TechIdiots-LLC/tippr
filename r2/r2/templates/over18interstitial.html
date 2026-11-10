@@ -42,9 +42,15 @@
 </%def>
 
 <%def name="interstitial_message()">
+  %if c.user_is_loggedin:
   <p>
     ${_("You must be at least eighteen years old to view this content. Are you over eighteen and willing to see adult content?")}
   </p>
+  %else:
+  <p>
+    ${_("Adult content is only for members who have said they're over eighteen. Log in, then confirm your age; you can change it any time in your preferences.")}
+  </p>
+  %endif
 </%def>
 
 <%def name="interstitial_buttons()">
@@ -54,7 +60,11 @@
         ${_("no thank you")}
       </button>
       <button class="c-btn c-btn-primary" type="submit" name="over18" value="yes">
+        %if c.user_is_loggedin:
         ${_("continue")}
+        %else:
+        ${_("log in")}
+        %endif
       </button>
     </div>
   </%utils:submit_form>

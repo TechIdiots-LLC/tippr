@@ -264,28 +264,20 @@ def delete_obsolete_cookies():
             c.cookies[cookie_name] = Cookie("", expires=DELETE)
 
 def over18():
+    """Whether this request may see 18+ content: only a member who has said
+    they're over 18 (pref_over_18, set in preferences or on /over18), and
+    admins. Logged-out visitors, search engines among them, never do; the
+    over18 cookie that used to let them is cleared."""
     if c.user_is_loggedin:
-        return c.user.pref_over_18 or c.user_is_admin
-    else:
-        if 'over18' in c.cookies:
-            cookie = c.cookies['over18'].value
-            if cookie == "1":
-                return True
-            else:
-                delete_over18_cookie()
-
-
-def set_over18_cookie():
-    c.cookies.add("over18", "1")
+        return bool(c.user.pref_over_18 or c.user_is_admin)
+    if 'over18' in c.cookies:
+        delete_over18_cookie()
+    return False
 
 
 def delete_over18_cookie():
     c.cookies["over18"] = Cookie(value="", expires=DELETE)
 
-
-def set_obey_over18():
-    "querystring parameter for API to obey over18 filtering rules"
-    c.obey_over18 = request.GET.get("obey_over18") == "true"
 
 valid_ascii_domain = re.compile(r'\A(\w[-\w]*\.)+[\w]+\Z')
 
@@ -1445,7 +1437,6 @@ class TipprController(OAuth2ResourceController):
         c.request_timer.intermediate("base-ratelimits")
 
         c.over18 = over18()
-        set_obey_over18()
 
         # looking up the multivault requires c.user.
         set_multivault()
@@ -1536,14 +1527,14 @@ class TipprController(OAuth2ResourceController):
                         request=request, context=c)
                     return self.intermediate_redirect("/quarantine", vault_path=False)
 
-            # check over 18
-            if (
-                c.site.over_18 and not c.over18 and
-                request.path != "/over18" and
-                c.render_style == 'html' and
-                not request.parsed_agent.bot
-            ):
-                return self.intermediate_redirect("/over18", vault_path=False)
+            # check over 18: search engines included, and the API and RSS
+            # get nothing (they can't answer the question)
+            if (c.site.over_18 and not c.over18 and
+                    request.path != "/over18"):
+                if c.render_style == 'html':
+                    return self.intermediate_redirect("/over18",
+                                                      vault_path=False)
+                self.abort403()
 
         #check whether to allow custom styles
         c.allow_styles = True

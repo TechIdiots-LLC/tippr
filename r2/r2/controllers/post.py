@@ -43,7 +43,7 @@ from r2.models import *
 from r2.models.recommend import ExploreSettings
 
 from .api import ApiController
-from .tippr_base import delete_over18_cookie, set_over18_cookie
+from .tippr_base import delete_over18_cookie
 
 
 class PostController(ApiController):
@@ -122,11 +122,15 @@ class PostController(ApiController):
     )
     def POST_over18(self, over18, dest):
         if over18 == 'yes':
-            if c.user_is_loggedin and not c.errors:
+            if not c.user_is_loggedin:
+                # only members see 18+ content (tippr_base.over18): log in,
+                # then come back here to say so
+                return self.intermediate_redirect(
+                    "/login", vault_path=False,
+                    fullpath="/over18" + query_string(dict(dest=dest)))
+            if not c.errors:
                 c.user.pref_over_18 = True
                 c.user._commit()
-            else:
-                set_over18_cookie()
             return self.redirect(dest)
         else:
             if c.user_is_loggedin and not c.errors:
