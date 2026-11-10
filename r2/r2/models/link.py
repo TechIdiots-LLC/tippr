@@ -405,12 +405,8 @@ class Link(Thing, Printable):
                     listing_filters.hides(user, self, wrapped)):
                 return False
 
-        # show NSFW to API and RSS users unless obey_over18=true
-        is_api = c.render_style in extensions.API_TYPES
-        is_rss = c.render_style in extensions.RSS_TYPES
-        if (is_api or is_rss) and not c.obey_over18:
-            return True
-
+        # 18+ posts are only for members who said they're over 18
+        # (tippr_base.over18), in the API and RSS too
         is_nsfw = wrapped.over_18 or wrapped.vault.over_18
         if not is_nsfw:
             return True
@@ -1551,6 +1547,14 @@ class Comment(Thing, Printable):
     def keep_item(self, wrapped):
         if c.user_is_admin:
             return True
+
+        # comments on 18+ posts, or in 18+ vaults, are only for members who
+        # said they're over 18 (tippr_base.over18): /comments, profiles, RSS
+        link = getattr(wrapped, "link", None)
+        vault = getattr(wrapped, "vault", None)
+        if not c.over18 and (getattr(link, "over_18", False) or
+                             getattr(vault, "over_18", False)):
+            return False
 
         if c.user_is_loggedin:
             if wrapped.vault.is_moderator(c.user):

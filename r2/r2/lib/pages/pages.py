@@ -1886,6 +1886,9 @@ class LinkInfoPage(Tippr):
         elif comment:
             # We don't want crawlers to index the comment permalink pages.
             robots = "noindex"
+        elif self._waits_for_people(link):
+            # a feed bot's post nobody has commented on (r2.lib.index_rules)
+            robots = "noindex"
         else:
             robots = None
 
@@ -1903,6 +1906,13 @@ class LinkInfoPage(Tippr):
             })
 
         Tippr.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
+
+    def _waits_for_people(self, link):
+        from r2.lib import index_rules
+        author = getattr(self.link, "author", None)
+        if not isinstance(author, Account):
+            author = Account._byID(link.author_id, data=True)
+        return index_rules.waits_for_people(link, author)
 
     def _build_og_data(self, link_title, meta_description):
         vault_fragment = "/v/" + c.site.name if not c.default_vault else get_domain()

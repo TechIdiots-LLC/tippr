@@ -6282,12 +6282,17 @@ class ApiController(TipprController):
 
         Vaults whose names begin with `query` will be returned. If
         `include_over_18` is false, vaults with over-18 content
-        restrictions will be filtered from the results.
+        restrictions will be filtered from the results. They're always
+        left out for anyone who hasn't said they're over 18.
 
         If `exact` is true, only an exact match will be returned.
         """
         if query:
             query = vault_path_rx.sub(r'\g<name>', query.strip())
+
+        # 18+ vaults only for members who said they're over 18
+        # (tippr_base.over18)
+        include_over_18 = bool(include_over_18 and c.over18)
 
         names = []
         if query and exact:
@@ -6296,7 +6301,8 @@ class ApiController(TipprController):
             except NotFound:
                 self.abort404()
             else:
-                # not respecting include_over_18 for exact match
+                if vault.over_18 and not c.over18:
+                    self.abort404()
                 names = [vault.name]
         elif query:
             names = search_vaults(query, include_over_18)

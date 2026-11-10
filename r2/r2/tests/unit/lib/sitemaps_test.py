@@ -73,6 +73,45 @@ class CompleteSitemapsTest(unittest.TestCase):
         self.assertNotIn(complete._key("posts-3"), self.cache)
 
 
+class ListablePostsTest(unittest.TestCase):
+    """The posts sitemap leaves out feed bots' posts nobody has commented
+    on (r2.lib.index_rules)."""
+    def setUp(self):
+        self.vault = mock.Mock(type="public", _spam=False, over_18=False,
+                               quarantine=False)
+        self.vault.name = "a"
+        self.person = mock.Mock(feed_bot=False)
+        self.bot = mock.Mock(feed_bot=True)
+
+        def post(name, author_id, num_comments):
+            return mock.Mock(promoted=None, over_18=False, vault_id=1,
+                             author_id=author_id, num_comments=num_comments,
+                             _date=None,
+                             make_permalink=lambda vault: "/v/a/%s/" % name)
+        self.links = [post("mine", 10, 0), post("feed", 20, 0),
+                      post("talked", 20, 3)]
+
+        accounts = {10: self.person, 20: self.bot}
+        Account = mock.Mock()
+        Account._byID.side_effect = lambda ids, **kw: {
+            i: accounts[i] for i in ids}
+        Vault = mock.Mock()
+        Vault._byID.side_effect = lambda ids, **kw: {1: self.vault}
+        for target, value in (
+                ("r2.models.Account", Account),
+                ("r2.models.Vault", Vault),
+                ("r2.models.Link", mock.MagicMock()),
+                ("r2.lib.sitemaps.live.fetch_things2",
+                 lambda query, **kw: iter([self.links]))):
+            patch = mock.patch(target, value)
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_feed_posts_wait_for_a_comment(self):
+        paths = [path for path, _ in live.listable_posts()]
+        self.assertEqual(paths, ["/v/a/mine/", "/v/a/talked/"])
+
+
 class PermacacheTooBigTest(unittest.TestCase):
     """A value over memcached's limit still comes from Cassandra."""
     def setUp(self):

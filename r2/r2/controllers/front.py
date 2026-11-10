@@ -34,7 +34,7 @@ from pylons.i18n import _
 
 import r2.lib.db.thing as thing
 from r2.config import feature
-from r2.config.extensions import API_TYPES, RSS_TYPES, is_api
+from r2.config.extensions import is_api
 from r2.controllers.ipn import GoldException, generate_blob, validate_blob
 from r2.controllers.tippr_base import (
     TipprController,
@@ -324,14 +324,12 @@ class FrontController(TipprController):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
-        # check over 18
-        if (
-            article.is_nsfw and
-            not c.over18 and
-            c.render_style == 'html' and
-            not request.parsed_agent.bot
-        ):
-            return self.intermediate_redirect("/over18", vault_path=False)
+        # check over 18: search engines included, and the API and RSS get
+        # nothing (they can't answer the question)
+        if (article.is_nsfw or vault.over_18) and not c.over18:
+            if c.render_style == 'html':
+                return self.intermediate_redirect("/over18", vault_path=False)
+            self.abort403()
 
         canonical_link = article.make_canonical_link(vault)
 
@@ -1140,15 +1138,9 @@ class FrontController(TipprController):
             return self.intermediate_redirect('/over18', vault_path=False,
                                               fullpath=search_url)
 
-        # show NSFW to API and RSS users unless obey_over18=true
-        is_api_or_rss = (c.render_style in API_TYPES
-                         or c.render_style in RSS_TYPES)
-        if is_api_or_rss:
-            include_over18 = not c.obey_over18 or c.over18
-        elif feature.is_enabled('safe_search'):
-            include_over18 = c.over18
-        else:
-            include_over18 = True
+        # 18+ results only for members who said they're over 18
+        # (tippr_base.over18), in the API and RSS too
+        include_over18 = bool(c.over18)
 
         if query:
             q = g.search.VaultSearchQuery(query, sort=sort, faceting={},
@@ -1221,15 +1213,9 @@ class FrontController(TipprController):
         if not syntax:
             syntax = g.search.SearchQuery.default_syntax
 
-        # show NSFW to API and RSS users unless obey_over18=true
-        is_api_or_rss = (c.render_style in API_TYPES
-                         or c.render_style in RSS_TYPES)
-        if is_api_or_rss:
-            include_over18 = not c.obey_over18 or c.over18
-        elif feature.is_enabled('safe_search'):
-            include_over18 = c.over18
-        else:
-            include_over18 = True
+        # 18+ results only for members who said they're over 18
+        # (tippr_base.over18), in the API and RSS too
+        include_over18 = bool(c.over18)
 
         # do not request facets--they are not popular with users and result in
         # looking up unpopular vaults (which is bad for site performance)
