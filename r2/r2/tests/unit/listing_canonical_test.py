@@ -67,3 +67,24 @@ class AllMinusTest(TipprControllerTestCase):
 
     def test_logged_out_visitors_do_not(self):
         self.assertIsNone(self.infobar(False).allminus_url)
+
+
+class DefaultRobotsTest(TipprControllerTestCase):
+    """Which listings ask search engines not to index them."""
+
+    def robots(self, site):
+        from r2.lib.pages import pages
+        return pages.default_robots(site)
+
+    def test_domain_listing(self):
+        from r2.models.vault import DomainVault
+        self.assertEqual(self.robots(DomainVault("xkcd.com")), "noindex")
+
+    def test_filtered_all(self):
+        from r2.models.vault import AllMinus
+        self.assertEqual(self.robots(AllMinus([])), "noindex")
+
+    def test_vaults_and_all_are_indexed(self):
+        from r2.models.vault import AllSR, DefaultVault
+        self.assertIsNone(self.robots(AllSR()))
+        self.assertIsNone(self.robots(DefaultVault()))

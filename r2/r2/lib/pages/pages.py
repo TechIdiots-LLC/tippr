@@ -223,6 +223,19 @@ class CrossDomain(Templated):
     pass
 
 
+def default_robots(site):
+    """The robots meta tag of a page on this site, when the page doesn't
+    set its own.
+
+    /v/all-a-b-c is /all with some vaults left out, one for every set of
+    vaults: the same posts as /all to a search engine. /domain/example.com
+    is a tool for members (what's been posted from a site) and only links
+    elsewhere; the site is found through its vaults and posts."""
+    if isinstance(site, (AllMinus, DomainVault)):
+        return "noindex"
+    return None
+
+
 class Tippr(Templated):
     '''Base class for rendering a page on tippr.  Handles toolbar creation,
     content of the footers, and content of the corner buttons.
@@ -273,10 +286,8 @@ class Tippr(Templated):
         self.title = title
         self.short_title = short_title
         self.short_description = short_description
-        if robots is None and isinstance(c.site, AllMinus):
-            # /v/all-a-b-c is /all with some vaults left out, one for
-            # every set of vaults: the same posts as /all to a search engine
-            robots = "noindex"
+        if robots is None:
+            robots = default_robots(c.site)
         self.robots = robots
         self.infotext = infotext
         self.extra_js_config = extra_js_config
