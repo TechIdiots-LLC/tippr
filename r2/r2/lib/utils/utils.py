@@ -611,9 +611,12 @@ class UrlParser:
 
     def canonicalize(self):
         subdomain = extract_subdomain(self.hostname)
-        if subdomain == '' or is_language_subdomain(subdomain):
+        if (subdomain in ('', 'www') or
+                is_language_subdomain(subdomain)):
             # the site's main host: reddit's was www., tippr's is usually
-            # the bare domain (domain_prefix is empty by default)
+            # the bare domain (domain_prefix is empty by default). www.
+            # and the bare domain redirect to whichever of them that is
+            # (DomainMiddleware), so neither is canonical unless it's it
             if g.domain_prefix:
                 self.hostname = '{}.{}'.format(g.domain_prefix, g.domain)
             else:

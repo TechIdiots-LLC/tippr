@@ -6,6 +6,7 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Posts name the site's own address as their canonical one, not www.** A post's page told search engines its real address was on www.<domain>, which has redirected to the bare domain since 0.29, so Google was pointed at a redirect for every post and kept crawling the www. copies. It's now the site's main host, the one www. and the bare domain both send visitors to, and any other canonical link written on www. is moved to it too.
 
 ## 0.34.0
 ### ✨ Features and improvements

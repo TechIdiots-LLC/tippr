@@ -283,3 +283,34 @@ class TestEquality(unittest.TestCase):
         u2 = UrlParser('http://example.com/')
         u2.update_query(page='ï½•ï½Žï½‰ï½ƒï½ï½„ï½…ï¼šï¼ˆ')
         self.assertEqual(u, u2)
+
+
+class TestCanonicalize(TipprTestCase):
+    """canonicalize() names the site's main host, the one www. and the
+    bare domain redirect to (DomainMiddleware)."""
+
+    def _canonical(self, url):
+        u = UrlParser(url)
+        u.canonicalize()
+        return u.unparse()
+
+    def test_bare_domain_site(self):
+        self.patch_g(domain='tippr.net', domain_prefix='')
+        self.assertEqual('https://tippr.net/v/cats/',
+                         self._canonical('http://www.tippr.net/v/cats'))
+        self.assertEqual('https://tippr.net/v/cats/',
+                         self._canonical('https://tippr.net/v/cats/'))
+        self.assertEqual('https://tippr.net/',
+                         self._canonical('https://en.tippr.net/'))
+
+    def test_www_site(self):
+        self.patch_g(domain='tippr.net', domain_prefix='www')
+        self.assertEqual('https://www.tippr.net/v/cats/',
+                         self._canonical('https://tippr.net/v/cats/'))
+        self.assertEqual('https://www.tippr.net/v/cats/',
+                         self._canonical('https://www.tippr.net/v/cats/'))
+
+    def test_other_subdomains_kept(self):
+        self.patch_g(domain='tippr.net', domain_prefix='')
+        self.assertEqual('https://i.tippr.net/v/cats/',
+                         self._canonical('https://i.tippr.net/v/cats/'))

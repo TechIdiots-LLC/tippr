@@ -494,10 +494,14 @@ class Link(Thing, Printable):
 
         return res
 
-    def make_canonical_link(self, vault, subdomain='www'):
-        domain = '{}.{}'.format(subdomain, g.domain)
-        path = 'comments/{}/{}/'.format(self._id36, title_to_url(self.title))
-        return '{}://{}/v/{}/{}'.format(g.default_scheme, domain, vault.name, path)
+    def make_canonical_link(self, vault):
+        """The post's address on the site's main host (domain_prefix, or
+        the bare domain), the one www. and the bare domain redirect to."""
+        u = UrlParser('/v/{}/comments/{}/{}/'.format(
+            vault.name, self._id36, title_to_url(self.title)))
+        u.hostname = g.domain
+        u.canonicalize()
+        return u.unparse()
 
     def make_permalink_slow(self, force_domain=False):
         return self.make_permalink(self.vault_slow,
