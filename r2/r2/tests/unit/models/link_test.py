@@ -28,6 +28,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from r2.models.link import Comment, Link
+from r2.tests import TipprTestCase
 
 TINY_COMMENT = 'rekt'
 SHORT_COMMENT = 'What is your favorite car from a rival brand?'
@@ -337,3 +338,26 @@ class TestSubmit(unittest.TestCase):
         l.set_content(True, "change to self post")
 
         self.assertEqual(self.links_by_url_remove_link.call_count, 1)
+
+
+class TestMakeCanonicalLink(TipprTestCase):
+    """A post's canonical address is on the site's main host, not www.,
+    which redirects to it."""
+
+    def _canonical(self):
+        link = MagicMock(_id36='9qo', title='Eagles Week 7 injury report')
+        vault = MagicMock()
+        vault.name = 'sports'
+        return Link.make_canonical_link(link, vault)
+
+    def test_bare_domain_site(self):
+        self.patch_g(domain='tippr.net', domain_prefix='')
+        self.assertEqual(
+            'https://tippr.net/v/sports/comments/9qo/eagles_week_7_injury_report/',
+            self._canonical())
+
+    def test_www_site(self):
+        self.patch_g(domain='tippr.net', domain_prefix='www')
+        self.assertEqual(
+            'https://www.tippr.net/v/sports/comments/9qo/eagles_week_7_injury_report/',
+            self._canonical())
