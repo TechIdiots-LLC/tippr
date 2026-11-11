@@ -34,7 +34,7 @@ from pylons import app_globals as g
 from pylons.i18n import _
 
 from r2.config.extensions import is_api
-from r2.lib import hooks, organic, trending
+from r2.lib import hooks, index_rules, organic, trending
 from r2.lib.csrf import csrf_exempt
 from r2.lib.db import queries
 from r2.lib.db.thing import Query
@@ -1106,8 +1106,20 @@ class UserController(ListingController):
 
         if vuser.pref_hide_from_robots:
             self.robots = 'noindex,nofollow'
+        elif index_rules.is_feed_bot(vuser):
+            # a feed bot's profile is its feeds' posts, which aren't
+            # indexed until someone comments (r2.lib.index_rules)
+            self.robots = 'noindex'
 
         return ListingController.GET_listing(self, **env)
+
+    def canonical_link(self):
+        """The profile page without its sort and time (?sort=top&t=week):
+        each of those is the same page to a search engine."""
+        path = "/user/%s/" % self.vuser.name
+        if self.where != "overview":
+            path += "%s/" % self.where
+        return add_vault(path, vault_path=False, force_https=True)
 
     @property
     def render_params(self):
@@ -1129,6 +1141,7 @@ class UserController(ListingController):
             else:
                 event_target['target_after'] = self.after._fullname
         render_params['extra_js_config'] = {'event_target': event_target}
+        render_params['canonical_link'] = self.canonical_link()
 
         return render_params
 
