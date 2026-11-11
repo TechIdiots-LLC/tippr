@@ -8,6 +8,7 @@
 - _...Add new stuff here..._
 - **Posts name the site's own address as their canonical one, not www.** A post's page told search engines its real address was on www.<domain>, which has redirected to the bare domain since 0.29, so Google was pointed at a redirect for every post and kept crawling the www. copies. It's now the site's main host, the one www. and the bare domain both send visitors to, and any other canonical link written on www. is moved to it too.
 - **Profiles have one canonical address, whatever the sort.** /user/name/?sort=top&t=week named itself as canonical, so every sort and time of every profile was a separate page to Google. The canonical link is now the profile (or its submitted or comments tab) without them. A feed bot's profile, which is only its feeds' posts, also asks search engines not to index it (noindex).
+- **"Exclude your subscribed vaults" no longer makes endless copies of /all for search engines.** Logged out, /v/all offered a link to /v/all-<every default vault>, with the vaults in a different order each time, so Google kept finding "new" pages that were /all again, times every sort tab. The link is now for members only (and nofollow), the vaults in its address are in name order, and filtered /all pages ask search engines not to index them.
 
 ## 0.34.0
 ### ✨ Features and improvements

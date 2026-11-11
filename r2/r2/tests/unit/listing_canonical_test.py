@@ -31,3 +31,39 @@ class UserCanonicalLinkTest(TipprControllerTestCase):
     def test_comments(self):
         self.assertEqual(self.canonical("comments"),
                          "/user/feed_bot/comments/")
+
+
+class AllMinusTest(TipprControllerTestCase):
+    """/v/all-a-b-c: one address for each set of vaults, and only members
+    are offered it."""
+
+    def vaults(self, *names):
+        return [types.SimpleNamespace(name=name, _id=i)
+                for i, name in enumerate(names)]
+
+    def test_path_is_in_name_order(self):
+        from r2.models.vault import AllMinus
+        self.assertEqual(AllMinus(self.vaults("space", "Art", "cats")).path,
+                         "/v/all-Art-cats-space")
+        self.assertEqual(AllMinus(self.vaults("cats", "space", "Art")).path,
+                         "/v/all-Art-cats-space")
+
+    def infobar(self, logged_in):
+        from r2.lib.pages import pages
+        fake_c = types.SimpleNamespace(
+            user_is_loggedin=logged_in,
+            user=types.SimpleNamespace(gold=False))
+        with mock.patch.object(pages, "c", fake_c), \
+                mock.patch.object(pages, "request",
+                                  types.SimpleNamespace(path="/v/all/")), \
+                mock.patch.object(pages.Vault, "user_vaults",
+                                  return_value=[1, 2]), \
+                mock.patch.object(pages.Vault, "_byID",
+                                  return_value=self.vaults("cats", "art")):
+            return pages.AllInfoBar(pages.AllSR(), fake_c.user)
+
+    def test_members_get_the_link(self):
+        self.assertEqual(self.infobar(True).allminus_url, "/v/all-art-cats")
+
+    def test_logged_out_visitors_do_not(self):
+        self.assertIsNone(self.infobar(False).allminus_url)

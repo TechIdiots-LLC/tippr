@@ -1830,7 +1830,10 @@ class AllMinus(AllSR):
 
     @property
     def path(self):
-        return '/v/all-' + '-'.join(vault.name for vault in self.exclude_vaults)
+        # in name order, so the same vaults are always the same address
+        names = sorted((vault.name for vault in self.exclude_vaults),
+                       key=str.lower)
+        return '/v/all-' + '-'.join(names)
 
     def get_links(self, sort, time):
         from r2.models import Link

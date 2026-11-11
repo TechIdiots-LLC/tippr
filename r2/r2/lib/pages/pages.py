@@ -273,6 +273,10 @@ class Tippr(Templated):
         self.title = title
         self.short_title = short_title
         self.short_description = short_description
+        if robots is None and isinstance(c.site, AllMinus):
+            # /v/all-a-b-c is /all with some vaults left out, one for
+            # every set of vaults: the same posts as /all to a search engine
+            robots = "noindex"
         self.robots = robots
         self.infotext = infotext
         self.extra_js_config = extra_js_config
@@ -3136,11 +3140,15 @@ class AllInfoBar(Templated):
             self.css_class = "gold-accent"
         else:
             self.description = strings.r_all_description
-            vault_ids = Vault.user_vaults(user)
-            vaults = Vault._byID(
-                vault_ids, data=True, return_dict=False, stale=True)
-            if vaults:
-                self.allminus_url = '/v/all-' + '-'.join([vault.name for vault in vaults])
+            # members only: logged out, it's the default vaults, and a
+            # search engine following it found the same /all again under
+            # an address in a new order each time
+            if c.user_is_loggedin:
+                vault_ids = Vault.user_vaults(user)
+                vaults = Vault._byID(
+                    vault_ids, data=True, return_dict=False, stale=True)
+                if vaults:
+                    self.allminus_url = AllMinus(vaults).path
 
         self.gilding_listing = False
         if request.path.startswith("/comments/gilded"):
