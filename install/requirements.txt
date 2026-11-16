@@ -101,7 +101,7 @@ sentry-sdk==2.75.0
 setuptools==84.2.1
 simplejson==4.3.0
 six==1.17.0
-soupsieve==4.0.1
+soupsieve==4.1
 SQLAlchemy==2.1.8
 stripe==16.1.0
 thrift==0.25.0
