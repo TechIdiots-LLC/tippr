@@ -80,7 +80,7 @@ pyasn1_modules==0.4.2
 pycparser==3.12
 pycryptodome==4.4.0
 Pygments==2.21.0
-pylibmc==1.6.3
+pylibmc==1.7.1
 pyOpenSSL==26.4.0
 pyparsing==3.3.3
 pyrate-limiter==4.5.1
