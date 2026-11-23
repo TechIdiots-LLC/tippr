@@ -92,7 +92,7 @@ pytz==2026.6
 PyYAML==6.0.3
 raven==6.10.0
 redis==8.1.0
-regex==2026.9.29
+regex==2026.11.19
 repoze-lru==0.8
 requests==2.34.2
 Routes==2.5.1
